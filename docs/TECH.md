@@ -20,8 +20,8 @@ OpenGold is intended to be a modern, open-source reimplementation of the SSI Gol
 This design is based on these decisions and strong preferences from the referenced chat:
 
 - use `OpenGold` as the project identity rather than a Pool of Radiance-branded product
-- build the presentation layer with `Godot 4.x .NET`
-- use `C#` for both engine logic and Godot-facing code
+- build the presentation layer with `Godot 4.x`
+- use `C/C++` for both engine logic and Godot-facing code
 - keep the core engine independent from the renderer and UI
 - do not emulate the original executable; read original data files directly
 - require players to supply their own legally obtained game files
@@ -30,7 +30,7 @@ This design is based on these decisions and strong preferences from the referenc
 - support enhanced graphics through shader/filter services, with `xBR` as the leading option
 - prefer permissive or file-level-copyleft dependencies and avoid incorporating GPL code into the codebase without an explicit licensing decision
 
-One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and the existing repository direction clearly settled on `Godot` as the chosen presentation stack, so this document treats `Godot + C#` as the active design.
+One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and the existing repository direction clearly settled on `Godot` as the chosen presentation stack, so this document treats `Godot + C/C++` as the active design.
 
 ## 3. Technical Goals
 
@@ -44,13 +44,13 @@ One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and t
 
 ### Runtime and Language
 
-- `Godot 4.x .NET` for desktop presentation, input, scenes, UI, shaders, and packaging
-- `C#` as the primary implementation language across the project
-- `.NET 8+` for the engine, tools, and tests
+- `Godot 4.x` for desktop presentation, input, scenes, UI, shaders, and packaging
+- `C/C++` as the primary implementation language across the project
+- a native C/C++ toolchain for the engine, tools, and tests
 
 ### Why This Stack
 
-`C#` fits the project because most of the work is domain-heavy software engineering rather than high-end real-time rendering:
+`C/C++` fits the project because it supports a portable native engine with direct integration into Godot:
 
 - binary format parsing
 - rules processing
@@ -74,8 +74,6 @@ One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and t
 OpenGold should be implemented as a small set of clearly separated modules:
 
 ```text
-OpenGold.sln
-
 src/
   OpenGold.Core/
   OpenGold.Formats/
@@ -118,7 +116,7 @@ Responsible for engine behavior implemented by OpenGold:
 - event dispatch
 - compatibility behaviors
 
-This layer must have no dependency on Godot. It should be runnable under tests with plain .NET.
+This layer must have no dependency on Godot. It should be runnable directly under the native test suite.
 
 ### `OpenGold.Game.PoolOfRadiance`
 
@@ -296,7 +294,7 @@ OpenGold ECL runtime
 Core state changes, encounters, dialogs, flags, transitions
 ```
 
-This is preferable to rewriting campaign progression as hand-authored C# scene logic because it keeps the engine reusable and preserves original behavior more faithfully.
+This is preferable to rewriting campaign progression as hand-authored C/C++ scene logic because it keeps the engine reusable and preserves original behavior more faithfully.
 
 ## 11. Rules and Compatibility
 
@@ -333,7 +331,7 @@ The project should maintain a compatibility-heavy test suite covering:
 - event/runtime execution
 - state serialization
 
-Parameter-heavy rule verification is one reason `C#` was preferred. `NUnit` or `xUnit` both fit; defaulting to one consistent framework is recommended early.
+Parameter-heavy rule verification is one reason a strongly typed C/C++ implementation was preferred. The project should select one consistent native testing framework early.
 
 ### Behavioral Oracle Testing
 
@@ -389,7 +387,7 @@ The chosen stack is optimized for desktop releases:
 - Linux next
 - macOS where practical
 
-Web export is not part of the primary design. That aligns with both the game’s desktop-oriented workflow and the current limitations of Godot C# export support discussed in the source chat.
+Web export is not part of the primary design. That aligns with the game’s desktop-oriented workflow and keeps the initial platform scope focused.
 
 ## 15. Dependency Policy
 
@@ -436,9 +434,9 @@ before deeper investment in rules fidelity and full campaign support.
 
 The current technical recommendation is:
 
-- `Godot 4.x .NET` for presentation
-- `C#` across engine and UI code
-- `.NET 8+` for the solution baseline
+- `Godot 4.x` for presentation
+- `C/C++` across engine and UI code
+- a native C/C++ toolchain for the project baseline
 - a layered architecture centered on `Formats`, `Core`, `Game.PoolOfRadiance`, and `Godot`
 - user-supplied original assets loaded at runtime
 - ECL-driven campaign execution
