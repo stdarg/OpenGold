@@ -1,182 +1,1302 @@
-# OpenGold Product Requirements Document
+# Product Requirements Document: OpenGold
 
-Date: 2026-08-29
-Status: Draft v0.1
-Project: OpenGold
+**Document:** PRD.md  
+**Project:** OpenGold  
+**Status:** Draft / Living Document  
+**Primary Platform:** Desktop PC  
+**Target OS:** Windows, Linux, macOS  
+**Engine:** Godot 4.x  
+**Core Language:** C/C++  
+**Godot Integration:** GDExtension  
+**License for Original OpenGold Code:** MPL-2.0
 
-## 1. Summary
+---
 
-OpenGold is an open-source, modern reimplementation of SSI's Gold Box engine focused first on Pool of Radiance. It should let players use their own legally obtained original game files while experiencing the game through a cleaner interface, improved rendering, and modern quality-of-life features without changing the core rules, progression, or feel that made the original compelling.
+## 1. Product Summary
 
-## 2. Problem
+OpenGold is an open-source modernization and reimplementation of the 1988 SSI *Pool of Radiance* game experience.
 
-Pool of Radiance remains historically important and still has strong design fundamentals, especially its tactical combat and party-based progression. Today, the original experience is hard for many players to approach because it depends on dated presentation, awkward UI conventions, low-resolution rendering, and aging distribution formats. There is no broadly available remake that preserves the original game's structure and mechanics while making it feel comfortable on a modern PC.
+The project aims to preserve the gameplay, rules, content structure, maps, encounters, and feel of the original game while replacing its DOS-era executable and interface with a modern, maintainable implementation.
 
-## 3. Vision
+OpenGold is **not** intended to redistribute copyrighted SSI, TSR, Wizards of the Coast, or other third-party game assets. Users must provide their own legally obtained copy of the original game files. OpenGold will read and interpret those files at runtime.
 
-Create the version of Pool of Radiance that players wish existed in 2026:
+The project should ultimately allow a player who owns the original game to launch OpenGold, point it at the original game data, and play a faithful version of *Pool of Radiance* through a modern interface.
 
-- faithful to the original game's data, rules, tone, pacing, and encounter design
-- modern in usability, readability, accessibility, and visual presentation
-- legally clean by requiring users to provide their own original game data
-- architected as a reusable open engine that can later support additional Gold Box titles
+---
 
-## 4. Product Principles
+## 2. Vision
 
-- Faithfulness first. Changes should preserve gameplay outcomes unless the team explicitly chooses a compatibility break.
-- Modernize the shell, not the soul. Replace the UI and presentation layer while keeping core game behavior intact.
-- Player-owned assets only. OpenGold must not ship copyrighted Pool of Radiance assets or game data.
-- Inspectable and testable. Core rules and format readers should be deterministic and heavily testable.
-- Modest by default. The first shipped experience should solve the original game's usability problems before expanding into broader engine ambitions.
+> Rebuild the original *Pool of Radiance* experience faithfully, while making it pleasant to run, understand, mod, maintain, and play on modern computers.
 
-## 5. Target Users
+The project should feel like the original game and received a careful restoration rather than a redesign.
 
-- players who own Pool of Radiance and want a more usable way to replay it
-- retro RPG fans curious about Gold Box games but blocked by the original UI
-- preservation-minded contributors who want a clean open-source codebase
-- future developers who may extend the engine to other Gold Box titles
+The player should recognize the original game immediately.
 
-## 6. Goals
+Modernization should improve presentation and usability without silently changing the underlying game.
 
-### Primary Goals
+---
 
-- Ship a playable Pool of Radiance experience that requires the user's original game files.
-- Preserve the original campaign flow, combat model, character systems, and scripted progression.
-- Deliver a modern UI that makes movement, combat, inventory, character review, spell use, shopping, resting, and save/load significantly easier to understand.
-- Improve visual presentation through clean scaling, better layout, and optional pixel-art upscaling filters.
-- Build an engine architecture that cleanly separates file parsing, game logic, and presentation.
+## 3. Goals
 
-### Secondary Goals
+### 3.1 Primary Goals
 
-- Make compatibility gaps visible through tests, debug tooling, and documented known differences.
-- Support Windows first, with portability to other desktop platforms where practical.
-- Encourage community contribution through MPL-2.0 licensing, clear boundaries, and documentation.
+1. Reimplement the original game's executable behavior without using the original executable code.
+2. Reuse original game data and art supplied by the user.
+3. Preserve original game mechanics as accurately as practical.
+4. Replace the DOS user interface with a modern desktop UI.
+5. Support modern resolutions, windowed mode, fullscreen mode, scaling, and input.
+6. Keep the core game implementation portable and testable.
+7. Make the project easy for outside contributors to understand and extend.
+8. Provide a clean path for reverse engineering additional file formats and game systems.
+9. Allow visual improvements such as optional pixel-art upscaling without destroying the original aesthetic.
+10. Build a reusable foundation that could potentially support other SSI Gold Box titles later.
 
-## 7. Non-Goals
+### 3.2 Secondary Goals
 
-- shipping original SSI, TSR, or Wizards of the Coast copyrighted assets in the repository or binaries
-- rewriting the campaign story, encounters, or rules into a new game
-- creating a full 3D remake or action RPG reinterpretation
-- supporting every Gold Box title in the first release
-- introducing balance changes, new classes, or fan expansion content in the initial product
-- requiring emulation of the original executable rather than reading original data files directly
+- Faster loading and saving.
+- Multiple save slots.
+- Better inventory management.
+- Improved character sheets.
+- Modern tooltips and contextual explanations.
+- Configurable keyboard shortcuts.
+- Mouse-driven interaction where appropriate.
+- Accessibility improvements.
+- Optional quality-of-life features that can be disabled for strict-faithful play.
 
-## 8. User Experience Requirements
+---
 
-### Core Player Experience
+## 4. Non-Goals
 
-The player installs OpenGold, points it at their own Pool of Radiance files, and starts playing with minimal setup friction. The game should feel recognizably like Pool of Radiance within minutes, but far easier to read and operate.
+The initial project is **not** intended to:
 
-### UX Expectations
+1. Create a new Dungeons & Dragons game.
+2. Redesign *Pool of Radiance* combat.
+3. Rewrite the campaign.
+4. Replace original encounters with newly authored encounters.
+5. Convert the game to real-time combat.
+6. Turn the game into a 3D title.
+7. Redistribute copyrighted original game data.
+8. Ship the original DOS executable.
+9. Require DOSBox.
+10. Reproduce bugs merely because they existed in the original, unless a bug materially affects compatibility or expected game behavior.
+11. Support every Gold Box game in the first release.
+12. Introduce multiplayer in the initial product.
+13. Build a general-purpose RPG engine before *Pool of Radiance* itself is playable.
 
-- clear onboarding for locating and validating original game files
-- resolution-independent interface with readable fonts and modern layout
-- intuitive exploration, combat, inventory, and spellcasting flows
-- useful feedback for status effects, hit chances, damage, movement, and combat order where feasible
-- quick save/load and predictable input behavior
-- mouse-first interaction with keyboard shortcuts for power users
-- optional original-look and enhanced-rendering display modes
+---
 
-### Accessibility and Quality-of-Life
+## 5. Guiding Principles
 
-- larger text and scalable UI
-- clearer color contrast than the original presentation
-- tooltips or equivalent contextual help for stats, commands, and combat options
-- concise combat log and party status visibility
-- reduced menu friction compared to the DOS interface
+### 5.1 Fidelity First
 
-## 9. Functional Scope
+When choosing between:
 
-### MVP / Vertical Slice
+- modern convenience,
+- implementation elegance, and
+- fidelity to the original rules,
 
-- import and validate Pool of Radiance game data from a user-supplied installation
-- load core assets, maps, character data, items, monsters, and scripted content needed for a representative early-game slice
-- party creation or loading compatible starting data
-- town and dungeon exploration
-- turn-based tactical combat with faithful movement, attacks, spells, and victory conditions
-- inventory, equipment, rest, save, and load
-- modern UI shell for exploration and combat
+the default priority is:
 
-### Version 1.0 Scope
+1. Correct game behavior
+2. Compatibility with original data
+3. Maintainable implementation
+4. Modern convenience
 
-- full playable Pool of Radiance campaign
-- end-to-end support for required game data formats and scripted events
-- compatibility-focused implementation of core AD&D mechanics as used by the original game
-- modernized interfaces for shops, temples, journals, loot, and party management
-- optional rendering filters for original art assets
-- packaging, installer guidance, and contributor documentation
+Quality-of-life changes should normally be optional.
 
-### Post-1.0 Opportunities
+### 5.2 Modern Shell, Original Game
 
-- support for additional Gold Box titles
-- modding and debugging tools
-- optional assist features such as encounter replay, combat speed controls, or annotated logs
-- higher-level content validation and conversion utilities
+The game engine should reproduce the original game's rules and state transitions.
 
-## 10. Technical Direction
+Godot should provide the modern shell:
 
-OpenGold should be structured in three major layers:
+- windows,
+- panels,
+- menus,
+- input,
+- rendering,
+- sound playback,
+- animation,
+- scaling,
+- accessibility,
+- and platform integration.
 
-- `OpenGold.Formats`: readers and decoders for original game data, assets, maps, scripts, and save structures
-- `OpenGold.Core`: engine behavior including rules, combat, world state, event handling, and compatibility logic
-- `OpenGold.Godot`: presentation, input, rendering, scenes, and modern UI
+### 5.3 Data-Driven Where Possible
 
-The core engine should remain independent from the presentation layer wherever possible so that gameplay behavior can be tested without the UI runtime.
+Original game data should be decoded into structured internal representations rather than hard-coded into the engine.
 
-## 11. Legal and Content Constraints
+Example:
 
-- The project must not include copyrighted Pool of Radiance assets, maps, text, music, portraits, or data files.
-- Users must supply their own legally obtained original game installation.
-- The repository should clearly distinguish open-source engine code from copyrighted game content.
-- Branding and documentation should state that OpenGold is an independent reimplementation and is not affiliated with or endorsed by the original rights holders.
+```text
+Original SSI file
+      ↓
+Binary parser
+      ↓
+Validated OpenGold data structures
+      ↓
+Game engine
+      ↓
+Godot presentation
+```
 
-## 12. Success Metrics
+### 5.4 Reversible Modernization
 
-- a new player can install the app and reach gameplay using their own files without external technical help
-- the first hour of Pool of Radiance is fully playable in OpenGold with no blocking progression issues
-- core combat flows are understandable without consulting the original manual
-- compatibility test coverage exists for high-risk rules and data parsing behavior
-- contributors can understand the architecture and add features without touching unrelated layers
+Visual or usability enhancements should ideally be switchable.
 
-## 13. Milestones
+Examples:
 
-### Milestone 1: Foundation
+- original nearest-neighbor rendering,
+- xBRZ-style upscaling,
+- enhanced fonts,
+- modern inventory layout,
+- combat animation speed,
+- tooltip detail,
+- original keyboard navigation.
 
-- define repository structure and module boundaries
-- document supported source files and legal boundaries
-- implement initial file import and validation flow
-- stand up basic rendering and UI shell
+---
 
-### Milestone 2: Vertical Slice
+## 6. Target Users
 
-- load a limited playable area and encounters
-- implement core combat loop, movement, targeting, and rewards
-- support save/load and party state
-- validate feel and fidelity with repeated playtesting
+### 6.1 Primary User
 
-### Milestone 3: Full Campaign
+A player who:
 
-- complete content coverage for the full Pool of Radiance campaign
-- close major compatibility gaps in rules and scripting
-- harden UX, installer flow, and performance
+- owns *Pool of Radiance*,
+- enjoys classic computer RPGs,
+- wants faithful gameplay,
+- dislikes running the original game through DOS-era interfaces,
+- and wants modern resolution, controls, and usability.
 
-### Milestone 4: Community Release
+### 6.2 Secondary Users
 
-- publish contribution guidelines and roadmap
-- formalize testing and issue taxonomy
-- prepare an openly distributable release that requires external game data
+- Gold Box enthusiasts
+- retro-computing enthusiasts
+- preservationists
+- reverse engineers
+- mod developers
+- open-source contributors
+- Dungeons & Dragons historians
 
-## 14. Key Risks
+---
 
-- exact behavioral compatibility may be much harder than asset and UI work
-- legal confusion could damage the project if asset boundaries are not explicit
-- event scripting and edge-case rule handling may take disproportionate time
-- an overly ambitious engine-generalization effort could delay a playable Pool of Radiance release
+## 7. Technology Stack
 
-## 15. Open Questions
+### 7.1 Core Technology
 
-- How strict should compatibility be when original behavior is opaque, inconsistent, or user-hostile?
-- Which parts of the original UI should be preserved for nostalgia versus replaced entirely?
-- What minimum operating systems and desktop targets should Version 1.0 support?
-- How much modding or multi-game support should be designed up front versus deferred?
-- Should enhanced rendering filters be part of the first public release or follow shortly after?
+**Game Engine / UI:** Godot 4.x
+
+**Core implementation:** C/C++
+
+**Godot interface:** GDExtension
+
+No C# runtime or .NET dependency is required.
+
+### 7.2 Why C/C++
+
+C/C++ is appropriate because the project requires:
+
+- binary file parsing,
+- explicit control over data layout,
+- efficient decoding,
+- portability,
+- integration with existing reverse-engineering tools and libraries,
+- potential reuse outside Godot,
+- and straightforward native interoperability through GDExtension.
+
+The game simulation should not depend tightly on Godot classes.
+
+### 7.3 Architectural Boundary
+
+The preferred architecture is:
+
+```text
++---------------------------------------------------+
+|                    Godot UI                       |
+|                                                   |
+| Menus | Windows | Map | Combat UI | Input | Audio |
++-------------------------+-------------------------+
+                          |
+                     GDExtension
+                          |
++-------------------------v-------------------------+
+|               OpenGold C/C++ Core                 |
+|                                                   |
+| Game State | Combat | Rules | Characters | Maps   |
+| Events | Inventory | Saving | Data Interpretation |
++-------------------------+-------------------------+
+                          |
++-------------------------v-------------------------+
+|              Original Game Data Layer             |
+|                                                   |
+| File Parsers | Decoders | Resource Loaders        |
++---------------------------------------------------+
+```
+
+This separation makes the core testable without running the Godot renderer.
+
+---
+
+## 8. Repository Structure
+
+A suggested initial layout:
+
+```text
+opengold/
+├── README.md
+├── PRD.md
+├── LICENSE
+├── CONTRIBUTING.md
+├── CMakeLists.txt
+│
+├── docs/
+│   ├── architecture/
+│   ├── reverse-engineering/
+│   ├── file-formats/
+│   └── legal/
+│
+├── core/
+│   ├── include/
+│   ├── src/
+│   └── tests/
+│
+├── formats/
+│   ├── include/
+│   ├── src/
+│   └── tests/
+│
+├── godot/
+│   ├── project.godot
+│   ├── scenes/
+│   ├── scripts/
+│   ├── themes/
+│   ├── assets/
+│   └── ui/
+│
+├── gdextension/
+│   ├── include/
+│   └── src/
+│
+├── tools/
+│   ├── inspectors/
+│   ├── converters/
+│   └── diagnostics/
+│
+└── testdata/
+    └── synthetic/
+```
+
+Original copyrighted game files must not be committed to the repository.
+
+---
+
+## 9. Original Game Data
+
+### 9.1 User-Owned Assets
+
+OpenGold should require the player to supply the original *Pool of Radiance* installation files.
+
+The application should provide an initial setup flow that:
+
+1. asks the user to locate the original game directory,
+2. validates expected files,
+3. identifies the detected release/version where possible,
+4. records the path,
+5. tests that required resources are readable,
+6. reports missing or unexpected files clearly.
+
+### 9.2 Asset Policy
+
+The OpenGold repository must not contain:
+
+- original SSI art,
+- original maps,
+- original text,
+- music copied from the game,
+- fonts extracted from the game,
+- original executable code,
+- proprietary logos,
+- or substantial copyrighted game data.
+
+Small byte sequences used solely for tests should preferably be synthetic.
+
+### 9.3 Resource Access
+
+The original files should remain authoritative whenever practical.
+
+OpenGold may:
+
+- parse them at runtime,
+- cache derived representations,
+- or generate local indexes.
+
+It should not require permanent conversion of the user's game installation.
+
+---
+
+## 10. Clean-Room Reverse Engineering
+
+Reverse engineering must focus on **behavior and file formats**, not copying original source code.
+
+### 10.1 Allowed Research Outputs
+
+Project documentation may describe:
+
+- binary file layouts,
+- offsets,
+- compression schemes,
+- palette formats,
+- sprite formats,
+- map structures,
+- encounter structures,
+- save formats,
+- rule behavior,
+- algorithms inferred from observable behavior,
+- and compatibility findings.
+
+### 10.2 Preferred Process
+
+For each subsystem:
+
+1. Observe original behavior.
+2. Record inputs and outputs.
+3. Inspect original data files where legally permitted.
+4. Document the discovered format or behavior.
+5. Create synthetic tests.
+6. Implement equivalent behavior independently.
+7. Compare OpenGold output against the original game.
+8. Record discrepancies.
+
+### 10.3 Documentation Standard
+
+Reverse-engineering discoveries should be committed as documentation before, or alongside, implementation.
+
+Example:
+
+```text
+docs/file-formats/character-record.md
+docs/file-formats/wall-graphics.md
+docs/file-formats/map-format.md
+docs/reverse-engineering/combat-initiative.md
+```
+
+---
+
+## 11. Major Functional Systems
+
+The final game will need implementations for the following systems.
+
+### 11.1 Application Shell
+
+- startup
+- configuration
+- game-data location
+- resolution
+- fullscreen/windowed mode
+- audio controls
+- scaling options
+- accessibility options
+- save management
+
+### 11.2 Character Creation
+
+Support the original game's character-generation mechanics, including:
+
+- race
+- class
+- alignment
+- sex where represented by the original game
+- ability scores
+- hit points
+- starting equipment
+- starting money
+- name
+- portrait/icon selection where applicable
+
+Modern UI may make these choices clearer without changing the rules.
+
+### 11.3 Character Management
+
+- character sheet
+- level
+- XP
+- armor class
+- THAC0 / attack information
+- saving throws
+- memorized spells
+- known spells
+- conditions
+- money
+- equipment
+- encumbrance
+- class-specific abilities
+
+### 11.4 Party Management
+
+- add character
+- remove character
+- reorder party
+- inspect party
+- rest
+- camp
+- save
+- load
+
+### 11.5 Exploration
+
+Implement:
+
+- first-person dungeon/city traversal
+- directional movement
+- map transitions
+- doors
+- walls
+- stairs
+- zones
+- scripted locations
+- encounters
+- searching
+- environmental messages
+
+### 11.6 Overland Travel
+
+Where required by the original game:
+
+- wilderness map
+- travel destinations
+- encounters
+- movement costs
+- transitions between overland and local maps
+
+### 11.7 Combat
+
+Combat is a high-fidelity subsystem.
+
+Required features include:
+
+- combat map loading
+- initiative
+- turn order
+- movement
+- targeting
+- melee attacks
+- ranged attacks
+- spellcasting
+- area effects
+- saving throws
+- damage
+- death
+- unconscious states where applicable
+- morale
+- enemy AI
+- victory
+- retreat/flee behavior
+- treasure
+- XP awards
+
+Modern UI may display calculations more clearly.
+
+Example:
+
+```text
+Long Sword
+Attack: +4
+Target AC: 5
+Roll needed: 11+
+```
+
+Such explanations should be optional if they alter the original presentation significantly.
+
+### 11.8 Magic
+
+Implement:
+
+- spell books
+- memorization
+- cleric spells
+- magic-user spells
+- spell levels
+- casting restrictions
+- targeting
+- durations
+- saving throws
+- area-of-effect rules
+- rest-based recovery
+
+### 11.9 Inventory
+
+Modern inventory management should retain original mechanics while reducing friction.
+
+Potential interface:
+
+- character inventory panes
+- drag-and-drop where safe
+- equip/unequip
+- item details
+- quantity
+- weight
+- value
+- magical status when known
+- usable-by restrictions
+
+### 11.10 Economy
+
+- money denominations
+- stores
+- buying
+- selling
+- identification
+- training fees
+- temple/service fees
+
+### 11.11 NPCs
+
+Support:
+
+- temporary party members
+- scripted NPC behavior
+- joining/leaving
+- dialogue
+- combat behavior
+- equipment restrictions
+- event triggers
+
+### 11.12 Journal and Quest State
+
+Preserve original campaign state and event logic.
+
+Modern UI may optionally provide:
+
+- searchable journal,
+- known quest list,
+- location notes,
+- event history.
+
+Care must be taken not to reveal information the original game intentionally concealed.
+
+---
+
+## 12. Rendering
+
+### 12.1 Original Graphics
+
+The renderer must support displaying original graphics accurately.
+
+Initial priority:
+
+1. Decode original image format.
+2. Decode palette data.
+3. Render image accurately.
+4. Scale cleanly.
+5. Integrate into Godot textures.
+
+### 12.2 Pixel-Art Scaling
+
+The player should eventually have multiple rendering options:
+
+- nearest-neighbor
+- integer scaling
+- xBRZ or comparable edge-aware pixel-art scaler
+- optional CRT-style treatment
+- original aspect-ratio correction
+
+The default should preserve the character of the source art.
+
+No scaler should be required for gameplay.
+
+### 12.3 UI Scaling
+
+The UI must be usable at:
+
+- 1080p
+- 1440p
+- 4K
+
+The design should avoid assuming a fixed DOS-era resolution.
+
+---
+
+## 13. User Interface
+
+### 13.1 Design Direction
+
+The UI should evoke the structure of the Gold Box interface without copying its constraints.
+
+Desired feeling:
+
+- dark fantasy
+- readable
+- compact
+- information-rich
+- keyboard-friendly
+- mouse-friendly
+
+Avoid making the game resemble a generic modern mobile RPG.
+
+### 13.2 Main Game Layout
+
+A possible layout:
+
+```text
++----------------------------------------------------------+
+| Party Summary                                            |
++-----------------------------+----------------------------+
+|                             |                            |
+|       Game View             | Character / Context Panel  |
+|                             |                            |
+|                             |                            |
++-----------------------------+----------------------------+
+| Messages / Combat Log / Commands                         |
++----------------------------------------------------------+
+```
+
+The exact layout may evolve through prototypes.
+
+### 13.3 Keyboard Support
+
+The game should be fully playable by keyboard.
+
+Where possible, preserve familiar original shortcuts while also providing modern bindings.
+
+### 13.4 Mouse Support
+
+Mouse support should include:
+
+- menus
+- inventory
+- targeting
+- character inspection
+- buttons
+- map navigation where appropriate
+
+### 13.5 Controller Support
+
+Controller support is desirable but not required for the first playable milestone.
+
+---
+
+## 14. Save Games
+
+### 14.1 OpenGold Save Format
+
+OpenGold may use its own versioned save format.
+
+The format should include enough information to restore:
+
+- party
+- characters
+- inventory
+- world state
+- map
+- position
+- event flags
+- quests
+- combat state if mid-combat saving is permitted
+- configuration tied to the campaign
+
+### 14.2 Original Save Compatibility
+
+Importing original *Pool of Radiance* saves is highly desirable.
+
+Writing original-compatible saves is lower priority and should only be attempted if reliable.
+
+### 14.3 Save Safety
+
+Use defensive save techniques:
+
+```text
+write temporary file
+→ validate
+→ flush
+→ atomically rename
+```
+
+Where possible, avoid destroying the player's only valid save.
+
+---
+
+## 15. Audio
+
+Initial requirements:
+
+- original sound support where feasible
+- volume controls
+- mute
+- modern audio device handling
+
+Future optional enhancements may include:
+
+- replacement sound packs
+- MIDI improvements
+- community audio packs
+
+Any replacement assets must be legally distributable.
+
+---
+
+## 16. Modding
+
+Modding is not required for the first release, but architecture should avoid making it impossible.
+
+Potential long-term mod support:
+
+- replacement graphics
+- UI themes
+- sound packs
+- text fixes
+- rules variants
+- maps
+- encounters
+
+Original campaign behavior should remain separately selectable.
+
+---
+
+## 17. Diagnostics and Developer Tools
+
+Reverse engineering will be much easier if OpenGold includes small inspection tools.
+
+Useful tools include:
+
+### 17.1 Resource Inspector
+
+Displays:
+
+- file name
+- offsets
+- record structure
+- palette
+- sprites
+- decoded metadata
+
+### 17.2 Map Inspector
+
+Displays decoded maps independently of gameplay.
+
+### 17.3 Character Inspector
+
+Reads original character/save files and prints structured information.
+
+### 17.4 Event Inspector
+
+Displays event/script records in human-readable form.
+
+### 17.5 Comparison Harness
+
+Where practical:
+
+```text
+original input
+      ↓
+expected observations
+
+OpenGold input
+      ↓
+actual observations
+
+      ↓
+
+difference report
+```
+
+These tools are first-class project infrastructure, not disposable experiments.
+
+---
+
+## 18. Testing Strategy
+
+### 18.1 Unit Tests
+
+C/C++ unit tests should cover:
+
+- binary parsing
+- compression
+- palette conversion
+- combat calculations
+- dice
+- XP
+- character statistics
+- saving throws
+- spell calculations
+- item restrictions
+- serialization
+
+### 18.2 Golden Tests
+
+For decoded resources:
+
+```text
+binary fixture
+→ decoder
+→ normalized representation
+→ expected result
+```
+
+### 18.3 Synthetic Test Data
+
+Use synthetic fixtures whenever copyrighted content is unnecessary.
+
+### 18.4 Compatibility Tests
+
+When users provide game files locally, optional developer tests may compare decoded results against known hashes or metadata without committing copyrighted data.
+
+---
+
+## 19. Error Handling
+
+OpenGold should fail loudly and usefully when data cannot be interpreted.
+
+Bad:
+
+```text
+Error 42
+```
+
+Good:
+
+```text
+Unable to decode wall graphic record 17 in GEO1.DAX.
+
+Expected decompressed size: 3072 bytes
+Actual size: 3018 bytes
+
+This game release may use an unsupported resource format.
+```
+
+Reverse-engineering projects live or die by good diagnostics.
+
+---
+
+## 20. Security
+
+OpenGold processes externally supplied binary files.
+
+All parsers must treat game data as untrusted input.
+
+Requirements:
+
+- bounds checking
+- integer overflow protection
+- validated offsets
+- validated record sizes
+- no unchecked pointer arithmetic
+- no fixed-buffer assumptions
+- fuzz testing for important decoders where practical
+
+C/C++ parsers must prioritize correctness over cleverness.
+
+---
+
+## 21. Performance
+
+The original game targeted hardware many orders of magnitude slower than modern PCs.
+
+Performance requirements are therefore modest, but architecture should avoid unnecessary overhead.
+
+Target behavior:
+
+- near-instant UI response
+- near-instant map transitions
+- fast startup after initial indexing
+- negligible combat input latency
+- low idle CPU usage
+
+Frame rate is not a meaningful simulation constraint.
+
+---
+
+## 22. Licensing
+
+### 22.1 OpenGold Source Code
+
+Original OpenGold source code should be licensed under:
+
+**Mozilla Public License 2.0 (MPL-2.0)**
+
+This provides:
+
+- open source distribution,
+- commercial use,
+- modification,
+- patent protection,
+- and file-level copyleft.
+
+### 22.2 Third-Party Libraries
+
+Dependencies must have licenses compatible with MPL-2.0 distribution.
+
+Each dependency should be documented.
+
+### 22.3 Original Game Rights
+
+The OpenGold license does not grant rights to:
+
+- *Pool of Radiance*
+- Dungeons & Dragons
+- Forgotten Realms
+- SSI artwork
+- TSR/Wizards content
+- original game music
+- original text
+
+The README should make this distinction explicit.
+
+---
+
+## 23. Project Naming
+
+**OpenGold** is the current working project name.
+
+The name reflects the project's relationship to the Gold Box lineage without claiming ownership of the original trademarks.
+
+Before a broad public release, the name should be checked for trademark and project-name conflicts.
+
+---
+
+## 24. Contributor Model
+
+The project is intended to welcome outside contributors.
+
+Contribution areas should include:
+
+- reverse engineering
+- C/C++ implementation
+- Godot UI
+- testing
+- documentation
+- platform support
+- accessibility
+- asset decoding
+- tooling
+
+### 24.1 Contribution Requirement
+
+Reverse-engineering discoveries should be documented well enough for another contributor to reproduce the conclusion.
+
+Avoid unexplained code such as:
+
+```cpp
+value = data[offset + 17] ^ 0x80;
+```
+
+Prefer:
+
+```cpp
+// Byte 17 contains the signed morale modifier.
+// SSI stores the signed value using the high bit as the sign.
+value = decode_morale_modifier(data[offset + 17]);
+```
+
+---
+
+## 25. Initial Development Strategy
+
+Do **not** begin by implementing the entire game.
+
+The first phase should answer the question:
+
+> Can OpenGold reliably interpret original game resources and present them through Godot?
+
+### Milestone 0: Repository Bootstrap
+
+Deliver:
+
+- Git repository
+- MPL-2.0 license
+- PRD
+- README
+- CMake build
+- Godot project
+- GDExtension bridge
+- trivial C/C++ test
+- CI build
+
+### Milestone 1: First Original Graphic
+
+Deliver:
+
+1. Locate one known graphic resource.
+2. Document the binary format needed to read it.
+3. Decode it in C/C++.
+4. Decode its palette.
+5. expose the resulting pixel data through GDExtension.
+6. Display it correctly in a Godot window.
+7. Support nearest-neighbor integer scaling.
+
+**Success criterion:**
+
+> OpenGold renders one original *Pool of Radiance* image correctly from the user's game files.
+
+This is the project's first vertical slice.
+
+### Milestone 2: Resource Browser
+
+Build a developer resource browser capable of:
+
+- opening the game data directory,
+- listing known resource archives,
+- enumerating records,
+- rendering supported graphics,
+- displaying metadata,
+- exporting diagnostics.
+
+### Milestone 3: Map Rendering
+
+Deliver:
+
+- map data decoding
+- wall/terrain rendering
+- player facing
+- map movement
+- collision
+- transitions
+
+No encounters are required yet.
+
+### Milestone 4: Party and Character Data
+
+Deliver:
+
+- character decoding
+- party display
+- character sheet
+- inventory display
+- core AD&D statistics
+
+### Milestone 5: Exploration Loop
+
+Deliver:
+
+```text
+load party
+→ enter map
+→ move
+→ trigger event
+→ display text
+→ change game state
+→ save
+```
+
+### Milestone 6: Combat Prototype
+
+Deliver one representative combat encounter with:
+
+- combat map
+- player units
+- enemy units
+- initiative
+- movement
+- melee
+- damage
+- death
+- victory
+
+### Milestone 7: Full Campaign Systems
+
+Incrementally implement:
+
+- spells
+- ranged combat
+- shops
+- temples
+- training
+- NPCs
+- quests
+- wilderness
+- special events
+- campaign completion
+
+### Milestone 8: Compatibility and Polish
+
+- original save import
+- graphics scaling options
+- accessibility
+- controller support
+- installers
+- crash diagnostics
+- platform packaging
+
+---
+
+## 26. First Engineering Task
+
+The recommended first real engineering task is deliberately small:
+
+> **Decode and display one original *Pool of Radiance* graphic in Godot using C/C++.**
+
+This task exercises nearly every foundational architectural decision:
+
+- locating user-owned data,
+- understanding a file format,
+- binary parsing in C/C++,
+- test infrastructure,
+- palette conversion,
+- CMake,
+- GDExtension,
+- Godot rendering,
+- documentation,
+- and legal separation of code from assets.
+
+It provides a visible result without requiring speculative architecture for the entire RPG.
+
+---
+
+## 27. Definition of Minimum Playable Product
+
+The minimum playable product is achieved when a player can:
+
+1. install OpenGold,
+2. select a valid original *Pool of Radiance* installation,
+3. create or load a party,
+4. enter the campaign,
+5. explore maps,
+6. interact with campaign events,
+7. enter combat,
+8. complete combat,
+9. manage inventory and characters,
+10. save and restore progress,
+11. progress through the complete original campaign,
+12. reach the original ending.
+
+The interface does not need every planned quality-of-life feature at this stage.
+
+The game must, however, be completable.
+
+---
+
+## 28. Definition of Version 1.0
+
+OpenGold 1.0 should meet the following bar:
+
+### Gameplay
+
+- Complete *Pool of Radiance* campaign is playable.
+- Major rules behave consistently with the original.
+- Major encounters function.
+- Character advancement works.
+- Spells are implemented.
+- Shops, temples, training, and NPCs work.
+- Saving/loading is reliable.
+
+### Compatibility
+
+- Supports at least one well-documented original PC release.
+- Handles common legitimate distribution variants where practical.
+- Provides useful diagnostics for unsupported variants.
+
+### Interface
+
+- Modern windowed UI
+- fullscreen support
+- mouse support
+- keyboard support
+- scalable fonts/UI
+- modern save selection
+- functional inventory UI
+- clear character sheets
+
+### Rendering
+
+- faithful original rendering
+- integer scaling
+- optional enhanced pixel scaling
+
+### Distribution
+
+- Windows release
+- Linux release
+- macOS release if maintainable
+- installation instructions
+- original-data setup instructions
+
+### Development
+
+- automated builds
+- automated tests
+- documented architecture
+- documented known file formats
+- contributor guide
+
+---
+
+## 29. Future Possibilities
+
+These are explicitly outside the initial scope but should influence architectural flexibility.
+
+### Other Gold Box Games
+
+Potential future support could include:
+
+- *Curse of the Azure Bonds*
+- *Secret of the Silver Blades*
+- *Pools of Darkness*
+- *Champions of Krynn*
+- *Death Knights of Krynn*
+- *The Dark Queen of Krynn*
+- other related SSI titles
+
+The project should **not** prematurely generalize for these games.
+
+Instead:
+
+> Make *Pool of Radiance* work cleanly first, then extract reusable abstractions from proven similarities.
+
+### Enhanced Content
+
+Possible later projects:
+
+- community replacement art
+- high-resolution UI themes
+- remastered sound
+- translations
+- accessibility packs
+- optional rule explanations
+- community campaigns
+
+These should remain separate from strict compatibility mode.
+
+---
+
+## 30. Open Questions
+
+The following items require further investigation:
+
+1. Which *Pool of Radiance* release should be the reference implementation?
+2. Which archive/resource formats are required for the first graphic?
+3. How much of the game is stored in DAX-style resource archives?
+4. How are map event scripts encoded?
+5. How closely can original save files be imported?
+6. Which behaviors are data-driven versus executable-driven?
+7. Which pixel-art scaler should be used for the optional enhanced mode?
+8. Should the modern UI be resizable panel-by-panel or use predefined layouts?
+9. How should compatibility quirks and original bugs be categorized?
+10. Which original keyboard shortcuts should be preserved by default?
+11. Should strict compatibility mode intentionally reproduce certain original bugs?
+12. What is the minimum macOS support burden the project is willing to maintain?
+
+---
+
+## 31. Decision Log
+
+| Decision | Choice |
+|---|---|
+| Engine | Godot 4.x |
+| Native language | C/C++ |
+| Godot/native integration | GDExtension |
+| C# | Not used |
+| Project model | Open source |
+| Code license | MPL-2.0 |
+| Original assets | User supplied |
+| Original executable | Not distributed or required at runtime |
+| Reverse engineering | Behavioral / clean-room oriented |
+| Primary goal | Faithful *Pool of Radiance* reimplementation |
+| UI philosophy | Modern interface, original gameplay |
+| Graphics | Original assets with optional modern scaling |
+| First engineering milestone | Decode and display one original graphic |
+| Premature multi-game engine | Avoid |
+| Long-term Gold Box support | Possible after *Pool of Radiance* |
+
+---
+
+## 32. Product Principle in One Sentence
+
+**OpenGold is an open-source C/C++ and Godot reimplementation of SSI's 1988 *Pool of Radiance* that uses player-supplied original game assets to preserve the original gameplay while providing a modern, portable interface.**
