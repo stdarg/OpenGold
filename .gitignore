@@ -9,3 +9,4 @@ godot/bin/
 # Local user data and derived original-game assets
 /user-data/
 /testdata/local/
+*.png
