@@ -1,0 +1,10 @@
+# Native build output
+/build/
+
+# Godot generated state and imports
+godot/.godot/
+godot/*.tmp
+
+# Local user data and derived original-game assets
+/user-data/
+/testdata/local/

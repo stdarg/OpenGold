@@ -1,0 +1,142 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource path="res://scripts/main.gd" type="Script" id="1"]
+[ext_resource path="res://shaders/xbr.gdshader" type="Shader" id="2"]
+
+[ext_resource path="res://shaders/hqx/hq4x.gdshader" type="Shader" id="3"]
+[ext_resource path="res://shaders/hqx/hq4x.png" type="Texture2D" id="4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xbr"]
+shader = ExtResource("2")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hqx"]
+shader = ExtResource("3")
+shader_parameter/lookup_table = ExtResource("4")
+
+[node name="OpenGold" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.043, 0.055, 1)
+
+[node name="Scroll" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 32.0
+offset_right = -32.0
+offset_bottom = -32.0
+
+[node name="Center" type="CenterContainer" parent="Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="Scroll/Center"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="Scroll/Center/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "OpenGold - Scaling Comparison"
+horizontal_alignment = 1
+
+[node name="CategorySelect" type="OptionButton" parent="Scroll/Center/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+custom_minimum_size = Vector2(260, 0)
+
+[node name="Comparison" type="HBoxContainer" parent="Scroll/Center/Content"]
+layout_mode = 2
+theme_override_constants/separation = 48
+alignment = 1
+
+[node name="Nearest" type="VBoxContainer" parent="Scroll/Center/Content/Comparison"]
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="Scroll/Center/Content/Comparison/Nearest"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Nearest neighbor"
+horizontal_alignment = 1
+
+[node name="Center" type="CenterContainer" parent="Scroll/Center/Content/Comparison/Nearest"]
+layout_mode = 2
+
+[node name="NearestSprite" type="TextureRect" parent="Scroll/Center/Content/Comparison/Nearest/Center"]
+unique_name_in_owner = true
+layout_mode = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Xbr" type="VBoxContainer" parent="Scroll/Center/Content/Comparison"]
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="Scroll/Center/Content/Comparison/Xbr"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "xBR (level 2)"
+horizontal_alignment = 1
+
+[node name="Center" type="CenterContainer" parent="Scroll/Center/Content/Comparison/Xbr"]
+layout_mode = 2
+
+[node name="XbrSprite" type="TextureRect" parent="Scroll/Center/Content/Comparison/Xbr/Center"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_xbr")
+layout_mode = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Hqx" type="VBoxContainer" parent="Scroll/Center/Content/Comparison"]
+layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
+theme_override_constants/separation = 16
+
+[node name="Label" type="Label" parent="Scroll/Center/Content/Comparison/Hqx"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "HQx (HQ4x)"
+horizontal_alignment = 1
+
+[node name="Center" type="CenterContainer" parent="Scroll/Center/Content/Comparison/Hqx"]
+layout_mode = 2
+
+[node name="HqxSprite" type="TextureRect" parent="Scroll/Center/Content/Comparison/Hqx/Center"]
+material = SubResource("ShaderMaterial_hqx")
+unique_name_in_owner = true
+layout_mode = 2
+texture_filter = 1
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Status" type="Label" parent="Scroll/Center/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(580, 0)
+text = "Loading combat sprite..."
+horizontal_alignment = 1
+autowrap_mode = 3
+

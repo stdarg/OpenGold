@@ -48,6 +48,22 @@ One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and t
 - `C/C++` as the primary implementation language across the project
 - a native C/C++ toolchain for the engine, tools, and tests
 
+### C++ Engineering Guidelines
+
+- use `C++20` as the project language standard; do not depend on
+  compiler-specific `C++ latest` behavior
+- employ RAII for all owned resources so cleanup is deterministic and tied to
+  object lifetime
+- bias toward smart pointers when pointer ownership is required: prefer
+  `std::unique_ptr` for exclusive ownership and use `std::shared_ptr` only when
+  ownership is genuinely shared
+- prefer value types and standard RAII containers, such as `std::vector` and
+  `std::string`, over heap allocation when pointer semantics are unnecessary
+- do not express ownership with raw pointers; raw pointers and references may
+  be used only as non-owning views with lifetimes made clear by the API
+- maintain separation of concerns between file-format decoding, engine and game
+  rules, campaign-specific behavior, and Godot presentation code
+
 ### Why This Stack
 
 `C/C++` fits the project because it supports a portable native engine with direct integration into Godot:

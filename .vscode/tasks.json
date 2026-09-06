@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "OpenGold: configure",
+            "type": "shell",
+            "command": "cmake --preset default",
+            "problemMatcher": []
+        },
+        {
+            "label": "OpenGold: build",
+            "type": "shell",
+            "command": "cmake --build --preset default",
+            "dependsOn": "OpenGold: configure",
+            "group": "build",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "OpenGold: test",
+            "type": "shell",
+            "command": "ctest --test-dir build --output-on-failure",
+            "dependsOn": "OpenGold: build",
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
+}
