@@ -252,6 +252,8 @@ loaders. Enable each host capability only after its service is implemented.
 
 The immediate next deliverable is **the state adapter plus a minimal map and
 presentation host**, demonstrated by an original noncombat event in Godot.
+The [Rolf welcome design proposal](design/rolf-welcome.md) provides an interactive
+layout study and a scoped implementation plan for a candidate first event.
 Record its script/map IDs, initial state, choices, displayed output, state changes
 and revisit result. Build scheduling around the documented entry roles and
 verify movement, blocked moves and transitions for that event.

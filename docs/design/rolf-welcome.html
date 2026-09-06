@@ -1,0 +1,322 @@
+<div id="og-rolf-design" aria-label="OpenGold welcome design">
+  <style>
+    #og-rolf-design {
+      --og-bg: light-dark(#eee9de, #14191d);
+      --og-panel: light-dark(#faf6ed, #1c2328);
+      --og-recess: light-dark(#e6e1d6, #11181d);
+      --og-text: light-dark(#262b2c, #ece9df);
+      --og-muted: light-dark(#535a59, #b4bdbd);
+      --og-line: light-dark(#b9b4a8, #3a454a);
+      --og-gold: light-dark(#78541c, #dcb777);
+      --og-button: light-dark(#78541c, #dcb777);
+      --og-button-text: light-dark(#fff9ed, #211b12);
+      --og-party: light-dark(#006570, #75d4d8);
+      --og-open: light-dark(#dcd8ca, #283137);
+      --og-stone: light-dark(#abaeaa, #535e64);
+      --og-fog: light-dark(#cbc9c0, #151e24);
+      color: var(--og-text); background: var(--og-bg);
+      font-family: Georgia, 'Times New Roman', serif;
+      border: 1px solid var(--og-line); border-radius: 6px;
+      overflow: clip; width: 100%; box-sizing: border-box;
+    }
+    #og-rolf-design * { box-sizing: border-box; }
+    #og-rolf-design [hidden] { display: none !important; }
+    #og-rolf-design .og-chrome {
+      padding: 18px 22px; display: flex; align-items: center;
+      justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--og-line);
+    }
+    #og-rolf-design .og-brand { color: var(--og-gold); letter-spacing: .14em; }
+    #og-rolf-design .og-location { display: flex; align-items: center; gap: 14px; }
+    #og-rolf-design .og-ui { font-family: 'Segoe UI', Arial, sans-serif; }
+    #og-rolf-design .og-muted { color: var(--og-muted); }
+    #og-rolf-design .og-layout {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, var(--og-map-width, 33%));
+      gap: 18px; padding: 20px;
+    }
+    #og-rolf-design .og-main { min-width: 0; }
+    #og-rolf-design .og-scene-shell { border: 1px solid var(--og-line); background: var(--og-recess); }
+    #og-rolf-design .og-caption {
+      display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      padding: 10px 12px; color: var(--og-muted); font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    #og-rolf-design .og-scene { position: relative; width: 100%; aspect-ratio: 8 / 5; background: #61797e; }
+    #og-rolf-design canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+    #og-rolf-design .og-scene-tag {
+      position: absolute; left: 12px; bottom: 10px; padding: 5px 8px;
+      background: #182128; color: #f0e7d2; border: 1px solid #586064;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    #og-rolf-design .og-dialogue {
+      margin-top: 16px; border: 1px solid var(--og-line); background: var(--og-panel);
+      border-top: 2px solid var(--og-gold); padding: 18px;
+    }
+    #og-rolf-design .og-speaker { color: var(--og-gold); display: flex; gap: 12px; flex-wrap: wrap; }
+    #og-rolf-design .og-dialogue p { margin: 13px 0 20px; min-height: 3em; }
+    #og-rolf-design .og-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    #og-rolf-design button {
+      font: inherit; font-family: 'Segoe UI', Arial, sans-serif;
+      padding: 10px 14px; border-radius: 3px; border: 1px solid var(--og-line);
+      background: var(--og-panel); color: var(--og-text); cursor: pointer;
+      min-height: 42px;
+    }
+    #og-rolf-design button:hover:not(:disabled) { border-color: var(--og-gold); }
+    #og-rolf-design button:disabled { opacity: .48; cursor: default; }
+    #og-rolf-design .og-continue { background: var(--og-button); color: var(--og-button-text); border-color: var(--og-button); min-width: 145px; }
+    #og-rolf-design .og-aside { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+    #og-rolf-design .og-map-panel { background: var(--og-recess); border: 1px solid var(--og-line); }
+    #og-rolf-design .og-map-head { padding: 12px; display: flex; justify-content: space-between; gap: 8px; }
+    #og-rolf-design .og-map { padding: 4px 12px 12px; }
+    #og-rolf-design .og-map svg { display: block; width: 100%; height: auto; }
+    #og-rolf-design .og-map-stats { padding: 12px; border-top: 1px solid var(--og-line); display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+    #og-rolf-design .og-legend { display: flex; gap: 14px; flex-wrap: wrap; color: var(--og-muted); }
+    #og-rolf-design .og-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    #og-rolf-design .og-party-key { color: var(--og-party); }
+    #og-rolf-design .og-door-key { width: 14px; height: 5px; display: inline-block; background: var(--og-gold); }
+    #og-rolf-design .og-movement { margin-top: auto; border-top: 1px solid var(--og-line); padding-top: 15px; }
+    #og-rolf-design .og-move-title { margin-bottom: 10px; }
+    #og-rolf-design .og-dpad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    #og-rolf-design .og-dpad button { padding: 8px 4px; }
+    #og-rolf-design .og-foot {
+      border-top: 1px solid var(--og-line); padding: 10px 20px;
+      display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;
+      color: var(--og-muted); font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    @media (max-width: 700px) {
+      #og-rolf-design .og-layout { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 16px; }
+      #og-rolf-design .og-aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, .65fr); align-items: start; }
+      #og-rolf-design .og-map-panel { grid-row: span 2; }
+      #og-rolf-design .og-movement { margin: 0; }
+      #og-rolf-design .og-chrome { padding: 14px; }
+    }
+    @media (max-width: 440px) {
+      #og-rolf-design .og-aside { display: flex; }
+      #og-rolf-design .og-map-panel { width: 100%; }
+      #og-rolf-design .og-movement { width: 100%; }
+      #og-rolf-design .og-dialogue { padding: 14px; }
+    }
+  </style>
+  <header class="og-chrome">
+    <span class="og-brand">OPENGOLD</span>
+    <div class="og-location"><span>New Phlan</span><span class="og-muted og-ui">Rolf’s welcome</span></div>
+  </header>
+  <div class="og-layout">
+    <main class="og-main">
+      <section class="og-scene-shell" aria-label="First-person encounter view">
+        <div class="og-caption"><span id="og-place">Streets of Phlan</span><span id="og-facing">Facing north</span></div>
+        <div class="og-scene">
+          <canvas id="og-view" width="320" height="200" role="img" aria-label="First-person street view with Rolf standing ahead"></canvas>
+          <span class="og-scene-tag" id="og-rolf-tag">Rolf</span>
+        </div>
+      </section>
+      <section class="og-dialogue" aria-label="Dialogue">
+        <div class="og-speaker"><span id="og-speaker">Rolf</span><span class="og-muted og-ui" id="og-role">Council guide</span></div>
+        <p id="og-dialogue-text" aria-live="polite">Welcome to Phlan. I’m Rolf, your guide. Let me show you around.</p>
+        <div class="og-actions">
+          <span class="og-ui og-muted" id="og-input-state">Waiting for you</span>
+          <button type="button" class="og-continue" id="og-continue">Continue ↵</button>
+        </div>
+      </section>
+    </main>
+    <aside class="og-aside" aria-label="Map and movement">
+      <section class="og-map-panel og-ui" aria-label="Local map">
+        <div class="og-map-head"><span>Local map</span><span class="og-muted">N ↑</span></div>
+        <div id="og-map" class="og-map"></div>
+        <div class="og-map-stats" aria-live="polite"><span id="og-coordinates">X 7 · Y 12</span><span id="og-map-facing">North ↑</span></div>
+      </section>
+      <div class="og-legend og-ui"><span><b class="og-party-key">▲</b> Party</span><span><i class="og-door-key"></i> Door</span></div>
+      <section class="og-movement og-ui" aria-label="Movement controls">
+        <div class="og-move-title og-muted" id="og-movement-state">Movement paused during dialogue</div>
+        <div class="og-dpad">
+          <button type="button" id="og-left" aria-label="Turn left" disabled>↶ Left</button>
+          <button type="button" id="og-forward" aria-label="Move forward" disabled>↑ Step</button>
+          <button type="button" id="og-right" aria-label="Turn right" disabled>Right ↷</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+  <footer class="og-foot"><span id="og-preview-label">Design preview · illustrative map &amp; dialogue</span><span id="og-art-status">Art placeholder</span></footer>
+  <script>
+  (() => {
+    const root = document.getElementById('og-rolf-design');
+    const q = id => root.querySelector('#' + id);
+    const canvas = q('og-view');
+    const ctx = canvas.getContext('2d');
+    const sprites = /* LOCAL_ROLF_SPRITES */ [];
+    const spriteImages = sprites.map(frame => {
+      const img = new Image(); img.onload = () => drawView(); img.src = frame.url; return img;
+    });
+    const options = { mapWidth: 33, mapMode: 'Full area', scene: 'Welcome', spriteDistance: 'Near', showSight: true };
+    // Synthetic block map for design review. It is not decoded GEO or Rolf's real route.
+    const grid = Array.from({ length: 16 }, (_, y) => Array.from({ length: 16 }, (_, x) => {
+      if (x === 0 || y === 0 || x === 15 || y === 15) return 1;
+      if ((x >= 2 && x <= 5 && y >= 2 && y <= 11) || (x >= 9 && x <= 13 && y >= 2 && y <= 11)) return 1;
+      return 0;
+    }));
+    for (let x = 1; x < 15; x++) grid[9][x] = 0;
+    grid[7][9] = 2; grid[11][4] = 2; grid[5][5] = 2;
+    const directions = [{ x: 0, y: -1, name: 'North', arrow: '↑' }, { x: 1, y: 0, name: 'East', arrow: '→' },
+      { x: 0, y: 1, name: 'South', arrow: '↓' }, { x: -1, y: 0, name: 'West', arrow: '←' }];
+    const state = { x: 7, y: 12, facing: 0, phase: 'welcome', visited: new Set(), timer: null, epoch: 0 };
+    const remember = () => {
+      for (let y = state.y - 3; y <= state.y + 3; y++) for (let x = state.x - 3; x <= state.x + 3; x++) {
+        if (x >= 0 && y >= 0 && x < 16 && y < 16) state.visited.add(x + ',' + y);
+      }
+    };
+    function drawMap() {
+      const size = 256, cell = size / 16;
+      let cells = '';
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+        const visible = options.mapMode === 'Full area' || state.visited.has(x + ',' + y);
+        const fill = !visible ? 'var(--og-fog)' : grid[y][x] ? 'var(--og-stone)' : 'var(--og-open)';
+        cells += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="${fill}" stroke="var(--og-recess)" stroke-width=".7"/>`;
+        if (visible && grid[y][x] === 2) {
+          const side = x === 9 || x === 5;
+          cells += `<rect x="${x*cell+(x===9 ? 0 : side ? 13 : 2)}" y="${y*cell+(side ? 2 : 13)}" width="${side ? 3 : 12}" height="${side ? 12 : 3}" fill="var(--og-gold)"/>`;
+        }
+      }
+      const px = (state.x+.5)*cell, py = (state.y+.5)*cell;
+      const cone = options.showSight ? '<path d="M0,0 L-22,-43 L22,-43 Z" fill="var(--og-party)" opacity=".13"/>' : '';
+      q('og-map').innerHTML = `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Illustrative local map. Party at X ${state.x}, Y ${state.y}, facing ${directions[state.facing].name}. North is up.">${cells}<g transform="translate(${px},${py}) rotate(${state.facing*90})">${cone}<circle r="9" fill="var(--og-recess)"/><path d="M0,-8 L6,6 L0,3 L-6,6 Z" fill="var(--og-party)" stroke="var(--og-recess)" stroke-width="1"/></g></svg>`;
+    }
+    function drawView() {
+      // A ray-cast stand-in makes the illustrative scene agree with this mock's map.
+      // Production will composite original WALLDEF perspective pieces in CanvasItem.
+      ctx.imageSmoothingEnabled = false;
+      const w = canvas.width, h = canvas.height, horizon = 87;
+      ctx.fillStyle = '#77959a'; ctx.fillRect(0, 0, w, horizon);
+      ctx.fillStyle = '#9eafb0'; ctx.fillRect(0, horizon-17, w, 17);
+      ctx.fillStyle = '#bbc4bb'; ctx.fillRect(26, 28, 70, 5); ctx.fillRect(41, 22, 41, 7);
+      ctx.fillRect(225, 40, 46, 4); ctx.fillRect(238, 34, 29, 6);
+      ctx.fillStyle = '#555a59'; ctx.fillRect(0, horizon, w, h-horizon);
+      ctx.strokeStyle = '#72756c'; ctx.lineWidth = 1;
+      [96,109,130,163,197].forEach(y => {ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(w,y+.5);ctx.stroke();});
+      for (let x = -640; x <= 960; x += 80) {ctx.beginPath();ctx.moveTo(w/2,horizon);ctx.lineTo(x,h);ctx.stroke();}
+      const forward = directions[state.facing];
+      const right = {x:-forward.y, y:forward.x};
+      for (let sx=0; sx<w; sx++) {
+        const lateral = (sx / w - .5) * 1.25;
+        const dx = forward.x + right.x*lateral, dy = forward.y + right.y*lateral;
+        const ox = state.x+.5, oy=state.y+.5;
+        let mx=Math.floor(ox), my=Math.floor(oy), side=0;
+        const deltaX=dx===0 ? Infinity : Math.abs(1/dx), deltaY=dy===0 ? Infinity : Math.abs(1/dy);
+        const stepX=dx<0 ? -1 : 1, stepY=dy<0 ? -1 : 1;
+        let nextX=(dx<0 ? ox-mx : mx+1-ox)*deltaX, nextY=(dy<0 ? oy-my : my+1-oy)*deltaY;
+        for(let i=0;i<40;i++) {
+          if(nextX<nextY) {nextX+=deltaX;mx+=stepX;side=0;} else {nextY+=deltaY;my+=stepY;side=1;}
+          if(!grid[my] || grid[my][mx]===undefined || grid[my][mx]) break;
+        }
+        const distance=Math.max(.15,side ? nextY-deltaY : nextX-deltaX);
+        const height=135/distance, top=horizon-height*.54, bottom=horizon+height*.46;
+        const along = side ? ox+distance*dx : oy+distance*dy;
+        const u=along-Math.floor(along);
+        const isDoor=grid[my]?.[mx]===2 && u>.15 && u<.85;
+        for(let sy=Math.max(0,Math.floor(top));sy<Math.min(h,bottom);sy++) {
+          const v=(sy-top)/height;
+          const row=Math.floor(v*9), mortar=(v*9)%1<.075 || ((u*4+(row%2)*.5)%1)<.035;
+          const shade=side ? 0 : -16;
+          const depth=Math.min(38,distance*2);
+          let r=139+shade-depth, g=141+shade-depth, b=132+shade-depth;
+          if(mortar) {r-=26;g-=26;b-=24;}
+          if(isDoor && v>.2) {
+            const seam=(u*13)%1<.12;
+            r=seam ? 54 : 89;g=seam ? 47 : 68;b=seam ? 37 : 44;
+            if((v>.46 && v<.49) || (v>.8 && v<.83)) {r=44;g=48;b=46;}
+          }
+          ctx.fillStyle=`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;ctx.fillRect(sx,sy,1,1);
+        }
+      }
+      if(state.phase==='welcome') {
+        const index = options.spriteDistance==='Far' ? Math.min(2,sprites.length-1) : options.spriteDistance==='Medium' ? Math.min(1,sprites.length-1) : 0;
+        const frame=sprites[index], img=spriteImages[index];
+        if(frame && img?.complete && img.naturalWidth) {
+          // Every source pixel keeps its aspect ratio; use the separate stored distance variant.
+          const scale=Math.max(1,Math.floor(180/Math.max(...sprites.map(s=>s.height))));
+          ctx.drawImage(img,Math.round(160-frame.width*scale/2),177-frame.height*scale,frame.width*scale,frame.height*scale);
+        } else {
+          ctx.fillStyle='#b6a98b';ctx.fillRect(143,74,34,100);
+          ctx.strokeStyle='#e0cfab';ctx.strokeRect(140.5,71.5,40,105);
+          ctx.fillStyle='#292e2e';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('Rolf',160,123);
+        }
+      }
+    }
+    function render() {
+      root.style.setProperty('--og-map-width',options.mapWidth+'%');
+      const dir=directions[state.facing];
+      const welcome=state.phase==='welcome', moving=state.phase==='moving', stop=state.phase==='stop', exploring=state.phase==='explore';
+      const locked=!exploring;
+      remember();drawMap();drawView();
+      q('og-facing').textContent='Facing '+dir.name.toLowerCase();
+      q('og-map-facing').textContent=dir.name+' '+dir.arrow;
+      q('og-coordinates').textContent=`X ${state.x} · Y ${state.y}`;
+      q('og-place').textContent=stop ? 'First tour stop' : 'Streets of Phlan';
+      q('og-rolf-tag').hidden=!welcome;
+      q('og-rolf-tag').textContent=sprites.length ? 'Rolf' : 'Rolf · art placeholder';
+      q('og-art-status').textContent=sprites.length ? 'Local encounter art · provisional binding' : 'Art placeholder';
+      q('og-speaker').textContent=exploring ? 'Exploration preview' : 'Rolf';
+      q('og-role').textContent=exploring ? 'Illustrative streets' : 'Council guide';
+      q('og-dialogue-text').textContent=welcome ? 'Welcome to Phlan. I’m Rolf, your guide. Let me show you around.' : moving ? 'Following Rolf…' : stop ? 'This is the Temple of Tyr, one of the city’s places of worship.' : 'Turn or step to see the street view and party marker update together.';
+      q('og-input-state').textContent=welcome ? 'Waiting for you' : moving ? 'Following the guide' : stop ? 'First-stop preview complete' : 'One step per command';
+      q('og-movement-state').textContent=locked ? (moving ? 'Following Rolf' : 'Movement paused during dialogue') : 'Explore · arrow keys or buttons';
+      q('og-continue').textContent=stop ? 'End of preview' : 'Continue ↵';
+      q('og-continue').disabled=!welcome;
+      q('og-continue').hidden=exploring;
+      ['og-left','og-forward','og-right'].forEach(id=>q(id).disabled=locked);
+      canvas.setAttribute('aria-label',`First-person illustrative street view, facing ${dir.name}, at X ${state.x}, Y ${state.y}. ${welcome ? 'Rolf stands ahead.' : ''}`);
+    }
+    function move(action) {
+      if(state.phase!=='explore') return;
+      if(action==='left') state.facing=(state.facing+3)%4;
+      else if(action==='right') state.facing=(state.facing+1)%4;
+      else {
+        const d=directions[state.facing], x=state.x+d.x, y=state.y+d.y;
+        if(!grid[y] || grid[y][x]!==0) {q('og-input-state').textContent='The way is blocked';return;}
+        state.x=x;state.y=y;
+      }
+      render();
+    }
+    function continueTour() {
+      if(state.phase!=='welcome') return;
+      state.phase='moving';
+      const epoch=++state.epoch;
+      render();
+      const next=()=>{
+        if(state.epoch!==epoch) return;
+        if(state.y>7) {state.y--;render();state.timer=setTimeout(next,250);}
+        else {state.facing=1;state.phase='stop';state.timer=null;render();}
+      };
+      if(matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        for(let y=state.y;y>=7;y--) {state.y=y;remember();}
+        state.facing=1;state.phase='stop';render();
+      } else state.timer=setTimeout(next,250);
+    }
+    let renderedScene=options.scene;
+    function applyDesign() {
+      if(options.scene!==renderedScene) {
+        renderedScene=options.scene;state.epoch++;clearTimeout(state.timer);state.timer=null;
+        state.visited.clear();state.x=7;state.y=options.scene==='First stop' ? 7 : 12;
+        state.facing=options.scene==='First stop' ? 1 : 0;
+        state.phase=options.scene==='Welcome' ? 'welcome' : options.scene==='First stop' ? 'stop' : 'explore';
+      }
+      render();
+    }
+    q('og-continue').addEventListener('click',continueTour);
+    ['left','forward','right'].forEach(action=>q('og-'+action).addEventListener('click',()=>move(action)));
+    root.addEventListener('keydown',event=>{
+      if(event.repeat || /INPUT|SELECT|TEXTAREA/.test(event.target.tagName)) return;
+      const action={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'forward'}[event.key];
+      if(action) {event.preventDefault();move(action);}
+      if(event.key==='Enter' && event.target.tagName!=='BUTTON') {event.preventDefault();continueTour();}
+    });
+    render();
+    if(globalThis.Tweak) {
+      const design = new Tweak({container:root,onChange:applyDesign});
+      design.addSelect(options,'scene',{label:'Preview scene',options:['Welcome','First stop','Explore layout']});
+      design.addSlider(options,'mapWidth',{label:'Map width',min:28,max:45,step:1,unit:'%'});
+      design.addSelect(options,'mapMode',{label:'Map visibility',options:['Explored','Full area']});
+      design.addSelect(options,'spriteDistance',{label:'Rolf distance variant',options:['Near','Medium','Far']});
+      design.addToggle(options,'showSight',{label:'Facing cone'});
+    }
+  })();
+  </script>
+</div>
