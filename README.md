@@ -33,7 +33,7 @@ The [ECL runtime and engine design](docs/SCRIPTS.md) documents the initial nativ
 script interpreter and planned map-trigger/encounter integration. After building,
 run `.\build\opengold_scripts.exe --demo` for a self-contained arithmetic, text,
 and menu script. The tool also lists, inspects, and runs installed ECL records;
-unsupported gameplay commands and unbound engine variables produce explicit faults.
+missing gameplay host capabilities and unbound engine variables produce explicit faults.
 
 Run `build.cmd`, then `review-maps.cmd` to browse the original GEO maps as a
 top-down grid with walls, doors, and numbered event markers. Click cells or event

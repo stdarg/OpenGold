@@ -32,6 +32,8 @@ func verify() -> void:
     check(decoded.nodes.has(22),"Conditional EXIT must preserve the other branch")
     decoded = Decoder.new().decode(record([52,0,1,0]))
     check(decoded.nodes[20].end == 23 and decoded.diagnostics.is_empty(),"Pool ECL CLOCK has one operand")
+    decoded = Decoder.new().decode(record([51,11,0,25,0,1,0,11,0]))
+    check(decoded.nodes.has(21) and decoded.diagnostics.is_empty(),"PRINT RETURN falls through to the art command")
     # A call returns to its caller; separate event text beyond EXIT is excluded.
     # The synthetic subroutine begins at body offset 37 (0x9925).
     var fixture := record([12,0,15,0,0,0,25,2,1,0x25,0x99,54,0,25,0,0,0,17,128,3,4,32,192,19])

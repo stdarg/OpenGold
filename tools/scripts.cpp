@@ -38,12 +38,14 @@ std::shared_ptr<const EclProgram> demo()
 }
 int inspect(const EclProgram& p)
 {
-    std::deque<std::uint32_t> queue(p.entries().begin(), p.entries().end());
+    using Edge = std::pair<std::uint32_t,std::optional<std::uint16_t>>;
+    std::deque<Edge> queue;
+    for (auto entry : p.entries()) queue.emplace_back(entry,std::nullopt);
     std::set<std::uint32_t> seen;
     std::map<std::uint32_t,std::uint32_t> spans;
     bool failed = false;
     while (!queue.empty()) {
-        const auto pc = queue.front(); queue.pop_front();
+        const auto [pc, speculative] = queue.front(); queue.pop_front();
         if (!seen.insert(pc).second) continue;
         try {
             if (pc < p.body_start()) throw EclError("Target in entry table");
@@ -58,15 +60,18 @@ int inspect(const EclProgram& p)
                 else std::cout << " {tag=" << unsigned(a.tag) << ",value=" << a.value << '}';
             }
             if (!spec.executable) std::cout << " [execution unsupported]";
+            else if (spec.requires_host) std::cout << " [host required]";
             std::cout << '\n';
-            if (i.opcode == 1 || i.opcode == 2) queue.push_back(i.operands[0].value);
+            if (i.opcode == 1 || i.opcode == 2) queue.emplace_back(i.operands[0].value,speculative);
             if (i.opcode == 37 || i.opcode == 38)
-                for (std::size_t n = 2; n < i.operands.size(); ++n) queue.push_back(i.operands[n].value);
-            if (i.opcode >= 22 && i.opcode <= 27) queue.push_back(p.instruction(i.next).next);
-            if (i.opcode != 0 && i.opcode != 1 && i.opcode != 19 && i.opcode != 32 && i.opcode != 51)
-                queue.push_back(i.next);
+                for (std::size_t n = 2; n < i.operands.size(); ++n) queue.emplace_back(i.operands[n].value,speculative);
+            if (i.opcode >= 22 && i.opcode <= 27) queue.emplace_back(p.instruction(i.next).next,speculative);
+            if (i.opcode != 0 && i.opcode != 1 && i.opcode != 19 && i.opcode != 32)
+                queue.emplace_back(i.next,i.opcode == 37 ? std::optional(i.address) : speculative);
         } catch (const EclError& e) {
-            failed = true; std::cerr << p.source() << " @ 0x" << std::hex << pc << std::dec << ": " << e.what() << '\n';
+            failed = true; std::cerr << p.source() << " @ 0x" << std::hex << pc;
+            if (speculative) std::cerr << " (possible ON GOTO fallthrough from 0x" << *speculative << ")";
+            std::cerr << std::dec << ": " << e.what() << '\n';
         }
     }
     return failed ? 1 : 0;
@@ -84,16 +89,28 @@ int run(EclMachine& vm)
         if (result.state == EclState::waiting) {
             const auto& r = *result.request;
             if (r.clear) std::cout << "[clear text]\n";
-            std::cout << r.text << '\n';
+            std::cout << r.text;
+            if (!r.instruction || r.instruction->opcode != 51) std::cout << '\n';
             if (r.kind == EclRequestKind::text) { (void)vm.resume(r.id); continue; }
+            if (r.kind == EclRequestKind::host) {
+                std::cerr << "Console has no service for " << ecl_opcode(r.instruction->opcode).name << '\n';
+                return 2;
+            }
             for (std::size_t i = 0; i < r.choices.size(); ++i) std::cout << i+1 << ") " << r.choices[i] << '\n';
             while (true) {
-                std::cout << "Choice (1-" << r.choices.size() << "): " << std::flush;
+                if (r.kind == EclRequestKind::menu) std::cout << "Choice (1-" << r.choices.size() << "): ";
+                else std::cout << "Input (up to " << r.input_limit << (r.kind == EclRequestKind::input_number ? " digits): " : " characters): ");
+                std::cout << std::flush;
                 std::string input;
                 if (!std::getline(std::cin, input)) { std::cerr << "Input ended while script was waiting.\n"; return 2; }
                 // PowerShell/.NET redirected UTF-8 input may include a BOM.
                 std::string_view selection = input;
                 if (selection.starts_with("\xEF\xBB\xBF")) selection.remove_prefix(3);
+                if (r.kind == EclRequestKind::input_string || r.kind == EclRequestKind::input_number) {
+                    if (vm.resume_input(r.id,selection)) break;
+                    std::cout << "Invalid input or unbound destination buffer.\n";
+                    continue;
+                }
                 while (!selection.empty() && (selection.front() == ' ' || selection.front() == '\t')) selection.remove_prefix(1);
                 while (!selection.empty() && (selection.back() == ' ' || selection.back() == '\t' || selection.back() == '\r')) selection.remove_suffix(1);
                 try {

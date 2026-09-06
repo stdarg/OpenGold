@@ -219,15 +219,16 @@ the following entry roles, in order:
 
 | Slot (zero-based) | Reference interpretation |
 | --- | --- |
-| 0 | Normal movement/update entry. Exact invocation timing remains to be verified. |
-| 1 | Search location. |
+| 0 | Movement command, before movement resolution in the PC 1.3 main-loop research. |
+| 1 | Search location, after movement resolution or Look. |
 | 2 | Pre-camp check. |
 | 3 | Camp interruption. |
-| 4 | Startup. |
+| 4 | Initial entry after script load or saved-game load. |
 
 These are separate entry points into a program, not a list of map-cell event
-handlers. Their names come from the reference implementation; they do not prove
-when every entry is invoked in our DOS release.
+handlers. Timing is documented in the PC main-loop research listed in the
+[script source audit](script-source-audit.md); our scheduler still needs to
+reproduce that ordering, including blocked moves and transitions.
 
 The inspector decodes typed operands, including constants, address-bearing
 values, inline packed six-bit text, and string references. It follows reachable
@@ -262,21 +263,32 @@ association until its bank context and execution path are resolved.
 
 ### Current capability and execution plan
 
-OpenGold now has a native ECL loader and an initial interpreter for control flow,
-explicitly bound variables, arithmetic, text, and menus, alongside the existing
-inspector and bounded asset-evidence analysis. The map demo's event list still
-does not resolve handlers or execute them. Gameplay opcodes and mapped engine
-state remain unsupported. Static analysis stops at uncertain operations; its
-possible paths must not be presented as observed gameplay.
+OpenGold has a native ECL loader and resumable interpreter for control flow,
+explicitly bound variables, arithmetic, table data, strings, input and menus,
+alongside the existing inspector and asset-evidence analysis. Engine services
+have opt-in host requests; their concrete gameplay implementations and mapped
+world state remain outstanding. The map demo's event list still does not execute
+handlers. Static paths must not be presented as observed gameplay.
 
-The native engine separates immutable `EclProgram` data, a resumable
-`EclMachine`, and typed text/menu requests consumed by a console host. The planned
-PoR host will connect further request types to game services.
-The machine owns instruction position, comparisons, variables, and a return
-stack. It currently yields for text and menus, then resumes with a validated
-result; combat and further host operations remain planned. Instruction budgets
-allow a future Godot integration to remain responsive; unsupported
-instructions produce contextual diagnostics instead of being skipped.
+The native engine separates shared `EclProgram` data, a resumable `EclMachine`
+with private writable script bytes, and typed presentation/input/engine requests.
+The machine owns its PC, conditions, variables, RNG and return stack. Replies
+validate request identity and output writes before continuing; a script
+replacement finishes the old invocation. Instruction budgets allow a future
+Godot integration to remain responsive. Missing host capabilities and unresolved
+commands produce contextual diagnostics.
+
+The external research corrected zero-based menus and indexed jumps, bitwise
+condition flags, and `PRINT RETURN` fallthrough. For example, Slums event 1
+dispatches to `0x9E1A`; after combat its script sets `0x4ACA` to 255. The optional
+installed-data test now runs that event with a mock combat host and verifies that
+a second visit does not repeat the encounter. This flag is distinct from the
+map's raw event byte and its high bit.
+
+The six programs with static decoding warnings have speculative indexed-jump
+fallthrough paths into embedded tables. The runtime now reads those tables with
+GETTABLE; the inspector retains possible fallthroughs and identifies their source.
+See the [audit](script-source-audit.md) for exact addresses and unresolved details.
 
 Map-event dispatch will construct a context from the map, position, facing, and
 cell data, then invoke the verified entry point in the active program. Movement

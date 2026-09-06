@@ -1,129 +1,195 @@
-# ECL decoding and execution design
+# ECL decoding and execution
 
-Status: initial native execution implementation added September 5, 2026. The
-implementation described below loads ECL and executes a bounded subset with
-resumable text/menu requests. The remaining sections describe the intended full
-architecture; their host services, scheduler, snapshots, and campaign integration
-are not all implemented. The map demo still does not execute cell events.
+Status: the native runtime now includes the PoR research corrections described
+below. It executes VM operations and exposes opt-in, resumable engine requests.
+Combat, world-state mapping, and a Godot campaign scheduler still need concrete
+host implementations. The map demo does not execute cell events.
 
 ## Run the implementation
 
-Build with `build.cmd`, then run the self-contained ECL demo (no game assets needed):
+Build and run the self-contained demo (no game assets needed):
 
 ```powershell
+.\build.cmd
 .\build\opengold_scripts.exe --demo
 ```
 
-The demo executes genuine ECL instruction encodings: writes 7 to a variable, adds
-5, prints 12, asks you to choose CONTINUE or LEAVE, and prints the selected
-one-based value before completing. It demonstrates bytecode execution and host
-resume, not an original game event.
+The demo computes and prints 12, prompts for CONTINUE or LEAVE, and prints the
+zero-based script result, 0 or 1. Console menu labels remain 1 and 2.
 
 For an installed game, set `OPENGOLD_GAME_DIR` to the folder with ECL archives:
 
 ```powershell
 .\build\opengold_scripts.exe --list "$env:OPENGOLD_GAME_DIR"
-.\build\opengold_scripts.exe --inspect "$env:OPENGOLD_GAME_DIR" ECL7.DAX 17
+.\build\opengold_scripts.exe --inspect "$env:OPENGOLD_GAME_DIR" ECL2.DAX 20
 .\build\opengold_scripts.exe --run "$env:OPENGOLD_GAME_DIR" ECL7.DAX 17 4 0x49FB=0
 ```
 
-The final example starts reference startup slot 4 with one explicitly initialized
-variable. It is a research invocation, not a complete startup environment: it
-will stop when it encounters another missing binding or unsupported operation.
-Bindings do not install the original engine's field side effects. Never interpret
-successful execution with invented bindings as verification of game behavior.
+The final command is a research invocation with an explicitly initialized
+variable. It stops at missing bindings or host capabilities. A successful run
+with invented state does not establish original gameplay compatibility. Numbers
+accept decimal or `0x` hex, archive names are case-insensitive, and entry slots
+are 0..4. The console handles text, menus, number input, and string input; it
+does not opt into combat or other engine services. String input needs a fully
+bound destination buffer, including its terminator.
 
-Numbers accept decimal or `0x`-prefixed hexadecimal. Archive arguments are
-case-insensitive; entry slots are 0..4. `--inspect` follows static control flow,
-marks unsupported execution, and exits nonzero on decoding diagnostics. `--run`
-returns nonzero on faults or input ending during a menu. The console acknowledges
-text immediately and represents PRINTCLEAR with a visible `[clear text]` marker.
+`--inspect` marks engine instructions `[host required]` and unresolved execution
+`[execution unsupported]`. It follows possible branches, retains decoding
+warnings, and reports the originating speculative `ON GOTO` fallthrough when
+applicable. A warning makes inspection exit nonzero; it is not proof that the
+original game executes that path. `--run` also exits nonzero for faults or EOF
+while awaiting input.
 
-## Implemented API and execution profile
+## Implemented API
 
-- [`ecl.h`](../src/OpenGold.Formats/include/opengold/ecl.h): immutable
-  `EclProgram`, `EclInstruction`, tagged `EclOperand`, packed text decoder, and a
-  shared PoR opcode grammar/support table.
+- [`ecl.h`](../src/OpenGold.Formats/include/opengold/ecl.h): shared immutable
+  `EclProgram`, instruction/operand types, packed-text decoder and opcode metadata.
 - [`ecl_machine.h`](../src/OpenGold.Core/include/opengold/ecl_machine.h):
-  `EclCatalog`, shared program ownership, `EclMachine`, and typed text/menu requests.
-- [`scripts.cpp`](../tools/scripts.cpp): command-line catalog, disassembler, and
-  interactive runner. Link `opengold_core` to use the runtime in another native app.
+  `EclCatalog`, `EclMachine`, typed requests, and validated replies.
+- [`scripts.cpp`](../tools/scripts.cpp): catalog, disassembler and console runner.
+  Link `opengold_core` to embed the runtime.
 
 ```cpp
 #include <opengold/ecl_machine.h>
 
-void prepare_script(const std::filesystem::path& game_directory)
+void prepare_script(const std::filesystem::path& directory)
 {
     using namespace opengold::por;
-    const auto catalog = EclCatalog::load(game_directory);
-    const auto program = catalog.find({"ECL7.DAX", 17});
+    const auto catalog = EclCatalog::load(directory);
+    const auto program = catalog.find({"ECL2.DAX", 20});
     if (!program) return;
     EclMachine machine(program);
-    machine.bind_variable(0x49FB, 0); // Explicit research state; not a game-memory adapter.
-    if (!machine.start(4)) return;
+    machine.bind_variable(0xC04F, 1); // Explicit research input: event byte.
+    machine.seed_random(1234);      // Reproducible OpenGold sequence.
+    // Bind all other required variables and provide real engine services.
+    if (!machine.start(1)) return;
     const auto result = machine.run(1000);
     // running: budget yielded; call run() on a later update.
-    // waiting: render result.request, then resume its ID with an optional choice.
-    // completed/faulted: finish or inspect result.diagnostic and machine.trace().
-    // Keep machine alive between calls; a production session owns it.
+    // waiting: dispatch result.request once, retaining machine between updates.
+    // completed/faulted: finish or inspect diagnostic and trace().
 }
 ```
 
-| Implemented instructions | Behavior in the initial research profile |
+## VM operations
+
+The [source audit](script-source-audit.md) records references, corrections,
+contradictions, and the remaining compatibility questions. These are the current
+implementation's behaviors, tested with hand-authored bytecode:
+
+| Operations | Runtime behavior |
 | --- | --- |
-| EXIT, GOTO, GOSUB, RETURN | Completion, direct jumps, and bounded subroutine stack. Return without a call faults. |
-| COMPARE, IF = / <> / < / > / <= / >= | Unsigned numeric or two inline-text comparisons; failed conditions skip one entire instruction. COMPARE is required before an IF. |
-| SAVE, ADD, SUBTRACT, MULTIPLY, AND, OR | Numeric logical-variable operations with explicit unsigned 16-bit wrapping. SUBTRACT computes operand 2 minus operand 1. String SAVE is unsupported. |
-| PRINT, PRINTCLEAR | Suspend with a typed text request. Inline packed text and numeric display are supported. |
-| VERTICAL MENU, HORIZONTAL MENU | Suspend with choices and orientation; resume accepts a zero-based UI index and stores index+1. Empty menus fault. Vertical-menu timing/cancellation semantics are not implemented. |
-| ON GOTO, ON GOSUB | One-based indexed dispatch; zero and out-of-range selectors fall through. |
+| EXIT, GOTO, GOSUB, RETURN | Direct control flow and bounded stack; empty RETURN falls through. |
+| COMPARE and six IF operations | Unsigned numeric or string comparison; false IF skips one decoded instruction. Flags initially all false. |
+| COMPARE AND, AND, OR | Equality/inequality flags; ordering flags become false. Bitwise results compare against zero. |
+| ADD, SUBTRACT, MULTIPLY, DIVIDE | Unsigned 16-bit arithmetic; SUBTRACT is second minus first. DIVIDE stores the quotient, faults before writing on zero divisor, and does not store a remainder. |
+| RANDOM | Seedable MT19937 with portable rejection sampling. The range is 0 through the byte-valued argument, with the increment saturated at 255 (argument 255 therefore yields at most 254). This is not the DOS RNG sequence. |
+| SAVE, GETTABLE, SAVE TABLE | Numeric writes, embedded or bound-variable table access, and inline string writes. Table offsets advance one logical address; overflow faults. GETTABLE currently preserves condition flags, pending the source discrepancy in the audit. |
+| PRINT, PRINTCLEAR, PRINT RETURN, CLEAR BOX | Text requests; PRINT RETURN emits a blank line and continues. CLEAR BOX requests clearing without adding text. |
+| VERTICAL MENU, HORIZONTAL MENU | Zero-based choices; empty menus fault. |
+| ON GOTO, ON GOSUB | Zero-based byte selector; selectors at least the list count fall through. |
+| PARLAY | Five choices; stores the selected operand value. |
+| INPUT NUMBER, INPUT STRING | Resumable validated input, using PC limits of 6 digits and 40 characters. Numbers must fit uint16; empty string input becomes one space. |
+| SPELL; unrecognized CALL/PROGRAM service IDs | Explicit PoR no-op behavior. Known CALL/PROGRAM services require a host. |
 
-This profile makes width, comparison order, and indexing behavior explicit and
-tests them with synthetic programs. It is not an execution-verified PoR memory
-or arithmetic compatibility layer. Numeric tags 0/2 supply immediate values;
-tags 1/3 read explicitly bound logical variables. In branch roles their encoded
-addresses are used directly. Address tags 1/3 identify writable destinations.
-Tag `0x81` string references decode but cannot yet execute.
+Operand roles matter. Numeric tags 1/3 read logical cells; encoded addresses in
+branch, table-base and destination roles are not dereferenced. String operands
+in numeric roles supply their encoded length/address. Text roles expand inline
+packed strings (`128`) or bounded NUL-terminated string references (`129`).
+`SAVE` with inline text writes the decoded characters and terminator; with a
+string reference it writes the reference's numeric address. String destinations
+may themselves use tag `129`.
 
-`bind_variable()` initializes individual 16-bit logical slots while idle or
-completed; it does not expose a raw 64 KiB memory buffer. Program bytes cannot be
-bound as variables. Unbound reads and writes fault. Bindings survive completed
-invocations; comparison/stack state resets on `start()`. Program data is shared
-and immutable; each machine's variables, requests, stack, and trace are independent.
+`bind_variable()` and `bind_string()` establish research state while idle or
+completed. Program bytes have a private writable copy per machine, including
+embedded tables; fetches observe changes and affected instruction spans are
+invalidated. The shared catalog remains unchanged. Script space is bounded to
+`0x9900..0xB6FF` and the loaded image's actual length. Its cells and the five map
+cells `0xC04B..0xC04F` have byte width; other explicit bindings hold 16-bit logical
+values. This is not a flat byte array. Reads/writes outside bound or loaded data
+fault; string writes validate every destination before changing any of them.
 
-The machine executes at most the supplied budget per `run()`, with a hard limit
-of one million instructions per invocation and 256 call frames. It retains the
-last 64 instruction addresses. Malformed instructions, overlapping encountered
-instruction spans, invalid targets, and unsupported operations fault with source,
-virtual PC, record offset, and stack depth. Faulted machines cannot silently
-restart; construct a new machine with deliberate initial state.
+Bindings and RNG state survive completed invocations. `start()` clears the stack
+and condition flags and rereads the selected entry from the private script
+image. String buffers are at most 255 characters plus a terminator. Budgets limit
+work per update, with hard caps of one million instructions per invocation, 256
+call frames, and a 64-address trace. Faulted machines require deliberate
+reconstruction. Successful earlier instructions are not rolled back after a fault.
 
-Waiting results expose the same request ID until resumed. Callers must dispatch
-each ID once. Incorrect IDs, duplicate results, out-of-range choices, and choices
-submitted to text requests are rejected without changing state. Mutations before
-a later fault remain committed. There is no persistent save/replay API yet.
+## Engine request contract
 
-Division and random numbers remain unsupported because their complete engine
-side effects/conventions are not implemented. So do table access, mapped party
-state, native services, resource changes, pictures, combat, recruitment, and other
-gameplay opcodes. They fault explicitly rather than claiming to have occurred.
-The current text/menu request API is the first part of the proposed host contract;
-there is no Godot session binding or automatic map-event scheduler yet.
+Every supported engine opcode requires `enable_host(opcode)` before execution.
+Without it the VM faults with the opcode name and source PC. Enabling a capability
+is the application's promise that it implements that operation; it does not
+install a combat system, renderer, or engine-memory adapter.
 
-### Implementation validation
+An `EclRequestKind::host` request carries the original instruction and resolved
+`EclHostArgument` values. Each argument is explicitly a number, encoded address,
+or text. Opcode-role byte conversions happen before dispatch; raw operand tags
+remain available in `instruction`. The host reads implicit fields with
+`variable()` and supplies bound-memory changes in `EclHostReply::writes`.
 
-`build.cmd` runs `opengold_ecl_tests` alongside the existing native suites. Tests
-cover packed text, operand truncation, invalid entries, conditional skips,
-arithmetic wrapping, branch/stack errors, menu resume validation, execution limits,
-independent variables, archive loading, and program lifetime after catalog destruction.
-Setting `OPENGOLD_GAME_DIR` adds an installed archive load check.
+```cpp
+// Configure only services actually implemented by this application:
+machine.enable_host(0x1D); // PARTY STRENGTH
+// After starting/running, for that pending request:
+EclHostReply reply;
+reply.writes.push_back({request.arguments[0].value, calculated_party_strength});
+const bool accepted = machine.resume_host(request.id, reply);
+```
 
-In the inspected installation all **29 ECL records** load and their entry tables
-validate. Full static traversal currently reports diagnostics in six programs:
-`ECL2.DAX:9`, `ECL2.DAX:15`, `ECL4.DAX:21`, `ECL5.DAX:7`, `ECL6.DAX:28`, and
-`ECL8.DAX:16`. Reports include out-of-body targets and unsupported operand tags;
-these need investigation rather than suppressing diagnostics or declaring the
-original assets corrupt. Loading success is not full decoding or gameplay coverage.
+`resume(id)` acknowledges text; `resume(id, choice)` answers a menu;
+`resume_input(id, text)` answers number/string input. `resume_host(id, reply)`
+validates all writes before applying them. Wrong IDs, wrong reply types,
+duplicate destinations, missing declared output addresses, and unbound writes
+leave the pending request and VM state unchanged. `FIND ITEM` requires its six
+condition flags; only the equality pair may be set. Other host replies must not
+replace flags. A subsequent `run()` resumes after the completed operation.
+
+`NEW ECL` requires a resolved `next_program` in the reply. It replaces the private
+image, clears stack/flags and bound local flags `0x4A00..0x4A1F`, preserves other
+bindings, and completes the old invocation. The host supplies previous-script
+and world-state changes, then explicitly starts slot 4. It must not resume the
+old script after a transition. Program resolution must use the current resource
+bank; a numeric script ID alone is insufficient.
+
+| Host opcodes (hex) | Service the application must provide |
+| --- | --- |
+| 0A, 0B, 0C, 0D, 1C, 36 | Character selection, creature loading, encounter presentation/approach, encounter cleanup, recruitment. |
+| 0E, 31, 37 | Picture/sprite presentation and wall-art loading. |
+| 1D, 1E, 22, 23 | Party calculations and surprise resolution, including required output writes. |
+| 20, 21 | Script replacement and map/resource loading. |
+| 24, 27, 28, 29, 2E, 32 | Combat/shop/temple routing, treasure, robbery, encounter menu, damage, inventory search. |
+| 2D | Recognized services 2C90, 8000, 8001, BA03, C018, C01E, interpreted by the host. |
+| 38, 39, 3A, 3C | Training/win/camp programs, character choice, pacing, rune display. |
+
+The core still lacks a live mapping between engine fields and selected creatures,
+party position, time, and inventory. In particular, the character-name address
+needs the original special handling when connected to real characters. Updating
+a binding alone does not move a party or modify a `CreatureInstance`. Hosts must
+validate world mutations before committing and keep VM/world state synchronized.
+`0x1F` and the broken `ECL CLOCK` remain explicit execution faults.
+
+## Validation
+
+`build.cmd` runs all three native suites. The ECL suite tests corrected indexing,
+condition flags, division, RNG bounds/reproducibility, embedded writable tables,
+string references and writes, input validation, host reply atomicity, transitions,
+limits, malformed records and independent ownership. Godot's
+`tests/ecl_art_tests.gd` tests inspector/review integration and PRINT RETURN
+fallthrough.
+
+With `OPENGOLD_GAME_DIR` set, the native suite validates all **29 ECL records** and
+runs Slums event 1 from the installed `ECL2.DAX:20` search entry. It checks the
+published monster/count/icon sequence, supplies a **mock combat result**, verifies
+flag `0x4ACA = 255` and counter `0x4ABB = 1`, then revisits and verifies that the
+encounter is not repeated. This validates original bytecode and continuation,
+not combat gameplay. No original game data is checked into the tests.
+
+Static inspection still reports seven diagnostics in six programs. Each comes
+from a possible indexed-jump fallthrough into embedded table data; the audit
+lists their PCs. The inspector retains those paths until range analysis can
+prove them impossible. Full campaign execution, original-DOS differential traces,
+save/replay and map-event scheduling remain outstanding.
 
 ## Full-engine design and remaining work
 
@@ -236,10 +302,11 @@ grammar, and unresolved semantics. Do not copy another game's table wholesale.
 
 ## Virtual memory and game state
 
-ECL addresses are integers in a virtual address space. A proposed 64 KiB byte
-array provides backing storage, with checked region descriptors controlling
-access. Regions distinguish program bytes, script variables, and mapped engine
-state. Unknown addresses produce a diagnostic; do not silently return zero.
+ECL addresses are integers in a virtual address space. Storage must distinguish
+8-bit script/map cells from 16-bit logical variable cells; it cannot be a plain
+64 KiB byte array with uniform addressing. The current implementation uses a
+private script image and explicit variable bindings. The future mapped adapter
+must retain checked regions and diagnostics for unknown addresses.
 
 Mapped reads and writes go through the PoR adapter. Maintain one authoritative
 value for party position, selected character, time, quest state, and similar
@@ -252,10 +319,10 @@ random bounds, table stride, and string termination before enabling the relevant
 operation. Implement explicit integer operations rather than relying on C++
 signed overflow. Inject a deterministic RNG; save its algorithm/version and state.
 
-The default code region is read-only. If installed scripts require writes to
-tables embedded in a program, add a per-session writable overlay and invalidate
-affected decode caches. Do not mutate shared `EclProgram` data. Self-modifying
-instructions remain unsupported until their behavior is demonstrated.
+The shared catalog is read-only. The implemented per-machine writable image
+supports embedded table writes and invalidates affected instruction spans.
+Original self-modifying script behavior still needs differential validation;
+working private-image fetches alone do not establish full compatibility.
 
 ## Execution and suspension
 
@@ -287,7 +354,8 @@ For a host operation, first resolve and validate operands, then store its reques
 ID and continuation, and suspend. The continuation includes the next instruction
 and any validated result destination. Calling `run()` while waiting must not
 redispatch or reapply the operation. `resume()` validates the request ID and result
-type; duplicate, stale, or mismatched replies leave state unchanged.
+type; duplicate, stale, or mismatched replies leave state unchanged. The current
+API separates `resume`, `resume_input`, and `resume_host` for these reply families.
 
 The host validates a mutation before committing it and returns a result in the
 original script's value convention. Apply that result exactly once before

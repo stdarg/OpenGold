@@ -12,7 +12,7 @@ const NAMES := {0:"EXIT",1:"GOTO",2:"GOSUB",3:"COMPARE",9:"SAVE",
     11:"LOAD MONSTER",12:"SETUP MONSTER",14:"PICTURE",17:"PRINT",
     18:"PRINTCLEAR",19:"RETURN",21:"VERTICAL MENU",28:"CLEAR MONSTERS",
     32:"NEW ECL",33:"LOAD FILES",36:"COMBAT",37:"ON GOTO",38:"ON GOSUB",
-    41:"ENCOUNTER MENU",43:"HORIZONTAL MENU",45:"CALL",49:"SPRITE OFF",54:"ADD NPC"}
+    41:"ENCOUNTER MENU",43:"HORIZONTAL MENU",45:"CALL",49:"SPRITE OFF",51:"PRINT RETURN",54:"ADD NPC"}
 
 var data := PackedByteArray()
 var error := ""
@@ -92,6 +92,8 @@ func instruction(offset: int) -> Dictionary:
 func decode(bytes: PackedByteArray) -> Dictionary:
     # The record's leading two-byte length is outside the VM address space.
     data = bytes.slice(2)
+    if bytes.size() < 2 or data.size() > 0x1e00:
+        return {"nodes":{}, "roots":[], "diagnostics":["Invalid PoR ECL record size"], "size":data.size()}
     var nodes := {}
     var roots: Array = []
     var diagnostics: Array = []
@@ -130,7 +132,8 @@ func decode(bytes: PackedByteArray) -> Dictionary:
         if op in [37,38]:
             for arg in node.args.slice(2): edges.append(int(arg.value)-ORIGIN)
         # ON GOTO/GOSUB fall through when the selector is outside the table.
-        if op not in [0,1,19,32,51]: edges.append(node.end)
+        # PRINT RETURN prints a blank line and continues; it does not pop the stack.
+        if op not in [0,1,19,32]: edges.append(node.end)
         if op >= 22 and op <= 27:
             var skipped := instruction(node.end)
             if skipped.is_empty(): diagnostics.append("Cannot decode conditional skip at 0x%04X" % node.address)

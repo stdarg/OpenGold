@@ -24,7 +24,7 @@ struct EclInstruction {
 struct EclOpcode {
     std::string_view name;
     unsigned operands{};
-    bool variable_list{}, executable{};
+    bool variable_list{}, executable{}, requires_host{};
 };
 [[nodiscard]] const EclOpcode& ecl_opcode(std::uint8_t opcode);
 [[nodiscard]] std::string unpack_ecl_text(std::span<const std::uint8_t> bytes);
@@ -32,10 +32,13 @@ struct EclOpcode {
 class EclProgram {
 public:
     static constexpr std::uint32_t origin = 0x9900;
+    static constexpr std::uint32_t limit = 0xB700; // PoR zone 3 ends at B6FF.
     // Validates record size and five entry jumps. Reachable bodies decode on demand:
     // embedded data is not interpreted as instructions. Prefix is retained, not guessed.
     [[nodiscard]] static EclProgram decode(std::span<const std::uint8_t> record, std::string source);
     [[nodiscard]] EclInstruction instruction(std::uint32_t address) const;
+    // Decode a machine's private, potentially modified copy of this record.
+    [[nodiscard]] EclInstruction instruction(std::uint32_t address, std::span<const std::uint8_t> image) const;
     [[nodiscard]] const std::array<std::uint16_t, 5>& entries() const noexcept { return entries_; }
     [[nodiscard]] const std::string& source() const noexcept { return source_; }
     [[nodiscard]] const std::vector<std::uint8_t>& raw() const noexcept { return raw_; }
