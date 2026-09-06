@@ -85,13 +85,41 @@ RolfTourSession RolfTourSession::load(const std::filesystem::path& directory)
         if (!result) throw EclError("Cannot decode Rolf encounter distance image " + std::to_string(i));
         sprites[i] = std::move(result.image);
     }
-    return RolfTourSession(map->get(), program, std::move(sprites), 0xB071, std::move(*wall_art));
+    auto town = std::make_shared<PhlanResources>();
+    for (unsigned id : {0,8,11}) {
+        auto p = catalog.find({"ECL3.DAX", static_cast<std::uint8_t>(id)});
+        if (!p) throw EclError("Missing New Phlan building script");
+        town->programs.emplace(id, std::move(p));
+    }
+    const auto templates = decode_item_templates(read_archive(resolve_archive(directory, "ITEMS")));
+    if (!templates) throw EclError("Invalid item templates");
+    for (const auto& record : archive("ITEM3.DAX").records) {
+        const auto items = decode_items(record.bytes);
+        if (!items) throw EclError("Invalid town treasure record");
+        auto& stock = town->treasure[record.id];
+        for (const auto& item : *items) {
+            if (item.type >= templates->size()) throw EclError("Invalid town item type");
+            Equipment equipment; equipment.index = stock.size();
+            equipment.stored = item; equipment.base = (*templates)[item.type];
+            stock.push_back(std::move(equipment));
+        }
+    }
+    town->sprite_archive = bytes;
+    const auto pictures=[&](const char* name,auto& destination){
+        for(const auto& record:archive(name).records){
+            auto image=decode_ega_picture(record.bytes);
+            if(image)destination.emplace(record.id,std::move(image.image));
+        }
+    };
+    pictures("HEAD3.DAX",town->heads);pictures("BODY3.DAX",town->bodies);pictures("PIC3.DAX",town->pictures);
+    return RolfTourSession(map->get(), program, std::move(sprites), 0xB071, std::move(*wall_art), std::move(town));
 }
 
 RolfTourSession::RolfTourSession(GeoMap map, std::shared_ptr<const EclProgram> program,
-    std::array<opengold::Image, 3> sprites, std::uint32_t entry, WallArtSet wall_art)
+    std::array<opengold::Image, 3> sprites, std::uint32_t entry, WallArtSet wall_art,
+    std::shared_ptr<const PhlanResources> town)
     : map_(std::move(map)), program_(std::move(program)), sprites_(std::move(sprites)),
-      wall_art_(std::move(wall_art)), machine_(program_), entry_(entry)
+      wall_art_(std::move(wall_art)), machine_(program_), entry_(entry), town_(std::move(town))
 {
     restart();
 }
@@ -102,6 +130,14 @@ void RolfTourSession::restart()
     machine_ = EclMachine(program_);
     snapshot_ = {}; snapshot_.revision = revision;
     menu_request_ = delayed_request_ = 0; remaining_delay_ = 0;
+    party_ = {}; treasure_.clear(); picture_.reset();checkpoint_.reset(); diagnostics_.clear();
+    current_script_ = selected_character_ = event_stage_ = 0;
+    pending_movement_.reset(); transition_ = message_only_ = false; shop_request_ = 0;
+    if (town_ && !town_->sprite_archive.empty()) for (unsigned n=0;n<3;++n) {
+        auto decoded=decode_ega_sprite(town_->sprite_archive,12,n);
+        if (!decoded) throw EclError("Cannot restore Rolf sprite");
+        sprites_[n]=std::move(decoded.image);
+    }
     // Minimal explicit isolated state, not a fabricated whole party/world model.
     for (const std::uint16_t address : {0x03DE, 0x49C9, 0x49FD, 0x4AC5, 0x4A07, 0x4A0F,
             0x4A10, 0x4A11, 0x6DE1, 0x6E79, 0x6E7A, 0x6E7B, 0x6E7C, 0x6E7D,
@@ -109,11 +145,24 @@ void RolfTourSession::restart()
         machine_.bind_variable(address, 0);
     machine_.bind_variable(0x49C9, 12); // Research fixture: midday.
     for (const std::uint8_t opcode : {12, 13, 14, 45, 49, 58}) machine_.enable_host(opcode);
+    if (town_) configure_town();
     if (!machine_.start_at_for_inspection(entry_)) fail("Invalid isolated tour entry");
 }
 
 void RolfTourSession::fail(std::string diagnostic)
 {
+    if (snapshot_.tour_finished && checkpoint_) {
+        diagnostics_.push_back(diagnostic);
+        machine_ = std::move(*checkpoint_); checkpoint_.reset();
+        party_ = saved_party_; current_script_ = saved_script_;
+        selected_character_ = saved_selected_character_; pending_movement_.reset(); transition_ = false;
+        delayed_request_ = shop_request_ = 0; treasure_.clear();
+        snapshot_.sprite_frame = -1;picture_.reset();++snapshot_.picture_revision;publish_pose();
+        snapshot_.script_id = current_script_;
+        notice("This event is not supported yet: " + diagnostic +
+            "\nThe event's changes were rolled back. You can continue exploring.");
+        return;
+    }
     snapshot_.phase = TourPhase::faulted; snapshot_.diagnostic = std::move(diagnostic);
     snapshot_.continue_ticket = 0; ++snapshot_.revision;
 }
@@ -129,6 +178,7 @@ void RolfTourSession::publish_pose()
 
 void RolfTourSession::handle_host(const EclRequest& request)
 {
+    if (town_ && snapshot_.tour_finished && handle_town_host(request)) return;
     EclHostReply reply;
     const auto opcode = request.instruction->opcode;
     switch (opcode) {
@@ -179,7 +229,9 @@ void RolfTourSession::advance(double seconds)
             const auto result = machine_.run(256);
             if (result.state == EclState::faulted) { fail(result.diagnostic); return; }
             if (result.state == EclState::completed) {
-                snapshot_.phase = TourPhase::completed; publish_pose(); return;
+                if (town_ && snapshot_.tour_finished) { finish_event(); return; }
+                snapshot_.phase = TourPhase::completed;
+                snapshot_.tour_finished = true; publish_pose(); return;
             }
             if (!result.request) return; // Instruction budget yield.
             const auto& request = *result.request;
@@ -190,30 +242,40 @@ void RolfTourSession::advance(double seconds)
                 if (!machine_.resume(request.id)) throw EclError("Text acknowledgement rejected");
                 ++snapshot_.revision;
             } else if (request.kind == EclRequestKind::menu) {
-                if (request.choices.size() != 1) throw EclError("Unexpected branching menu in Rolf tour");
+                if(request.vertical && !request.text.empty())snapshot_.dialogue += "\n"+request.text;
+                snapshot_.choices = request.choices;
                 menu_request_ = request.id;
                 snapshot_.continue_ticket = ++next_ticket_;
                 snapshot_.phase = TourPhase::awaiting_continue;
                 ++snapshot_.prompts; ++snapshot_.revision; return;
             } else if (request.kind == EclRequestKind::host) {
                 handle_host(request);
-                if (delayed_request_) return;
-            } else throw EclError("Unexpected input request in Rolf tour");
+                if (delayed_request_ || snapshot_.phase != TourPhase::running) return;
+            } else if (request.kind == EclRequestKind::input_number || request.kind == EclRequestKind::input_string) {
+                menu_request_ = request.id; snapshot_.continue_ticket = ++next_ticket_;
+                snapshot_.number_input = request.kind == EclRequestKind::input_number;
+                snapshot_.phase = TourPhase::awaiting_input; ++snapshot_.revision; return;
+            } else throw EclError("Unexpected input request");
         }
     } catch (const EclError& error) { fail(error.what()); }
 }
 
 bool RolfTourSession::continue_dialogue(std::uint64_t ticket)
 {
-    if (snapshot_.phase != TourPhase::awaiting_continue || ticket != snapshot_.continue_ticket) return false;
-    if (!machine_.resume(menu_request_, 0)) return false;
-    snapshot_.continue_ticket = 0; snapshot_.phase = TourPhase::running;
-    ++snapshot_.revision; return true;
+    return choose(ticket, 0);
 }
 
 bool RolfTourSession::explore(ExplorationCommand command)
 {
     if (snapshot_.phase != TourPhase::completed) return false;
+    if (town_) {
+        if (command == ExplorationCommand::forward) {
+            pending_movement_ = command; begin_event(0);
+        } else if (command == ExplorationCommand::look) begin_event(1);
+        else if (command == ExplorationCommand::camp) begin_event(2);
+        else { move_party(command); begin_event(1); }
+        advance(0); return true;
+    }
     auto pose = snapshot_.pose;
     if (command == ExplorationCommand::turn_left) pose.facing = (pose.facing + 3) % 4;
     else if (command == ExplorationCommand::turn_right) pose.facing = (pose.facing + 1) % 4;

@@ -5,6 +5,7 @@
 #include "opengold/map_catalog.h"
 #include "opengold/formats.h"
 #include "opengold/wall_art.h"
+#include "opengold/creature_catalog.h"
 #include <bitset>
 
 namespace opengold::por {
@@ -12,7 +13,19 @@ struct PartyPose {
     unsigned x{}, y{}, facing{}; // GEO coordinates, 0=N, 1=E, 2=S, 3=W.
     auto operator<=>(const PartyPose&) const = default;
 };
-enum class TourPhase { running, awaiting_continue, completed, faulted };
+enum class TourPhase { running, awaiting_continue, awaiting_input, shopping, completed, faulted };
+struct TownParty {
+    std::string name{"Fighter"};
+    unsigned level{1}, hit_points{12}, max_hit_points{12};
+    std::array<std::uint16_t, 7> wealth{0,0,0,9999,0,0,0};
+    std::vector<Equipment> inventory;
+};
+struct PhlanResources {
+    std::map<unsigned, std::shared_ptr<const EclProgram>> programs;
+    std::map<unsigned, std::vector<Equipment>> treasure;
+    std::vector<std::uint8_t> sprite_archive;
+    std::map<unsigned,Image> heads,bodies,pictures;
+};
 struct TourSnapshot {
     PartyPose pose;
     TourPhase phase{TourPhase::running};
@@ -20,28 +33,40 @@ struct TourSnapshot {
     std::uint64_t revision{}, continue_ticket{};
     unsigned prompts{}, redraws{}, footsteps{};
     int sprite_frame{-1}; // -1 hidden; native near/medium/far frames are 0/1/2.
+    bool tour_finished{};
+    unsigned script_id{}, event_runs{}, sprite_id{12};
+    std::vector<std::string> choices;
+    bool number_input{};
+    std::uint64_t picture_revision{};
     std::bitset<256> visited;
 };
-enum class ExplorationCommand { turn_left, turn_right, forward };
+enum class ExplorationCommand { turn_left, turn_right, forward, look, camp };
 
-// Isolated tour host, not a campaign scheduler. Original bytecode supplies the
-// dialogue and route. Bound VM position cells are authoritative; snapshot_ is a
-// read-only presentation cache published at redraw/request boundaries.
+// Original tour followed by the New Phlan movement/search/script scheduler.
+// Bound VM position cells are authoritative; snapshots are read-only views.
 class RolfTourSession {
 public:
     [[nodiscard]] static RolfTourSession load(const std::filesystem::path& directory);
     // Also accepts wholly synthetic resources for asset-free host tests.
     RolfTourSession(GeoMap map, std::shared_ptr<const EclProgram> program,
                    std::array<opengold::Image, 3> sprites, std::uint32_t entry,
-                   WallArtSet wall_art = {});
+                   WallArtSet wall_art = {}, std::shared_ptr<const PhlanResources> town = {});
     void restart();
     void advance(double seconds);
     bool continue_dialogue(std::uint64_t ticket);
+    bool choose(std::uint64_t ticket, std::size_t choice);
+    bool input(std::uint64_t ticket, std::string_view value);
+    bool buy(std::uint64_t ticket, std::size_t item);
+    bool leave_shop(std::uint64_t ticket);
     bool explore(ExplorationCommand command);
     [[nodiscard]] const TourSnapshot& snapshot() const noexcept { return snapshot_; }
     [[nodiscard]] const GeoMap& map() const noexcept { return map_; }
     [[nodiscard]] const auto& sprites() const noexcept { return sprites_; }
     [[nodiscard]] const WallArtSet& wall_art() const noexcept { return wall_art_; }
+    [[nodiscard]] const TownParty& party() const noexcept { return party_; }
+    [[nodiscard]] const std::vector<Equipment>& shop_stock() const noexcept { return treasure_; }
+    [[nodiscard]] const std::vector<std::string>& script_diagnostics() const noexcept { return diagnostics_; }
+    [[nodiscard]] const std::optional<Image>& picture() const noexcept { return picture_; }
     [[nodiscard]] std::uint16_t script_variable(std::uint16_t address) const { return machine_.variable(address); }
 private:
     GeoMap map_;
@@ -53,6 +78,27 @@ private:
     TourSnapshot snapshot_;
     std::uint64_t next_ticket_{}, menu_request_{}, delayed_request_{};
     double remaining_delay_{};
+    std::shared_ptr<const PhlanResources> town_;
+    TownParty party_, saved_party_;
+    std::vector<Equipment> treasure_;
+    std::optional<Image> picture_;
+    std::optional<EclMachine> checkpoint_;
+    std::vector<std::string> diagnostics_;
+    std::optional<ExplorationCommand> pending_movement_;
+    unsigned current_script_{}, saved_script_{}, selected_character_{};
+    unsigned saved_selected_character_{};
+    unsigned event_stage_{}; // 0 tour, 1 before step, 2 search, 3 area entry, 4 camp.
+    bool transition_{}, message_only_{};
+    std::uint64_t shop_request_{};
+    void configure_town();
+    void begin_event(unsigned slot);
+    void finish_event();
+    bool handle_town_host(const EclRequest& request);
+    void read_character();
+    [[nodiscard]] EclHostReply character_reply(unsigned index) const;
+    void bind_pose(PartyPose pose);
+    bool move_party(ExplorationCommand command);
+    void notice(std::string message);
     void publish_pose();
     void handle_host(const EclRequest& request);
     void fail(std::string diagnostic);

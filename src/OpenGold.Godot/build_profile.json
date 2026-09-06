@@ -1,6 +1,6 @@
 {
     "enabled_classes": [
-        "Control", "Button", "Label", "RichTextLabel", "PanelContainer",
+        "Control", "Button", "Label", "RichTextLabel", "PanelContainer", "ItemList", "LineEdit",
         "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
         "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton",
         "ProjectSettings", "OS", "Engine", "Window", "SceneTree",

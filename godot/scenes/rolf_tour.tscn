@@ -1,4 +1,12 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
+
+[sub_resource type="StyleBoxFlat" id="InventoryStyle"]
+bg_color = Color(0.11, 0.15, 0.18, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.843, 0.706, 0.475, 1)
 
 [node name="RolfTour" type="RolfTourView"]
 layout_mode = 3
@@ -65,7 +73,41 @@ text = "Replay tour"
 [node name="Footer" type="Label" parent="."]
 theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
 theme_override_font_sizes/font_size = 14
-text = "Original map, script & wall artwork • Isolated tour; exploration events are inactive"
+text = "Arrow keys: move / turn   •   L: look   •   Original New Phlan scripts and shop stock"
+
+[node name="Choices" type="ItemList" parent="."]
+visible = false
+theme_override_font_sizes/font_size = 17
+
+[node name="Answer" type="LineEdit" parent="."]
+visible = false
+max_length = 40
+
+[node name="LeaveShop" type="Button" parent="."]
+visible = false
+text = "Leave shop"
+
+[node name="Look" type="Button" parent="."]
+text = "Look [L]"
+
+[node name="Inventory" type="Button" parent="."]
+text = "Inventory"
+
+[node name="Party" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="InventoryPanel" type="Panel" parent="."]
+visible = false
+z_index = 2
+mouse_filter = 0
+theme_override_styles/panel = SubResource("InventoryStyle")
+
+[node name="Items" type="RichTextLabel" parent="InventoryPanel"]
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="InventoryPanel"]
+text = "Close inventory"
 
 [node name="Footstep" type="AudioStreamPlayer" parent="."]
 volume_db = -12.0

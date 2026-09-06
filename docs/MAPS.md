@@ -6,7 +6,8 @@ interpreter, map-event dispatch, and gameplay integration.
 OpenGold can load Pool of Radiance's exploration maps and wall artwork from the
 original game installation. GEO map decoding and a top-down inspection demo are
 implemented. The native [Rolf tour](ROLF.md) now assembles and displays the
-original Phlan wall artwork and supports isolated inspection movement. A
+original Phlan wall artwork, ordinary-door traversal and the bounded
+[New Phlan location scheduler](PHLAN.md). A
 standalone ECL interpreter is also available; general area resource selection
 and full map-script integration remain future work.
 

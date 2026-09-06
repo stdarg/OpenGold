@@ -29,8 +29,12 @@ review-rolf.cmd
 ```
 
 Use **Continue** or **Enter** at each pause. Movement remains locked until the
-farewell finishes. Then use the arrow keys or the turn/step buttons to inspect
-the map. **Replay tour** resets the isolated session. **Map: full/visited** changes
+farewell finishes. Then use the arrow keys or the turn/step buttons to explore
+the town, pass through ordinary doors, and run location scripts. **Look** or **L**
+searches the current location. Shops offer their original merchandise; select
+an item and choose **Buy**, then **Leave shop**. **Inventory** shows purchases.
+The party contains one level-1 fighter with 9,999 gold pieces. **Replay tour**
+resets the tour, purse, inventory and town flags. **Map: full/visited** changes
 map visibility; visited means cells actually occupied, not a line-of-sight rule.
 
 ## Build boundary
@@ -67,10 +71,12 @@ not been verified. See the official [CMake integration documentation](https://do
 
 ## Evidence and deliberate limits
 
-This is an isolated event host, not a complete campaign scheduler. It starts
+This is a bounded New Phlan host, not a complete campaign scheduler. It starts
 `ECL3.DAX:0` explicitly at `0xB071`, with minimal mapped state and midday as its
-time fixture. It does not establish the campaign's entry conditions or revisit
-policy. The loader checks the expected entry instructions before running.
+time fixture. After the farewell it schedules the original town, City Hall and
+training-hall programs. It does not establish full campaign startup behavior.
+See [PHLAN.md](PHLAN.md) for scheduling, purchasing and unsupported services.
+The loader checks the expected entry instructions before running.
 
 | Source/service | Implemented behavior |
 | --- | --- |
@@ -103,9 +109,10 @@ occlusion case, and original audio are not yet verified. See
 [map findings](MAPS.md), [NPC art evidence](npc-art-identification.md), and the
 [published PC 1.3 ECL reference](https://gamefaqs.gamespot.com/c64/578753-pool-of-radiance/faqs/73869).
 
-After the tour, inspection movement blocks walls/doors on either side of an
-edge and blocks map boundaries. It does not open doors, dispatch area events,
-leave New Phlan, persist campaign state, or implement combat.
+After the tour, ordinary doors permit movement and original location events
+run. Solid walls, locked doors and the town boundary remain blocking. State
+persists through movement and building visits within the current session;
+save/load, travel outside New Phlan and town combat remain unimplemented.
 
 ## Verification
 
@@ -117,6 +124,9 @@ IDs. Synthetic wall fixtures check tile bounds, normal EGA colors, transparency,
 all four facings, opposite-edge appearance selection, near-wall occlusion, frame
 placement and map boundaries. No original text/assets are
 embedded in the test fixtures.
+Town fixtures additionally test purchases, insufficient funds, inventory limits,
+stale replies, replay and rollback after unsupported services. Installed route
+tests attempt all numbered town cells and buy from all four shop types.
 
 After building, check the actual Godot scene and input path:
 

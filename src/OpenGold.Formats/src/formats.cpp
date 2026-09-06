@@ -179,4 +179,21 @@ ImageDecodeResult decode_ega_combat_icon(std::span<const std::uint8_t> dax,std::
     }
     return {FormatResult::ok,std::move(image)};
 }
+ImageDecodeResult decode_ega_picture(std::span<const std::uint8_t> record)
+{
+    if(record.size()<17)return {};
+    const auto height=read_u16(record,0),width_bytes=read_u16(record,2);
+    const unsigned count=record[8];
+    if(!height||height>200||!width_bytes||width_bytes>40||!count||
+        record.size()!=17+static_cast<std::size_t>(height)*width_bytes*4*count)return {};
+    Image image;image.width=width_bytes*8;image.height=height;
+    image.rgba.resize(static_cast<std::size_t>(image.width)*height*4);
+    for(std::size_t pixel=0;pixel<static_cast<std::size_t>(image.width)*height;++pixel){
+        const auto packed=record[17+pixel/2];const unsigned color=pixel%2?packed&15:packed>>4;
+        std::copy(ega_palette[color].begin(),ega_palette[color].end(),image.rgba.begin()+pixel*4);
+        if(color==13){image.rgba[pixel*4]=255;image.rgba[pixel*4+1]=85;image.rgba[pixel*4+2]=255;}
+        image.rgba[pixel*4+3]=255;
+    }
+    return {FormatResult::ok,std::move(image)};
+}
 } // namespace opengold

@@ -3,9 +3,12 @@
 Status: the native runtime now includes the PoR research corrections described
 below. It executes VM operations and exposes opt-in, resumable engine requests.
 General encounter integration, world-state mapping, and a Godot campaign scheduler still need concrete
-host implementations. The map demo does not execute cell events. The isolated
-[C++/Godot Rolf tour](ROLF.md) now runs the original welcome through farewell
-using a small concrete host; it does not yet schedule campaign events.
+host implementations. The map inspector does not execute cell events. The
+[C++/Godot Rolf demo](ROLF.md) runs the original welcome through farewell, then
+schedules the three [New Phlan programs](PHLAN.md), with branching dialogue,
+building transitions, character selection and original-stock shop purchases.
+This bounded town host does not implement all campaign services; unsupported
+branches roll back the event and return the player to exploration.
 
 ## Run the implementation
 

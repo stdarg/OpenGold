@@ -28,7 +28,12 @@ private:
     godot::String error_;
     std::uint64_t shown_revision_{}, checked_ticket_{};
     unsigned played_footsteps_{}, check_frames_{}, check_prompts_{};
+    unsigned rendered_sprite_id_{999};
+    std::uint64_t displayed_ticket_{};
+    std::uint64_t rendered_picture_revision_{};
     bool full_map_{true}, ready_{}, checking_{}, capture_{}, capture_pending_{};
+    bool town_check_{};
+    unsigned shop_check_stage_{};
     void layout();
     void refresh();
     void restart();
@@ -36,11 +41,15 @@ private:
     void left();
     void right();
     void forward();
+    void look();
+    void inventory();
+    void leave_shop();
     void map_mode();
     void movement(opengold::por::ExplorationCommand command);
     void draw_scene();
     void draw_map();
     void check_run();
+    void check_town();
     void capture_frame(const godot::String& name);
 };
 #endif
