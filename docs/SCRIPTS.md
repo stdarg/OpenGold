@@ -179,7 +179,7 @@ and state changes described here.
 | 31 | SPRITE OFF | Remove the encounter sprite presentation. |
 | 32 | FIND ITEM | Search actual party inventory and return the comparison flags. |
 | 36 | ADD NPC | Recruit the requested NPC with the correct live state and allegiance. |
-| 37 | LOAD PIECES | Load the selected wall artwork; retain unresolved operands for verification. |
+| 37 | LOAD PIECES | Load the selected wall artwork; retain all three operands pending the [operand investigation](#reverse-engineering-load-pieces-0x37). |
 | 38 | PROGRAM | Dispatch training, victory and camp services. |
 | 39 | WHO | Present character selection and change the selected character. |
 | 3A | DELAY | Provide presentation pacing without blocking the game update loop. |
@@ -280,6 +280,9 @@ ECL CLOCK explicit until evidence establishes an appropriate policy, and priorit
 commands that block observed events. Do not count speculative decoding of embedded
 table bytes as evidence of a new command.
 
+For LOAD PIECES, use the dedicated [operand investigation below](#reverse-engineering-load-pieces-0x37)
+to separate resource selection from the already decoded map geometry.
+
 ### 5. Track closure and complete session persistence
 
 Track three milestones independently for each command: **implemented**, **tested
@@ -293,6 +296,102 @@ private script bytes, RNG, resource context, world state and supported pending
 requests. Verify save/reload at permitted boundaries without repeating rewards,
 recruitment or other completed mutations. Preserve the console harness for
 regression tests while expanding Godot integration and original-event coverage.
+
+## Reverse-engineering LOAD PIECES (0x37)
+
+Recorded September 6, 2026. The working hypothesis is that the three operands
+select **three ordered wall-art sets**, whose wall types are used by the map's
+directional wall IDs. Geometry tells us where walls go; it does not by itself
+identify the artwork assigned to each wall type. The precise operand contract
+still needs verification against Pool of Radiance PC 1.3.
+
+### Evidence and its limits
+
+Stephen S. Lee's [PC 1.3 guide](https://gamefaqs.gamespot.com/c64/578753-pool-of-radiance/faqs/73869)
+identifies the first operand as a wall-definition file ID and leaves the other
+two as unnamed variables. Gold Box Explorer supplies a more specific lead at
+pinned revision `eac30abaa6ee66aea6f5d65ebe6d676b10015a8f`:
+
+- Its [map loader](https://github.com/bsimser/Gold-Box-Explorer/blob/eac30abaa6ee66aea6f5d65ebe6d676b10015a8f/src/Common/Plugins/GeoDax/GeoDaxFile.cs#L92)
+  recognizes three immediate operands and stores them as wall-set IDs in encoded
+  order: `(a, b, c)`. It scans raw byte patterns and keeps the first valid
+  candidate; this is not proof that the command executes. OpenGold's inventory
+  should use decoded instruction paths, since embedded data can resemble opcodes.
+- Its [wall renderer](https://github.com/bsimser/Gold-Box-Explorer/blob/eac30abaa6ee66aea6f5d65ebe6d676b10015a8f/src/Common/Plugins/GeoDax/GeoDaxFileViewer.cs#L634)
+  assigns successive groups of wall types to those sets. It derives each group's
+  size from that set's bitmap count divided by ten, rather than assuming five
+  wall types per set. It also substitutes the current map record ID for values
+  `127` and `255`. Both rules are viewer behavior to investigate, not confirmed
+  PoR rules.
+- Its [ECL disassembler](https://github.com/bsimser/Gold-Box-Explorer/blob/eac30abaa6ee66aea6f5d65ebe6d676b10015a8f/src/Common/Plugins/DaxEcl/Commands.cs#L277)
+  prints LOAD PIECES operands in **reverse encoded order**. Number operands from
+  the tagged bytecode and OpenGold decoder, not from that textual listing.
+
+Explorer supports multiple games and is not an execution oracle. These findings
+support a testable hypothesis; they do not close the compatibility gap.
+
+### Investigation sequence
+
+1. **Inventory decoded calls and available resources.** Record ECL archive and
+   record ID, instruction PC, all operand tags and values in encoded order,
+   candidate map and resource-bank context, and the control-flow path that reaches
+   the call. Compare candidate IDs with available WALLDEF records. Keep indirect
+   operands unresolved until their runtime values are known, and distinguish
+   static candidates from calls actually observed executing.
+
+2. **Start with a pair that changes only the second operand.** Static inspection
+   of the installed `ECL8.DAX:16` found these immediate operands (all tags are 0):
+
+   | Instruction PC | Operand 1 | Operand 2 | Operand 3 |
+   | --- | --- | --- | --- |
+   | `0x9C1B` | 9 | 20 | 23 |
+   | `0xAA41` | 9 | 20 | 23 |
+   | `0x9D6C` | 9 | 17 | 23 |
+
+   The `(9,20,23)` and `(9,17,23)` calls suggest a useful experiment, but their
+   original execution contexts may differ. In an isolated copy of the game,
+   restore the same initial save, map, party position, facing and resource state;
+   change only operand 2 at the **same instruction site** from 20 to 17. Confirm
+   that the instruction executes and compare resource loads, memory and rendered
+   wall types. Repeat with known valid alternatives for operands 1 and 3. Keep
+   original assets and saves intact.
+
+3. **Trace each operand through the original handler.** Lee's guide lists
+   `19B5:0C74..0DEE` as the shared handler for LOAD FILES (`0x21`) and LOAD PIECES
+   (`0x37`). Locate the equivalent routine in the actual executable/overlay
+   version; the published segment is not necessarily a literal runtime address.
+   Follow the `0x37` branch and track each decoded operand into resource lookups,
+   destination buffers and persistent fields. Record archive names **and DAX
+   record IDs**, since several sets can share an archive. Capture geometry and
+   party state before and after as well as graphics changes, to detect additional
+   side effects instead of assuming the command is entirely visual.
+
+4. **Test ordering, group boundaries and special values.** Swap two distinct valid
+   operands while preserving the other inputs. Check whether the corresponding
+   groups of wall types exchange artwork. Exercise wall IDs on both sides of each
+   proposed group boundary and view them at several distances and orientations.
+   Test `127` and `255` in the isolated copy if the handler supports a meaningful
+   special-value interpretation. An unchanged screenshot is inconclusive when
+   the visible walls do not use the affected set.
+
+### Completion criteria and implementation
+
+For each operand, document its resource role, bank-resolution rules, order and
+wall-type range, special values, and load/cache/redraw effects. Preserve the
+executable version and hashes, script PC, initial state, operand changes,
+resource/memory traces and before/after views with the findings. Require agreement
+between handler dataflow and controlled observations before treating the contract
+as confirmed; record any cases that remain untested.
+
+Then implement the verified selection in the concrete host, with regression
+fixtures for operand order, group boundaries and confirmed special values, plus
+an original-event comparison. Keep original game data out of the repository.
+Preloading art is compatible with this design: the command can select already
+loaded sets if that preserves the original state changes and rendering behavior.
+
+Until then, retain all three operands and explicit host requirements. This
+investigation need not block top-down geometry or movement work, but faithful
+first-person wall rendering needs the verified selection behavior.
 
 ## Full-engine design and remaining work
 
