@@ -8,7 +8,8 @@ Install these tools and make sure each command is available in a new terminal:
   equivalent C++20 compiler
 - CMake 3.24 or newer
 - Ninja, if using the committed `default` preset
-- Godot 4.x for the presentation project
+- Godot 4.5+ for the presentation project and native tour
+- Git and Python 3.8+ when building the optional Godot C++ extension
 - VS Code extensions recommended by `.vscode/extensions.json`
 
 The Visual Studio Developer PowerShell is the simplest environment for the
@@ -30,9 +31,11 @@ Tests do not require Godot.
 
 ## Godot project
 
-Open `godot/project.godot` in Godot 4.x. The project currently provides the
-presentation shell and main scene. The CMake-built native libraries are kept
-independent until the GDExtension binding target is introduced.
+Open `godot/project.godot` in Godot. The existing main scene remains the art
+comparison tool. Build and launch the C++ Rolf tour from Windows CMD with
+`build-rolf.cmd` and `review-rolf.cmd`. The optional GDExtension fetches pinned
+official Godot C++ bindings; the core remains independently testable.
+See [Rolf's tour](ROLF.md) for build options, controls and data configuration.
 
 Do not commit original SSI game files or derived assets. Keep local copies in
 ignored directories such as `testdata/local/` or `user-data/`.

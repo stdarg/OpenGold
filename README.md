@@ -4,6 +4,19 @@ A modern Godot-based reimplementation of SSI's Gold Box engine that reads the
 original game data and assets while adding a cleaner UI, improved rendering,
 and modern quality-of-life features.
 
+## Rolf's tour
+
+Run the original welcome through Rolf's farewell in a C++/Godot scene, with his
+encounter sprite, a schematic first-person view, and a synchronized party map.
+From Windows CMD:
+
+```cmd
+build-rolf.cmd
+review-rolf.cmd
+```
+
+See [build prerequisites, controls and current limits](docs/ROLF.md).
+
 ## Native monster/NPC statistics
 
 `opengold::por::CreatureCatalog` loads all original Pool of Radiance monster/NPC
@@ -141,8 +154,8 @@ build.cmd
 ```
 
 Open `godot/project.godot` in Godot 4.x for the presentation shell. The native
-core is deliberately testable without launching Godot; GDExtension bindings
-will be added at the presentation integration milestone.
+core is deliberately testable without launching Godot. The optional C++
+GDExtension for Rolf's tour is built separately with `build-rolf.cmd`.
 
 The current scene compares nearest-neighbor, xBR level-2, and Maxim Stepin's HQx
 (HQ4x) side by side at 4x. The dropdown defaults to **Combat sprites** (`CPIC*.DAX`,

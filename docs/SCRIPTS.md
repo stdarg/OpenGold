@@ -3,7 +3,9 @@
 Status: the native runtime now includes the PoR research corrections described
 below. It executes VM operations and exposes opt-in, resumable engine requests.
 Combat, world-state mapping, and a Godot campaign scheduler still need concrete
-host implementations. The map demo does not execute cell events.
+host implementations. The map demo does not execute cell events. The isolated
+[C++/Godot Rolf tour](ROLF.md) now runs the original welcome through farewell
+using a small concrete host; it does not yet schedule campaign events.
 
 ## Run the implementation
 
@@ -194,7 +196,7 @@ validate world mutations before committing and keep VM/world state synchronized.
 
 ## Validation
 
-`build.cmd` runs all three native suites. The ECL suite tests corrected indexing,
+`build.cmd` runs all four native suites. The ECL suite tests corrected indexing,
 condition flags, division, RNG bounds/reproducibility, embedded writable tables,
 string references and writes, input validation, host reply atomicity, transitions,
 limits, malformed records and independent ownership. Godot's
@@ -250,13 +252,13 @@ loaders. Enable each host capability only after its service is implemented.
 | 4 | SETUP MONSTER, APPROACH, CLEAR MONSTERS, PARTY SURPRISE, SURPRISE, ENCOUNTER MENU | Reproduce encounter presentation, choices and surprise up to the combat decision, including noncombat outcomes. |
 | 5 | COMBAT, DAMAGE, TREASURE, ROB, duel CALL services, shop/temple routing, PROGRAM and PROTECTION | Complete encounters and special services with real results, inventory/HP changes and persistent consequences. |
 
-The immediate next deliverable is **the state adapter plus a minimal map and
-presentation host**, demonstrated by an original noncombat event in Godot.
-The [Rolf welcome design proposal](design/rolf-welcome.md) provides an interactive
-layout study and a scoped implementation plan for a candidate first event.
-Record its script/map IDs, initial state, choices, displayed output, state changes
-and revisit result. Build scheduling around the documented entry roles and
-verify movement, blocked moves and transitions for that event.
+The [C++/Godot Rolf tour](ROLF.md) implements an isolated state adapter and minimal
+map/presentation host, extending the welcome through farewell. Its original
+script supplies all eight dialogue pauses and the route; both views use one
+native pose snapshot. Next, verify its entry conditions and revisit behavior in
+the original game, implement the original wall-piece rendering and connect it
+to scheduling based on documented entry roles. The isolated host does not yet
+claim campaign transitions or persistence.
 
 ### 3. Turn the Slums regression into a complete encounter
 

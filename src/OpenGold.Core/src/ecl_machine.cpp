@@ -206,6 +206,16 @@ bool EclMachine::start(std::size_t slot)
     return true;
 }
 
+bool EclMachine::start_at_for_inspection(std::uint32_t address)
+{
+    if (state_ != EclState::idle && state_ != EclState::completed) return false;
+    try { (void)decode(address); } catch (const EclError&) { return false; }
+    pc_ = address; state_ = EclState::running;
+    stack_.clear(); trace_.clear(); conditions_.fill(false); pending_.reset();
+    destination_.reset(); menu_values_.clear(); diagnostic_.clear(); total_instructions_ = 0;
+    return true;
+}
+
 void EclMachine::execute(const EclInstruction& i)
 {
     const auto& spec = ecl_opcode(i.opcode);

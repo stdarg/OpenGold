@@ -1,0 +1,9 @@
+{
+    "enabled_classes": [
+        "Control", "Button", "Label", "RichTextLabel", "PanelContainer",
+        "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
+        "Image", "ImageTexture", "InputEventKey", "InputEventMouseButton",
+        "ProjectSettings", "OS", "Engine", "Window", "SceneTree",
+        "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture"
+    ]
+}

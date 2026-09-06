@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[node name="RolfTour" type="RolfTourView"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 27
+text = "OPENGOLD  /  Rolf's welcome"
+
+[node name="Location" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="MapTitle" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+text = "New Phlan    N ↑"
+
+[node name="MapMode" type="Button" parent="."]
+text = "Map: full"
+
+[node name="Coordinates" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.475, 0.839, 0.831, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="Legend" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+text = "Arrow: party & facing\nGold: doors   Teal: visited"
+
+[node name="Speaker" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 19
+
+[node name="Dialogue" type="RichTextLabel" parent="."]
+theme_override_colors/default_color = Color(0.906, 0.902, 0.855, 1)
+theme_override_font_sizes/normal_font_size = 18
+bbcode_enabled = false
+scroll_active = true
+
+[node name="Continue" type="Button" parent="."]
+text = "Continue  [Enter]"
+
+[node name="Progress" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+
+[node name="Movement" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+
+[node name="Left" type="Button" parent="."]
+text = "← Turn"
+
+[node name="Forward" type="Button" parent="."]
+text = "↑ Step"
+
+[node name="Right" type="Button" parent="."]
+text = "Turn →"
+
+[node name="Restart" type="Button" parent="."]
+text = "Replay tour"
+
+[node name="Footer" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+theme_override_font_sizes/font_size = 14
+text = "Original map & script • Schematic walls • Isolated tour; exploration events are inactive"
+
+[node name="Footstep" type="AudioStreamPlayer" parent="."]
+volume_db = -12.0

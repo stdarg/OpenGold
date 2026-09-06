@@ -4,6 +4,7 @@
 # Godot generated state and imports
 godot/.godot/
 godot/*.tmp
+godot/bin/
 
 # Local user data and derived original-game assets
 /user-data/

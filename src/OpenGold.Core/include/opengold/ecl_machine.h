@@ -72,6 +72,9 @@ public:
     [[nodiscard]] std::uint16_t variable(std::uint16_t address) const;
     [[nodiscard]] std::string string(std::uint16_t address) const;
     bool start(std::size_t entry_slot);
+    // Explicit isolated research entry. Bypasses campaign entry scheduling; the
+    // caller must identify an instruction boundary from its compatibility profile.
+    bool start_at_for_inspection(std::uint32_t address);
     [[nodiscard]] EclRunResult run(std::size_t budget = 1000);
     // Text expects no choice; menus use zero-based indices (PARLAY stores its value).
     // Invalid/stale replies do not change machine state or spend the pending request.
