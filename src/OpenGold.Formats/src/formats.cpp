@@ -158,4 +158,25 @@ ImageDecodeResult decode_ega_sprite(
     return {FormatResult::not_found, {}};
 }
 
+ImageDecodeResult decode_ega_combat_icon(std::span<const std::uint8_t> dax,std::uint8_t record_id,std::uint8_t frame_index)
+{
+    const auto extracted=extract_record(dax,record_id);
+    if(extracted.status!=FormatResult::ok)return {extracted.status,{}};
+    const std::span<const std::uint8_t> record{extracted.bytes};
+    if(record.size()<17)return {};
+    const auto height=read_u16(record,0),width_bytes=read_u16(record,2);
+    const auto count=record[8];const std::size_t frame_size=static_cast<std::size_t>(height)*width_bytes*4;
+    if(!height||height>200||!width_bytes||width_bytes>40||!count||record.size()!=17+frame_size*count)return {};
+    if(frame_index>=count)return {FormatResult::not_found,{}};
+    Image image;image.width=width_bytes*8;image.height=height;image.rgba.resize(image.width*image.height*4);
+    const std::size_t start=17+frame_index*frame_size;
+    for(std::size_t pixel=0;pixel<static_cast<std::size_t>(image.width)*height;++pixel) {
+        const auto packed=record[start+pixel/2];const unsigned index=pixel%2?packed&15:packed>>4;
+        std::copy(ega_palette[index].begin(),ega_palette[index].end(),image.rgba.begin()+pixel*4);
+        if(index==8)image.rgba[pixel*4]=image.rgba[pixel*4+1]=image.rgba[pixel*4+2]=0;
+        if(index==13){image.rgba[pixel*4]=255;image.rgba[pixel*4+1]=85;image.rgba[pixel*4+2]=255;}
+        image.rgba[pixel*4+3]=index==0?0:255;
+    }
+    return {FormatResult::ok,std::move(image)};
+}
 } // namespace opengold

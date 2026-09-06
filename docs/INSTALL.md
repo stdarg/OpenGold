@@ -26,7 +26,7 @@ cmake --build --preset default
 ctest --test-dir build --output-on-failure
 ```
 
-The build compiles `src/OpenGold.Formats` and `src/OpenGold.Core` as C++20.
+The build compiles the formats, core, rules interface and SRD module as C++20.
 Tests do not require Godot.
 
 ## Godot project
@@ -36,6 +36,8 @@ comparison tool. Build and launch the C++ Rolf tour from Windows CMD with
 `build-rolf.cmd` and `review-rolf.cmd`. The optional GDExtension fetches pinned
 official Godot C++ bindings; the core remains independently testable.
 See [Rolf's tour](ROLF.md) for build options, controls and data configuration.
+The same extension also contains the native combat scene: run
+`review-combat.cmd` after building. See [combat controls and scope](RULES.md).
 
 Do not commit original SSI game files or derived assets. Keep local copies in
 ignored directories such as `testdata/local/` or `user-data/`.

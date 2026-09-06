@@ -6,6 +6,7 @@ if(NOT Python3_EXECUTABLE AND EXISTS "${PROJECT_SOURCE_DIR}/build/_deps/python/p
 endif()
 find_package(Python3 3.8 COMPONENTS Interpreter REQUIRED)
 set(GODOTCPP_BUILD_PROFILE "${CMAKE_CURRENT_SOURCE_DIR}/build_profile.json" CACHE PATH "" FORCE)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${GODOTCPP_BUILD_PROFILE}")
 set(GODOTCPP_DISABLE_EXCEPTIONS OFF CACHE BOOL "" FORCE)
 set(GODOTCPP_USE_HOT_RELOAD OFF CACHE BOOL "" FORCE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -14,8 +15,8 @@ FetchContent_Declare(godot_cpp
     GIT_TAG e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77
 )
 FetchContent_MakeAvailable(godot_cpp)
-add_library(opengold_godot SHARED rolf_tour_view.cpp register_types.cpp)
-target_link_libraries(opengold_godot PRIVATE opengold_core godot-cpp)
+add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp register_types.cpp)
+target_link_libraries(opengold_godot PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
 target_compile_features(opengold_godot PRIVATE cxx_std_20)
 target_compile_definitions(opengold_godot PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>)
 set_target_properties(opengold_godot PROPERTIES

@@ -14,7 +14,7 @@ build-rolf.cmd
 review-rolf.cmd
 ```
 
-The first command builds the C++ GDExtension and runs all four native test suites.
+The first command builds the C++ GDExtension and runs all five native test suites.
 The second imports the extension and opens the Godot scene. Once built, use only
 `review-rolf.cmd` to run it again. Close the scene before rebuilding its DLL.
 

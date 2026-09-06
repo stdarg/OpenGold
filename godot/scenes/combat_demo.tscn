@@ -1,0 +1,86 @@
+[gd_scene format=3]
+
+[node name="CombatDemo" type="CombatView"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 27
+text = "OPENGOLD / Turn-based combat"
+
+[node name="Subtitle" type="Label" parent="."]
+theme_override_font_sizes/font_size = 17
+text = "SRD 5.2.1 / Fixed combat profiles\nChoose an action, then click its target. Enter ends your turn."
+
+[node name="Training" type="Button" parent="."]
+text = "Training"
+[node name="Slums" type="Button" parent="."]
+text = "Slums event"
+[node name="Replay" type="Button" parent="."]
+text = "Restart"
+
+[node name="Turn" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.475, 0.839, 0.831, 1)
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 2
+[node name="Roster" type="RichTextLabel" parent="."]
+theme_override_font_sizes/normal_font_size = 16
+scroll_active = true
+[node name="Prompt" type="Label" parent="."]
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+
+[node name="Move" type="Button" parent="."]
+text = "Move"
+[node name="Melee" type="Button" parent="."]
+text = "Melee"
+[node name="Ranged" type="Button" parent="."]
+text = "Ranged"
+[node name="FireBolt" type="Button" parent="."]
+text = "Fire Bolt"
+[node name="MagicMissile" type="Button" parent="."]
+text = "Magic Missile"
+[node name="CureWounds" type="Button" parent="."]
+text = "Cure Wounds"
+[node name="SecondWind" type="Button" parent="."]
+text = "Second Wind"
+[node name="Dash" type="Button" parent="."]
+text = "Dash"
+[node name="Dodge" type="Button" parent="."]
+text = "Dodge"
+[node name="Disengage" type="Button" parent="."]
+text = "Disengage"
+[node name="End" type="Button" parent="."]
+text = "End turn"
+[node name="Continue" type="Button" parent="."]
+text = "Continue"
+[node name="React" type="Button" parent="."]
+text = "Opportunity attack"
+[node name="Decline" type="Button" parent="."]
+text = "Decline reaction"
+[node name="Save" type="Button" parent="."]
+text = "Save combat"
+[node name="Load" type="Button" parent="."]
+text = "Load combat"
+[node name="Revisit" type="Button" parent="."]
+text = "Revisit event"
+
+[node name="Help" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 2
+text = "Teal: party | Orange: enemies\nStone: obstacle | Brown: difficult terrain\nSaving is available in training combat."
+
+[node name="Log" type="RichTextLabel" parent="."]
+theme_override_font_sizes/normal_font_size = 16
+scroll_active = true
+
+[node name="Footer" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+theme_override_font_sizes/font_size = 14
+text = "SRD 5.2.1 combat subset | Authored test arena | Original Slums dialogue and art load locally"

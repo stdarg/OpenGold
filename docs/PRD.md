@@ -16,7 +16,15 @@
 
 OpenGold is an open-source modernization and reimplementation of the 1988 SSI *Pool of Radiance* game experience.
 
-The project aims to preserve the gameplay, rules, content structure, maps, encounters, and feel of the original game while replacing its DOS-era executable and interface with a modern, maintainable implementation.
+The project aims to preserve the campaign, content structure, maps, encounters, and feel of the original game while replacing its DOS-era executable and interface with a modern, maintainable implementation.
+
+**Combat decision, 2026-09-06:** use SRD 5.2.1, with standard turn-based rules and
+spell slots, behind a replaceable C++ rules-library interface. Open5E supplies
+reference content. This supersedes earlier requirements for original AD&D combat
+calculations, class restrictions and spell memorization. Preserve original
+campaign/script behavior and encounter identities/counts through explicit
+conversion adapters. The first milestone uses an approved fixed party, curated
+monsters and authored test arena; see [implementation scope](RULES.md).
 
 OpenGold is **not** intended to redistribute copyrighted SSI, TSR, Wizards of the Coast, or other third-party game assets. Users must provide their own legally obtained copy of the original game files. OpenGold will read and interpret those files at runtime.
 
@@ -42,7 +50,7 @@ Modernization should improve presentation and usability without silently changin
 
 1. Reimplement the original game's executable behavior without using the original executable code.
 2. Reuse original game data and art supplied by the user.
-3. Preserve original game mechanics as accurately as practical.
+3. Preserve original campaign behavior while implementing the selected SRD 5.2.1 combat rules through a replaceable library.
 4. Replace the DOS user interface with a modern desktop UI.
 5. Support modern resolutions, windowed mode, fullscreen mode, scaling, and input.
 6. Keep the core game implementation portable and testable.
@@ -70,7 +78,7 @@ Modernization should improve presentation and usability without silently changin
 The initial project is **not** intended to:
 
 1. Create a new Dungeons & Dragons game.
-2. Redesign *Pool of Radiance* combat.
+2. Reverse engineer exact original AD&D combat calculations for the initial rules module.
 3. Rewrite the campaign.
 4. Replace original encounters with newly authored encounters.
 5. Convert the game to real-time combat.
@@ -93,7 +101,7 @@ When choosing between:
 
 - modern convenience,
 - implementation elegance, and
-- fidelity to the original rules,
+- fidelity to original campaign behavior and the selected combat rules,
 
 the default priority is:
 
@@ -106,7 +114,8 @@ Quality-of-life changes should normally be optional.
 
 ### 5.2 Modern Shell, Original Game
 
-The game engine should reproduce the original game's rules and state transitions.
+The game engine should reproduce original campaign state transitions. The
+selected rules module controls combat mechanics and character combat state.
 
 Godot should provide the modern shell:
 
@@ -469,7 +478,9 @@ Where required by the original game:
 
 ### 11.7 Combat
 
-Combat is a high-fidelity subsystem.
+Combat must follow the selected rules module, initially SRD 5.2.1. Original
+encounter composition and script-visible outcomes are preserved by campaign
+adapters; original AD&D numerical statistics require explicit conversion.
 
 Required features include:
 
@@ -500,7 +511,7 @@ Example:
 ```text
 Long Sword
 Attack: +4
-Target AC: 5
+Target AC: 15
 Roll needed: 11+
 ```
 
@@ -511,9 +522,9 @@ Such explanations should be optional if they alter the original presentation sig
 Implement:
 
 - spell books
-- memorization
+- prepared spells and standard spell slots under the selected rules module
 - cleric spells
-- magic-user spells
+- wizard spells
 - spell levels
 - casting restrictions
 - targeting
@@ -1170,7 +1181,7 @@ OpenGold 1.0 should meet the following bar:
 ### Gameplay
 
 - Complete *Pool of Radiance* campaign is playable.
-- Major rules behave consistently with the original.
+- Major combat rules behave consistently with the selected SRD baseline; campaign state transitions remain compatible with original scripts.
 - Major encounters function.
 - Character advancement works.
 - Spells are implemented.

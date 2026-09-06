@@ -11,7 +11,7 @@ This document captures the current technical design for OpenGold based on the te
 OpenGold is intended to be a modern, open-source reimplementation of the SSI Gold Box engine that:
 
 - uses user-supplied original game files at runtime
-- preserves original game rules, progression, and content behavior as closely as practical
+- preserves original progression and content behavior while using the selected combat rules module
 - replaces the original interface with a modern desktop UI
 - starts with Pool of Radiance, but is architected to support additional Gold Box titles later
 
@@ -92,6 +92,8 @@ OpenGold should be implemented as a small set of clearly separated modules:
 ```text
 src/
   OpenGold.Core/
+  OpenGold.Rules/
+  OpenGold.Rules.Srd5/
   OpenGold.Formats/
   OpenGold.Game.PoolOfRadiance/
   OpenGold.Godot/
@@ -124,15 +126,22 @@ Responsible for engine behavior implemented by OpenGold:
 
 - world state
 - party state
-- combat loop
-- movement and targeting
-- AD&D rule execution as used by the game
-- status conditions
+- campaign-to-combat adaptation through `OpenGold.Rules`
+- exploration movement and encounter setup
 - inventory/equipment logic
 - event dispatch
 - compatibility behaviors
 
 This layer must have no dependency on Godot. It should be runnable directly under the native test suite.
+
+### `OpenGold.Rules` and `OpenGold.Rules.Srd5`
+
+The C++20 rules interface provides encounter creation, immutable display
+snapshots, legal commands, validated submission, outcomes and versioned
+checkpoints. The SRD 5.2.1 implementation owns combat turns, movement/targeting,
+attacks, spell resources, HP, dice and serialization. It depends on the interface
+and standard library, not Godot, ECL or original creature file formats. The
+application injects a module into the campaign adapter. See [RULES.md](RULES.md).
 
 ### `OpenGold.Game.PoolOfRadiance`
 
@@ -314,23 +323,26 @@ This is preferable to rewriting campaign progression as hand-authored C/C++ scen
 
 ## 11. Rules and Compatibility
 
-OpenGold should preserve the original decision-making model wherever practical:
+The approved baseline (2026-09-06) is **SRD 5.2.1**, using standard turns and
+spell slots. Open5E is a content source, not a rules engine. A versioned offline
+snapshot and curated profiles avoid a runtime API dependency. The SRD module
+replaces the earlier plan to reconstruct original AD&D attack calculations,
+initiative, spell memorization and class restrictions.
 
-- THAC0 and descending AC
-- spell memorization behavior
-- movement and initiative timing
-- spell interruption
-- class and race restrictions
-- monster statistics
-- encounter composition
-- treasure and reward behavior
-- quest and progression flags
+Campaign adapters preserve original encounter identities/counts and script-visible
+results. They explicitly select converted combat definitions without rewriting
+raw `CreatureCatalog` data. Original maps, dialogue, quest flags and progression
+remain reverse-engineering targets. Original tactical geometry is pending; the
+first combat milestone uses an approved authored arena and fixed party.
 
-The guiding rule is:
+The UI and demonstration AI submit commands offered by the selected rules
+module. They do not calculate hit chances, damage or resource costs. Saves bind
+to module and content identities; unknown definitions and incompatible saves
+fail explicitly. Replacement currently occurs at C++ composition/build time,
+not through a dynamic plugin ABI. The demo UI knows its presented action verbs.
 
-> modernize how the player interacts with the game, not what the game decides
-
-Where exact behavior is unclear, the project should document compatibility assumptions rather than silently inventing new rules.
+Document unimplemented SRD mechanics and conversion choices in [RULES.md](RULES.md).
+The first playable subset is not a claim of full SRD or campaign compatibility.
 
 ## 12. Testing Strategy
 

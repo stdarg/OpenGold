@@ -46,6 +46,8 @@ struct ImageDecodeResult {
     std::span<const std::uint8_t> dax,
     std::uint8_t record_id,
     std::uint8_t frame_index = 0);
+[[nodiscard]] ImageDecodeResult decode_ega_combat_icon(
+    std::span<const std::uint8_t> dax, std::uint8_t record_id, std::uint8_t frame_index = 0);
 
 } // namespace opengold
 

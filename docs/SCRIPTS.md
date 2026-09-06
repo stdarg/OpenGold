@@ -2,7 +2,7 @@
 
 Status: the native runtime now includes the PoR research corrections described
 below. It executes VM operations and exposes opt-in, resumable engine requests.
-Combat, world-state mapping, and a Godot campaign scheduler still need concrete
+General encounter integration, world-state mapping, and a Godot campaign scheduler still need concrete
 host implementations. The map demo does not execute cell events. The isolated
 [C++/Godot Rolf tour](ROLF.md) now runs the original welcome through farewell
 using a small concrete host; it does not yet schedule campaign events.
@@ -196,7 +196,7 @@ validate world mutations before committing and keep VM/world state synchronized.
 
 ## Validation
 
-`build.cmd` runs all four native suites. The ECL suite tests corrected indexing,
+`build.cmd` runs all five native suites. The ECL suite tests corrected indexing,
 condition flags, division, RNG bounds/reproducibility, embedded writable tables,
 string references and writes, input validation, host reply atomicity, transitions,
 limits, malformed records and independent ownership. Godot's
@@ -209,6 +209,14 @@ published monster/count/icon sequence, supplies a **mock combat result**, verifi
 flag `0x4ACA = 255` and counter `0x4ABB = 1`, then revisits and verifies that the
 encounter is not repeated. This validates original bytecode and continuation,
 not combat gameplay. No original game data is checked into the tests.
+
+The separate `opengold_rules_tests` suite now runs that same installed event
+through **actual SRD 5.2.1 combat**, preserving its two monster/count/icon groups,
+returning the real victory/defeat and defeated count, and checking the original
+flags and revisit behavior. The native Godot combat scene exposes this isolated
+adapter with a fixed party and approved authored arena. See [RULES.md](RULES.md)
+for exact mapping and limitations; original arena loading, complete encounter
+presentation, loot and campaign persistence remain pending.
 
 Static inspection still reports seven diagnostics in six programs. Each comes
 from a possible indexed-jump fallthrough into embedded table data; the audit
@@ -265,8 +273,9 @@ claim campaign transitions or persistence.
 Keep the installed `ECL2.DAX:20` event-1 regression as a reference while replacing
 its mocked services with real implementations. Check creature IDs, counts, icons,
 combat inputs, the actual result and loot, then verify `0x4ACA` and `0x4ABB` and
-the second visit. Its current mock-combat pass is a bytecode-flow milestone;
-closing the combat gap requires the real encounter and resulting world state.
+the second visit. The mock-combat pass remains a bytecode-flow milestone. A
+separate real-combat pass now verifies result-dependent continuation and in-memory
+revisit state; loot, campaign persistence and original battlefield loading remain.
 
 ### 4. Resolve uncertain command behavior with isolated experiments
 

@@ -27,6 +27,19 @@ int main()
     assert(decoded.image.width == 16 && decoded.image.height == 1 && decoded.image.rgba.size() == 64);
     assert(decoded.image.rgba[3] == 255 && decoded.image.rgba[63] == 0);
 
+    // CPIC uses one 17-byte header for every pose, unlike SPRIT records.
+    std::vector<std::uint8_t> cpic{9,0,4,0,0,0,0,25,0,26,0,24};
+    cpic.resize(12+25,0);
+    cpic[12]=1; cpic[14]=2; cpic[20]=1;
+    cpic[29]=0x08; cpic[30]=0xd1;
+    const auto icon=opengold::decode_ega_combat_icon(cpic,4);
+    assert(icon && icon.image.width==16 && icon.image.height==1);
+    assert(icon.image.rgba[3]==0 && icon.image.rgba[4]==0 && icon.image.rgba[7]==255);
+    assert(icon.image.rgba[8]==255 && icon.image.rgba[9]==85 && icon.image.rgba[10]==255);
+    assert(!opengold::decode_ega_combat_icon(cpic,4,1));
+    cpic.pop_back();
+    assert(!opengold::decode_ega_combat_icon(cpic,4));
+
     if (const char *game_dir = std::getenv("OPENGOLD_GAME_DIR")) {
         std::ifstream input(std::filesystem::path(game_dir) / "SPRIT1.DAX", std::ios::binary);
         const std::vector<std::uint8_t> installed{

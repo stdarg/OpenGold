@@ -13,7 +13,13 @@ if(MSVC)
 endif()
 
 option(OPENGOLD_BUILD_TESTS "Build the native test suite" ${BUILD_TESTING})
-option(OPENGOLD_BUILD_GODOT "Build the C++ Godot tour scene" OFF)
+option(OPENGOLD_BUILD_GODOT "Build the C++ Godot tour and combat scenes" OFF)
+
+add_library(opengold_rules STATIC src/OpenGold.Rules/src/rules.cpp)
+target_include_directories(opengold_rules PUBLIC src/OpenGold.Rules/include)
+add_library(opengold_rules_srd5 STATIC src/OpenGold.Rules.Srd5/src/srd5.cpp)
+target_include_directories(opengold_rules_srd5 PUBLIC src/OpenGold.Rules.Srd5/include)
+target_link_libraries(opengold_rules_srd5 PUBLIC opengold_rules)
 
 add_library(opengold_formats STATIC
     src/OpenGold.Formats/src/formats.cpp
@@ -35,6 +41,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/ecl_machine.cpp
     src/OpenGold.Core/src/por_effects.cpp
     src/OpenGold.Core/src/rolf_tour.cpp
+    src/OpenGold.Core/src/combat_demo.cpp
 )
 
 target_include_directories(opengold_core
@@ -45,6 +52,7 @@ target_include_directories(opengold_core
 target_link_libraries(opengold_core
     PUBLIC
         opengold_formats
+        opengold_rules
 )
 
 if(OPENGOLD_BUILD_TESTS)
@@ -63,6 +71,10 @@ if(OPENGOLD_BUILD_TESTS)
     add_executable(opengold_tour_tests tests/tour_tests.cpp)
     target_link_libraries(opengold_tour_tests PRIVATE opengold_core)
     add_test(NAME opengold_tour_tests COMMAND opengold_tour_tests)
+    add_executable(opengold_rules_tests tests/rules_tests.cpp)
+    target_link_libraries(opengold_rules_tests PRIVATE opengold_rules_srd5 opengold_core)
+    target_compile_definitions(opengold_rules_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_rules_tests COMMAND opengold_rules_tests)
 endif()
 
 add_executable(opengold_creatures tools/creatures.cpp)
@@ -73,6 +85,6 @@ add_executable(opengold_scripts tools/scripts.cpp)
 target_link_libraries(opengold_scripts PRIVATE opengold_core)
 
 if(OPENGOLD_BUILD_GODOT)
-    set_target_properties(opengold_core opengold_formats PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(opengold_core opengold_formats opengold_rules opengold_rules_srd5 PROPERTIES POSITION_INDEPENDENT_CODE ON)
     add_subdirectory(src/OpenGold.Godot)
 endif()

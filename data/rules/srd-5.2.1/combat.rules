@@ -1,0 +1,12 @@
+OPENGOLD_SRD5 1 srd-5.2.1-demo.1
+# creature key AC HP initiative speed melee_bonus melee_count melee_sides melee_modifier ranged_bonus ranged_count ranged_sides ranged_modifier range long_range second_winds spell_slots casting_bonus level spell_mask
+# spell_mask: 1=Fire Bolt, 2=Cure Wounds, 4=Magic Missile.
+creature bandit 12 11 1 30 3 1 6 1 3 1 8 1 80 320 0 0 0 1 0
+creature slums-orc 13 12 1 30 4 1 8 2 3 1 6 1 80 320 0 0 0 1 0
+creature vanguard 17 28 1 30 5 1 8 3 3 1 6 1 80 320 2 0 0 3 0
+creature scout 14 22 3 30 5 1 6 3 5 1 8 3 150 600 0 0 0 3 0
+creature adept 12 18 2 30 2 1 6 0 4 1 8 2 80 320 0 2 5 3 5
+creature healer 16 24 0 30 4 1 8 2 2 1 8 0 80 320 0 2 5 3 2
+# Profiles are deliberately limited fixtures, not complete player class sheets.
+# Bandit weapon names/stats are the SRD Scimitar and Light Crossbow.
+# Slums orcs and party profiles are authored conversions; no original CHA stats are treated as 5e stats.

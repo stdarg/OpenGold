@@ -17,6 +17,21 @@ review-rolf.cmd
 
 See [build prerequisites, controls and current limits](docs/ROLF.md).
 
+## Turn-based combat
+
+The first replaceable C++ rules module uses **SRD 5.2.1** with a native Godot
+combat scene, an offline curated rules pack, and a fixed party. Run from CMD:
+
+```cmd
+build-rolf.cmd
+review-combat.cmd
+```
+
+Training works without original files. **Slums event** runs the original four-orc
+encounter through actual combat and returns its result to ECL. The arena is
+authored; original orc icons and dialogue load from your installed game.
+See [controls, library boundaries, supported rules, and remaining work](docs/RULES.md).
+
 ## Native monster/NPC statistics
 
 `opengold::por::CreatureCatalog` loads all original Pool of Radiance monster/NPC
