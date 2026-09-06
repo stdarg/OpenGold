@@ -152,15 +152,38 @@ and world-state changes, then explicitly starts slot 4. It must not resume the
 old script after a transition. Program resolution must use the current resource
 bank; a numeric script ID alone is insufficient.
 
-| Host opcodes (hex) | Service the application must provide |
-| --- | --- |
-| 0A, 0B, 0C, 0D, 1C, 36 | Character selection, creature loading, encounter presentation/approach, encounter cleanup, recruitment. |
-| 0E, 31, 37 | Picture/sprite presentation and wall-art loading. |
-| 1D, 1E, 22, 23 | Party calculations and surprise resolution, including required output writes. |
-| 20, 21 | Script replacement and map/resource loading. |
-| 24, 27, 28, 29, 2E, 32 | Combat/shop/temple routing, treasure, robbery, encounter menu, damage, inventory search. |
-| 2D | Recognized services 2C90, 8000, 8001, BA03, C018, C01E, interpreted by the host. |
-| 38, 39, 3A, 3C | Training/win/camp programs, character choice, pacing, rune display. |
+All 26 commands below have request/continuation support. Their concrete game
+services are still outstanding; a registered capability must supply the behavior
+and state changes described here.
+
+| Opcode (hex) | Command | Host responsibility |
+| --- | --- | --- |
+| 0A | LOAD CHARACTER | Select the character/monster and expose its live fields through mapped reads/writes. |
+| 0B | LOAD MONSTER | Resolve the creature bank and create the requested group, retaining separate combat-icon selection. |
+| 0C | SETUP MONSTER | Set up encounter presentation and resolve the visible distance. |
+| 0D | APPROACH | Advance the presented encounter toward the party. |
+| 0E | PICTURE | Display the selected picture/composite/animation, or restore the map view. |
+| 1C | CLEAR MONSTERS | Apply encounter-flag and treasure cleanup; do not assume this deletes every creature. |
+| 1D | PARTY STRENGTH | Calculate and write the party-strength result. |
+| 1E | CHECK PARTY | Query the requested attribute/effect and supply all four output values. |
+| 20 | NEW ECL | Resolve and supply the replacement program, update resource context, and schedule its initial entry. |
+| 21 | LOAD FILES | Load the requested map/resources and refresh the view without implicitly replacing ECL. |
+| 22 | PARTY SURPRISE | Initialize party surprise modifiers from the real party. |
+| 23 | SURPRISE | Resolve surprise and publish the script-visible result. |
+| 24 | COMBAT | Route to combat, shop, or temple according to mapped state; return the resulting state changes. |
+| 27 | TREASURE | Accumulate the requested money/items for the appropriate encounter/service. |
+| 28 | ROB | Apply money and inventory losses to the selected targets. |
+| 29 | ENCOUNTER MENU | Run encounter choices and monster responses; write the resolution code. |
+| 2D | CALL | Interpret recognized services 2C90, 8000, 8001, BA03, C018 and C01E; never invoke a native pointer. |
+| 2E | DAMAGE | Resolve attacks, saving throws, HP changes and resulting party status. |
+| 31 | SPRITE OFF | Remove the encounter sprite presentation. |
+| 32 | FIND ITEM | Search actual party inventory and return the comparison flags. |
+| 36 | ADD NPC | Recruit the requested NPC with the correct live state and allegiance. |
+| 37 | LOAD PIECES | Load the selected wall artwork; retain unresolved operands for verification. |
+| 38 | PROGRAM | Dispatch training, victory and camp services. |
+| 39 | WHO | Present character selection and change the selected character. |
+| 3A | DELAY | Provide presentation pacing without blocking the game update loop. |
+| 3C | PROTECTION | Display the requested rune text through the appropriate presentation service. |
 
 The core still lacks a live mapping between engine fields and selected creatures,
 party position, time, and inventory. In particular, the character-name address
@@ -190,6 +213,86 @@ from a possible indexed-jump fallthrough into embedded table data; the audit
 lists their PCs. The inspector retains those paths until range analysis can
 prove them impossible. Full campaign execution, original-DOS differential traces,
 save/replay and map-event scheduling remain outstanding.
+
+## Plan for closing execution gaps
+
+Recorded September 5, 2026. The current 62-opcode table contains **34 core VM
+operations, 26 commands awaiting concrete host services, and 2 explicitly
+unsupported commands** (`0x1F` and `ECL CLOCK`). The 28 command-level gaps overlap
+with shared state, scheduling and persistence work; this is not a percentage of
+campaign completion. The command descriptions above and the
+[source audit](script-source-audit.md) distinguish implemented behavior from
+unverified compatibility details.
+
+### 1. Connect scripts to authoritative game state
+
+Build a shared PoR state adapter for the party, selected character, inventory,
+quest flags, map position/facing, encounter state and current resource banks.
+Route mapped reads and writes through checked accessors so changing script-visible
+HP updates the actual `CreatureInstance`, and changing position updates the world
+and its derived cell information. Define ownership and lifetime for scratch,
+area-local and persistent state; avoid independently writable VM/world copies.
+
+Acceptance: script and world reads observe the same state, selecting a different
+character changes the mapped view, and invalid writes do not partially mutate
+the world. Verify the relevant address mappings before enabling each service.
+
+### 2. Implement a concrete PorScriptHost in dependency order
+
+Reuse `EclMachine` requests, `MapCatalog`, `CreatureFactory` and existing art
+loaders. Enable each host capability only after its service is implemented.
+
+| Priority | Commands/services | Acceptance milestone |
+| --- | --- | --- |
+| 1 | LOAD FILES, LOAD PIECES, PICTURE, SPRITE OFF, DELAY, NEW ECL, and movement/redraw CALL services | An original noncombat map event runs in Godot with correct presentation, input and persistent revisit behavior. A transition resolves banks, replaces resources in the right order and discards stale old-map triggers. |
+| 2 | LOAD CHARACTER, WHO, LOAD MONSTER, ADD NPC | Select real characters and create/recruit independent instances through CreatureFactory. Creature identity, artwork and live HP remain distinct. |
+| 3 | CHECK PARTY, PARTY STRENGTH, FIND ITEM | Original events branch on actual party abilities, effects and possessions, with all documented outputs populated. |
+| 4 | SETUP MONSTER, APPROACH, CLEAR MONSTERS, PARTY SURPRISE, SURPRISE, ENCOUNTER MENU | Reproduce encounter presentation, choices and surprise up to the combat decision, including noncombat outcomes. |
+| 5 | COMBAT, DAMAGE, TREASURE, ROB, duel CALL services, shop/temple routing, PROGRAM and PROTECTION | Complete encounters and special services with real results, inventory/HP changes and persistent consequences. |
+
+The immediate next deliverable is **the state adapter plus a minimal map and
+presentation host**, demonstrated by an original noncombat event in Godot.
+Record its script/map IDs, initial state, choices, displayed output, state changes
+and revisit result. Build scheduling around the documented entry roles and
+verify movement, blocked moves and transitions for that event.
+
+### 3. Turn the Slums regression into a complete encounter
+
+Keep the installed `ECL2.DAX:20` event-1 regression as a reference while replacing
+its mocked services with real implementations. Check creature IDs, counts, icons,
+combat inputs, the actual result and loot, then verify `0x4ACA` and `0x4ABB` and
+the second visit. Its current mock-combat pass is a bytecode-flow milestone;
+closing the combat gap requires the real encounter and resulting world state.
+
+### 4. Resolve uncertain command behavior with isolated experiments
+
+Create minimal ECL fixtures for GETTABLE comparison flags, RANDOM's upper endpoint,
+conditional-skip quirks and runtime script writes. Run them in an isolated copy
+of the original DOS game and compare instruction addresses, operands, condition
+flags and memory changes with OpenGold. Use Companion's ECL-monitor for live
+script/flag observation and debugger breakpoints for instruction-level questions;
+the [audit](script-source-audit.md) links the tools and relevant handler ranges.
+Record the executable version and resource hashes with every observation.
+
+For RANDOM, inspect the bound conversion and generator as well as sampled outputs:
+failure to observe an endpoint does not prove it is impossible. Keep `0x1F` and
+ECL CLOCK explicit until evidence establishes an appropriate policy, and prioritize
+commands that block observed events. Do not count speculative decoding of embedded
+table bytes as evidence of a new command.
+
+### 5. Track closure and complete session persistence
+
+Track three milestones independently for each command: **implemented**, **tested
+with a synthetic script**, and **verified against an original event**. Record
+remaining side effects, service variants, evidence links and tests, plus the
+observed events each missing command blocks. A CALL service or one COMBAT route
+passing does not establish coverage of all its variants.
+
+After the first integrated event, add versioned snapshots for script state,
+private script bytes, RNG, resource context, world state and supported pending
+requests. Verify save/reload at permitted boundaries without repeating rewards,
+recruitment or other completed mutations. Preserve the console harness for
+regression tests while expanding Godot integration and original-event coverage.
 
 ## Full-engine design and remaining work
 
@@ -377,7 +480,7 @@ Godot node references inside the VM.
 | Monster setup and combat | Build encounter definitions, run combat, and return the validated result code. |
 | NPC recruitment, inventory, treasure, damage | Delegate to party/world rules, retaining script-visible results. |
 | Delay and time queries | Use the game clock, separating game-time advancement from presentation delay. |
-| Built-in `CALL` / program operations | Dispatch through an explicit, versioned table of implemented engine services. Unknown service IDs fault. |
+| Built-in `CALL` / program operations | Dispatch recognized services through an explicit, versioned table. Missing implementations of known services fault; unrecognized IDs retain the documented PoR no-op behavior. |
 
 `SAVE` and `SAVE TABLE` instruction names must not be confused with saving a game:
 their actual variable/table write semantics belong in the opcode specification.
