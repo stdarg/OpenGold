@@ -236,7 +236,9 @@ void RolfTourView::draw_scene()
     draw_rect(Rect2(r.position+Vector2(0,r.size.y*.49),Vector2(r.size.x,r.size.y*.51)),Color("585c55"));
     if (!session_) return;
     const auto& s=session_->snapshot();
-    const Vector2 camera(s.pose.x+.5,s.pose.y+.5), forward=direction[s.pose.facing], right(-forward.y,forward.x);
+    const Vector2 forward=direction[s.pose.facing], right(-forward.y,forward.x);
+    // Set the eye back within the occupied cell to leave room around nearby doors.
+    const Vector2 camera=Vector2(s.pose.x+.5,s.pose.y+.5)-forward*.25;
     struct Wall {Vector2 a,b;double depth;unsigned material,door,side;};
     std::vector<Wall> walls;
     const auto relative=[&](Vector2 p){const auto d=p-camera;return Vector2(d.dot(right),d.dot(forward));};
@@ -255,7 +257,10 @@ void RolfTourView::draw_scene()
         }
     }
     std::stable_sort(walls.begin(),walls.end(),[](const Wall& a,const Wall& b){return a.depth>b.depth;});
-    const auto project=[&](Vector2 p,double height){return r.position+Vector2(r.size.x*.5+p.x/p.y*r.size.x*.68,r.size.y*.49-height/p.y*r.size.x*.68);};
+    // A front wall is now 0.75 cells away. Fit its full height, including the
+    // door's lintel and threshold, even when the view becomes wide and shallow.
+    const double focal_length=std::min(r.size.x*.68,r.size.y*.60);
+    const auto project=[&](Vector2 p,double height){return r.position+Vector2(r.size.x*.5+p.x/p.y*focal_length,r.size.y*.49-height/p.y*focal_length);};
     const auto face=[&](Vector2 a,Vector2 b,double top,double bottom,Color color){
         const auto polygon=clipped({project(a,top),project(b,top),project(b,bottom),project(a,bottom)},r);
         if (polygon.size()>=3) draw_colored_polygon(polygon,color);
