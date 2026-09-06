@@ -280,6 +280,20 @@ void RolfTourView::draw_scene()
             const auto a=wall.a.lerp(wall.b,.22),b=wall.a.lerp(wall.b,.78);
             face(a,b,.30,-.5,Color("504137").darkened(std::min(.4,wall.depth*.06)));
             face(a,b,.04,.02,gold.darkened(.45));
+            // A brass knob on the right, slightly below the door's midpoint.
+            // Project it in the door plane so side views keep their perspective.
+            const auto knob=a.lerp(b,.83), along=(b-a).normalized();
+            for (unsigned layer=0;layer<2;++layer) {
+                const double radius=layer==0?.025:.018;
+                std::vector<Vector2> outline;
+                for (unsigned point=0;point<12;++point) {
+                    const double angle=point*6.283185307179586/12;
+                    outline.push_back(project(knob+along*(std::cos(angle)*radius),-.15+std::sin(angle)*radius));
+                }
+                const auto polygon=clipped(std::move(outline),r);
+                if (polygon.size()>=3) draw_colored_polygon(polygon,
+                    layer==0?Color("30261b"):gold.darkened(std::min(.4,wall.depth*.06)));
+            }
         }
     }
     if (s.sprite_frame>=0 && sprites_[s.sprite_frame].is_valid()) {
