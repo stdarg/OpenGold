@@ -65,7 +65,7 @@ text = "Replay tour"
 [node name="Footer" type="Label" parent="."]
 theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
 theme_override_font_sizes/font_size = 14
-text = "Original map & script • Schematic walls • Isolated tour; exploration events are inactive"
+text = "Original map, script & wall artwork • Isolated tour; exploration events are inactive"
 
 [node name="Footstep" type="AudioStreamPlayer" parent="."]
 volume_db = -12.0

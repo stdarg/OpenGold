@@ -4,6 +4,7 @@
 #include "opengold/ecl_machine.h"
 #include "opengold/map_catalog.h"
 #include "opengold/formats.h"
+#include "opengold/wall_art.h"
 #include <bitset>
 
 namespace opengold::por {
@@ -31,7 +32,8 @@ public:
     [[nodiscard]] static RolfTourSession load(const std::filesystem::path& directory);
     // Also accepts wholly synthetic resources for asset-free host tests.
     RolfTourSession(GeoMap map, std::shared_ptr<const EclProgram> program,
-                   std::array<opengold::Image, 3> sprites, std::uint32_t entry);
+                   std::array<opengold::Image, 3> sprites, std::uint32_t entry,
+                   WallArtSet wall_art = {});
     void restart();
     void advance(double seconds);
     bool continue_dialogue(std::uint64_t ticket);
@@ -39,11 +41,13 @@ public:
     [[nodiscard]] const TourSnapshot& snapshot() const noexcept { return snapshot_; }
     [[nodiscard]] const GeoMap& map() const noexcept { return map_; }
     [[nodiscard]] const auto& sprites() const noexcept { return sprites_; }
+    [[nodiscard]] const WallArtSet& wall_art() const noexcept { return wall_art_; }
     [[nodiscard]] std::uint16_t script_variable(std::uint16_t address) const { return machine_.variable(address); }
 private:
     GeoMap map_;
     std::shared_ptr<const EclProgram> program_;
     std::array<opengold::Image, 3> sprites_;
+    WallArtSet wall_art_;
     EclMachine machine_;
     std::uint32_t entry_;
     TourSnapshot snapshot_;

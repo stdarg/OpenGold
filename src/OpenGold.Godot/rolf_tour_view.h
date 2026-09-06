@@ -21,6 +21,8 @@ protected:
 private:
     std::optional<opengold::por::RolfTourSession> session_;
     std::array<godot::Ref<godot::ImageTexture>, 3> sprites_;
+    godot::Ref<godot::ImageTexture> wall_view_;
+    std::optional<opengold::por::PartyPose> rendered_pose_;
     godot::Ref<godot::AudioStreamWAV> footstep_;
     godot::Rect2 scene_rect_, map_rect_, dialogue_rect_;
     godot::String error_;

@@ -49,6 +49,35 @@ RolfTourSession RolfTourSession::load(const std::filesystem::path& directory)
     const auto maps = MapCatalog::load(directory);
     const auto map = maps.find({"GEO3.DAX", 0});
     if (!map) throw EclError("Rolf tour requires GEO3.DAX record 0");
+    // Explicit, verified Phlan profile. This does not implement general 127
+    // operand semantics or assume that every map shares its GEO/art record ID.
+    const auto pieces = program->instruction(0x9B11);
+    if (pieces.opcode != 55 || pieces.operands.size() != 3 ||
+        std::any_of(pieces.operands.begin(), pieces.operands.end(),
+            [](const auto& a) { return a.tag != 0 || a.value != 127; }))
+        throw EclError("Unsupported Phlan wall resource profile");
+    const auto archive = [&](const char* name) {
+        auto records = decode_dax_archive(read_archive(resolve_archive(directory, name)));
+        if (!records) throw EclError(std::string("Invalid wall archive ") + name);
+        return records;
+    };
+    const auto find_record = [](const DaxDecodeResult& records, unsigned id) -> const std::vector<std::uint8_t>& {
+        for (const auto& record : records.records) if (record.id == id) return record.bytes;
+        throw EclError("Missing required Phlan wall/tile record " + std::to_string(id));
+    };
+    const auto definitions = archive("WALLDEF3.DAX");
+    const auto shared = archive("8X8D1.DAX");
+    const auto local = archive("8X8D3.DAX");
+    WallTiles tiles(1); // Blank tile slot zero.
+    const auto append = [&](const std::vector<std::uint8_t>& record, unsigned expected_count) {
+        auto decoded = decode_wall_tiles(record);
+        if (!decoded || decoded->size() != expected_count) throw EclError("Unexpected Phlan wall tile layout");
+        tiles.insert(tiles.end(), decoded->begin(), decoded->end());
+    };
+    append(find_record(shared, 203), 45);
+    for (unsigned id : {101, 102, 103}) append(find_record(local, id), 70);
+    auto wall_art = decode_wall_art(find_record(definitions, 0), tiles);
+    if (!wall_art || wall_art->appearances.size() != 15) throw EclError("Invalid Phlan wall definitions");
     const auto bytes = read_archive(resolve_archive(directory, "SPRIT3.DAX"));
     std::array<opengold::Image, 3> sprites;
     for (std::uint8_t i = 0; i < sprites.size(); ++i) {
@@ -56,13 +85,13 @@ RolfTourSession RolfTourSession::load(const std::filesystem::path& directory)
         if (!result) throw EclError("Cannot decode Rolf encounter distance image " + std::to_string(i));
         sprites[i] = std::move(result.image);
     }
-    return RolfTourSession(map->get(), program, std::move(sprites), 0xB071);
+    return RolfTourSession(map->get(), program, std::move(sprites), 0xB071, std::move(*wall_art));
 }
 
 RolfTourSession::RolfTourSession(GeoMap map, std::shared_ptr<const EclProgram> program,
-    std::array<opengold::Image, 3> sprites, std::uint32_t entry)
+    std::array<opengold::Image, 3> sprites, std::uint32_t entry, WallArtSet wall_art)
     : map_(std::move(map)), program_(std::move(program)), sprites_(std::move(sprites)),
-      machine_(program_), entry_(entry)
+      wall_art_(std::move(wall_art)), machine_(program_), entry_(entry)
 {
     restart();
 }

@@ -26,6 +26,7 @@ add_library(opengold_formats STATIC
     src/OpenGold.Formats/src/pool_radiance.cpp
     src/OpenGold.Formats/src/geo_map.cpp
     src/OpenGold.Formats/src/ecl.cpp
+    src/OpenGold.Formats/src/wall_art.cpp
 )
 
 target_include_directories(opengold_formats
@@ -42,6 +43,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/por_effects.cpp
     src/OpenGold.Core/src/rolf_tour.cpp
     src/OpenGold.Core/src/combat_demo.cpp
+    src/OpenGold.Core/src/exploration_view.cpp
 )
 
 target_include_directories(opengold_core

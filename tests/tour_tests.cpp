@@ -1,4 +1,6 @@
 #include "opengold/rolf_tour.h"
+#include "opengold/exploration_view.h"
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 
@@ -18,6 +20,60 @@ void step_to_prompt(RolfTourSession& tour)
     for (int n = 0; n < 500 && tour.snapshot().phase == TourPhase::running; ++n) tour.advance(0.3);
     check(tour.snapshot().phase != TourPhase::faulted, tour.snapshot().diagnostic.c_str());
     check(tour.snapshot().phase != TourPhase::running, "Host must yield a prompt or finish");
+}
+void wall_art_tests()
+{
+    Bytes tiles_record(17 + 4 * 32, 0);
+    tiles_record[0] = 8; tiles_record[2] = 1; tiles_record[8] = 4;
+    std::fill_n(tiles_record.begin() + 17, 32, 0x11);
+    std::fill_n(tiles_record.begin() + 49, 32, 0x88);
+    std::fill_n(tiles_record.begin() + 113, 32, 0xdd);
+    auto tiles = decode_wall_tiles(tiles_record);
+    check(tiles && tiles->size() == 4 && (*tiles)[1][63] == 8, "Decode normal 8x8 tile frames");
+    tiles_record.pop_back();
+    check(!decode_wall_tiles(tiles_record), "Reject truncated tile record");
+    tiles_record.push_back(0xdd); tiles_record[2] = 2;
+    check(!decode_wall_tiles(tiles_record), "Reject unsupported tile dimensions");
+
+    Bytes definitions(156 * 2, 1);
+    std::fill(definitions.begin() + 156, definitions.end(), 2);
+    auto art = decode_wall_art(definitions, *tiles);
+    check(art && art->appearances.size() == 2, "Two appearances with ten views each");
+    const auto& face = art->appearances[0][6];
+    check(face.width == 56 && face.height == 64, "Near-facing art retains authored dimensions");
+    check(face.rgba[0] == 85 && face.rgba[3] == 255, "Wall palette index eight is opaque gray");
+    check(art->appearances[1][6].rgba[0] == 0 && art->appearances[1][6].rgba[3] == 255, "Black is opaque in wall art");
+    definitions[54] = 3; definitions[55] = 0;
+    const auto cutouts = decode_wall_art(definitions, *tiles);
+    check(cutouts && cutouts->appearances[0][6].rgba[3] == 0 &&
+        cutouts->appearances[0][6].rgba[8 * 4 + 3] == 0, "Pink and tile zero reveal the backdrop");
+    definitions[55] = 4;
+    check(!decode_wall_art(definitions, *tiles), "Out-of-bank tile reference rejected");
+    definitions.pop_back();
+    check(!decode_wall_art(definitions, *tiles), "Partial appearance rejected");
+
+    GeoMap map;
+    map.cells[8 * 16 + 8].walls[0] = 1;
+    map.cells[7 * 16 + 8].walls[2] = 2;
+    map.cells[7 * 16 + 8].walls[0] = 2;
+    auto view = compose_exploration_view(map, *art, 8, 8, 0);
+    check(view.width == 88 && view.height == 88 && view.rgba[(40 * 88 + 44) * 4] == 85,
+        "Near face hides farther opaque artwork");
+    check(view.rgba[(8 * 88 + 16) * 4] == 85 && view.rgba[(71 * 88 + 71) * 4] == 85,
+        "Full near face fits inside the frame");
+    view = compose_exploration_view(map, *art, 8, 7, 2);
+    check(view.rgba[(40 * 88 + 44) * 4] == 0, "Opposite edge keeps its distinct artwork");
+    for (unsigned facing = 0; facing < 4; ++facing) {
+        GeoMap rotated;
+        rotated.cells[8 * 16 + 8].walls[facing] = 1;
+        const auto image = compose_exploration_view(rotated, *art, 8, 8, facing);
+        check(image.rgba[(40 * 88 + 44) * 4] == 85, "Directional wall ID follows every facing");
+    }
+    GeoMap empty;
+    const auto background = compose_exploration_view(empty, *art, 0, 0, 3);
+    empty.cells[0].doors[3] = 1;
+    check(compose_exploration_view(empty, *art, 0, 0, 3).rgba == background.rgba,
+        "Door interaction bits do not fabricate door artwork at map boundaries");
 }
 void synthetic()
 {
@@ -74,6 +130,11 @@ void synthetic()
 void installed(const char* directory)
 {
     auto tour = RolfTourSession::load(directory);
+    check(tour.wall_art().appearances.size() == 15, "Load all fifteen Phlan appearances");
+    check(tour.wall_art().appearances[5][6].rgba != tour.wall_art().appearances[7][6].rgba,
+        "Distinct stone masonry patterns retained");
+    check(tour.map().at(4,3).walls[2] == 11 && tour.map().at(5,2).walls[1] == 12 &&
+        tour.map().at(11,2).walls[2] == 13, "Original landmark IDs select city hall, training hall and temple");
     unsigned prompts = 0;
     while (true) {
         step_to_prompt(tour);
@@ -83,6 +144,8 @@ void installed(const char* directory)
         std::cout << "Prompt " << prompts << " at " << s.pose.x << ',' << s.pose.y << " facing " << s.pose.facing << '\n';
         check(prompts <= 16, "Bounded installed tour");
         check(!s.dialogue.empty(), "Original dialogue shown at each pause");
+        const auto image = compose_exploration_view(tour.map(), tour.wall_art(), s.pose.x, s.pose.y, s.pose.facing);
+        check(image.rgba.size() == 88 * 88 * 4, "Every tour pause composes original artwork");
         check(!tour.explore(ExplorationCommand::forward), "No movement during original dialogue");
         check(tour.continue_dialogue(s.continue_ticket), "Original Continue accepted");
     }
@@ -95,7 +158,7 @@ void installed(const char* directory)
 int main()
 {
     try {
-        synthetic();
+        wall_art_tests(); synthetic();
         if (const auto directory = std::getenv("OPENGOLD_GAME_DIR")) installed(directory);
         std::cout << "Tour tests passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

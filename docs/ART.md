@@ -1,5 +1,9 @@
 # Original game artwork
 
+The native Rolf demo now displays original Phlan walls and doors. See
+[wall appearance IDs and resource assembly](phlan-wall-art.md) for the mapping,
+source records and validation limits.
+
 See [asset-source-audit.md](asset-source-audit.md) for the external source review:
 ECL has separate monster/icon references, encounter picture/sprite selection,
 and the available character-format notes describe assembled icon fields.

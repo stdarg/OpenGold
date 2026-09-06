@@ -1,4 +1,5 @@
 #include "rolf_tour_view.h"
+#include "opengold/exploration_view.h"
 #include <godot_cpp/classes/audio_stream_player.hpp>
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -29,33 +30,6 @@ const Color background(18/255.f,26/255.f,32/255.f), panel(28/255.f,39/255.f,46/2
 const std::array<Vector2,4> direction{Vector2(0,-1),Vector2(1,0),Vector2(0,1),Vector2(-1,0)};
 const std::array<const char*,4> direction_name{"North","East","South","West"};
 
-// Clip perspective wall quads to the view rectangle. Prevent close side walls
-// from drawing into the map or dialogue; no Godot nodes/resources are allocated.
-PackedVector2Array clipped(std::vector<Vector2> points, const Rect2& r)
-{
-    for (int side=0; side<4; ++side) {
-        if (points.empty()) break;
-        const bool x_axis=side<2;
-        const double limit=side==0?r.position.x:side==1?r.get_end().x:side==2?r.position.y:r.get_end().y;
-        const auto value=[&](Vector2 p){return x_axis?p.x:p.y;};
-        const auto inside=[&](Vector2 p){return side%2==0?value(p)>=limit:value(p)<=limit;};
-        std::vector<Vector2> output;
-        auto previous=points.back(); bool was_inside=inside(previous);
-        for (const auto point:points) {
-            const bool is_inside=inside(point);
-            if (is_inside!=was_inside) {
-                const auto fraction=(limit-value(previous))/(value(point)-value(previous));
-                output.push_back(previous+(point-previous)*fraction);
-            }
-            if (is_inside) output.push_back(point);
-            previous=point;was_inside=is_inside;
-        }
-        points=std::move(output);
-    }
-    PackedVector2Array result;
-    for (const auto point:points) result.push_back(point);
-    return result;
-}
 }
 
 void RolfTourView::_bind_methods() {}
@@ -144,6 +118,7 @@ void RolfTourView::restart()
                 sprites_[i]=ImageTexture::create_from_image(image);
             }
         }
+        rendered_pose_.reset();
         played_footsteps_=0; shown_revision_=0;
         session_->advance(0);
     } catch (const std::exception& error) {
@@ -197,6 +172,20 @@ void RolfTourView::_process(double delta)
 
 void RolfTourView::refresh()
 {
+    if (session_ && (!rendered_pose_ || *rendered_pose_ != session_->snapshot().pose)) {
+        try {
+            const auto pose = session_->snapshot().pose;
+            const auto source = compose_exploration_view(session_->map(), session_->wall_art(), pose.x, pose.y, pose.facing);
+            PackedByteArray pixels; pixels.resize(source.rgba.size());
+            std::copy(source.rgba.begin(), source.rgba.end(), pixels.ptrw());
+            const auto image = godot::Image::create_from_data(source.width, source.height, false, godot::Image::FORMAT_RGBA8, pixels);
+            if (wall_view_.is_null()) wall_view_ = ImageTexture::create_from_image(image);
+            else wall_view_->update(image);
+            rendered_pose_ = pose;
+        } catch (const std::exception& error) {
+            session_.reset(); error_ = String::utf8(error.what());
+        }
+    }
     const bool loaded=session_.has_value();
     const TourSnapshot s=loaded?session_->snapshot():TourSnapshot{};
     shown_revision_=s.revision;
@@ -231,77 +220,20 @@ void RolfTourView::_draw()
 
 void RolfTourView::draw_scene()
 {
-    const auto& r=scene_rect_;
-    draw_rect(r,Color("718b95"));
-    draw_rect(Rect2(r.position+Vector2(0,r.size.y*.49),Vector2(r.size.x,r.size.y*.51)),Color("585c55"));
-    if (!session_) return;
-    const auto& s=session_->snapshot();
-    const Vector2 forward=direction[s.pose.facing], right(-forward.y,forward.x);
-    // Set the eye back within the occupied cell to leave room around nearby doors.
-    const Vector2 camera=Vector2(s.pose.x+.5,s.pose.y+.5)-forward*.25;
-    struct Wall {Vector2 a,b;double depth;unsigned material,door,side;};
-    std::vector<Wall> walls;
-    const auto relative=[&](Vector2 p){const auto d=p-camera;return Vector2(d.dot(right),d.dot(forward));};
-    for (unsigned y=0;y<16;++y) for (unsigned x=0;x<16;++x) {
-        const auto& cell=session_->map().at(x,y);
-        const std::array<Vector2,4> corners{Vector2(x,y),Vector2(x+1,y),Vector2(x+1,y+1),Vector2(x,y+1)};
-        for (unsigned side=0;side<4;++side) {
-            if (!cell.walls[side]&&!cell.doors[side]) continue;
-            auto a=corners[side],b=corners[(side+1)%4];
-            if ((camera-(a+b)*.5).dot(direction[side])>=0) continue;
-            a=relative(a);b=relative(b);
-            if (std::max(a.y,b.y)<.06||std::min(a.y,b.y)>4.5) continue;
-            if (a.y<.06) a=a+(b-a)*((.06-a.y)/(b.y-a.y));
-            if (b.y<.06) b=b+(a-b)*((.06-b.y)/(a.y-b.y));
-            walls.push_back({a,b,(a.y+b.y)*.5,cell.walls[side],cell.doors[side],side});
-        }
-    }
-    std::stable_sort(walls.begin(),walls.end(),[](const Wall& a,const Wall& b){return a.depth>b.depth;});
-    // A front wall is now 0.75 cells away. Fit its full height, including the
-    // door's lintel and threshold, even when the view becomes wide and shallow.
-    const double focal_length=std::min(r.size.x*.68,r.size.y*.60);
-    const auto project=[&](Vector2 p,double height){return r.position+Vector2(r.size.x*.5+p.x/p.y*focal_length,r.size.y*.49-height/p.y*focal_length);};
-    const auto face=[&](Vector2 a,Vector2 b,double top,double bottom,Color color){
-        const auto polygon=clipped({project(a,top),project(b,top),project(b,bottom),project(a,bottom)},r);
-        if (polygon.size()>=3) draw_colored_polygon(polygon,color);
-    };
-    for (const auto& wall:walls) {
-        const std::array<Color,4> colors{Color("88938d"),Color("998b72"),Color("9b7561"),Color("a5a69a")};
-        auto color=colors[wall.material%colors.size()].darkened(std::min(.55,wall.depth*.075)+(wall.side%2?0.06:0.0));
-        face(wall.a,wall.b,.56,-.5,color);
-        // Schematic masonry guides; original WALLDEF perspective art is pending.
-        for (unsigned row=0;row<5;++row) {
-            const double h=.56-row*.22;
-            face(wall.a,wall.b,h,h-.012,color.darkened(.28));
-        }
-        const auto mid=wall.a+(wall.b-wall.a)*.5;
-        face(mid,mid+(wall.b-wall.a)*.012,.56,-.5,color.darkened(.22));
-        if (wall.door) {
-            const auto a=wall.a.lerp(wall.b,.22),b=wall.a.lerp(wall.b,.78);
-            face(a,b,.30,-.5,Color("504137").darkened(std::min(.4,wall.depth*.06)));
-            face(a,b,.04,.02,gold.darkened(.45));
-            // A brass knob on the right, slightly below the door's midpoint.
-            // Project it in the door plane so side views keep their perspective.
-            const auto knob=a.lerp(b,.83), along=(b-a).normalized();
-            for (unsigned layer=0;layer<2;++layer) {
-                const double radius=layer==0?.025:.018;
-                std::vector<Vector2> outline;
-                for (unsigned point=0;point<12;++point) {
-                    const double angle=point*6.283185307179586/12;
-                    outline.push_back(project(knob+along*(std::cos(angle)*radius),-.15+std::sin(angle)*radius));
-                }
-                const auto polygon=clipped(std::move(outline),r);
-                if (polygon.size()>=3) draw_colored_polygon(polygon,
-                    layer==0?Color("30261b"):gold.darkened(std::min(.4,wall.depth*.06)));
-            }
-        }
-    }
-    if (s.sprite_frame>=0 && sprites_[s.sprite_frame].is_valid()) {
-        const auto& image=session_->sprites()[s.sprite_frame];
-        // Preserve source pixels and padding; distance selects a stored image.
-        const double scale=std::max(1.0,std::floor(r.size.y/95.0));
-        const Vector2 size(image.width*scale,image.height*scale);
-        draw_texture_rect(sprites_[s.sprite_frame],Rect2(r.position+Vector2((r.size.x-size.x)*.5,r.size.y-size.y-8),size),false);
+    draw_rect(scene_rect_, panel);
+    if (!session_ || wall_view_.is_null()) return;
+    // Fit the complete original 88x88 view. DOS EGA pixels were displayed 6/5
+    // as tall as wide; letterboxing preserves art and door framing on resize.
+    const double scale = std::min(scene_rect_.size.x / 88.0, scene_rect_.size.y / 105.6);
+    const Vector2 pixel_scale(scale, scale * 1.2), size(88 * pixel_scale.x, 88 * pixel_scale.y);
+    const Rect2 view(scene_rect_.position + (scene_rect_.size - size) * .5, size);
+    draw_texture_rect(wall_view_, view, false);
+    const auto& state = session_->snapshot();
+    if (state.sprite_frame >= 0 && sprites_[state.sprite_frame].is_valid()) {
+        const auto& source = session_->sprites()[state.sprite_frame];
+        const Vector2 sprite_size(source.width * pixel_scale.x, source.height * pixel_scale.y);
+        draw_texture_rect(sprites_[state.sprite_frame],
+            Rect2(view.position + Vector2((view.size.x - sprite_size.x) * .5, view.size.y - sprite_size.y), sprite_size), false);
     }
 }
 

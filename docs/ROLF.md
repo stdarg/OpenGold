@@ -4,6 +4,8 @@ This native scene runs the original Rolf sequence through his farewell: eight
 dialogue pauses and 35 scripted redraws with the currently configured game files.
 It extends the welcome with the temple, docks, training hall, city hall, park and
 gate stops. Dialogue and route tables come from the original ECL at runtime.
+The first-person view now assembles Phlan's original wall, door, shop, temple,
+and waterfront pieces directly from your installed game files.
 
 ## Run from Windows CMD
 
@@ -73,6 +75,7 @@ policy. The loader checks the expected entry instructions before running.
 | Source/service | Implemented behavior |
 | --- | --- |
 | `GEO3.DAX:0` | Original 16 x 16 New Phlan geometry for both views. |
+| `WALLDEF3.DAX:0` and `8X8D` resources | All fifteen Phlan appearances, ten stored perspectives each; see [wall-art mapping](phlan-wall-art.md). |
 | `ECL3:0`, `0xB0AD` | SETUP MONSTER operands 12, 2, 9 select the provisional `SPRIT3.DAX:12` resource profile. |
 | APPROACH / SPRITE OFF / PICTURE 255 | Select stored far, medium and near images; clear the encounter image. |
 | `0xB0B9`, helper `0xAF1F` | Original introduction and a single Continue choice. Later text executes from the original program. |
@@ -82,10 +85,21 @@ policy. The loader checks the expected entry instructions before running.
 | DELAY | Nonblocking 0.22-second presentation pause; original timing is not verified. |
 | `0x4AC5` | Original script writes 1; replay explicitly resets the research session. |
 
-The first-person walls are schematic polygons derived from GEO edges. Original
-`8X8D` / `WALLDEF` perspective-piece assembly, exact backgrounds, sprite anchoring
-and original audio remain unimplemented. Resource-bank selection and this
-rendering have not been checked against a recorded DOS run. See
+The view selects artwork from directional GEO appearance IDs. Door interaction
+bits do not select a generic door overlay: wooden doors and their knobs are
+already in the original images. Opposite sides of an edge retain their own art.
+Native code assembles tiles, composites far-to-near on an 88 x 88 canvas, and
+updates a cached Godot texture when the party moves or turns. Godot fits the
+complete frame using nearest-neighbor sampling and 6:5 pixel-height correction;
+wide windows have side margins so nearby door tops and thresholds stay visible.
+
+The resource profile is explicit for Phlan, with a guard on the decoded
+`LOAD PIECES 127,127,127` instruction at `0x9B11`. It does not establish general
+127 semantics or select art for other maps. City Hall, training hall, and gateway
+captures were checked against the original-game screenshots and tour positions.
+The flat daytime sky/ground colors, indoor ceiling color and sprite anchoring
+remain presentation approximations; exact dynamic backgrounds, every distant
+occlusion case, and original audio are not yet verified. See
 [map findings](MAPS.md), [NPC art evidence](npc-art-identification.md), and the
 [published PC 1.3 ECL reference](https://gamefaqs.gamespot.com/c64/578753-pool-of-radiance/faqs/73869).
 
@@ -98,7 +112,10 @@ leave New Phlan, persist campaign state, or implement combat.
 `opengold_tour_tests` uses generated data to check mapped pose, nonblocking delay,
 sprite changes, text, input locks, stale/duplicate replies, replay, collision and
 unsupported services. With `OPENGOLD_GAME_DIR` set, it also runs the entire local
-original tour and checks its final script flag. No original text/assets are
+original tour and checks its final script flag, Phlan art resources and landmark
+IDs. Synthetic wall fixtures check tile bounds, normal EGA colors, transparency,
+all four facings, opposite-edge appearance selection, near-wall occlusion, frame
+placement and map boundaries. No original text/assets are
 embedded in the test fixtures.
 
 After building, check the actual Godot scene and input path:

@@ -5,8 +5,10 @@ interpreter, map-event dispatch, and gameplay integration.
 
 OpenGold can load Pool of Radiance's exploration maps and wall artwork from the
 original game installation. GEO map decoding and a top-down inspection demo are
-implemented. An initial standalone ECL interpreter is also available; wall artwork
-assembly, exploration movement, and full map-script integration remain future work.
+implemented. The native [Rolf tour](ROLF.md) now assembles and displays the
+original Phlan wall artwork and supports isolated inspection movement. A
+standalone ECL interpreter is also available; general area resource selection
+and full map-script integration remain future work.
 
 This document describes the implementation and planned extensions. Format details below come from
 the pinned Gold Box Explorer reference implementation and must be validated
@@ -110,6 +112,11 @@ rendered scene for visual inspection, omit `--headless` and append `-- --capture
 the screenshot is saved under ignored `user-data/map-inspector.png`.
 
 ## Wall artwork
+
+The Phlan profile is implemented in C++ and used by `review-rolf.cmd`. See
+[the fifteen appearance IDs, resources and verification](phlan-wall-art.md).
+The pipeline below describes the reusable format boundary and the remaining
+general area-selection work.
 
 Three sources cooperate to produce an area's first-person walls:
 

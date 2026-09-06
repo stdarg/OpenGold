@@ -7,7 +7,7 @@ and modern quality-of-life features.
 ## Rolf's tour
 
 Run the original welcome through Rolf's farewell in a C++/Godot scene, with his
-encounter sprite, a schematic first-person view, and a synchronized party map.
+encounter sprite, the original Phlan wall and door artwork, and a synchronized party map.
 From Windows CMD:
 
 ```cmd
