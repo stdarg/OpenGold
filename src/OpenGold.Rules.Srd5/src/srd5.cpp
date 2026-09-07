@@ -454,15 +454,15 @@ public:
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
         CharacterProfile result{data,d.hp,d.ac,"Level-one combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
         for(const auto& key:gear){
-            if(key=="shield")result.item_modifiers+="Shield: +2 AC.\n";
-            else if(key=="leather")result.item_modifiers+="Leather armor: AC becomes 11 + Dexterity modifier.\n";
-            else if(key=="chain_mail")result.item_modifiers+="Chain mail: AC becomes 16; speed -10 feet below Strength 13.\n";
-            else result.item_modifiers+=key+": melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier +2 proficiency; damage adds that ability modifier.\n";
+            if(key=="shield")result.item_modifiers+="Source: equipped Shield: +2 AC.\n";
+            else if(key=="leather")result.item_modifiers+="Source: equipped Leather armor and Dexterity score "+std::to_string(sheet.scores[1])+". AC becomes 11 + Dexterity modifier ("+std::to_string(sheet.modifiers[1])+").\n";
+            else if(key=="chain_mail")result.item_modifiers+="Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength "+std::to_string(sheet.scores[0])+").\n";
+            else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier +2 class proficiency; damage adds that ability modifier.\n";
         }
-        if(gear.empty())result.item_modifiers="No equipment modifiers. Unarmed attack uses Strength +2 proficiency; damage is 1 + Strength modifier (minimum 0).";
+        if(gear.empty())result.item_modifiers="No equipment modifiers. Source: unarmed strike rules and Strength score "+std::to_string(sheet.scores[0])+". Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).";
         result.spell_modifiers="No active spell modifiers. Persistent spell effects are not implemented.";
-        if(sheet.character_class=="Wizard")result.spell_modifiers="Fire Bolt attack: Intelligence modifier +2 proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
-        if(sheet.character_class=="Cleric")result.spell_modifiers="Cure Wounds healing: 2d8 + Wisdom modifier ("+std::to_string(d.casting-2)+").\n"+result.spell_modifiers;
+        if(sheet.character_class=="Wizard")result.spell_modifiers="Source: Fire Bolt and Wizard spellcasting, Intelligence score "+std::to_string(sheet.scores[3])+". Attack: Intelligence modifier +2 level-one proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
+        if(sheet.character_class=="Cleric")result.spell_modifiers="Source: Cure Wounds and Cleric spellcasting, Wisdom score "+std::to_string(sheet.scores[4])+". Healing: 2d8 + Wisdom modifier ("+std::to_string(d.casting-2)+").\n"+result.spell_modifiers;
         return result;
     }
 private: std::shared_ptr<const Content> content_;

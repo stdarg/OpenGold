@@ -32,7 +32,16 @@ void CharacterCreator::select(CreationField field,std::string_view id)
 void CharacterCreator::select_adjustment(unsigned index)
 {require_editable();if(index>=rules_->adjustments(draft_.background).size())throw std::runtime_error("Invalid score adjustment");draft_.adjustment=index;}
 void CharacterCreator::roll()
-{require_editable();draft_.rolls=rules_->roll(random_);draft_.rolled=true;draft_.assignment={0,1,2,3,4,5};}
+{require_editable();draft_.rolls=rules_->roll(random_);draft_.rolled=true;draft_.assignment.fill(6);}
+bool CharacterCreator::scores_assigned() const
+{return draft_.rolled&&std::all_of(draft_.assignment.begin(),draft_.assignment.end(),[](auto n){return n<6;});}
+void CharacterCreator::assign_roll(unsigned roll,unsigned ability)
+{
+    require_editable();if(!draft_.rolled||roll>=6||ability>=6)throw std::runtime_error("Invalid roll assignment");
+    const auto source=std::find(draft_.assignment.begin(),draft_.assignment.end(),roll);
+    if(source!=draft_.assignment.end())std::swap(*source,draft_.assignment[ability]);
+    else draft_.assignment[ability]=roll; // A displaced result returns to the unassigned rolls.
+}
 void CharacterCreator::swap_scores(unsigned first,unsigned second)
 {
     require_editable();if(!draft_.rolled||first>=6||second>=6)throw std::runtime_error("Invalid score swap");

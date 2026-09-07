@@ -152,7 +152,7 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 16
 
-[node name="Score0" type="Label" parent="."]
+[node name="Score0" type="Button" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="Ability1" type="Button" parent="."]
@@ -163,7 +163,7 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 16
 
-[node name="Score1" type="Label" parent="."]
+[node name="Score1" type="Button" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="Ability2" type="Button" parent="."]
@@ -174,7 +174,7 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 16
 
-[node name="Score2" type="Label" parent="."]
+[node name="Score2" type="Button" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="Ability3" type="Button" parent="."]
@@ -185,7 +185,7 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 16
 
-[node name="Score3" type="Label" parent="."]
+[node name="Score3" type="Button" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="Ability4" type="Button" parent="."]
@@ -196,7 +196,7 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 16
 
-[node name="Score4" type="Label" parent="."]
+[node name="Score4" type="Button" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="Ability5" type="Button" parent="."]
@@ -207,7 +207,7 @@ bbcode_enabled = true
 scroll_active = false
 theme_override_font_sizes/normal_font_size = 16
 
-[node name="Score5" type="Label" parent="."]
+[node name="Score5" type="Button" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="Part0" type="Label" parent="."]
@@ -312,7 +312,7 @@ theme_override_font_sizes/font_size = 14
 [node name="Palette15" type="Button" parent="."]
 
 [node name="DiceHeader" type="Label" parent="."]
-text = "Dice bank / drag"
+text = "Dice Rolls"
 horizontal_alignment = 0
 
 [node name="BaseHeader" type="Label" parent="."]

@@ -149,7 +149,9 @@ void CharacterCreationView::party_check()
     switch(party_check_stage_){
     case 0:
         creator_->select(rules::CreationField::race,"human");creator_->select(rules::CreationField::character_class,"fighter");
-        recommend_head();creator_->roll();creator_->name("Party check fighter");while(creator_->step()!=CreationStep::sheet)next();
+        recommend_head();creator_->roll();creator_->name("Party check fighter");
+        for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
+        while(creator_->step()!=CreationStep::sheet)next();
         press("AddParty");if(campaign_->state().slots[0]==0)throw std::runtime_error("Add party callback failed");
         press("PartyPanel/Recruit");if(!campaign_->state().slots[6])throw std::runtime_error("Recruit callback failed");
         press("PartyPanel/Remove");press("PartyPanel/Rejoin");

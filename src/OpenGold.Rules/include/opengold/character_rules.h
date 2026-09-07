@@ -19,7 +19,7 @@ struct ScoreAdjustment {
 struct CharacterDraft {
     std::string race, gender, character_class, alignment, background, name;
     std::array<AbilityRoll,6> rolls{};
-    // Each ability owns a unique rolled result, even if two totals are equal.
+    // Each assigned ability owns a unique result; 6 means not yet assigned.
     std::array<unsigned,6> assignment{0,1,2,3,4,5};
     unsigned adjustment{};
     bool rolled{};

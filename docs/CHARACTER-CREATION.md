@@ -21,11 +21,14 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 2. Select gender. Gender does not alter stats or restrict other choices.
 3. Select one of the twelve SRD classes.
 4. Select alignment.
-5. Roll attributes. All four dice appear, with the discarded lowest die marked.
-   Drag a result from the separate dice bank onto an attribute to assign it,
-   swapping its previous assignment. Clicking two attribute buttons also swaps
-   their results for keyboard access. **Reroll all six**
-   replaces the complete set and resets assignments; attempts are unlimited.
+5. The **Dice Rolls** area starts with six empty boxes to the right of the
+   abilities. Roll attributes to fill those boxes; all four dice appear, with
+   the discarded lowest die marked. Ability boxes remain empty until you drag
+   results into them. Assigned results leave their original boxes empty.
+   Dragging between filled ability boxes swaps their results. Dropping an
+   unassigned roll onto a filled ability returns the displaced result to the
+   right. All six abilities must be assigned before continuing. **Reroll all six**
+   replaces the complete set and empties ability boxes; attempts are unlimited.
    Choose one of the four SRD backgrounds here, then allocate its attribute
    bonuses (+2/+1 to different allowed abilities, or +1 to all three).
 6. Review maximum starting HP: maximum class Hit Die + Constitution modifier,
@@ -48,7 +51,10 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
     saving throws, Hit Dice, HP and inventory (initially empty). Saving throws
     include the class's level-one proficiency bonus where applicable.
     **Modifiers** opens a modal with ability, racial, class, background, equipped
-    item and spell details. Unimplemented effects are identified explicitly.
+    item and spell details, identifying the source of each applied modifier.
+    Score numbers are yellow for positive ability modifiers, red for negative
+    modifiers, and the normal text color for zero. Unimplemented effects are
+    identified explicitly.
     The party screen uses this same sheet for its selected member, including
     live HP, equipment and resources; roster entries show character names.
 

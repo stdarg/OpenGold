@@ -73,6 +73,11 @@ void CharacterCreationView::_ready()
         get_node<Control>(gs("Dice"+std::to_string(i)))->set_tooltip_text("Drag this rolled result onto an attribute to assign it.");
         for(const char* stem:{"Ability","Score","BonusScore","TotalScore"})
             get_node<Control>(gs(std::string(stem)+std::to_string(i)))->set_drag_forwarding(Callable(),callable_mp(this,&CharacterCreationView::can_drop_roll).bind(i),callable_mp(this,&CharacterCreationView::drop_roll).bind(i));
+        auto* score=get_node<Button>(gs("Score"+std::to_string(i)));
+        score->set_drag_forwarding(callable_mp(this,&CharacterCreationView::drag_roll).bind(i+6),callable_mp(this,&CharacterCreationView::can_drop_roll).bind(i),callable_mp(this,&CharacterCreationView::drop_roll).bind(i));
+        score->set_default_cursor_shape(Control::CURSOR_DRAG);
+        score->set_tooltip_text("Drop a roll here. Drag a filled box onto another ability to swap.");
+        score->add_theme_stylebox_override("normal",box(Color("10171c"),Color("687d88")));
     }
     get_node<Button>("Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("ModifiersModal/Close")->connect("pressed",callable_mp(this,&CharacterCreationView::close_modifiers));
@@ -122,6 +127,8 @@ void CharacterCreationView::layout()
     const double x=page_rect_.position.x,y=page_rect_.position.y,pw=page_rect_.size.x,ph=page_rect_.size.y;
     place("PageTitle",Rect2(x+20,y+18,pw-40,36));place("Instructions",Rect2(x+20,y+60,pw-40,48));
     place("Choices",Rect2(x+20,y+116,pw-40,ph-272));place("Description",Rect2(x+20,y+ph-140,pw-40,120));
+    get_node<ItemList>("Choices")->set_fixed_column_width((pw-160)/2);
+    get_node<ItemList>("Choices")->add_theme_constant_override("h_separation",32);
     place("BackgroundLabel",Rect2(x+20,y+118,106,32));place("Background",Rect2(x+126,y+114,pw-146,36));
     place("BonusLabel",Rect2(x+20,y+164,106,32));place("Bonus",Rect2(x+126,y+160,pw-146,36));
     place("Columns",Rect2(x+20,y+208,pw-40,24));
@@ -130,7 +137,7 @@ void CharacterCreationView::layout()
     for(int i=0;i<6;++i) {
         place(gs("Ability"+std::to_string(i)),Rect2(x+20,y+244+i*47,116,37));
         place(gs("Dice"+std::to_string(i)),Rect2(x+pw-184,y+244+i*47,164,37));
-        place(gs("Score"+std::to_string(i)),Rect2(x+144,y+248+i*47,50,37));
+        place(gs("Score"+std::to_string(i)),Rect2(x+152,y+244+i*47,100,37));
         place(gs("BonusScore"+std::to_string(i)),Rect2(x+198,y+248+i*47,48,37));
         place(gs("TotalScore"+std::to_string(i)),Rect2(x+250,y+248+i*47,50,37));
     }
@@ -217,11 +224,14 @@ void CharacterCreationView::refresh()
     show("Description",choosing||step==CreationStep::hit_points||step==CreationStep::sheet);
     show("Modifiers",step==CreationStep::sheet);
     for(const auto* n:{"BackgroundLabel","Background","BonusLabel","Bonus","Columns","DiceHeader","BaseHeader","BonusHeader","TotalHeader","Roll","SwapHint"})show(n,stats);
+    for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
     show("Name",step==CreationStep::name);
     for(const auto* n:{"HeadPrevious","HeadNext","PortraitHead","BodyPrevious","BodyNext","BodyLabel"})show(n,portrait);
     for(const auto* n:{"CombatHeadPrevious","CombatHeadNext","CombatHeadLabel","WeaponPrevious","WeaponNext","WeaponLabel","Size","ColorTitle","Color1Title","Color2Title","PaletteHint"})show(n,icon);
     for(int i=0;i<6;++i) {
         for(const auto& stem:{std::string("Ability"),std::string("Dice"),std::string("Score"),std::string("BonusScore"),std::string("TotalScore")})get_node<Control>(gs(stem+std::to_string(i)))->set_visible(stats);
+        get_node<Control>(gs("BonusScore"+std::to_string(i)))->hide();
+        get_node<Control>(gs("TotalScore"+std::to_string(i)))->hide();
         get_node<Control>(gs("Part"+std::to_string(i)))->set_visible(icon);
         for(int bank=0;bank<2;++bank)get_node<Control>(gs("Color"+std::to_string(bank)+"_"+std::to_string(i)))->set_visible(icon);
     }
@@ -235,7 +245,7 @@ void CharacterCreationView::refresh()
     show("Next",step!=CreationStep::sheet);
     if(campaign_)get_node<Button>("AddParty")->set_visible(step==CreationStep::sheet&&!added_to_party_);
     get_node<Button>("Next")->set_text(icon?"Show character sheet":"Next");
-    get_node<Button>("Next")->set_disabled((stats&&!d.rolled)||(step==CreationStep::name&&d.name.empty()));
+    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::name&&d.name.empty()));
     get_node<Label>("Status")->set_text(error_);
     std::string instructions;
     if(choosing) {
@@ -248,22 +258,22 @@ void CharacterCreationView::refresh()
         instructions=step==CreationStep::race?"Choose your race (called species in SRD 5.2.1).":"Select an option, then continue.";
     }
     if(stats) {
-        instructions="Drag a roll from the dice bank onto an attribute. Its previous roll swaps places; background bonuses stay put.";
+        instructions="Roll the dice, then drag each result into an empty ability box. Drag between filled ability boxes to swap.";
         auto* background=get_node<OptionButton>("Background");background->clear();
         const auto choices=creator_->rules().choices(CreationField::background);
         for(unsigned i=0;i<choices.size();++i){background->add_item(gs(choices[i].label));if(choices[i].id==d.background)background->select(i);}
         auto* bonus=get_node<OptionButton>("Bonus");bonus->clear();
         for(const auto& option:creator_->rules().adjustments(d.background))bonus->add_item(gs(option.label));bonus->select(d.adjustment);
         get_node<Button>("Roll")->set_text(d.rolled?"Reroll all six":"Roll all six");
-        get_node<Label>("SwapHint")->set_text(selected_score_<0?"Drag dice to an attribute, or select two attributes to swap.":gs(std::string("Swap ")+abilities[selected_score_]+" with another attribute."));
+        get_node<Label>("SwapHint")->set_text("Fill all six boxes to continue.\nBonuses apply on the sheet.");
     }
     std::optional<CharacterSheet> s;
     if(completed_)s=completed_->sheet();
-    else if(d.rolled)s=creator_->sheet();
+    else if(creator_->scores_assigned())s=creator_->sheet();
     if(stats)for(unsigned i=0;i<6;++i) {
         auto* b=get_node<Button>(gs("Ability"+std::to_string(i)));b->set_text(gs(std::string(selected_score_==i?"> ":"")+full_abilities[i]));b->set_disabled(!d.rolled);
-        std::string dice="--   --   --   --";
-        if(s) {
+        std::string dice;
+        if(d.rolled&&std::find(d.assignment.begin(),d.assignment.end(),i)==d.assignment.end()) {
             dice.clear();const auto& r=d.rolls[i];
             for(unsigned j=0;j<4;++j) {
                 if(j==r.discarded)dice+="[color=#bd8585][s]";
@@ -271,13 +281,13 @@ void CharacterCreationView::refresh()
             }
             dice+="= "+std::to_string(r.total());
         }
-        get_node<RichTextLabel>(gs("Dice"+std::to_string(i)))->set_text(gs(dice));
-        get_node<Label>(gs("Score"+std::to_string(i)))->set_text(s?gs(std::to_string(s->base[i])):String("--"));
+        get_node<RichTextLabel>(gs("Dice"+std::to_string(i)))->set_text(gs("[center]"+dice+"[/center]"));
+        get_node<Button>(gs("Score"+std::to_string(i)))->set_text(d.rolled&&d.assignment[i]<6?gs(std::to_string(d.rolls[d.assignment[i]].total())):String());
         get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(s?gs(signed_number(s->bonuses[i])):String("--"));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
     if(step==CreationStep::hit_points) {
-        instructions="At level 1, take the maximum class Hit Die and add your Constitution modifier.";
+        instructions="SRD 5.2.1 sets level-one HP to the maximum class Hit Die plus applicable modifiers. No HP roll is required.";
         get_node<RichTextLabel>("Description")->set_text(gs("[font_size=48]"+std::to_string(s->hit_points)+" HP[/font_size]\n\n"+s->hp_explanation+"\n\nHit Dice: 1d"+std::to_string(s->hit_die)+"\n\nThese values update if you change class, race, or Constitution."));
     }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
@@ -332,6 +342,10 @@ void CharacterCreationView::_draw()
     draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));
     for(const auto& rect:{page_rect_,preview_rect_}){draw_rect(rect,Color("1c272e"));draw_rect(rect,Color("405058"),false);}
     for(const auto& rect:{ready_rect_,action_rect_})draw_rect(rect,Color("10171c"));
+    if(creator_&&creator_->step()==CreationStep::attributes)for(unsigned i=0;i<6;++i){
+        const auto rect=get_node<Control>(gs("Dice"+std::to_string(i)))->get_rect();
+        draw_rect(rect,Color("10171c"));draw_rect(rect,Color("687d88"),false);
+    }
     {
         draw_rect(portrait_rect_,Color("10171c"));
         if(images_[0].is_valid())draw_texture_rect(images_[0],portrait_rect_,false);
@@ -413,17 +427,22 @@ void CharacterCreationView::capture_portrait_armor()
 }
 void CharacterCreationView::check_run()
 {
-    if(check_stage_==6&&drag_check_stage_<4){
-        const auto source=get_node<Control>("Dice0")->get_global_rect().get_center();
-        const auto target=get_node<Control>("Ability3")->get_global_rect().get_center();
-        if(drag_check_stage_==0||drag_check_stage_==2){Ref<InputEventMouseButton> event;event.instantiate();
-            const auto p=drag_check_stage_==0?source:target;event->set_position(p);event->set_global_position(p);
-            event->set_button_index(MouseButton::MOUSE_BUTTON_LEFT);event->set_pressed(drag_check_stage_==0);get_viewport()->push_input(event,true);
-        }else if(drag_check_stage_==1){Ref<InputEventMouseMotion> event;event.instantiate();
+    if(check_stage_==6&&drag_check_stage_<12){
+        const auto group=drag_check_stage_/4,phase=drag_check_stage_%4;
+        const auto source=get_node<Control>(group==0?"Dice0":group==1?"Dice1":"Score3")->get_global_rect().get_center();
+        const auto target=get_node<Control>(group==0?"Score3":"Score1")->get_global_rect().get_center();
+        if(phase==0||phase==2){Ref<InputEventMouseButton> event;event.instantiate();
+            const auto p=phase==0?source:target;event->set_position(p);event->set_global_position(p);
+            event->set_button_index(MouseButton::MOUSE_BUTTON_LEFT);event->set_pressed(phase==0);get_viewport()->push_input(event,true);
+        }else if(phase==1){Ref<InputEventMouseMotion> event;event.instantiate();
             event->set_position(target);event->set_global_position(target);event->set_relative(target-source);event->set_button_mask(MouseButtonMask::MOUSE_BUTTON_MASK_LEFT);get_viewport()->push_input(event,true);
         }else{
-            if(creator_->draft().assignment[3]!=0||creator_->draft().assignment[0]!=3)throw std::runtime_error("Mouse drag did not swap the selected roll into Intelligence");
+            const auto& assigned=creator_->draft().assignment;
+            if(group==0&&(assigned[3]!=0||assigned[0]!=6))throw std::runtime_error("Mouse drag did not fill only the target ability box");
+            if(group==1&&assigned[1]!=1)throw std::runtime_error("Second dice assignment failed");
+            if(group==2&&(assigned[1]!=0||assigned[3]!=1))throw std::runtime_error("Dragging between filled boxes failed to swap scores");
             if(can_drop_roll({},String("invalid"),0))throw std::runtime_error("Invalid drag data accepted");
+            if(group==2){for(unsigned i:{0u,2u,4u,5u}){Dictionary data;data["opengold_ability_roll"]=i==0?2:i==2?3:i;drop_roll({},data,i);}}
         }
         ++drag_check_stage_;return;
     }
@@ -450,6 +469,7 @@ void CharacterCreationView::check_run()
     // ItemList lays out refreshed entries on the next frame. Keep race and
     // gender clicks on separate idle turns, as a player would see them.
     if(check_stage_==0&&check_default_<8) {
+        if(check_default_==0)capture("character-race-columns.png");
         if(check_default_<5) {
             const auto& head=por::additional_portrait_heads()[check_default_*2+1];
             choose(CreationField::race,std::string(head.race).c_str());
@@ -504,8 +524,9 @@ void CharacterCreationView::check_run()
     case 1:choose(CreationField::gender,"female");press("Next");break;
     case 2:choose(CreationField::character_class,"fighter");press("Next");break;
     case 3:choose(CreationField::alignment,"neutral_good");press("Next");break;
-    case 4:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Unrolled scores accepted");press("Roll");break;
-    case 5:{const auto old=creator_->draft().rolls;press("Roll");if(old==creator_->draft().rolls)throw std::runtime_error("Reroll did not replace dice");
+    case 4:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Unrolled scores accepted");capture("character-empty-rolls.png");press("Roll");
+        if(!get_node<Button>("Next")->is_disabled()||!get_node<Button>("Score0")->get_text().is_empty())throw std::runtime_error("Dice were automatically assigned");break;
+    case 5:{capture("character-unassigned-rolls.png");const auto old=creator_->draft().rolls;press("Roll");if(old==creator_->draft().rolls)throw std::runtime_error("Reroll did not replace dice");
         get_node<OptionButton>("Background")->emit_signal("item_selected",3);get_node<OptionButton>("Bonus")->emit_signal("item_selected",1);break;}
     case 6:{const auto old=creator_->draft().assignment;press("Ability0");press("Ability2");if(creator_->draft().assignment[0]!=old[2])throw std::runtime_error("UI swap failed");break;}
     case 7:capture("character-attributes.png");press("Next");break;

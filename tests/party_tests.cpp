@@ -18,6 +18,7 @@ Character character(std::string klass="fighter",std::string name="Ada")
     CharacterCreator creator(srd5::character_rules(),42);
     creator.select(CreationField::race,"human");creator.select(CreationField::character_class,klass);
     creator.roll();creator.name(std::move(name));
+    for(unsigned i=0;i<6;++i)creator.assign_roll(i,i);
     while(creator.step()!=CreationStep::sheet)creator.next();return creator.create_character();
 }
 por::Equipment item(unsigned type,unsigned price=10)

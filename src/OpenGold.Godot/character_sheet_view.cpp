@@ -18,11 +18,14 @@ struct DeleteNode {void operator()(Node* node) const {memdelete(node);}};
 }
 Variant CharacterCreationView::drag_roll(Vector2,int index)
 {
-    if(!creator_||party_open_||creator_->step()!=CreationStep::attributes||!creator_->draft().rolled||index<0||index>=6)return {};
+    if(!creator_||party_open_||creator_->step()!=CreationStep::attributes||!creator_->draft().rolled||index<0||index>=12)return {};
+    const auto& d=creator_->draft();
+    const unsigned roll=index<6?index:d.assignment[index-6];
+    if(roll>=6||(index<6&&std::find(d.assignment.begin(),d.assignment.end(),roll)!=d.assignment.end()))return {};
     auto preview=std::unique_ptr<Label,DeleteNode>(memnew(Label));
-    preview->set_text(gs("Roll "+std::to_string(index+1)+": "+std::to_string(creator_->draft().rolls[index].total())));
-    get_node<Control>(gs("Dice"+std::to_string(index)))->set_drag_preview(preview.get());preview.release();
-    Dictionary data;data["opengold_ability_roll"]=index;return data;
+    preview->set_text(gs(std::to_string(d.rolls[roll].total())));
+    get_node<Control>(gs(std::string(index<6?"Dice":"Score")+std::to_string(index%6)))->set_drag_preview(preview.get());preview.release();
+    Dictionary data;data["opengold_ability_roll"]=roll;return data;
 }
 bool CharacterCreationView::can_drop_roll(Vector2,const Variant& data,int index)
 {
@@ -34,9 +37,7 @@ void CharacterCreationView::drop_roll(Vector2 position,const Variant& data,int i
 {
     if(!can_drop_roll(position,data,index))return;
     const Dictionary payload=data;const unsigned roll=int(payload["opengold_ability_roll"]);
-    perform([&]{const auto& assignments=creator_->draft().assignment;
-        const auto source=std::find(assignments.begin(),assignments.end(),roll)-assignments.begin();
-        creator_->swap_scores(source,index);selected_score_=-1;});
+    perform([&]{creator_->assign_roll(roll,index);selected_score_=-1;});
 }
 String CharacterCreationView::sheet_text(const Character& character,const PartyMember* member) const
 {
@@ -45,7 +46,11 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     text+="[b]HP "+std::to_string(member?member->vitals.hit_points:s.hit_points)+" / "+std::to_string(s.hit_points)+"[/b]   Hit Dice: 1d"+std::to_string(s.hit_die);
     if(member)text+="   Gold "+std::to_string(member->wealth[3])+(member->vitals.dead?"   Dead":"");
     text+="\n\n[table=3][cell][b]Attribute     [/b][/cell][cell][b]Score     [/b][/cell][cell][b]Saving throw[/b][/cell]";
-    for(unsigned i=0;i<6;++i)text+="[cell]"+std::string(names[i])+"[/cell][cell]"+std::to_string(s.scores[i])+"[/cell][cell]"+number(s.saving_throws[i])+(s.save_proficiencies[i]?" *":"")+"[/cell]";
+    for(unsigned i=0;i<6;++i){
+        const auto score=std::to_string(s.scores[i]);
+        const auto colored=s.modifiers[i]==0?score:"[color="+std::string(s.modifiers[i]>0?"#f3d55b":"#f08080")+"]"+score+"[/color]";
+        text+="[cell]"+std::string(names[i])+"[/cell][cell]"+colored+"[/cell][cell]"+number(s.saving_throws[i])+(s.save_proficiencies[i]?" *":"")+"[/cell]";
+    }
     text+="[/table]\n* Proficient saving throw";
     if(member){
         try{const auto p=campaign_->profile(member->id);text+="\n\nAC "+std::to_string(p.armor_class)+"   Speed "+std::to_string(p.movement_feet)+" ft";}
@@ -64,7 +69,7 @@ void CharacterCreationView::show_modifiers()
     if(!member&&!completed_)return;
     const auto& s=member?member->character.sheet():completed_->sheet();
     std::string text="[b]Ability modifiers[/b]\n";
-    for(unsigned i=0;i<6;++i)text+=std::string(names[i])+": "+number(s.modifiers[i])+"\n";
+    for(unsigned i=0;i<6;++i)text+=std::string(names[i])+": "+number(s.modifiers[i])+"\nSource: "+names[i]+" score "+std::to_string(s.scores[i])+" (rolled "+std::to_string(s.base[i])+", "+s.background+" "+number(s.bonuses[i])+"). (Score - 10) / 2, rounded down.\n\n";
     text+="\n[b]Race / "+s.race+"[/b]\n"+s.racial_modifiers;
     text+="\n\n[b]Class / "+s.character_class+"[/b]\n"+s.class_modifiers;
     text+="\n\n[b]Background / "+s.background+"[/b]\n"+s.background_modifiers;

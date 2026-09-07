@@ -125,10 +125,10 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     const auto trained=saves.at(c-classes.begin());
     for(unsigned i=0;i<6;++i){s.save_proficiencies[i]=i==trained[0]||i==trained[1];
         s.saving_throws[i]=s.modifiers[i]+(s.save_proficiencies[i]?2:0);}
-    s.class_modifiers="Saving throws: +2 proficiency to "+ability_names[trained[0]]+" and "+ability_names[trained[1]]+".\nStarting HP: maximum d"+std::to_string(s.hit_die)+" + Constitution modifier.";
-    s.racial_modifiers=d.race=="dwarf"?"Dwarven Toughness: +1 maximum HP at level 1.":d.race=="goliath"?"Speed: 35 feet (5 feet above the default).":"No numeric racial modifiers are currently applied.";
+    s.class_modifiers="Source: "+s.character_class+" class, level 1. Saving-throw training adds +2 proficiency to "+ability_names[trained[0]]+" and "+ability_names[trained[1]]+".\nSource: "+s.character_class+" Hit Die and Constitution score "+std::to_string(s.scores[2])+". Starting HP: maximum d"+std::to_string(s.hit_die)+" + Constitution modifier ("+std::to_string(s.modifiers[2])+").";
+    s.racial_modifiers=d.race=="dwarf"?"Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1.":d.race=="goliath"?"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).":"No numeric racial modifiers are currently applied.";
     s.racial_modifiers+="\nOther racial traits and conditional effects are not implemented.";
-    s.background_modifiers=options[d.adjustment].label+". Other background features are not implemented.";
+    s.background_modifiers="Source: "+s.background+" background, selected ability increases. "+options[d.adjustment].label+". Other background features are not implemented.";
     s.hit_points=s.hit_die+s.modifiers[2]+racial_hp;
     s.hp_explanation=std::to_string(s.hit_die)+" (maximum d"+std::to_string(s.hit_die)+") "+
         (s.modifiers[2]<0?"- ":"+ ")+std::to_string(std::abs(s.modifiers[2]))+" (Constitution)"+

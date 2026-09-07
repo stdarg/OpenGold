@@ -15,6 +15,8 @@ public:
     void select(rules::CreationField field,std::string_view id);
     void select_adjustment(unsigned index);
     void roll();
+    void assign_roll(unsigned roll,unsigned ability);
+    [[nodiscard]] bool scores_assigned() const;
     void swap_scores(unsigned first,unsigned second);
     void name(std::string text);
     void appearance(por::CharacterAppearance value);

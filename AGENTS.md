@@ -41,3 +41,5 @@
 - Keep responses concise and investigation proportional to the task.
 - Do not perform speculative or unrelated work.
 - Provide commands appropriate to the user's actual shell.
+- Ask numbered questions to confirm UI layout and control behavior before
+  making independent choices about them.
