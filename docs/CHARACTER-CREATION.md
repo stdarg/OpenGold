@@ -39,7 +39,7 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    its original roll, red below it, and normal when unchanged. Dice boxes have
    room for a two-digit total and padding, with a drag hint beside **Dice Rolls**.
 6. Enter a name, up to 40 characters. There is no separate HP step.
-7. Choose a portrait head from the dropdown or browse with the previous/next
+   Choose a portrait head from the dropdown or browse with the previous/next
    buttons directly below the portrait, then choose a body with the second row
    of arrows. These controls are available on every creation step, including
    the finished sheet, and are disabled after **Add to party**. The ready/action
@@ -50,13 +50,13 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    head keeps it selected through later edits; every head remains available.
    With no exact match (including Nonbinary), the initial original head remains
    the default until you choose one. **Start over** restores automatic defaults.
-8. Customize combat head and weapon/body parts, tall/short art, and all twelve
+7. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
    swatch. Enlarged ready and action previews update immediately, recoloring
    only that part, with the composed portrait head and body visible above both
    poses. Controls show **Not present** when the selected parts omit
    that region in both poses. Its saved colors return when the part is present.
-9. Show the character sheet: race, gender, class, level, background, six scores,
+8. Show the character sheet: race, gender, class, level, background, six scores,
     saving throws, Hit Dice, HP and inventory (initially empty). Saving throws
     include the class's level-one proficiency bonus where applicable.
     A note explains that SRD 5.2.1 uses the maximum class Hit Die plus applicable
@@ -69,7 +69,9 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
     identified explicitly.
     The party screen uses this same sheet for its selected member, including
     live HP, equipment and resources; roster entries show character names.
-    Ready and Action combat sprites appear side by side under the party portrait.
+    Ready and Action combat sprites appear side by side under the party portrait,
+    with their labels below the images. Portrait selection has no separate step;
+    its preview controls remain available throughout creation.
 
 **Back** preserves selections and allows earlier edits. Derived scores and HP
 update from the current choices. **Start over** clears the single character.

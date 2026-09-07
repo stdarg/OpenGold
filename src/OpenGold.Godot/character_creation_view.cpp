@@ -30,7 +30,7 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,9> steps{"Race","Gender","Class","Alignment","Attributes","Name","Portrait","Combat appearance","Character sheet"};
+const std::array<const char*,8> steps{"Race","Gender","Class","Alignment","Attributes","Name","Combat appearance","Character sheet"};
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
 const std::array<const char*,6> full_abilities{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
 const std::array<const char*,16> colors{"Black","Blue","Green","Cyan","Red","Magenta","Brown","Light gray","Dark gray","Light blue","Light green","Light cyan","Light red","Pink","Yellow","White"};
@@ -226,7 +226,7 @@ void CharacterCreationView::refresh()
     if(!creator_)return;refreshing_=true;
     const auto step=creator_->step();const auto& d=creator_->draft();const auto& a=creator_->appearance();
     const auto show=[&](const char* node,bool visible){get_node<Control>(node)->set_visible(visible);};
-    const bool choosing=step<=CreationStep::alignment,stats=step==CreationStep::attributes,portrait=step==CreationStep::portrait,icon=step==CreationStep::combat_icon;
+    const bool choosing=step<=CreationStep::alignment,stats=step==CreationStep::attributes,icon=step==CreationStep::combat_icon;
     for(const auto* n:{"Choices"})show(n,choosing);
     show("Description",choosing||step==CreationStep::sheet);
     show("Modifiers",step==CreationStep::sheet);
@@ -246,7 +246,7 @@ void CharacterCreationView::refresh()
     for(int i=0;i<16;++i)get_node<Control>(gs("Palette"+std::to_string(i)))->set_visible(icon);
     get_node<Label>("PageTitle")->set_text(gs(steps[static_cast<unsigned>(step)]));
     std::string progress;
-    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==7?"Combat icon":steps[i])+"\n\n";
+    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==6?"Combat icon":steps[i])+"\n\n";
     get_node<Label>("Steps")->set_text(gs(progress));
     get_node<Button>("Back")->set_disabled(step==CreationStep::race);
     get_node<Button>("Back")->set_text(step==CreationStep::sheet?"Edit appearance":"Back");
@@ -301,7 +301,6 @@ void CharacterCreationView::refresh()
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
-    if(portrait)instructions="Use the controls below the portrait to choose its head and body. You can change them until you add this character to a party.";
     if(icon)instructions="Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.";
     {
         auto* heads=get_node<OptionButton>("PortraitHead");heads->clear();
@@ -568,7 +567,7 @@ void CharacterCreationView::check_run()
         if(creator_->appearance().portrait_head!=261)throw std::runtime_error("Portrait dropdown input failed");
         press("Back");press("Next"); // Returning through Name must preserve a manual head choice.
         if(creator_->appearance().portrait_head!=261)throw std::runtime_error("Manual head selection was replaced on Back/Next");
-        press("Next");
+        if(creator_->step()!=CreationStep::combat_icon)throw std::runtime_error("Name must advance directly to combat appearance");
         for(int bank=0;bank<2;++bank)for(int part:{0,3})
             if(!get_node<Button>(gs("Color"+std::to_string(bank)+"_"+std::to_string(part)))->is_disabled())throw std::runtime_error("Absent weapon/shield control enabled");
         press("CombatHeadNext");for(int i=0;i<4;++i)press("WeaponNext");press("Size");break;

@@ -345,6 +345,7 @@ text = "Color-2"
 horizontal_alignment = 1
 
 [node name="BonusScore0" type="Label" parent="."]
+vertical_alignment = 1
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 14
 
@@ -352,6 +353,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore1" type="Label" parent="."]
+vertical_alignment = 1
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 14
 
@@ -359,6 +361,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore2" type="Label" parent="."]
+vertical_alignment = 1
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 14
 
@@ -366,6 +369,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore3" type="Label" parent="."]
+vertical_alignment = 1
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 14
 
@@ -373,6 +377,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore4" type="Label" parent="."]
+vertical_alignment = 1
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 14
 
@@ -380,6 +385,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore5" type="Label" parent="."]
+vertical_alignment = 1
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 14
 

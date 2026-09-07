@@ -57,7 +57,7 @@ void CharacterCreator::appearance(por::CharacterAppearance value)
     por::validate_character_appearance(value);
     appearance_=value;
 }
-CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,step_>=CreationStep::portrait);}
+CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,step_>=CreationStep::combat_icon);}
 Character CharacterCreator::create_character() const
 {
     if(step_!=CreationStep::sheet)throw std::runtime_error("Finish character creation before exporting the character");
