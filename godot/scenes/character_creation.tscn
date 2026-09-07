@@ -319,6 +319,11 @@ theme_override_font_sizes/font_size = 14
 text = "Dice Rolls"
 horizontal_alignment = 0
 
+[node name="DiceHint" type="Label" parent="."]
+text = "Drag to the ability score of your choice."
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
 [node name="BaseHeader" type="Label" parent="."]
 text = "Base"
 horizontal_alignment = 0
@@ -340,37 +345,43 @@ text = "Color-2"
 horizontal_alignment = 1
 
 [node name="BonusScore0" type="Label" parent="."]
-theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
 
 [node name="TotalScore0" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore1" type="Label" parent="."]
-theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
 
 [node name="TotalScore1" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore2" type="Label" parent="."]
-theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
 
 [node name="TotalScore2" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore3" type="Label" parent="."]
-theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
 
 [node name="TotalScore3" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore4" type="Label" parent="."]
-theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
 
 [node name="TotalScore4" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
 
 [node name="BonusScore5" type="Label" parent="."]
-theme_override_font_sizes/font_size = 19
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
 
 [node name="TotalScore5" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19

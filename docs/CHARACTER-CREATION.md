@@ -34,6 +34,10 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    Assigned ability boxes include those bonuses and update immediately when
    either selector changes, even before all six rolls are assigned. Empty boxes
    remain empty; the unassigned dice retain their original totals.
+   Each applied adjustment appears beside its ability (for example,
+   `+2 — Soldier background`). Only the ability score is colored: yellow above
+   its original roll, red below it, and normal when unchanged. Dice boxes have
+   room for a two-digit total and padding, with a drag hint beside **Dice Rolls**.
 6. Review maximum starting HP: maximum class Hit Die + Constitution modifier,
    with +1 for Dwarven Toughness when applicable.
 7. Enter a name, up to 40 characters.

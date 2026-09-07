@@ -132,13 +132,14 @@ void CharacterCreationView::layout()
     place("BackgroundLabel",Rect2(x+20,y+118,106,32));place("Background",Rect2(x+126,y+114,pw-146,36));
     place("BonusLabel",Rect2(x+20,y+164,106,32));place("Bonus",Rect2(x+126,y+160,pw-146,36));
     place("Columns",Rect2(x+20,y+208,pw-40,24));
-    place("DiceHeader",Rect2(x+pw-184,y+208,164,24));
+    place("DiceHeader",Rect2(x+152,y+208,86,32));
+    place("DiceHint",Rect2(x+246,y+208,pw-266,34));
     place("BaseHeader",Rect2(x+144,y+208,50,24));place("BonusHeader",Rect2(x+198,y+208,48,24));place("TotalHeader",Rect2(x+250,y+208,50,24));
     for(int i=0;i<6;++i) {
         place(gs("Ability"+std::to_string(i)),Rect2(x+20,y+244+i*47,116,37));
-        place(gs("Dice"+std::to_string(i)),Rect2(x+pw-184,y+244+i*47,164,37));
-        place(gs("Score"+std::to_string(i)),Rect2(x+152,y+244+i*47,100,37));
-        place(gs("BonusScore"+std::to_string(i)),Rect2(x+198,y+248+i*47,48,37));
+        place(gs("Dice"+std::to_string(i)),Rect2(x+pw-72,y+244+i*47,52,37));
+        place(gs("Score"+std::to_string(i)),Rect2(x+144,y+244+i*47,64,37));
+        place(gs("BonusScore"+std::to_string(i)),Rect2(x+220,y+244+i*47,pw-304,37));
         place(gs("TotalScore"+std::to_string(i)),Rect2(x+250,y+248+i*47,50,37));
     }
     place("Roll",Rect2(x+20,y+ph-58,170,36));place("SwapHint",Rect2(x+202,y+ph-62,pw-222,46));
@@ -230,6 +231,7 @@ void CharacterCreationView::refresh()
     show("Description",choosing||step==CreationStep::hit_points||step==CreationStep::sheet);
     show("Modifiers",step==CreationStep::sheet);
     for(const auto* n:{"BackgroundLabel","Background","BonusLabel","Bonus","Columns","DiceHeader","BaseHeader","BonusHeader","TotalHeader","Roll","SwapHint"})show(n,stats);
+    show("DiceHint",stats);
     for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
     show("Name",step==CreationStep::name);
     for(const auto* n:{"HeadPrevious","HeadNext","PortraitHead","BodyPrevious","BodyNext","BodyLabel"})show(n,true);
@@ -237,7 +239,6 @@ void CharacterCreationView::refresh()
     for(const auto* n:{"CombatHeadPrevious","CombatHeadNext","CombatHeadLabel","WeaponPrevious","WeaponNext","WeaponLabel","Size","ColorTitle","Color1Title","Color2Title","PaletteHint"})show(n,icon);
     for(int i=0;i<6;++i) {
         for(const auto& stem:{std::string("Ability"),std::string("Dice"),std::string("Score"),std::string("BonusScore"),std::string("TotalScore")})get_node<Control>(gs(stem+std::to_string(i)))->set_visible(stats);
-        get_node<Control>(gs("BonusScore"+std::to_string(i)))->hide();
         get_node<Control>(gs("TotalScore"+std::to_string(i)))->hide();
         get_node<Control>(gs("Part"+std::to_string(i)))->set_visible(icon);
         for(int bank=0;bank<2;++bank)get_node<Control>(gs("Color"+std::to_string(bank)+"_"+std::to_string(i)))->set_visible(icon);
@@ -285,8 +286,18 @@ void CharacterCreationView::refresh()
         }
         get_node<RichTextLabel>(gs("Dice"+std::to_string(i)))->set_text(gs("[center]"+dice+"[/center]"));
         const auto score=creator_->rules().ability_score(d,i);
-        get_node<Button>(gs("Score"+std::to_string(i)))->set_text(score?gs(std::to_string(*score)):String());
-        get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(s?gs(signed_number(s->bonuses[i])):String("--"));
+        auto* score_box=get_node<Button>(gs("Score"+std::to_string(i)));
+        score_box->set_text(score?gs(std::to_string(*score)):String());
+        const int change=score?*score-d.rolls[d.assignment[i]].total():0;
+        const auto color=change>0?Color("f3d55b"):change<0?Color("f08080"):Color("e0e0e0");
+        for(const auto* state:{"font_color","font_hover_color","font_pressed_color","font_focus_color"})score_box->add_theme_color_override(state,color);
+        std::string modifier;
+        if(score&&change){
+            const auto backgrounds=creator_->rules().choices(CreationField::background);
+            const auto found=std::find_if(backgrounds.begin(),backgrounds.end(),[&](const auto& b){return b.id==d.background;});
+            modifier=signed_number(change)+" — "+found->label+" background";
+        }
+        get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(gs(modifier));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
     if(step==CreationStep::hit_points) {
