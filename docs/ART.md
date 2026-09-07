@@ -76,6 +76,9 @@ The demo now defaults to **Combat sprites**, loading every stored image from
 `CPIC*.DAX`, `COMSPR.DAX`, `CHEAD.DAX`, and `CBODY.DAX`. In the inspected
 installation this includes 428 images across 11 archives. Head/body components
 are displayed individually, not assembled into a customized character.
+The new native [character-art foundation](CHARACTER-CREATION.md) separately
+composes `CHEAD`/`CBODY` components and supports two color banks for six regions;
+the character-creation UI is pending the choices documented there.
 The dropdown switches to **Encounter sprites** for the 258 `SPRIT` images.
 Both categories support Left / Right navigation and retain their browsing
 positions. All three rendering styles display the same selected image.

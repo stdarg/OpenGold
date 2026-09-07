@@ -1,0 +1,42 @@
+#ifndef OPENGOLD_CHARACTER_ART_H
+#define OPENGOLD_CHARACTER_ART_H
+
+#include "opengold/formats.h"
+#include <array>
+#include <filesystem>
+#include <map>
+#include <string>
+
+namespace opengold::por {
+// Art references and palette choices belong to presentation, independently of
+// the selected rules edition. Indices refer to the user's original archives.
+struct CharacterAppearance {
+    unsigned portrait_head{1}, portrait_body{1};
+    unsigned combat_head{}, combat_body{};
+    bool tall{true};
+    // Weapon, body, hair/face, shield, arms, legs; Color-1 then Color-2.
+    std::array<std::array<unsigned, 6>, 2> colors{{
+        {7, 1, 6, 6, 1, 6}, {15, 9, 12, 14, 9, 14}}};
+    bool operator==(const CharacterAppearance&) const = default;
+};
+struct PortraitPart { std::string archive; Image image; };
+struct IndexedIcon {
+    unsigned width{}, height{};
+    std::vector<std::uint8_t> pixels;
+};
+// Keeps the source color indices: they identify regions, not final RGB colors.
+[[nodiscard]] IndexedIcon decode_character_icon(std::span<const std::uint8_t> record);
+[[nodiscard]] Image compose_character_icon(const IndexedIcon& head,
+    const IndexedIcon& body, const CharacterAppearance& appearance);
+[[nodiscard]] std::array<std::uint8_t, 3> character_color(unsigned index);
+class CharacterArt {
+public:
+    [[nodiscard]] static CharacterArt load(const std::filesystem::path& directory);
+    std::map<unsigned, PortraitPart> heads, bodies;
+    std::map<unsigned, IndexedIcon> combat_heads, combat_bodies;
+    [[nodiscard]] Image portrait(const CharacterAppearance&) const;
+    [[nodiscard]] Image icon(const CharacterAppearance&, bool action) const;
+    void validate(const CharacterAppearance&) const;
+};
+}
+#endif

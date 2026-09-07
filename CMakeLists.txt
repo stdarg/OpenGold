@@ -36,6 +36,7 @@ target_include_directories(opengold_formats
 
 add_library(opengold_core STATIC
     src/OpenGold.Core/src/core.cpp
+    src/OpenGold.Core/src/character_art.cpp
     src/OpenGold.Core/src/creature_catalog.cpp
     src/OpenGold.Core/src/creature_factory.cpp
     src/OpenGold.Core/src/map_catalog.cpp
@@ -78,6 +79,9 @@ if(OPENGOLD_BUILD_TESTS)
     target_link_libraries(opengold_rules_tests PRIVATE opengold_rules_srd5 opengold_core)
     target_compile_definitions(opengold_rules_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     add_test(NAME opengold_rules_tests COMMAND opengold_rules_tests)
+    add_executable(opengold_character_tests tests/character_tests.cpp)
+    target_link_libraries(opengold_character_tests PRIVATE opengold_core opengold_rules_srd5)
+    add_test(NAME opengold_character_tests COMMAND opengold_character_tests)
 endif()
 
 add_executable(opengold_creatures tools/creatures.cpp)
