@@ -31,6 +31,9 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    replaces the complete set and empties ability boxes; attempts are unlimited.
    Choose one of the four SRD backgrounds here, then allocate its attribute
    bonuses (+2/+1 to different allowed abilities, or +1 to all three).
+   Assigned ability boxes include those bonuses and update immediately when
+   either selector changes, even before all six rolls are assigned. Empty boxes
+   remain empty; the unassigned dice retain their original totals.
 6. Review maximum starting HP: maximum class Hit Die + Constitution modifier,
    with +1 for Dwarven Toughness when applicable.
 7. Enter a name, up to 40 characters.

@@ -29,6 +29,7 @@ public:
     std::vector<CreationChoice> choices(CreationField field) const override;
     std::vector<ScoreAdjustment> adjustments(std::string_view background) const override;
     std::array<AbilityRoll,6> roll(std::uint64_t& state) const override;
+    std::optional<int> ability_score(const CharacterDraft& draft,unsigned ability) const override;
     CharacterSheet evaluate(const CharacterDraft& draft,bool require_name) const override;
 };
 std::vector<CreationChoice> CreatorRules::choices(CreationField field) const
@@ -92,6 +93,16 @@ std::array<AbilityRoll,6> CreatorRules::roll(std::uint64_t& state) const
     for(auto& r:result) {for(auto& n:r.dice)n=die();r.discarded=static_cast<unsigned>(std::min_element(r.dice.begin(),r.dice.end())-r.dice.begin());}
     return result;
 }
+std::optional<int> CreatorRules::ability_score(const CharacterDraft& d,unsigned ability) const
+{
+    if(ability>=6||d.assignment[ability]>6)throw std::runtime_error("Invalid ability assignment");
+    if(!d.rolled||d.assignment[ability]==6)return std::nullopt;
+    const auto options=adjustments(d.background);
+    if(d.adjustment>=options.size())throw std::runtime_error("Invalid background bonuses");
+    const auto score=d.rolls[d.assignment[ability]].total()+options[d.adjustment].bonuses[ability];
+    if(score>20)throw std::runtime_error("Background bonuses cannot raise a score above 20");
+    return score;
+}
 CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name) const
 {
     const auto label=[&](CreationField field,const std::string& id) {
@@ -114,8 +125,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     std::set<unsigned> used;
     for(unsigned i=0;i<6;++i) {
         if(d.assignment[i]>=6||!used.insert(d.assignment[i]).second)throw std::runtime_error("Each roll must be assigned exactly once");
-        s.base[i]=d.rolls[d.assignment[i]].total();s.scores[i]=s.base[i]+s.bonuses[i];
-        if(s.scores[i]>20)throw std::runtime_error("Background bonuses cannot raise a score above 20");
+        s.base[i]=d.rolls[d.assignment[i]].total();s.scores[i]=*ability_score(d,i);
         s.modifiers[i]=ability_modifier(s.scores[i]);
     }
     const auto c=std::find_if(classes.begin(),classes.end(),[&](const auto& c){return c.id==d.character_class;});

@@ -272,7 +272,7 @@ void CharacterCreationView::refresh()
         auto* bonus=get_node<OptionButton>("Bonus");bonus->clear();
         for(const auto& option:creator_->rules().adjustments(d.background))bonus->add_item(gs(option.label));bonus->select(d.adjustment);
         get_node<Button>("Roll")->set_text(d.rolled?"Reroll all six":"Roll all six");
-        get_node<Label>("SwapHint")->set_text("Fill all six boxes to continue.\nBonuses apply on the sheet.");
+        get_node<Label>("SwapHint")->set_text("Fill all six boxes to continue.\nAssigned scores include bonuses.");
     }
     std::optional<CharacterSheet> s;
     if(completed_)s=completed_->sheet();
@@ -284,7 +284,8 @@ void CharacterCreationView::refresh()
             dice=std::to_string(d.rolls[i].total());
         }
         get_node<RichTextLabel>(gs("Dice"+std::to_string(i)))->set_text(gs("[center]"+dice+"[/center]"));
-        get_node<Button>(gs("Score"+std::to_string(i)))->set_text(d.rolled&&d.assignment[i]<6?gs(std::to_string(d.rolls[d.assignment[i]].total())):String());
+        const auto score=creator_->rules().ability_score(d,i);
+        get_node<Button>(gs("Score"+std::to_string(i)))->set_text(score?gs(std::to_string(*score)):String());
         get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(s?gs(signed_number(s->bonuses[i])):String("--"));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
@@ -442,6 +443,15 @@ void CharacterCreationView::check_run()
         }else{
             const auto& assigned=creator_->draft().assignment;
             if(group==0&&(assigned[3]!=0||assigned[0]!=6))throw std::runtime_error("Mouse drag did not fill only the target ability box");
+            if(group==0){
+                const auto raw=creator_->draft().rolls[0].total();
+                get_node<OptionButton>("Background")->emit_signal("item_selected",0);
+                if(get_node<Button>("Score3")->get_text()!=gs(std::to_string(raw+2)))throw std::runtime_error("Background selector did not refresh the assigned score");
+                get_node<OptionButton>("Bonus")->emit_signal("item_selected",2);
+                if(get_node<Button>("Score3")->get_text()!=gs(std::to_string(raw+1))||!get_node<Button>("Score0")->get_text().is_empty())throw std::runtime_error("Bonus selector did not refresh partial scores correctly");
+                get_node<OptionButton>("Background")->emit_signal("item_selected",3);
+                get_node<OptionButton>("Bonus")->emit_signal("item_selected",1);
+            }
             if(group==1&&assigned[1]!=1)throw std::runtime_error("Second dice assignment failed");
             if(group==2&&(assigned[1]!=0||assigned[3]!=1))throw std::runtime_error("Dragging between filled boxes failed to swap scores");
             if(can_drop_roll({},String("invalid"),0))throw std::runtime_error("Invalid drag data accepted");
@@ -532,7 +542,9 @@ void CharacterCreationView::check_run()
     case 5:{capture("character-unassigned-rolls.png");const auto old=creator_->draft().rolls;press("Roll");if(old==creator_->draft().rolls)throw std::runtime_error("Reroll did not replace dice");
         get_node<OptionButton>("Background")->emit_signal("item_selected",3);get_node<OptionButton>("Bonus")->emit_signal("item_selected",1);break;}
     case 6:{const auto old=creator_->draft().assignment;press("Ability0");press("Ability2");if(creator_->draft().assignment[0]!=old[2])throw std::runtime_error("UI swap failed");break;}
-    case 7:capture("character-attributes.png");press("Next");break;
+    case 7:
+        for(unsigned i=0;i<6;++i)if(get_node<Button>(gs("Score"+std::to_string(i)))->get_text()!=gs(std::to_string(creator_->sheet().scores[i])))throw std::runtime_error("Displayed ability score differs from the character sheet");
+        capture("character-attributes.png");press("Next");break;
     case 8:if(creator_->sheet().hit_points!=11+creator_->sheet().modifiers[2])throw std::runtime_error("Wrong fighter/dwarf HP");press("Next");break;
     case 9:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Empty name accepted");
         get_node<LineEdit>("Name")->grab_focus();

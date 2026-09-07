@@ -63,7 +63,16 @@ void creation_tests()
     creator.roll();const auto original=creator.draft().rolls;
     check(!creator.scores_assigned()&&std::all_of(creator.draft().assignment.begin(),creator.draft().assignment.end(),[](auto n){return n==6;}),"Rolls start unassigned");
     rejects([&]{creator.next();},"Cannot continue with empty ability boxes");
-    creator.assign_roll(0,3);creator.assign_roll(1,1);creator.assign_roll(0,1);
+    creator.assign_roll(0,3);
+    creator.select(CreationField::background,"acolyte");
+    check(creator.rules().ability_score(creator.draft(),3)==original[0].total()+2,"Assigned Intelligence includes Acolyte bonus before other rolls are assigned");
+    creator.select(CreationField::background,"sage");
+    check(creator.rules().ability_score(creator.draft(),3)==original[0].total()+1,"Background changes recalculate partial scores");
+    creator.select_adjustment(1);
+    check(creator.rules().ability_score(creator.draft(),3)==original[0].total()&&!creator.rules().ability_score(creator.draft(),0),"Bonus changes update assigned scores and leave empty abilities empty");
+    check(creator.draft().rolls==original,"Bonus changes preserve original dice");
+    creator.select(CreationField::background,"acolyte");
+    creator.assign_roll(1,1);creator.assign_roll(0,1);
     check(creator.draft().assignment[1]==0&&creator.draft().assignment[3]==1,"Assigned results swap when dropped on another ability");
     creator.assign_roll(2,1);
     check(std::find(creator.draft().assignment.begin(),creator.draft().assignment.end(),0)==creator.draft().assignment.end(),"A displaced result returns to unassigned rolls");
