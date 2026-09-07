@@ -245,6 +245,11 @@ void synthetic()
     step_to_prompt(tour);
     check(tour.snapshot().phase == TourPhase::completed && tour.snapshot().sprite_frame == -1, "Tour completes and hides encounter");
     check(tour.snapshot().pose == PartyPose{4,4,1}, "Later scripted redraw");
+    const auto before_turn=tour.snapshot().pose;
+    check(tour.explore(ExplorationCommand::turn_around),"Turn around succeeds");
+    check(tour.snapshot().pose==PartyPose{before_turn.x,before_turn.y,(before_turn.facing+2)%4},"Turn around changes facing without moving");
+    tour.explore(ExplorationCommand::turn_around);
+    check(tour.snapshot().pose==before_turn,"Two half turns restore facing");
     check(!tour.explore(ExplorationCommand::forward), "Wall blocks exploration");
     check(tour.explore(ExplorationCommand::turn_left), "Turn after completion");
     check(tour.script_variable(0xC04D) == 0, "Exploration and VM share authoritative pose");

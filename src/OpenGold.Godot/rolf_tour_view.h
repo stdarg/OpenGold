@@ -15,7 +15,7 @@ public:
     void _process(double delta) override;
     void _draw() override;
     void _input(const godot::Ref<godot::InputEvent>& event) override;
-    void campaign_party(std::shared_ptr<opengold::CampaignParty> party){campaign_=std::move(party);}
+    void campaign_party(std::shared_ptr<opengold::CampaignParty> party){campaign_=std::move(party);embedded_party_=true;}
     [[nodiscard]] bool can_leave() const {return !session_||session_->can_leave();}
     void resume_party(){shown_revision_=0;refresh();}
     [[nodiscard]] bool party_route_checked() const {return shop_check_stage_==4;}
@@ -37,7 +37,7 @@ private:
     std::uint64_t displayed_ticket_{};
     std::uint64_t rendered_picture_revision_{};
     bool full_map_{true}, ready_{}, checking_{}, capture_{}, capture_pending_{};
-    bool town_check_{};
+    bool town_check_{},embedded_party_{};
     unsigned shop_check_stage_{};
     void layout();
     void refresh();
@@ -48,6 +48,11 @@ private:
     void forward();
     void look();
     void inventory();
+    void refresh_inventory();
+    void inventory_selected(std::int64_t index);
+    void equip_item(bool equip);
+    void party_selected(std::int64_t index);
+    void close_sheet();
     void leave_shop();
     void map_mode();
     void movement(opengold::por::ExplorationCommand command);

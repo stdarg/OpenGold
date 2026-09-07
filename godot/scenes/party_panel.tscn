@@ -87,3 +87,6 @@ texture_filter = 1
 expand_mode = 1
 stretch_mode = 5
 texture_filter = 1
+
+[node name="Pool" type="Button" parent="."]
+text = "Character Pool"

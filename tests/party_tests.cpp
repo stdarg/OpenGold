@@ -47,8 +47,39 @@ void roster_and_equipment()
     party.unequip(pc,shield);check(party.profile(pc).armor_class==16,"Unequipping updates AC");
     party.begin_combat();rejects([&]{party.remove(pc);});rejects([&]{party.purchase(pc,item(8));});party.end_combat();
     CampaignParty wizard(module());auto mage=wizard.add_pc(character("wizard"));wizard.set_wealth(mage,{0,0,0,50,0,0,0});
-    wizard.purchase(mage,item(59));rejects([&]{wizard.equip(mage,1);});
-    auto bard=wizard.add_pc(character("bard"));rejects([&]{(void)wizard.profile(bard);});
+    wizard.purchase(mage,item(59));const int naked_ac=wizard.profile(mage).armor_class;wizard.equip(mage,1);check(wizard.profile(mage).armor_class==naked_ac,"Untrained shield is allowed but adds no AC");
+    auto bard=wizard.add_pc(character("bard"));check(wizard.profile(bard).armor_class>0,"All classes can display an equipment profile outside combat");
+}
+void untrained_equipment()
+{
+    auto rules=module();const auto mage=character("wizard");const auto& s=mage.sheet();
+    const std::array<std::string,1> sword{"longsword"},mace{"mace"},armor{"leather"},shield{"shield"};
+    check(rules->character_profile(s,sword).melee_attack_bonus==s.modifiers[0],"Untrained longsword omits proficiency");
+    check(rules->character_profile(s,mace).melee_attack_bonus==s.modifiers[0]+2,"SRD wizard is proficient in simple weapons including mace");
+    const auto p=rules->character_profile(s,armor);
+    check(p.strength_dexterity_disadvantage&&p.armor_class==11+s.modifiers[1],"Untrained armor keeps AC with disadvantage");
+    check(p.item_modifiers.find("cannot cast spells")!=std::string::npos,"Untrained penalty has an equipment source");
+    check(!rules->character_profile(s,{}).strength_dexterity_disadvantage,"Removing armor clears disadvantage");
+    for(const auto& c:srd5::character_rules()->choices(CreationField::character_class)){
+        const auto pc=character(c.id);
+        const bool no_light=c.id=="monk"||c.id=="sorcerer"||c.id=="wizard";
+        check(rules->character_profile(pc.sheet(),armor).strength_dexterity_disadvantage==no_light,"Light armor training matches all SRD classes");
+        const bool shield_training=c.id=="barbarian"||c.id=="cleric"||c.id=="druid"||c.id=="fighter"||c.id=="paladin"||c.id=="ranger";
+        const auto guarded=rules->character_profile(pc.sheet(),shield);
+        const int base=10+pc.sheet().modifiers[1]+(c.id=="barbarian"?std::max(0,pc.sheet().modifiers[2]):0);
+        check(guarded.armor_class==base+(shield_training?2:0),"Shield training and Monk unarmored restriction match SRD");
+    }
+    Encounter e{{4,4,std::vector<std::uint8_t>(16)},{{1,"campaign-character","Mage",0,{1,1},p.data},{2,"bandit","Bandit",1,{2,1}}}};
+    bool tested=false;
+    for(unsigned seed=0;seed<100&&!tested;++seed){auto combat=rules->create(e,seed);if(combat->snapshot().actor!=1)continue;
+        const auto commands=combat->legal_commands();
+        check(std::none_of(commands.begin(),commands.end(),[](const auto& c){return c.verb=="fire_bolt"||c.verb=="magic_missile";}),"Untrained armor prevents spellcasting");
+        const auto hit=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="melee";});
+        check(hit!=commands.end()&&combat->submit(*hit),"Untrained armored attack is allowed");
+        const auto log=combat->snapshot().log;check(std::any_of(log.begin(),log.end(),[](const auto& line){return line.find("disadvantage")!=std::string::npos;}),"Armor penalty applies to actual attack rolls");
+        auto restored=rules->restore(combat->save());check(restored->save()==combat->save(),"Untrained equipment penalties survive combat restore");tested=true;
+    }
+    check(tested,"Exercised armored wizard combat");
 }
 void finish(CombatDemo& fight)
 {
@@ -87,6 +118,13 @@ void dynamic_checkpoint()
     check(restored->save()==bytes,"Dynamic character profile round-trips exactly");
     const auto command=choose_demo_command(*session);check(session->submit(command)&&restored->submit(command),"Restored command accepted");
     check(session->save()==restored->save(),"Dynamic checkpoint deterministic continuation");
+    auto unsupported=e;unsupported.participants[0].character_profile=rules->character_profile(character("bard").sheet(),{}).data;
+    rejects([&]{(void)rules->create(unsupported,42);}); // Profiles are broader than the combat implementation.
+    for(const auto& c:srd5::character_rules()->choices(CreationField::character_class)){
+        const auto pc=character(c.id);const auto p=rules->character_profile(pc.sheet(),{});
+        const int expected=10+pc.sheet().modifiers[1]+(c.id=="monk"?pc.sheet().modifiers[4]:c.id=="barbarian"?pc.sheet().modifiers[2]:0);
+        check(p.armor_class==std::max(expected,10+pc.sheet().modifiers[1])&&p.hit_points==pc.sheet().hit_points,"All twelve classes have correct unarmored AC and HP profiles");
+    }
     e.participants[0].state=VitalState{99999,false,{}};rejects([&]{(void)rules->create(e,42);});
     e.participants[0].state=VitalState{1,false,"SRD1 0 99 0 0 0"};rejects([&]{(void)rules->create(e,42);});
 }
@@ -133,6 +171,6 @@ void script_handoff()
 }
 int main()
 {
-    try{roster_and_equipment();combat_handoff();dynamic_checkpoint();script_handoff();std::cout<<"Party integration tests passed\n";return 0;}
+    try{roster_and_equipment();untrained_equipment();combat_handoff();dynamic_checkpoint();script_handoff();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

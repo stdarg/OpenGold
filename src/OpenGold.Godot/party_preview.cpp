@@ -3,6 +3,8 @@
 #include "rolf_tour_view.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/window.hpp>
+#include <godot_cpp/classes/viewport_texture.hpp>
 #include <godot_cpp/classes/item_list.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
@@ -17,6 +19,8 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <algorithm>
 #include <stdexcept>
+#include <set>
+#include <map>
 
 using namespace godot;
 using namespace opengold;
@@ -51,6 +55,13 @@ void CharacterCreationView::setup_party()
     const std::array<int,9> actions{2,3,4,5,6,10,7,8,11};
     for(unsigned i=0;i<buttons.size();++i)get_node<Button>(gs(std::string("PartyPanel/")+buttons[i]))->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(actions[i]));
     get_node<ItemList>("PartyPanel/Roster")->connect("item_selected",callable_mp(this,&CharacterCreationView::party_selected));
+    get_node<Button>("PartyPanel/Pool")->connect("pressed",callable_mp(this,&CharacterCreationView::show_pool));
+    get_node<ItemList>("PoolModal/List")->connect("item_selected",callable_mp(this,&CharacterCreationView::pool_selected));
+    get_node<Button>("PoolModal/Add")->connect("pressed",callable_mp(this,&CharacterCreationView::pool_add));
+    get_node<Button>("PoolModal/Close")->connect("pressed",callable_mp(this,&CharacterCreationView::close_pool));
+    get_node<Window>("PoolModal")->connect("close_requested",callable_mp(this,&CharacterCreationView::close_pool));
+    get_node<Button>("TownSheet/Close")->connect("pressed",callable_mp(this,&CharacterCreationView::close_town_sheet));
+    get_node<Window>("TownSheet")->connect("close_requested",callable_mp(this,&CharacterCreationView::close_town_sheet));
     get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("PartyPanel/SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
@@ -74,6 +85,8 @@ void CharacterCreationView::party_layout()
     const std::array<const char*,9> buttons{"Create","Remove","Rejoin","Recruit","Equip","Unequip","Explore","Combat","Close"};
     const double bw=(w-64)/5;
     for(unsigned i=0;i<buttons.size();++i)place((std::string("PartyPanel/")+buttons[i]).c_str(),Rect2(24+(i%5)*(bw+4),h-125+(i/5)*44,bw,36));
+    place("PartyPanel/Pool",Rect2(w-220,24,196,36));
+    pool_layout();
     place("PartyPanel/Status",Rect2(24,h-39,w-48,32));
     place("PartyPanel/Modifiers",Rect2(24+4*(bw+4),h-81,bw*0.42f,36));
     place("PartyPanel/SavingThrows",Rect2(28+4*(bw+4)+bw*0.42f,h-81,bw*0.58f-4,36));
@@ -115,7 +128,7 @@ void CharacterCreationView::refresh_party()
 void CharacterCreationView::party_action(int action)
 {
     try {
-        error_="";
+        error_="";String equipment_notice;
         const auto id=campaign_->state().roster.empty()?0:campaign_->state().roster.at(roster_index_).id;
         if(action==1){if(!completed_||added_to_party_)return;const auto added=campaign_->add_pc(*completed_);campaign_->set_wealth(added,{0,0,0,250,0,0,0});
             added_to_party_=true;roster_index_=campaign_->state().roster.size()-1;refresh();}
@@ -127,12 +140,12 @@ void CharacterCreationView::party_action(int action)
         if(action==6||action==10){const auto selection=get_node<ItemList>("PartyPanel/Inventory")->get_selected_items();
             if(selection.is_empty())throw std::runtime_error("Select an inventory item first");
             const auto items=campaign_->member(id).character.inventory().items();const auto selected=items[selection[0]].id;
-            if(action==6)campaign_->equip(id,selected);else campaign_->unequip(id,selected);}
+            if(action==6){campaign_->equip(id,selected);equipment_notice=gs("Equipped. "+srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
         if(action==7||action==8){
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
                 if(!town){auto owned=scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid exploration scene");
-                    town->set_name("CampaignTown");town->campaign_party(campaign_);add_child(owned.get());owned.release();}
+                    town->set_name("CampaignTown");town->campaign_party(campaign_);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));add_child(owned.get());owned.release();}
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }else{
                 const auto participants=campaign_->participants();std::vector<CombatArt> images;
@@ -149,13 +162,31 @@ void CharacterCreationView::party_action(int action)
                 town->hide();town->set_process(false);town->set_process_input(false);}
             get_node<Button>("ReturnParty")->hide();
         }
-        party_open_=true;auto* panel=get_node<Control>("PartyPanel");move_child(panel,get_child_count()-1);panel->show();refresh_party();
+        party_open_=true;auto* panel=get_node<Control>("PartyPanel");move_child(panel,get_child_count()-1);panel->show();refresh_party();if(!equipment_notice.is_empty())get_node<Label>("PartyPanel/Status")->set_text(equipment_notice);
     }catch(const std::exception& e){error_=gs(e.what());get_node<Label>("Status")->set_text(error_);get_node<Label>("PartyPanel/Status")->set_text(error_);
         get_node<Button>("ReturnParty")->set_tooltip_text(error_);}
 }
 void CharacterCreationView::party_check()
 {
     const auto press=[&](const char* node){get_node<Button>(node)->emit_signal("pressed");if(!error_.is_empty())throw std::runtime_error(error_.utf8().get_data());};
+    if(pool_check_stage_<3){
+        if(pool_check_stage_==0){show_pool();if(pool_.size()!=48)throw std::runtime_error("Pool must contain four characters per class");}
+        else if(pool_check_stage_==1){
+            std::map<std::string,unsigned> classes;std::set<std::string> names;
+            for(unsigned i=0;i<pool_.size();++i){const auto& c=pool_[i];const auto& s=c.sheet();++classes[s.character_class];names.insert(s.name);
+                if(s.level!=1||*std::min_element(s.scores.begin(),s.scores.end())<13||*std::max_element(s.scores.begin(),s.scores.end())>20)throw std::runtime_error("Invalid pool ability range");
+                art_->validate(c.appearance());pool_selected(i);
+            }
+            if(names.size()!=48||classes.size()!=12||std::any_of(classes.begin(),classes.end(),[](const auto& c){return c.second!=4;}))throw std::runtime_error("Pool class counts or names invalid");
+            pool_selected(19);get_node<ItemList>("PoolModal/List")->select(19);
+        }else{
+            if(capture_){const auto image=get_node<Window>("PoolModal")->get_texture()->get_image();if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-pool.png"));}
+            const auto state=campaign_->checkpoint();pool_add();pool_add();
+            if(campaign_->state().roster.size()!=state.roster.size()+1)throw std::runtime_error("Pool add or duplicate guard failed");
+            campaign_->restore(state);pool_added_.clear();roster_index_=0;close_pool();
+        }
+        ++pool_check_stage_;return;
+    }
     switch(party_check_stage_){
     case 0:{
         creator_->select(rules::CreationField::race,"human");creator_->select(rules::CreationField::character_class,"fighter");

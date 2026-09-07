@@ -465,3 +465,65 @@ theme_override_font_sizes/normal_font_size = 18
 
 [node name="Close" type="Button" parent="SavingThrowsModal"]
 text = "Close"
+
+[node name="PoolModal" type="Window" parent="."]
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(1000, 680)
+
+[node name="Background" type="ColorRect" parent="PoolModal"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="RichTextLabel" parent="PoolModal"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 17
+
+[node name="Close" type="Button" parent="PoolModal"]
+text = "Close"
+
+[node name="TownSheet" type="Window" parent="."]
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(1000, 680)
+
+[node name="Background" type="ColorRect" parent="TownSheet"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="RichTextLabel" parent="TownSheet"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 17
+
+[node name="Close" type="Button" parent="TownSheet"]
+text = "Close"
+
+[node name="List" type="ItemList" parent="PoolModal"]
+theme_override_font_sizes/font_size = 16
+
+[node name="Title" type="Label" parent="PoolModal"]
+text = "Character Pool / 48 level-one characters"
+theme_override_font_sizes/font_size = 23
+
+[node name="Add" type="Button" parent="PoolModal"]
+text = "Add to party"
+
+[node name="Status" type="Label" parent="PoolModal"]
+autowrap_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="PoolModal"]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="Ready" type="TextureRect" parent="PoolModal"]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="Action" type="TextureRect" parent="PoolModal"]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1

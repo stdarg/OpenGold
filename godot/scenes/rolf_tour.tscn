@@ -103,11 +103,99 @@ z_index = 2
 mouse_filter = 0
 theme_override_styles/panel = SubResource("InventoryStyle")
 
-[node name="Items" type="RichTextLabel" parent="InventoryPanel"]
-theme_override_font_sizes/normal_font_size = 18
+[node name="Items" type="ItemList" parent="InventoryPanel"]
+theme_override_font_sizes/font_size = 18
 
 [node name="Close" type="Button" parent="InventoryPanel"]
 text = "Close inventory"
 
 [node name="Footstep" type="AudioStreamPlayer" parent="."]
 volume_db = -12.0
+
+[node name="PartyList" type="ScrollContainer" parent="."]
+horizontal_scroll_mode = 0
+
+[node name="Rows" type="VBoxContainer" parent="PartyList"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Header" type="Label" parent="InventoryPanel"]
+theme_override_font_sizes/font_size = 20
+
+[node name="Status" type="Label" parent="InventoryPanel"]
+autowrap_mode = 2
+
+[node name="Equip" type="Button" parent="InventoryPanel"]
+text = "Equip"
+
+[node name="Unequip" type="Button" parent="InventoryPanel"]
+text = "Unequip"
+
+[node name="MemberSheet" type="Window" parent="."]
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+title = "Character Sheet"
+
+[node name="Text" type="RichTextLabel" parent="MemberSheet"]
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="MemberSheet"]
+text = "Close"
+
+[node name="Member0" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member1" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member2" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member3" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member4" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member5" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member6" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member7" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16

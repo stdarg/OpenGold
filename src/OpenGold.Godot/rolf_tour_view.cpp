@@ -1,5 +1,6 @@
 #include "rolf_tour_view.h"
 #include "opengold/exploration_view.h"
+#include "opengold/srd5.h"
 #include <godot_cpp/classes/audio_stream_player.hpp>
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -35,7 +36,7 @@ const std::array<const char*,4> direction_name{"North","East","South","West"};
 
 }
 
-void RolfTourView::_bind_methods() {}
+void RolfTourView::_bind_methods() {ADD_SIGNAL(MethodInfo("party_member_selected",PropertyInfo(Variant::INT,"slot")));}
 void RolfTourView::_notification(int what)
 {
     if (what==NOTIFICATION_RESIZED && ready_) {layout();queue_redraw();}
@@ -54,6 +55,12 @@ void RolfTourView::_ready()
     get_node<Button>("Look")->connect("pressed",callable_mp(this,&RolfTourView::look));
     get_node<Button>("Inventory")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
     get_node<Button>("InventoryPanel/Close")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
+    for(unsigned slot=0;slot<8;++slot)get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot))->connect("pressed",callable_mp(this,&RolfTourView::party_selected).bind(slot));
+    get_node<ItemList>("InventoryPanel/Items")->connect("item_selected",callable_mp(this,&RolfTourView::inventory_selected));
+    get_node<Button>("InventoryPanel/Equip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(true));
+    get_node<Button>("InventoryPanel/Unequip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(false));
+    get_node<Button>("MemberSheet/Close")->connect("pressed",callable_mp(this,&RolfTourView::close_sheet));
+    get_node<Window>("MemberSheet")->connect("close_requested",callable_mp(this,&RolfTourView::close_sheet));
     get_node<Button>("LeaveShop")->connect("pressed",callable_mp(this,&RolfTourView::leave_shop));
     get_window()->set_min_size(Vector2i(960,720));
     layout();
@@ -76,7 +83,7 @@ void RolfTourView::_ready()
     footstep_->set_data(samples);
     get_node<AudioStreamPlayer>("Footstep")->set_stream(footstep_);
     restart();
-    if(campaign_)get_node<Button>("Restart")->hide();
+    if(embedded_party_)get_node<Button>("Restart")->hide();
 }
 
 void RolfTourView::layout()
@@ -86,13 +93,14 @@ void RolfTourView::layout()
     const double main_width=width-margin*2-gutter-sidebar;
     const bool shopping=session_&&session_->snapshot().phase==TourPhase::shopping;
     const double view_height=std::min(main_width*.625,height-(shopping?490.0:410.0));
-    scene_rect_=Rect2(margin,102,main_width,view_height);
+    scene_rect_=Rect2(margin,102,view_height/1.2,view_height);
     map_rect_=Rect2(margin+main_width+gutter,102,sidebar,sidebar);
     dialogue_rect_=Rect2(margin,scene_rect_.get_end().y+18,main_width,height-scene_rect_.get_end().y-76);
     const auto place=[&](const char* name,Rect2 rect) {
         auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);
     };
     place("Title",Rect2(margin,20,main_width,34));
+    place("PartyList",Rect2(scene_rect_.get_end().x+16,102,main_width-scene_rect_.size.x-16,view_height));
     place("Location",Rect2(margin,68,main_width,26));
     place("MapTitle",Rect2(map_rect_.position.x,68,sidebar-130,26));
     place("MapMode",Rect2(width-margin-122,64,122,30));
@@ -118,17 +126,31 @@ void RolfTourView::layout()
     place("LeaveShop",Rect2(dialogue_rect_.get_end()-Vector2(332,54),Vector2(140,40)));
     place("InventoryPanel",Rect2(margin+40,90,width-2*margin-80,height-160));
     auto* inventory_panel=get_node<Control>("InventoryPanel");
-    get_node<Control>("InventoryPanel/Items")->set_position(Vector2(20,20));
-    get_node<Control>("InventoryPanel/Items")->set_size(inventory_panel->get_size()-Vector2(40,90));
+    get_node<Control>("InventoryPanel/Items")->set_position(Vector2(20,70));
+    get_node<Control>("InventoryPanel/Items")->set_size(inventory_panel->get_size()-Vector2(40,210));
     get_node<Control>("InventoryPanel/Close")->set_position(Vector2(20,inventory_panel->get_size().y-54));
-    get_node<Control>("InventoryPanel/Close")->set_size(Vector2(200,36));
+    get_node<Control>("InventoryPanel/Close")->set_size(Vector2(180,36));
+    const auto iw=inventory_panel->get_size().x,ih=inventory_panel->get_size().y;
+    get_node<Control>("InventoryPanel/Header")->set_position(Vector2(20,18));get_node<Control>("InventoryPanel/Header")->set_size(Vector2(iw-40,44));
+    get_node<Control>("InventoryPanel/Status")->set_position(Vector2(20,ih-132));get_node<Control>("InventoryPanel/Status")->set_size(Vector2(iw-40,68));
+    get_node<Control>("InventoryPanel/Equip")->set_position(Vector2(220,ih-54));get_node<Control>("InventoryPanel/Equip")->set_size(Vector2(150,36));
+    get_node<Control>("InventoryPanel/Unequip")->set_position(Vector2(390,ih-54));get_node<Control>("InventoryPanel/Unequip")->set_size(Vector2(150,36));
+    get_node<Window>("MemberSheet")->set_size(Vector2i(width-120,height-120));
+    place("MemberSheet/Text",Rect2(24,24,width-168,height-220));place("MemberSheet/Close",Rect2(width-290,height-180,130,36));
 }
 
 void RolfTourView::restart()
 {
     try {
         error_="";
-        if (session_) session_->restart();
+        if(!campaign_||!embedded_party_){
+            const auto pack=ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules");
+            campaign_=std::make_shared<opengold::CampaignParty>(opengold::srd5::load(std::filesystem::u8path(pack.utf8().get_data())));
+            opengold::rules::CharacterDraft d;d.race="human";d.gender="female";d.character_class="fighter";d.alignment="neutral_good";d.background="soldier";d.name="Adventurer";d.rolled=true;
+            for(auto& roll:d.rolls)roll={{6,5,4,1},3};
+            const auto id=campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),d,{}));campaign_->set_wealth(id,{0,0,0,9999,0,0,0});
+        }
+        if (session_) {session_->restart();session_->campaign_party(campaign_);}
         else {
             auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
             if (directory.is_empty()) directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
@@ -173,18 +195,55 @@ void RolfTourView::inventory()
     auto* panel=get_node<Control>("InventoryPanel");
     if(panel->is_visible()){panel->hide();return;}
     if(!session_)return;
-    if(campaign_&&campaign_->selected()){
-        const auto& m=campaign_->member(campaign_->selected());std::string text=m.character.sheet().name+"\n"+std::to_string(m.wealth[3])+" gold pieces\n\n";
-        for(const auto& item:m.character.inventory().items())text+=item.name+" x"+std::to_string(item.quantity)+"\n";
-        if(m.character.inventory().empty())text+="Inventory is empty. Visit a shop to buy equipment.";
-        get_node<RichTextLabel>("InventoryPanel/Items")->set_text(String::utf8(text.c_str()));panel->show();return;
-    }
-    const auto& p=session_->party();
-    std::string text=p.name+" / Level "+std::to_string(p.level)+"\n"+std::to_string(p.wealth[3])+" gold pieces\n\n";
-    if(p.inventory.empty())text+="Inventory is empty. Visit a shop to buy equipment.";
-    for(const auto& item:p.inventory)text+=item.label()+"\n";
-    get_node<RichTextLabel>("InventoryPanel/Items")->set_text(String::utf8(text.c_str()));panel->show();
+    refresh_inventory();panel->show();
 }
+void RolfTourView::refresh_inventory()
+{
+    auto* items=get_node<ItemList>("InventoryPanel/Items");items->clear();
+    if(!campaign_||!campaign_->selected())return;
+    const auto& m=campaign_->member(campaign_->selected());
+    get_node<Label>("InventoryPanel/Header")->set_text(String::utf8((m.character.sheet().name+" / "+m.character.sheet().character_class+" / "+std::to_string(m.wealth[3])+" gp").c_str()));
+    for(const auto& item:m.character.inventory().items())items->add_item(String::utf8(((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?"Equipped / ":"")+item.name+" x"+std::to_string(item.quantity)).c_str()));
+    if(items->get_item_count())items->select(0);
+    get_node<Button>("InventoryPanel/Equip")->set_disabled(!items->get_item_count());get_node<Button>("InventoryPanel/Unequip")->set_disabled(!items->get_item_count());
+    get_node<Label>("InventoryPanel/Status")->set_text("Inventory is empty. Visit a shop to buy equipment.");
+    if(items->get_item_count())inventory_selected(0);
+}
+void RolfTourView::inventory_selected(std::int64_t index)
+{
+    if(!campaign_||!campaign_->selected())return;
+    const auto& m=campaign_->member(campaign_->selected());const auto items=m.character.inventory().items();
+    if(index<0||static_cast<std::size_t>(index)>=items.size())return;
+    try{get_node<Label>("InventoryPanel/Status")->set_text(String::utf8(opengold::srd5::equipment_note(m.character.sheet(),items[index].definition_id).c_str()));}
+    catch(const std::exception& e){get_node<Label>("InventoryPanel/Status")->set_text(String::utf8(e.what()));}
+}
+void RolfTourView::equip_item(bool equip)
+{
+    try{
+        const auto selection=get_node<ItemList>("InventoryPanel/Items")->get_selected_items();
+        if(selection.is_empty())throw std::runtime_error("Select an item first.");
+        const auto id=campaign_->selected();const auto& m=campaign_->member(id);const auto items=m.character.inventory().items();if(selection[0]<0||static_cast<std::size_t>(selection[0])>=items.size())throw std::runtime_error("Select an existing item.");const auto item=items[selection[0]].id;
+        if(equip)campaign_->equip(id,item);else campaign_->unequip(id,item);
+        refresh_inventory();get_node<ItemList>("InventoryPanel/Items")->select(selection[0]);refresh();
+        get_node<Label>("InventoryPanel/Status")->set_text(equip?String::utf8(("Equipped. "+opengold::srd5::equipment_note(m.character.sheet(),items[selection[0]].definition_id)).c_str()):String("Item unequipped."));
+    }catch(const std::exception& e){get_node<Label>("InventoryPanel/Status")->set_text(String::utf8(e.what()));}
+}
+void RolfTourView::party_selected(std::int64_t index)
+{
+    if(index<0||index>=8||!session_||!campaign_||!campaign_->state().slots[index])return;
+    const auto slot=static_cast<unsigned>(index);if(session_->can_leave())campaign_->select(slot);
+    if(embedded_party_)emit_signal("party_member_selected",slot);
+    else{
+        const auto& m=campaign_->member(campaign_->state().slots[slot]);const auto& s=m.character.sheet();
+        std::string text=s.name+"\nLevel 1 "+s.race+" "+s.gender+" "+s.character_class+"\n"+s.alignment+" / "+s.background+"\nAC "+std::to_string(campaign_->profile(m.id).armor_class)+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(s.hit_points)+"\n\n";
+        const std::array<const char*,6> names{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
+        for(unsigned i=0;i<6;++i)text+=std::string(names[i])+": "+std::to_string(s.scores[i])+" / Save "+std::to_string(s.saving_throws[i])+"\n";
+        get_node<RichTextLabel>("MemberSheet/Text")->set_text(String::utf8(text.c_str()));get_node<Window>("MemberSheet")->popup_centered();
+    }
+    refresh();
+}
+void RolfTourView::close_sheet(){get_node<Window>("MemberSheet")->hide();}
+
 void RolfTourView::movement(ExplorationCommand command)
 {
     if (!session_) return;
@@ -206,6 +265,7 @@ void RolfTourView::_input(const Ref<InputEvent>& event)
     case Key::KEY_LEFT: left();break;
     case Key::KEY_RIGHT: right();break;
     case Key::KEY_UP: forward();break;
+    case Key::KEY_DOWN: movement(ExplorationCommand::turn_around);break;
     case Key::KEY_L: look();break;
     default:return;
     }
@@ -301,6 +361,13 @@ void RolfTourView::refresh()
     if(loaded){const auto& p=session_->party();get_node<Label>("Party")->set_text("Fighter  /  Level 1  /  HP "+String::num_uint64(p.hit_points)+"/"+String::num_uint64(p.max_hit_points)+"\n"+String::num_uint64(p.wealth[3])+" gp  /  "+String::num_uint64(p.inventory.size())+" items");}
     if(loaded&&campaign_&&campaign_->selected()){
         const auto& m=campaign_->member(campaign_->selected());get_node<Label>("Party")->set_text(String::utf8((m.character.sheet().name+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(m.character.sheet().hit_points)+"\n"+std::to_string(m.wealth[3])+" gp / "+std::to_string(m.character.inventory().items().size())+" items").c_str()));}
+    for(unsigned slot=0;slot<8;++slot){
+        auto* button=get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot));
+        const auto id=campaign_?campaign_->state().slots[slot]:0;button->set_visible(id!=0);if(!id)continue;
+        const auto& m=campaign_->member(id);const auto& cs=m.character.sheet();
+        const auto text=cs.name+"\n"+cs.character_class+" / AC "+std::to_string(campaign_->profile(id).armor_class)+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(cs.hit_points);
+        button->set_text(String::utf8(text.c_str()));button->set_tooltip_text(String::utf8(text.c_str()));
+    }
     get_node<Button>("MapMode")->set_text(full_map_?"Map: full":"Map: visited");
     queue_redraw();
 }
@@ -412,6 +479,8 @@ void RolfTourView::check_run()
             get_node<Button>("Restart")->grab_focus();
             const auto facing=s.pose.facing;press_key(Key::KEY_RIGHT);
             if (session_->snapshot().pose.facing!=(facing+1)%4) throw std::runtime_error("Exploration turn did not update native state");
+            const auto before=session_->snapshot().pose;press_key(Key::KEY_DOWN);
+            if(session_->snapshot().pose!=PartyPose{before.x,before.y,(before.facing+2)%4})throw std::runtime_error("Down arrow must turn without moving");
             UtilityFunctions::print("Godot C++ tour integration passed: ",check_prompts_," pauses.");
             get_tree()->quit(0);checking_=false;
         }
@@ -429,8 +498,13 @@ void RolfTourView::check_town()
     if(shop_check_stage_==3 && s.phase==TourPhase::completed){
         if(inventory_size()!=1 || session_->script_variable(0x6BC1)!=gold())
             throw std::runtime_error("Shop results did not persist after leaving");
+        party_selected(0);
+        auto* sheet=get_node<Window>(embedded_party_?"../TownSheet":"MemberSheet");
+        if(!sheet->is_visible())throw std::runtime_error("Town party click did not open a character sheet");
+        sheet->emit_signal("close_requested");
+        if(sheet->is_visible())throw std::runtime_error("Town character sheet did not close");
         UtilityFunctions::print("Godot town integration passed: tour, doors, shop purchase, inventory and return to exploration.");
-        if(!campaign_)get_tree()->quit(0);shop_check_stage_=4;checking_=false;return;
+        if(!embedded_party_)get_tree()->quit(0);shop_check_stage_=4;checking_=false;return;
     }
     if(s.phase==TourPhase::shopping){
         if(shop_check_stage_==0){shop_check_stage_=1;return;}
@@ -445,6 +519,20 @@ void RolfTourView::check_town()
                 throw std::runtime_error("Godot purchase did not debit the purse and add inventory");
             get_node<Button>("Inventory")->emit_signal("pressed");shop_check_stage_=2;return;
         }
+        get_node<ItemList>("InventoryPanel/Items")->select(0);
+        const auto id=campaign_->selected();const auto ac=campaign_->profile(id).armor_class;
+        get_node<Button>("InventoryPanel/Equip")->emit_signal("pressed");
+        if(campaign_->profile(id).armor_class!=ac+2)throw std::runtime_error("Inventory Equip did not apply shield AC");
+        get_node<Button>("InventoryPanel/Unequip")->emit_signal("pressed");
+        if(campaign_->profile(id).armor_class!=ac)throw std::runtime_error("Inventory Unequip did not remove shield AC");
+        get_node<Button>("InventoryPanel/Equip")->emit_signal("pressed");
+        const auto retained=campaign_->checkpoint();auto changed=retained;
+        auto& member=changed.roster.at(0);auto inventory=member.character.inventory();auto draft=member.character.creation_data();draft.character_class="wizard";
+        member.character=opengold::Character(*opengold::srd5::character_rules(),draft,member.character.appearance());member.character.inventory()=std::move(inventory);member.equipped.clear();member.vitals={member.character.sheet().hit_points,false,{}};
+        campaign_->restore(changed);refresh_inventory();get_node<ItemList>("InventoryPanel/Items")->select(0);
+        get_node<Button>("InventoryPanel/Equip")->emit_signal("pressed");
+        if(!get_node<Label>("InventoryPanel/Status")->get_text().contains("Untrained shield: no AC bonus"))throw std::runtime_error("Equip must display the untrained penalty");
+        campaign_->restore(retained);refresh_inventory();
         capture_frame("phlan-inventory");
         get_node<Button>("InventoryPanel/Close")->emit_signal("pressed");
         get_node<Button>("LeaveShop")->emit_signal("pressed");shop_check_stage_=3;return;

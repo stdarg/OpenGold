@@ -32,7 +32,10 @@ Use **Continue** or **Enter** at each pause. Movement remains locked until the
 farewell finishes. Then use the arrow keys or the turn/step buttons to explore
 the town, pass through ordinary doors, and run location scripts. **Look** or **L**
 searches the current location. Shops offer their original merchandise; select
-an item and choose **Buy**, then **Leave shop**. **Inventory** shows purchases.
+an item and choose **Buy**, then **Leave shop**. **Inventory** shows purchases
+and offers Equip/Unequip, including SRD untrained-use penalty descriptions.
+Down turns the party 180 degrees without moving. The view sits at the left at
+its required width, with clickable party name/class/AC/HP rows beside it.
 The party contains one level-1 fighter with 9,999 gold pieces. **Replay tour**
 resets the tour, purse, inventory and town flags. **Map: full/visited** changes
 map visibility; visited means cells actually occupied, not a line-of-sight rule.

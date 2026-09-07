@@ -66,6 +66,16 @@ private:
     std::size_t roster_index_{};
     bool party_open_{},added_to_party_{},party_check_{};
     unsigned party_check_stage_{};
+    std::vector<opengold::Character> pool_;
+    std::vector<unsigned> pool_added_;
+    unsigned pool_index_{},pool_check_stage_{};
+    void show_pool();
+    void pool_selected(std::int64_t index);
+    void pool_add();
+    void close_pool();
+    void pool_layout();
+    void town_member_selected(std::int64_t slot);
+    void close_town_sheet();
     void setup_party();
     void party_action(int action);
     void party_selected(std::int64_t index);

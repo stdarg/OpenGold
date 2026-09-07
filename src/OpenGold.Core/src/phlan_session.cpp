@@ -65,6 +65,7 @@ bool RolfTourSession::move_party(ExplorationCommand command)
     auto pose=snapshot_.pose;
     if (command==ExplorationCommand::turn_left) pose.facing=(pose.facing+3)%4;
     else if (command==ExplorationCommand::turn_right) pose.facing=(pose.facing+1)%4;
+    else if (command==ExplorationCommand::turn_around) pose.facing=(pose.facing+2)%4;
     else if (command==ExplorationCommand::forward) {
         if (machine_.variable(0x6DC9)==255) return false;
         const int x=static_cast<int>(pose.x)+dx[pose.facing],y=static_cast<int>(pose.y)+dy[pose.facing];

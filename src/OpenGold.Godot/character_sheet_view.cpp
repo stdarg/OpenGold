@@ -117,6 +117,7 @@ void CharacterCreationView::update_saving_throws(String value)
         label->set_text("Enter a whole-number target DC from 1 to 999.");return;
     }
     const int dc=static_cast<int>(value.to_int());
+    const bool disadvantage=member&&campaign_->profile(member->id).strength_dexterity_disadvantage;
     std::string text="Roll a d20 and add the saving throw bonus. Meet or exceed DC "+std::to_string(dc)+" to save.\n\n";
     for(unsigned i=0;i<6;++i){
         const int needed=srd5::minimum_save_roll(dc,s.saving_throws[i]);
@@ -124,6 +125,7 @@ void CharacterCreationView::update_saving_throws(String value)
         text+=needed>20?"Cannot reach this DC on a d20":needed==1?"Any d20 roll saves":"Roll "+std::to_string(needed)+" or higher";
         text+="[/b]\n"+number(s.modifiers[i])+" from "+names[i]+" score "+std::to_string(s.scores[i])+" (score minus 10, divided by 2, rounded down).\n";
         text+=s.save_proficiencies[i]?number(s.saving_throws[i]-s.modifiers[i])+" from "+s.character_class+" saving throw proficiency.":"+0 proficiency: "+s.character_class+" does not grant proficiency in this save.";
+        if(disadvantage&&i<2)text+="\nDisadvantage from untrained armor: roll two d20s and use the lower roll.";
         text+="\n\n";
     }
     text+="No additional racial, item or spell bonuses are currently applied to these saves. Conditional traits and persistent spell effects are not implemented.\n\nOrdinary saving throws: a natural 1 or 20 does not automatically fail or succeed. Death saves use separate rules.";

@@ -43,7 +43,7 @@ struct TourSnapshot {
     std::uint64_t picture_revision{};
     std::bitset<256> visited;
 };
-enum class ExplorationCommand { turn_left, turn_right, forward, look, camp };
+enum class ExplorationCommand { turn_left, turn_right, turn_around, forward, look, camp };
 
 // Original tour followed by the New Phlan movement/search/script scheduler.
 // Bound VM position cells are authoritative; snapshots are read-only views.

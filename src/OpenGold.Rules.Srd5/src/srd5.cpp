@@ -19,6 +19,27 @@ int minimum_save_roll(int dc, int bonus) noexcept
 bool attack_hits(int natural, int bonus, int ac) noexcept
 { return natural==20 || (natural!=1 && static_cast<std::int64_t>(natural)+bonus>=ac); }
 namespace {
+bool trained(std::string_view klass,std::string_view key)
+{
+    if(key=="dagger"||key=="mace"||key=="quarterstaff")return true;
+    if(key=="longsword")return klass=="Barbarian"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
+    if(key=="chain_mail")return klass=="Fighter"||klass=="Paladin";
+    if(key=="leather")return klass!="Monk"&&klass!="Sorcerer"&&klass!="Wizard";
+    if(key=="shield")return klass=="Barbarian"||klass=="Cleric"||klass=="Druid"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
+    throw std::runtime_error("Unsupported equipment conversion: "+std::string(key));
+}
+}
+std::string equipment_note(const CharacterSheet& sheet,std::string_view item)
+{
+    std::string text;
+    if(trained(sheet.character_class,item))text="Class training: no untrained-use penalty.";
+    else if(item=="shield")text="Untrained shield: no AC bonus.";
+    else if(item=="leather"||item=="chain_mail")text="Untrained armor: disadvantage on Strength/Dexterity attacks, checks (including initiative), and saves; cannot cast spells.";
+    else text="Untrained weapon: no proficiency bonus on attack rolls (no +2 at level 1).";
+    if(item=="chain_mail"&&sheet.scores[0]<13)text+=" Chain mail requires Strength 13: speed reduced by 10 feet.";
+    return text;
+}
+namespace {
 struct Dice { int count{}, sides{}, bonus{}; };
 struct Definition {
     int ac{}, hp{}, initiative{}, speed{}, melee_bonus{};
@@ -26,6 +47,7 @@ struct Definition {
     int ranged_bonus{};
     Dice ranged;
     int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{};
+    bool str_dex_disadvantage{};
 };
 struct Content { Identity identity; std::map<std::string,Definition> definitions; };
 struct Actor {
@@ -35,7 +57,7 @@ struct Actor {
     bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{}, stable{}, dead{};
 };
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
-Definition character_definition(std::string_view bytes)
+Definition character_definition(std::string_view bytes,bool combat=true)
 {
     if(bytes.size()>1024)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
@@ -43,13 +65,17 @@ Definition character_definition(std::string_view bytes)
     in>>magic>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
     in>>count;
-    if(!in||magic!="PC1"||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;})||
-        (klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard"))
+    if(!in||magic!="PC1"||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
+        throw std::runtime_error("Invalid character profile");
+    if(combat&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")
         throw std::runtime_error("Campaign combat supports level-one Fighter, Cleric and Wizard profiles only");
     const auto races=character_rules()->choices(CreationField::race);
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
-    Definition d;d.hp=(klass=="Fighter"?10:klass=="Cleric"?8:6)+con+(race=="Dwarf"?1:0);
+    const auto classes=character_rules()->choices(CreationField::character_class);
+    if(std::none_of(classes.begin(),classes.end(),[&](const auto& c){return c.label==klass;}))throw std::runtime_error("Unknown class");
+    const int die=klass=="Barbarian"?12:(klass=="Fighter"||klass=="Paladin"||klass=="Ranger")?10:(klass=="Wizard"||klass=="Sorcerer")?6:8;
+    Definition d;d.hp=die+con+(race=="Dwarf"?1:0);
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=1;
     d.melee_bonus=2+str;d.melee={0,0,std::max(0,1+str)};
     d.winds=klass=="Fighter"?2:0;d.slots=klass=="Fighter"?0:2;
@@ -58,18 +84,20 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(key=="dagger"||key=="mace"||key=="longsword"||key=="quarterstaff"){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
-            if((key=="longsword"&&klass!="Fighter")||(key=="mace"&&klass=="Wizard"))throw std::runtime_error("Weapon proficiency is not supported for this class");
             const int modifier=key=="dagger"?std::max(str,dex):str;
-            d.melee_bonus=2+modifier;d.melee={1,key=="dagger"?4:key=="longsword"?8:6,modifier};
+            d.melee_bonus=(trained(klass,key)?2:0)+modifier;d.melee={1,key=="dagger"?4:key=="longsword"?8:6,modifier};
         }else if(key=="leather"||key=="chain_mail"){
-            if(armor||klass=="Wizard"||(key=="chain_mail"&&klass!="Fighter"))throw std::runtime_error("Unsupported armor training or duplicate armor");
+            if(armor)throw std::runtime_error("Only one armor may be equipped");
+            if(!trained(klass,key)){d.str_dex_disadvantage=true;d.spells=0;}
             armor=true;d.ac=key=="leather"?11+dex:16;
             if(key=="chain_mail"&&scores[0]<13)d.speed-=10;
         }else if(key=="shield"){
-            if(shield||klass=="Wizard")throw std::runtime_error("Unsupported shield training or duplicate shield");shield=true;
+            if(shield)throw std::runtime_error("Only one shield may be equipped");shield=true;
         }else throw std::runtime_error("Unsupported equipment conversion: "+key);
     }
-    if(shield)d.ac+=2;
+    if(!armor&&klass=="Barbarian")d.ac=std::max(d.ac,10+dex+con);
+    if(!armor&&!shield&&klass=="Monk")d.ac=std::max(d.ac,10+dex+ability_modifier(scores[4]));
+    if(shield&&trained(klass,"shield"))d.ac+=2;
     in>>std::ws;if(!in.eof())throw std::runtime_error("Invalid character profile fields");return d;
 }
 void restore_vitals(Actor& a,const VitalState& state)
@@ -116,7 +144,7 @@ public:
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
             Actor a; a.definition=d;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;
             if(a.source.state)restore_vitals(a,*a.source.state);
-            a.initiative=roll(20)+d.initiative;a.movement=d.speed;
+            a.initiative=roll(20);if(d.str_dex_disadvantage)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
             actors_.push_back(std::move(a));
         }
         if (sides.size()!=2) throw std::runtime_error("Encounter needs both sides");
@@ -269,7 +297,7 @@ void Session::heal(Actor& target,int amount)
 }
 void Session::attack(Actor& a,Actor& target,bool ranged,bool spell)
 {
-    const auto& d=def(a);bool disadvantaged=target.dodge;
+    const auto& d=def(a);bool disadvantaged=target.dodge||(!spell&&d.str_dex_disadvantage);
     if(ranged) {
         if(!spell&&distance(a.source.cell,target.source.cell)>d.range)disadvantaged=true;
         for(const auto& other:actors_)if(other.source.side!=a.source.side&&other.hp>0&&distance(a.source.cell,other.source.cell)<=5&&line_of_sight(a.source.cell,other.source.cell))disadvantaged=true;
@@ -452,19 +480,22 @@ public:
         std::ostringstream out;out<<"PC1 "<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
-        const auto data=out.str();const auto d=character_definition(data);
+        const auto data=out.str();const auto d=character_definition(data,false);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
         CharacterProfile result{data,d.hp,d.ac,"Level-one combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
+        result.strength_dexterity_disadvantage=d.str_dex_disadvantage;
         for(const auto& key:gear){
-            if(key=="shield")result.item_modifiers+="Source: equipped Shield: +2 AC.\n";
+            if(key=="shield")result.item_modifiers+=trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.\n":"Source: equipped Shield: +0 AC (untrained).\n";
             else if(key=="leather")result.item_modifiers+="Source: equipped Leather armor and Dexterity score "+std::to_string(sheet.scores[1])+". AC becomes 11 + Dexterity modifier ("+std::to_string(sheet.modifiers[1])+").\n";
             else if(key=="chain_mail")result.item_modifiers+="Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength "+std::to_string(sheet.scores[0])+").\n";
-            else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier +2 class proficiency; damage adds that ability modifier.\n";
+            else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage adds that ability modifier.\n";
         }
+        for(const auto& key:gear)result.item_modifiers+="Source: equipped "+key+". "+equipment_note(sheet,key)+"\n";
         if(gear.empty())result.item_modifiers="No equipment modifiers. Source: unarmed strike rules and Strength score "+std::to_string(sheet.scores[0])+". Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).";
         result.spell_modifiers="No active spell modifiers. Persistent spell effects are not implemented.";
         if(sheet.character_class=="Wizard")result.spell_modifiers="Source: Fire Bolt and Wizard spellcasting, Intelligence score "+std::to_string(sheet.scores[3])+". Attack: Intelligence modifier +2 level-one proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
         if(sheet.character_class=="Cleric")result.spell_modifiers="Source: Cure Wounds and Cleric spellcasting, Wisdom score "+std::to_string(sheet.scores[4])+". Healing: 2d8 + Wisdom modifier ("+std::to_string(d.casting-2)+").\n"+result.spell_modifiers;
+        if(d.str_dex_disadvantage)result.spell_modifiers="Cannot cast spells while wearing untrained armor.\n"+result.spell_modifiers;
         return result;
     }
 private: std::shared_ptr<const Content> content_;

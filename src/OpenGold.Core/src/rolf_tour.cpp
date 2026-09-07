@@ -282,6 +282,7 @@ bool RolfTourSession::explore(ExplorationCommand command)
     auto pose = snapshot_.pose;
     if (command == ExplorationCommand::turn_left) pose.facing = (pose.facing + 3) % 4;
     else if (command == ExplorationCommand::turn_right) pose.facing = (pose.facing + 1) % 4;
+    else if (command == ExplorationCommand::turn_around) pose.facing = (pose.facing + 2) % 4;
     else {
         const auto& edge = map_.at(pose.x, pose.y);
         const int x = static_cast<int>(pose.x) + dx[pose.facing], y = static_cast<int>(pose.y) + dy[pose.facing];

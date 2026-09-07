@@ -13,6 +13,12 @@ Run from PowerShell:
 
 1. Finish a character, then select **Add to party** on the character sheet.
    The preview grants each new PC 250 gp. **View party** opens the roster.
+   Alternatively, **Character Pool** opens 48 level-one characters, four for each
+   SRD class, with varied alignments, genders, strong ability scores, and selected
+   portrait heads/bodies. The ready/action sprite palettes use colors sampled
+   from their portraits and matched to the original 16-color sprite palette.
+   Select a candidate to preview the sheet and art, then **Add to party**.
+   The same candidate cannot be added twice; use Rejoin for a reserved member.
 2. Select **Create character** to make additional PCs. Six PC positions and two
    separate NPC positions are available. Adding retains the finished character
    by value; subsequently editing the creator's draft does not edit that member.
@@ -28,8 +34,15 @@ Run from PowerShell:
    identification or automatic conversion of an original NPC.
 6. **Explore New Phlan** runs Rolf's tour and the existing original town host.
    Visit the arms shop at (13,8), accept its offer, buy equipment and leave.
-   **Return to party** becomes available when the event finishes.
-7. Select purchased gear and **Equip selected**. Unequip an existing weapon or
+   **Return to party** becomes available when the event finishes. The street or
+   encounter view occupies only its required width at the left. Immediately to
+   its right, scrollable member rows show name, class, AC and current/maximum HP.
+   Clicking a row opens the character sheet without leaving town. During an
+   active dialogue it is read-only; outside events it also selects that member.
+   Down turns 180 degrees in place; Up steps forward and Left/Right turn 90 degrees.
+7. In town, **Inventory** offers **Equip** and **Unequip** for the selected item,
+   with the training penalty visible when selecting and equipping it. The party
+   screen also offers **Equip selected**. Unequip an existing weapon or
    armor before equipping its replacement. Invalid combinations leave equipment
    unchanged. **Party combat** opens the existing tactical UI against a Bandit.
 8. Finish the fight and return. HP, death state and spent resources persist.
@@ -44,7 +57,8 @@ preview opens combat explicitly; it does not add general town combat encounters.
 The rules module evaluates the created scores and equipment; these characters
 do not select the old Vanguard/Adept/Healer fixture statistics. This first shared
 party increment supports **level-one Fighter, Cleric and Wizard combat subsets**.
-Other classes can be created and retained in the roster, but must be put in
+All twelve classes have exploration equipment profiles, including armor training,
+unarmored AC and HP. Other classes must still be put in
 reserve before combat. An unsupported active profile fails explicitly.
 
 - Fighter: ordinary attacks and two Second Wind uses.
@@ -63,13 +77,27 @@ Original merchandise maps by item type, not its display name:
 
 | Original type | Rules key | Supported use |
 | --- | --- | --- |
-| 8 | dagger | All supported classes; finesse melee |
-| 23 | mace | Fighter/Cleric |
-| 33 | quarterstaff | All supported classes; one-handed melee |
-| 36 | longsword | Fighter; one-handed melee |
-| 50 | leather | Fighter/Cleric; AC 11 + Dexterity |
-| 55 | chain_mail | Fighter; AC 16, speed penalty below Strength 13 |
-| 59 | shield | Fighter/Cleric; +2 AC |
+| 8 | dagger | Simple weapon; all classes trained; finesse melee |
+| 23 | mace | Simple weapon; all classes trained |
+| 33 | quarterstaff | Simple weapon; all classes trained; one-handed melee |
+| 36 | longsword | Barbarian/Fighter/Paladin/Ranger trained; one-handed melee |
+| 50 | leather | All except Monk/Sorcerer/Wizard trained; AC 11 + Dexterity |
+| 55 | chain_mail | Fighter/Paladin trained; AC 16, speed penalty below Strength 13 |
+| 59 | shield | Barbarian/Cleric/Druid/Fighter/Paladin/Ranger trained; +2 AC |
+
+Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):
+- Weapons omit the +2 level-one proficiency bonus on attacks.
+- Shields provide no AC bonus without training.
+- Armor retains its AC but imposes disadvantage on Strength/Dexterity D20 Tests
+  and prevents spellcasting. Combat applies this to initiative and physical
+  attacks; the saving-throw dialog identifies disadvantage on Strength/Dexterity
+  saves. General ability checks and additional saving-throw combat effects are
+  not yet implemented.
+
+Training uses the base level-one class traits; optional Cleric/Druid orders that
+add training are not selected by this creator. Equipping or removing gear rebuilds
+these effects from the current loadout. Duplicate weapon/armor/shield slots remain
+invalid, and heavy armor's low-Strength speed penalty is shown separately.
 
 Enchanted, cursed, effect-bearing and other types remain purchasable inventory
 but reject equipping until explicitly converted. The decoded original item and
