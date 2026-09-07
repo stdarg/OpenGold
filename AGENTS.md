@@ -43,3 +43,14 @@
 - Provide commands appropriate to the user's actual shell.
 - Ask numbered questions to confirm UI layout and control behavior before
   making independent choices about them.
+
+## UI controls
+
+- Make interactive elements visibly recognizable as controls. Buttons must look
+  like buttons, and selectable rows must visibly communicate that they can be
+  selected; do not present actions as indistinguishable plain text.
+- Use consistent standard control styling with clear boundaries, readable
+  contrast, padding, and distinct hover, pressed/selected, disabled, and keyboard
+  focus states. Preserve keyboard access and clear labels.
+- Apply this rule to new screens and when updating existing UI. Confirm layout
+  and control behavior with numbered questions as required above.
