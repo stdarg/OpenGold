@@ -54,7 +54,7 @@ void CharacterCreator::name(std::string text)
 }
 void CharacterCreator::appearance(por::CharacterAppearance value)
 {
-    require_editable();por::validate_character_appearance(value);
+    por::validate_character_appearance(value);
     appearance_=value;
 }
 CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,step_>=CreationStep::portrait);}

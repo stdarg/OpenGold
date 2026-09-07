@@ -80,6 +80,9 @@ void creation_tests()
     auto appearance=creator.appearance();appearance.portrait_head=261;appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
     check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
     auto finished=creator.create_character();
+    auto revised=appearance;revised.portrait_body=2;creator.appearance(revised);
+    check(creator.step()==CreationStep::sheet&&creator.create_character().appearance()==revised,"Portrait can change while reviewing a completed sheet");
+    creator.appearance(appearance);
     const auto retained=creator.draft();const auto sheet=creator.sheet();
     check(finished.inventory().empty()&&finished.appearance()==appearance,"Finished character owns appearance and an empty inventory");
     rejects([&]{creator.roll();},"Completed sheet cannot be silently rerolled");

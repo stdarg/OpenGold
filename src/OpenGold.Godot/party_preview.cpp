@@ -108,7 +108,7 @@ void CharacterCreationView::party_action(int action)
         error_="";
         const auto id=campaign_->state().roster.empty()?0:campaign_->state().roster.at(roster_index_).id;
         if(action==1){if(!completed_||added_to_party_)return;const auto added=campaign_->add_pc(*completed_);campaign_->set_wealth(added,{0,0,0,250,0,0,0});
-            added_to_party_=true;roster_index_=campaign_->state().roster.size()-1;get_node<Button>("AddParty")->hide();}
+            added_to_party_=true;roster_index_=campaign_->state().roster.size()-1;refresh();}
         if(action==2||action==11){party_open_=false;get_node<Control>("PartyPanel")->hide();if(action==2)restart();return;}
         if(action==3)campaign_->remove(id);
         if(action==4)campaign_->rejoin(id);
@@ -147,15 +147,19 @@ void CharacterCreationView::party_check()
 {
     const auto press=[&](const char* node){get_node<Button>(node)->emit_signal("pressed");if(!error_.is_empty())throw std::runtime_error(error_.utf8().get_data());};
     switch(party_check_stage_){
-    case 0:
+    case 0:{
         creator_->select(rules::CreationField::race,"human");creator_->select(rules::CreationField::character_class,"fighter");
         recommend_head();creator_->roll();creator_->name("Party check fighter");
         for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
         while(creator_->step()!=CreationStep::sheet)next();
+        press("BodyNext");const auto chosen=completed_->appearance();
         press("AddParty");if(campaign_->state().slots[0]==0)throw std::runtime_error("Add party callback failed");
+        if(!get_node<Button>("BodyNext")->is_disabled()||!get_node<Button>("PortraitHead")->is_disabled())throw std::runtime_error("Added portrait controls remained enabled");
+        portrait_part(1,1);
+        if(completed_->appearance()!=chosen||campaign_->member(campaign_->state().slots[0]).character.appearance()!=chosen)throw std::runtime_error("Party portrait changed after adding");
         press("PartyPanel/Recruit");if(!campaign_->state().slots[6])throw std::runtime_error("Recruit callback failed");
         press("PartyPanel/Remove");press("PartyPanel/Rejoin");
-        party_selected(0);capture("party-roster.png");++party_check_stage_;break;
+        party_selected(0);capture("party-roster.png");++party_check_stage_;break;}
     case 1:press("PartyPanel/Explore");++party_check_stage_;break;
     case 2:if(!get_node<RolfTourView>("CampaignTown")->party_route_checked())return;
         press("ReturnParty");party_selected(0);

@@ -63,20 +63,24 @@ placeholder_text = "Enter a character name"
 max_length = 40
 
 [node name="HeadPrevious" type="Button" parent="."]
-text = "< Head"
+text = "<"
+tooltip_text = "Previous portrait head"
 
 [node name="HeadNext" type="Button" parent="."]
-text = "Head >"
+text = ">"
+tooltip_text = "Next portrait head"
 
 [node name="PortraitHead" type="OptionButton" parent="."]
 fit_to_longest_item = false
 
 
 [node name="BodyPrevious" type="Button" parent="."]
-text = "< Body"
+text = "<"
+tooltip_text = "Previous portrait body"
 
 [node name="BodyNext" type="Button" parent="."]
-text = "Body >"
+text = ">"
+tooltip_text = "Next portrait body"
 
 [node name="BodyLabel" type="Label" parent="."]
 

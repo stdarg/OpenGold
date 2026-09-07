@@ -22,8 +22,8 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 3. Select one of the twelve SRD classes.
 4. Select alignment.
 5. The **Dice Rolls** area starts with six empty boxes to the right of the
-   abilities. Roll attributes to fill those boxes; all four dice appear, with
-   the discarded lowest die marked. Ability boxes remain empty until you drag
+   abilities. Roll attributes to fill those boxes with totals only. The native
+   character retains the underlying dice. Ability boxes remain empty until you drag
    results into them. Assigned results leave their original boxes empty.
    Dragging between filled ability boxes swaps their results. Dropping an
    unassigned roll onto a filled ability returns the displaced result to the
@@ -35,7 +35,11 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    with +1 for Dwarven Toughness when applicable.
 7. Enter a name, up to 40 characters.
 8. Choose a portrait head from the dropdown or browse with the previous/next
-   buttons, then choose a body. The list includes all original heads plus male
+   buttons directly below the portrait, then choose a body with the second row
+   of arrows. These controls are available on every creation step, including
+   the finished sheet, and are disabled after **Add to party**. The ready/action
+   previews sit below the controls and scale down at the minimum window size.
+   The list includes all original heads plus male
    and female Gnome, Orc, Goliath, Tiefling and Dragonborn heads. Race/gender
    selections initially suggest the matching new head. Manually choosing a
    head keeps it selected through later edits; every head remains available.
@@ -76,7 +80,8 @@ Persistence remains separate work.
   rejection sampling; invalid assignments and selections are rejected.
 - `OpenGold.Core/character_creator.h` owns the injected rules module and the
   single character's sequence and appearance. A completed sheet must return to
-  editing before mutation. No rolled result can be assigned twice.
+  editing before changing choices or scores; appearance can change during sheet
+  review. No rolled result can be assigned twice.
   `create_character()` exports a finished `Character` only after the last step.
 - `OpenGold.Core/character.h` is the reusable, value-owned character model.
   It retains all creation choices, original dice, assignments and bonuses;
