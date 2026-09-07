@@ -9,6 +9,8 @@ and modern quality-of-life features.
 Play the 19 original PC-speaker effects from your installed `START.EXE`, including
 unused effects, with a button for every sound-directory entry. The native demo
 decodes everything in memory and includes stop, volume and mute controls.
+Its reusable `SoundBank` and `SoundPlayer` classes are independent of Godot;
+the scene uses a separate Godot audio adapter.
 From PowerShell:
 
 ```powershell

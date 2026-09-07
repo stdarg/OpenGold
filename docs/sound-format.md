@@ -72,6 +72,59 @@ the resulting ticks to 48 kHz mono PCM, averaging the square wave within each
 sample. Hardware speaker coloration and phase at the instant of an original
 interrupt are not reproduced; no acoustic recording comparison is claimed.
 
+## Reusable game audio and ownership
+
+`OpenGold.Core` provides the game-facing C++ classes:
+
+- `PcmBuffer` owns signed 16-bit, 48 kHz mono samples and supplies explicit
+  little-endian serialization and duration metadata.
+- `SoundBank` owns prepared clips. `load(directory)` reads the original
+  executable; its value constructor accepts decoded effects for tests. Clips
+  are looked up by their original ID, independently of presentation order.
+- `SoundPlayer` owns a bank by value and a `std::unique_ptr<SoundOutput>`.
+  It handles replay, replacement, stop, completion queries, volume and mute.
+  Its destructor stops playback. It cannot be copied or moved.
+- `SoundOutput` is the small injectable device interface. Native tests use a
+  fake output and need neither Godot, an audio device nor original assets.
+
+`GodotSoundOutput` is the presentation adapter. It caches streams using Godot's
+`Ref<AudioStreamWAV>` smart pointers. Its `AudioStreamPlayer` node remains owned
+by the scene; the adapter keeps only a checked instance ID. Calls run on the
+Godot main thread, and the node must be dedicated to this adapter. The adapter
+stops playback and detaches its stream on destruction; an already-freed node
+is safe to query or tear down, and attempts to play through it fail explicitly.
+
+For example, game code can keep this controller for the scene's lifetime:
+
+```cpp
+#include "opengold/sound_player.h"
+#include "godot_sound_output.h"
+
+// scene_player is a reference to a scene-owned AudioStreamPlayer.
+opengold::por::SoundPlayer audio(
+    opengold::por::SoundBank::load(game_directory),
+    std::make_unique<GodotSoundOutput>(scene_player));
+audio.set_volume(0.7);
+audio.play(10); // Original footstep ID; repeated calls restart it.
+audio.set_muted(true); // Exact zero gain; preserves the chosen volume.
+```
+
+The sound board is a consumer of these classes. It chooses the installation
+path and manages labels/buttons; it does not construct PCM streams or implement
+playback policy. The format decoder and mathematical renderer remain pure
+functions behind the bank so their binary and waveform behavior can be tested
+directly. All decoded data stays in memory.
+
+## Review findings addressed
+
+The original demo coupled stream conversion, caching and playback policy to
+`SoundBoardView` and assumed sound ID equaled button index plus one. Extracting
+the classes above makes them usable from exploration or combat without a review
+scene. The controller now rejects invalid IDs before interrupting audio,
+validates volume, silences partially started playback after a device failure,
+and releases its output on failed construction. Mute previously attenuated by
+80 dB; it now supplies zero linear gain.
+
 ## Run and verify
 
 From PowerShell:
@@ -87,5 +140,17 @@ Click a sound to play/restart it; a new selection stops the previous sound.
 Stop, mute and volume are available below the buttons.
 
 The native sound tests use hand-authored fixtures, plus optional inspection of
-all 21 entries when `OPENGOLD_GAME_DIR` is set. Godot's `--sound-check` mode
-exercises each button's pressed signal and verifies playback starts and ends.
+all 21 entries when `OPENGOLD_GAME_DIR` is set. `opengold_sound_player_tests`
+covers PCM byte order, bank validation, sparse IDs, playback/replay/completion,
+volume and mute, failure recovery, and RAII destruction using a fake output.
+Godot's `--sound-check` mode exercises each button's pressed signal and verifies
+completion, stream reuse, switching, controls, destruction during playback, and
+an adapter outliving its scene node. Shutdown checks allow the audio mixer to
+release stopped playback handles before the test process exits.
+The runtime tests check behavior and buffer conversion; acoustic comparison
+with original-game recordings remains outside this verification.
+
+```powershell
+.\build\godot\opengold_sound_player_tests.exe
+godot --headless --path godot res://scenes/sound_board.tscn -- --sound-check
+```

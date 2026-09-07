@@ -51,6 +51,8 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/combat_demo.cpp
     src/OpenGold.Core/src/exploration_view.cpp
     src/OpenGold.Core/src/speaker_audio.cpp
+    src/OpenGold.Core/src/sound_bank.cpp
+    src/OpenGold.Core/src/sound_player.cpp
 )
 
 target_include_directories(opengold_core
@@ -90,6 +92,9 @@ if(OPENGOLD_BUILD_TESTS)
     add_executable(opengold_sound_tests tests/sound_tests.cpp)
     target_link_libraries(opengold_sound_tests PRIVATE opengold_core)
     add_test(NAME opengold_sound_tests COMMAND opengold_sound_tests)
+    add_executable(opengold_sound_player_tests tests/sound_player_tests.cpp)
+    target_link_libraries(opengold_sound_player_tests PRIVATE opengold_core)
+    add_test(NAME opengold_sound_player_tests COMMAND opengold_sound_player_tests)
 endif()
 
 add_executable(opengold_creatures tools/creatures.cpp)
