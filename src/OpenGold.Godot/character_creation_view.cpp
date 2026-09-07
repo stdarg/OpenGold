@@ -143,6 +143,10 @@ void CharacterCreationView::layout()
     portrait_rect_=Rect2(px+27,py+100,264,264);
     ready_rect_=Rect2(px+26,py+408,120,120);action_rect_=Rect2(px+172,py+408,120,120);
     place("ReadyLabel",Rect2(px+26,py+374,120,28));place("ActionLabel",Rect2(px+172,py+374,120,28));
+    if(creator_&&creator_->step()==CreationStep::combat_icon) {
+        ready_rect_=Rect2(px+63,py+112,192,192);action_rect_=Rect2(px+63,py+348,192,192);
+        place("ReadyLabel",Rect2(px+63,py+88,192,24));place("ActionLabel",Rect2(px+63,py+324,192,24));
+    }
     place("PreviewSummary",Rect2(px+18,py+550,282,std::max(42.0,ph-564)));
     place("Back",Rect2(x,h-60,150,38));place("Next",Rect2(x+pw-190,h-60,190,38));
     place("Status",Rect2(x+160,h-62,std::max(1.0,pw-360),44));
@@ -211,7 +215,8 @@ void CharacterCreationView::refresh()
         get_node<Label>("SwapHint")->set_text(selected_score_<0?"Select two attributes to swap.":gs(std::string("Swap ")+abilities[selected_score_]+" with another attribute."));
     }
     std::optional<CharacterSheet> s;
-    if(d.rolled)s=creator_->sheet();
+    if(completed_)s=completed_->sheet();
+    else if(d.rolled)s=creator_->sheet();
     if(stats)for(unsigned i=0;i<6;++i) {
         auto* b=get_node<Button>(gs("Ability"+std::to_string(i)));b->set_text(gs(std::string(selected_score_==i?"> ":"")+abilities[i]));b->set_disabled(!d.rolled);
         std::string dice="--   --   --   --";
@@ -233,20 +238,28 @@ void CharacterCreationView::refresh()
     }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
     if(portrait)instructions="Choose a head and body for your character sheet portrait. The preview updates immediately.";
-    if(icon)instructions="Choose head and weapon parts. Select a Color-1 or Color-2 region, then choose a palette color below.";
+    if(icon)instructions="Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.";
     get_node<Label>("HeadLabel")->set_text(gs("Head "+std::to_string(a.portrait_head)));
     get_node<Label>("BodyLabel")->set_text(gs("Body "+std::to_string(a.portrait_body)));
     get_node<Label>("CombatHeadLabel")->set_text(gs("Head "+std::to_string(a.combat_head+1)+" / 14"));
     get_node<Label>("WeaponLabel")->set_text(gs("Weapon "+std::to_string(a.combat_body+1)+" / 32"));
     get_node<Button>("Size")->set_text(a.tall?"Size: Tall":"Size: Short");
     if(icon) {
+        const auto usage=art_->color_usage(a);
+        if(!usage.contains(color_bank_,color_part_)) {
+            for(unsigned i=0;i<12;++i)if(usage.contains(i/6,i%6)){color_bank_=i/6;color_part_=i%6;break;}
+        }
         get_node<Label>("PaletteHint")->set_text(gs(std::string(parts[color_part_])+" / Color-"+std::to_string(color_bank_+1)+": choose a color"));
         for(int bank=0;bank<2;++bank)for(int part=0;part<6;++part) {
             auto* button=get_node<Button>(gs("Color"+std::to_string(bank)+"_"+std::to_string(part)));
             const bool selected=bank==color_bank_&&part==color_part_;const auto color=ega(a.colors[bank][part]);
-            button->set_text(gs(std::string(selected?"> ":"")+colors[a.colors[bank][part]]));
+            const bool present=usage.contains(bank,part);
+            button->set_disabled(!present);
+            button->set_tooltip_text(present?"Choose a swatch to recolor this part in the combat preview.":"This part is not present in either pose. Choose another head or weapon to use it.");
+            button->set_text(present?gs(std::string(selected?"> ":"")+colors[a.colors[bank][part]]):String("Not present"));
             button->add_theme_stylebox_override("normal",box(color,selected?Color("f1d29c"):Color("62707a"),selected?3:1));
             button->add_theme_stylebox_override("hover",box(color,Color("ffffff"),2));
+            button->add_theme_stylebox_override("disabled",box(Color("253038"),Color("405058")));
             const auto foreground=(color.r*.299+color.g*.587+color.b*.114)>.5?Color("101820"):Color("ffffff");
             button->add_theme_color_override("font_color",foreground);button->add_theme_color_override("font_hover_color",foreground);
         }
@@ -258,9 +271,13 @@ void CharacterCreationView::refresh()
         text+="[table=4][cell]Attribute     [/cell][cell]Score     [/cell][cell]Modifier     [/cell][cell]Base + bonus[/cell]";
         for(unsigned i=0;i<6;++i)text+="[cell]"+std::string(full_abilities[i])+"[/cell][cell]"+std::to_string(s->scores[i])+"[/cell][cell]"+signed_number(s->modifiers[i])+"[/cell][cell]"+std::to_string(s->base[i])+" "+signed_number(s->bonuses[i])+"[/cell]";
         text+="[/table]\n\n"+s->hp_explanation;
+        text+="\n\n[b]Inventory[/b]";
+        if(completed_->inventory().empty())text+="\nEmpty";
+        else for(const auto& item:completed_->inventory().items())text+="\n"+item.name+" x"+std::to_string(item.quantity);
         get_node<RichTextLabel>("Description")->set_text(gs(text));
     }
     get_node<Label>("Instructions")->set_text(gs(instructions));
+    get_node<Label>("PreviewTitle")->set_text(icon?"COMBAT PREVIEW":"CHARACTER PREVIEW");
     get_node<Label>("PreviewName")->set_text(d.name.empty()?"Unnamed character":gs(d.name));
     get_node<Label>("PreviewSummary")->set_text(s?gs(s->race+" / "+s->character_class+"\n"+s->alignment+" / "+std::to_string(s->hit_points)+" HP"):String("Choose your character's details."));
     refresh_art();layout();queue_redraw();refreshing_=false;
@@ -269,8 +286,11 @@ void CharacterCreationView::_draw()
 {
     draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));
     for(const auto& rect:{page_rect_,preview_rect_}){draw_rect(rect,Color("1c272e"));draw_rect(rect,Color("405058"),false);}
-    for(const auto& rect:{portrait_rect_,ready_rect_,action_rect_})draw_rect(rect,Color("10171c"));
-    if(images_[0].is_valid())draw_texture_rect(images_[0],portrait_rect_,false);
+    for(const auto& rect:{ready_rect_,action_rect_})draw_rect(rect,Color("10171c"));
+    if(!creator_||creator_->step()!=CreationStep::combat_icon) {
+        draw_rect(portrait_rect_,Color("10171c"));
+        if(images_[0].is_valid())draw_texture_rect(images_[0],portrait_rect_,false);
+    }
     if(images_[1].is_valid())draw_texture_rect(images_[1],ready_rect_,false);
     if(images_[2].is_valid())draw_texture_rect(images_[2],action_rect_,false);
 }
@@ -280,9 +300,9 @@ void CharacterCreationView::perform(const std::function<void()>& action)
     try{error_="";action();refresh();}
     catch(const std::exception& e){error_=gs(e.what());refreshing_=false;get_node<Label>("Status")->set_text(error_);}
 }
-void CharacterCreationView::next(){perform([&]{creator_->next();selected_score_=-1;});}
-void CharacterCreationView::back(){perform([&]{creator_->back();selected_score_=-1;});}
-void CharacterCreationView::restart(){perform([&]{creator_->restart();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
+void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}
+void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
+void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
 void CharacterCreationView::choice_selected(std::int64_t index)
 {if(refreshing_)return;perform([&]{const auto f=static_cast<CreationField>(creator_->step());creator_->select(f,creator_->rules().choices(f).at(index).id);});}
 void CharacterCreationView::background_selected(std::int64_t index)
@@ -347,13 +367,37 @@ void CharacterCreationView::check_run()
             event->set_keycode(static_cast<Key>(c>='a'&&c<='z'?c-32:c));event->set_pressed(pressed);get_viewport()->push_input(event,true);}
         break; // LineEdit publishes text_changed on the next idle turn.
     case 10:press("Next");press("HeadNext");press("BodyNext");press("Next");break;
-    case 11:press("CombatHeadNext");press("WeaponNext");press("Size");break;
-    case 12:for(int bank=0;bank<2;++bank)for(int part=0;part<6;++part){press(("Color"+std::to_string(bank)+"_"+std::to_string(part)).c_str());press(("Palette"+std::to_string((part*2+bank+1)%16)).c_str());
-        if(creator_->appearance().colors[bank][part]!=(part*2+bank+1)%16)throw std::runtime_error("Color input did not change the requested region");}break;
+    case 11:
+        for(int bank=0;bank<2;++bank)for(int part:{0,3})
+            if(!get_node<Button>(gs("Color"+std::to_string(bank)+"_"+std::to_string(part)))->is_disabled())throw std::runtime_error("Absent weapon/shield control enabled");
+        press("CombatHeadNext");for(int i=0;i<4;++i)press("WeaponNext");press("Size");break;
+    case 12:
+        capture("character-before-colors.png");
+        for(int bank=0;bank<2;++bank)for(int part=0;part<6;++part) {
+            const auto before=creator_->appearance();const auto usage=art_->color_usage(before);
+            const auto chosen=(before.colors[bank][part]+3)%16;
+            const auto portrait=images_[0]->get_image()->get_data();
+            const std::array<PackedByteArray,2> old{images_[1]->get_image()->get_data(),images_[2]->get_image()->get_data()};
+            press(("Color"+std::to_string(bank)+"_"+std::to_string(part)).c_str());press(("Palette"+std::to_string(chosen)).c_str());
+            if(creator_->appearance().colors[bank][part]!=chosen)throw std::runtime_error("Color input did not change the requested region");
+            if(images_[0]->get_image()->get_data()!=portrait)throw std::runtime_error("Combat colors changed the portrait");
+            for(unsigned pose=0;pose<2;++pose) {
+                const auto pixels=images_[pose+1]->get_image()->get_data();
+                const auto expected=art_->icon(creator_->appearance(),pose!=0);
+                if(pixels.size()!=expected.rgba.size()||!std::equal(expected.rgba.begin(),expected.rgba.end(),pixels.ptr()))
+                    throw std::runtime_error("Preview texture is stale after palette input");
+                unsigned changed=0;for(int64_t p=0;p<pixels.size();p+=4)
+                    if(!std::equal(pixels.ptr()+p,pixels.ptr()+p+4,old[pose].ptr()+p))++changed;
+                if(changed!=(pose?usage.action:usage.ready)[bank][part])throw std::runtime_error("Recolor changed the wrong number of visible pixels");
+            }
+        }break;
     case 13:capture("character-appearance.png");press("Next");break;
-    case 14:if(creator_->step()!=CreationStep::sheet||creator_->sheet().name!="Mira Stoneward")throw std::runtime_error("Sheet not completed");capture("character-sheet.png");press("Back");break;
-    case 15:{const auto a=creator_->appearance();press("Next");if(a!=creator_->appearance())throw std::runtime_error("Appearance lost on review");press("Restart");break;}
-    case 16:if(creator_->draft().rolled||!creator_->draft().name.empty()||creator_->step()!=CreationStep::race)throw std::runtime_error("Start over did not clear the character");
-        UtilityFunctions::print("Godot C++ character check passed: choices, dice, swaps, background, HP, name, original art, twelve colors, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
+    case 14:if(creator_->step()!=CreationStep::sheet||!completed_||completed_->sheet().name!="Mira Stoneward"||!completed_->inventory().empty()||completed_->appearance()!=creator_->appearance())throw std::runtime_error("Character not completed");capture("character-sheet.png");press("Back");break;
+    case 15:{const auto a=creator_->appearance();press("Size");press("CombatHeadNext");
+        if(!get_node<Button>("Color0_2")->is_disabled())throw std::runtime_error("Helmet-covered hair control enabled");
+        press("CombatHeadPrevious");press("Size");press("Next");
+        if(a!=creator_->appearance()||a!=completed_->appearance())throw std::runtime_error("Appearance lost on part changes or review");press("Restart");break;}
+    case 16:if(completed_||creator_->draft().rolled||!creator_->draft().name.empty()||creator_->step()!=CreationStep::race)throw std::runtime_error("Start over did not clear the character");
+        UtilityFunctions::print("Godot C++ character check passed: choices, dice, swaps, background, HP, name, original art, twelve live texture recolors, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
     }
 }

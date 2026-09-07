@@ -4,6 +4,32 @@
 #include <stdexcept>
 
 namespace opengold::por {
+namespace {
+// 5/13 belong to the cap. The six user-customizable regions skip that pair.
+constexpr std::array<int,8> color_regions{-1,1,4,5,2,-1,3,0};
+std::vector<std::uint8_t> composed_pixels(const IndexedIcon& head,const IndexedIcon& body)
+{
+    if(head.width!=24 || body.width!=24 || !head.height || head.height>24 || body.height!=24 ||
+        head.pixels.size()!=head.width*head.height || body.pixels.size()!=576)
+        throw std::runtime_error("Invalid character icon components");
+    auto pixels=body.pixels;
+    for(unsigned p=0;p<head.pixels.size();++p)if(head.pixels[p])pixels[p]=head.pixels[p];
+    if(std::any_of(pixels.begin(),pixels.end(),[](auto c){return c>15;}))
+        throw std::runtime_error("Invalid character icon pixel");
+    return pixels;
+}
+}
+bool CharacterColorUsage::contains(unsigned bank,unsigned part) const
+{
+    if(bank>=2||part>=6)throw std::runtime_error("Invalid character color region");
+    return ready[bank][part]||action[bank][part];
+}
+void validate_character_appearance(const CharacterAppearance& a)
+{
+    if(a.portrait_head>255||a.portrait_body>255||a.combat_head>=14||a.combat_body>=32)
+        throw std::runtime_error("Invalid appearance reference");
+    for(const auto& bank:a.colors)for(auto color:bank)(void)character_color(color);
+}
 std::array<std::uint8_t, 3> character_color(unsigned index)
 {
     constexpr std::array<std::array<std::uint8_t, 3>, 16> palette{{
@@ -25,21 +51,16 @@ IndexedIcon decode_character_icon(std::span<const std::uint8_t> record)
 }
 Image compose_character_icon(const IndexedIcon& head,const IndexedIcon& body,const CharacterAppearance& appearance)
 {
-    if(head.width!=24 || body.width!=24 || !head.height || head.height>24 || body.height!=24 ||
-        head.pixels.size()!=head.width*head.height || body.pixels.size()!=576)
-        throw std::runtime_error("Invalid character icon components");
+    const auto pixels=composed_pixels(head,body);
     for(const auto& bank:appearance.colors)for(auto c:bank)(void)character_color(c);
     Image result;result.width=result.height=24;result.rgba.resize(24*24*4);
     // Source indices 1/9 = body, 2/10 = arms, 3/11 = legs,
-    // 4/12 = hair/face, 5/13 = shield, 6/14 = weapon.
-    constexpr std::array<unsigned,7> region{0,1,4,5,2,3,0};
+    // 4/12 = hair/face, 6/14 = shield, 7/15 = weapon.
     for(unsigned p=0;p<576;++p) {
-        unsigned index=body.pixels[p];
-        if(p<head.pixels.size() && head.pixels[p])index=head.pixels[p];
-        if(index>15)throw std::runtime_error("Invalid character icon pixel");
+        const unsigned index=pixels[p];
         auto rgb=character_color(index==8?0:index);
-        if(index && index!=8 && (index&7)<=6)
-            rgb=character_color(appearance.colors[index>>3][region[index&7]]);
+        if(const auto region=color_regions[index&7];region>=0)
+            rgb=character_color(appearance.colors[index>>3][region]);
         std::copy(rgb.begin(),rgb.end(),result.rgba.begin()+p*4);
         result.rgba[p*4+3]=index?255:0;
     }
@@ -90,9 +111,9 @@ CharacterArt CharacterArt::load(const std::filesystem::path& directory)
 }
 void CharacterArt::validate(const CharacterAppearance& a) const
 {
-    if(!heads.contains(a.portrait_head)||!bodies.contains(a.portrait_body)||a.combat_head>=14||a.combat_body>=32)
+    validate_character_appearance(a);
+    if(!heads.contains(a.portrait_head)||!bodies.contains(a.portrait_body))
         throw std::runtime_error("Invalid character appearance selection");
-    for(const auto& bank:a.colors)for(auto color:bank)(void)character_color(color);
 }
 Image CharacterArt::portrait(const CharacterAppearance& a) const
 {
@@ -105,5 +126,16 @@ Image CharacterArt::icon(const CharacterAppearance& a,bool action) const
 {
     validate(a);const unsigned bank=(a.tall?64u:0u)+(action?128u:0u);
     return compose_character_icon(combat_heads.at(bank+a.combat_head),combat_bodies.at(bank+a.combat_body),a);
+}
+CharacterColorUsage CharacterArt::color_usage(const CharacterAppearance& a) const
+{
+    validate(a);CharacterColorUsage usage;
+    for(bool action:{false,true}) {
+        const unsigned bank=(a.tall?64u:0u)+(action?128u:0u);
+        const auto pixels=composed_pixels(combat_heads.at(bank+a.combat_head),combat_bodies.at(bank+a.combat_body));
+        auto& counts=action?usage.action:usage.ready;
+        for(auto pixel:pixels)if(const auto part=color_regions[pixel&7];part>=0)++counts[pixel>>3][part];
+    }
+    return usage;
 }
 }

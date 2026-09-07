@@ -53,6 +53,7 @@ void creation_tests()
     d.name="  ";rejects([&]{(void)module->evaluate(d,true);},"Blank names rejected");
     d.name="Mira";d.character_class="invented";rejects([&]{(void)module->evaluate(d,true);},"Unknown class rejected");
     CharacterCreator creator(srd5::character_rules(),42);
+    rejects([&]{(void)creator.create_character();},"Incomplete drafts cannot become characters");
     for(int i=0;i<4;++i)creator.next();
     rejects([&]{creator.next();},"Cannot advance without rolling");check(creator.step()==CreationStep::attributes,"Invalid transition leaves step unchanged");
     creator.roll();const auto original=creator.draft().rolls;creator.swap_scores(0,2);
@@ -64,6 +65,9 @@ void creation_tests()
     creator.name("  Mira Stoneward  ");creator.next();creator.next();
     auto appearance=creator.appearance();appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
     check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
+    auto finished=creator.create_character();
+    const auto retained=creator.draft();const auto sheet=creator.sheet();
+    check(finished.inventory().empty()&&finished.appearance()==appearance,"Finished character owns appearance and an empty inventory");
     rejects([&]{creator.roll();},"Completed sheet cannot be silently rerolled");
     creator.back();creator.next();check(creator.appearance()==appearance,"Review retains both appearance banks");
     creator.back();creator.back();creator.back();creator.back();creator.back();
@@ -71,6 +75,44 @@ void creation_tests()
     creator.select(CreationField::race,"dwarf");creator.select(CreationField::character_class,"barbarian");
     check(creator.sheet().hit_points==13+creator.sheet().modifiers[2],"HP recalculates after earlier edits");
     creator.restart();check(!creator.draft().rolled&&creator.draft().name.empty()&&creator.step()==CreationStep::race,"Restart clears the single character");
+    const auto& data=finished.creation_data();const auto& saved=finished.sheet();
+    check(data.race==retained.race&&data.gender==retained.gender&&data.character_class==retained.character_class&&
+        data.alignment==retained.alignment&&data.background==retained.background&&data.name==retained.name&&
+        data.rolls==retained.rolls&&data.assignment==retained.assignment&&data.adjustment==retained.adjustment&&data.rolled,
+        "Character retains all creation choices and dice after creator edits/restart");
+    check(saved.identity.version=="5.2.1"&&saved.name==sheet.name&&saved.race==sheet.race&&saved.gender==sheet.gender&&
+        saved.character_class==sheet.character_class&&saved.alignment==sheet.alignment&&saved.background==sheet.background&&
+        saved.base==sheet.base&&saved.bonuses==sheet.bonuses&&saved.scores==sheet.scores&&saved.modifiers==sheet.modifiers&&
+        saved.hit_die==sheet.hit_die&&saved.hit_points==sheet.hit_points&&saved.hp_explanation==sheet.hp_explanation&&saved.level==1,
+        "Character retains rules identity and evaluated sheet values");
+    const auto sword=finished.inventory().add("test:longsword","Longsword");
+    auto copy=finished;copy.inventory().remove(sword);auto recolored=appearance;recolored.colors[0][0]=2;copy.appearance(recolored);
+    check(!finished.inventory().empty()&&finished.appearance()==appearance&&copy.inventory().empty(),"Copies independently own inventory and appearance");
+    recolored.colors[1][3]=16;rejects([&]{copy.appearance(recolored);},"Character rejects invalid appearance colors");
+    check(copy.appearance().colors[1][3]==appearance.colors[1][3],"Rejected appearance changes are atomic");
+    // The temporary module is destroyed at this statement's end.
+    Character detached(*srd5::character_rules(),retained,appearance);
+    check(detached.sheet().hit_points==saved.hit_points&&detached.creation_data().rolls==data.rolls,"Character does not borrow its rules module");
+    auto invalid=retained;invalid.name="";
+    rejects([&]{Character rejected(*srd5::character_rules(),invalid,appearance);},"Direct character construction validates creation data");
+}
+void inventory_tests()
+{
+    Inventory inventory;check(inventory.empty()&&!inventory.find(1),"New inventory is empty");
+    rejects([&]{inventory.add("","Arrows");},"Items require a stable definition key");
+    rejects([&]{inventory.add("test:arrow","  ");},"Items require a display name");
+    rejects([&]{inventory.add("test:arrow","Arrows",0);},"Empty stacks rejected");
+    const auto first=inventory.add("test:arrow","Arrows",20),second=inventory.add("test:arrow","Arrows",5);
+    check(first!=second&&inventory.items().size()==2&&inventory.find(first)->get().definition_id=="test:arrow","Separate stacks have stable IDs");
+    const auto before=std::vector<InventoryItem>(inventory.items().begin(),inventory.items().end());
+    rejects([&]{inventory.remove(first,21);},"Cannot remove more than a stack holds");
+    rejects([&]{inventory.remove(first,0);},"Zero removals rejected");
+    rejects([&]{inventory.remove(999);},"Unknown items rejected");
+    check(std::equal(before.begin(),before.end(),inventory.items().begin(),inventory.items().end()),"Rejected inventory operations leave all stacks intact");
+    inventory.remove(first,19);check(inventory.find(first)->get().quantity==1&&inventory.find(second)->get().quantity==5,"Partial removal affects only the requested stack");
+    inventory.remove(first);check(!inventory.find(first)&&inventory.items().size()==1,"Removing the final item removes its stack");
+    const auto third=inventory.add("test:shield","Shield");check(third!=first&&third!=second,"Removed stack IDs are not reused");
+    inventory.remove(second,5);inventory.remove(third);check(inventory.empty(),"All inventory can be removed");
 }
 void art_tests()
 {
@@ -79,10 +121,10 @@ void art_tests()
     check(body.pixels[0]==6&&body.pixels[1]==14,"Preserve region indices and nibble order");
     raw.pop_back();rejects([&]{(void)decode_character_icon(raw);},"Reject truncated components");
     IndexedIcon head{24,10,std::vector<std::uint8_t>(240)};
-    CharacterAppearance a;const std::array<unsigned,6> masks{6,1,4,5,2,3};
+    CharacterAppearance a;const std::array<unsigned,6> masks{7,1,4,6,2,3};
     for(unsigned bank=0;bank<2;++bank)for(unsigned region=0;region<6;++region) {
         body.pixels.assign(576,0);body.pixels[0]=masks[region]+bank*8;
-        body.pixels[1]=8;body.pixels[2]=7;
+        body.pixels[1]=8;body.pixels[2]=5;
         a.colors[bank][region]=0;const auto black=compose_character_icon(head,body,a);
         check(black.rgba[3]==255&&black.rgba[0]==0,"Chosen black must remain opaque");
         a.colors[bank][region]=14;const auto yellow=compose_character_icon(head,body,a);
@@ -97,6 +139,33 @@ void art_tests()
     if(const auto directory=std::getenv("OPENGOLD_GAME_DIR")) {
         const auto art=CharacterArt::load(directory);a=CharacterAppearance{};
         check(art.portrait(a).rgba.size()==88*88*4,"Original portrait parts join into a sheet image");
+        for(bool tall:{false,true}) {
+            a.tall=tall;a.combat_body=0;
+            auto usage=art.color_usage(a);
+            for(unsigned bank=0;bank<2;++bank)check(!usage.contains(bank,0)&&!usage.contains(bank,3),"Original unarmed sprite has no weapon or shield to recolor");
+            a.combat_body=1;usage=art.color_usage(a);
+            for(unsigned bank=0;bank<2;++bank)check(usage.contains(bank,0)&&!usage.contains(bank,3),"Original bow uses weapon indices, without a shield");
+            a.combat_body=4;a.combat_head=2;usage=art.color_usage(a);
+            for(bool action:{false,true}) {
+                const auto bank=(tall?64u:0u)+(action?128u:0u);
+                auto source=art.combat_bodies.at(bank+4).pixels;const auto& head_pixels=art.combat_heads.at(bank+2).pixels;
+                for(unsigned p=0;p<head_pixels.size();++p)if(head_pixels[p])source[p]=head_pixels[p];
+                const auto original=art.icon(a,action);
+                for(unsigned color_bank=0;color_bank<2;++color_bank)for(unsigned part=0;part<6;++part) {
+                    auto changed=a;changed.colors[color_bank][part]=(a.colors[color_bank][part]+3)%16;
+                    const auto recolored=art.icon(changed,action);unsigned count=0;
+                    for(unsigned p=0;p<source.size();++p) {
+                        const bool differs=!std::equal(original.rgba.begin()+p*4,original.rgba.begin()+p*4+4,recolored.rgba.begin()+p*4);
+                        const bool targeted=source[p]==masks[part]+color_bank*8;
+                        check(differs==targeted,"Only the selected original source mask changes in each pose");
+                        if(targeted)++count;
+                    }
+                    check(count==(action?usage.action:usage.ready)[color_bank][part],"Visible region counts match the composed original art");
+                    check(usage.contains(color_bank,part)==(part!=2||color_bank!=0||!tall),
+                        "The tall helmet covers hair; other armed test sprite regions remain visible");
+                }
+            }
+        }
         for(bool tall:{false,true})for(unsigned h=0;h<14;++h)for(unsigned b=0;b<32;++b) {
             a.tall=tall;a.combat_head=h;a.combat_body=b;
             check(art.icon(a,false).rgba.size()==576*4&&art.icon(a,true).rgba.size()==576*4,
@@ -109,6 +178,6 @@ void art_tests()
 }
 int main()
 {
-    try {creation_tests();art_tests();std::cout<<"Character tests passed\n";return 0;}
+    try {creation_tests();inventory_tests();art_tests();std::cout<<"Character tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

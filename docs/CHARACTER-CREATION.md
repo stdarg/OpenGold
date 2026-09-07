@@ -32,9 +32,12 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 8. Browse portrait heads and bodies with the previous/next buttons.
 9. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
-   swatch. Ready and action previews update together.
+   swatch. Enlarged ready and action previews update immediately, recoloring
+   only that part. Controls show **Not present** when the selected parts omit
+   that region in both poses. Its saved colors return when the part is present.
 10. Show the character sheet: identity, level, background, six scores and
-    modifiers, base scores/bonuses, Hit Dice, and the HP calculation.
+    modifiers, base scores/bonuses, Hit Dice, the HP calculation, and inventory
+    (initially empty).
 
 **Back** preserves selections and allows earlier edits. Derived scores and HP
 update from the current choices. **Start over** clears the single character.
@@ -56,6 +59,21 @@ fighter and combat fixtures remain separate.
 - `OpenGold.Core/character_creator.h` owns the injected rules module and the
   single character's sequence and appearance. A completed sheet must return to
   editing before mutation. No rolled result can be assigned twice.
+  `create_character()` exports a finished `Character` only after the last step.
+- `OpenGold.Core/character.h` is the reusable, value-owned character model.
+  It retains all creation choices, original dice, assignments and bonuses;
+  the evaluated sheet with rules identity and HP; portrait/part references;
+  both combat color banks; and an `Inventory`. It has no dependency on Godot
+  or the lifetime of the creator, rules module, or loaded artwork. The final
+  demo sheet reads this object. Appearance changes are validated, and copying
+  a character produces independent appearance and inventory data.
+- `OpenGold.Core/inventory.h` owns item stacks with stable inventory-local IDs,
+  content definition keys, display names and quantities. It supports addition,
+  lookup and partial/full removal, rejecting invalid operations without losing
+  items. Separate additions remain separate stacks. Rules or content adapters
+  resolve the definition keys; inventory storage imposes no edition-specific
+  equipment rules or legacy item limit. Starting gear selection, equipping,
+  shop integration and saving remain outside this standalone demo.
 - `CharacterCreationView` is native GDExtension presentation and input, backed
   by a Godot scene. Godot owns scene nodes; resource references use Godot RAII.
 
@@ -84,17 +102,21 @@ archive IDs and indexed combat pixels. No extracted artwork is distributed.
 
 | Region | Color-1 source index | Color-2 source index |
 | --- | --- | --- |
-| Weapon | 6 | 14 |
+| Weapon | 7 | 15 |
 | Body | 1 | 9 |
 | Hair / face | 4 (hair) | 12 (face) |
-| Shield | 5 | 13 |
+| Shield | 6 | 14 |
 | Arms | 2 | 10 |
 | Legs | 3 | 11 |
 
-Indices 7 and 15 remain fixed. Region names describe the original icon masks;
-some weapon variants use shield pixels for ammunition or omit a region. All
-six regions retain two independently selectable colors from the 16-color EGA
-palette. Portrait colors are separate from combat-icon colors.
+Indices 5 and 13 belong to the cap and remain fixed. This corrects the original
+demo's misassignment of the weapon, shield and cap masks. In the installed
+`CBODY.DAX`, base ID 0 is unarmed and has no weapon or shield indices; base ID 1
+uses 7/15 for its bow and has no 6/14 shield indices. Base ID 4 includes both
+weapon and shield regions. All six regions retain two independently selectable
+colors from the 16-color EGA palette. Controls use visible pixels after head
+composition to determine whether a region is available in either pose.
+Portrait colors are separate from combat-icon colors.
 
 The assembly and mapping were checked against the installed DAX records. The
 original manual's Icon menu describes independent head/weapon selection, two
@@ -108,10 +130,12 @@ are not used as an assumed list of available archive IDs.
 `build.cmd` and `build-rolf.cmd` include `opengold_character_tests`. Synthetic
 tests cover deterministic rolls, retained dice, swaps, all class HP values,
 background bonuses, invalid selections, name validation, navigation, restart,
-truncation, all twelve color controls, head composition, fixed pixels and
-transparency. Set `OPENGOLD_GAME_DIR` to the directory containing
+truncation, all twelve color controls, head composition, fixed pixels,
+transparency, character data ownership and inventory operations. Set
+`OPENGOLD_GAME_DIR` to the directory containing
 the DAX files to additionally check every original head/body combination in
-both sizes and both poses:
+both sizes and both poses, plus exact recolor masks and absent regions in the
+original art:
 
 ```bat
 set "OPENGOLD_GAME_DIR=D:\path\to\POOLRAD"
@@ -125,7 +149,10 @@ godot --headless --path godot res://scenes/character_creation.tscn -- --characte
 ```
 
 This exercises choices, rolling, swaps, background bonuses, HP, name entry,
-portrait/parts selection, all twelve colors, sheet review and restart. Buttons
+portrait/parts selection, all twelve colors, sheet review and restart. Each
+palette click checks the preview texture pixels against the composed icon and
+counts changed pixels in each pose; it also checks that the portrait is intact.
+The completed sheet is checked against the reusable character and inventory. Buttons
 and list selections use injected viewport mouse input; name entry uses keyboard
 events. Background controls also exercise their native selection signals.
 For local screenshots of attributes, appearance and the sheet, omit

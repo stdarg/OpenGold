@@ -17,6 +17,7 @@ protected:
     void _notification(int what);
 private:
     std::unique_ptr<opengold::CharacterCreator> creator_;
+    std::optional<opengold::Character> completed_;
     std::optional<opengold::por::CharacterArt> art_;
     std::optional<opengold::por::CharacterAppearance> rendered_;
     std::array<godot::Ref<godot::ImageTexture>,3> images_;

@@ -19,10 +19,17 @@ struct CharacterAppearance {
         {7, 1, 6, 6, 1, 6}, {15, 9, 12, 14, 9, 14}}};
     bool operator==(const CharacterAppearance&) const = default;
 };
+// Structural validation; CharacterArt additionally checks available portrait IDs.
+void validate_character_appearance(const CharacterAppearance&);
 struct PortraitPart { std::string archive; Image image; };
 struct IndexedIcon {
     unsigned width{}, height{};
     std::vector<std::uint8_t> pixels;
+};
+struct CharacterColorUsage {
+    // Visible source pixels per Color-1/Color-2 region after head composition.
+    std::array<std::array<unsigned,6>,2> ready{}, action{};
+    [[nodiscard]] bool contains(unsigned bank,unsigned part) const;
 };
 // Keeps the source color indices: they identify regions, not final RGB colors.
 [[nodiscard]] IndexedIcon decode_character_icon(std::span<const std::uint8_t> record);
@@ -36,6 +43,7 @@ public:
     std::map<unsigned, IndexedIcon> combat_heads, combat_bodies;
     [[nodiscard]] Image portrait(const CharacterAppearance&) const;
     [[nodiscard]] Image icon(const CharacterAppearance&, bool action) const;
+    [[nodiscard]] CharacterColorUsage color_usage(const CharacterAppearance&) const;
     void validate(const CharacterAppearance&) const;
 };
 }

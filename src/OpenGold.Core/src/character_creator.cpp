@@ -45,12 +45,15 @@ void CharacterCreator::name(std::string text)
 }
 void CharacterCreator::appearance(por::CharacterAppearance value)
 {
-    require_editable();if(value.portrait_head>255||value.portrait_body>255||value.combat_head>=14||value.combat_body>=32)
-        throw std::runtime_error("Invalid appearance reference");
-    for(const auto& bank:value.colors)for(auto color:bank)if(color>=16)throw std::runtime_error("Invalid appearance color");
+    require_editable();por::validate_character_appearance(value);
     appearance_=value;
 }
 CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,step_>=CreationStep::portrait);}
+Character CharacterCreator::create_character() const
+{
+    if(step_!=CreationStep::sheet)throw std::runtime_error("Finish character creation before exporting the character");
+    return Character(*rules_,draft_,appearance_);
+}
 void CharacterCreator::next()
 {
     if(step_==CreationStep::sheet)return;
