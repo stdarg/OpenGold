@@ -1,4 +1,8 @@
 #include "opengold/character_art.h"
+#include "opengold/character_creator.h"
+#include "opengold/srd5.h"
+#include <algorithm>
+#include <set>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -9,6 +13,65 @@ namespace {
 void check(bool ok,const char* message) {if(!ok)throw std::runtime_error(message);}
 template<class F> void rejects(F action,const char* message)
 {bool rejected=false;try{action();}catch(const std::exception&){rejected=true;}check(rejected,message);}
+void creation_tests()
+{
+    using namespace rules;
+    auto module=srd5::character_rules();
+    check(module->identity().version=="5.2.1","Creator identifies its rules edition");
+    check(module->choices(CreationField::race).size()==9&&module->choices(CreationField::character_class).size()==12,
+        "SRD species and all twelve classes available");
+    std::uint64_t seed=123,again=123;
+    check(module->roll(seed)==module->roll(again)&&seed==again,"Seeded rolls reproduce across sessions");
+    std::set<int> totals;
+    for(int i=0;i<2000;++i)for(const auto& roll:module->roll(seed)) {
+        check(roll.total()>=3&&roll.total()<=18,"4d6 result remains in range");totals.insert(roll.total());
+        check(roll.dice[roll.discarded]==*std::min_element(roll.dice.begin(),roll.dice.end()),"Lowest die is discarded");
+    }
+    check(totals.size()==16,"The roller can produce every score, including low results");
+    AbilityRoll example{{6,1,4,3},1};check(example.total()==13,"Four dice retain the three highest results");
+    example.discarded=0;rejects([&]{(void)example.total();},"Cannot discard a higher die");
+    CharacterDraft d;d.race="human";d.gender="female";d.character_class="fighter";d.alignment="neutral_good";
+    d.background="soldier";d.name="Mira";d.rolled=true;
+    // Deliberately distinct base scores: STR 12, DEX 9, CON 14, INT 3, WIS 15, CHA 18.
+    const std::array<std::array<int,4>,6> dice{{{4,4,4,1},{3,3,3,1},{5,5,4,1},{1,1,1,1},{5,5,5,1},{6,6,6,1}}};
+    for(unsigned i=0;i<6;++i)d.rolls[i]={dice[i],3};
+    auto s=module->evaluate(d,true);
+    check(s.scores[0]==14&&s.scores[1]==10&&s.scores[2]==14&&s.hit_points==12,"Fighter has maximum d10 plus Constitution");
+    check(s.modifiers[3]==-4,"Odd negative ability modifiers round down");
+    const std::array<int,12> hp{14,10,10,10,12,10,12,12,10,8,10,8};
+    const auto classes=module->choices(CreationField::character_class);
+    for(unsigned i=0;i<classes.size();++i){d.character_class=classes[i].id;check(module->evaluate(d,true).hit_points==hp[i],"Starting HP is correct for each class");}
+    d.character_class="fighter";d.race="dwarf";check(module->evaluate(d,true).hit_points==13,"Dwarven Toughness adds one HP");
+    for(const auto& bg:module->choices(CreationField::background)) {
+        d.background=bg.id;const auto adjustments=module->adjustments(bg.id);check(adjustments.size()==7,"Every background offers six +2/+1 allocations and +1 each");
+        for(unsigned n=0;n<adjustments.size();++n) {d.adjustment=n;const auto evaluated=module->evaluate(d,true);
+            int bonus=0;for(unsigned k=0;k<6;++k){bonus+=evaluated.bonuses[k];check(evaluated.scores[k]<=20,"Background bonuses cap at twenty");}
+            check(bonus==3,"Background grants exactly three points");}
+    }
+    d.background="soldier";d.adjustment=0;d.assignment[0]=1;
+    rejects([&]{(void)module->evaluate(d,true);},"Duplicate roll assignments rejected");d.assignment[0]=0;
+    d.name="  ";rejects([&]{(void)module->evaluate(d,true);},"Blank names rejected");
+    d.name="Mira";d.character_class="invented";rejects([&]{(void)module->evaluate(d,true);},"Unknown class rejected");
+    CharacterCreator creator(srd5::character_rules(),42);
+    for(int i=0;i<4;++i)creator.next();
+    rejects([&]{creator.next();},"Cannot advance without rolling");check(creator.step()==CreationStep::attributes,"Invalid transition leaves step unchanged");
+    creator.roll();const auto original=creator.draft().rolls;creator.swap_scores(0,2);
+    check(creator.sheet().base[0]==original[2].total()&&creator.draft().rolls==original,"Swaps preserve dice provenance");
+    const auto assignment=creator.draft().assignment;
+    rejects([&]{creator.swap_scores(0,6);},"Invalid swap rejected");check(creator.draft().assignment==assignment,"Rejected swap is atomic");
+    creator.roll();check(creator.draft().rolls!=original&&creator.draft().assignment[0]==0,"Full reroll replaces all rolls and resets assignments");
+    creator.next();creator.next();rejects([&]{creator.next();},"Name required before portrait");
+    creator.name("  Mira Stoneward  ");creator.next();creator.next();
+    auto appearance=creator.appearance();appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
+    check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
+    rejects([&]{creator.roll();},"Completed sheet cannot be silently rerolled");
+    creator.back();creator.next();check(creator.appearance()==appearance,"Review retains both appearance banks");
+    creator.back();creator.back();creator.back();creator.back();creator.back();
+    check(creator.step()==CreationStep::attributes,"Back navigation reaches attributes");
+    creator.select(CreationField::race,"dwarf");creator.select(CreationField::character_class,"barbarian");
+    check(creator.sheet().hit_points==13+creator.sheet().modifiers[2],"HP recalculates after earlier edits");
+    creator.restart();check(!creator.draft().rolled&&creator.draft().name.empty()&&creator.step()==CreationStep::race,"Restart clears the single character");
+}
 void art_tests()
 {
     std::vector<std::uint8_t> raw(17+24*24/2);raw[0]=24;raw[2]=3;raw[8]=1;raw[17]=0x6e;
@@ -46,6 +109,6 @@ void art_tests()
 }
 int main()
 {
-    try {art_tests();std::cout<<"Character tests passed\n";return 0;}
+    try {creation_tests();art_tests();std::cout<<"Character tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

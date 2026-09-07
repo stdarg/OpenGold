@@ -1,19 +1,69 @@
 # Character creation
 
-The requested standalone demo will use the existing C++20/Godot GDExtension.
-Its sequence is race, gender, class, alignment, attributes, HP, name, portrait,
-combat appearance, then saving to a character pool. Player parties have at most
-six created characters, leaving two positions for NPC hirelings.
+The standalone C++20/Godot demo creates one level-one character and shows the
+character sheet. It uses SRD 5.2.1 and the original game's portrait/combat art.
 
-The creation UI and character pool are pending these user decisions:
+Run from Windows CMD at the repository root:
 
-- SRD 5.2.1 race/class choices or original Pool of Radiance choices.
-- Attribute rolling and assignment; rolled or maximum starting HP.
-- Whether the first standalone demo includes party selection or only saves
-  completed characters to the pool.
+```cmd
+build-rolf.cmd
+review-character.cmd
+```
 
-The art foundation below is implemented. There is no character-demo launcher
-yet. This does not change the Rolf demo's fixed fighter or combat profiles.
+The shared extension uses the existing [build prerequisites](ROLF.md). The
+launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
+`OPENGOLD_GAME_DIR` environment variable, falling back to
+`opengold/game_directory` in `godot/project.godot`.
+
+## Creation flow
+
+1. Select race (the nine species included in SRD 5.2.1).
+2. Select gender. Gender does not alter stats or restrict other choices.
+3. Select one of the twelve SRD classes.
+4. Select alignment.
+5. Roll attributes. All four dice appear, with the discarded lowest die marked.
+   Click two attribute buttons to swap their rolled results. **Reroll all six**
+   replaces the complete set and resets assignments; attempts are unlimited.
+   Choose one of the four SRD backgrounds here, then allocate its attribute
+   bonuses (+2/+1 to different allowed abilities, or +1 to all three).
+6. Review maximum starting HP: maximum class Hit Die + Constitution modifier,
+   with +1 for Dwarven Toughness when applicable.
+7. Enter a name, up to 40 characters.
+8. Browse portrait heads and bodies with the previous/next buttons.
+9. Customize combat head and weapon/body parts, tall/short art, and all twelve
+   region colors. Select a region's Color-1 or Color-2 button, then a palette
+   swatch. Ready and action previews update together.
+10. Show the character sheet: identity, level, background, six scores and
+    modifiers, base scores/bonuses, Hit Dice, and the HP calculation.
+
+**Back** preserves selections and allows earlier edits. Derived scores and HP
+update from the current choices. **Start over** clears the single character.
+
+Per the confirmed scope, this demo has no pool, party management, persistence,
+or campaign integration. The later party limit remains six PCs plus two NPC
+positions. Class feature choices, skills, equipment, spells, and species
+lineage choices are outside this first requested flow; the sheet presents the
+implemented creation fields, not a complete combat-ready character. The Rolf
+fighter and combat fixtures remain separate.
+
+## Native boundaries and rules
+
+- `OpenGold.Rules/character_rules.h` defines the optional `CharacterRules`
+  capability, draft, retained dice, choices, adjustments and sheet values.
+- `OpenGold.Rules.Srd5` supplies the SRD choices and arithmetic. It has no Godot,
+  original-asset, or campaign dependency. Dice use seeded SplitMix64 with
+  rejection sampling; invalid assignments and selections are rejected.
+- `OpenGold.Core/character_creator.h` owns the injected rules module and the
+  single character's sequence and appearance. A completed sheet must return to
+  editing before mutation. No rolled result can be assigned twice.
+- `CharacterCreationView` is native GDExtension presentation and input, backed
+  by a Godot scene. Godot owns scene nodes; resource references use Godot RAII.
+
+The rolling and HP rules come from
+[SRD 5.2.1, pp. 21–22](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=21),
+backgrounds from p. 83, and Dwarven Toughness from p. 84. Unlimited full-set
+rerolls are the user-approved customization. Attribution is in
+[NOTICE.md](../data/rules/srd-5.2.1/NOTICE.md).
 
 ## Original character art
 
@@ -56,8 +106,10 @@ are not used as an assumed list of available archive IDs.
 ## Verification
 
 `build.cmd` and `build-rolf.cmd` include `opengold_character_tests`. Synthetic
-tests cover truncation, all twelve color controls, head composition, fixed
-pixels and transparency. Set `OPENGOLD_GAME_DIR` to the directory containing
+tests cover deterministic rolls, retained dice, swaps, all class HP values,
+background bonuses, invalid selections, name validation, navigation, restart,
+truncation, all twelve color controls, head composition, fixed pixels and
+transparency. Set `OPENGOLD_GAME_DIR` to the directory containing
 the DAX files to additionally check every original head/body combination in
 both sizes and both poses:
 
@@ -65,3 +117,16 @@ both sizes and both poses:
 set "OPENGOLD_GAME_DIR=D:\path\to\POOLRAD"
 build.cmd
 ```
+
+Run the Godot scene's automated creation check:
+
+```cmd
+godot --headless --path godot res://scenes/character_creation.tscn -- --character-check
+```
+
+This exercises choices, rolling, swaps, background bonuses, HP, name entry,
+portrait/parts selection, all twelve colors, sheet review and restart. Buttons
+and list selections use injected viewport mouse input; name entry uses keyboard
+events. Background controls also exercise their native selection signals.
+For local screenshots of attributes, appearance and the sheet, omit
+`--headless` and append `--capture`. Captures go to ignored `user-data/` files.

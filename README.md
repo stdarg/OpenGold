@@ -35,6 +35,20 @@ encounter through actual combat and returns its result to ECL. The arena is
 authored; original orc icons and dialogue load from your installed game.
 See [controls, library boundaries, supported rules, and remaining work](docs/RULES.md).
 
+## Character creation
+
+Create a single level-one character in the standalone C++/Godot demo, with
+SRD 5.2.1 choices, 4d6 rolls, score swapping, maximum starting HP, original
+portrait parts, and customizable ready/action sprites. The final screen shows
+the character sheet. Run from CMD:
+
+```cmd
+build-rolf.cmd
+review-character.cmd
+```
+
+See [controls, rules and scope](docs/CHARACTER-CREATION.md).
+
 ## Native monster/NPC statistics
 
 `opengold::por::CreatureCatalog` loads all original Pool of Radiance monster/NPC

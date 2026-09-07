@@ -15,7 +15,7 @@ FetchContent_Declare(godot_cpp
     GIT_TAG e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77
 )
 FetchContent_MakeAvailable(godot_cpp)
-add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp register_types.cpp)
+add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp character_creation_view.cpp register_types.cpp)
 target_link_libraries(opengold_godot PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
 target_compile_features(opengold_godot PRIVATE cxx_std_20)
 target_compile_definitions(opengold_godot PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>)

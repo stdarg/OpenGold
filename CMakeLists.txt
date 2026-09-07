@@ -15,9 +15,9 @@ endif()
 option(OPENGOLD_BUILD_TESTS "Build the native test suite" ${BUILD_TESTING})
 option(OPENGOLD_BUILD_GODOT "Build the C++ Godot tour and combat scenes" OFF)
 
-add_library(opengold_rules STATIC src/OpenGold.Rules/src/rules.cpp)
+add_library(opengold_rules STATIC src/OpenGold.Rules/src/rules.cpp src/OpenGold.Rules/src/character_rules.cpp)
 target_include_directories(opengold_rules PUBLIC src/OpenGold.Rules/include)
-add_library(opengold_rules_srd5 STATIC src/OpenGold.Rules.Srd5/src/srd5.cpp)
+add_library(opengold_rules_srd5 STATIC src/OpenGold.Rules.Srd5/src/srd5.cpp src/OpenGold.Rules.Srd5/src/character_rules.cpp)
 target_include_directories(opengold_rules_srd5 PUBLIC src/OpenGold.Rules.Srd5/include)
 target_link_libraries(opengold_rules_srd5 PUBLIC opengold_rules)
 
@@ -37,6 +37,7 @@ target_include_directories(opengold_formats
 add_library(opengold_core STATIC
     src/OpenGold.Core/src/core.cpp
     src/OpenGold.Core/src/character_art.cpp
+    src/OpenGold.Core/src/character_creator.cpp
     src/OpenGold.Core/src/creature_catalog.cpp
     src/OpenGold.Core/src/creature_factory.cpp
     src/OpenGold.Core/src/map_catalog.cpp

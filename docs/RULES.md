@@ -161,7 +161,10 @@ Next increments should add one tested encounter's required mechanics at a time:
 regular saving throws and conditions, campaign party/encounter persistence,
 exploration-to-combat transitions and original battlefield geometry, then rewards
 and wider creature/spell coverage. Full character creation follows the fixed
-party milestone. Reverse engineering remains focused on campaign interfaces,
+party milestone. The [standalone character creator](CHARACTER-CREATION.md) now
+implements the requested identity, attribute, HP, and appearance flow through
+a separate optional native `CharacterRules` capability; it does not replace
+combat fixture definitions. Reverse engineering remains focused on campaign interfaces,
 file formats and content mapping rather than recreating the original combat rules.
 
 Reference content and attribution are recorded in

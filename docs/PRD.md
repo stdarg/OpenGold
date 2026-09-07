@@ -408,7 +408,12 @@ The final game will need implementations for the following systems.
 
 ### 11.2 Character Creation
 
-Support the original game's character-generation mechanics, including:
+Use the selected rules module for character generation. The first standalone
+demo uses SRD 5.2.1, 4d6 dropping the lowest die, freely assigned scores,
+unlimited full-set rerolls, and maximum starting HP. It creates one character
+and displays the character sheet; pool and party management follow separately.
+See [the current creation flow](CHARACTER-CREATION.md). Character generation
+ultimately includes:
 
 - race
 - class
