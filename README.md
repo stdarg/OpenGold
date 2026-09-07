@@ -53,6 +53,10 @@ See [controls, library boundaries, supported rules, and remaining work](docs/RUL
 
 ## Character creation
 
+The character scene also previews a shared party: finish a character and **Add
+to party**, inspect sheets/inventories, recruit a preview NPC, buy/equip in New
+Phlan, and fight with persistent HP/resources. See [party scope and controls](docs/PARTY.md).
+
 Create a single level-one character in the standalone C++/Godot demo, with
 SRD 5.2.1 choices, 4d6 rolls, score swapping, maximum starting HP, original
 portrait parts, and customizable ready/action sprites. The final screen shows

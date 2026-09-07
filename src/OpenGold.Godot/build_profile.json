@@ -4,6 +4,6 @@
         "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
         "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton",
         "ProjectSettings", "ResourceLoader", "OS", "Engine", "Window", "SceneTree",
-        "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture", "HSlider"
+        "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture", "HSlider", "PackedScene", "TextureRect", "ColorRect"
     ]
 }

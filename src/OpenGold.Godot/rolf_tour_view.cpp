@@ -60,6 +60,7 @@ void RolfTourView::_ready()
     if (Engine::get_singleton()->is_editor_hint()) return;
     const auto args=OS::get_singleton()->get_cmdline_user_args();
     town_check_=args.has("--town-check");checking_=args.has("--tour-check")||town_check_;capture_=args.has("--capture");
+    if(campaign_&&args.has("--party-check"))town_check_=checking_=true;
     // An original OpenGold footstep cue, not extracted SSI sound data.
     footstep_.instantiate();footstep_->set_format(AudioStreamWAV::FORMAT_16_BITS);
     footstep_->set_mix_rate(22050);
@@ -75,6 +76,7 @@ void RolfTourView::_ready()
     footstep_->set_data(samples);
     get_node<AudioStreamPlayer>("Footstep")->set_stream(footstep_);
     restart();
+    if(campaign_)get_node<Button>("Restart")->hide();
 }
 
 void RolfTourView::layout()
@@ -131,6 +133,7 @@ void RolfTourView::restart()
             auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
             if (directory.is_empty()) directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
             session_.emplace(RolfTourSession::load(std::filesystem::u8path(directory.utf8().get_data())));
+            if(campaign_)session_->campaign_party(campaign_);
             for (unsigned i=0;i<sprites_.size();++i) {
                 const auto& source=session_->sprites()[i];
                 PackedByteArray pixels;pixels.resize(source.rgba.size());
@@ -170,6 +173,12 @@ void RolfTourView::inventory()
     auto* panel=get_node<Control>("InventoryPanel");
     if(panel->is_visible()){panel->hide();return;}
     if(!session_)return;
+    if(campaign_&&campaign_->selected()){
+        const auto& m=campaign_->member(campaign_->selected());std::string text=m.character.sheet().name+"\n"+std::to_string(m.wealth[3])+" gold pieces\n\n";
+        for(const auto& item:m.character.inventory().items())text+=item.name+" x"+std::to_string(item.quantity)+"\n";
+        if(m.character.inventory().empty())text+="Inventory is empty. Visit a shop to buy equipment.";
+        get_node<RichTextLabel>("InventoryPanel/Items")->set_text(String::utf8(text.c_str()));panel->show();return;
+    }
     const auto& p=session_->party();
     std::string text=p.name+" / Level "+std::to_string(p.level)+"\n"+std::to_string(p.wealth[3])+" gold pieces\n\n";
     if(p.inventory.empty())text+="Inventory is empty. Visit a shop to buy equipment.";
@@ -290,6 +299,8 @@ void RolfTourView::refresh()
     if(shopping)get_node<RichTextLabel>("Dialogue")->set_text(s.diagnostic.empty()?"Prices are per listed item or bundle.":String::utf8(s.diagnostic.c_str()));
     if(answer&&!s.diagnostic.empty())get_node<RichTextLabel>("Dialogue")->add_text("\n"+String::utf8(s.diagnostic.c_str()));
     if(loaded){const auto& p=session_->party();get_node<Label>("Party")->set_text("Fighter  /  Level 1  /  HP "+String::num_uint64(p.hit_points)+"/"+String::num_uint64(p.max_hit_points)+"\n"+String::num_uint64(p.wealth[3])+" gp  /  "+String::num_uint64(p.inventory.size())+" items");}
+    if(loaded&&campaign_&&campaign_->selected()){
+        const auto& m=campaign_->member(campaign_->selected());get_node<Label>("Party")->set_text(String::utf8((m.character.sheet().name+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(m.character.sheet().hit_points)+"\n"+std::to_string(m.wealth[3])+" gp / "+std::to_string(m.character.inventory().items().size())+" items").c_str()));}
     get_node<Button>("MapMode")->set_text(full_map_?"Map: full":"Map: visited");
     queue_redraw();
 }
@@ -412,23 +423,25 @@ void RolfTourView::check_run()
 void RolfTourView::check_town()
 {
     const auto& s=session_->snapshot();
+    const auto inventory_size=[&]{return campaign_?campaign_->member(campaign_->selected()).character.inventory().items().size():session_->party().inventory.size();};
+    const auto gold=[&]{return campaign_?campaign_->member(campaign_->selected()).wealth[3]:session_->party().wealth[3];};
     if(check_prompts_!=8)throw std::runtime_error("Town started before the full tour");
     if(shop_check_stage_==3 && s.phase==TourPhase::completed){
-        if(session_->party().inventory.size()!=1 || session_->script_variable(0x6BC1)!=session_->party().wealth[3])
+        if(inventory_size()!=1 || session_->script_variable(0x6BC1)!=gold())
             throw std::runtime_error("Shop results did not persist after leaving");
         UtilityFunctions::print("Godot town integration passed: tour, doors, shop purchase, inventory and return to exploration.");
-        get_tree()->quit(0);checking_=false;return;
+        if(!campaign_)get_tree()->quit(0);shop_check_stage_=4;checking_=false;return;
     }
     if(s.phase==TourPhase::shopping){
         if(shop_check_stage_==0){shop_check_stage_=1;return;}
         if(shop_check_stage_==1){
             capture_frame("phlan-shop");
-            const auto gold_before=session_->party().wealth[3];
+            const auto gold_before=gold();
             const auto price=session_->shop_stock()[0].stored.value;
             if(get_node<ItemList>("Choices")->get_item_count()!=57 || get_node<Button>("Continue")->is_disabled())
                 throw std::runtime_error("Arms shop list is not available in Godot");
             get_node<Button>("Continue")->emit_signal("pressed");
-            if(session_->party().wealth[3]!=gold_before-price || session_->party().inventory.size()!=1)
+            if(gold()!=gold_before-price || inventory_size()!=1)
                 throw std::runtime_error("Godot purchase did not debit the purse and add inventory");
             get_node<Button>("Inventory")->emit_signal("pressed");shop_check_stage_=2;return;
         }
@@ -441,6 +454,7 @@ void RolfTourView::check_town()
         for(const auto* safe:{"NO","LEAVE","RUN","GO","NONE","EXIT"})
             for(std::size_t n=0;n<s.choices.size();++n)if(s.choices[n]==safe)selection=n;
         if(s.pose.x==13 && s.pose.y==8 && s.dialogue.find("SHOP")!=std::string::npos)selection=0;
+        if(campaign_&&s.dialogue=="Choose a party member.")selection=0;
         get_node<ItemList>("Choices")->select(selection);get_node<Button>("Continue")->emit_signal("pressed");return;
     }
     if(s.phase==TourPhase::awaiting_input){get_node<LineEdit>("Answer")->set_text("0");next();return;}

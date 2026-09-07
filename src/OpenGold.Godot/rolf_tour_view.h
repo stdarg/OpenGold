@@ -15,11 +15,16 @@ public:
     void _process(double delta) override;
     void _draw() override;
     void _input(const godot::Ref<godot::InputEvent>& event) override;
+    void campaign_party(std::shared_ptr<opengold::CampaignParty> party){campaign_=std::move(party);}
+    [[nodiscard]] bool can_leave() const {return !session_||session_->can_leave();}
+    void resume_party(){shown_revision_=0;refresh();}
+    [[nodiscard]] bool party_route_checked() const {return shop_check_stage_==4;}
 protected:
     static void _bind_methods();
     void _notification(int what);
 private:
     std::optional<opengold::por::RolfTourSession> session_;
+    std::shared_ptr<opengold::CampaignParty> campaign_;
     std::array<godot::Ref<godot::ImageTexture>, 3> sprites_;
     godot::Ref<godot::ImageTexture> wall_view_;
     std::optional<opengold::por::PartyPose> rendered_pose_;

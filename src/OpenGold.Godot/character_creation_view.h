@@ -1,6 +1,7 @@
 #ifndef OPENGOLD_CHARACTER_CREATION_VIEW_H
 #define OPENGOLD_CHARACTER_CREATION_VIEW_H
 #include "opengold/character_creator.h"
+#include "opengold/campaign_party.h"
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <optional>
@@ -50,5 +51,16 @@ private:
     void check_run();
     void capture(const char* name);
     void capture_portrait_armor();
+    std::shared_ptr<opengold::CampaignParty> campaign_;
+    std::size_t roster_index_{};
+    bool party_open_{},added_to_party_{},party_check_{};
+    unsigned party_check_stage_{};
+    void setup_party();
+    void party_action(int action);
+    void party_selected(std::int64_t index);
+    void refresh_party();
+    void party_layout();
+    void party_check();
+    void update_party_navigation();
 };
 #endif

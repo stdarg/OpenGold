@@ -29,10 +29,28 @@ std::optional<Image> original_icon(const std::filesystem::path& directory,unsign
 }
 CombatDemo::CombatDemo(std::unique_ptr<RulesModule> module):module_(std::move(module))
 {if(!module_)throw std::runtime_error("A combat rules module is required");}
+CombatDemo::~CombatDemo(){if(campaign_&&owns_campaign_combat_)campaign_->end_combat();}
+void CombatDemo::campaign_party(std::shared_ptr<CampaignParty> party)
+{if(combat_)throw std::runtime_error("Attach party before starting combat");campaign_=std::move(party);}
+void CombatDemo::synchronize_party()
+{
+    if(campaign_&&combat_){campaign_->apply_combat(combat_->snapshot());
+        if(combat_->snapshot().outcome!=Outcome::ongoing){campaign_->end_combat();owns_campaign_combat_=false;}}
+}
+void CombatDemo::start_encounter(std::vector<Participant> enemies)
+{
+    auto participants=campaign_?campaign_->participants():party();
+    participants.insert(participants.end(),enemies.begin(),enemies.end());
+    auto next=module_->create({arena(),std::move(participants)},seed_);
+    if(campaign_){if(campaign_->identity()!=module_->identity())throw std::runtime_error("Party and combat rules differ");
+        campaign_->begin_combat();owns_campaign_combat_=true;}combat_=std::move(next);synchronize_party();
+}
 const CombatSession& CombatDemo::combat() const
 {if(!combat_)throw std::runtime_error("No active combat");return *combat_;}
 void CombatDemo::training(std::uint64_t seed)
 {
+    if(campaign_){seed_=seed;start_encounter({{1000,"bandit","Bandit",1,{9,4}}});
+        vm_.reset();art_.clear();dialogue_="Party combat preview. HP and spent resources carry back to the party.";status_="Party training";return;}
     auto next=module_->create({arena(),{{1,"vanguard","Vanguard",0,{2,4}},{10,"bandit","Bandit",1,{9,4}}}},seed);
     combat_=std::move(next);vm_.reset();creatures_.reset();art_.clear();enemies_.clear();
     menu_ticket_=combat_ticket_=0;encounters_=0;seed_=seed;
@@ -79,15 +97,14 @@ void CombatDemo::pump()
                 const auto& creature=creatures_->find({2,static_cast<std::uint8_t>(record)})->get();
                 const auto icon=original_icon(game_directory_,a[2].value);
                 for(unsigned i=0;i<count;++i) {
-                    const auto id=static_cast<EntityId>(10+enemies_.size());
+                    const auto id=static_cast<EntityId>(1000+enemies_.size());
                     enemies_.push_back({id,"slums-orc",creature.stored.name+" "+std::to_string(enemies_.size()+1),1,{9,2+static_cast<int>(enemies_.size())}});
                     if(icon)art_.push_back({id,*icon});
                 }
             } else if(opcode==36) {
                 if(enemies_.size()!=4||encounters_!=0||vm_->variable(0x6DC6)!=99||vm_->variable(0x6DCB)!=0)
                     throw std::runtime_error("Unsupported Slums combat context");
-                auto participants=party();participants.insert(participants.end(),enemies_.begin(),enemies_.end());
-                combat_=module_->create({arena(),std::move(participants)},seed_);combat_ticket_=request.id;++encounters_;
+                start_encounter(enemies_);combat_ticket_=request.id;++encounters_;
                 status_="Slums combat: original four-orc group, authored 5e conversion and arena";return;
             } else if(opcode==28) {
                 enemies_.clear();art_.clear(); // CLEAR MONSTERS resets the staged encounter.
@@ -108,16 +125,16 @@ void CombatDemo::finish_combat()
     if(!vm_->resume_host(combat_ticket_,reply))throw std::runtime_error("Combat outcome rejected by ECL");combat_ticket_=0;pump();
 }
 bool CombatDemo::submit(const Command& command)
-{if(!combat_||!combat_->submit(command))return false;finish_combat();return true;}
+{if(!combat_||!combat_->submit(command))return false;synchronize_party();finish_combat();return true;}
 void CombatDemo::revisit()
 {
     if(!script_complete()||!combat_||combat_->snapshot().outcome!=Outcome::victory)throw std::runtime_error("Revisit requires completed victory");
     if(!vm_->start(1))throw std::runtime_error("Slums revisit rejected");dialogue_.clear();pump();
 }
 std::string CombatDemo::save_combat() const
-{if(vm_)throw std::runtime_error("Campaign checkpoints are pending; save/load currently supports training combat only");return combat().save();}
+{if(vm_||campaign_)throw std::runtime_error("Campaign checkpoints are pending; save/load currently supports training combat only");return combat().save();}
 void CombatDemo::restore_combat(std::string_view checkpoint)
-{if(vm_)throw std::runtime_error("Cannot replace a pending campaign combat with a training checkpoint");auto restored=module_->restore(checkpoint);combat_=std::move(restored);}
+{if(vm_||campaign_)throw std::runtime_error("Cannot replace a campaign combat with a training checkpoint");auto restored=module_->restore(checkpoint);combat_=std::move(restored);}
 unsigned CombatDemo::script_variable(std::uint16_t address) const
 {if(!vm_)throw std::runtime_error("No active campaign script");return vm_->variable(address);}
 Command choose_demo_command(const CombatSession& session)

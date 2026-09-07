@@ -3,12 +3,28 @@
 #include <compare>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace opengold::rules {
+struct CharacterSheet;
+struct CharacterProfile {
+    std::string data;
+    int hit_points{}, armor_class{};
+    std::string description;
+    int movement_feet{}, melee_attack_bonus{};
+};
+// Module-owned continuation, separate from encounter turn budgets.
+struct VitalState {
+    int hit_points{};
+    bool dead{};
+    std::string resources;
+    std::string description;
+    bool operator==(const VitalState&) const = default;
+};
 using EntityId = std::uint32_t;
 struct Cell { int x{}, y{}; auto operator<=>(const Cell&) const = default; };
 struct Battlefield {
@@ -23,6 +39,8 @@ struct Participant {
     std::string definition, name;
     unsigned side{}; // 0=party, 1=opposition in this first encounter adapter.
     Cell cell;
+    std::string character_profile;
+    std::optional<VitalState> state;
 };
 struct Encounter { Battlefield battlefield; std::vector<Participant> participants; };
 struct Identity {
@@ -38,6 +56,7 @@ struct CombatantView {
     int hit_points{}, max_hit_points{}, armor_class{}, initiative{}, movement_feet{};
     bool action{}, bonus_action{}, reaction{}, conscious{}, dead{};
     std::string status;
+    VitalState persistent;
 };
 struct Snapshot {
     Identity identity;
@@ -73,6 +92,7 @@ public:
     [[nodiscard]] virtual std::vector<std::string> supported_features() const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> create(Encounter encounter, std::uint64_t seed) const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const = 0;
+    [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>) const;
 };
 }
 #endif

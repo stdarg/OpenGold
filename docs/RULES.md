@@ -5,6 +5,10 @@ slots. Open5E supplies reference content; it is not an executable rules engine.
 The first implementation is a bounded C++20 rules module and a native Godot
 combat scene. It is not a complete implementation of the SRD.
 
+The [shared party preview](PARTY.md) extends this module with created-character
+recipes, equipment and persistent vitals/resources. The standalone combat modes
+below retain their fixed fixtures; the character scene injects the actual party.
+
 ## Run from Windows CMD
 
 From the repository root:

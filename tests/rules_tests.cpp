@@ -47,7 +47,7 @@ void boundary_tests() {
     const auto after=session->save();check(!session->submit(attack)&&session->save()==after,"Duplicate command rejected atomically");
     for(const auto& c:session->legal_commands())check(c.verb!="melee"&&c.verb!="ranged","Attack consumes the action");
     auto restored=module->restore(after);check(restored->save()==after,"Checkpoint preserves exact module state");
-    auto mismatch=after;const auto where=mismatch.find("0.1.0");mismatch.replace(where,5,"9.9.9");
+    auto mismatch=after;const auto version=session->snapshot().identity.version;const auto where=mismatch.find(version);mismatch.replace(where,version.size(),"9.9.9");
     rejects([&]{(void)module->restore(mismatch);},"Wrong rules version rejected");
     rejects([&]{(void)module->restore(after+"junk");},"Trailing checkpoint data rejected");
     rejects([&]{(void)module->restore(after.substr(0,after.size()/2));},"Truncated checkpoint rejected");

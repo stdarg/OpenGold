@@ -4,6 +4,7 @@
 #include "opengold/ecl_machine.h"
 #include "opengold/creature_catalog.h"
 #include "opengold/formats.h"
+#include "opengold/campaign_party.h"
 namespace opengold {
 struct CombatArt { rules::EntityId entity{}; Image image; };
 // A bounded demonstration/campaign adapter. It depends on the rules interface,
@@ -11,6 +12,8 @@ struct CombatArt { rules::EntityId entity{}; Image image; };
 class CombatDemo {
 public:
     explicit CombatDemo(std::unique_ptr<rules::RulesModule> module);
+    ~CombatDemo();
+    void campaign_party(std::shared_ptr<CampaignParty> party);
     void training(std::uint64_t seed=42);
     void slums(const std::filesystem::path& game_directory,std::uint64_t seed=42);
     [[nodiscard]] const rules::CombatSession& combat() const;
@@ -30,6 +33,10 @@ public:
 private:
     std::unique_ptr<rules::RulesModule> module_;
     std::unique_ptr<rules::CombatSession> combat_;
+    std::shared_ptr<CampaignParty> campaign_;
+    bool owns_campaign_combat_{};
+    void start_encounter(std::vector<rules::Participant> enemies);
+    void synchronize_party();
     std::optional<por::EclMachine> vm_;
     std::optional<por::CreatureCatalog> creatures_;
     std::vector<rules::Participant> enemies_;

@@ -1,5 +1,9 @@
 # New Phlan exploration demo
 
+The [party preview](PARTY.md) can inject created PCs/NPCs into this same native
+host, including shared purses/inventory, WHO and character/party queries.
+The standalone launcher retains the single-fighter fixture described below.
+
 `review-rolf.cmd` runs the C++/Godot Rolf tour followed by free exploration of
 the complete 16 x 16 New Phlan map, including building locations. The current
 scope is the civilized town; ruined districts and boat destinations are outside

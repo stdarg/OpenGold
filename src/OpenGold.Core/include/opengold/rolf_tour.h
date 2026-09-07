@@ -6,6 +6,7 @@
 #include "opengold/formats.h"
 #include "opengold/wall_art.h"
 #include "opengold/creature_catalog.h"
+#include "opengold/campaign_party.h"
 #include <bitset>
 
 namespace opengold::por {
@@ -25,6 +26,8 @@ struct PhlanResources {
     std::map<unsigned, std::vector<Equipment>> treasure;
     std::vector<std::uint8_t> sprite_archive;
     std::map<unsigned,Image> heads,bodies,pictures;
+    // Explicit converted NPC profiles scoped to this resource bank. No guessed ID conversion.
+    std::map<unsigned,opengold::Character> npc_profiles;
 };
 struct TourSnapshot {
     PartyPose pose;
@@ -52,6 +55,8 @@ public:
                    std::array<opengold::Image, 3> sprites, std::uint32_t entry,
                    WallArtSet wall_art = {}, std::shared_ptr<const PhlanResources> town = {});
     void restart();
+    void campaign_party(std::shared_ptr<opengold::CampaignParty> party);
+    [[nodiscard]] bool can_leave() const {return snapshot_.phase==TourPhase::completed;}
     void advance(double seconds);
     bool continue_dialogue(std::uint64_t ticket);
     bool choose(std::uint64_t ticket, std::size_t choice);
@@ -80,6 +85,10 @@ private:
     double remaining_delay_{};
     std::shared_ptr<const PhlanResources> town_;
     TownParty party_, saved_party_;
+    std::shared_ptr<opengold::CampaignParty> campaign_;
+    std::optional<opengold::PartyState> saved_campaign_;
+    std::uint64_t who_request_{};
+    std::vector<unsigned> who_slots_;
     std::vector<Equipment> treasure_;
     std::optional<Image> picture_;
     std::optional<EclMachine> checkpoint_;

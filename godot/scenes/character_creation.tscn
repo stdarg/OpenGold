@@ -369,3 +369,14 @@ theme_override_font_sizes/font_size = 19
 
 [node name="TotalScore5" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
+
+[node name="Party" type="Button" parent="."]
+text = "View party"
+
+[node name="AddParty" type="Button" parent="."]
+visible = false
+text = "Add to party"
+
+[node name="ReturnParty" type="Button" parent="."]
+visible = false
+text = "Return to party"

@@ -48,12 +48,11 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 **Back** preserves selections and allows earlier edits. Derived scores and HP
 update from the current choices. **Start over** clears the single character.
 
-Per the confirmed scope, this demo has no pool, party management, persistence,
-or campaign integration. The later party limit remains six PCs plus two NPC
-positions. Class feature choices, skills, equipment, spells, and species
-lineage choices are outside this first requested flow; the sheet presents the
-implemented creation fields, not a complete combat-ready character. The Rolf
-fighter and combat fixtures remain separate.
+The [shared party preview](PARTY.md) now adds a roster, six PC/two NPC positions,
+party sheets/inventories, town purchases/equipping and combat handoffs to this
+scene. Character creation itself retains the same choices. Supported combat
+profiles and remaining class/skill/spell/lineage limits are listed there.
+Persistence remains separate work.
 
 ## Native boundaries and rules
 

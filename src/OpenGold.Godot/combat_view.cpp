@@ -49,7 +49,9 @@ void CombatView::_ready()
     get_node<Button>("Save")->connect("pressed",callable_mp(this,&CombatView::save_game));
     get_node<Button>("Load")->connect("pressed",callable_mp(this,&CombatView::load_game));
     const auto args=OS::get_singleton()->get_cmdline_user_args();checking_=args.has("--combat-check");capture_=args.has("--capture");check_slums_=args.has("--slums");
-    try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../data/rules/srd-5.2.1/combat.rules")));if(check_slums_)slums();else training();}
+    party_check_=campaign_&&args.has("--party-check");
+    try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(check_slums_)slums();else training();sync_art();
+        if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();}
     catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::layout()
@@ -91,6 +93,8 @@ void CombatView::sync_art()
         const auto image=godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels);
         art_[source.entity]=ImageTexture::create_from_image(image);
     }
+    for(const auto& source:campaign_art_){PackedByteArray pixels;pixels.resize(source.image.rgba.size());std::copy(source.image.rgba.begin(),source.image.rgba.end(),pixels.ptrw());
+        art_[source.entity]=ImageTexture::create_from_image(godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels));}
 }
 void CombatView::save_game()
 {
@@ -242,8 +246,8 @@ void CombatView::_process(double delta)
                 checked_input_=true;++check_steps_;return;
             }
         }
-        if(checking_||active->side==1) {
-            ai_delay_+=delta;if(!checking_&&ai_delay_<.65)return;ai_delay_=0;
+        if(checking_||party_check_||active->side==1) {
+            ai_delay_+=delta;if(!checking_&&!party_check_&&ai_delay_<.65)return;ai_delay_=0;
             if(checking_&&++check_steps_>1000) {
                 std::string details="Combat check command limit exceeded";
                 for(const auto& line:s.log)details+="\n"+line;

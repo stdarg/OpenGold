@@ -93,7 +93,7 @@ void CharacterCreationView::_ready()
         art_=por::CharacterArt::load(std::filesystem::u8path(directory.utf8().get_data()));
         load_additional_heads();
         const auto seed=checking_?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-        creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);recommend_head();refresh();
+        creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_head();refresh();
     } catch(const std::exception& e) {
         fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-rolf.cmd, then review-character.cmd.");
         get_node<Label>("Status")->set_text(error_);get_node<Button>("Next")->set_disabled(true);
@@ -155,6 +155,7 @@ void CharacterCreationView::layout()
     place("Back",Rect2(x,h-60,150,38));place("Next",Rect2(x+pw-190,h-60,190,38));
     place("Status",Rect2(x+160,h-62,std::max(1.0,pw-360),44));
     place("Footer",Rect2(24,h-25,w-48,22));
+    if(campaign_)party_layout();
     if(creator_&&(creator_->step()==CreationStep::sheet||creator_->step()==CreationStep::hit_points))
         place("Description",Rect2(x+20,y+124,pw-40,ph-148));
 }
@@ -217,6 +218,7 @@ void CharacterCreationView::refresh()
     get_node<Button>("Back")->set_disabled(step==CreationStep::race);
     get_node<Button>("Back")->set_text(step==CreationStep::sheet?"Edit appearance":"Back");
     show("Next",step!=CreationStep::sheet);
+    if(campaign_)get_node<Button>("AddParty")->set_visible(step==CreationStep::sheet&&!added_to_party_);
     get_node<Button>("Next")->set_text(icon?"Show character sheet":"Next");
     get_node<Button>("Next")->set_disabled((stats&&!d.rolled)||(step==CreationStep::name&&d.name.empty()));
     get_node<Label>("Status")->set_text(error_);
@@ -334,7 +336,7 @@ void CharacterCreationView::perform(const std::function<void()>& action)
 }
 void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}
 void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
-void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();portrait_chosen_=false;recommend_head();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
+void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_head();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
 void CharacterCreationView::choice_selected(std::int64_t index)
 {if(refreshing_)return;perform([&]{const auto f=static_cast<CreationField>(creator_->step());creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race||f==CreationField::gender)recommend_head();});}
 void CharacterCreationView::background_selected(std::int64_t index)
@@ -373,6 +375,11 @@ void CharacterCreationView::capture(const char* name)
 }
 void CharacterCreationView::_process(double)
 {
+    if(campaign_)update_party_navigation();
+    if(party_check_&&!Engine::get_singleton()->is_editor_hint()){
+        try{if(++check_frames_%4==0)party_check();if(check_frames_>3000)throw std::runtime_error("Party check timed out");}
+        catch(const std::exception& e){UtilityFunctions::printerr("Party check failed: ",gs(e.what()));party_check_=false;get_tree()->quit(1);}return;
+    }
     if(!checking_||Engine::get_singleton()->is_editor_hint())return;
     try{if(fatal_||!error_.is_empty())throw std::runtime_error(error_.utf8().get_data());if(++check_frames_%4==0)check_run();
         if(check_frames_>400)throw std::runtime_error("Character UI check timed out");}

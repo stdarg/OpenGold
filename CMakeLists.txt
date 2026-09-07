@@ -40,6 +40,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/character_art.cpp
     src/OpenGold.Core/src/character_creator.cpp
     src/OpenGold.Core/src/character.cpp
+    src/OpenGold.Core/src/campaign_party.cpp
     src/OpenGold.Core/src/inventory.cpp
     src/OpenGold.Core/src/creature_catalog.cpp
     src/OpenGold.Core/src/creature_factory.cpp
@@ -89,6 +90,10 @@ if(OPENGOLD_BUILD_TESTS)
     add_executable(opengold_character_tests tests/character_tests.cpp)
     target_link_libraries(opengold_character_tests PRIVATE opengold_core opengold_rules_srd5)
     add_test(NAME opengold_character_tests COMMAND opengold_character_tests)
+    add_executable(opengold_party_tests tests/party_tests.cpp)
+    target_link_libraries(opengold_party_tests PRIVATE opengold_core opengold_rules_srd5)
+    target_compile_definitions(opengold_party_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_party_tests COMMAND opengold_party_tests)
     add_executable(opengold_sound_tests tests/sound_tests.cpp)
     target_link_libraries(opengold_sound_tests PRIVATE opengold_core)
     add_test(NAME opengold_sound_tests COMMAND opengold_sound_tests)

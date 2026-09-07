@@ -2,6 +2,8 @@
 #include <algorithm>
 
 namespace opengold::por {
+void RolfTourSession::campaign_party(std::shared_ptr<opengold::CampaignParty> party)
+{campaign_=std::move(party);restart();}
 namespace {
 constexpr std::array<std::uint16_t,7> money{0x6BBB,0x6BBD,0x6BBF,0x6BC1,0x6BC3,0x6BC5,0x6BC7};
 constexpr std::array<int,4> dx{0,1,0,-1}, dy{-1,0,1,0};
@@ -18,12 +20,15 @@ void RolfTourSession::configure_town()
     machine_.bind_variable(0xB8,0); machine_.bind_variable(0xB9,0);
     machine_.bind_variable(0x49C9,12); machine_.bind_variable(0x49CA,1);
     machine_.bind_variable(0x6E12,3); machine_.bind_variable(0x6E3E,1);
-    for (const auto& w:character_reply(0).writes) machine_.bind_variable(w.address,w.value);
+    if(campaign_)selected_character_=campaign_->state().selected;
+    for (const auto& w:character_reply(selected_character_).writes) machine_.bind_variable(w.address,w.value);
     for (const std::uint8_t op:{10,28,32,33,36,39,40,50,55,56,57}) machine_.enable_host(op);
+    if(campaign_)for(const std::uint8_t op:{29,30,54})machine_.enable_host(op);
 }
 
 EclHostReply RolfTourSession::character_reply(unsigned index) const
 {
+    if(campaign_)return campaign_->character_reply(index);
     EclHostReply reply;
     std::array<std::uint16_t,285> fields{};
     if (index==0) {
@@ -40,6 +45,7 @@ EclHostReply RolfTourSession::character_reply(unsigned index) const
 
 void RolfTourSession::read_character()
 {
+    if(campaign_){campaign_->read_character(selected_character_,machine_);return;}
     if (selected_character_!=0) return;
     for (unsigned n=0;n<money.size();++n) party_.wealth[n]=machine_.variable(money[n]);
     party_.hit_points=machine_.variable(0x6C19);
@@ -76,6 +82,9 @@ bool RolfTourSession::move_party(ExplorationCommand command)
 
 void RolfTourSession::begin_event(unsigned slot)
 {
+    if(campaign_){selected_character_=campaign_->state().selected;
+        for(const auto& w:character_reply(selected_character_).writes)machine_.bind_variable(w.address,w.value);
+        saved_campaign_=campaign_->checkpoint();}
     checkpoint_=machine_; saved_party_=party_; saved_script_=current_script_;
     saved_selected_character_=selected_character_;
     event_stage_=slot==0?1:slot==2?4:2;
@@ -125,7 +134,11 @@ bool RolfTourSession::choose(std::uint64_t ticket,std::size_t choice)
 {
     if (snapshot_.phase!=TourPhase::awaiting_continue || !ticket || ticket!=snapshot_.continue_ticket ||
         choice>=snapshot_.choices.size()) return false;
-    if (message_only_) { message_only_=false;snapshot_.phase=TourPhase::completed; }
+    if(who_request_){
+        const auto slot=who_slots_.at(choice);auto reply=character_reply(slot);
+        if(!machine_.resume_host(who_request_,reply))return false;
+        campaign_->select(slot);selected_character_=slot;who_request_=0;who_slots_.clear();snapshot_.phase=TourPhase::running;
+    }else if (message_only_) { message_only_=false;snapshot_.phase=TourPhase::completed; }
     else {
         if (!machine_.resume(menu_request_,choice)) return false;
         snapshot_.phase=TourPhase::running;
@@ -148,6 +161,11 @@ bool RolfTourSession::buy(std::uint64_t ticket,std::size_t item)
 {
     if (snapshot_.phase!=TourPhase::shopping || !ticket || ticket!=snapshot_.continue_ticket || item>=treasure_.size()) return false;
     const auto& offered=treasure_[item];
+    if(campaign_){
+        try{campaign_->purchase(campaign_->selected(),offered);snapshot_.diagnostic="Bought "+offered.label();}
+        catch(const std::exception& e){snapshot_.diagnostic=e.what();++snapshot_.revision;return false;}
+        ++snapshot_.revision;return true;
+    }
     const auto price=offered.stored.value;
     if (party_.inventory.size()>=16 || party_.wealth[3]<price) {
         snapshot_.diagnostic=party_.inventory.size()>=16?"Inventory is full (16 items).":"Not enough gold.";
@@ -163,9 +181,10 @@ bool RolfTourSession::buy(std::uint64_t ticket,std::size_t item)
 bool RolfTourSession::leave_shop(std::uint64_t ticket)
 {
     if (snapshot_.phase!=TourPhase::shopping || !ticket || ticket!=snapshot_.continue_ticket) return false;
-    auto reply=character_reply(0); reply.writes.push_back({0x6E6C,0});
+    const auto selected=campaign_?campaign_->state().selected:0;
+    auto reply=character_reply(selected); reply.writes.push_back({0x6E6C,0});
     if (!machine_.resume_host(shop_request_,reply)) return false;
-    selected_character_=0;shop_request_=0;snapshot_.continue_ticket=0;
+    selected_character_=selected;shop_request_=0;snapshot_.continue_ticket=0;
     snapshot_.phase=TourPhase::running;++snapshot_.revision;return true;
 }
 
@@ -181,9 +200,21 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
             read_character();
         } else {
             read_character();selected_character_=arg(0);reply=character_reply(selected_character_);
+            // LOAD CHARACTER is also used to scan slots. WHO, not that VM
+            // cursor, changes the player's chosen party member.
         }
         break;
-    case 57: read_character();selected_character_=0;reply=character_reply(0);break; // Single PC WHO.
+    case 57:
+        read_character();
+        if(campaign_){
+            who_slots_.clear();snapshot_.choices.clear();
+            for(unsigned slot=0;slot<8;++slot)if(auto id=campaign_->state().slots[slot]){
+                who_slots_.push_back(slot);snapshot_.choices.push_back(campaign_->member(id).character.sheet().name);}
+            if(who_slots_.empty())throw EclError("WHO requires a party member");
+            who_request_=request.id;snapshot_.phase=TourPhase::awaiting_continue;snapshot_.continue_ticket=++next_ticket_;
+            snapshot_.dialogue="Choose a party member.";++snapshot_.revision;return true;
+        }
+        selected_character_=0;reply=character_reply(0);break;
     case 12: {
         // Encounter distance images use the already verified SPRIT3 format.
         std::array<Image,3> decoded;
@@ -217,6 +248,19 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         break;
     }
     case 28: treasure_.clear();break;
+    case 29:
+        read_character();reply.writes.push_back({static_cast<std::uint16_t>(arg(0)),static_cast<std::uint16_t>(campaign_->strength())});break;
+    case 30:{
+        read_character();const auto values=campaign_->query(arg(0),arg(1));
+        std::map<std::uint16_t,std::uint16_t> outputs;
+        for(unsigned n=0;n<4;++n)outputs[static_cast<std::uint16_t>(arg(n+2))]=values[n];
+        for(const auto& [address,value]:outputs)reply.writes.push_back({address,value});break;
+    }
+    case 54:{
+        read_character();const auto found=town_->npc_profiles.find(arg(0));
+        if(found==town_->npc_profiles.end()||arg(0)==24)throw EclError("NPC needs an explicit supported conversion/allegiance profile");
+        campaign_->recruit("por:MON3CHA:"+std::to_string(arg(0)),found->second,arg(1));break;
+    }
     case 39: {
         for (unsigned n=0;n<7;++n) if (arg(n)) throw EclError("Non-shop treasure awards are not implemented");
         if (arg(7)==255) break;
@@ -226,6 +270,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
     }
     case 36:
         if (machine_.variable(0x6E6C)==1) {
+            if(campaign_&&!campaign_->state().slots.at(campaign_->state().selected))throw EclError("Shopping requires a selected party member");
             read_character();shop_request_=request.id;
             snapshot_.phase=TourPhase::shopping;snapshot_.continue_ticket=++next_ticket_;
             snapshot_.choices.clear();snapshot_.diagnostic.clear();++snapshot_.revision;return true;
@@ -245,7 +290,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         if (arg(0)!=127 || arg(1)!=127 || arg(2)!=127) throw EclError("Unverified wall resource profile");
         break;
     case 50: {
-        const bool found=std::any_of(party_.inventory.begin(),party_.inventory.end(),[&](const auto& i){return i.stored.type==arg(0);});
+        const bool found=campaign_?campaign_->has_item(arg(0)):std::any_of(party_.inventory.begin(),party_.inventory.end(),[&](const auto& i){return i.stored.type==arg(0);});
         reply.conditions=EclConditions{found,!found,false,false,false,false};break;
     }
     case 40: throw EclError("Pickpocket money and item removal");
