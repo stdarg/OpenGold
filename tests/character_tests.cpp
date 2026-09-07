@@ -84,7 +84,7 @@ void creation_tests()
     rejects([&]{creator.swap_scores(0,6);},"Invalid swap rejected");check(creator.draft().assignment==assignment,"Rejected swap is atomic");
     creator.roll();check(creator.draft().rolls!=original&&creator.draft().assignment[0]==6,"Full reroll replaces all rolls and empties assignments");
     for(unsigned i=0;i<6;++i)creator.assign_roll(i,i);
-    creator.next();creator.next();rejects([&]{creator.next();},"Name required before portrait");
+    creator.next();check(creator.step()==CreationStep::name,"Attributes advance directly to Name");rejects([&]{creator.next();},"Name required before portrait");
     creator.name("  Mira Stoneward  ");creator.next();creator.next();
     auto appearance=creator.appearance();appearance.portrait_head=261;appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
     check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
@@ -96,7 +96,7 @@ void creation_tests()
     check(finished.inventory().empty()&&finished.appearance()==appearance,"Finished character owns appearance and an empty inventory");
     rejects([&]{creator.roll();},"Completed sheet cannot be silently rerolled");
     creator.back();creator.next();check(creator.appearance()==appearance,"Review retains both appearance banks");
-    creator.back();creator.back();creator.back();creator.back();creator.back();
+    creator.back();creator.back();creator.back();creator.back();
     check(creator.step()==CreationStep::attributes,"Back navigation reaches attributes");
     creator.select(CreationField::race,"dwarf");creator.select(CreationField::character_class,"barbarian");
     check(creator.sheet().hit_points==13+creator.sheet().modifiers[2],"HP recalculates after earlier edits");

@@ -38,10 +38,8 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    `+2 — Soldier background`). Only the ability score is colored: yellow above
    its original roll, red below it, and normal when unchanged. Dice boxes have
    room for a two-digit total and padding, with a drag hint beside **Dice Rolls**.
-6. Review maximum starting HP: maximum class Hit Die + Constitution modifier,
-   with +1 for Dwarven Toughness when applicable.
-7. Enter a name, up to 40 characters.
-8. Choose a portrait head from the dropdown or browse with the previous/next
+6. Enter a name, up to 40 characters. There is no separate HP step.
+7. Choose a portrait head from the dropdown or browse with the previous/next
    buttons directly below the portrait, then choose a body with the second row
    of arrows. These controls are available on every creation step, including
    the finished sheet, and are disabled after **Add to party**. The ready/action
@@ -52,15 +50,18 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    head keeps it selected through later edits; every head remains available.
    With no exact match (including Nonbinary), the initial original head remains
    the default until you choose one. **Start over** restores automatic defaults.
-9. Customize combat head and weapon/body parts, tall/short art, and all twelve
+8. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
    swatch. Enlarged ready and action previews update immediately, recoloring
    only that part, with the composed portrait head and body visible above both
    poses. Controls show **Not present** when the selected parts omit
    that region in both poses. Its saved colors return when the part is present.
-10. Show the character sheet: race, gender, class, level, background, six scores,
+9. Show the character sheet: race, gender, class, level, background, six scores,
     saving throws, Hit Dice, HP and inventory (initially empty). Saving throws
     include the class's level-one proficiency bonus where applicable.
+    A note explains that SRD 5.2.1 uses the maximum class Hit Die plus applicable
+    modifiers at level one. Only the HP numbers are colored: yellow for a
+    positive combined modifier, red for a negative modifier, normal for zero.
     **Modifiers** opens a modal with ability, racial, class, background, equipped
     item and spell details, identifying the source of each applied modifier.
     Score numbers are yellow for positive ability modifiers, red for negative
@@ -68,6 +69,7 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
     identified explicitly.
     The party screen uses this same sheet for its selected member, including
     live HP, equipment and resources; roster entries show character names.
+    Ready and Action combat sprites appear side by side under the party portrait.
 
 **Back** preserves selections and allows earlier edits. Derived scores and HP
 update from the current choices. **Start over** clears the single character.

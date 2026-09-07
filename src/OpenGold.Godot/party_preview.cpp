@@ -65,6 +65,10 @@ void CharacterCreationView::party_layout()
     place("PartyPanel/Title",Rect2(24,22,w-48,40));place("PartyPanel/Roster",Rect2(24,90,300,h-300));
     place("PartyPanel/Sheet",Rect2(350,90,w-650,h-380));
     place("PartyPanel/Portrait",Rect2(w-284,90,264,264));
+    place("PartyPanel/ReadyLabel",Rect2(w-284,360,120,24));
+    place("PartyPanel/ActionLabel",Rect2(w-140,360,120,24));
+    place("PartyPanel/ReadySprite",Rect2(w-284,388,120,120));
+    place("PartyPanel/ActionSprite",Rect2(w-140,388,120,120));
     place("PartyPanel/Inventory",Rect2(350,h-280,w-374,140));
     const std::array<const char*,9> buttons{"Create","Remove","Rejoin","Recruit","Equip","Unequip","Explore","Combat","Close"};
     const double bw=(w-64)/5;
@@ -97,6 +101,10 @@ void CharacterCreationView::refresh_party()
         for(const auto& item:m.character.inventory().items())items->add_item(gs(std::string(std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?"Equipped / ":"")+item.name+" x"+std::to_string(item.quantity)));
         const auto image=art_->portrait(m.character.appearance());PackedByteArray pixels;pixels.resize(image.rgba.size());std::copy(image.rgba.begin(),image.rgba.end(),pixels.ptrw());
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(image.width,image.height,false,godot::Image::FORMAT_RGBA8,pixels)));
+        for(unsigned pose=0;pose<2;++pose){
+            const auto icon=art_->icon(m.character.appearance(),pose!=0);PackedByteArray rgba;rgba.resize(icon.rgba.size());std::copy(icon.rgba.begin(),icon.rgba.end(),rgba.ptrw());
+            get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(icon.width,icon.height,false,godot::Image::FORMAT_RGBA8,rgba)));
+        }
     }
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_text(gs(sheet));
     get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?"Session preview / New PCs receive 250 gp / Progress is not saved yet.":error_);

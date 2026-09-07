@@ -30,7 +30,7 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,10> steps{"Race","Gender","Class","Alignment","Attributes","Hit points","Name","Portrait","Combat appearance","Character sheet"};
+const std::array<const char*,9> steps{"Race","Gender","Class","Alignment","Attributes","Name","Portrait","Combat appearance","Character sheet"};
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
 const std::array<const char*,6> full_abilities{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
 const std::array<const char*,16> colors{"Black","Blue","Green","Cyan","Red","Magenta","Brown","Light gray","Dark gray","Light blue","Light green","Light cyan","Light red","Pink","Yellow","White"};
@@ -184,8 +184,8 @@ void CharacterCreationView::layout()
     place("ModifiersModal/Text",Rect2(24,70,mw-48,mh-140));
     place("ModifiersModal/Close",Rect2(mw-154,mh-52,130,36));
     if(campaign_)party_layout();
-    if(creator_&&(creator_->step()==CreationStep::sheet||creator_->step()==CreationStep::hit_points))
-        place("Description",Rect2(x+20,y+124,pw-40,ph-(creator_->step()==CreationStep::sheet?194:148)));
+    if(creator_&&creator_->step()==CreationStep::sheet)
+        place("Description",Rect2(x+20,y+124,pw-40,ph-194));
 }
 void CharacterCreationView::load_additional_heads()
 {
@@ -228,7 +228,7 @@ void CharacterCreationView::refresh()
     const auto show=[&](const char* node,bool visible){get_node<Control>(node)->set_visible(visible);};
     const bool choosing=step<=CreationStep::alignment,stats=step==CreationStep::attributes,portrait=step==CreationStep::portrait,icon=step==CreationStep::combat_icon;
     for(const auto* n:{"Choices"})show(n,choosing);
-    show("Description",choosing||step==CreationStep::hit_points||step==CreationStep::sheet);
+    show("Description",choosing||step==CreationStep::sheet);
     show("Modifiers",step==CreationStep::sheet);
     for(const auto* n:{"BackgroundLabel","Background","BonusLabel","Bonus","Columns","DiceHeader","BaseHeader","BonusHeader","TotalHeader","Roll","SwapHint"})show(n,stats);
     show("DiceHint",stats);
@@ -246,7 +246,7 @@ void CharacterCreationView::refresh()
     for(int i=0;i<16;++i)get_node<Control>(gs("Palette"+std::to_string(i)))->set_visible(icon);
     get_node<Label>("PageTitle")->set_text(gs(steps[static_cast<unsigned>(step)]));
     std::string progress;
-    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==8?"Combat icon":steps[i])+"\n\n";
+    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==7?"Combat icon":steps[i])+"\n\n";
     get_node<Label>("Steps")->set_text(gs(progress));
     get_node<Button>("Back")->set_disabled(step==CreationStep::race);
     get_node<Button>("Back")->set_text(step==CreationStep::sheet?"Edit appearance":"Back");
@@ -299,10 +299,6 @@ void CharacterCreationView::refresh()
         }
         get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(gs(modifier));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
-    }
-    if(step==CreationStep::hit_points) {
-        instructions="SRD 5.2.1 sets level-one HP to the maximum class Hit Die plus applicable modifiers. No HP roll is required.";
-        get_node<RichTextLabel>("Description")->set_text(gs("[font_size=48]"+std::to_string(s->hit_points)+" HP[/font_size]\n\n"+s->hp_explanation+"\n\nHit Dice: 1d"+std::to_string(s->hit_die)+"\n\nThese values update if you change class, race, or Constitution."));
     }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
     if(portrait)instructions="Use the controls below the portrait to choose its head and body. You can change them until you add this character to a party.";
@@ -556,7 +552,7 @@ void CharacterCreationView::check_run()
     case 7:
         for(unsigned i=0;i<6;++i)if(get_node<Button>(gs("Score"+std::to_string(i)))->get_text()!=gs(std::to_string(creator_->sheet().scores[i])))throw std::runtime_error("Displayed ability score differs from the character sheet");
         capture("character-attributes.png");press("Next");break;
-    case 8:if(creator_->sheet().hit_points!=11+creator_->sheet().modifiers[2])throw std::runtime_error("Wrong fighter/dwarf HP");press("Next");break;
+    case 8:if(creator_->step()!=CreationStep::name||creator_->sheet().hit_points!=11+creator_->sheet().modifiers[2])throw std::runtime_error("Attributes must advance directly to Name with rules-derived HP");break;
     case 9:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Empty name accepted");
         get_node<LineEdit>("Name")->grab_focus();
         for(char c:std::string("Mira Stoneward"))for(bool pressed:{true,false}){Ref<InputEventKey> event;event.instantiate();event->set_unicode(c);

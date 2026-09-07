@@ -64,3 +64,21 @@ text = "Back to creator"
 
 [node name="Modifiers" type="Button" parent="."]
 text = "Modifiers"
+
+[node name="ReadyLabel" type="Label" parent="."]
+text = "Ready"
+horizontal_alignment = 1
+
+[node name="ActionLabel" type="Label" parent="."]
+text = "Action"
+horizontal_alignment = 1
+
+[node name="ReadySprite" type="TextureRect" parent="."]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="ActionSprite" type="TextureRect" parent="."]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
