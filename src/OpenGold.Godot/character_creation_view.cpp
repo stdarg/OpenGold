@@ -4,6 +4,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
+#include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
 #include <godot_cpp/classes/item_list.hpp>
 #include <godot_cpp/classes/label.hpp>
@@ -65,7 +66,17 @@ void CharacterCreationView::_ready()
     get_node<OptionButton>("Bonus")->connect("item_selected",callable_mp(this,&CharacterCreationView::bonus_selected));
     get_node<OptionButton>("PortraitHead")->connect("item_selected",callable_mp(this,&CharacterCreationView::portrait_head_selected));
     get_node<LineEdit>("Name")->connect("text_changed",callable_mp(this,&CharacterCreationView::name_changed));
-    for(int i=0;i<6;++i)get_node<Button>(gs("Ability"+std::to_string(i)))->connect("pressed",callable_mp(this,&CharacterCreationView::score_selected).bind(i));
+    for(int i=0;i<6;++i){
+        get_node<Button>(gs("Ability"+std::to_string(i)))->connect("pressed",callable_mp(this,&CharacterCreationView::score_selected).bind(i));
+        get_node<Control>(gs("Dice"+std::to_string(i)))->set_drag_forwarding(callable_mp(this,&CharacterCreationView::drag_roll).bind(i),Callable(),Callable());
+        get_node<Control>(gs("Dice"+std::to_string(i)))->set_default_cursor_shape(Control::CURSOR_DRAG);
+        get_node<Control>(gs("Dice"+std::to_string(i)))->set_tooltip_text("Drag this rolled result onto an attribute to assign it.");
+        for(const char* stem:{"Ability","Score","BonusScore","TotalScore"})
+            get_node<Control>(gs(std::string(stem)+std::to_string(i)))->set_drag_forwarding(Callable(),callable_mp(this,&CharacterCreationView::can_drop_roll).bind(i),callable_mp(this,&CharacterCreationView::drop_roll).bind(i));
+    }
+    get_node<Button>("Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
+    get_node<Button>("ModifiersModal/Close")->connect("pressed",callable_mp(this,&CharacterCreationView::close_modifiers));
+    get_node<Window>("ModifiersModal")->connect("close_requested",callable_mp(this,&CharacterCreationView::close_modifiers));
     for(int direction:{-1,1}) {
         const auto suffix=direction<0?"Previous":"Next";
         get_node<Button>(gs(std::string("Head")+suffix))->connect("pressed",callable_mp(this,&CharacterCreationView::portrait_part).bind(0,direction));
@@ -114,14 +125,14 @@ void CharacterCreationView::layout()
     place("BackgroundLabel",Rect2(x+20,y+118,106,32));place("Background",Rect2(x+126,y+114,pw-146,36));
     place("BonusLabel",Rect2(x+20,y+164,106,32));place("Bonus",Rect2(x+126,y+160,pw-146,36));
     place("Columns",Rect2(x+20,y+208,pw-40,24));
-    place("DiceHeader",Rect2(x+104,y+208,175,24));
-    place("BaseHeader",Rect2(x+288,y+208,56,24));place("BonusHeader",Rect2(x+348,y+208,64,24));place("TotalHeader",Rect2(x+416,y+208,60,24));
+    place("DiceHeader",Rect2(x+pw-184,y+208,164,24));
+    place("BaseHeader",Rect2(x+144,y+208,50,24));place("BonusHeader",Rect2(x+198,y+208,48,24));place("TotalHeader",Rect2(x+250,y+208,50,24));
     for(int i=0;i<6;++i) {
-        place(gs("Ability"+std::to_string(i)),Rect2(x+20,y+244+i*47,68,37));
-        place(gs("Dice"+std::to_string(i)),Rect2(x+104,y+248+i*47,174,37));
-        place(gs("Score"+std::to_string(i)),Rect2(x+288,y+248+i*47,56,37));
-        place(gs("BonusScore"+std::to_string(i)),Rect2(x+348,y+248+i*47,64,37));
-        place(gs("TotalScore"+std::to_string(i)),Rect2(x+416,y+248+i*47,60,37));
+        place(gs("Ability"+std::to_string(i)),Rect2(x+20,y+244+i*47,116,37));
+        place(gs("Dice"+std::to_string(i)),Rect2(x+pw-184,y+244+i*47,164,37));
+        place(gs("Score"+std::to_string(i)),Rect2(x+144,y+248+i*47,50,37));
+        place(gs("BonusScore"+std::to_string(i)),Rect2(x+198,y+248+i*47,48,37));
+        place(gs("TotalScore"+std::to_string(i)),Rect2(x+250,y+248+i*47,50,37));
     }
     place("Roll",Rect2(x+20,y+ph-58,170,36));place("SwapHint",Rect2(x+202,y+ph-62,pw-222,46));
     place("Name",Rect2(x+20,y+138,pw-40,46));
@@ -147,17 +158,20 @@ void CharacterCreationView::layout()
     portrait_rect_=Rect2(px+27,py+100,264,264);
     ready_rect_=Rect2(px+26,py+408,120,120);action_rect_=Rect2(px+172,py+408,120,120);
     place("ReadyLabel",Rect2(px+26,py+374,120,28));place("ActionLabel",Rect2(px+172,py+374,120,28));
-    if(creator_&&creator_->step()==CreationStep::combat_icon) {
-        ready_rect_=Rect2(px+63,py+112,192,192);action_rect_=Rect2(px+63,py+348,192,192);
-        place("ReadyLabel",Rect2(px+63,py+88,192,24));place("ActionLabel",Rect2(px+63,py+324,192,24));
-    }
     place("PreviewSummary",Rect2(px+18,py+550,282,std::max(42.0,ph-564)));
     place("Back",Rect2(x,h-60,150,38));place("Next",Rect2(x+pw-190,h-60,190,38));
     place("Status",Rect2(x+160,h-62,std::max(1.0,pw-360),44));
     place("Footer",Rect2(24,h-25,w-48,22));
+    place("Modifiers",Rect2(x+20,y+ph-60,150,36));
+    const double mw=std::min(780.0,w-100),mh=h-120;
+    get_node<Window>("ModifiersModal")->set_size(Vector2i(mw,mh));
+    place("ModifiersModal/Background",Rect2(0,0,mw,mh));
+    place("ModifiersModal/Title",Rect2(24,18,mw-48,36));
+    place("ModifiersModal/Text",Rect2(24,70,mw-48,mh-140));
+    place("ModifiersModal/Close",Rect2(mw-154,mh-52,130,36));
     if(campaign_)party_layout();
     if(creator_&&(creator_->step()==CreationStep::sheet||creator_->step()==CreationStep::hit_points))
-        place("Description",Rect2(x+20,y+124,pw-40,ph-148));
+        place("Description",Rect2(x+20,y+124,pw-40,ph-(creator_->step()==CreationStep::sheet?194:148)));
 }
 void CharacterCreationView::load_additional_heads()
 {
@@ -201,6 +215,7 @@ void CharacterCreationView::refresh()
     const bool choosing=step<=CreationStep::alignment,stats=step==CreationStep::attributes,portrait=step==CreationStep::portrait,icon=step==CreationStep::combat_icon;
     for(const auto* n:{"Choices"})show(n,choosing);
     show("Description",choosing||step==CreationStep::hit_points||step==CreationStep::sheet);
+    show("Modifiers",step==CreationStep::sheet);
     for(const auto* n:{"BackgroundLabel","Background","BonusLabel","Bonus","Columns","DiceHeader","BaseHeader","BonusHeader","TotalHeader","Roll","SwapHint"})show(n,stats);
     show("Name",step==CreationStep::name);
     for(const auto* n:{"HeadPrevious","HeadNext","PortraitHead","BodyPrevious","BodyNext","BodyLabel"})show(n,portrait);
@@ -233,27 +248,28 @@ void CharacterCreationView::refresh()
         instructions=step==CreationStep::race?"Choose your race (called species in SRD 5.2.1).":"Select an option, then continue.";
     }
     if(stats) {
-        instructions="Assign your rolls by selecting two attribute buttons to swap. Background bonuses stay with their attributes.";
+        instructions="Drag a roll from the dice bank onto an attribute. Its previous roll swaps places; background bonuses stay put.";
         auto* background=get_node<OptionButton>("Background");background->clear();
         const auto choices=creator_->rules().choices(CreationField::background);
         for(unsigned i=0;i<choices.size();++i){background->add_item(gs(choices[i].label));if(choices[i].id==d.background)background->select(i);}
         auto* bonus=get_node<OptionButton>("Bonus");bonus->clear();
         for(const auto& option:creator_->rules().adjustments(d.background))bonus->add_item(gs(option.label));bonus->select(d.adjustment);
         get_node<Button>("Roll")->set_text(d.rolled?"Reroll all six":"Roll all six");
-        get_node<Label>("SwapHint")->set_text(selected_score_<0?"Select two attributes to swap.":gs(std::string("Swap ")+abilities[selected_score_]+" with another attribute."));
+        get_node<Label>("SwapHint")->set_text(selected_score_<0?"Drag dice to an attribute, or select two attributes to swap.":gs(std::string("Swap ")+abilities[selected_score_]+" with another attribute."));
     }
     std::optional<CharacterSheet> s;
     if(completed_)s=completed_->sheet();
     else if(d.rolled)s=creator_->sheet();
     if(stats)for(unsigned i=0;i<6;++i) {
-        auto* b=get_node<Button>(gs("Ability"+std::to_string(i)));b->set_text(gs(std::string(selected_score_==i?"> ":"")+abilities[i]));b->set_disabled(!d.rolled);
+        auto* b=get_node<Button>(gs("Ability"+std::to_string(i)));b->set_text(gs(std::string(selected_score_==i?"> ":"")+full_abilities[i]));b->set_disabled(!d.rolled);
         std::string dice="--   --   --   --";
         if(s) {
-            dice.clear();const auto& r=d.rolls[d.assignment[i]];
+            dice.clear();const auto& r=d.rolls[i];
             for(unsigned j=0;j<4;++j) {
                 if(j==r.discarded)dice+="[color=#bd8585][s]";
-                dice+=std::to_string(r.dice[j]);if(j==r.discarded)dice+="[/s][/color]";dice+="   ";
+                dice+=std::to_string(r.dice[j]);if(j==r.discarded)dice+="[/s][/color]";dice+="  ";
             }
+            dice+="= "+std::to_string(r.total());
         }
         get_node<RichTextLabel>(gs("Dice"+std::to_string(i)))->set_text(gs(dice));
         get_node<Label>(gs("Score"+std::to_string(i)))->set_text(s?gs(std::to_string(s->base[i])):String("--"));
@@ -300,20 +316,15 @@ void CharacterCreationView::refresh()
     }
     if(step==CreationStep::sheet) {
         instructions="Your character sheet. Use Back to adjust the appearance, or Start over to create another character.";
-        std::string text="[font_size=24]Level 1 "+s->race+" "+s->character_class+"[/font_size]\n"+s->gender+" / "+s->alignment+"\nBackground: "+s->background+"\n\n";
-        text+="[font_size=26]"+std::to_string(s->hit_points)+" HP[/font_size]     Hit Dice: 1d"+std::to_string(s->hit_die)+"\n\n";
-        text+="[table=4][cell]Attribute     [/cell][cell]Score     [/cell][cell]Modifier     [/cell][cell]Base + bonus[/cell]";
-        for(unsigned i=0;i<6;++i)text+="[cell]"+std::string(full_abilities[i])+"[/cell][cell]"+std::to_string(s->scores[i])+"[/cell][cell]"+signed_number(s->modifiers[i])+"[/cell][cell]"+std::to_string(s->base[i])+" "+signed_number(s->bonuses[i])+"[/cell]";
-        text+="[/table]\n\n"+s->hp_explanation;
-        text+="\n\n[b]Inventory[/b]";
-        if(completed_->inventory().empty())text+="\nEmpty";
-        else for(const auto& item:completed_->inventory().items())text+="\n"+item.name+" x"+std::to_string(item.quantity);
-        get_node<RichTextLabel>("Description")->set_text(gs(text));
+        get_node<RichTextLabel>("Description")->set_text(sheet_text(*completed_));
     }
     get_node<Label>("Instructions")->set_text(gs(instructions));
     get_node<Label>("PreviewTitle")->set_text(icon?"COMBAT PREVIEW":"CHARACTER PREVIEW");
     get_node<Label>("PreviewName")->set_text(d.name.empty()?"Unnamed character":gs(d.name));
-    get_node<Label>("PreviewSummary")->set_text(s?gs(s->race+" / "+s->character_class+"\n"+s->alignment+" / "+std::to_string(s->hit_points)+" HP"):String("Choose your character's details."));
+    std::string identity;
+    for(const auto field:{CreationField::race,CreationField::gender,CreationField::character_class})
+        for(const auto& choice:creator_->rules().choices(field))if(choice.id==selection(d,field))identity+=(identity.empty()?"":" / ")+choice.label;
+    get_node<Label>("PreviewSummary")->set_text(gs(identity+(s?"\n"+s->alignment+" / "+std::to_string(s->hit_points)+" HP":"")));
     refresh_art();layout();queue_redraw();refreshing_=false;
 }
 void CharacterCreationView::_draw()
@@ -321,7 +332,7 @@ void CharacterCreationView::_draw()
     draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));
     for(const auto& rect:{page_rect_,preview_rect_}){draw_rect(rect,Color("1c272e"));draw_rect(rect,Color("405058"),false);}
     for(const auto& rect:{ready_rect_,action_rect_})draw_rect(rect,Color("10171c"));
-    if(!creator_||creator_->step()!=CreationStep::combat_icon) {
+    {
         draw_rect(portrait_rect_,Color("10171c"));
         if(images_[0].is_valid())draw_texture_rect(images_[0],portrait_rect_,false);
     }
@@ -402,6 +413,30 @@ void CharacterCreationView::capture_portrait_armor()
 }
 void CharacterCreationView::check_run()
 {
+    if(check_stage_==6&&drag_check_stage_<4){
+        const auto source=get_node<Control>("Dice0")->get_global_rect().get_center();
+        const auto target=get_node<Control>("Ability3")->get_global_rect().get_center();
+        if(drag_check_stage_==0||drag_check_stage_==2){Ref<InputEventMouseButton> event;event.instantiate();
+            const auto p=drag_check_stage_==0?source:target;event->set_position(p);event->set_global_position(p);
+            event->set_button_index(MouseButton::MOUSE_BUTTON_LEFT);event->set_pressed(drag_check_stage_==0);get_viewport()->push_input(event,true);
+        }else if(drag_check_stage_==1){Ref<InputEventMouseMotion> event;event.instantiate();
+            event->set_position(target);event->set_global_position(target);event->set_relative(target-source);event->set_button_mask(MouseButtonMask::MOUSE_BUTTON_MASK_LEFT);get_viewport()->push_input(event,true);
+        }else{
+            if(creator_->draft().assignment[3]!=0||creator_->draft().assignment[0]!=3)throw std::runtime_error("Mouse drag did not swap the selected roll into Intelligence");
+            if(can_drop_roll({},String("invalid"),0))throw std::runtime_error("Invalid drag data accepted");
+        }
+        ++drag_check_stage_;return;
+    }
+    if(check_stage_==14&&modal_check_stage_<3){
+        if(modal_check_stage_==0){get_node<Button>("Modifiers")->emit_signal("pressed");
+            if(!get_node<Window>("ModifiersModal")->is_visible()||!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Dwarven Toughness"))throw std::runtime_error("Modifier modal failed");
+        }else if(modal_check_stage_==1){
+            if(capture_){const auto image=get_node<Window>("ModifiersModal")->get_texture()->get_image();
+                if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-modifiers.png"));}
+            get_node<Button>("ModifiersModal/Close")->emit_signal("pressed");
+        }else if(get_node<Window>("ModifiersModal")->is_visible())throw std::runtime_error("Modifier modal did not close");
+        ++modal_check_stage_;return;
+    }
     const auto click=[&](Vector2 position) {
         for(bool pressed:{true,false}){Ref<InputEventMouseButton> event;event.instantiate();event->set_position(position);event->set_global_position(position);
             event->set_button_index(MouseButton::MOUSE_BUTTON_LEFT);event->set_pressed(pressed);get_viewport()->push_input(event,true);}
@@ -523,6 +558,6 @@ void CharacterCreationView::check_run()
     case 16:if(completed_||creator_->draft().rolled||!creator_->draft().name.empty()||creator_->step()!=CreationStep::race)throw std::runtime_error("Start over did not clear the character");
         if(creator_->appearance().portrait_head!=265)throw std::runtime_error("Restart did not restore the default race's recommended head");
         capture_portrait_armor();
-        UtilityFunctions::print("Godot C++ character check passed: choices, dice, swaps, background, HP, name, ten new portrait heads fitted to all original bodies, race/gender defaults, twelve live texture recolors, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
+        UtilityFunctions::print("Godot C++ character check passed: choices, mouse drag assignment, swaps, background, HP, name, portrait heads/bodies, race/gender defaults, live texture recolors, saving throws, modifier modal, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
     }
 }

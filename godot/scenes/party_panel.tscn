@@ -22,6 +22,7 @@ theme_override_font_sizes/font_size = 28
 [node name="Roster" type="ItemList" parent="."]
 
 [node name="Sheet" type="RichTextLabel" parent="."]
+theme_override_constants/table_h_separation = 16
 theme_override_font_sizes/normal_font_size = 18
 
 [node name="Inventory" type="ItemList" parent="."]
@@ -60,3 +61,6 @@ text = "Party combat"
 
 [node name="Close" type="Button" parent="."]
 text = "Back to creator"
+
+[node name="Modifiers" type="Button" parent="."]
+text = "Modifiers"

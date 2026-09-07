@@ -16,6 +16,7 @@ struct CharacterProfile {
     int hit_points{}, armor_class{};
     std::string description;
     int movement_feet{}, melee_attack_bonus{};
+    std::string item_modifiers, spell_modifiers;
 };
 // Module-owned continuation, separate from encounter turn budgets.
 struct VitalState {

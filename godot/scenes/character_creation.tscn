@@ -34,6 +34,7 @@ theme_override_font_sizes/font_size = 20
 
 [node name="Description" type="RichTextLabel" parent="."]
 bbcode_enabled = true
+theme_override_constants/table_h_separation = 16
 theme_override_font_sizes/normal_font_size = 18
 
 [node name="BackgroundLabel" type="Label" parent="."]
@@ -149,7 +150,7 @@ theme_override_font_sizes/font_size = 14
 [node name="Dice0" type="RichTextLabel" parent="."]
 bbcode_enabled = true
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Score0" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
@@ -160,7 +161,7 @@ theme_override_font_sizes/font_size = 19
 [node name="Dice1" type="RichTextLabel" parent="."]
 bbcode_enabled = true
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Score1" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
@@ -171,7 +172,7 @@ theme_override_font_sizes/font_size = 19
 [node name="Dice2" type="RichTextLabel" parent="."]
 bbcode_enabled = true
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Score2" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
@@ -182,7 +183,7 @@ theme_override_font_sizes/font_size = 19
 [node name="Dice3" type="RichTextLabel" parent="."]
 bbcode_enabled = true
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Score3" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
@@ -193,7 +194,7 @@ theme_override_font_sizes/font_size = 19
 [node name="Dice4" type="RichTextLabel" parent="."]
 bbcode_enabled = true
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Score4" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
@@ -204,7 +205,7 @@ theme_override_font_sizes/font_size = 19
 [node name="Dice5" type="RichTextLabel" parent="."]
 bbcode_enabled = true
 scroll_active = false
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Score5" type="Label" parent="."]
 theme_override_font_sizes/font_size = 19
@@ -311,7 +312,7 @@ theme_override_font_sizes/font_size = 14
 [node name="Palette15" type="Button" parent="."]
 
 [node name="DiceHeader" type="Label" parent="."]
-text = "Roll four, discard one"
+text = "Dice bank / drag"
 horizontal_alignment = 0
 
 [node name="BaseHeader" type="Label" parent="."]
@@ -380,3 +381,28 @@ text = "Add to party"
 [node name="ReturnParty" type="Button" parent="."]
 visible = false
 text = "Return to party"
+
+[node name="Modifiers" type="Button" parent="."]
+visible = false
+text = "Modifiers"
+
+[node name="ModifiersModal" type="Window" parent="."]
+title = "Character modifiers"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(780, 680)
+
+[node name="Background" type="ColorRect" parent="ModifiersModal"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Title" type="Label" parent="ModifiersModal"]
+theme_override_font_sizes/font_size = 24
+
+[node name="Text" type="RichTextLabel" parent="ModifiersModal"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="ModifiersModal"]
+text = "Close"

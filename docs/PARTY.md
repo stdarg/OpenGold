@@ -16,8 +16,10 @@ Run from PowerShell:
 2. Select **Create character** to make additional PCs. Six PC positions and two
    separate NPC positions are available. Adding retains the finished character
    by value; subsequently editing the creator's draft does not edit that member.
-3. Select a roster member to see identity, portrait, abilities, live HP, gold,
-   combat AC, resources and inventory. Selecting an active member also selects
+3. Select a roster member by name to see the same character sheet as the creator,
+   including gender between race and class, portrait, scores, saving throws,
+   live HP, gold, combat AC, resources and inventory. **Modifiers** opens the
+   detailed modifier modal for that member. Selecting an active member also selects
    that character for exploration/shop interactions.
 4. **Remove member** places a member in reserve. **Rejoin party** restores the
    same member without resetting their possessions or live state.

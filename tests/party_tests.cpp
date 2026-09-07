@@ -39,6 +39,7 @@ void roster_and_equipment()
     check(party.has_item(59)&&!party.has_item(55),"Party item query uses original types");
     party.purchase(pc,item(55));party.equip(pc,party.member(pc).character.inventory().items()[2].id);
     check(party.profile(pc).armor_class==18,"Armor and shield combine in rules module");
+    check(party.profile(pc).item_modifiers.find("Shield: +2 AC")!=std::string::npos&&party.profile(pc).item_modifiers.find("Chain mail")!=std::string::npos,"Modifier report includes every equipped effect");
     rejects([&]{party.purchase(pc,item(50,500));});check(party.member(pc).wealth[3]==70,"Unaffordable buy is atomic");
     party.purchase(pc,item(1));rejects([&]{party.equip(pc,party.member(pc).character.inventory().items().back().id);});
     check(party.member(pc).equipped.size()==3,"Unsupported item does not change equipment");

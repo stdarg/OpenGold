@@ -38,6 +38,10 @@ void creation_tests()
     auto s=module->evaluate(d,true);
     check(s.scores[0]==14&&s.scores[1]==10&&s.scores[2]==14&&s.hit_points==12,"Fighter has maximum d10 plus Constitution");
     check(s.modifiers[3]==-4,"Odd negative ability modifiers round down");
+    check(s.saving_throws==std::array<int,6>{4,0,4,-4,2,4},"Fighter saves include proficiency only for Strength and Constitution");
+    d.character_class="wizard";const auto wizard=module->evaluate(d,true);
+    check(wizard.saving_throws==std::array<int,6>{2,0,2,-2,4,4},"Wizard saves retain negative modifiers and add Intelligence/Wisdom proficiency");
+    d.character_class="fighter";
     const std::array<int,12> hp{14,10,10,10,12,10,12,12,10,8,10,8};
     const auto classes=module->choices(CreationField::character_class);
     for(unsigned i=0;i<classes.size();++i){d.character_class=classes[i].id;check(module->evaluate(d,true).hit_points==hp[i],"Starting HP is correct for each class");}

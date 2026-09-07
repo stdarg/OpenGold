@@ -120,6 +120,15 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     }
     const auto c=std::find_if(classes.begin(),classes.end(),[&](const auto& c){return c.id==d.character_class;});
     s.hit_die=c->die;const int racial_hp=d.race=="dwarf"?1:0;
+    // Core class traits, SRD 5.2.1. Single-class level-one creation.
+    const std::array<std::array<unsigned,2>,12> saves{{{0,2},{1,5},{4,5},{3,4},{0,2},{0,1},{4,5},{0,1},{1,3},{2,5},{4,5},{3,4}}};
+    const auto trained=saves.at(c-classes.begin());
+    for(unsigned i=0;i<6;++i){s.save_proficiencies[i]=i==trained[0]||i==trained[1];
+        s.saving_throws[i]=s.modifiers[i]+(s.save_proficiencies[i]?2:0);}
+    s.class_modifiers="Saving throws: +2 proficiency to "+ability_names[trained[0]]+" and "+ability_names[trained[1]]+".\nStarting HP: maximum d"+std::to_string(s.hit_die)+" + Constitution modifier.";
+    s.racial_modifiers=d.race=="dwarf"?"Dwarven Toughness: +1 maximum HP at level 1.":d.race=="goliath"?"Speed: 35 feet (5 feet above the default).":"No numeric racial modifiers are currently applied.";
+    s.racial_modifiers+="\nOther racial traits and conditional effects are not implemented.";
+    s.background_modifiers=options[d.adjustment].label+". Other background features are not implemented.";
     s.hit_points=s.hit_die+s.modifiers[2]+racial_hp;
     s.hp_explanation=std::to_string(s.hit_die)+" (maximum d"+std::to_string(s.hit_die)+") "+
         (s.modifiers[2]<0?"- ":"+ ")+std::to_string(std::abs(s.modifiers[2]))+" (Constitution)"+

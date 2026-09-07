@@ -452,7 +452,18 @@ public:
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
         const auto data=out.str();const auto d=character_definition(data);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
-        return {data,d.hp,d.ac,"Level-one combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
+        CharacterProfile result{data,d.hp,d.ac,"Level-one combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
+        for(const auto& key:gear){
+            if(key=="shield")result.item_modifiers+="Shield: +2 AC.\n";
+            else if(key=="leather")result.item_modifiers+="Leather armor: AC becomes 11 + Dexterity modifier.\n";
+            else if(key=="chain_mail")result.item_modifiers+="Chain mail: AC becomes 16; speed -10 feet below Strength 13.\n";
+            else result.item_modifiers+=key+": melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier +2 proficiency; damage adds that ability modifier.\n";
+        }
+        if(gear.empty())result.item_modifiers="No equipment modifiers. Unarmed attack uses Strength +2 proficiency; damage is 1 + Strength modifier (minimum 0).";
+        result.spell_modifiers="No active spell modifiers. Persistent spell effects are not implemented.";
+        if(sheet.character_class=="Wizard")result.spell_modifiers="Fire Bolt attack: Intelligence modifier +2 proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
+        if(sheet.character_class=="Cleric")result.spell_modifiers="Cure Wounds healing: 2d8 + Wisdom modifier ("+std::to_string(d.casting-2)+").\n"+result.spell_modifiers;
+        return result;
     }
 private: std::shared_ptr<const Content> content_;
 };

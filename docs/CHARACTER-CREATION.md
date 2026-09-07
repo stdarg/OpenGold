@@ -22,7 +22,9 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 3. Select one of the twelve SRD classes.
 4. Select alignment.
 5. Roll attributes. All four dice appear, with the discarded lowest die marked.
-   Click two attribute buttons to swap their rolled results. **Reroll all six**
+   Drag a result from the separate dice bank onto an attribute to assign it,
+   swapping its previous assignment. Clicking two attribute buttons also swaps
+   their results for keyboard access. **Reroll all six**
    replaces the complete set and resets assignments; attempts are unlimited.
    Choose one of the four SRD backgrounds here, then allocate its attribute
    bonuses (+2/+1 to different allowed abilities, or +1 to all three).
@@ -39,11 +41,16 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 9. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
    swatch. Enlarged ready and action previews update immediately, recoloring
-   only that part. Controls show **Not present** when the selected parts omit
+   only that part, with the composed portrait head and body visible above both
+   poses. Controls show **Not present** when the selected parts omit
    that region in both poses. Its saved colors return when the part is present.
-10. Show the character sheet: identity, level, background, six scores and
-    modifiers, base scores/bonuses, Hit Dice, the HP calculation, and inventory
-    (initially empty).
+10. Show the character sheet: race, gender, class, level, background, six scores,
+    saving throws, Hit Dice, HP and inventory (initially empty). Saving throws
+    include the class's level-one proficiency bonus where applicable.
+    **Modifiers** opens a modal with ability, racial, class, background, equipped
+    item and spell details. Unimplemented effects are identified explicitly.
+    The party screen uses this same sheet for its selected member, including
+    live HP, equipment and resources; roster entries show character names.
 
 **Back** preserves selections and allows earlier edits. Derived scores and HP
 update from the current choices. **Start over** clears the single character.
@@ -87,6 +94,12 @@ The rolling and HP rules come from
 backgrounds from p. 83, and Dwarven Toughness from p. 84. Unlimited full-set
 rerolls are the user-approved customization. Attribution is in
 [NOTICE.md](../data/rules/srd-5.2.1/NOTICE.md).
+
+Saving-throw proficiencies follow the SRD's Core Class Traits tables; the native
+rules layer adds +2 to the two proficient saves at level one. The modifier modal
+reports the effects currently implemented by that rules layer, including active
+equipment conversions. It does not imply full species traits or ongoing spell
+effect support.
 
 ## Original character art
 

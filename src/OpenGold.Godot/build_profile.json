@@ -2,7 +2,7 @@
     "enabled_classes": [
         "Control", "Button", "Label", "RichTextLabel", "PanelContainer", "ItemList", "LineEdit", "OptionButton",
         "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
-        "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton",
+        "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton", "InputEventMouseMotion",
         "ProjectSettings", "ResourceLoader", "OS", "Engine", "Window", "SceneTree",
         "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture", "HSlider", "PackedScene", "TextureRect", "ColorRect"
     ]

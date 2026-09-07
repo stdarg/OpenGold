@@ -30,6 +30,9 @@ struct CharacterSheet {
     std::array<int,6> base{}, bonuses{}, scores{}, modifiers{};
     int level{1}, hit_die{}, hit_points{};
     std::string hp_explanation;
+    std::array<int,6> saving_throws{};
+    std::array<bool,6> save_proficiencies{};
+    std::string racial_modifiers, class_modifiers, background_modifiers;
 };
 // Creation is a separate optional capability: campaign and Godot code do not
 // embed edition-specific tables, rolling policies, or HP arithmetic.

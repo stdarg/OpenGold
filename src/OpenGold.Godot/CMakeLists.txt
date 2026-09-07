@@ -31,7 +31,7 @@ foreach(species gnome orc goliath tiefling dragonborn)
 endforeach()
 add_custom_target(opengold_portrait_assets DEPENDS ${portrait_outputs})
 add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp character_creation_view.cpp
-    party_preview.cpp sound_board_view.cpp godot_sound_output.cpp register_types.cpp)
+    party_preview.cpp character_sheet_view.cpp sound_board_view.cpp godot_sound_output.cpp register_types.cpp)
 add_dependencies(opengold_godot opengold_portrait_assets)
 target_link_libraries(opengold_godot PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
 target_compile_features(opengold_godot PRIVATE cxx_std_20)

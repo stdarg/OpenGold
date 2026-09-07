@@ -51,6 +51,8 @@ void CharacterCreationView::setup_party()
     const std::array<int,9> actions{2,3,4,5,6,10,7,8,11};
     for(unsigned i=0;i<buttons.size();++i)get_node<Button>(gs(std::string("PartyPanel/")+buttons[i]))->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(actions[i]));
     get_node<ItemList>("PartyPanel/Roster")->connect("item_selected",callable_mp(this,&CharacterCreationView::party_selected));
+    get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
+    get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
 }
 void CharacterCreationView::party_layout()
@@ -68,6 +70,7 @@ void CharacterCreationView::party_layout()
     const double bw=(w-64)/5;
     for(unsigned i=0;i<buttons.size();++i)place((std::string("PartyPanel/")+buttons[i]).c_str(),Rect2(24+(i%5)*(bw+4),h-125+(i/5)*44,bw,36));
     place("PartyPanel/Status",Rect2(24,h-39,w-48,32));
+    place("PartyPanel/Modifiers",Rect2(24+4*(bw+4),h-81,bw,36));
     for(const auto* name:{"CampaignTown","CampaignCombat"})if(auto* child=Object::cast_to<Control>(get_node_or_null(name)))child->set_size(get_size());
 }
 void CharacterCreationView::party_selected(std::int64_t index)
@@ -83,29 +86,21 @@ void CharacterCreationView::refresh_party()
     const auto& state=campaign_->state();
     for(const auto& m:state.roster){
         auto slot=std::find(state.slots.begin(),state.slots.end(),m.id);
-        const auto position=slot==state.slots.end()?"Reserve":std::string(m.npc_source.empty()?"PC ":"NPC ")+std::to_string(slot-state.slots.begin()+1-(m.npc_source.empty()?0:6));
-        list->add_item(gs(position+" / "+m.character.sheet().name));
+        list->add_item(gs(m.character.sheet().name+(slot==state.slots.end()?" (Reserve)":"")));
     }
     auto* items=get_node<ItemList>("PartyPanel/Inventory");items->clear();
     std::string sheet="Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster.";
     if(!state.roster.empty()){
         roster_index_=std::min(roster_index_,state.roster.size()-1);list->select(roster_index_);
-        const auto& m=state.roster[roster_index_];const auto& s=m.character.sheet();
-        sheet=s.name+"\nLevel "+std::to_string(s.level)+" "+s.race+" "+s.character_class+"\n"+s.gender+" / "+s.alignment+"\nBackground: "+s.background;
-        sheet+="\n\nHP "+std::to_string(m.vitals.hit_points)+" / "+std::to_string(s.hit_points)+(m.vitals.dead?" (dead)":"")+"   Gold "+std::to_string(m.wealth[3])+"\n";
-        const std::array<const char*,6> names{"STR","DEX","CON","INT","WIS","CHA"};
-        for(unsigned i=0;i<6;++i)sheet+=std::string(names[i])+" "+std::to_string(s.scores[i])+" ("+(s.modifiers[i]>=0?"+":"")+std::to_string(s.modifiers[i])+")  "+(i==2?"\n":"");
-        try{const auto p=campaign_->profile(m.id);sheet+="\n\nAC "+std::to_string(p.armor_class)+"\n"+p.description;}
-        catch(const std::exception& e){sheet+="\n\nCombat unavailable: "+std::string(e.what());}
-        if(!m.vitals.description.empty())sheet+="\n\n"+m.vitals.description;
-        if(!m.npc_source.empty())sheet+="\nCompanion / Morale "+std::to_string(m.morale);
+        const auto& m=state.roster[roster_index_];
+        sheet=sheet_text(m.character,&m).utf8().get_data();
         for(const auto& item:m.character.inventory().items())items->add_item(gs(std::string(std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?"Equipped / ":"")+item.name+" x"+std::to_string(item.quantity)));
         const auto image=art_->portrait(m.character.appearance());PackedByteArray pixels;pixels.resize(image.rgba.size());std::copy(image.rgba.begin(),image.rgba.end(),pixels.ptrw());
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(image.width,image.height,false,godot::Image::FORMAT_RGBA8,pixels)));
     }
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_text(gs(sheet));
     get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?"Session preview / New PCs receive 250 gp / Progress is not saved yet.":error_);
-    for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
+    for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat","Modifiers"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
 }
 void CharacterCreationView::party_action(int action)
 {
@@ -164,7 +159,12 @@ void CharacterCreationView::party_check()
         press("ReturnParty");party_selected(0);
         if(campaign_->member(campaign_->selected()).character.inventory().items().size()!=1)throw std::runtime_error("Town purchase missing from party inventory");
         get_node<ItemList>("PartyPanel/Inventory")->select(0);press("PartyPanel/Equip");++party_check_stage_;break;
-    case 3:capture("party-equipped.png");press("PartyPanel/Combat");++party_check_stage_;break;
+    case 3:
+        if(!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("Saving throw"))throw std::runtime_error("Party selection did not display the character sheet");
+        press("PartyPanel/Modifiers");
+        if(!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Shield: +2 AC"))throw std::runtime_error("Party modifiers omitted equipped shield");
+        press("ModifiersModal/Close");
+        capture("party-equipped.png");press("PartyPanel/Combat");++party_check_stage_;break;
     case 4:{auto* fight=get_node<CombatView>("CampaignCombat");
         if(!fight->can_leave())return;press("ReturnParty");capture("party-after-combat.png");
         if(campaign_->in_combat()||campaign_->member(campaign_->state().slots[0]).vitals.resources.empty())throw std::runtime_error("Combat state was not returned");

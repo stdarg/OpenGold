@@ -26,6 +26,7 @@ private:
     godot::String error_;
     int selected_score_{-1},color_bank_{},color_part_{};
     unsigned check_stage_{},check_frames_{},check_head_{},check_default_{};
+    unsigned drag_check_stage_{},modal_check_stage_{};
     bool ready_{},refreshing_{},checking_{},capture_{},fatal_{},portrait_chosen_{};
     void layout();
     void refresh();
@@ -41,6 +42,12 @@ private:
     void bonus_selected(std::int64_t index);
     void roll();
     void score_selected(int index);
+    godot::Variant drag_roll(godot::Vector2 position,int index);
+    bool can_drop_roll(godot::Vector2 position,const godot::Variant& data,int index);
+    void drop_roll(godot::Vector2 position,const godot::Variant& data,int index);
+    godot::String sheet_text(const opengold::Character& character,const opengold::PartyMember* member=nullptr) const;
+    void show_modifiers();
+    void close_modifiers();
     void name_changed(godot::String value);
     void portrait_part(int part,int direction);
     void portrait_head_selected(std::int64_t index);
