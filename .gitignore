@@ -10,3 +10,6 @@ godot/bin/
 /user-data/
 /testdata/local/
 *.png
+
+# Newly generated OpenGold portrait artwork (not extracted game assets)
+!/data/art/portraits/*.png
