@@ -12,6 +12,10 @@ head on a black background, facing slightly right, without a body or costume.
 | Tiefling | [Portrait](tiefling-male.png) | [Portrait](tiefling-female.png) |
 | Dragonborn | [Portrait](dragonborn-male.png) | [Portrait](dragonborn-female.png) |
 
+The Goliath pair now uses slate-blue skin, russet-brown markings and amber
+eyes. The color revision preserves their faces and framing; its edit prompts
+are recorded alongside the original generation prompts.
+
 These are enlarged source artwork, not decoded DAX records or runtime-ready
 88 x 40 head panels. They use an EGA-inspired appearance; the generated PNGs
 are not guaranteed to use exactly sixteen colors or a uniform logical pixel
