@@ -17,11 +17,12 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 
 ## Creation flow
 
-1. Select race (the nine species included in SRD 5.2.1).
-2. Select gender. Gender does not alter stats or restrict other choices.
-3. Select one of the twelve SRD classes.
-4. Select alignment.
-5. The **Dice Rolls** area starts with six empty boxes to the right of the
+1. **Race & Gender**: select race (the nine species included in SRD 5.2.1)
+   from the two-column list and gender from the dropdown below it. Gender does
+   not alter stats or restrict other choices. Both selections persist when returning.
+2. Select one of the twelve SRD classes.
+3. Select alignment.
+4. The **Dice Rolls** area starts with six empty boxes to the right of the
    abilities. Roll attributes to fill those boxes with totals only. The native
    character retains the underlying dice. Ability boxes remain empty until you drag
    results into them. Assigned results leave their original boxes empty.
@@ -38,7 +39,7 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    `+2 — Soldier background`). Only the ability score is colored: yellow above
    its original roll, red below it, and normal when unchanged. Dice boxes have
    room for a two-digit total and padding, with a drag hint beside **Dice Rolls**.
-6. Enter a name, up to 40 characters. There is no separate HP step.
+5. Enter a name, up to 40 characters. There is no separate HP step.
    Choose a portrait head from the dropdown or browse with the previous/next
    buttons directly below the portrait, then choose a body with the second row
    of arrows. These controls are available on every creation step, including
@@ -50,13 +51,13 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    head keeps it selected through later edits; every head remains available.
    With no exact match (including Nonbinary), the initial original head remains
    the default until you choose one. **Start over** restores automatic defaults.
-7. Customize combat head and weapon/body parts, tall/short art, and all twelve
+6. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
    swatch. Enlarged ready and action previews update immediately, recoloring
    only that part, with the composed portrait head and body visible above both
    poses. Controls show **Not present** when the selected parts omit
    that region in both poses. Its saved colors return when the part is present.
-8. Show the character sheet: race, gender, class, level, background, six scores,
+7. Show the character sheet: race, gender, class, level, background, six scores,
     saving throws, Hit Dice, HP and inventory (initially empty). Saving throws
     include the class's level-one proficiency bonus where applicable.
     A note explains that SRD 5.2.1 uses the maximum class Hit Die plus applicable
@@ -65,6 +66,9 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
     **Modifiers** opens a modal with ability score adjustments, racial, class, background, equipped
     item and spell details, identifying the source of each applied modifier.
     Its ability section shows changes to the rolled scores, not derived bonuses.
+    Unadjusted abilities are omitted. Each adjusted ability starts with its rolled
+    score, followed by each source with its signed adjustment in parentheses,
+    then the final score on a separate line. The dialog scrolls for longer content.
     **Saving Throws**, beside Modifiers on both sheets, opens a separate dialog
     with an editable target DC (initially 15), the required d20 roll for each save,
     and ability-score and class-proficiency sources. Invalid DC input shows a

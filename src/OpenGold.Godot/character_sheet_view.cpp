@@ -75,9 +75,10 @@ void CharacterCreationView::show_modifiers()
     const auto& s=member?member->character.sheet():completed_->sheet();
     std::string text="[b]Ability score adjustments[/b]\n";
     for(unsigned i=0;i<6;++i){
-        text+=std::string(names[i])+": "+number(s.bonuses[i])+"\n";
-        text+=s.bonuses[i]==0?"No adjustment to the rolled score.":"Source: "+s.background+" background, selected ability increase.";
-        text+=" Rolled "+std::to_string(s.base[i])+"; final score "+std::to_string(s.scores[i])+".\n\n";
+        if(s.bonuses[i]==0)continue;
+        text+="[b]"+std::string(names[i])+"[/b]\nRolled score: "+std::to_string(s.base[i])+"\n";
+        text+=s.background+" background ("+number(s.bonuses[i])+")\n";
+        text+="Final score: "+std::to_string(s.scores[i])+"\n\n";
     }
     text+="\n[b]Race / "+s.race+"[/b]\n"+s.racial_modifiers;
     text+="\n\n[b]Class / "+s.character_class+"[/b]\n"+s.class_modifiers;

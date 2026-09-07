@@ -2,7 +2,7 @@
 #define OPENGOLD_CHARACTER_CREATOR_H
 #include "opengold/character.h"
 namespace opengold {
-enum class CreationStep { race, gender, character_class, alignment, attributes, name, combat_icon, sheet };
+enum class CreationStep { race, character_class, alignment, attributes, name, combat_icon, sheet };
 class CharacterCreator {
 public:
     CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,std::uint64_t seed);

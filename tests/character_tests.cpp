@@ -62,7 +62,10 @@ void creation_tests()
     d.name="Mira";d.character_class="invented";rejects([&]{(void)module->evaluate(d,true);},"Unknown class rejected");
     CharacterCreator creator(srd5::character_rules(),42);
     rejects([&]{(void)creator.create_character();},"Incomplete drafts cannot become characters");
-    for(int i=0;i<4;++i)creator.next();
+    creator.select(CreationField::gender,"male");creator.next();
+    check(creator.step()==CreationStep::character_class,"Race and gender advance directly to Class");
+    creator.back();check(creator.step()==CreationStep::race&&creator.draft().gender=="male","Back retains gender on combined first step");
+    for(int i=0;i<3;++i)creator.next();
     rejects([&]{creator.next();},"Cannot advance without rolling");check(creator.step()==CreationStep::attributes,"Invalid transition leaves step unchanged");
     creator.roll();const auto original=creator.draft().rolls;
     check(!creator.scores_assigned()&&std::all_of(creator.draft().assignment.begin(),creator.draft().assignment.end(),[](auto n){return n==6;}),"Rolls start unassigned");

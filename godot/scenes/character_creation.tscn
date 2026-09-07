@@ -37,6 +37,11 @@ bbcode_enabled = true
 theme_override_constants/table_h_separation = 16
 theme_override_font_sizes/normal_font_size = 18
 
+[node name="GenderLabel" type="Label" parent="."]
+text = "Gender"
+
+[node name="Gender" type="OptionButton" parent="."]
+
 [node name="BackgroundLabel" type="Label" parent="."]
 text = "Background"
 

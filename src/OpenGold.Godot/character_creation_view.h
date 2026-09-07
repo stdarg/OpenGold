@@ -38,6 +38,7 @@ private:
     void back();
     void restart();
     void choice_selected(std::int64_t index);
+    void gender_selected(std::int64_t index);
     void background_selected(std::int64_t index);
     void bonus_selected(std::int64_t index);
     void roll();

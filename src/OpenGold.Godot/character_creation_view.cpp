@@ -30,7 +30,8 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,8> steps{"Race","Gender","Class","Alignment","Attributes","Name","Combat appearance","Character sheet"};
+const std::array<const char*,7> steps{"Race & Gender","Class","Alignment","Attributes","Name","Combat appearance","Character sheet"};
+const std::array<CreationField,3> choice_fields{CreationField::race,CreationField::character_class,CreationField::alignment};
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
 const std::array<const char*,6> full_abilities{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
 const std::array<const char*,16> colors{"Black","Blue","Green","Cyan","Red","Magenta","Brown","Light gray","Dark gray","Light blue","Light green","Light cyan","Light red","Pink","Yellow","White"};
@@ -62,6 +63,7 @@ void CharacterCreationView::_ready()
     get_node<Button>("Restart")->connect("pressed",callable_mp(this,&CharacterCreationView::restart));
     get_node<Button>("Roll")->connect("pressed",callable_mp(this,&CharacterCreationView::roll));
     get_node<ItemList>("Choices")->connect("item_selected",callable_mp(this,&CharacterCreationView::choice_selected));
+    get_node<OptionButton>("Gender")->connect("item_selected",callable_mp(this,&CharacterCreationView::gender_selected));
     get_node<OptionButton>("Background")->connect("item_selected",callable_mp(this,&CharacterCreationView::background_selected));
     get_node<OptionButton>("Bonus")->connect("item_selected",callable_mp(this,&CharacterCreationView::bonus_selected));
     get_node<OptionButton>("PortraitHead")->connect("item_selected",callable_mp(this,&CharacterCreationView::portrait_head_selected));
@@ -131,6 +133,8 @@ void CharacterCreationView::layout()
     const double x=page_rect_.position.x,y=page_rect_.position.y,pw=page_rect_.size.x,ph=page_rect_.size.y;
     place("PageTitle",Rect2(x+20,y+18,pw-40,36));place("Instructions",Rect2(x+20,y+60,pw-40,48));
     place("Choices",Rect2(x+20,y+116,pw-40,ph-272));place("Description",Rect2(x+20,y+ph-140,pw-40,120));
+    if(creator_&&creator_->step()==CreationStep::race)place("Choices",Rect2(x+20,y+116,pw-40,ph-320));
+    place("GenderLabel",Rect2(x+20,y+ph-196,106,36));place("Gender",Rect2(x+126,y+ph-196,pw-146,36));
     get_node<ItemList>("Choices")->set_fixed_column_width((pw-160)/2);
     get_node<ItemList>("Choices")->add_theme_constant_override("h_separation",32);
     place("BackgroundLabel",Rect2(x+20,y+118,106,32));place("Background",Rect2(x+126,y+114,pw-146,36));
@@ -240,6 +244,7 @@ void CharacterCreationView::refresh()
     const auto show=[&](const char* node,bool visible){get_node<Control>(node)->set_visible(visible);};
     const bool choosing=step<=CreationStep::alignment,stats=step==CreationStep::attributes,icon=step==CreationStep::combat_icon;
     for(const auto* n:{"Choices"})show(n,choosing);
+    show("GenderLabel",step==CreationStep::race);show("Gender",step==CreationStep::race);
     show("Description",choosing||step==CreationStep::sheet);
     show("Modifiers",step==CreationStep::sheet);
     show("SavingThrows",step==CreationStep::sheet);
@@ -259,7 +264,7 @@ void CharacterCreationView::refresh()
     for(int i=0;i<16;++i)get_node<Control>(gs("Palette"+std::to_string(i)))->set_visible(icon);
     get_node<Label>("PageTitle")->set_text(gs(steps[static_cast<unsigned>(step)]));
     std::string progress;
-    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==6?"Combat icon":steps[i])+"\n\n";
+    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==static_cast<unsigned>(CreationStep::combat_icon)?"Combat icon":steps[i])+"\n\n";
     get_node<Label>("Steps")->set_text(gs(progress));
     get_node<Button>("Back")->set_disabled(step==CreationStep::race);
     get_node<Button>("Back")->set_text(step==CreationStep::sheet?"Edit appearance":"Back");
@@ -270,13 +275,18 @@ void CharacterCreationView::refresh()
     get_node<Label>("Status")->set_text(error_);
     std::string instructions;
     if(choosing) {
-        const auto field=static_cast<CreationField>(step);const auto choices=creator_->rules().choices(field);
+        const auto field=choice_fields.at(static_cast<unsigned>(step));const auto choices=creator_->rules().choices(field);
         auto* list=get_node<ItemList>("Choices");list->clear();list->add_theme_constant_override("v_separation",18);
         for(unsigned i=0;i<choices.size();++i) {
             list->add_item(gs(choices[i].label));
             if(choices[i].id==selection(d,field)){list->select(i);get_node<RichTextLabel>("Description")->set_text(gs(choices[i].description));}
         }
-        instructions=step==CreationStep::race?"Choose your race (called species in SRD 5.2.1).":"Select an option, then continue.";
+        instructions=step==CreationStep::race?"Choose your race (species in SRD 5.2.1) and gender.":"Select an option, then continue.";
+    }
+    if(step==CreationStep::race){
+        auto* gender=get_node<OptionButton>("Gender");gender->clear();
+        const auto choices=creator_->rules().choices(CreationField::gender);
+        for(unsigned i=0;i<choices.size();++i){gender->add_item(gs(choices[i].label));if(choices[i].id==d.gender)gender->select(i);}
     }
     if(stats) {
         instructions="Roll the dice, then drag each result into an empty ability box. Drag between filled ability boxes to swap.";
@@ -385,7 +395,9 @@ void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->ste
 void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
 void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_head();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
 void CharacterCreationView::choice_selected(std::int64_t index)
-{if(refreshing_)return;perform([&]{const auto f=static_cast<CreationField>(creator_->step());creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race||f==CreationField::gender)recommend_head();});}
+{if(refreshing_)return;perform([&]{const auto f=choice_fields.at(static_cast<unsigned>(creator_->step()));creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race)recommend_head();});}
+void CharacterCreationView::gender_selected(std::int64_t index)
+{if(refreshing_)return;perform([&]{creator_->select(CreationField::gender,creator_->rules().choices(CreationField::gender).at(index).id);recommend_head();});}
 void CharacterCreationView::background_selected(std::int64_t index)
 {if(refreshing_)return;perform([&]{creator_->select(CreationField::background,creator_->rules().choices(CreationField::background).at(index).id);});}
 void CharacterCreationView::bonus_selected(std::int64_t index)
@@ -483,6 +495,12 @@ void CharacterCreationView::check_run()
             if(!get_node<Window>("ModifiersModal")->is_visible()||!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Dwarven Toughness"))throw std::runtime_error("Modifier modal failed");
             const auto text=get_node<RichTextLabel>("ModifiersModal/Text")->get_text();
             if(text.contains("(Score - 10)")||!text.contains("Ability score adjustments"))throw std::runtime_error("Ability adjustments still include derived save bonuses");
+            for(unsigned i=0;i<6;++i){
+                const auto& s=completed_->sheet();
+                const auto heading="[b]"+std::string(full_abilities[i])+"[/b]\n";
+                if(s.bonuses[i]==0){if(text.contains(gs(heading)))throw std::runtime_error("Unadjusted ability shown in modifiers");}
+                else if(!text.contains(gs(heading+"Rolled score: "+std::to_string(s.base[i])+"\n"+s.background+" background ("+signed_number(s.bonuses[i])+")\nFinal score: "+std::to_string(s.scores[i]))))throw std::runtime_error("Adjustment lines do not match approved format");
+            }
         }else if(modal_check_stage_==1){
             if(capture_){const auto image=get_node<Window>("ModifiersModal")->get_texture()->get_image();
                 if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-modifiers.png"));}
@@ -512,6 +530,11 @@ void CharacterCreationView::check_run()
     const auto press=[&](const char* name){auto* button=get_node<Button>(name);if(!button->is_visible_in_tree()||button->is_disabled())throw std::runtime_error(std::string("Unavailable button: ")+name);click(button->get_global_rect().get_center());};
     const auto choose=[&](CreationField field,const char* id) {
         const auto choices=creator_->rules().choices(field);
+        if(field==CreationField::gender){
+            auto* gender=get_node<OptionButton>("Gender");
+            if(!gender->is_visible_in_tree())throw std::runtime_error("Gender must be on Race & Gender");
+            for(unsigned i=0;i<choices.size();++i)if(choices[i].id==id){gender->emit_signal("item_selected",i);return;}
+        }
         for(unsigned i=0;i<choices.size();++i)if(choices[i].id==id){auto* list=get_node<ItemList>("Choices");click(list->get_global_position()+list->get_item_rect(i).get_center());return;}
         throw std::runtime_error("Missing UI choice");
     };
@@ -523,12 +546,12 @@ void CharacterCreationView::check_run()
             const auto& head=por::additional_portrait_heads()[check_default_*2+1];
             choose(CreationField::race,std::string(head.race).c_str());
             if(creator_->appearance().portrait_head!=head.id)throw std::runtime_error("Race did not recommend its new head: "+std::string(head.race));
-        } else if(check_default_==5) {choose(CreationField::race,"goliath");press("Next");}
+        } else if(check_default_==5) {choose(CreationField::race,"goliath");}
         else if(check_default_==6) {
             choose(CreationField::gender,"male");if(creator_->appearance().portrait_head!=260)throw std::runtime_error("Male Goliath recommendation failed");
         } else {
             choose(CreationField::gender,"female");if(creator_->appearance().portrait_head!=261)throw std::runtime_error("Female Goliath recommendation failed");
-            press("Back");
+            if(get_node<Label>("PageTitle")->get_text()!="Race & Gender"||!get_node<Label>("Steps")->get_text().contains("7. Character sheet"))throw std::runtime_error("Combined race and gender steps not renumbered");
         }
         ++check_default_;return;
     }
@@ -569,7 +592,7 @@ void CharacterCreationView::check_run()
         ++check_head_;press("HeadPrevious");return;
     }
     switch(check_stage_++) {
-    case 0:choose(CreationField::race,"dwarf");press("Next");break;
+    case 0:choose(CreationField::race,"dwarf");break;
     case 1:choose(CreationField::gender,"female");press("Next");break;
     case 2:choose(CreationField::character_class,"fighter");press("Next");break;
     case 3:choose(CreationField::alignment,"neutral_good");press("Next");break;
