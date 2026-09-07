@@ -121,7 +121,7 @@ void additional_portrait_tests()
         const auto p=(y*176+x)*4;source.rgba[p+3]=255;
         if(y<80){source.rgba[p]=31+x/2;source.rgba[p+1]=61+y/2;source.rgba[p+2]=173;}
     }
-    const auto original=source.rgba;const auto panel=prepare_portrait_head(source);
+    const auto original=source.rgba;const auto panel=prepare_portrait_head(source,256);
     check(panel.width==88&&panel.height==40&&source.rgba==original,"Preparing a head leaves source artwork intact");
     for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x) {
         const auto p=(y*88+x)*4;
@@ -129,11 +129,11 @@ void additional_portrait_tests()
             "Nearest sampling preserves approved colors and removes the bottom gap");
     }
     Image translucent;translucent.width=translucent.height=1;translucent.rgba={240,160,80,128};
-    const auto opaque=prepare_portrait_head(translucent);
+    const auto opaque=prepare_portrait_head(translucent,256);
     check(opaque.rgba[0]==120&&opaque.rgba[1]==80&&opaque.rgba[2]==40&&opaque.rgba[3]==255,"Alpha composites onto the portrait's black background");
-    rejects([&]{(void)prepare_portrait_head(Image{});},"Empty portrait sources rejected");
-    translucent.rgba={0,0,0,255};rejects([&]{(void)prepare_portrait_head(translucent);},"Blank portrait sources rejected");
-    source.rgba.pop_back();rejects([&]{(void)prepare_portrait_head(source);},"Truncated portrait pixels rejected");
+    rejects([&]{(void)prepare_portrait_head(Image{},256);},"Empty portrait sources rejected");
+    translucent.rgba={0,0,0,255};rejects([&]{(void)prepare_portrait_head(translucent,256);},"Blank portrait sources rejected");
+    source.rgba.pop_back();rejects([&]{(void)prepare_portrait_head(source,256);},"Truncated portrait pixels rejected");
     CharacterArt art;art.heads.emplace(1,PortraitPart{"original",panel});
     Image body;body.width=88;body.height=48;body.rgba.assign(88*48*4,128);art.bodies.emplace(1,PortraitPart{"original",body});
     std::set<unsigned> ids;std::set<std::string_view> files;
@@ -144,16 +144,47 @@ void additional_portrait_tests()
         art.add_portrait_head(head.id,panel);CharacterAppearance a;a.portrait_head=head.id;
         const auto portrait=art.portrait(a);
         check(portrait.width==88&&portrait.height==88&&portrait.rgba.size()==88*88*4,"Additional heads compose a complete portrait");
-        check(std::equal(panel.rgba.begin(),panel.rgba.end(),portrait.rgba.begin())&&
-            std::equal(body.rgba.begin(),body.rgba.end(),portrait.rgba.begin()+88*40*4),"New head composition preserves both the head colors and original body");
+        check(std::equal(body.rgba.begin(),body.rgba.end(),portrait.rgba.begin()+88*40*4),"Neck fitting leaves the original body unchanged");
         check(art.heads.at(head.id).label==head.label,"Additional heads retain readable selection labels");
     }
     check(!matching_portrait_head("human","female")&&!matching_portrait_head("goliath","nonbinary"),"No unsupported portrait recommendation is invented");
+    rejects([&]{(void)prepare_portrait_head(translucent,266);},"Unknown head fitting profiles rejected");
     rejects([&]{art.add_portrait_head(1,panel);},"Additional artwork cannot replace an original archive ID");
     rejects([&]{art.add_portrait_head(256,panel);},"Duplicate new head IDs rejected");
     CharacterArt unloaded;rejects([&]{unloaded.add_portrait_head(256,body);},"Additional head must be 88 by 40");
     CharacterAppearance invalid;invalid.portrait_head=266;
     rejects([&]{validate_character_appearance(invalid);},"Unregistered extended head IDs rejected");
+    CharacterAppearance original_appearance;
+    const auto unchanged=art.portrait(original_appearance);
+    check(std::equal(panel.rgba.begin(),panel.rgba.end(),unchanged.rgba.begin()),"Original heads retain their exact placement and pixels");
+    // Independent join geometry: male/female openings, including an off-center
+    // narrow neck and unrelated collar pixels on the same scanline.
+    for(const auto& head:additions)for(const auto opening:{std::pair{36u,56u},std::pair{37u,55u},std::pair{36u,52u}}) {
+        Image neck;neck.width=88;neck.height=40;neck.rgba.assign(88*40*4,0);
+        for(unsigned p=3;p<neck.rgba.size();p+=4)neck.rgba[p]=255;
+        for(unsigned y=34;y<40;++y)for(unsigned x=head.neck_left;x<head.neck_right;++x) {
+            const auto p=(y*88+x)*4;neck.rgba[p]=80;neck.rgba[p+1]=120;neck.rgba[p+2]=200;
+        }
+        // A face feature above the fitted rows must retain its size and colors.
+        for(unsigned x=40;x<44;++x)neck.rgba[(20*88+x)*4]=211;
+        Image torso=body;torso.rgba.assign(88*48*4,0);
+        for(unsigned p=3;p<torso.rgba.size();p+=4)torso.rgba[p]=255;
+        for(unsigned x=opening.first;x<opening.second;++x){torso.rgba[x*4]=255;torso.rgba[x*4+1]=torso.rgba[x*4+2]=85;}
+        torso.rgba[32*4]=170; // red collar, not skin
+        CharacterArt joined;joined.bodies.emplace(1,PortraitPart{"synthetic",torso});joined.add_portrait_head(head.id,neck);
+        CharacterAppearance a;a.portrait_head=head.id;const auto image=joined.portrait(a);
+        unsigned face_pixels=0;
+        for(unsigned x=0;x<88;++x) {
+            check((image.rgba[(39*88+x)*4]==80)==(x>=opening.first&&x<opening.second),"Every new head meets the selected body's full neck opening with no overhang");
+            if(image.rgba[(20*88+x)*4]==211)++face_pixels;
+        }
+        check(face_pixels==4,"Neck fitting translates the face without stretching it");
+        check(std::equal(torso.rgba.begin(),torso.rgba.end(),image.rgba.begin()+88*40*4),"Fitting never recolors or moves original body pixels");
+    }
+    Image rounded;rounded.width=88;rounded.height=40;rounded.rgba.assign(88*40*4,255);
+    for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x)rounded.rgba[(y*88+x)*4]=y;
+    check(prepare_portrait_head(rounded,258).rgba[39*88*4]==36&&
+        prepare_portrait_head(rounded,264).rgba[39*88*4]==38,"Orc and Dragonborn crops exclude the rounded bottom remnants");
 }
 void art_tests()
 {

@@ -28,12 +28,16 @@ struct PortraitPart { std::string archive; Image image; std::string label; };
 struct AdditionalPortraitHead {
     unsigned id;
     std::string_view filename, label, race, gender;
+    // Neck edges [left,right) and retained rows on the source's fitted 88x40
+    // grid. Exclude dangling hair and rounded bottom remnants from the join.
+    unsigned neck_left, neck_right, retained_rows;
 };
 [[nodiscard]] std::span<const AdditionalPortraitHead> additional_portrait_heads();
 [[nodiscard]] std::optional<unsigned> matching_portrait_head(std::string_view race,std::string_view gender);
 // Fit approved source artwork to the original head panel without palette
-// quantization. Remove bottom black padding so the neck reaches the body seam.
-[[nodiscard]] Image prepare_portrait_head(const Image& source);
+// quantization. Trim padding and crop at the cataloged neck baseline. The final
+// neck placement is fitted to the selected original body during composition.
+[[nodiscard]] Image prepare_portrait_head(const Image& source,unsigned head_id);
 struct IndexedIcon {
     unsigned width{}, height{};
     std::vector<std::uint8_t> pixels;

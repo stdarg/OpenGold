@@ -1,22 +1,55 @@
 #include "opengold/character_art.h"
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <stdexcept>
 
 namespace opengold::por {
 namespace {
 constexpr std::array<AdditionalPortraitHead,10> additional_heads{{
-    {256,"gnome-male.png","Gnome / Male","gnome","male"},
-    {257,"gnome-female.png","Gnome / Female","gnome","female"},
-    {258,"orc-male.png","Orc / Male","orc","male"},
-    {259,"orc-female.png","Orc / Female","orc","female"},
-    {260,"goliath-male.png","Goliath / Male","goliath","male"},
-    {261,"goliath-female.png","Goliath / Female","goliath","female"},
-    {262,"tiefling-male.png","Tiefling / Male","tiefling","male"},
-    {263,"tiefling-female.png","Tiefling / Female","tiefling","female"},
-    {264,"dragonborn-male.png","Dragonborn / Male","dragonborn","male"},
-    {265,"dragonborn-female.png","Dragonborn / Female","dragonborn","female"}
+    {256,"gnome-male.png","Gnome / Male","gnome","male",36,52,40},
+    {257,"gnome-female.png","Gnome / Female","gnome","female",37,49,40},
+    {258,"orc-male.png","Orc / Male","orc","male",31,54,37},
+    {259,"orc-female.png","Orc / Female","orc","female",29,50,40},
+    {260,"goliath-male.png","Goliath / Male","goliath","male",35,52,40},
+    {261,"goliath-female.png","Goliath / Female","goliath","female",34,50,40},
+    {262,"tiefling-male.png","Tiefling / Male","tiefling","male",35,52,40},
+    {263,"tiefling-female.png","Tiefling / Female","tiefling","female",36,49,40},
+    {264,"dragonborn-male.png","Dragonborn / Male","dragonborn","male",37,54,39},
+    {265,"dragonborn-female.png","Dragonborn / Female","dragonborn","female",35,51,40}
 }};
+const AdditionalPortraitHead& additional_head(unsigned id)
+{
+    const auto entry=std::find_if(additional_heads.begin(),additional_heads.end(),[&](const auto& head){return head.id==id;});
+    if(entry==additional_heads.end())throw std::runtime_error("Unknown additional portrait head");
+    return *entry;
+}
+Image fit_neck(const Image& head,const Image& body,const AdditionalPortraitHead& placement)
+{
+    // Original HEAD bottoms normally occupy x=36..55. BODY openings vary:
+    // inspect only the neck region's skin pixels, not armor, collars or hair.
+    unsigned left=88,right=0;
+    for(unsigned x=30;x<62;++x) {
+        const auto p=x*4;
+        if(body.rgba[p]==255&&body.rgba[p+1]==85&&body.rgba[p+2]==85){left=std::min(left,x);right=x+1;}
+    }
+    if(right<=left||right-left<10||right-left>28){left=36;right=56;}
+    const double source_center=(placement.neck_left+placement.neck_right)/2.0;
+    const double target_center=(left+right)/2.0;
+    const double neck_scale=double(right-left)/(placement.neck_right-placement.neck_left);
+    Image result=head;
+    for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x) {
+        // Translate the face intact. Only the lowest five rows gradually widen
+        // or narrow to the body's opening; never stretch the face or horns.
+        const double blend=y<=34?0.0:double(y-34)/5.0;
+        const double scale=1.0+(neck_scale-1.0)*blend;
+        const int from_x=static_cast<int>(std::floor(source_center+(x+0.5-target_center)/scale));
+        const auto to=(y*88+x)*4;
+        for(unsigned c=0;c<3;++c)result.rgba[to+c]=from_x>=0&&from_x<88?head.rgba[(y*88+from_x)*4+c]:0;
+        result.rgba[to+3]=255;
+    }
+    return result;
+}
 // 5/13 belong to the cap. The six user-customizable regions skip that pair.
 constexpr std::array<int,8> color_regions{-1,1,4,5,2,-1,3,0};
 std::vector<std::uint8_t> composed_pixels(const IndexedIcon& head,const IndexedIcon& body)
@@ -37,8 +70,9 @@ std::optional<unsigned> matching_portrait_head(std::string_view race,std::string
     for(const auto& head:additional_heads)if(head.race==race&&head.gender==gender)return head.id;
     return std::nullopt;
 }
-Image prepare_portrait_head(const Image& source)
+Image prepare_portrait_head(const Image& source,unsigned head_id)
 {
+    const auto& placement=additional_head(head_id);
     if(!source.width||!source.height||source.width>8192||source.height>8192||
         source.rgba.size()!=std::size_t(source.width)*source.height*4)
         throw std::runtime_error("Invalid portrait source image");
@@ -56,7 +90,8 @@ Image prepare_portrait_head(const Image& source)
     if(!bottom)throw std::runtime_error("Portrait source has no visible head");
     Image result;result.width=88;result.height=40;result.rgba.resize(88*40*4);
     for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x) {
-        const auto from=(std::size_t((2*y+1)*bottom/80)*source.width+(2*x+1)*source.width/176)*4;
+        const auto source_y=std::size_t(2*y+1)*bottom*placement.retained_rows/3200;
+        const auto from=(source_y*source.width+(2*x+1)*source.width/176)*4;
         const auto to=(y*88+x)*4;
         // Composite alpha on the original portrait's black background.
         for(unsigned c=0;c<3;++c)result.rgba[to+c]=unsigned(source.rgba[from+c])*source.rgba[from+3]/255;
@@ -172,9 +207,10 @@ void CharacterArt::add_portrait_head(unsigned id,Image image)
 Image CharacterArt::portrait(const CharacterAppearance& a) const
 {
     validate(a);Image result;result.width=result.height=88;
-    result.rgba=heads.at(a.portrait_head).image.rgba;
-    const auto& body=bodies.at(a.portrait_body).image.rgba;
-    result.rgba.insert(result.rgba.end(),body.begin(),body.end());return result;
+    const auto& head=heads.at(a.portrait_head).image;
+    const auto& body=bodies.at(a.portrait_body).image;
+    result.rgba=a.portrait_head>255?fit_neck(head,body,additional_head(a.portrait_head)).rgba:head.rgba;
+    result.rgba.insert(result.rgba.end(),body.rgba.begin(),body.rgba.end());return result;
 }
 Image CharacterArt::icon(const CharacterAppearance& a,bool action) const
 {

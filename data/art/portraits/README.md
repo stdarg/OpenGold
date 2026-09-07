@@ -19,9 +19,11 @@ are recorded alongside the original generation prompts.
 These enlarged source PNGs are now used by the native character creator.
 `build-rolf.cmd` copies them into `godot/bin/portraits/`, and the review launcher
 imports those copies as Godot resources. At load time, native code fits each
-head into the 88 x 40 panel with nearest-neighbor sampling and removes bottom
-black padding so the neck reaches the original body panel. Their approved
-colors are retained; they are not restricted to exactly sixteen EGA colors.
+head into the 88 x 40 panel with nearest-neighbor sampling and trims it at a
+measured neck baseline. When a body is selected, native composition aligns the
+head to its neck opening and fits the lowest neck rows to its width. Faces and
+horns retain their horizontal proportions. The source PNGs stay intact. Their
+approved colors are retained; they are not restricted to exactly sixteen EGA colors.
 
 The portrait dropdown and head arrows include all ten new heads alongside the
 original game's heads. Race/gender choices suggest a matching head until the

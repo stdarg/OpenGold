@@ -170,7 +170,7 @@ void CharacterCreationView::load_additional_heads()
         const auto pixels=source->get_data();opengold::Image decoded;
         decoded.width=source->get_width();decoded.height=source->get_height();
         decoded.rgba.assign(pixels.ptr(),pixels.ptr()+pixels.size());
-        art_->add_portrait_head(head.id,por::prepare_portrait_head(decoded));
+        art_->add_portrait_head(head.id,por::prepare_portrait_head(decoded,head.id));
     }
 }
 void CharacterCreationView::recommend_head()
@@ -416,6 +416,24 @@ void CharacterCreationView::check_run()
         const auto expected=art_->portrait(a);const auto pixels=images_[0]->get_image()->get_data();
         if(pixels.size()!=expected.rgba.size()||!std::equal(expected.rgba.begin(),expected.rgba.end(),pixels.ptr()))
             throw std::runtime_error("New portrait preview texture is stale");
+        for(const auto& [body_id,body]:art_->bodies) {
+            auto selection=a;selection.portrait_body=body_id;const auto joined=art_->portrait(selection);
+            unsigned left=88,right=0;
+            for(unsigned x=30;x<62;++x)if(body.image.rgba[x*4]==255&&body.image.rgba[x*4+1]==85&&body.image.rgba[x*4+2]==85){left=std::min(left,x);right=x+1;}
+            if(right<=left)throw std::runtime_error("Original body has no neck opening");
+            for(const auto x:{left,right-1}) {
+                const auto p=(39*88+x)*4;
+                if(std::max({joined.rgba[p],joined.rgba[p+1],joined.rgba[p+2]})<=24)
+                    throw std::runtime_error("Portrait neck misses body opening: "+std::string(head.filename)+" / "+std::to_string(body_id));
+            }
+            if(!std::equal(body.image.rgba.begin(),body.image.rgba.end(),joined.rgba.begin()+88*40*4))
+                throw std::runtime_error("Neck alignment changed the original body");
+        }
+        press("BodyNext");
+        const auto changed_body=art_->portrait(creator_->appearance());const auto changed_pixels=images_[0]->get_image()->get_data();
+        if(changed_pixels.size()!=changed_body.rgba.size()||!std::equal(changed_body.rgba.begin(),changed_body.rgba.end(),changed_pixels.ptr()))
+            throw std::runtime_error("Changing bodies did not update neck alignment");
+        press("BodyPrevious");
         if(head.race=="goliath") {
             unsigned colored=0;for(unsigned p=0;p<88*40*4;p+=4)
                 if(std::max({pixels[p],pixels[p+1],pixels[p+2]})-std::min({pixels[p],pixels[p+1],pixels[p+2]})>20)++colored;
@@ -482,6 +500,6 @@ void CharacterCreationView::check_run()
         if(a!=creator_->appearance()||a!=completed_->appearance())throw std::runtime_error("Appearance lost on part changes or review");press("Restart");break;}
     case 16:if(completed_||creator_->draft().rolled||!creator_->draft().name.empty()||creator_->step()!=CreationStep::race)throw std::runtime_error("Start over did not clear the character");
         if(creator_->appearance().portrait_head!=265)throw std::runtime_error("Restart did not restore the default race's recommended head");
-        UtilityFunctions::print("Godot C++ character check passed: choices, dice, swaps, background, HP, name, ten new portrait heads, race/gender defaults, twelve live texture recolors, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
+        UtilityFunctions::print("Godot C++ character check passed: choices, dice, swaps, background, HP, name, ten new portrait heads fitted to all original bodies, race/gender defaults, twelve live texture recolors, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
     }
 }

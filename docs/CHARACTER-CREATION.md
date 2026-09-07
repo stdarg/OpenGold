@@ -104,10 +104,35 @@ archive IDs and indexed combat pixels. No extracted artwork is distributed.
   `build-rolf.cmd` copies their source PNGs into `godot/bin/portraits/`;
   `review-character.cmd` imports them through Godot's resource system.
   The native core fits the decoded images to 88 x 40 with nearest-neighbor
-  sampling and removes bottom black padding to join the neck to the body.
+  sampling, trims bottom padding, and crops at a measured neck baseline.
+  Each head has neck anchors; composition centers them on the selected body's
+  skin opening and tapers only the lowest five rows to match its width. Changing
+  bodies immediately refits the join. Faces and horns are translated without
+  horizontal stretching; the source PNGs and original head/body pixels stay intact.
   Approved colors are preserved without forcing the new heads into the EGA
   palette; original body art and combat icons keep their existing colors.
   These files are needed for the demo; a missing resource reports its filename.
+
+### Portrait neck alignment
+
+Local inspection of 41 original heads and 21 bodies found that most `HEAD`
+bottoms occupy x=36..55 (inclusive) on the 88-pixel grid. The narrower bodies
+use openings such as x=36..51 or x=37..54. The compositor identifies the selected
+body's opening by its original skin color `(255,85,85)` in top-row columns
+30..61, excluding collars and armor. An unrecognized opening uses x=36..55.
+
+`AdditionalPortraitHead` stores the source neck edges and retained row count
+on the fitted 88 x 40 grid. The male Orc keeps 37 rows and male Dragonborn 39,
+excluding their rounded bottom remnants; the other heads keep 40. These
+anchors exclude braids and hair from the neck measurement. This fixes position
+and width; original body skin colors can still differ from the new heads.
+
+Native tests check varied neck widths, unchanged faces/body pixels, and the
+two crops. The Godot `--character-check` also checks every new head against
+every loaded original body and verifies live updates when changing bodies.
+
+### Combat parts
+
 - Combat heads come from `CHEAD.DAX`, base IDs 0..13. Body/weapon components come
   from `CBODY.DAX`, base IDs 0..31. Add 64 for tall components and 128 for the
   action pose. Both head and body use the same size/pose bank. The head overlays
