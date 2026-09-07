@@ -48,6 +48,9 @@ private:
     godot::String sheet_text(const opengold::Character& character,const opengold::PartyMember* member=nullptr) const;
     void show_modifiers();
     void close_modifiers();
+    void show_saving_throws();
+    void close_saving_throws();
+    void update_saving_throws(godot::String value);
     void name_changed(godot::String value);
     void portrait_part(int part,int direction);
     void portrait_head_selected(std::int64_t index);

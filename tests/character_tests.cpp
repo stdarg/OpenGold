@@ -38,6 +38,10 @@ void creation_tests()
     auto s=module->evaluate(d,true);
     check(s.scores[0]==14&&s.scores[1]==10&&s.scores[2]==14&&s.hit_points==12,"Fighter has maximum d10 plus Constitution");
     check(s.modifiers[3]==-4,"Odd negative ability modifiers round down");
+    check(srd5::minimum_save_roll(15,srd5::ability_modifier(20))==10,"Strength 20 needs 10 to meet DC 15 without proficiency");
+    check(srd5::minimum_save_roll(15,-4)==19,"Negative save bonuses raise the required roll");
+    check(srd5::minimum_save_roll(20,0)==20&&srd5::minimum_save_roll(21,0)==21,"Natural 20 does not automatically save");
+    check(srd5::minimum_save_roll(5,4)==1&&srd5::minimum_save_roll(5,8)==1,"Natural 1 can save when its total meets DC");
     check(s.saving_throws==std::array<int,6>{4,0,4,-4,2,4},"Fighter saves include proficiency only for Strength and Constitution");
     d.character_class="wizard";const auto wizard=module->evaluate(d,true);
     check(wizard.saving_throws==std::array<int,6>{2,0,2,-2,4,4},"Wizard saves retain negative modifiers and add Intelligence/Wisdom proficiency");

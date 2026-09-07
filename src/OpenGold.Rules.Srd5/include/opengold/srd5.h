@@ -9,6 +9,8 @@ namespace opengold::srd5 {
 [[nodiscard]] std::unique_ptr<rules::CharacterRules> character_rules();
 // Pure SRD arithmetic, also used by the deterministic combat resolver.
 [[nodiscard]] int ability_modifier(int score) noexcept;
+// Ordinary saving throws: 1 means every roll saves; 21 means no d20 roll saves.
+[[nodiscard]] int minimum_save_roll(int difficulty_class, int bonus) noexcept;
 [[nodiscard]] bool attack_hits(int natural_roll, int bonus, int armor_class) noexcept;
 }
 #endif

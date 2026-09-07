@@ -64,6 +64,11 @@ text = "Back to creator"
 
 [node name="Modifiers" type="Button" parent="."]
 text = "Modifiers"
+theme_override_font_sizes/font_size = 14
+
+[node name="SavingThrows" type="Button" parent="."]
+text = "Saving Throws"
+theme_override_font_sizes/font_size = 14
 
 [node name="ReadyLabel" type="Label" parent="."]
 text = "Ready"

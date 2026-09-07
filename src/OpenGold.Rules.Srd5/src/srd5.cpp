@@ -14,6 +14,8 @@
 namespace opengold::srd5 {
 using namespace rules;
 int ability_modifier(int score) noexcept { return static_cast<int>(std::floor((static_cast<double>(score)-10)/2.0)); }
+int minimum_save_roll(int dc, int bonus) noexcept
+{ return static_cast<int>(std::clamp(static_cast<long long>(dc)-bonus,1LL,21LL)); }
 bool attack_hits(int natural, int bonus, int ac) noexcept
 { return natural==20 || (natural!=1 && static_cast<std::int64_t>(natural)+bonus>=ac); }
 namespace {

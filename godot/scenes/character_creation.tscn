@@ -427,3 +427,36 @@ theme_override_font_sizes/normal_font_size = 18
 
 [node name="Close" type="Button" parent="ModifiersModal"]
 text = "Close"
+
+[node name="SavingThrows" type="Button" parent="."]
+visible = false
+text = "Saving Throws"
+
+[node name="SavingThrowsModal" type="Window" parent="."]
+title = "Saving Throws"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(780, 680)
+
+[node name="Background" type="ColorRect" parent="SavingThrowsModal"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Title" type="Label" parent="SavingThrowsModal"]
+theme_override_font_sizes/font_size = 24
+
+[node name="DCLabel" type="Label" parent="SavingThrowsModal"]
+text = "Target DC"
+
+[node name="DC" type="LineEdit" parent="SavingThrowsModal"]
+text = "15"
+max_length = 3
+select_all_on_focus = true
+
+[node name="Text" type="RichTextLabel" parent="SavingThrowsModal"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="SavingThrowsModal"]
+text = "Close"

@@ -62,8 +62,15 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
     A note explains that SRD 5.2.1 uses the maximum class Hit Die plus applicable
     modifiers at level one. Only the HP numbers are colored: yellow for a
     positive combined modifier, red for a negative modifier, normal for zero.
-    **Modifiers** opens a modal with ability, racial, class, background, equipped
+    **Modifiers** opens a modal with ability score adjustments, racial, class, background, equipped
     item and spell details, identifying the source of each applied modifier.
+    Its ability section shows changes to the rolled scores, not derived bonuses.
+    **Saving Throws**, beside Modifiers on both sheets, opens a separate dialog
+    with an editable target DC (initially 15), the required d20 roll for each save,
+    and ability-score and class-proficiency sources. Invalid DC input shows a
+    correction hint. Rolls that always meet or cannot reach the DC are identified;
+    ordinary saves do not automatically fail on 1 or succeed on 20. Conditional
+    racial traits and persistent spell effects are not implemented in these totals.
     Score numbers are yellow for positive ability modifiers, red for negative
     modifiers, and the normal text color for zero. Unimplemented effects are
     identified explicitly.

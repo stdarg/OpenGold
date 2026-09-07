@@ -79,6 +79,10 @@ void CharacterCreationView::_ready()
         score->set_tooltip_text("Drop a roll here. Drag a filled box onto another ability to swap.");
         score->add_theme_stylebox_override("normal",box(Color("10171c"),Color("687d88")));
     }
+    get_node<Button>("SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
+    get_node<Button>("SavingThrowsModal/Close")->connect("pressed",callable_mp(this,&CharacterCreationView::close_saving_throws));
+    get_node<Window>("SavingThrowsModal")->connect("close_requested",callable_mp(this,&CharacterCreationView::close_saving_throws));
+    get_node<LineEdit>("SavingThrowsModal/DC")->connect("text_changed",callable_mp(this,&CharacterCreationView::update_saving_throws));
     get_node<Button>("Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("ModifiersModal/Close")->connect("pressed",callable_mp(this,&CharacterCreationView::close_modifiers));
     get_node<Window>("ModifiersModal")->connect("close_requested",callable_mp(this,&CharacterCreationView::close_modifiers));
@@ -177,12 +181,20 @@ void CharacterCreationView::layout()
     place("Status",Rect2(x+160,h-62,std::max(1.0,pw-360),44));
     place("Footer",Rect2(24,h-25,w-48,22));
     place("Modifiers",Rect2(x+20,y+ph-60,150,36));
+    place("SavingThrows",Rect2(x+180,y+ph-60,160,36));
     const double mw=std::min(780.0,w-100),mh=h-120;
     get_node<Window>("ModifiersModal")->set_size(Vector2i(mw,mh));
     place("ModifiersModal/Background",Rect2(0,0,mw,mh));
     place("ModifiersModal/Title",Rect2(24,18,mw-48,36));
     place("ModifiersModal/Text",Rect2(24,70,mw-48,mh-140));
     place("ModifiersModal/Close",Rect2(mw-154,mh-52,130,36));
+    get_node<Window>("SavingThrowsModal")->set_size(Vector2i(mw,mh));
+    place("SavingThrowsModal/Background",Rect2(0,0,mw,mh));
+    place("SavingThrowsModal/Title",Rect2(24,18,mw-48,36));
+    place("SavingThrowsModal/DCLabel",Rect2(24,66,110,36));
+    place("SavingThrowsModal/DC",Rect2(144,66,90,36));
+    place("SavingThrowsModal/Text",Rect2(24,118,mw-48,mh-188));
+    place("SavingThrowsModal/Close",Rect2(mw-154,mh-52,130,36));
     if(campaign_)party_layout();
     if(creator_&&creator_->step()==CreationStep::sheet)
         place("Description",Rect2(x+20,y+124,pw-40,ph-194));
@@ -230,6 +242,7 @@ void CharacterCreationView::refresh()
     for(const auto* n:{"Choices"})show(n,choosing);
     show("Description",choosing||step==CreationStep::sheet);
     show("Modifiers",step==CreationStep::sheet);
+    show("SavingThrows",step==CreationStep::sheet);
     for(const auto* n:{"BackgroundLabel","Background","BonusLabel","Bonus","Columns","DiceHeader","BaseHeader","BonusHeader","TotalHeader","Roll","SwapHint"})show(n,stats);
     show("DiceHint",stats);
     for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
@@ -465,14 +478,31 @@ void CharacterCreationView::check_run()
         }
         ++drag_check_stage_;return;
     }
-    if(check_stage_==14&&modal_check_stage_<3){
+    if(check_stage_==14&&modal_check_stage_<7){
         if(modal_check_stage_==0){get_node<Button>("Modifiers")->emit_signal("pressed");
             if(!get_node<Window>("ModifiersModal")->is_visible()||!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Dwarven Toughness"))throw std::runtime_error("Modifier modal failed");
+            const auto text=get_node<RichTextLabel>("ModifiersModal/Text")->get_text();
+            if(text.contains("(Score - 10)")||!text.contains("Ability score adjustments"))throw std::runtime_error("Ability adjustments still include derived save bonuses");
         }else if(modal_check_stage_==1){
             if(capture_){const auto image=get_node<Window>("ModifiersModal")->get_texture()->get_image();
                 if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-modifiers.png"));}
             get_node<Button>("ModifiersModal/Close")->emit_signal("pressed");
-        }else if(get_node<Window>("ModifiersModal")->is_visible())throw std::runtime_error("Modifier modal did not close");
+        }else if(modal_check_stage_==2){
+            if(get_node<Window>("ModifiersModal")->is_visible())throw std::runtime_error("Modifier modal did not close");
+        }else if(modal_check_stage_==3){
+            get_node<Button>("SavingThrows")->emit_signal("pressed");
+            const auto text=get_node<RichTextLabel>("SavingThrowsModal/Text")->get_text();
+            if(!get_node<Window>("SavingThrowsModal")->is_visible()||!text.contains("Strength save:")||!text.contains("Fighter saving throw proficiency"))throw std::runtime_error("Saving throw modal omitted sources");
+        }else if(modal_check_stage_==4){
+            if(capture_){const auto image=get_node<Window>("SavingThrowsModal")->get_texture()->get_image();
+                if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-saving-throws.png"));}
+            auto* dc=get_node<LineEdit>("SavingThrowsModal/DC");
+            const auto edit=[&](const char* value){dc->set_text(value);dc->emit_signal("text_changed",String(value));return get_node<RichTextLabel>("SavingThrowsModal/Text")->get_text();};
+            if(!edit("999").contains("Cannot reach this DC")||!edit("1").contains("Any d20 roll saves")||!edit("").contains("Enter a whole-number")||!edit("abc").contains("Enter a whole-number")||!edit("0").contains("Enter a whole-number"))throw std::runtime_error("Saving throw DC changes failed");
+            const int needed=srd5::minimum_save_roll(15,completed_->sheet().saving_throws[0]);
+            if(!edit("15").contains(gs("Roll "+std::to_string(needed)+" or higher")))throw std::runtime_error("Saving throw DC did not restore");
+        }else if(modal_check_stage_==5)get_node<Button>("SavingThrowsModal/Close")->emit_signal("pressed");
+        else if(get_node<Window>("SavingThrowsModal")->is_visible())throw std::runtime_error("Saving throw modal did not close");
         ++modal_check_stage_;return;
     }
     const auto click=[&](Vector2 position) {

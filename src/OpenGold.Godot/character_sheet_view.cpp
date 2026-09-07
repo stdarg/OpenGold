@@ -2,6 +2,7 @@
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/line_edit.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -72,8 +73,12 @@ void CharacterCreationView::show_modifiers()
     if(party_open_&&!campaign_->state().roster.empty())member=&campaign_->state().roster.at(roster_index_);
     if(!member&&!completed_)return;
     const auto& s=member?member->character.sheet():completed_->sheet();
-    std::string text="[b]Ability modifiers[/b]\n";
-    for(unsigned i=0;i<6;++i)text+=std::string(names[i])+": "+number(s.modifiers[i])+"\nSource: "+names[i]+" score "+std::to_string(s.scores[i])+" (rolled "+std::to_string(s.base[i])+", "+s.background+" "+number(s.bonuses[i])+"). (Score - 10) / 2, rounded down.\n\n";
+    std::string text="[b]Ability score adjustments[/b]\n";
+    for(unsigned i=0;i<6;++i){
+        text+=std::string(names[i])+": "+number(s.bonuses[i])+"\n";
+        text+=s.bonuses[i]==0?"No adjustment to the rolled score.":"Source: "+s.background+" background, selected ability increase.";
+        text+=" Rolled "+std::to_string(s.base[i])+"; final score "+std::to_string(s.scores[i])+".\n\n";
+    }
     text+="\n[b]Race / "+s.race+"[/b]\n"+s.racial_modifiers;
     text+="\n\n[b]Class / "+s.character_class+"[/b]\n"+s.class_modifiers;
     text+="\n\n[b]Background / "+s.background+"[/b]\n"+s.background_modifiers;
@@ -91,3 +96,35 @@ void CharacterCreationView::show_modifiers()
     get_node<Button>("ModifiersModal/Close")->grab_focus();
 }
 void CharacterCreationView::close_modifiers(){get_node<Window>("ModifiersModal")->hide();}
+
+void CharacterCreationView::show_saving_throws()
+{
+    update_saving_throws(get_node<LineEdit>("SavingThrowsModal/DC")->get_text());
+    get_node<Window>("SavingThrowsModal")->popup_centered();
+    get_node<LineEdit>("SavingThrowsModal/DC")->grab_focus();
+}
+void CharacterCreationView::close_saving_throws(){get_node<Window>("SavingThrowsModal")->hide();}
+void CharacterCreationView::update_saving_throws(String value)
+{
+    const PartyMember* member=nullptr; // Borrowed for synchronous rendering.
+    if(party_open_&&!campaign_->state().roster.empty())member=&campaign_->state().roster.at(roster_index_);
+    if(!member&&!completed_)return;
+    const auto& s=member?member->character.sheet():completed_->sheet();
+    get_node<Label>("SavingThrowsModal/Title")->set_text(gs(s.name+" / Saving Throws"));
+    auto* label=get_node<RichTextLabel>("SavingThrowsModal/Text");
+    if(!value.is_valid_int()||value.to_int()<1||value.to_int()>999){
+        label->set_text("Enter a whole-number target DC from 1 to 999.");return;
+    }
+    const int dc=static_cast<int>(value.to_int());
+    std::string text="Roll a d20 and add the saving throw bonus. Meet or exceed DC "+std::to_string(dc)+" to save.\n\n";
+    for(unsigned i=0;i<6;++i){
+        const int needed=srd5::minimum_save_roll(dc,s.saving_throws[i]);
+        text+="[b]"+std::string(names[i])+" save: "+number(s.saving_throws[i])+" | ";
+        text+=needed>20?"Cannot reach this DC on a d20":needed==1?"Any d20 roll saves":"Roll "+std::to_string(needed)+" or higher";
+        text+="[/b]\n"+number(s.modifiers[i])+" from "+names[i]+" score "+std::to_string(s.scores[i])+" (score minus 10, divided by 2, rounded down).\n";
+        text+=s.save_proficiencies[i]?number(s.saving_throws[i]-s.modifiers[i])+" from "+s.character_class+" saving throw proficiency.":"+0 proficiency: "+s.character_class+" does not grant proficiency in this save.";
+        text+="\n\n";
+    }
+    text+="No additional racial, item or spell bonuses are currently applied to these saves. Conditional traits and persistent spell effects are not implemented.\n\nOrdinary saving throws: a natural 1 or 20 does not automatically fail or succeed. Death saves use separate rules.";
+    label->set_text(gs(text));
+}

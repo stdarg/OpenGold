@@ -52,6 +52,7 @@ void CharacterCreationView::setup_party()
     for(unsigned i=0;i<buttons.size();++i)get_node<Button>(gs(std::string("PartyPanel/")+buttons[i]))->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(actions[i]));
     get_node<ItemList>("PartyPanel/Roster")->connect("item_selected",callable_mp(this,&CharacterCreationView::party_selected));
     get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
+    get_node<Button>("PartyPanel/SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
 }
@@ -74,7 +75,8 @@ void CharacterCreationView::party_layout()
     const double bw=(w-64)/5;
     for(unsigned i=0;i<buttons.size();++i)place((std::string("PartyPanel/")+buttons[i]).c_str(),Rect2(24+(i%5)*(bw+4),h-125+(i/5)*44,bw,36));
     place("PartyPanel/Status",Rect2(24,h-39,w-48,32));
-    place("PartyPanel/Modifiers",Rect2(24+4*(bw+4),h-81,bw,36));
+    place("PartyPanel/Modifiers",Rect2(24+4*(bw+4),h-81,bw*0.42f,36));
+    place("PartyPanel/SavingThrows",Rect2(28+4*(bw+4)+bw*0.42f,h-81,bw*0.58f-4,36));
     for(const auto* name:{"CampaignTown","CampaignCombat"})if(auto* child=Object::cast_to<Control>(get_node_or_null(name)))child->set_size(get_size());
 }
 void CharacterCreationView::party_selected(std::int64_t index)
@@ -108,7 +110,7 @@ void CharacterCreationView::refresh_party()
     }
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_text(gs(sheet));
     get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?"Session preview / New PCs receive 250 gp / Progress is not saved yet.":error_);
-    for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat","Modifiers"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
+    for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat","Modifiers","SavingThrows"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
 }
 void CharacterCreationView::party_action(int action)
 {
@@ -178,6 +180,9 @@ void CharacterCreationView::party_check()
         press("PartyPanel/Modifiers");
         if(!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Shield: +2 AC"))throw std::runtime_error("Party modifiers omitted equipped shield");
         press("ModifiersModal/Close");
+        press("PartyPanel/SavingThrows");
+        if(!get_node<Label>("SavingThrowsModal/Title")->get_text().contains(gs(campaign_->state().roster.at(roster_index_).character.sheet().name))||!get_node<RichTextLabel>("SavingThrowsModal/Text")->get_text().contains("saving throw proficiency"))throw std::runtime_error("Party saving throws did not use selected character");
+        press("SavingThrowsModal/Close");
         capture("party-equipped.png");press("PartyPanel/Combat");++party_check_stage_;break;
     case 4:{auto* fight=get_node<CombatView>("CampaignCombat");
         if(!fight->can_leave())return;press("ReturnParty");capture("party-after-combat.png");
