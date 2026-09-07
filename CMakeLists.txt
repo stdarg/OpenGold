@@ -27,6 +27,7 @@ add_library(opengold_formats STATIC
     src/OpenGold.Formats/src/geo_map.cpp
     src/OpenGold.Formats/src/ecl.cpp
     src/OpenGold.Formats/src/wall_art.cpp
+    src/OpenGold.Formats/src/por_sound.cpp
 )
 
 target_include_directories(opengold_formats
@@ -49,6 +50,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/phlan_session.cpp
     src/OpenGold.Core/src/combat_demo.cpp
     src/OpenGold.Core/src/exploration_view.cpp
+    src/OpenGold.Core/src/speaker_audio.cpp
 )
 
 target_include_directories(opengold_core
@@ -85,6 +87,9 @@ if(OPENGOLD_BUILD_TESTS)
     add_executable(opengold_character_tests tests/character_tests.cpp)
     target_link_libraries(opengold_character_tests PRIVATE opengold_core opengold_rules_srd5)
     add_test(NAME opengold_character_tests COMMAND opengold_character_tests)
+    add_executable(opengold_sound_tests tests/sound_tests.cpp)
+    target_link_libraries(opengold_sound_tests PRIVATE opengold_core)
+    add_test(NAME opengold_sound_tests COMMAND opengold_sound_tests)
 endif()
 
 add_executable(opengold_creatures tools/creatures.cpp)

@@ -4,6 +4,20 @@ A modern Godot-based reimplementation of SSI's Gold Box engine that reads the
 original game data and assets while adding a cleaner UI, improved rendering,
 and modern quality-of-life features.
 
+## Sound board
+
+Play the 19 original PC-speaker effects from your installed `START.EXE`, including
+unused effects, with a button for every sound-directory entry. The native demo
+decodes everything in memory and includes stop, volume and mute controls.
+From PowerShell:
+
+```powershell
+.\build-rolf.cmd
+.\review-sounds.cmd
+```
+
+See [sound data, supported release and verification](docs/sound-format.md).
+
 ## Rolf's tour
 
 Run the original welcome through Rolf's farewell in a C++/Godot scene, with his

@@ -1,6 +1,7 @@
 #include "rolf_tour_view.h"
 #include "combat_view.h"
 #include "character_creation_view.h"
+#include "sound_board_view.h"
 #include <godot_cpp/godot.hpp>
 
 namespace {
@@ -10,6 +11,7 @@ void initialize(godot::ModuleInitializationLevel level)
         godot::ClassDB::register_class<RolfTourView>();
         godot::ClassDB::register_class<CombatView>();
         godot::ClassDB::register_class<CharacterCreationView>();
+        godot::ClassDB::register_class<SoundBoardView>();
     }
 }
 void terminate(godot::ModuleInitializationLevel) {}
