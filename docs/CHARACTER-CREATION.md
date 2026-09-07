@@ -29,7 +29,13 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 6. Review maximum starting HP: maximum class Hit Die + Constitution modifier,
    with +1 for Dwarven Toughness when applicable.
 7. Enter a name, up to 40 characters.
-8. Browse portrait heads and bodies with the previous/next buttons.
+8. Choose a portrait head from the dropdown or browse with the previous/next
+   buttons, then choose a body. The list includes all original heads plus male
+   and female Gnome, Orc, Goliath, Tiefling and Dragonborn heads. Race/gender
+   selections initially suggest the matching new head. Manually choosing a
+   head keeps it selected through later edits; every head remains available.
+   With no exact match (including Nonbinary), the initial original head remains
+   the default until you choose one. **Start over** restores automatic defaults.
 9. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
    swatch. Enlarged ready and action previews update immediately, recoloring
@@ -92,6 +98,16 @@ archive IDs and indexed combat pixels. No extracted artwork is distributed.
   identical copies of an ID and rejects conflicting copies. It exposes the
   available original parts, without claiming a race/class-specific selection
   list. A head is 88 x 40 pixels, followed by an 88 x 48 body.
+- The ten approved [OpenGold heads](../data/art/portraits/README.md) are loaded
+  in addition to the original heads. Their stable IDs 256..265 do not overlap
+  the original byte-sized DAX IDs and are retained in `CharacterAppearance`.
+  `build-rolf.cmd` copies their source PNGs into `godot/bin/portraits/`;
+  `review-character.cmd` imports them through Godot's resource system.
+  The native core fits the decoded images to 88 x 40 with nearest-neighbor
+  sampling and removes bottom black padding to join the neck to the body.
+  Approved colors are preserved without forcing the new heads into the EGA
+  palette; original body art and combat icons keep their existing colors.
+  These files are needed for the demo; a missing resource reports its filename.
 - Combat heads come from `CHEAD.DAX`, base IDs 0..13. Body/weapon components come
   from `CBODY.DAX`, base IDs 0..31. Add 64 for tall components and 128 for the
   action pose. Both head and body use the same size/pose bank. The head overlays
@@ -131,7 +147,8 @@ are not used as an assumed list of available archive IDs.
 tests cover deterministic rolls, retained dice, swaps, all class HP values,
 background bonuses, invalid selections, name validation, navigation, restart,
 truncation, all twelve color controls, head composition, fixed pixels,
-transparency, character data ownership and inventory operations. Set
+transparency, character data ownership, inventory operations, additional-head
+IDs, panel fitting, approved color preservation, and body composition. Set
 `OPENGOLD_GAME_DIR` to the directory containing
 the DAX files to additionally check every original head/body combination in
 both sizes and both poses, plus exact recolor masks and absent regions in the
@@ -149,7 +166,8 @@ godot --headless --path godot res://scenes/character_creation.tscn -- --characte
 ```
 
 This exercises choices, rolling, swaps, background bonuses, HP, name entry,
-portrait/parts selection, all twelve colors, sheet review and restart. Each
+portrait/parts selection, all ten new heads, race/gender defaults, all twelve
+colors, sheet review and restart. Each
 palette click checks the preview texture pixels against the composed icon and
 counts changed pixels in each pose; it also checks that the portrait is intact.
 The completed sheet is checked against the reusable character and inventory. Buttons
@@ -157,3 +175,5 @@ and list selections use injected viewport mouse input; name entry uses keyboard
 events. Background controls also exercise their native selection signals.
 For local screenshots of attributes, appearance and the sheet, omit
 `--headless` and append `--capture`. Captures go to ignored `user-data/` files.
+This also saves one composed portrait preview for each new head as
+`character-portrait-<species>-<gender>.png`.

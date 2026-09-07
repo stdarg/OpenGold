@@ -24,11 +24,13 @@ private:
     godot::Rect2 page_rect_,preview_rect_,portrait_rect_,ready_rect_,action_rect_;
     godot::String error_;
     int selected_score_{-1},color_bank_{},color_part_{};
-    unsigned check_stage_{},check_frames_{};
-    bool ready_{},refreshing_{},checking_{},capture_{},fatal_{};
+    unsigned check_stage_{},check_frames_{},check_head_{},check_default_{};
+    bool ready_{},refreshing_{},checking_{},capture_{},fatal_{},portrait_chosen_{};
     void layout();
     void refresh();
     void refresh_art();
+    void load_additional_heads();
+    void recommend_head();
     void perform(const std::function<void()>& action);
     void next();
     void back();
@@ -40,6 +42,7 @@ private:
     void score_selected(int index);
     void name_changed(godot::String value);
     void portrait_part(int part,int direction);
+    void portrait_head_selected(std::int64_t index);
     void combat_part(int part,int direction);
     void toggle_size();
     void color_selected(int bank,int part);

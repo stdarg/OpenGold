@@ -67,7 +67,8 @@ text = "< Head"
 [node name="HeadNext" type="Button" parent="."]
 text = "Head >"
 
-[node name="HeadLabel" type="Label" parent="."]
+[node name="PortraitHead" type="OptionButton" parent="."]
+fit_to_longest_item = false
 
 
 [node name="BodyPrevious" type="Button" parent="."]
@@ -139,7 +140,7 @@ autowrap_mode = 2
 theme_override_font_sizes/font_size = 16
 
 [node name="Footer" type="Label" parent="."]
-text = "Original game artwork / SRD 5.2.1"
+text = "Original game art + OpenGold portraits / SRD 5.2.1"
 theme_override_font_sizes/font_size = 14
 
 [node name="Ability0" type="Button" parent="."]

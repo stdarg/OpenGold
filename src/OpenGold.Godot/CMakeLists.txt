@@ -15,7 +15,23 @@ FetchContent_Declare(godot_cpp
     GIT_TAG e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77
 )
 FetchContent_MakeAvailable(godot_cpp)
+# Keep the approved source PNGs authoritative, and ship build copies inside
+# the Godot project. Asset changes refresh even when the DLL needs no relink.
+set(portrait_outputs)
+foreach(species gnome orc goliath tiefling dragonborn)
+    foreach(gender male female)
+        set(portrait_source "${PROJECT_SOURCE_DIR}/data/art/portraits/${species}-${gender}.png")
+        set(portrait_output "${PROJECT_SOURCE_DIR}/godot/bin/portraits/${species}-${gender}.png")
+        add_custom_command(OUTPUT "${portrait_output}"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_SOURCE_DIR}/godot/bin/portraits"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${portrait_source}" "${portrait_output}"
+            DEPENDS "${portrait_source}" VERBATIM)
+        list(APPEND portrait_outputs "${portrait_output}")
+    endforeach()
+endforeach()
+add_custom_target(opengold_portrait_assets DEPENDS ${portrait_outputs})
 add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp character_creation_view.cpp register_types.cpp)
+add_dependencies(opengold_godot opengold_portrait_assets)
 target_link_libraries(opengold_godot PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
 target_compile_features(opengold_godot PRIVATE cxx_std_20)
 target_compile_definitions(opengold_godot PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>)

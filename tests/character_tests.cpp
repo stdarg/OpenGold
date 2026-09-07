@@ -63,7 +63,7 @@ void creation_tests()
     creator.roll();check(creator.draft().rolls!=original&&creator.draft().assignment[0]==0,"Full reroll replaces all rolls and resets assignments");
     creator.next();creator.next();rejects([&]{creator.next();},"Name required before portrait");
     creator.name("  Mira Stoneward  ");creator.next();creator.next();
-    auto appearance=creator.appearance();appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
+    auto appearance=creator.appearance();appearance.portrait_head=261;appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
     check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
     auto finished=creator.create_character();
     const auto retained=creator.draft();const auto sheet=creator.sheet();
@@ -113,6 +113,47 @@ void inventory_tests()
     inventory.remove(first);check(!inventory.find(first)&&inventory.items().size()==1,"Removing the final item removes its stack");
     const auto third=inventory.add("test:shield","Shield");check(third!=first&&third!=second,"Removed stack IDs are not reused");
     inventory.remove(second,5);inventory.remove(third);check(inventory.empty(),"All inventory can be removed");
+}
+void additional_portrait_tests()
+{
+    Image source;source.width=176;source.height=84;source.rgba.resize(176*84*4);
+    for(unsigned y=0;y<84;++y)for(unsigned x=0;x<176;++x) {
+        const auto p=(y*176+x)*4;source.rgba[p+3]=255;
+        if(y<80){source.rgba[p]=31+x/2;source.rgba[p+1]=61+y/2;source.rgba[p+2]=173;}
+    }
+    const auto original=source.rgba;const auto panel=prepare_portrait_head(source);
+    check(panel.width==88&&panel.height==40&&source.rgba==original,"Preparing a head leaves source artwork intact");
+    for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x) {
+        const auto p=(y*88+x)*4;
+        check(panel.rgba[p]==31+x&&panel.rgba[p+1]==61+y&&panel.rgba[p+2]==173&&panel.rgba[p+3]==255,
+            "Nearest sampling preserves approved colors and removes the bottom gap");
+    }
+    Image translucent;translucent.width=translucent.height=1;translucent.rgba={240,160,80,128};
+    const auto opaque=prepare_portrait_head(translucent);
+    check(opaque.rgba[0]==120&&opaque.rgba[1]==80&&opaque.rgba[2]==40&&opaque.rgba[3]==255,"Alpha composites onto the portrait's black background");
+    rejects([&]{(void)prepare_portrait_head(Image{});},"Empty portrait sources rejected");
+    translucent.rgba={0,0,0,255};rejects([&]{(void)prepare_portrait_head(translucent);},"Blank portrait sources rejected");
+    source.rgba.pop_back();rejects([&]{(void)prepare_portrait_head(source);},"Truncated portrait pixels rejected");
+    CharacterArt art;art.heads.emplace(1,PortraitPart{"original",panel});
+    Image body;body.width=88;body.height=48;body.rgba.assign(88*48*4,128);art.bodies.emplace(1,PortraitPart{"original",body});
+    std::set<unsigned> ids;std::set<std::string_view> files;
+    const auto additions=additional_portrait_heads();check(additions.size()==10,"All ten additional heads are cataloged");
+    for(const auto& head:additions) {
+        check(head.id>255&&ids.insert(head.id).second&&files.insert(head.filename).second,"Additional heads have unique IDs outside the original archive range");
+        check(matching_portrait_head(head.race,head.gender)==head.id,"Race and gender recommend the matching approved portrait");
+        art.add_portrait_head(head.id,panel);CharacterAppearance a;a.portrait_head=head.id;
+        const auto portrait=art.portrait(a);
+        check(portrait.width==88&&portrait.height==88&&portrait.rgba.size()==88*88*4,"Additional heads compose a complete portrait");
+        check(std::equal(panel.rgba.begin(),panel.rgba.end(),portrait.rgba.begin())&&
+            std::equal(body.rgba.begin(),body.rgba.end(),portrait.rgba.begin()+88*40*4),"New head composition preserves both the head colors and original body");
+        check(art.heads.at(head.id).label==head.label,"Additional heads retain readable selection labels");
+    }
+    check(!matching_portrait_head("human","female")&&!matching_portrait_head("goliath","nonbinary"),"No unsupported portrait recommendation is invented");
+    rejects([&]{art.add_portrait_head(1,panel);},"Additional artwork cannot replace an original archive ID");
+    rejects([&]{art.add_portrait_head(256,panel);},"Duplicate new head IDs rejected");
+    CharacterArt unloaded;rejects([&]{unloaded.add_portrait_head(256,body);},"Additional head must be 88 by 40");
+    CharacterAppearance invalid;invalid.portrait_head=266;
+    rejects([&]{validate_character_appearance(invalid);},"Unregistered extended head IDs rejected");
 }
 void art_tests()
 {
@@ -178,6 +219,6 @@ void art_tests()
 }
 int main()
 {
-    try {creation_tests();inventory_tests();art_tests();std::cout<<"Character tests passed\n";return 0;}
+    try {creation_tests();inventory_tests();additional_portrait_tests();art_tests();std::cout<<"Character tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

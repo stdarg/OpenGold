@@ -5,6 +5,18 @@
 
 namespace opengold::por {
 namespace {
+constexpr std::array<AdditionalPortraitHead,10> additional_heads{{
+    {256,"gnome-male.png","Gnome / Male","gnome","male"},
+    {257,"gnome-female.png","Gnome / Female","gnome","female"},
+    {258,"orc-male.png","Orc / Male","orc","male"},
+    {259,"orc-female.png","Orc / Female","orc","female"},
+    {260,"goliath-male.png","Goliath / Male","goliath","male"},
+    {261,"goliath-female.png","Goliath / Female","goliath","female"},
+    {262,"tiefling-male.png","Tiefling / Male","tiefling","male"},
+    {263,"tiefling-female.png","Tiefling / Female","tiefling","female"},
+    {264,"dragonborn-male.png","Dragonborn / Male","dragonborn","male"},
+    {265,"dragonborn-female.png","Dragonborn / Female","dragonborn","female"}
+}};
 // 5/13 belong to the cap. The six user-customizable regions skip that pair.
 constexpr std::array<int,8> color_regions{-1,1,4,5,2,-1,3,0};
 std::vector<std::uint8_t> composed_pixels(const IndexedIcon& head,const IndexedIcon& body)
@@ -19,6 +31,39 @@ std::vector<std::uint8_t> composed_pixels(const IndexedIcon& head,const IndexedI
     return pixels;
 }
 }
+std::span<const AdditionalPortraitHead> additional_portrait_heads() {return additional_heads;}
+std::optional<unsigned> matching_portrait_head(std::string_view race,std::string_view gender)
+{
+    for(const auto& head:additional_heads)if(head.race==race&&head.gender==gender)return head.id;
+    return std::nullopt;
+}
+Image prepare_portrait_head(const Image& source)
+{
+    if(!source.width||!source.height||source.width>8192||source.height>8192||
+        source.rgba.size()!=std::size_t(source.width)*source.height*4)
+        throw std::runtime_error("Invalid portrait source image");
+    unsigned bottom=source.height;
+    const auto visible=[&](unsigned x,unsigned y) {
+        const auto p=(std::size_t(y)*source.width+x)*4;
+        return source.rgba[p+3]>127&&std::max({source.rgba[p],source.rgba[p+1],source.rgba[p+2]})>24;
+    };
+    while(bottom) {
+        bool content=false;
+        for(unsigned x=0;x<source.width;++x)if(visible(x,bottom-1)){content=true;break;}
+        if(content)break;
+        --bottom;
+    }
+    if(!bottom)throw std::runtime_error("Portrait source has no visible head");
+    Image result;result.width=88;result.height=40;result.rgba.resize(88*40*4);
+    for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x) {
+        const auto from=(std::size_t((2*y+1)*bottom/80)*source.width+(2*x+1)*source.width/176)*4;
+        const auto to=(y*88+x)*4;
+        // Composite alpha on the original portrait's black background.
+        for(unsigned c=0;c<3;++c)result.rgba[to+c]=unsigned(source.rgba[from+c])*source.rgba[from+3]/255;
+        result.rgba[to+3]=255;
+    }
+    return result;
+}
 bool CharacterColorUsage::contains(unsigned bank,unsigned part) const
 {
     if(bank>=2||part>=6)throw std::runtime_error("Invalid character color region");
@@ -26,7 +71,8 @@ bool CharacterColorUsage::contains(unsigned bank,unsigned part) const
 }
 void validate_character_appearance(const CharacterAppearance& a)
 {
-    if(a.portrait_head>255||a.portrait_body>255||a.combat_head>=14||a.combat_body>=32)
+    if((a.portrait_head>255&&std::none_of(additional_heads.begin(),additional_heads.end(),[&](const auto& h){return h.id==a.portrait_head;}))||
+        a.portrait_body>255||a.combat_head>=14||a.combat_body>=32)
         throw std::runtime_error("Invalid appearance reference");
     for(const auto& bank:a.colors)for(auto color:bank)(void)character_color(color);
 }
@@ -114,6 +160,14 @@ void CharacterArt::validate(const CharacterAppearance& a) const
     validate_character_appearance(a);
     if(!heads.contains(a.portrait_head)||!bodies.contains(a.portrait_body))
         throw std::runtime_error("Invalid character appearance selection");
+}
+void CharacterArt::add_portrait_head(unsigned id,Image image)
+{
+    const auto entry=std::find_if(additional_heads.begin(),additional_heads.end(),[&](const auto& head){return head.id==id;});
+    if(entry==additional_heads.end()||image.width!=88||image.height!=40||image.rgba.size()!=88*40*4)
+        throw std::runtime_error("Invalid additional portrait head");
+    if(!heads.emplace(id,PortraitPart{std::string(entry->filename),std::move(image),std::string(entry->label)}).second)
+        throw std::runtime_error("Duplicate portrait head ID");
 }
 Image CharacterArt::portrait(const CharacterAppearance& a) const
 {

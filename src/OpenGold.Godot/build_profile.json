@@ -3,7 +3,7 @@
         "Control", "Button", "Label", "RichTextLabel", "PanelContainer", "ItemList", "LineEdit", "OptionButton",
         "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
         "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton",
-        "ProjectSettings", "OS", "Engine", "Window", "SceneTree",
+        "ProjectSettings", "ResourceLoader", "OS", "Engine", "Window", "SceneTree",
         "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture"
     ]
 }

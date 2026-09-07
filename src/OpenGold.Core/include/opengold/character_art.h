@@ -5,11 +5,14 @@
 #include <array>
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
+#include <string_view>
 
 namespace opengold::por {
 // Art references and palette choices belong to presentation, independently of
-// the selected rules edition. Indices refer to the user's original archives.
+// the selected rules edition. Head IDs 0..255 address original archives;
+// additional heads have stable IDs above that range.
 struct CharacterAppearance {
     unsigned portrait_head{1}, portrait_body{1};
     unsigned combat_head{}, combat_body{};
@@ -21,7 +24,16 @@ struct CharacterAppearance {
 };
 // Structural validation; CharacterArt additionally checks available portrait IDs.
 void validate_character_appearance(const CharacterAppearance&);
-struct PortraitPart { std::string archive; Image image; };
+struct PortraitPart { std::string archive; Image image; std::string label; };
+struct AdditionalPortraitHead {
+    unsigned id;
+    std::string_view filename, label, race, gender;
+};
+[[nodiscard]] std::span<const AdditionalPortraitHead> additional_portrait_heads();
+[[nodiscard]] std::optional<unsigned> matching_portrait_head(std::string_view race,std::string_view gender);
+// Fit approved source artwork to the original head panel without palette
+// quantization. Remove bottom black padding so the neck reaches the body seam.
+[[nodiscard]] Image prepare_portrait_head(const Image& source);
 struct IndexedIcon {
     unsigned width{}, height{};
     std::vector<std::uint8_t> pixels;
@@ -41,6 +53,7 @@ public:
     [[nodiscard]] static CharacterArt load(const std::filesystem::path& directory);
     std::map<unsigned, PortraitPart> heads, bodies;
     std::map<unsigned, IndexedIcon> combat_heads, combat_bodies;
+    void add_portrait_head(unsigned id,Image image);
     [[nodiscard]] Image portrait(const CharacterAppearance&) const;
     [[nodiscard]] Image icon(const CharacterAppearance&, bool action) const;
     [[nodiscard]] CharacterColorUsage color_usage(const CharacterAppearance&) const;

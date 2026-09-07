@@ -2,8 +2,8 @@
 
 New OpenGold portrait artwork for male and female Gnomes, Orcs, Goliaths,
 Tieflings and Dragonborn is in [Additional portrait heads](../data/art/portraits/README.md).
-These are generated source images awaiting native-size/palette preparation
-and character-creator integration.
+The native character creator now includes these heads, fits them to its
+portrait panel at load time, and retains their approved colors.
 
 The native Rolf demo now displays original Phlan walls and doors. See
 [wall appearance IDs and resource assembly](phlan-wall-art.md) for the mapping,
