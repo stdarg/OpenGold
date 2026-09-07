@@ -183,8 +183,8 @@ void additional_portrait_tests()
     }
     Image rounded;rounded.width=88;rounded.height=40;rounded.rgba.assign(88*40*4,255);
     for(unsigned y=0;y<40;++y)for(unsigned x=0;x<88;++x)rounded.rgba[(y*88+x)*4]=y;
-    check(prepare_portrait_head(rounded,258).rgba[39*88*4]==36&&
-        prepare_portrait_head(rounded,264).rgba[39*88*4]==38,"Orc and Dragonborn crops exclude the rounded bottom remnants");
+    for(const auto id:{258u,260u,262u,264u})check(prepare_portrait_head(rounded,id).rgba[39*88*4]==39,
+        "Revised male heads retain the full neck below the chin instead of cropping it into the armor");
 }
 void art_tests()
 {

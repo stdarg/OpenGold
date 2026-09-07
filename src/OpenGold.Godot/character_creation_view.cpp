@@ -378,6 +378,21 @@ void CharacterCreationView::_process(double)
         if(check_frames_>400)throw std::runtime_error("Character UI check timed out");}
     catch(const std::exception& e){UtilityFunctions::printerr("Character UI check failed at stage ",check_stage_,": ",gs(e.what()));checking_=false;get_tree()->quit(1);}
 }
+void CharacterCreationView::capture_portrait_armor()
+{
+    if(!capture_)return;
+    constexpr std::array<unsigned,5> heads{1,258,260,262,264};
+    constexpr std::array<unsigned,3> bodies{1,18,26};
+    PackedByteArray pixels;pixels.resize(440*264*4);
+    for(unsigned row=0;row<bodies.size();++row)for(unsigned column=0;column<heads.size();++column) {
+        por::CharacterAppearance a;a.portrait_head=heads[column];a.portrait_body=bodies[row];const auto portrait=art_->portrait(a);
+        for(unsigned y=0;y<88;++y)std::copy_n(portrait.rgba.begin()+y*88*4,88*4,pixels.ptrw()+((row*88+y)*440+column*88)*4);
+    }
+    const auto image=godot::Image::create_from_data(440,264,false,godot::Image::FORMAT_RGBA8,pixels);
+    image->resize(1760,1056,godot::Image::INTERPOLATE_NEAREST);
+    const auto path=ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-portrait-armor.png");
+    if(image->save_png(path)!=OK)throw std::runtime_error("Portrait armor capture failed");
+}
 void CharacterCreationView::check_run()
 {
     const auto click=[&](Vector2 position) {
@@ -500,6 +515,7 @@ void CharacterCreationView::check_run()
         if(a!=creator_->appearance()||a!=completed_->appearance())throw std::runtime_error("Appearance lost on part changes or review");press("Restart");break;}
     case 16:if(completed_||creator_->draft().rolled||!creator_->draft().name.empty()||creator_->step()!=CreationStep::race)throw std::runtime_error("Start over did not clear the character");
         if(creator_->appearance().portrait_head!=265)throw std::runtime_error("Restart did not restore the default race's recommended head");
+        capture_portrait_armor();
         UtilityFunctions::print("Godot C++ character check passed: choices, dice, swaps, background, HP, name, ten new portrait heads fitted to all original bodies, race/gender defaults, twelve live texture recolors, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
     }
 }

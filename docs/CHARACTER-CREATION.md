@@ -122,14 +122,18 @@ body's opening by its original skin color `(255,85,85)` in top-row columns
 30..61, excluding collars and armor. An unrecognized opening uses x=36..55.
 
 `AdditionalPortraitHead` stores the source neck edges and retained row count
-on the fitted 88 x 40 grid. The male Orc keeps 37 rows and male Dragonborn 39,
-excluding their rounded bottom remnants; the other heads keep 40. These
-anchors exclude braids and hair from the neck measurement. This fixes position
-and width; original body skin colors can still differ from the new heads.
+on the fitted 88 x 40 grid. All ten heads now keep all 40 rows. The male Orc,
+Goliath, Tiefling and Dragonborn source artwork was revised to give the necks
+straight sides and flat bases, with the complete chin above the join. Their
+anchors were remeasured. In particular, the old Orc crop removed needed neck
+space and is no longer applied. Anchors exclude braids and hair from the neck
+measurement; original body skin colors can still differ from the new heads.
 
-Native tests check varied neck widths, unchanged faces/body pixels, and the
-two crops. The Godot `--character-check` also checks every new head against
-every loaded original body and verifies live updates when changing bodies.
+Native tests check varied neck widths, unchanged face proportions/body pixels,
+and retention of the revised necks. The Godot `--character-check` also checks
+every new head against every loaded original body and verifies live updates
+when changing bodies. Numerical seam checks cannot establish anatomical fit;
+the armor comparison capture is also reviewed visually.
 
 ### Combat parts
 
@@ -202,3 +206,7 @@ For local screenshots of attributes, appearance and the sheet, omit
 `--headless` and append `--capture`. Captures go to ignored `user-data/` files.
 This also saves one composed portrait preview for each new head as
 `character-portrait-<species>-<gender>.png`.
+`character-portrait-armor.png` compares original head 1 with the male Orc,
+Goliath, Tiefling and Dragonborn (columns left to right) on armor bodies 1, 18
+and 26 (rows top to bottom). It is a local rendering of installed game art and
+is not distributed.

@@ -16,6 +16,13 @@ The Goliath pair now uses slate-blue skin, russet-brown markings and amber
 eyes. The color revision preserves their faces and framing; its edit prompts
 are recorded alongside the original generation prompts.
 
+The male Orc, Goliath, Tiefling and Dragonborn were subsequently edited with
+the built-in image generation tool to straighten their necks and provide flat
+bases. The Orc's full chin now has neck space below it before the armor join;
+its former runtime crop has been removed. The exact edit prompts are recorded
+in [neck-revision-prompts.json](neck-revision-prompts.json). These four updated
+PNGs replace the previous versions at the same paths and retain their IDs.
+
 These enlarged source PNGs are now used by the native character creator.
 `build-rolf.cmd` copies them into `godot/bin/portraits/`, and the review launcher
 imports those copies as Godot resources. At load time, native code fits each

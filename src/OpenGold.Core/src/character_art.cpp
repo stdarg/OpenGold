@@ -9,13 +9,13 @@ namespace {
 constexpr std::array<AdditionalPortraitHead,10> additional_heads{{
     {256,"gnome-male.png","Gnome / Male","gnome","male",36,52,40},
     {257,"gnome-female.png","Gnome / Female","gnome","female",37,49,40},
-    {258,"orc-male.png","Orc / Male","orc","male",31,54,37},
+    {258,"orc-male.png","Orc / Male","orc","male",35,51,40},
     {259,"orc-female.png","Orc / Female","orc","female",29,50,40},
-    {260,"goliath-male.png","Goliath / Male","goliath","male",35,52,40},
+    {260,"goliath-male.png","Goliath / Male","goliath","male",33,52,40},
     {261,"goliath-female.png","Goliath / Female","goliath","female",34,50,40},
     {262,"tiefling-male.png","Tiefling / Male","tiefling","male",35,52,40},
     {263,"tiefling-female.png","Tiefling / Female","tiefling","female",36,49,40},
-    {264,"dragonborn-male.png","Dragonborn / Male","dragonborn","male",37,54,39},
+    {264,"dragonborn-male.png","Dragonborn / Male","dragonborn","male",34,54,40},
     {265,"dragonborn-female.png","Dragonborn / Female","dragonborn","female",35,51,40}
 }};
 const AdditionalPortraitHead& additional_head(unsigned id)

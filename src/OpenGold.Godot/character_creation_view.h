@@ -49,5 +49,6 @@ private:
     void palette_selected(int index);
     void check_run();
     void capture(const char* name);
+    void capture_portrait_armor();
 };
 #endif
