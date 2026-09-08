@@ -35,7 +35,7 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    either selector changes, even before all six rolls are assigned. Empty boxes
    remain empty; the unassigned dice retain their original totals.
    Each applied adjustment appears beside its ability (for example,
-   `+2 — Soldier background`). Only the ability score is colored: yellow above
+   `Soldier (+2)`). Only the ability score is colored: yellow above
    its original roll, red below it, and normal when unchanged. Dice boxes have
    room for a two-digit total and padding, with a drag hint beside **Dice Rolls**.
 4. Select one starting class from the twelve SRD classes. Classes whose primary
@@ -267,7 +267,14 @@ is not distributed.
 The native draft retains multiple desired class IDs separately from its one
 level-one class. Target eligibility can be queried with partial assignments;
 unmet targets never prevent selecting a different qualified starting class.
-The checkbox selector and score-warning layout are awaiting UI confirmation.
+On Attributes, compact rolled totals sit beside the ability boxes. The scrollable
+**Target class(es)** checklist shows all twelve classes and their prerequisites.
+Checkboxes record future goals even when the character is not yet qualified.
+Unmet requirements turn the relevant score box dark red and show a readable
+explanation immediately below it. Warnings update with targets, assignments,
+swaps, rerolls, backgrounds and bonuses; Fighter's either/or condition clears
+both warnings when either primary qualifies. The character sheet retains these
+future goals separately from the starting class.
 SRD 5.2.1 multiclassing acquires another class when gaining a level. Later
 Ability Score Improvement features can raise scores and help meet prerequisites;
 future increases are not applied to level-one scores.

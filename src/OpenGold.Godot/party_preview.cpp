@@ -192,7 +192,14 @@ void CharacterCreationView::party_check()
         creator_->select(rules::CreationField::race,"human");creator_->select(rules::CreationField::character_class,"fighter");
         recommend_head();creator_->roll();creator_->name("Party check fighter");
         for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
-        while(creator_->step()!=CreationStep::sheet)next();
+        for(unsigned attempt=0;!creator_->rules().class_eligible(creator_->draft(),"fighter");++attempt){
+            if(attempt==100)throw std::runtime_error("Could not roll qualified party-check fixture");
+            creator_->roll();for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
+        }
+        while(creator_->step()!=CreationStep::sheet){
+            const auto before=creator_->step();next();
+            if(creator_->step()==before)throw std::runtime_error("Party-check creation did not advance");
+        }
         press("BodyNext");const auto chosen=completed_->appearance();
         press("AddParty");if(campaign_->state().slots[0]==0)throw std::runtime_error("Add party callback failed");
         if(!get_node<Button>("BodyNext")->is_disabled()||!get_node<Button>("PortraitHead")->is_disabled())throw std::runtime_error("Added portrait controls remained enabled");

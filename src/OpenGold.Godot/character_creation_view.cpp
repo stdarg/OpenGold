@@ -1,6 +1,8 @@
 #include "character_creation_view.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/check_box.hpp>
+#include <godot_cpp/classes/scroll_container.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
@@ -71,6 +73,8 @@ void CharacterCreationView::_ready()
     get_node<ItemList>("Choices")->connect("item_selected",callable_mp(this,&CharacterCreationView::choice_selected));
     get_node<OptionButton>("Gender")->connect("item_selected",callable_mp(this,&CharacterCreationView::gender_selected));
     get_node<OptionButton>("Background")->connect("item_selected",callable_mp(this,&CharacterCreationView::background_selected));
+    for(int i=0;i<12;++i)get_node<CheckBox>(gs("Targets/Rows/Class"+std::to_string(i)))->connect("toggled",callable_mp(this,&CharacterCreationView::target_toggled).bind(i));
+    get_node<ScrollContainer>("Targets")->add_theme_stylebox_override("panel",box(Color("10171c"),Color("687d88")));
     get_node<OptionButton>("Bonus")->connect("item_selected",callable_mp(this,&CharacterCreationView::bonus_selected));
     get_node<OptionButton>("PortraitHead")->connect("item_selected",callable_mp(this,&CharacterCreationView::portrait_head_selected));
     get_node<LineEdit>("Name")->connect("text_changed",callable_mp(this,&CharacterCreationView::name_changed));
@@ -157,6 +161,30 @@ void CharacterCreationView::layout()
         place(gs("TotalScore"+std::to_string(i)),Rect2(x+250,y+248+i*47,50,37));
     }
     place("Roll",Rect2(x+20,y+ph-58,170,36));place("SwapHint",Rect2(x+202,y+ph-62,pw-222,46));
+    if(creator_&&creator_->step()==CreationStep::attributes){
+        place("BackgroundLabel",Rect2(x+20,y+62,106,32));place("Background",Rect2(x+126,y+58,pw-146,36));
+        place("BonusLabel",Rect2(x+20,y+104,106,32));place("Bonus",Rect2(x+126,y+100,pw-146,36));
+        place("Columns",Rect2(x+20,y+142,110,24));
+        place("DiceHeader",Rect2(x+192,y+142,86,24));
+        place("DiceHint",Rect2(x+20,y+166,254,30));
+        get_node<Label>("DiceHint")->add_theme_font_size_override("font_size",12);
+        place("TargetsTitle",Rect2(x+282,y+142,pw-302,28));
+        place("Targets",Rect2(x+282,y+178,pw-302,ph-336));
+        place("TargetHint",Rect2(x+282,y+ph-150,pw-302,90));
+        for(int i=0;i<6;++i){
+            const double row=y+200+i*58;
+            place(gs("Ability"+std::to_string(i)),Rect2(x+20,row,98,32));
+            get_node<Button>(gs("Ability"+std::to_string(i)))->add_theme_font_size_override("font_size",13);
+            place(gs("Score"+std::to_string(i)),Rect2(x+126,row,60,32));
+            place(gs("Dice"+std::to_string(i)),Rect2(x+202,row,44,32));
+            place(gs("BonusScore"+std::to_string(i)),Rect2(x+20,row+34,100,24));
+            get_node<Label>(gs("BonusScore"+std::to_string(i)))->add_theme_font_size_override("font_size",11);
+            place(gs("Warning"+std::to_string(i)),Rect2(x+126,row+32,144,26));
+            get_node<Label>(gs("Warning"+std::to_string(i)))->add_theme_constant_override("line_spacing",-3);
+        }
+        place("SwapHint",Rect2(x+202,y+ph-56,pw-222,42));
+        get_node<Label>("SwapHint")->add_theme_font_size_override("font_size",13);
+    }
     place("Name",Rect2(x+20,y+138,pw-40,46));
     for(const auto& stem:{std::string("CombatHead"),std::string("Weapon")}) {
         const int row=stem=="CombatHead"?0:1;
@@ -247,7 +275,7 @@ void CharacterCreationView::refresh()
 {
     if(!creator_)return;refreshing_=true;
     const auto step=creator_->step();const auto& d=creator_->draft();const auto& a=creator_->appearance();
-    const auto show=[&](const char* node,bool visible){get_node<Control>(node)->set_visible(visible);};
+    const auto show=[&](const String& node,bool visible){get_node<Control>(node)->set_visible(visible);};
     const bool choosing=step==CreationStep::race||step==CreationStep::alignment||step==CreationStep::character_class,stats=step==CreationStep::attributes,icon=step==CreationStep::combat_icon;
     for(const auto* n:{"Choices"})show(n,choosing);
     show("GenderLabel",step==CreationStep::race);show("Gender",step==CreationStep::race);
@@ -255,7 +283,9 @@ void CharacterCreationView::refresh()
     show("Modifiers",step==CreationStep::sheet);
     show("SavingThrows",step==CreationStep::sheet);
     for(const auto* n:{"BackgroundLabel","Background","BonusLabel","Bonus","Columns","DiceHeader","BaseHeader","BonusHeader","TotalHeader","Roll","SwapHint"})show(n,stats);
-    show("DiceHint",stats);
+    show("DiceHint",stats);show("Instructions",!stats);
+    for(const auto* n:{"TargetsTitle","Targets","TargetHint"})show(n,stats);
+    for(unsigned i=0;i<6;++i)show(gs("Warning"+std::to_string(i)),stats&&creator_->rules().unmet_targets(d)[i]);
     for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
     show("Name",step==CreationStep::name);
     for(const auto* n:{"HeadPrevious","HeadNext","PortraitHead","BodyPrevious","BodyNext","BodyLabel"})show(n,true);
@@ -300,7 +330,14 @@ void CharacterCreationView::refresh()
         for(unsigned i=0;i<choices.size();++i){gender->add_item(gs(choices[i].label));if(choices[i].id==d.gender)gender->select(i);}
     }
     if(stats) {
-        instructions="Roll the dice, then drag each result into an empty ability box. Drag between filled ability boxes to swap.";
+        const auto targets=creator_->rules().choices(CreationField::character_class);
+        for(unsigned i=0;i<targets.size();++i){
+            auto* check=get_node<CheckBox>(gs("Targets/Rows/Class"+std::to_string(i)));
+            const auto requirements=creator_->rules().class_requirements(targets[i].id);
+            check->set_text(gs(targets[i].label+"\n"+requirements.description));
+            check->set_tooltip_text(gs(targets[i].description+"\n"+(creator_->rules().class_eligible(d,targets[i].id)?"Requirements met.":"Not yet qualified. You may still plan for this class.")));
+            check->set_pressed_no_signal(std::find(d.target_classes.begin(),d.target_classes.end(),targets[i].id)!=d.target_classes.end());
+        }
         auto* background=get_node<OptionButton>("Background");background->clear();
         const auto choices=creator_->rules().choices(CreationField::background);
         for(unsigned i=0;i<choices.size();++i){background->add_item(gs(choices[i].label));if(choices[i].id==d.background)background->select(i);}
@@ -322,6 +359,11 @@ void CharacterCreationView::refresh()
         const auto score=creator_->rules().ability_score(d,i);
         auto* score_box=get_node<Button>(gs("Score"+std::to_string(i)));
         score_box->set_text(score?gs(std::to_string(*score)):String());
+        const bool unmet=creator_->rules().unmet_targets(d)[i];
+        for(const auto* state:{"normal","hover","pressed"}){
+            auto style=box(unmet?Color("651f27"):Color("10171c"),Color(state==std::string("normal")?"687d88":"e6c28a"));
+            style->set_content_margin_all(4);score_box->add_theme_stylebox_override(state,style);
+        }
         const int change=score?*score-d.rolls[d.assignment[i]].total():0;
         const auto color=change>0?Color("f3d55b"):change<0?Color("f08080"):Color("e0e0e0");
         for(const auto* state:{"font_color","font_hover_color","font_pressed_color","font_focus_color"})score_box->add_theme_color_override(state,color);
@@ -329,7 +371,7 @@ void CharacterCreationView::refresh()
         if(score&&change){
             const auto backgrounds=creator_->rules().choices(CreationField::background);
             const auto found=std::find_if(backgrounds.begin(),backgrounds.end(),[&](const auto& b){return b.id==d.background;});
-            modifier=signed_number(change)+" — "+found->label+" background";
+            modifier=found->label+" ("+signed_number(change)+")";
         }
         get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(gs(modifier));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
@@ -402,6 +444,8 @@ void CharacterCreationView::perform(const std::function<void()>& action)
     try{error_="";action();refresh();}
     catch(const std::exception& e){error_=gs(e.what());refreshing_=false;get_node<Label>("Status")->set_text(error_);}
 }
+void CharacterCreationView::target_toggled(bool selected,int index)
+{if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
 void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}
 void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
 void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_head();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
@@ -606,13 +650,25 @@ void CharacterCreationView::check_run()
     case 0:choose(CreationField::race,"dwarf");break;
     case 1:choose(CreationField::gender,"female");press("Next");break;
     case 2:choose(CreationField::alignment,"neutral_good");press("Next");break;
-    case 3:if(creator_->step()!=CreationStep::attributes)throw std::runtime_error("Attributes must precede Class");break;
+    case 3:if(creator_->step()!=CreationStep::attributes)throw std::runtime_error("Attributes must precede Class");
+        for(unsigned i=0;i<12;++i)get_node<CheckBox>(gs("Targets/Rows/Class"+std::to_string(i)))->set_pressed(true);
+        if(creator_->draft().target_classes.size()!=12||!get_node<Label>("Warning3")->is_visible())throw std::runtime_error("Target checkboxes must accept future goals and show unmet requirements");
+        break;
     case 4:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Unrolled scores accepted");capture("character-empty-rolls.png");press("Roll");
         if(!get_node<Button>("Next")->is_disabled()||!get_node<Button>("Score0")->get_text().is_empty())throw std::runtime_error("Dice were automatically assigned");break;
     case 5:{capture("character-unassigned-rolls.png");const auto old=creator_->draft().rolls;press("Roll");if(old==creator_->draft().rolls)throw std::runtime_error("Reroll did not replace dice");
         get_node<OptionButton>("Background")->emit_signal("item_selected",3);get_node<OptionButton>("Bonus")->emit_signal("item_selected",1);break;}
     case 6:{const auto old=creator_->draft().assignment;press("Ability0");press("Ability2");if(creator_->draft().assignment[0]!=old[2])throw std::runtime_error("UI swap failed");break;}
     case 7:
+        for(unsigned i=0;i<6;++i){
+            const bool unmet=creator_->rules().unmet_targets(creator_->draft())[i];
+            if(get_node<Label>(gs("Warning"+std::to_string(i)))->is_visible()!=unmet)throw std::runtime_error("Target warnings did not follow score assignment");
+            const Ref<StyleBoxFlat> style=get_node<Button>(gs("Score"+std::to_string(i)))->get_theme_stylebox("normal");
+            if(style->get_bg_color()!=(unmet?Color("651f27"):Color("10171c")))throw std::runtime_error("Target score background is stale");
+        }
+        get_node<CheckBox>("Targets/Rows/Class11")->set_pressed(false);
+        if(get_node<Label>("Warning3")->is_visible())throw std::runtime_error("Removing Wizard target must clear Intelligence warning");
+        get_node<CheckBox>("Targets/Rows/Class11")->set_pressed(true);
         for(unsigned i=0;i<6;++i)if(get_node<Button>(gs("Score"+std::to_string(i)))->get_text()!=gs(std::to_string(creator_->sheet().scores[i])))throw std::runtime_error("Displayed ability score differs from the character sheet");
         capture("character-attributes.png");press("Next");break;
     case 8:if(creator_->step()!=CreationStep::character_class)throw std::runtime_error("Attributes must advance to Class");

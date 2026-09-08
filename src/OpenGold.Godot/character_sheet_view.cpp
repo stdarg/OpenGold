@@ -44,6 +44,14 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
 {
     const auto& s=character.sheet();
     std::string text="[font_size=24]"+literal(s.name)+"[/font_size]\nLevel "+std::to_string(s.level)+" "+s.race+" "+s.gender+" "+s.character_class+"\n"+s.alignment+" / "+s.background+"\n\n";
+    if(!character.creation_data().target_classes.empty()){
+        text+="Future class goals: ";bool first=true;
+        const auto options=srd5::character_rules()->choices(rules::CreationField::character_class);
+        for(const auto& id:character.creation_data().target_classes)for(const auto& option:options)if(option.id==id){
+            if(!first)text+=", ";text+=option.label;first=false;
+        }
+        text+="\n\n";
+    }
     const int hp_modifier=s.hit_points-s.hit_die;
     const auto hp_number=[&](int hp){const auto value=std::to_string(hp);
         return hp_modifier==0?value:"[color="+std::string(hp_modifier>0?"#f3d55b":"#f08080")+"]"+value+"[/color]";};

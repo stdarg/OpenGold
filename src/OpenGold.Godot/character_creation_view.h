@@ -40,6 +40,7 @@ private:
     void choice_selected(std::int64_t index);
     void gender_selected(std::int64_t index);
     void background_selected(std::int64_t index);
+    void target_toggled(bool selected,int index);
     void bonus_selected(std::int64_t index);
     void roll();
     void score_selected(int index);
