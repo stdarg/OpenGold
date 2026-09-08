@@ -87,7 +87,8 @@ private:
     TownParty party_, saved_party_;
     std::shared_ptr<opengold::CampaignParty> campaign_;
     std::optional<opengold::PartyState> saved_campaign_;
-    std::uint64_t who_request_{};
+    std::uint64_t who_request_{}, temple_request_{};
+    std::vector<opengold::MemberId> temple_targets_;
     std::vector<unsigned> who_slots_;
     std::vector<Equipment> treasure_;
     std::optional<Image> picture_;
@@ -96,10 +97,12 @@ private:
     std::optional<ExplorationCommand> pending_movement_;
     unsigned current_script_{}, saved_script_{}, selected_character_{};
     unsigned saved_selected_character_{};
-    unsigned event_stage_{}; // 0 tour, 1 before step, 2 search, 3 area entry, 4 camp.
+    unsigned event_stage_{}; // 0 tour, 1 before step, 2 search, 3 area entry, 4 pre-camp, 5 interrupted.
     bool transition_{}, message_only_{};
     std::uint64_t shop_request_{};
     void configure_town();
+    void synchronize_clock();
+    [[nodiscard]] EclHostReply clock_reply() const;
     void begin_event(unsigned slot);
     void finish_event();
     bool handle_town_host(const EclRequest& request);

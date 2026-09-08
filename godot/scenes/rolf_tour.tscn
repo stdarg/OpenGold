@@ -90,6 +90,10 @@ text = "Leave shop"
 [node name="Look" type="Button" parent="."]
 text = "Look [L]"
 
+[node name="Camp" type="Button" parent="."]
+text = "Camp [C]"
+tooltip_text = "Run the area's pre-camp check and attempt an eight-hour long rest."
+
 [node name="Inventory" type="Button" parent="."]
 text = "Inventory"
 

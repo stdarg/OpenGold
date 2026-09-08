@@ -14,6 +14,8 @@ struct PartyMember {
     std::array<std::uint16_t,7> wealth{};
     std::vector<std::uint64_t> equipped;
     unsigned morale{100};
+    unsigned experience{};
+    std::optional<std::uint64_t> last_rest_minutes;
     std::map<std::uint64_t,por::Equipment> item_sources;
 };
 struct PartyState {
@@ -21,6 +23,8 @@ struct PartyState {
     std::array<MemberId,8> slots{};
     MemberId next_id{1};
     unsigned selected{};
+    std::uint64_t time_minutes{}, random_state{42};
+    std::vector<std::string> claimed_rewards;
 };
 // One shared campaign value store. Sessions share this owner, never separate PCs.
 // While combat owns mutable vitals, roster/equipment/script mutations are barred.
@@ -39,6 +43,11 @@ public:
     void unequip(MemberId id,std::uint64_t item);
     void purchase(MemberId id,const por::Equipment& item);
     void set_wealth(MemberId id,std::array<std::uint16_t,7> wealth);
+    void award_experience(unsigned amount,std::string reward_id);
+    [[nodiscard]] bool rest();
+    void temple_heal(MemberId target);
+    void advance_time(unsigned minutes);
+    [[nodiscard]] std::uint64_t time_hours() const noexcept {return state_.time_minutes/60;}
     [[nodiscard]] rules::CharacterProfile profile(MemberId id) const;
     [[nodiscard]] bool has_item(unsigned original_type) const;
     [[nodiscard]] unsigned strength() const;

@@ -124,7 +124,7 @@ void CharacterCreationView::_ready()
         if(directory.is_empty())directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
         art_=por::CharacterArt::load(std::filesystem::u8path(directory.utf8().get_data()));
         load_additional_heads();
-        const auto seed=checking_?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+        const auto seed=(checking_||args.has("--party-check"))?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_head();refresh();
     } catch(const std::exception& e) {
         fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-rolf.cmd, then review-character.cmd.");

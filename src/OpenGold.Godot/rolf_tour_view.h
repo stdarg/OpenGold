@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <optional>
+#include <set>
 
 class RolfTourView : public godot::Control {
     GDCLASS(RolfTourView, godot::Control)
@@ -19,6 +20,8 @@ public:
     [[nodiscard]] bool can_leave() const {return !session_||session_->can_leave();}
     void resume_party(){shown_revision_=0;refresh();}
     [[nodiscard]] bool party_route_checked() const {return shop_check_stage_==4;}
+    void start_recovery_check();
+    [[nodiscard]] bool recovery_checked() const {return recovery_stage_==8;}
 protected:
     static void _bind_methods();
     void _notification(int what);
@@ -39,6 +42,11 @@ private:
     bool full_map_{true}, ready_{}, checking_{}, capture_{}, capture_pending_{};
     bool town_check_{},embedded_party_{};
     unsigned shop_check_stage_{};
+    unsigned recovery_stage_{};
+    std::uint64_t recovery_capture_ticket_{};
+    std::optional<opengold::PartyState> recovery_before_;
+    std::set<std::pair<unsigned,unsigned>> check_refused_edges_;
+    std::optional<std::pair<unsigned,unsigned>> check_pending_edge_;
     void layout();
     void refresh();
     void restart();
@@ -47,6 +55,7 @@ private:
     void right();
     void forward();
     void look();
+    void camp();
     void inventory();
     void refresh_inventory();
     void inventory_selected(std::int64_t index);
@@ -60,6 +69,8 @@ private:
     void draw_map();
     void check_run();
     void check_town();
+    void check_recovery();
+    void check_walk_to(unsigned x,unsigned y);
     void capture_frame(const godot::String& name);
 };
 #endif

@@ -55,9 +55,10 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     const int hp_modifier=s.hit_points-s.hit_die;
     const auto hp_number=[&](int hp){const auto value=std::to_string(hp);
         return hp_modifier==0?value:"[color="+std::string(hp_modifier>0?"#f3d55b":"#f08080")+"]"+value+"[/color]";};
-    text+="[b]HP "+hp_number(member?member->vitals.hit_points:s.hit_points)+" / "+hp_number(s.hit_points)+"[/b]   Hit Dice: 1d"+std::to_string(s.hit_die);
+    text+="[b]HP "+hp_number(member?member->vitals.hit_points:s.hit_points)+" / "+hp_number(s.hit_points)+"[/b]   Hit Dice: "+std::to_string(s.level)+"d"+std::to_string(s.hit_die);
     if(member)text+="   Gold "+std::to_string(member->wealth[3])+(member->vitals.dead?"   Dead":"");
-    text+="\n[font_size=14]SRD 5.2.1: At level 1, HP uses the maximum class Hit Die plus applicable modifiers.[/font_size]";
+    if(member)text+="   XP "+std::to_string(member->experience);
+    text+="\n[font_size=14]"+literal(s.hp_explanation)+"[/font_size]";
     text+="\n\n[table=3][cell][b]Attribute     [/b][/cell][cell][b]Score     [/b][/cell][cell][b]Saving throw[/b][/cell]";
     for(unsigned i=0;i<6;++i){
         const auto score=std::to_string(s.scores[i]);

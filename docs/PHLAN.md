@@ -19,6 +19,8 @@ From CMD in the repository root, build once with `build-rolf.cmd`, then run
 - Arrow keys or the turn/step buttons move the party; stepping crosses ordinary
   doors. Solid walls, locks, and script-imposed restrictions still apply.
 - Look (L) runs the search entry at the current position and facing.
+- Camp (C) runs the original pre-camp check. The city watch interrupts street
+  camping; the original inn offers safe paid rest. See [recovery limits](RECOVERY.md).
 - Select an original dialogue choice, then Choose/Enter. Numeric/string prompts
   accept a typed answer followed by Submit/Enter.
 - Accept a shopkeeper's offer, select merchandise, and Buy/Enter. The list
@@ -36,9 +38,10 @@ to replace original dialogue or choose a handcrafted event.
 The host schedules slot 0 before resolving a forward step, then slot 1 after
 resolution. Turning and Look invoke slot 1. `NEW ECL` preserves campaign state,
 clears area-local flags through the VM and schedules slot 4 followed by slot 1.
-The native camp command exposes the pre-camp entry, but does not perform a rest.
+Camp exposes the pre-camp entry and the supported interruption/recovery paths.
 This is a bounded adapter policy, not a verified reproduction of every DOS
-main-loop detail. Time currently stays at midday.
+main-loop detail. Recovery advances the campaign clock and ECL time fields;
+ordinary movement and combat do not yet advance time.
 
 Logical campaign/local/register/scratch ranges are initialized explicitly.
 LOAD CHARACTER and WHO expose the single fighter and empty remaining party
@@ -103,7 +106,8 @@ Captures are written under ignored `user-data/phlan-shop.png` and
 `user-data/phlan-inventory.png`. Tested at 960 x 720 and 1280 x 900.
 
 Unimplemented branches include town combat/duels and their party-strength
-queries, training, temple spell services, resting, robbery, recruitment,
+queries, training, temple spells beyond Cure Wounds, short rests and general
+rest interruptions, robbery, recruitment,
 non-shop treasure awards, external travel and saved-game persistence. Campaign
 flags affect which dialogue branches can be reached; this test is not exhaustive
 coverage of all choices, quest states, random outcomes, or camp interruptions.

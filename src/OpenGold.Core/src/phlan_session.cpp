@@ -24,6 +24,25 @@ void RolfTourSession::configure_town()
     for (const auto& w:character_reply(selected_character_).writes) machine_.bind_variable(w.address,w.value);
     for (const std::uint8_t op:{10,28,32,33,36,39,40,50,55,56,57}) machine_.enable_host(op);
     if(campaign_)for(const std::uint8_t op:{29,30,54})machine_.enable_host(op);
+    synchronize_clock();
+}
+void RolfTourSession::synchronize_clock()
+{
+    for(const auto& w:clock_reply().writes)machine_.bind_variable(w.address,w.value);
+}
+EclHostReply RolfTourSession::clock_reply() const
+{
+    EclHostReply reply;if(!campaign_)return reply;
+    const auto minutes=campaign_->state().time_minutes;
+    const auto minute_of_day=(minutes%1440+720)%1440;
+    const auto days=minutes/1440+(minutes%1440+720)/1440;
+    reply.writes={{0x49C7,static_cast<std::uint16_t>(minute_of_day%10)},
+        {0x49C8,static_cast<std::uint16_t>((minute_of_day%60)/10)},
+        {0x49C9,static_cast<std::uint16_t>(minute_of_day/60)},
+        {0x49CA,static_cast<std::uint16_t>(days%30+1)},
+        {0x49CB,static_cast<std::uint16_t>((days/30)%12+1)},
+        {0x49CC,static_cast<std::uint16_t>((days/360)%256)}};
+    return reply;
 }
 
 EclHostReply RolfTourSession::character_reply(unsigned index) const
@@ -83,6 +102,7 @@ bool RolfTourSession::move_party(ExplorationCommand command)
 
 void RolfTourSession::begin_event(unsigned slot)
 {
+    synchronize_clock();
     if(campaign_){selected_character_=campaign_->state().selected;
         for(const auto& w:character_reply(selected_character_).writes)machine_.bind_variable(w.address,w.value);
         saved_campaign_=campaign_->checkpoint();}
@@ -117,8 +137,25 @@ void RolfTourSession::finish_event()
         return;
     }
     if (event_stage_==4) {
-        // The original pre-camp entry has run. A full SRD rest is not implied.
-        snapshot_.dialogue += "\nCamp check complete. Rest and spell preparation are not implemented here.";
+        if(!campaign_)throw EclError("Rest requires campaign rules");
+        const auto interval=machine_.variable(0x6DD2),chance=machine_.variable(0x6DD3);
+        if(chance==255)snapshot_.dialogue+="\nRest is not allowed here.";
+        else if(interval&&chance){
+            // Bounded original New Phlan profile: guaranteed city-watch interruption.
+            // Probabilistic interruptions require a campaign encounter scheduler.
+            if(interval!=1||chance<100)throw EclError("Unsupported probabilistic camp interruption");
+            campaign_->advance_time(5);synchronize_clock();event_stage_=5;
+            if(!machine_.start(3))throw EclError("Cannot enter camp interruption script");
+            return;
+        }else{
+            snapshot_.dialogue+=campaign_->rest()?"\nLong rest complete: eight hours passed; HP and supported resources recovered.":
+                "\nRest denied: every active member needs at least 1 HP and 16 hours since their previous long rest.";
+            for(const auto& w:character_reply(selected_character_).writes)machine_.bind_variable(w.address,w.value);
+            synchronize_clock();
+        }
+    }
+    if(event_stage_==5){
+        snapshot_.dialogue+="\nRest interrupted after five minutes; no recovery granted.";
     }
     checkpoint_.reset();snapshot_.phase=TourPhase::completed;
     snapshot_.choices.clear(); snapshot_.continue_ticket=0; ++snapshot_.revision;
@@ -135,7 +172,21 @@ bool RolfTourSession::choose(std::uint64_t ticket,std::size_t choice)
 {
     if (snapshot_.phase!=TourPhase::awaiting_continue || !ticket || ticket!=snapshot_.continue_ticket ||
         choice>=snapshot_.choices.size()) return false;
-    if(who_request_){
+    if(temple_request_){
+        // The original COMBAT request remains suspended until payment or cancellation.
+        auto before=campaign_->checkpoint();
+        try{
+            const bool cancel=choice==temple_targets_.size();
+            if(!cancel)campaign_->temple_heal(temple_targets_.at(choice));
+            auto reply=character_reply(selected_character_);reply.writes.push_back({0x6DE2,0});
+            if(!machine_.resume_host(temple_request_,reply))throw EclError("Temple reply rejected");
+            temple_request_=0;temple_targets_.clear();snapshot_.phase=TourPhase::running;
+            snapshot_.dialogue=cancel?"Temple service cancelled.":"Cure Wounds completed for 100 gp.";
+            snapshot_.diagnostic.clear();
+        }catch(const std::exception& e){
+            campaign_->restore(std::move(before));snapshot_.diagnostic=e.what();++snapshot_.revision;return false;
+        }
+    }else if(who_request_){
         const auto slot=who_slots_.at(choice);auto reply=character_reply(slot);
         if(!machine_.resume_host(who_request_,reply))return false;
         campaign_->select(slot);selected_character_=slot;who_request_=0;who_slots_.clear();snapshot_.phase=TourPhase::running;
@@ -270,6 +321,20 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         treasure_.insert(treasure_.end(),found->second.begin(),found->second.end());break;
     }
     case 36:
+        if(machine_.variable(0x6DE2)==1){
+            if(!campaign_)throw EclError("Temple service requires a campaign party");
+            read_character();temple_targets_.clear();snapshot_.choices.clear();
+            for(auto id:campaign_->state().slots)if(id){
+                const auto& m=campaign_->member(id);
+                if(!m.vitals.dead&&m.vitals.hit_points<m.character.sheet().hit_points){
+                    temple_targets_.push_back(id);snapshot_.choices.push_back("Cure Wounds: "+m.character.sheet().name+" (100 gp)");
+                }
+            }
+            snapshot_.choices.push_back("Cancel");temple_request_=request.id;
+            snapshot_.dialogue+="\nCure Wounds costs 100 gp from active party purses and heals 2d8 + 3 HP. Choose a wounded living member. Other temple services are not supported.";
+            snapshot_.diagnostic.clear();snapshot_.phase=TourPhase::awaiting_continue;
+            snapshot_.continue_ticket=++next_ticket_;++snapshot_.revision;return true;
+        }
         if (machine_.variable(0x6E6C)==1) {
             if(campaign_&&!campaign_->state().slots.at(campaign_->state().selected))throw EclError("Shopping requires a selected party member");
             read_character();shop_request_=request.id;
@@ -295,7 +360,17 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         reply.conditions=EclConditions{found,!found,false,false,false,false};break;
     }
     case 40: throw EclError("Pickpocket money and item removal");
-    case 56: throw EclError("Training/camp service "+std::to_string(arg(0)));
+    case 56:
+        if(arg(0)!=9||!campaign_)throw EclError("Training/camp service "+std::to_string(arg(0)));
+        // The original inn invokes its pre-camp subroutine before PROGRAM 9.
+        read_character();
+        if(machine_.variable(0x6DD3)==255||(machine_.variable(0x6DD2)&&machine_.variable(0x6DD3)))
+            throw EclError("Inn rest is not safe in this script context");
+        if(!campaign_->rest())throw EclError("Party is not eligible for a long rest");
+        reply=character_reply(selected_character_);
+        for(const auto& w:clock_reply().writes)reply.writes.push_back(w);
+        snapshot_.dialogue+="\nLong rest complete: eight hours passed; HP and supported resources recovered.";
+        break;
     default: return false;
     }
     if (!machine_.resume_host(request.id,reply)) throw EclError("Town host reply rejected");

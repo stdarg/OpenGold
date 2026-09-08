@@ -62,23 +62,24 @@ Definition character_definition(std::string_view bytes,bool combat=true)
     if(bytes.size()>1024)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
-    in>>magic>>std::quoted(klass)>>std::quoted(race);
+    unsigned level=1;in>>magic;if(magic=="PC2")in>>level;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
     in>>count;
-    if(!in||magic!="PC1"||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
+    if(!in||(magic!="PC1"&&magic!="PC2")||level<1||level>2||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
     if(combat&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")
-        throw std::runtime_error("Campaign combat supports level-one Fighter, Cleric and Wizard profiles only");
+        throw std::runtime_error("Campaign combat supports Fighter, Cleric and Wizard subsets only");
+    if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")throw std::runtime_error("Advancement is unsupported for this class");
     const auto races=character_rules()->choices(CreationField::race);
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
     const auto classes=character_rules()->choices(CreationField::character_class);
     if(std::none_of(classes.begin(),classes.end(),[&](const auto& c){return c.label==klass;}))throw std::runtime_error("Unknown class");
     const int die=klass=="Barbarian"?12:(klass=="Fighter"||klass=="Paladin"||klass=="Ranger")?10:(klass=="Wizard"||klass=="Sorcerer")?6:8;
-    Definition d;d.hp=die+con+(race=="Dwarf"?1:0);
-    d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=1;
+    Definition d;d.hp=die+con+(race=="Dwarf"?int(level):0)+(level-1)*std::max(1,die/2+1+con);
+    d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
     d.melee_bonus=2+str;d.melee={0,0,std::max(0,1+str)};
-    d.winds=klass=="Fighter"?2:0;d.slots=klass=="Fighter"?0:2;
+    d.winds=klass=="Fighter"?2:0;d.slots=(klass=="Cleric"||klass=="Wizard")?(level==1?2:3):0;
     d.casting=2+ability_modifier(scores[klass=="Cleric"?4:3]);d.spells=klass=="Cleric"?2:klass=="Wizard"?5:0;
     bool weapon=false,armor=false,shield=false;
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
@@ -475,14 +476,53 @@ public:
     std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
+    unsigned experience_for_level(unsigned level) const override
+    {static constexpr unsigned thresholds[]{0,0,300,900,2700};if(level<1||level>4)throw std::runtime_error("Unsupported character level");return thresholds[level];}
+    bool advance_character(CharacterSheet& sheet,VitalState& state) const override
+    {
+        const auto old=character_definition(character_profile(sheet,{}).data);
+        if(sheet.level==2)return false;
+        Actor actor;actor.definition=old;actor.winds=old.winds;actor.slots=old.slots;restore_vitals(actor,state);
+        auto next=sheet;++next.level;
+        const int growth=std::max(1,sheet.hit_die/2+1+ability_modifier(sheet.scores[2]))+(sheet.race=="Dwarf"?1:0);
+        next.hit_points+=growth;
+        next.hp_explanation="Level 2 HP total: "+std::to_string(next.hit_points)+". Gained "+std::to_string(growth)+" HP from the fixed average Hit Die and Constitution"+(sheet.race=="Dwarf"?" plus Dwarven Toughness.":".");
+        next.class_modifiers+="\nLevel 2 subset: fixed-average HP growth; Cleric/Wizard gain a third level-one slot. Additional class features are not implemented.";
+        actor.definition=character_definition(character_profile(next,{}).data);
+        if(actor.hp>0)actor.hp+=growth;
+        actor.slots+=actor.definition.slots-old.slots;
+        auto continuation=vitals(actor);sheet=std::move(next);state=std::move(continuation);
+        return true;
+    }
+    RestPolicy long_rest_policy() const override {return {480,960};}
+    void recover(VitalState& state,const CharacterSheet& sheet) const override
+    {
+        const auto d=character_definition(character_profile(sheet,{}).data,false);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;restore_vitals(actor,state);
+        if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
+        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.successes=actor.failures=0;actor.stable=false;
+        state=vitals(actor);
+    }
+    void temple_heal(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
+    {
+        const auto d=character_definition(character_profile(sheet,{}).data,false);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;restore_vitals(actor,state);
+        if(actor.dead||actor.hp>=d.hp)throw std::runtime_error("Cure Wounds requires a wounded living member");
+        // Authored temple caster: Cure Wounds, Wisdom +3. Same SplitMix64 as combat.
+        auto rng=random_state;int amount=3;
+        for(int i=0;i<2;++i){auto z=(rng+=0x9e3779b97f4a7c15ULL);z=(z^(z>>30))*0xbf58476d1ce4e5b9ULL;
+            z=(z^(z>>27))*0x94d049bb133111ebULL;amount+=int((z^(z>>31))%8)+1;}
+        actor.hp=std::min(d.hp,actor.hp+amount);actor.successes=actor.failures=0;actor.stable=false;
+        auto next=vitals(actor);state=std::move(next);random_state=rng;
+    }
     CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear) const override {
-        if(sheet.identity!=character_rules()->identity()||sheet.level!=1)throw std::runtime_error("Unsupported character rules identity or level");
-        std::ostringstream out;out<<"PC1 "<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>2)throw std::runtime_error("Unsupported character rules identity or level");
+        std::ostringstream out;out<<"PC2 "<<sheet.level<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
         const auto data=out.str();const auto d=character_definition(data,false);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
-        CharacterProfile result{data,d.hp,d.ac,"Level-one combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
+        CharacterProfile result{data,d.hp,d.ac,"Level 1-2 combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
         result.strength_dexterity_disadvantage=d.str_dex_disadvantage;
         for(const auto& key:gear){
             if(key=="shield")result.item_modifiers+=trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.\n":"Source: equipped Shield: +0 AC (untrained).\n";
@@ -515,7 +555,7 @@ std::unique_ptr<RulesModule> load(const std::filesystem::path& file)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.2.0",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.3.0",revision+"/"+std::to_string(hash)};
     while(std::getline(lines,line)) {
         if(line.empty()||line[0]=='#'||line=="\r")continue;
         std::istringstream row(line);std::string tag,key;Definition d;row>>tag>>key>>d.ac>>d.hp>>d.initiative>>d.speed>>d.melee_bonus>>d.melee.count>>d.melee.sides>>d.melee.bonus

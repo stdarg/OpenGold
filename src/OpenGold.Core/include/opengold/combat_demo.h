@@ -35,7 +35,7 @@ private:
     std::unique_ptr<rules::CombatSession> combat_;
     std::shared_ptr<CampaignParty> campaign_;
     bool owns_campaign_combat_{};
-    void start_encounter(std::vector<rules::Participant> enemies);
+    void start_encounter(std::vector<rules::Participant> enemies, std::string reward_id);
     void synchronize_party();
     std::optional<por::EclMachine> vm_;
     std::optional<por::CreatureCatalog> creatures_;
@@ -45,6 +45,7 @@ private:
     std::string dialogue_,status_;
     std::uint64_t menu_ticket_{},combat_ticket_{},seed_{};
     unsigned encounters_{};
+    std::string reward_id_;
     void pump();
     void finish_combat();
 };

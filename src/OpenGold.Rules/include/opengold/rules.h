@@ -27,6 +27,9 @@ struct VitalState {
     std::string description;
     bool operator==(const VitalState&) const = default;
 };
+struct RestPolicy {
+    unsigned duration_minutes{}, wait_after_rest_minutes{};
+};
 using EntityId = std::uint32_t;
 struct Cell { int x{}, y{}; auto operator<=>(const Cell&) const = default; };
 struct Battlefield {
@@ -95,6 +98,12 @@ public:
     [[nodiscard]] virtual std::unique_ptr<CombatSession> create(Encounter encounter, std::uint64_t seed) const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const = 0;
     [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>) const;
+    [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
+    // False means this module's supported advancement ceiling was reached.
+    virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;
+    virtual void recover(VitalState& state, const CharacterSheet& sheet) const;
+    [[nodiscard]] virtual RestPolicy long_rest_policy() const;
+    virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };
 }
 #endif

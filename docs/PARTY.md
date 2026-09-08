@@ -48,23 +48,25 @@ Run from PowerShell:
 8. Finish the fight and return. HP, death state and spent resources persist.
    Reopening exploration resumes the town session at its previous position.
 
-Closing the application discards this session. Campaign saving, rewards, rests
-and advancement remain issues #1 and #6; cross-area travel remains #3. The
+Closing the application discards this session. Campaign file saving remains #1;
+the bounded [recovery and advancement subset](RECOVERY.md) covers part of #6.
+Cross-area travel remains #3. The
 preview opens combat explicitly; it does not add general town combat encounters.
 
 ## Supported combat profiles
 
 The rules module evaluates the created scores and equipment; these characters
 do not select the old Vanguard/Adept/Healer fixture statistics. This first shared
-party increment supports **level-one Fighter, Cleric and Wizard combat subsets**.
+party increment supports **level 1-2 Fighter, Cleric and Wizard combat subsets**.
 All twelve classes have exploration equipment profiles, including armor training,
 unarmored AC and HP. Other classes must still be put in
 reserve before combat. An unsupported active profile fails explicitly.
 
 - Fighter: ordinary attacks and two Second Wind uses.
-- Cleric: ordinary attacks and Cure Wounds, with two level-one spell slots.
+- Cleric: ordinary attacks and Cure Wounds, with two level-one spell slots
+  (three at character level 2).
 - Wizard: ordinary attacks, Fire Bolt and single-target Magic Missile, with two
-  level-one spell slots.
+  level-one spell slots (three at character level 2).
 - Unarmed attacks, one equipped melee weapon, one armor and one shield are
   modeled. Ability modifiers, proficiency, AC, maximum HP and movement come from
   SRD calculations. Dwarven starting HP and Goliath speed are included.
@@ -122,12 +124,18 @@ recipe and display statistics. `Participant` carries that recipe and optional
 live vitals into combat. The SRD session owns turn state and exposes an opaque,
 versioned resource continuation for each actor in its snapshot.
 
-`CombatDemo` synchronizes accepted combat changes into the party. Roster, shop,
+`CombatDemo` synchronizes accepted combat changes into the party. Campaign
+victories award 300 XP once under a stable encounter key; reaching 300 XP
+advances the supported character to level 2 and updates the rules profile's HP
+and caster slots. The authored preview award is one-time, including across scene
+recreation; original rewards require explicit mappings. Roster, shop,
 equipment and script writes are locked during combat. When combat finishes,
 editing resumes; no fresh HP or spell resources are granted on the next fight.
-The module identity is now 0.2.0 and combat checkpoint format is version 2,
+The module identity is now 0.3.0 and combat checkpoint format is version 2,
 including character recipes. Old module saves fail the identity check explicitly.
-Campaign save/load is disabled rather than saving an incomplete party/ECL state.
+Campaign file save/load is disabled rather than saving an incomplete party/ECL
+state, but native `PartyState` checkpoints retain XP, claimed reward IDs and
+campaign time, rest timers and RNG for in-session rollback.
 
 ## ECL adapter
 
@@ -154,7 +162,11 @@ policy, not a claim of unchanged encounter balance. Dead members contribute zero
 Thief-skill/effect CHECKPARTY variants still fault. `PhlanResources::npc_profiles`
 accepts explicit native character conversions for this bank; unregistered NPCs
 and the special hostile NPC 24 fault. General bank resolution, morale behavior
-and original NPC conversion coverage remain campaign work. The preview guard
+and original NPC conversion coverage remain campaign work. An eligible,
+uninterrupted long rest advances campaign time by eight hours. The original
+city-watch interruption grants no recovery. Temple Cure Wounds costs 100 gp for
+a wounded living active member; resurrection is unsupported. See
+[service limits and checks](RECOVERY.md). The preview guard
 and synthetic ADD NPC test establish ownership/recruitment without inventing
 conversions for original content.
 
@@ -164,6 +176,8 @@ conversions for original content.
 state, purchasing/equipping and rejected operations, script-selected characters,
 WHO tickets, party queries, ADD NPC, FIND ITEM branching, event rollback, combat
 handoffs, no resource refill and deterministic character checkpoint continuation.
+The [recovery route](RECOVERY.md) adds XP thresholds, scene reentry, long rest,
+original temple/inn services, interruption and payment/rollback checks.
 
 The Godot acceptance route uses the actual installed original town shop and
 native control callbacks, then equips and fights with that same party:

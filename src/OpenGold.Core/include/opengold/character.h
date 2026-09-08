@@ -3,6 +3,7 @@
 #include "opengold/character_art.h"
 #include "opengold/character_rules.h"
 #include "opengold/inventory.h"
+#include "opengold/rules.h"
 
 namespace opengold {
 // A finished character owns its data. It does not borrow from the creator,
@@ -16,6 +17,7 @@ public:
     void appearance(por::CharacterAppearance value);
     [[nodiscard]] const Inventory& inventory() const {return inventory_;}
     [[nodiscard]] Inventory& inventory() {return inventory_;}
+    bool advance(const rules::RulesModule& rules, rules::VitalState& state);
 private:
     rules::CharacterDraft creation_;
     rules::CharacterSheet sheet_;

@@ -6,4 +6,6 @@ Character::Character(const rules::CharacterRules& rules,rules::CharacterDraft cr
 {this->appearance(appearance);}
 void Character::appearance(por::CharacterAppearance value)
 {por::validate_character_appearance(value);appearance_=value;}
+bool Character::advance(const rules::RulesModule& rules, rules::VitalState& state)
+{return rules.advance_character(sheet_,state);}
 }

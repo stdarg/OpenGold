@@ -225,12 +225,16 @@ void CharacterCreationView::party_check()
     case 4:{auto* fight=get_node<CombatView>("CampaignCombat");
         if(!fight->can_leave())return;press("ReturnParty");capture("party-after-combat.png");
         if(campaign_->in_combat()||campaign_->member(campaign_->state().slots[0]).vitals.resources.empty())throw std::runtime_error("Combat state was not returned");
+        if(!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("Level 2")||!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("XP 300"))throw std::runtime_error("Victory advancement is missing from character sheet");
         ++party_check_stage_;break;}
-    case 5:press("PartyPanel/Explore");++party_check_stage_;break;
-    case 6:if(!get_node<RolfTourView>("CampaignTown")->can_leave())return;
+    case 5:press("PartyPanel/Explore");get_node<RolfTourView>("CampaignTown")->start_recovery_check();++party_check_stage_;break;
+    case 6:if(!get_node<RolfTourView>("CampaignTown")->recovery_checked())return;
         press("ReturnParty");++party_check_stage_;break;
-    case 7:capture("party-after-combat.png");
-        UtilityFunctions::print("Godot party check passed: creation, party sheets/inventory, NPC remove/rejoin, original town shop, equipment, combat and return to exploration");party_check_=false;get_tree()->quit(0);break;
+    case 7:capture("party-recovered.png");press("PartyPanel/Combat");++party_check_stage_;break;
+    case 8:if(!get_node<CombatView>("CampaignCombat")->can_leave())return;
+        press("ReturnParty");
+        if(campaign_->state().roster.at(0).experience!=300)throw std::runtime_error("Reopening party combat duplicated XP");
+        UtilityFunctions::print("Godot party check passed: creation, shops, combat, level-two sheet, recovery services, subsequent combat and exactly-once XP");party_check_=false;get_tree()->quit(0);break;
     }
 }
 void CharacterCreationView::update_party_navigation()

@@ -95,9 +95,17 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
   instant death from excess damage, enemy defeat, and party incapacitation.
 - Complete training checkpoints and a basic AI that uses the same public
   commands as the player.
+- The [campaign recovery subset](RECOVERY.md) advances Fighter/Cleric/Wizard
+  to level 2 at 300 XP, using fixed-average HP growth and updated caster slots.
+  Higher advancement stops explicitly. Eligible eight-hour long rests restore
+  supported resources; repeated rests require a 16-hour wait. Stable campaign
+  reward IDs survive scene recreation and native checkpoints.
+- Temple Cure Wounds is a 100 gp atomic service for a wounded living active
+  member. Dead targets reject; no resurrection is implied.
 
-The profiles are intentionally limited to levels 1–4 and ordinary Medium-sized
-ground combatants. Party profiles are authored combat fixtures, not finished
+The fixed profiles are intentionally limited to levels 1–4 and ordinary Medium-sized
+ground combatants. Created campaign profiles support the documented level 1–2
+subset. Standalone party profiles are authored combat fixtures, not finished
 character sheets. The orc conversion is authored for this demo; its AC/HP are
 not an automatic conversion of original AD&D values.
 
@@ -105,8 +113,8 @@ Not yet implemented: character creation, full class features or equipment,
 weapon mastery, Extra Attack, regular ability saving-throw effects, general
 advantage/condition handling, surprise, partial cover, prone/grappling, damage
 types/resistance, multiple sizes, concentration, other spells, multiple spell
-levels/upcasting, split-target Magic Missile, rest/recovery, retreat, morale,
-XP/loot/inventory, campaign checkpoints, or original tactical arena loading.
+levels/upcasting, split-target Magic Missile, retreat, morale, loot,
+serialized campaign checkpoints, or original tactical arena loading.
 Unconscious enemies are currently treated as defeated, and attacks against
 unconscious party members are not offered. Allied transit and diagonal geometry
 use the documented grid adjudication; this is not an implementation of every

@@ -132,7 +132,7 @@ void RolfTourSession::restart()
     menu_request_ = delayed_request_ = 0; remaining_delay_ = 0;
     party_ = {}; treasure_.clear(); picture_.reset();checkpoint_.reset(); diagnostics_.clear();
     current_script_ = selected_character_ = event_stage_ = 0;
-    who_request_=0;who_slots_.clear();saved_campaign_.reset();
+    who_request_=temple_request_=0;who_slots_.clear();temple_targets_.clear();saved_campaign_.reset();
     pending_movement_.reset(); transition_ = message_only_ = false; shop_request_ = 0;
     if (town_ && !town_->sprite_archive.empty()) for (unsigned n=0;n<3;++n) {
         auto decoded=decode_ega_sprite(town_->sprite_archive,12,n);
@@ -157,7 +157,7 @@ void RolfTourSession::fail(std::string diagnostic)
         machine_ = std::move(*checkpoint_); checkpoint_.reset();
         party_ = saved_party_; current_script_ = saved_script_;
         if(campaign_&&saved_campaign_)campaign_->restore(*saved_campaign_);
-        who_request_=0;who_slots_.clear();
+        who_request_=temple_request_=0;who_slots_.clear();temple_targets_.clear();
         selected_character_ = saved_selected_character_; pending_movement_.reset(); transition_ = false;
         delayed_request_ = shop_request_ = 0; treasure_.clear();
         snapshot_.sprite_frame = -1;picture_.reset();++snapshot_.picture_revision;publish_pose();

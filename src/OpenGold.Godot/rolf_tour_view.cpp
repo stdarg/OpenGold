@@ -53,6 +53,7 @@ void RolfTourView::_ready()
     get_node<Button>("Forward")->connect("pressed",callable_mp(this,&RolfTourView::forward));
     get_node<Button>("MapMode")->connect("pressed",callable_mp(this,&RolfTourView::map_mode));
     get_node<Button>("Look")->connect("pressed",callable_mp(this,&RolfTourView::look));
+    get_node<Button>("Camp")->connect("pressed",callable_mp(this,&RolfTourView::camp));
     get_node<Button>("Inventory")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
     get_node<Button>("InventoryPanel/Close")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
     for(unsigned slot=0;slot<8;++slot)get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot))->connect("pressed",callable_mp(this,&RolfTourView::party_selected).bind(slot));
@@ -119,8 +120,10 @@ void RolfTourView::layout()
     place("Footer",Rect2(margin,height-36,width-2*margin,26));
     place("Party",Rect2(map_rect_.position.x,map_rect_.get_end().y+46,sidebar,50));
     get_node<Label>("Legend")->hide();
-    place("Look",Rect2(map_rect_.position.x,height-226,sidebar*.48,34));
-    place("Inventory",Rect2(map_rect_.position.x+sidebar*.52,height-226,sidebar*.48,34));
+    const double utility_width=(sidebar-12)/3;
+    place("Look",Rect2(map_rect_.position.x,height-226,utility_width,34));
+    place("Camp",Rect2(map_rect_.position.x+utility_width+6,height-226,utility_width,34));
+    place("Inventory",Rect2(map_rect_.position.x+2*(utility_width+6),height-226,utility_width,34));
     place("Choices",Rect2(dialogue_rect_.position+Vector2(18,84),Vector2(main_width-36,dialogue_rect_.size.y-148)));
     place("Answer",Rect2(dialogue_rect_.position+Vector2(18,dialogue_rect_.size.y-100),Vector2(main_width-36,36)));
     place("LeaveShop",Rect2(dialogue_rect_.get_end()-Vector2(332,54),Vector2(140,40)));
@@ -189,6 +192,7 @@ void RolfTourView::left(){movement(ExplorationCommand::turn_left);}
 void RolfTourView::right(){movement(ExplorationCommand::turn_right);}
 void RolfTourView::forward(){movement(ExplorationCommand::forward);}
 void RolfTourView::look(){movement(ExplorationCommand::look);}
+void RolfTourView::camp(){movement(ExplorationCommand::camp);}
 void RolfTourView::leave_shop(){if(session_){session_->leave_shop(session_->snapshot().continue_ticket);refresh();}}
 void RolfTourView::inventory()
 {
@@ -235,7 +239,7 @@ void RolfTourView::party_selected(std::int64_t index)
     if(embedded_party_)emit_signal("party_member_selected",slot);
     else{
         const auto& m=campaign_->member(campaign_->state().slots[slot]);const auto& s=m.character.sheet();
-        std::string text=s.name+"\nLevel 1 "+s.race+" "+s.gender+" "+s.character_class+"\n"+s.alignment+" / "+s.background+"\nAC "+std::to_string(campaign_->profile(m.id).armor_class)+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(s.hit_points)+"\n\n";
+        std::string text=s.name+"\nLevel "+std::to_string(s.level)+" "+s.race+" "+s.gender+" "+s.character_class+"\n"+s.alignment+" / "+s.background+"\nXP "+std::to_string(m.experience)+"\nAC "+std::to_string(campaign_->profile(m.id).armor_class)+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(s.hit_points)+"\n"+m.vitals.description+"\n\n";
         const std::array<const char*,6> names{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
         for(unsigned i=0;i<6;++i)text+=std::string(names[i])+": "+std::to_string(s.scores[i])+" / Save "+std::to_string(s.saving_throws[i])+"\n";
         get_node<RichTextLabel>("MemberSheet/Text")->set_text(String::utf8(text.c_str()));get_node<Window>("MemberSheet")->popup_centered();
@@ -267,6 +271,7 @@ void RolfTourView::_input(const Ref<InputEvent>& event)
     case Key::KEY_UP: forward();break;
     case Key::KEY_DOWN: movement(ExplorationCommand::turn_around);break;
     case Key::KEY_L: look();break;
+    case Key::KEY_C: camp();break;
     default:return;
     }
     get_viewport()->set_input_as_handled();
@@ -329,10 +334,11 @@ void RolfTourView::refresh()
         s.dialogue.empty()?"Following Rolf...":String::utf8(s.dialogue.c_str()));
     get_node<Button>("Continue")->set_disabled(!waiting&&!shopping&&!answer);
     get_node<Button>("Continue")->set_text(shopping?"Buy [Enter]":multiple?"Choose [Enter]":answer?"Submit [Enter]":"Continue [Enter]");
+    if(waiting&&s.choices.size()==1&&s.choices[0]=="Cancel")get_node<Button>("Continue")->set_text("Leave temple [Enter]");
     get_node<Button>("Continue")->set_visible(!completed);
     get_node<Label>("Progress")->set_text(faulted?"Stopped":s.tour_finished?"":waiting?"Pause "+String::num_uint64(s.prompts):"Following the guide");
     get_node<Label>("Movement")->set_text(completed?"Explore  /  arrow keys":"Movement paused");
-    for (const char* name:{"Left","Forward","Right","Look"}) get_node<Button>(name)->set_disabled(!completed);
+    for (const char* name:{"Left","Forward","Right","Look","Camp"}) get_node<Button>(name)->set_disabled(!completed);
     get_node<Button>("LeaveShop")->set_visible(shopping);
     get_node<LineEdit>("Answer")->set_visible(answer);
     get_node<LineEdit>("Answer")->set_max_length(s.number_input?6:40);
@@ -348,7 +354,7 @@ void RolfTourView::refresh()
     }
     get_node<RichTextLabel>("Dialogue")->set_size(Vector2(dialogue_rect_.size.x-36,(shopping||multiple)?36:dialogue_rect_.size.y-(answer?160:112)));
     if(multiple){
-        const double text_height=(dialogue_rect_.size.y-122)*.55;
+        const double text_height=std::min((dialogue_rect_.size.y-122)*.55,std::max<double>(28.0,dialogue_rect_.size.y-192));
         get_node<RichTextLabel>("Dialogue")->set_size(Vector2(dialogue_rect_.size.x-36,text_height));
         choices->set_position(dialogue_rect_.position+Vector2(18,56+text_height));
         choices->set_size(Vector2(dialogue_rect_.size.x-36,dialogue_rect_.size.y-120-text_height));
@@ -358,6 +364,7 @@ void RolfTourView::refresh()
     }
     if(shopping)get_node<RichTextLabel>("Dialogue")->set_text(s.diagnostic.empty()?"Prices are per listed item or bundle.":String::utf8(s.diagnostic.c_str()));
     if(answer&&!s.diagnostic.empty())get_node<RichTextLabel>("Dialogue")->add_text("\n"+String::utf8(s.diagnostic.c_str()));
+    if(waiting&&!s.diagnostic.empty())get_node<RichTextLabel>("Dialogue")->set_text(String::utf8((s.diagnostic+"\n"+s.dialogue).c_str()));
     if(loaded){const auto& p=session_->party();get_node<Label>("Party")->set_text("Fighter  /  Level 1  /  HP "+String::num_uint64(p.hit_points)+"/"+String::num_uint64(p.max_hit_points)+"\n"+String::num_uint64(p.wealth[3])+" gp  /  "+String::num_uint64(p.inventory.size())+" items");}
     if(loaded&&campaign_&&campaign_->selected()){
         const auto& m=campaign_->member(campaign_->selected());get_node<Label>("Party")->set_text(String::utf8((m.character.sheet().name+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(m.character.sheet().hit_points)+"\n"+std::to_string(m.wealth[3])+" gp / "+std::to_string(m.character.inventory().items().size())+" items").c_str()));}
@@ -451,7 +458,7 @@ void RolfTourView::check_run()
         };
         if (!session_ || session_->snapshot().phase==TourPhase::faulted)
             throw std::runtime_error(session_?session_->snapshot().diagnostic:error_.utf8().get_data());
-        if (++check_frames_>2000) throw std::runtime_error("Tour integration check timed out");
+        if (++check_frames_>2000) throw std::runtime_error("Tour integration check timed out; recovery stage "+std::to_string(recovery_stage_)+", position "+std::to_string(session_->snapshot().pose.x)+","+std::to_string(session_->snapshot().pose.y)+", "+session_->snapshot().dialogue);
         const auto& s=session_->snapshot();
         if(town_check_ && s.tour_finished){check_town();return;}
         if (s.phase==TourPhase::awaiting_continue) {
@@ -491,6 +498,7 @@ void RolfTourView::check_run()
 
 void RolfTourView::check_town()
 {
+    if(recovery_stage_){check_recovery();return;}
     const auto& s=session_->snapshot();
     const auto inventory_size=[&]{return campaign_?campaign_->member(campaign_->selected()).character.inventory().items().size():session_->party().inventory.size();};
     const auto gold=[&]{return campaign_?campaign_->member(campaign_->selected()).wealth[3]:session_->party().wealth[3];};
@@ -547,7 +555,17 @@ void RolfTourView::check_town()
     }
     if(s.phase==TourPhase::awaiting_input){get_node<LineEdit>("Answer")->set_text("0");next();return;}
     if(s.phase!=TourPhase::completed)return;
-    // Exercise actual movement callbacks to the original arms shop at (13,8).
+    check_walk_to(13,8);
+}
+void RolfTourView::check_walk_to(unsigned tx,unsigned ty)
+{
+    const auto& s=session_->snapshot();
+    // Exercise actual movement callbacks and original script entry dispatch.
+    const unsigned position=s.pose.y*16+s.pose.x;
+    if(check_pending_edge_){
+        if(position!=check_pending_edge_->second)check_refused_edges_.insert(*check_pending_edge_);
+        check_pending_edge_.reset();
+    }
     constexpr int dx[]{0,1,0,-1},dy[]{-1,0,1,0};
     std::array<int,256> previous;previous.fill(-1);std::queue<int> cells;
     const int origin=s.pose.y*16+s.pose.x;previous[origin]=origin;cells.push(origin);
@@ -556,13 +574,76 @@ void RolfTourView::check_town()
         for(int d=0;d<4;++d){const int x=cell%16+dx[d],y=cell/16+dy[d];if(x<0||y<0||x>=16||y>=16)continue;
             const auto& a=session_->map().at(cell%16,cell/16);const auto& b=session_->map().at(x,y);const int r=(d+2)%4;
             if(a.doors[d]>1||b.doors[r]>1||(a.walls[d]&&!a.doors[d])||(b.walls[r]&&!b.doors[r]))continue;
-            const int next=y*16+x;if(previous[next]>=0)continue;previous[next]=cell;cells.push(next);
+            const int next=y*16+x;if(previous[next]>=0||check_refused_edges_.contains({cell,next}))continue;previous[next]=cell;cells.push(next);
         }
     }
-    int next=8*16+13;
+    int next=ty*16+tx;
     if(next==origin){look();return;}
-    if(previous[next]<0)throw std::runtime_error("No route to arms shop");
+    if(previous[next]<0)throw std::runtime_error("No route to acceptance target "+std::to_string(tx)+","+std::to_string(ty)+" from "+std::to_string(s.pose.x)+","+std::to_string(s.pose.y)+"; blocked edges "+std::to_string(check_refused_edges_.size()));
     while(previous[next]!=origin)next=previous[next];
     const unsigned facing=next%16>int(s.pose.x)?1:next%16<int(s.pose.x)?3:next/16>int(s.pose.y)?2:0;
+    if(s.pose.facing==facing)check_pending_edge_={{origin,next}};
     get_node<Button>(s.pose.facing==facing?"Forward":"Right")->emit_signal("pressed");
+}
+void RolfTourView::start_recovery_check()
+{
+    // Deterministic wounded fixture and one platinum for the original inn payment.
+    auto state=campaign_->checkpoint();auto& member=state.roster.at(0);
+    if(member.vitals.dead)throw std::runtime_error("Recovery check requires a living victory survivor");
+    member.vitals.hit_points=1;member.wealth[3]=200;member.wealth[4]=1;
+    campaign_->restore(state);recovery_before_=std::move(state);
+    recovery_stage_=1;check_frames_=0;checking_=town_check_=true;
+}
+void RolfTourView::check_recovery()
+{
+    const auto& s=session_->snapshot();const auto id=campaign_->state().roster.at(0).id;
+    if(!session_->script_diagnostics().empty())throw std::runtime_error("Recovery route fault: "+session_->script_diagnostics().back());
+    const auto choose=[&](std::size_t choice){get_node<ItemList>("Choices")->select(choice);get_node<Button>("Continue")->emit_signal("pressed");};
+    if(s.phase==TourPhase::awaiting_continue){
+        if(recovery_stage_==3&&!s.choices.empty()&&s.choices[0].starts_with("Cure Wounds:")){
+            if(recovery_capture_ticket_!=s.continue_ticket){recovery_capture_ticket_=s.continue_ticket;return;}
+            recovery_before_=campaign_->checkpoint();capture_frame("party-temple");choose(0);recovery_stage_=4;return;
+        }
+        std::size_t selection=s.choices.size()-1;
+        for(const auto* safe:{"NO","LEAVE","RUN","GO","NONE","EXIT","Cancel"})
+            for(std::size_t n=0;n<s.choices.size();++n)if(s.choices[n]==safe)selection=n;
+        const auto event=session_->map().at(s.pose.x,s.pose.y).event_number();
+        // Temple cells can be transit cells: enter, then cancel the native service.
+        // Answering NO makes the original script move the party back to its prior cell.
+        if(((recovery_stage_==3||recovery_stage_==5)&&event==6)||(recovery_stage_==5&&event==9)){
+            for(std::size_t n=0;n<s.choices.size();++n)if(s.choices[n]=="YES")selection=n;
+            if(s.dialogue=="Choose a party member.")selection=0;
+        }
+        choose(selection);return;
+    }
+    if(s.phase==TourPhase::shopping){get_node<Button>("LeaveShop")->emit_signal("pressed");return;}
+    if(s.phase==TourPhase::awaiting_input){get_node<LineEdit>("Answer")->set_text("0");next();return;}
+    if(s.phase!=TourPhase::completed)return;
+    const auto& member=campaign_->member(id);
+    if(recovery_stage_==1){get_node<Button>("Camp")->emit_signal("pressed");recovery_stage_=2;return;}
+    if(recovery_stage_==2){
+        if(campaign_->state().time_minutes!=recovery_before_->time_minutes+5||member.vitals!=recovery_before_->roster.at(0).vitals)
+            throw std::runtime_error("Original city-watch interruption must consume five minutes without recovery");
+        recovery_stage_=3;
+    }
+    if(recovery_stage_==4){
+        if(member.wealth[3]!=recovery_before_->roster.at(0).wealth[3]-100||member.vitals.hit_points<=1||session_->script_variable(0x6de2)!=0)
+            throw std::runtime_error("Original temple must charge 100 gp, heal and resume ECL");
+        recovery_before_=campaign_->checkpoint();recovery_stage_=5;
+    }
+    if(recovery_stage_==5&&campaign_->state().time_minutes==recovery_before_->time_minutes+480){
+        if(member.vitals.hit_points!=member.character.sheet().hit_points||member.wealth[4]!=0)
+            throw std::runtime_error("Original inn payment and full recovery must persist");
+        recovery_before_=campaign_->checkpoint();recovery_stage_=6;
+    }
+    if(recovery_stage_==6){get_node<Button>("Camp")->emit_signal("pressed");recovery_stage_=7;return;}
+    if(recovery_stage_==7){
+        if(campaign_->state().time_minutes!=recovery_before_->time_minutes||s.dialogue.find("Rest denied")==std::string::npos)
+            throw std::runtime_error("Immediate repeated long rest must be denied");
+        capture_frame("party-rest");recovery_stage_=8;checking_=false;
+        UtilityFunctions::print("Godot recovery check passed: original interruption, temple payment, inn rest and repeated-rest denial.");return;
+    }
+    const auto target_event=recovery_stage_==3?6u:9u;
+    for(unsigned y=0;y<16;++y)for(unsigned x=0;x<16;++x)if(session_->map().at(x,y).event_number()==target_event){check_walk_to(x,y);return;}
+    throw std::runtime_error("Original recovery location is missing");
 }

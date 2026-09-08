@@ -91,6 +91,60 @@ void CampaignParty::purchase(MemberId id,const por::Equipment& item)
     m.wealth[3]-=item.stored.value;
 }
 void CampaignParty::set_wealth(MemberId id,std::array<std::uint16_t,7> wealth){editable();edit(id).wealth=wealth;}
+void CampaignParty::award_experience(unsigned amount,std::string reward_id)
+{
+    editable();
+    if(reward_id.empty()||reward_id.size()>160)throw std::runtime_error("Reward requires a bounded stable identity");
+    if(std::find(state_.claimed_rewards.begin(),state_.claimed_rewards.end(),reward_id)!=state_.claimed_rewards.end())return;
+    if(state_.claimed_rewards.size()>=1024)throw std::runtime_error("Reward history is full");
+    auto next=state_;
+    bool awarded=false;
+    for(auto id:next.slots)if(id){
+        auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});
+        if(member.vitals.dead)continue;
+        if(amount>std::numeric_limits<unsigned>::max()-member.experience)throw std::runtime_error("Experience overflow");
+        awarded=true;
+        member.experience+=amount;
+        while(member.experience>=rules_->experience_for_level(member.character.sheet().level+1)){
+            const auto level=member.character.sheet().level;
+            if(!member.character.advance(*rules_,member.vitals))break;
+            if(member.character.sheet().level!=level+1)throw std::runtime_error("Invalid rules advancement");
+        }
+    }
+    if(!awarded)throw std::runtime_error("Reward requires a living active member");
+    next.claimed_rewards.push_back(std::move(reward_id));state_=std::move(next);
+}
+bool CampaignParty::rest()
+{
+    editable();auto next=state_;bool rested=false;const auto policy=rules_->long_rest_policy();
+    if(!policy.duration_minutes)throw std::runtime_error("Invalid rules rest duration");
+    if(next.time_minutes>std::numeric_limits<std::uint64_t>::max()-policy.duration_minutes)throw std::runtime_error("Campaign clock overflow");
+    for(auto id:next.slots)if(id){
+        auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});
+        if(member.last_rest_minutes&&next.time_minutes-*member.last_rest_minutes<policy.wait_after_rest_minutes)return false;
+        // This bounded group rest requires everyone to be eligible at its start.
+        if(member.vitals.dead||member.vitals.hit_points<1)return false;
+        rules_->recover(member.vitals,member.character.sheet());
+        member.last_rest_minutes=next.time_minutes+policy.duration_minutes;rested=true;
+    }
+    if(!rested)return false;
+    next.time_minutes+=policy.duration_minutes;state_=std::move(next);return true;
+}
+void CampaignParty::advance_time(unsigned minutes)
+{
+    editable();if(minutes>std::numeric_limits<std::uint64_t>::max()-state_.time_minutes)throw std::runtime_error("Campaign clock overflow");
+    state_.time_minutes+=minutes;
+}
+void CampaignParty::temple_heal(MemberId target)
+{
+    editable();const auto& current=member(target);
+    if(std::find(state_.slots.begin(),state_.slots.end(),target)==state_.slots.end())throw std::runtime_error("Temple target must be active");
+    if(current.vitals.dead||current.vitals.hit_points>=current.character.sheet().hit_points)throw std::runtime_error("Cure Wounds requires a wounded living member");
+    auto next=state_;auto& healed=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==target;});
+    unsigned remaining=100;for(auto id:next.slots)if(id){auto& m=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& x){return x.id==id;});const auto paid=std::min<unsigned>(m.wealth[3],remaining);m.wealth[3]-=static_cast<std::uint16_t>(paid);remaining-=paid;}
+    if(remaining)throw std::runtime_error("Party cannot afford temple service");
+    rules_->temple_heal(healed.vitals,healed.character.sheet(),next.random_state);state_=std::move(next);
+}
 bool CampaignParty::has_item(unsigned type) const
 {
     for(auto id:state_.slots)if(id)for(const auto& item:member(id).character.inventory().items())if(item.original_type==type)return true;
@@ -138,15 +192,18 @@ void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
 }
 void CampaignParty::restore(PartyState state)
 {
-    editable();if(state.roster.size()>128||state.selected>=8||!state.next_id)throw std::runtime_error("Invalid party checkpoint");
+    editable();if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024)throw std::runtime_error("Invalid party checkpoint");
     std::set<MemberId> ids,active;std::set<std::string> sources;
     for(const auto& m:state.roster){
         if(!m.id||m.id>=state.next_id||!ids.insert(m.id).second||m.vitals.hit_points<0||
+            (m.last_rest_minutes&&*m.last_rest_minutes>state.time_minutes)||
             m.vitals.hit_points>m.character.sheet().hit_points||(m.vitals.dead&&m.vitals.hit_points)||m.morale>255||
             (!m.npc_source.empty()&&!sources.insert(m.npc_source).second))throw std::runtime_error("Invalid roster checkpoint");
         std::set<std::uint64_t> equipment;
         for(auto item:m.equipped)if(!m.character.inventory().find(item)||!equipment.insert(item).second)throw std::runtime_error("Invalid equipment checkpoint");
     }
+    if(std::any_of(state.claimed_rewards.begin(),state.claimed_rewards.end(),[](const auto& id){return id.empty()||id.size()>160;})||
+       std::set<std::string>(state.claimed_rewards.begin(),state.claimed_rewards.end()).size()!=state.claimed_rewards.size())throw std::runtime_error("Invalid claimed rewards");
     for(unsigned slot=0;slot<8;++slot)if(auto id=state.slots[slot]){
         if(!ids.contains(id)||!active.insert(id).second)throw std::runtime_error("Invalid active party checkpoint");
         const auto it=std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& m){return m.id==id;});
