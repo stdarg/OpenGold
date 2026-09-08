@@ -29,15 +29,43 @@ std::vector<Character> character_pool(const rules::CharacterRules& rules,const p
     if(art.bodies.empty()||art.heads.empty())throw std::runtime_error("Load character art before opening the pool");
     const auto classes=rules.choices(CreationField::character_class);
     const auto alignments=rules.choices(CreationField::alignment);
-    const std::array<const char*,12> surnames{"Ashfall","Songbrook","Dawnward","Greenbough","Ironvale","Stillwater","Brightshield","Thornpath","Nightwind","Emberheart","Duskwatch","Starweave"};
-    const std::array<const char*,4> first{"Arlen","Mira","Toren","Selene"};
+    // Every pool member has a distinct given name and surname.
+    const std::array<const char*,48> first{
+        "Arlen","Mira","Toren","Selene",
+        "Borin","Lyra","Cedric","Nessa",
+        "Dorian","Elara","Finn","Mara",
+        "Garrick","Isolde","Hadrian","Jessa",
+        "Ivor","Kaela","Joren","Liora",
+        "Kael","Maeve","Lucan","Nadia",
+        "Merric","Orla","Nolan","Petra",
+        "Oren","Quinn","Perrin","Rhea",
+        "Rolan","Sable","Silas","Talia",
+        "Theron","Una","Ulric","Vera",
+        "Valen","Wren","Willem","Xara",
+        "Yoren","Ysolde","Zev","Zinnia"
+    };
+    const std::array<const char*,48> surnames{
+        "Ashfall","Songbrook","Dawnward","Greenbough",
+        "Ironvale","Stillwater","Brightshield","Thornpath",
+        "Nightwind","Emberheart","Duskwatch","Starweave",
+        "Amberforge","Bramblewood","Cinderhill","Deepwell",
+        "Eaglecrest","Frostmere","Goldbranch","Hallowgrove",
+        "Ivorythorn","Juniperfell","Kestrelwing","Lightfoot",
+        "Mistvale","Northwick","Oakenshade","Pinehollow",
+        "Quickwater","Ravencrest","Silverleaf","Thistledown",
+        "Umberstone","Valeguard","Westbrook","Yarrowfield",
+        "Zephyrwind","Coppervein","Driftwood","Evenvale",
+        "Foxglove","Grayhaven","Hazelridge","Kingswell",
+        "Larkspur","Moonwhisper","Reedwalker","Stormglen"
+    };
     const std::array<const char*,5> races{"gnome","orc","goliath","tiefling","dragonborn"};
     std::vector<unsigned> bodies;for(const auto& [id,body]:art.bodies)bodies.push_back(id);
     std::vector<Character> result;
     for(unsigned c=0;c<classes.size();++c)for(unsigned variant=0;variant<4;++variant){
         CharacterDraft d;d.character_class=classes[c].id;d.race=races[(c+variant)%races.size()];
         d.gender=variant%2?"female":"male";d.alignment=alignments[(c+variant*2)%alignments.size()].id;
-        d.name=std::string(first[variant])+" "+surnames[c%surnames.size()];d.rolled=true;
+        const auto name_index=c*4+variant;
+        d.name=std::string(first.at(name_index))+" "+surnames.at(name_index);d.rolled=true;
         const auto& id=d.character_class;
         const unsigned primary=id=="wizard"?3:(id=="cleric"||id=="druid")?4:(id=="bard"||id=="sorcerer"||id=="warlock")?5:(id=="monk"||id=="ranger"||id=="rogue"||(id=="fighter"&&variant%2))?1:0;
         const unsigned secondary=(id=="monk"||id=="ranger")?4:id=="paladin"?5:2;
