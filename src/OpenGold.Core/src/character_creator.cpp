@@ -21,6 +21,8 @@ void CharacterCreator::select(CreationField field,std::string_view id)
 {
     require_editable();const auto choices=rules_->choices(field);
     if(std::none_of(choices.begin(),choices.end(),[&](const auto& c){return c.id==id;}))throw std::runtime_error("Unknown character choice");
+    if(field==CreationField::character_class&&step_>=CreationStep::character_class&&!rules_->class_eligible(draft_,id))
+        throw std::runtime_error("This class requires "+rules_->class_requirements(id).description+".");
     switch(field) {
     case CreationField::race:draft_.race=id;break;
     case CreationField::gender:draft_.gender=id;break;
@@ -28,6 +30,13 @@ void CharacterCreator::select(CreationField field,std::string_view id)
     case CreationField::alignment:draft_.alignment=id;break;
     case CreationField::background:draft_.background=id;draft_.adjustment=0;break;
     }
+}
+void CharacterCreator::target_class(std::string_view id,bool selected)
+{
+    require_editable();(void)rules_->class_requirements(id);
+    const auto found=std::find(draft_.target_classes.begin(),draft_.target_classes.end(),id);
+    if(selected&&found==draft_.target_classes.end())draft_.target_classes.emplace_back(id);
+    else if(!selected&&found!=draft_.target_classes.end())draft_.target_classes.erase(found);
 }
 void CharacterCreator::select_adjustment(unsigned index)
 {require_editable();if(index>=rules_->adjustments(draft_.background).size())throw std::runtime_error("Invalid score adjustment");draft_.adjustment=index;}
@@ -61,12 +70,15 @@ CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,s
 Character CharacterCreator::create_character() const
 {
     if(step_!=CreationStep::sheet)throw std::runtime_error("Finish character creation before exporting the character");
+    if(!rules_->class_eligible(draft_,draft_.character_class))throw std::runtime_error("Starting class prerequisites are not met.");
     return Character(*rules_,draft_,appearance_);
 }
 void CharacterCreator::next()
 {
     if(step_==CreationStep::sheet)return;
     if(step_>=CreationStep::attributes)(void)rules_->evaluate(draft_,step_>=CreationStep::name);
+    if(step_>=CreationStep::character_class&&!rules_->class_eligible(draft_,draft_.character_class))
+        throw std::runtime_error("Choose a qualified starting class. Requires "+rules_->class_requirements(draft_.character_class).description+".");
     step_=static_cast<CreationStep>(static_cast<unsigned>(step_)+1);
 }
 void CharacterCreator::back()

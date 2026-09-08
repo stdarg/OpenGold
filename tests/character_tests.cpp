@@ -56,6 +56,29 @@ void creation_tests()
             int bonus=0;for(unsigned k=0;k<6;++k){bonus+=evaluated.bonuses[k];check(evaluated.scores[k]<=20,"Background bonuses cap at twenty");}
             check(bonus==3,"Background grants exactly three points");}
     }
+    d.background="soldier";d.adjustment=0;
+    check(module->class_eligible(d,"fighter")&&module->class_eligible(d,"paladin"),"Bonuses count toward primary prerequisites");
+    check(!module->class_eligible(d,"monk")&&!module->class_eligible(d,"wizard"),"Both Monk primaries and Wizard Intelligence required");
+    d.target_classes={"fighter","monk","wizard"};
+    check(module->unmet_targets(d)==std::array<bool,6>{false,true,false,true,false,false},"Warnings flag only failing abilities of unmet targets");
+    std::swap(d.assignment[0],d.assignment[1]);
+    check(module->class_eligible(d,"fighter")&&!module->unmet_targets(d)[0],"Qualified Dexterity satisfies Fighter without a Strength warning");
+    std::swap(d.assignment[0],d.assignment[1]);d.target_classes.clear();
+    check(module->unmet_targets(d)==std::array<bool,6>{},"Removing targets clears warnings");
+    for(const auto& option:classes){
+        auto boundary=d;boundary.background="acolyte";boundary.adjustment=1;
+        for(auto& roll:boundary.rolls)roll={{{4,4,4,1}},3};
+        // Choose a background bonus allocation outside each tested primary.
+        const auto req=module->class_requirements(option.id);
+        for(auto ability:req.abilities){
+            const auto bonuses=module->adjustments(boundary.background)[boundary.adjustment].bonuses;
+            const int total=13-bonuses[ability];
+            boundary.rolls[ability]={{{total-8,4,4,1}},3};
+        }
+        check(module->class_eligible(boundary,option.id),"Every class accepts exactly 13 in its primary abilities");
+        for(auto ability:req.abilities)--boundary.rolls[ability].dice[0];
+        check(!module->class_eligible(boundary,option.id),"Every class rejects primaries below 13");
+    }
     d.background="soldier";d.adjustment=0;d.assignment[0]=1;
     rejects([&]{(void)module->evaluate(d,true);},"Duplicate roll assignments rejected");d.assignment[0]=0;
     d.name="  ";rejects([&]{(void)module->evaluate(d,true);},"Blank names rejected");
@@ -63,9 +86,9 @@ void creation_tests()
     CharacterCreator creator(srd5::character_rules(),42);
     rejects([&]{(void)creator.create_character();},"Incomplete drafts cannot become characters");
     creator.select(CreationField::gender,"male");creator.next();
-    check(creator.step()==CreationStep::character_class,"Race and gender advance directly to Class");
+    check(creator.step()==CreationStep::alignment,"Race and gender advance to Alignment");
     creator.back();check(creator.step()==CreationStep::race&&creator.draft().gender=="male","Back retains gender on combined first step");
-    for(int i=0;i<3;++i)creator.next();
+    for(int i=0;i<2;++i)creator.next();
     rejects([&]{creator.next();},"Cannot advance without rolling");check(creator.step()==CreationStep::attributes,"Invalid transition leaves step unchanged");
     creator.roll();const auto original=creator.draft().rolls;
     check(!creator.scores_assigned()&&std::all_of(creator.draft().assignment.begin(),creator.draft().assignment.end(),[](auto n){return n==6;}),"Rolls start unassigned");
@@ -91,11 +114,23 @@ void creation_tests()
     rejects([&]{creator.swap_scores(0,6);},"Invalid swap rejected");check(creator.draft().assignment==assignment,"Rejected swap is atomic");
     creator.roll();check(creator.draft().rolls!=original&&creator.draft().assignment[0]==6,"Full reroll replaces all rolls and empties assignments");
     for(unsigned i=0;i<6;++i)creator.assign_roll(i,i);
-    creator.next();check(creator.step()==CreationStep::name,"Attributes advance directly to Name");rejects([&]{creator.next();},"Name required before portrait");
+    creator.target_class("wizard",true);creator.target_class("wizard",true);
+    check(creator.draft().target_classes.size()==1,"Repeated target selection is idempotent");
+    creator.target_class("monk",true);creator.target_class("monk",false);
+    rejects([&]{creator.target_class("invented",true);},"Unknown targets rejected");
+    creator.next();check(creator.step()==CreationStep::character_class,"Attributes advance to Class");
+    bool selected=false;
+    for(const auto& option:classes){
+        if(module->class_eligible(creator.draft(),option.id)){if(!selected){creator.select(CreationField::character_class,option.id);selected=true;}}
+        else rejects([&]{creator.select(CreationField::character_class,option.id);},"Unqualified starting classes cannot be selected");
+    }
+    check(selected,"Fixture has a qualified class");creator.next();
+    check(creator.step()==CreationStep::name,"Class advances to Name regardless of future target eligibility");rejects([&]{creator.next();},"Name required before portrait");
     creator.name("  Mira Stoneward  ");creator.next();check(creator.step()==CreationStep::combat_icon,"Name advances directly to combat appearance");
     auto appearance=creator.appearance();appearance.portrait_head=261;appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
     check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
     auto finished=creator.create_character();
+    check(finished.creation_data().target_classes==std::vector<std::string>{"wizard"},"Future targets persist without adding class levels");
     auto revised=appearance;revised.portrait_body=2;creator.appearance(revised);
     check(creator.step()==CreationStep::sheet&&creator.create_character().appearance()==revised,"Portrait can change while reviewing a completed sheet");
     creator.appearance(appearance);
@@ -103,7 +138,7 @@ void creation_tests()
     check(finished.inventory().empty()&&finished.appearance()==appearance,"Finished character owns appearance and an empty inventory");
     rejects([&]{creator.roll();},"Completed sheet cannot be silently rerolled");
     creator.back();creator.next();check(creator.appearance()==appearance,"Review retains both appearance banks");
-    creator.back();creator.back();creator.back();
+    creator.back();creator.back();creator.back();creator.back();
     check(creator.step()==CreationStep::attributes,"Back navigation reaches attributes");
     creator.select(CreationField::race,"dwarf");creator.select(CreationField::character_class,"barbarian");
     check(creator.sheet().hit_points==13+creator.sheet().modifiers[2],"HP recalculates after earlier edits");

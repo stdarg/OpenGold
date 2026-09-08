@@ -20,9 +20,8 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
 1. **Race & Gender**: select race (the nine species included in SRD 5.2.1)
    from the two-column list and gender from the dropdown below it. Gender does
    not alter stats or restrict other choices. Both selections persist when returning.
-2. Select one of the twelve SRD classes.
-3. Select alignment.
-4. The **Dice Rolls** area starts with six empty boxes to the right of the
+2. Select alignment.
+3. The **Dice Rolls** area starts with six empty boxes to the right of the
    abilities. Roll attributes to fill those boxes with totals only. The native
    character retains the underlying dice. Ability boxes remain empty until you drag
    results into them. Assigned results leave their original boxes empty.
@@ -39,6 +38,13 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    `+2 — Soldier background`). Only the ability score is colored: yellow above
    its original roll, red below it, and normal when unchanged. Dice boxes have
    room for a two-digit total and padding, with a drag hint beside **Dice Rolls**.
+4. Select one starting class from the twelve SRD classes. Classes whose primary
+   abilities do not meet the SRD multiclass prerequisite of 13 are disabled.
+   Fighter requires Strength or Dexterity; Monk and Ranger require Dexterity
+   and Wisdom; Paladin requires Strength and Charisma. Applying these minimums
+   to the initial class is the requested OpenGold house rule, not an SRD
+   level-one restriction. Background bonuses count toward eligibility.
+   Return to Attributes to change assignments or bonuses if needed.
 5. Enter a name, up to 40 characters. There is no separate HP step.
    Choose a portrait head from the dropdown or browse with the previous/next
    buttons directly below the portrait, then choose a body with the second row
@@ -255,3 +261,16 @@ This also saves one composed portrait preview for each new head as
 Goliath, Tiefling and Dragonborn (columns left to right) on armor bodies 1, 18
 and 26 (rows top to bottom). It is a local rendering of installed game art and
 is not distributed.
+
+## Future class planning foundation
+
+The native draft retains multiple desired class IDs separately from its one
+level-one class. Target eligibility can be queried with partial assignments;
+unmet targets never prevent selecting a different qualified starting class.
+The checkbox selector and score-warning layout are awaiting UI confirmation.
+SRD 5.2.1 multiclassing acquires another class when gaining a level. Later
+Ability Score Improvement features can raise scores and help meet prerequisites;
+future increases are not applied to level-one scores.
+
+Rules reference: [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf),
+Multiclassing and class Ability Score Improvement features.

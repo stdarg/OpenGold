@@ -25,6 +25,7 @@ constexpr std::array<Class,12> classes{{
 }};
 class CreatorRules final : public CharacterRules {
 public:
+    ClassRequirements class_requirements(std::string_view id) const override;
     Identity identity() const override {return {"srd5","5.2.1","character-creation.1"};}
     std::vector<CreationChoice> choices(CreationField field) const override;
     std::vector<ScoreAdjustment> adjustments(std::string_view background) const override;
@@ -79,6 +80,18 @@ std::vector<ScoreAdjustment> CreatorRules::adjustments(std::string_view backgrou
     }
     ScoreAdjustment a;a.label="+1 to "+ability_names[allowed[0]]+", "+ability_names[allowed[1]]+", "+ability_names[allowed[2]];
     for(auto n:allowed)a.bonuses[n]=1;result.push_back(a);return result;
+}
+ClassRequirements CreatorRules::class_requirements(std::string_view id) const
+{
+    const std::array<std::vector<unsigned>,12> primary{{{0},{5},{4},{4},{0,1},{1,4},{0,5},{1,4},{1},{5},{5},{3}}};
+    const auto found=std::find_if(classes.begin(),classes.end(),[&](const auto& c){return c.id==id;});
+    if(found==classes.end())throw std::runtime_error("Unknown class prerequisite");
+    ClassRequirements result{primary.at(found-classes.begin()),id=="fighter",13,{}};
+    for(auto ability:result.abilities){
+        if(!result.description.empty())result.description+=result.any?" or ":" and ";
+        result.description+=ability_names[ability]+" 13";
+    }
+    return result;
 }
 std::array<AbilityRoll,6> CreatorRules::roll(std::uint64_t& state) const
 {

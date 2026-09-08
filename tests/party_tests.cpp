@@ -19,7 +19,8 @@ Character character(std::string klass="fighter",std::string name="Ada")
     creator.select(CreationField::race,"human");creator.select(CreationField::character_class,klass);
     creator.roll();creator.name(std::move(name));
     for(unsigned i=0;i<6;++i)creator.assign_roll(i,i);
-    while(creator.step()!=CreationStep::sheet)creator.next();return creator.create_character();
+    // Authored fixtures may have scores below the creator's optional starting-class minimums.
+    return Character(creator.rules(),creator.draft(),creator.appearance());
 }
 por::Equipment item(unsigned type,unsigned price=10)
 {por::Equipment e;e.stored.type=type;e.stored.value=price;e.stored.stack_size=1;return e;}

@@ -16,8 +16,15 @@ struct ScoreAdjustment {
     std::string label;
     std::array<int,6> bonuses{};
 };
+struct ClassRequirements {
+    std::vector<unsigned> abilities;
+    bool any{};
+    int minimum{13};
+    std::string description;
+};
 struct CharacterDraft {
     std::string race, gender, character_class, alignment, background, name;
+    std::vector<std::string> target_classes; // Future intentions, not acquired class levels.
     std::array<AbilityRoll,6> rolls{};
     // Each assigned ability owns a unique result; 6 means not yet assigned.
     std::array<unsigned,6> assignment{0,1,2,3,4,5};
@@ -44,6 +51,9 @@ public:
     [[nodiscard]] virtual std::vector<ScoreAdjustment> adjustments(std::string_view background) const = 0;
     [[nodiscard]] virtual std::array<AbilityRoll,6> roll(std::uint64_t& random_state) const = 0;
     [[nodiscard]] virtual std::optional<int> ability_score(const CharacterDraft& draft,unsigned ability) const = 0;
+    [[nodiscard]] virtual ClassRequirements class_requirements(std::string_view id) const = 0;
+    [[nodiscard]] bool class_eligible(const CharacterDraft& draft,std::string_view id) const;
+    [[nodiscard]] std::array<bool,6> unmet_targets(const CharacterDraft& draft) const;
     [[nodiscard]] virtual CharacterSheet evaluate(const CharacterDraft& draft, bool require_name) const = 0;
 };
 }

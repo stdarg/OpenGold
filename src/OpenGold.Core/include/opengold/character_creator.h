@@ -2,7 +2,7 @@
 #define OPENGOLD_CHARACTER_CREATOR_H
 #include "opengold/character.h"
 namespace opengold {
-enum class CreationStep { race, character_class, alignment, attributes, name, combat_icon, sheet };
+enum class CreationStep { race, alignment, attributes, character_class, name, combat_icon, sheet };
 class CharacterCreator {
 public:
     CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,std::uint64_t seed);
@@ -13,6 +13,7 @@ public:
     [[nodiscard]] rules::CharacterSheet sheet() const;
     [[nodiscard]] Character create_character() const;
     void select(rules::CreationField field,std::string_view id);
+    void target_class(std::string_view id,bool selected);
     void select_adjustment(unsigned index);
     void roll();
     void assign_roll(unsigned roll,unsigned ability);

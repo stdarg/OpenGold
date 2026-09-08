@@ -30,8 +30,14 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,7> steps{"Race & Gender","Class","Alignment","Attributes","Name","Combat appearance","Character sheet"};
-const std::array<CreationField,3> choice_fields{CreationField::race,CreationField::character_class,CreationField::alignment};
+const std::array<const char*,7> steps{"Race & Gender","Alignment","Attributes","Class","Name","Combat appearance","Character sheet"};
+CreationField choice_field(CreationStep step)
+{
+    switch(step){case CreationStep::race:return CreationField::race;
+    case CreationStep::alignment:return CreationField::alignment;
+    case CreationStep::character_class:return CreationField::character_class;
+    default:throw std::runtime_error("This step has no choice list");}
+}
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
 const std::array<const char*,6> full_abilities{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
 const std::array<const char*,16> colors{"Black","Blue","Green","Cyan","Red","Magenta","Brown","Light gray","Dark gray","Light blue","Light green","Light cyan","Light red","Pink","Yellow","White"};
@@ -242,7 +248,7 @@ void CharacterCreationView::refresh()
     if(!creator_)return;refreshing_=true;
     const auto step=creator_->step();const auto& d=creator_->draft();const auto& a=creator_->appearance();
     const auto show=[&](const char* node,bool visible){get_node<Control>(node)->set_visible(visible);};
-    const bool choosing=step<=CreationStep::alignment,stats=step==CreationStep::attributes,icon=step==CreationStep::combat_icon;
+    const bool choosing=step==CreationStep::race||step==CreationStep::alignment||step==CreationStep::character_class,stats=step==CreationStep::attributes,icon=step==CreationStep::combat_icon;
     for(const auto* n:{"Choices"})show(n,choosing);
     show("GenderLabel",step==CreationStep::race);show("Gender",step==CreationStep::race);
     show("Description",choosing||step==CreationStep::sheet);
@@ -271,17 +277,22 @@ void CharacterCreationView::refresh()
     show("Next",step!=CreationStep::sheet);
     if(campaign_)get_node<Button>("AddParty")->set_visible(step==CreationStep::sheet&&!added_to_party_);
     get_node<Button>("Next")->set_text(icon?"Show character sheet":"Next");
-    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::name&&d.name.empty()));
+    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::character_class&&!creator_->rules().class_eligible(d,d.character_class))||(step==CreationStep::name&&d.name.empty()));
     get_node<Label>("Status")->set_text(error_);
     std::string instructions;
     if(choosing) {
-        const auto field=choice_fields.at(static_cast<unsigned>(step));const auto choices=creator_->rules().choices(field);
+        const auto field=choice_field(step);const auto choices=creator_->rules().choices(field);
         auto* list=get_node<ItemList>("Choices");list->clear();list->add_theme_constant_override("v_separation",18);
         for(unsigned i=0;i<choices.size();++i) {
             list->add_item(gs(choices[i].label));
+            if(step==CreationStep::character_class){
+                list->set_item_disabled(i,!creator_->rules().class_eligible(d,choices[i].id));
+                list->set_item_tooltip(i,gs("Requires "+creator_->rules().class_requirements(choices[i].id).description));
+            }
             if(choices[i].id==selection(d,field)){list->select(i);get_node<RichTextLabel>("Description")->set_text(gs(choices[i].description));}
         }
-        instructions=step==CreationStep::race?"Choose your race (species in SRD 5.2.1) and gender.":"Select an option, then continue.";
+        if(step==CreationStep::character_class)get_node<RichTextLabel>("Description")->append_text("\n\nStarting-class minimums use the multiclass prerequisites as an OpenGold house rule. Disabled classes do not qualify; go Back to reassign scores or bonuses.");
+        instructions=step==CreationStep::character_class?"Choose one starting class. Checked targets are future plans, not additional class levels.":step==CreationStep::race?"Choose your race (species in SRD 5.2.1) and gender.":"Select an option, then continue.";
     }
     if(step==CreationStep::race){
         auto* gender=get_node<OptionButton>("Gender");gender->clear();
@@ -395,7 +406,7 @@ void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->ste
 void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
 void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_head();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
 void CharacterCreationView::choice_selected(std::int64_t index)
-{if(refreshing_)return;perform([&]{const auto f=choice_fields.at(static_cast<unsigned>(creator_->step()));creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race)recommend_head();});}
+{if(refreshing_)return;perform([&]{const auto f=choice_field(creator_->step());creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race)recommend_head();});}
 void CharacterCreationView::gender_selected(std::int64_t index)
 {if(refreshing_)return;perform([&]{creator_->select(CreationField::gender,creator_->rules().choices(CreationField::gender).at(index).id);recommend_head();});}
 void CharacterCreationView::background_selected(std::int64_t index)
@@ -594,8 +605,8 @@ void CharacterCreationView::check_run()
     switch(check_stage_++) {
     case 0:choose(CreationField::race,"dwarf");break;
     case 1:choose(CreationField::gender,"female");press("Next");break;
-    case 2:choose(CreationField::character_class,"fighter");press("Next");break;
-    case 3:choose(CreationField::alignment,"neutral_good");press("Next");break;
+    case 2:choose(CreationField::alignment,"neutral_good");press("Next");break;
+    case 3:if(creator_->step()!=CreationStep::attributes)throw std::runtime_error("Attributes must precede Class");break;
     case 4:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Unrolled scores accepted");capture("character-empty-rolls.png");press("Roll");
         if(!get_node<Button>("Next")->is_disabled()||!get_node<Button>("Score0")->get_text().is_empty())throw std::runtime_error("Dice were automatically assigned");break;
     case 5:{capture("character-unassigned-rolls.png");const auto old=creator_->draft().rolls;press("Roll");if(old==creator_->draft().rolls)throw std::runtime_error("Reroll did not replace dice");
@@ -604,7 +615,9 @@ void CharacterCreationView::check_run()
     case 7:
         for(unsigned i=0;i<6;++i)if(get_node<Button>(gs("Score"+std::to_string(i)))->get_text()!=gs(std::to_string(creator_->sheet().scores[i])))throw std::runtime_error("Displayed ability score differs from the character sheet");
         capture("character-attributes.png");press("Next");break;
-    case 8:if(creator_->step()!=CreationStep::name||creator_->sheet().hit_points!=11+creator_->sheet().modifiers[2])throw std::runtime_error("Attributes must advance directly to Name with rules-derived HP");break;
+    case 8:if(creator_->step()!=CreationStep::character_class)throw std::runtime_error("Attributes must advance to Class");
+        choose(CreationField::character_class,"fighter");press("Next");
+        if(creator_->step()!=CreationStep::name)throw std::runtime_error("Qualified Fighter must advance to Name");break;
     case 9:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Empty name accepted");
         get_node<LineEdit>("Name")->grab_focus();
         for(char c:std::string("Mira Stoneward"))for(bool pressed:{true,false}){Ref<InputEventKey> event;event.instantiate();event->set_unicode(c);
