@@ -1,5 +1,6 @@
 #include "character_creation_view.h"
 #include "rolf_tour_view.h"
+#include "combat_view.h"
 #include "save_slots.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
@@ -30,17 +31,19 @@ void CharacterCreationView::setup_saves(){
 }
 void CharacterCreationView::open_saves(bool saving){
     if(campaign_->in_combat())return;
-    if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));town&&!town->can_leave())return;
+    if(campaign_defeated_&&saving)return;
+    if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));town&&!town->can_leave()&&!campaign_defeated_)return;
     get_node<SaveSlots>("SaveSlots")->open(saving);
 }
 void CharacterCreationView::save_campaign(const std::filesystem::path& path){
+    if(campaign_defeated_)throw std::runtime_error("Load a saved game after defeat");
     const auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
     const auto bytes=encode_campaign(*campaign_,town?town->saved_session():nullptr,campaign_asset_identity(game_directory()));
     write_campaign_file(path,bytes);error_="Campaign saved.";refresh_party();
 }
 void CharacterCreationView::load_campaign(const std::filesystem::path& path){
     if(campaign_->in_combat())throw std::runtime_error("Finish combat before loading");
-    auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));if(town&&!town->can_leave())throw std::runtime_error("Finish the current event before loading");
+    auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));if(town&&!town->can_leave()&&!campaign_defeated_)throw std::runtime_error("Finish the current event before loading");
     const auto directory=game_directory();auto prototype=por::RolfTourSession::load(directory);auto module=rules_module();
     auto saved=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*module,campaign_asset_identity(directory),&prototype);
     auto replacement=std::make_shared<CampaignParty>(std::move(module));replacement->restore(std::move(saved.party));
@@ -49,6 +52,8 @@ void CharacterCreationView::load_campaign(const std::filesystem::path& path){
     if(saved.town&&!town){Ref<PackedScene> packed=ResourceLoader::get_singleton()->load("res://scenes/rolf_tour.tscn");if(packed.is_null())throw std::runtime_error("Missing town scene");owned.reset(packed->instantiate());town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid town scene");town->set_name("CampaignTown");town->campaign_party(replacement);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));add_child(owned.get());owned.release();}
     // All decoding, resource loading and character validation completed above.
     campaign_=std::move(replacement);
+    campaign_defeated_=false;get_node<Window>("Defeat")->hide();
+    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"))){remove_child(fight);std::unique_ptr<Node,DeleteNode> removed(fight);}
     if(saved.town){town->restore_campaign(campaign_,std::move(*saved.town));town->hide();town->set_process(false);town->set_process_input(false);}
     else if(town){remove_child(town);std::unique_ptr<Node,DeleteNode> removed(town);}
     pool_added_.clear();for(unsigned i=0;i<48;++i)for(const auto& m:campaign_->state().roster)if(m.creation_source=="pool:v1:"+std::to_string(i))pool_added_.push_back(i);completed_.reset();added_to_party_=false;roster_index_=0;party_open_=true;

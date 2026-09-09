@@ -50,6 +50,7 @@ void CombatView::_ready()
     get_node<Button>("Load")->connect("pressed",callable_mp(this,&CombatView::load_game));
     const auto args=OS::get_singleton()->get_cmdline_user_args();checking_=args.has("--combat-check");capture_=args.has("--capture");check_slums_=args.has("--slums");
     party_check_=campaign_&&args.has("--party-check");
+    defeat_check_=campaign_&&args.has("--defeat-check");
     try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(check_slums_)slums();else training();sync_art();
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();}
     catch(const std::exception& e){error_=e.what();refresh();}
@@ -132,7 +133,7 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
-    if(!demo_||Engine::get_singleton()->is_editor_hint())return;
+    if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
         if(demo_->waiting())next();else immediate("end");get_viewport()->set_input_as_handled();return;
@@ -246,8 +247,17 @@ void CombatView::_process(double delta)
                 checked_input_=true;++check_steps_;return;
             }
         }
-        if(checking_||party_check_||active->side==1) {
-            ai_delay_+=delta;if(!checking_&&!party_check_&&ai_delay_<.65)return;ai_delay_=0;
+        if(checking_||party_check_||defeat_check_||active->side==1) {
+            ai_delay_+=delta;if(!checking_&&!party_check_&&!defeat_check_&&ai_delay_<.65)return;ai_delay_=0;
+            if(defeat_check_){
+                if(++check_steps_>2000)throw std::runtime_error("Defeat check command limit exceeded");
+                if(active->side==0){
+                    const auto offered=demo_->combat().legal_commands();
+                    const auto pass=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==(s.reaction_pending?"decline":"end");});
+                    if(pass==offered.end())throw std::runtime_error("Defeat check cannot pass party turn");
+                    act(*pass);return;
+                }
+            }
             if(checking_&&++check_steps_>1000) {
                 std::string details="Combat check command limit exceeded";
                 for(const auto& line:s.log)details+="\n"+line;
@@ -255,5 +265,5 @@ void CombatView::_process(double delta)
             }
             act(choose_demo_command(demo_->combat()));
         }
-    }catch(const std::exception& e){error_=e.what();refresh();if(checking_){UtilityFunctions::push_error(gs(error_));checking_=false;get_tree()->quit(1);}}
+    }catch(const std::exception& e){error_=e.what();refresh();if(checking_||defeat_check_){UtilityFunctions::push_error(gs(error_));checking_=false;get_tree()->quit(1);}}
 }

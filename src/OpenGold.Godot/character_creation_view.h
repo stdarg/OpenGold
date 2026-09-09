@@ -79,6 +79,15 @@ private:
     void close_town_sheet();
     void setup_party();
     void setup_saves();
+    void setup_defeat();
+    void show_defeat();
+    void reload_after_defeat();
+    void exit_after_defeat();
+    void save_dialog_visibility_changed();
+    void restore_defeat_dialog();
+    void defeat_check();
+    bool campaign_defeated_{},defeat_check_{};
+    unsigned defeat_check_stage_{},defeat_check_frames_{};
     void open_saves(bool saving);
     void save_campaign(const std::filesystem::path& path);
     void load_campaign(const std::filesystem::path& path);

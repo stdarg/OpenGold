@@ -11,6 +11,17 @@ Run from PowerShell:
 
 ## Preview flow
 
+Losing shared-party combat opens a defeat window with **Reload a Saved Game**
+and **Exit to OS**. Return to party is blocked; defeat does not revive anyone.
+Reload uses the existing named-save dialog. Cancelling or rejecting a damaged
+save retains the defeated campaign; a confirmed valid load replaces it and
+removes the old combat scene. Standalone combat demos retain their restart controls.
+
+Run `.\review-character.cmd --defeat-check` for the automated loss/reload/exit
+check and a capture at `user-data/party-defeat.png`. It uses an isolated save
+profile. This completes defeat handling for shared-party combat; town-to-Slums
+travel and original tactical geometry are still pending.
+
 1. Finish a character, then select **Add to party** on the character sheet.
    The preview grants each new PC 250 gp. **View party** opens the roster.
    Alternatively, **Character Pool** opens 48 level-one characters, four for each

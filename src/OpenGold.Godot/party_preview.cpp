@@ -1,12 +1,15 @@
 #include "character_creation_view.h"
 #include "combat_view.h"
 #include "rolf_tour_view.h"
+#include "save_slots.h"
+#include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/viewport_texture.hpp>
 #include <godot_cpp/classes/item_list.hpp>
 #include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/line_edit.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/texture_rect.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -65,7 +68,7 @@ void CharacterCreationView::setup_party()
     get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("PartyPanel/SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
-    setup_saves();
+    setup_saves();setup_defeat();
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
 }
 void CharacterCreationView::party_layout()
@@ -131,6 +134,7 @@ void CharacterCreationView::refresh_party()
 void CharacterCreationView::party_action(int action)
 {
     try {
+        if(campaign_defeated_)return;
         error_="";String equipment_notice;
         const auto id=campaign_->state().roster.empty()?0:campaign_->state().roster.at(roster_index_).id;
         if(action==1){if(!completed_||added_to_party_)return;const auto added=campaign_->add_pc(*completed_);campaign_->set_wealth(added,{0,0,0,250,0,0,0});
@@ -245,8 +249,92 @@ void CharacterCreationView::party_check()
 void CharacterCreationView::update_party_navigation()
 {
     bool allowed=true;
-    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat")))allowed=fight->can_leave();
+    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"))){allowed=fight->can_leave();if(fight->defeated()&&!campaign_defeated_)show_defeat();}
     if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown")))if(town->is_visible())allowed=town->can_leave();
+    if(campaign_defeated_)allowed=false;
     auto* button=get_node<Button>("ReturnParty");button->set_disabled(!allowed);
     button->set_tooltip_text(allowed?"Inspect your party and equipment.":"Finish combat, dialogue or shopping before returning to the party.");
+}
+void CharacterCreationView::setup_defeat()
+{
+    std::unique_ptr<Window,DeleteNode> window(memnew(Window));window->set_name("Defeat");
+    window->set_title("Defeat");window->set_size(Vector2i(520,240));window->set_min_size(Vector2i(520,240));
+    window->set_flag(Window::FLAG_RESIZE_DISABLED,true);window->set_transient(true);window->set_exclusive(true);
+    window->hide();add_child(window.get());window.release();
+    auto* dialog=get_node<Window>("Defeat");
+    std::unique_ptr<Label,DeleteNode> title(memnew(Label));title->set_name("Title");title->set_text("Your party has been defeated.");
+    title->set_position(Vector2(24,30));title->set_size(Vector2(472,44));title->add_theme_font_size_override("font_size",24);dialog->add_child(title.get());title.release();
+    std::unique_ptr<Label,DeleteNode> body(memnew(Label));body->set_text("Load a saved game to continue.");body->set_position(Vector2(24,90));body->set_size(Vector2(472,36));dialog->add_child(body.get());body.release();
+    for(bool reload:{true,false}){
+        std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(reload?"Reload":"Exit");button->set_text(reload?"Reload a Saved Game":"Exit to OS");
+        button->set_position(Vector2(reload?24:308,170));button->set_size(Vector2(reload?268:188,44));
+        button->connect("pressed",reload?callable_mp(this,&CharacterCreationView::reload_after_defeat):callable_mp(this,&CharacterCreationView::exit_after_defeat));dialog->add_child(button.get());button.release();
+    }
+    dialog->connect("close_requested",callable_mp(this,&CharacterCreationView::show_defeat));
+    get_node<SaveSlots>("SaveSlots")->connect("visibility_changed",callable_mp(this,&CharacterCreationView::save_dialog_visibility_changed));
+    defeat_check_=OS::get_singleton()->get_cmdline_user_args().has("--defeat-check");
+}
+void CharacterCreationView::show_defeat()
+{
+    campaign_defeated_=true;get_node<Button>("ReturnParty")->hide();
+    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat")))fight->set_process_input(false);
+    auto* dialog=get_node<Window>("Defeat");if(!dialog->is_visible())dialog->popup_centered();dialog->get_node<Button>("Reload")->grab_focus();
+}
+void CharacterCreationView::reload_after_defeat()
+{
+    if(!campaign_defeated_)return;get_node<Window>("Defeat")->hide();open_saves(false);
+}
+void CharacterCreationView::save_dialog_visibility_changed()
+{
+    // Window releases its exclusive-child slot after emitting visibility_changed.
+    callable_mp(this,&CharacterCreationView::restore_defeat_dialog).call_deferred();
+}
+void CharacterCreationView::restore_defeat_dialog()
+{
+    if(campaign_defeated_&&!get_node<SaveSlots>("SaveSlots")->is_visible())show_defeat();
+}
+void CharacterCreationView::exit_after_defeat(){if(campaign_defeated_)get_tree()->quit(0);}
+void CharacterCreationView::defeat_check()
+{
+    auto* dialog=get_node<Window>("Defeat");auto* saves=get_node<SaveSlots>("SaveSlots");
+    if(++defeat_check_frames_>4000)throw std::runtime_error("Defeat check timed out");
+    if(defeat_check_stage_==0){
+        const auto id=campaign_->add_pc(preview_guard());campaign_->set_wealth(id,{0,0,0,250,0,0,0});
+        open_saves(true);saves->get_node<LineEdit>("Name")->set_text("Defeat test");saves->get_node<Button>("Action")->emit_signal("pressed");
+        if(saves->is_visible())saves->get_node<Button>("Action")->emit_signal("pressed");
+        if(saves->is_visible())throw std::runtime_error("Defeat fixture save failed");
+        party_action(8);++defeat_check_stage_;return;
+    }
+    if(defeat_check_stage_==1){
+        if(!campaign_defeated_)return;
+        auto* fight=get_node<CombatView>("CampaignCombat");
+        if(!dialog->is_visible()||fight->can_leave()||campaign_->in_combat()||campaign_->state().roster.at(0).vitals.hit_points)throw std::runtime_error("Defeat did not lock gameplay with persisted zero HP");
+        party_action(9);if(!get_node_or_null("CampaignCombat")||!dialog->is_visible())throw std::runtime_error("Return to party bypassed defeat");
+        dialog->get_node<Button>("Reload")->emit_signal("pressed");if(!saves->is_visible()||dialog->is_visible())throw std::runtime_error("Defeat reload did not open save slots");
+        saves->get_node<Button>("Cancel")->emit_signal("pressed");++defeat_check_stage_;return;
+    }
+    if(defeat_check_stage_==2){
+        if(!dialog->is_visible())throw std::runtime_error("Cancel bypassed defeat");
+        auto* fight=get_node<CombatView>("CampaignCombat");
+        const auto broken=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../user-data/save-check/defeat-corrupt.ogs").utf8().get_data());
+        write_campaign_file(broken,"corrupt");const auto original=campaign_;bool rejected=false;
+        try{load_campaign(broken);}catch(const std::exception&){rejected=true;}
+        if(!rejected||campaign_!=original||!fight->defeated()||!dialog->is_visible())throw std::runtime_error("Rejected defeat load changed campaign");
+        ++defeat_check_stage_;defeat_check_frames_=0;return;
+    }
+    if(defeat_check_stage_==3){
+        if(defeat_check_frames_<4)return;
+        if(capture_){const auto image=dialog->get_texture()->get_image();if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/party-defeat.png"))!=OK)throw std::runtime_error("Cannot capture defeat screen");}
+        dialog->get_node<Button>("Reload")->emit_signal("pressed");auto* slots=saves->get_node<ItemList>("Slots");int selected=-1;
+        for(int i=0;i<slots->get_item_count();++i)if(slots->get_item_text(i)=="Defeat test")selected=i;
+        if(selected<0)throw std::runtime_error("Defeat save slot missing");slots->select(selected);slots->emit_signal("item_selected",selected);
+        saves->get_node<Button>("Action")->emit_signal("pressed");if(!campaign_defeated_||!saves->is_visible())throw std::runtime_error("Defeat load skipped confirmation");
+        saves->get_node<Button>("Action")->emit_signal("pressed");
+        if(campaign_defeated_||dialog->is_visible()||saves->is_visible()||get_node_or_null("CampaignCombat")||campaign_->state().roster.at(0).vitals.hit_points==0)throw std::runtime_error("Confirmed reload did not replace defeated campaign");
+        party_action(8);++defeat_check_stage_;return;
+    }
+    if(defeat_check_stage_==4&&campaign_defeated_){
+        UtilityFunctions::print("Godot defeat check passed: real combat loss, blocked return, cancel, corrupt load rollback, confirmed save reload, subsequent defeat and Exit to OS callback.");
+        dialog->get_node<Button>("Exit")->emit_signal("pressed");defeat_check_=false;
+    }
 }
