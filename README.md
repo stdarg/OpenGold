@@ -4,6 +4,16 @@ A modern Godot-based reimplementation of SSI's Gold Box engine that reads the
 original game data and assets while adding a cleaner UI, improved rendering,
 and modern quality-of-life features.
 
+The current implementation targets **Pool of Radiance** through playable demos
+and inspection tools; the full campaign is not yet playable. The engine uses
+C++20 with Godot 4.x presentation and a shared GDExtension. Combat uses a bounded,
+replaceable **SRD 5.2.1** rules module. Original game files must come from your
+own installation and are decoded at runtime; they are not bundled.
+
+For the connected character, town and combat flow, start with
+[character creation and the shared party preview](#character-creation-and-shared-party).
+See [build setup](#build-setup) for prerequisites and game-directory configuration.
+
 ## Sound board
 
 Play the 19 original PC-speaker effects from your installed `START.EXE`, including
@@ -27,11 +37,11 @@ encounter sprite, the original Phlan wall and door artwork, and a synchronized p
 After the farewell, explore New Phlan and its buildings with a single fighter
 carrying 9,999 gold. Enter shops, answer the original dialogue, and buy items.
 See [New Phlan exploration](docs/PHLAN.md) for controls and current script limits.
-From Windows CMD:
+From PowerShell:
 
-```cmd
-build-rolf.cmd
-review-rolf.cmd
+```powershell
+.\build-rolf.cmd
+.\review-rolf.cmd
 ```
 
 See [build prerequisites, controls and current limits](docs/ROLF.md).
@@ -39,11 +49,12 @@ See [build prerequisites, controls and current limits](docs/ROLF.md).
 ## Turn-based combat
 
 The first replaceable C++ rules module uses **SRD 5.2.1** with a native Godot
-combat scene, an offline curated rules pack, and a fixed party. Run from CMD:
+combat scene and an offline curated rules pack. The standalone modes use fixed
+fixtures; the shared party preview uses your created characters. From PowerShell:
 
-```cmd
-build-rolf.cmd
-review-combat.cmd
+```powershell
+.\build-rolf.cmd
+.\review-combat.cmd
 ```
 
 Training works without original files. **Slums event** runs the original four-orc
@@ -51,23 +62,62 @@ encounter through actual combat and returns its result to ECL. The arena is
 authored; original orc icons and dialogue load from your installed game.
 See [controls, library boundaries, supported rules, and remaining work](docs/RULES.md).
 
-## Character creation
+## Character creation and shared party
 
-The character scene also previews a shared party: finish a character and **Add
-to party**, inspect sheets/inventories, recruit a preview NPC, buy/equip in New
-Phlan, and fight with persistent HP/resources. See [party scope and controls](docs/PARTY.md).
+Create level-one characters with nine species, twelve classes, four SRD
+backgrounds, 4d6-drop-lowest rolls, drag-and-drop ability assignment and score
+swapping. Background bonuses update the scores and class eligibility immediately.
+Starting-class prerequisite checks are an OpenGold house rule. A scrollable
+**Target class(es)** checklist records future goals and shows unmet ability
+requirements; acquiring additional classes is not implemented.
 
-Create a single level-one character in the standalone C++/Godot demo, with
-SRD 5.2.1 choices, 4d6 rolls, score swapping, maximum starting HP, original
-portrait parts, and customizable ready/action sprites. The final screen shows
-the character sheet. Run from CMD:
+Choose original portrait parts or ten additional heads for Gnome, Orc, Goliath,
+Tiefling and Dragonborn characters. Portrait controls stay available throughout
+creation. Customize ready/action combat sprites with separate head/body parts
+and twelve region colors. The shared character sheet includes inventory, live
+stats, a **Modifiers** dialog and a **Saving Throws** calculator.
 
-```cmd
-build-rolf.cmd
-review-character.cmd
+From PowerShell:
+
+```powershell
+.\build-rolf.cmd
+.\review-character.cmd
 ```
 
 See [controls, rules and scope](docs/CHARACTER-CREATION.md).
+
+Finish a character and **Add to party**, or open **Character Pool** to choose
+from 48 level-one characters (four per class), each with a unique first name
+and surname, selected portraits and matching sprite palettes. The roster supports
+six PCs and two NPCs, reserve/rejoin, and an authored preview guard. New PCs
+receive 250 gp.
+
+**Explore New Phlan** shares the party with Rolf's tour and town scripts. Inspect
+members from the town roster, buy equipment for the selected member, and equip
+or unequip supported items with visible training penalties. **Party combat**
+opens the tactical Bandit preview. HP, equipment, spent resources and town
+position persist between scenes within the running session. All twelve classes
+have exploration equipment profiles; combat currently supports only the
+Fighter, Cleric and Wizard level 1-2 subsets. Put other classes in reserve before
+combat. See [party scope and controls](docs/PARTY.md).
+
+## Recovery and advancement
+
+The party Bandit preview grants a one-time **300 XP per living active member**
+on victory. A separate original Slums encounter mapping grants the same authored
+award when a campaign party is attached. Supported Fighters, Clerics and Wizards
+advance to **level 2**, updating maximum HP and caster slots while retaining spent
+resources. Further levels and full level-two class features remain unimplemented.
+
+The original inn can provide an eligible paid long rest, restoring HP and
+supported resources. Street camping runs the original city-watch interruption
+and grants no recovery. The temple offers a bounded **Cure Wounds** service for
+100 gp. Rest eligibility, payment and unsupported-event rollback are enforced.
+See [recovery, service limits and verification](docs/RECOVERY.md).
+
+Campaign file save/load, cross-area travel and general exploration-to-combat
+encounters remain future work. Closing the application discards the campaign
+session. The standalone combat Training mode has its own combat save/load.
 
 ## Native monster/NPC statistics
 
@@ -92,24 +142,30 @@ Build and inspect a creature from the repository root:
 Omit `"TROLL"` to inspect all records. See [the C++ API and interpretation
 limits](docs/creature-catalog.md) for integration, required assets and tests.
 
-## Map inspector
+## ECL script tools
 
-The [ECL runtime and engine design](docs/SCRIPTS.md) documents the initial native
-script interpreter and planned map-trigger/encounter integration. After building,
+The [ECL runtime and engine design](docs/SCRIPTS.md) documents the native
+script interpreter and resumable engine requests. The bounded New Phlan host
+already runs location events, building transitions, dialogue and shops; the
+Slums combat adapter returns encounter outcomes to ECL. General campaign
+integration remains incomplete. After building,
 run `.\build\opengold_scripts.exe --demo` for a self-contained arithmetic, text,
 and menu script. The tool also lists, inspects, and runs installed ECL records;
 missing gameplay host capabilities and unbound engine variables produce explicit faults.
 
-Run `build.cmd`, then `review-maps.cmd` to browse the original GEO maps as a
-top-down grid with walls, doors, and numbered event markers. Click cells or event
+## Map inspector
+
+Run `.\build.cmd`, then `.\review-maps.cmd` from PowerShell to browse the original
+GEO maps as a top-down grid with walls, doors, and numbered event markers. Click cells or event
 locations to inspect their raw data. The demo uses the configured game directory
 and the reusable native `MapCatalog` loader. Markers expose potential script
-triggers; ECL execution and collision-checked movement are not implemented yet.
+triggers; this inspector does not execute ECL or provide collision-checked player
+movement. Those bounded gameplay capabilities are available in the New Phlan demo.
 See [map loading, demo controls, and tests](docs/MAPS.md).
 
 ## Monster art review tool
 
-Run `review-art.cmd` from the repository root, or:
+Run `.\review-art.cmd` from PowerShell at the repository root, or:
 
 ```powershell
 godot --path godot res://scenes/monster_art_review.tscn
@@ -177,10 +233,11 @@ unresolved groups under ignored `user-data/`. See [NPC art findings](docs/npc-ar
 for the discoveries and remaining validation. Test with
 `godot_console --headless --path godot --script ../tests/ecl_art_tests.gd`.
 
-Current scope is CPIC, SPRIT, CHEAD, CBODY and COMSPR. Portraits, scene
-illustrations, walls/terrain, and non-image assets still require their own
-validated decoders; this tool does not claim to categorize those yet. Automatic
-name suggestions use script evidence where available and fall back to provisional
+This review tool covers CPIC, SPRIT, CHEAD, CBODY and COMSPR. It does not
+categorize portraits, scene illustrations, walls/terrain or non-image assets.
+Other native demos already decode supported portraits, pictures, Phlan wall
+art and PC-speaker sounds. Automatic name suggestions use script evidence where
+available and fall back to provisional
 matching-ID guesses; search allows manual assignment beyond those suggestions.
 Save names before closing.
 
@@ -201,15 +258,41 @@ ctest --test-dir build --output-on-failure
 From a regular VS Code terminal, run the repository-local helper instead. It
 initializes Visual Studio and uses its installed CMake directly:
 
-```cmd
-build.cmd
+```powershell
+.\build.cmd
 ```
 
 Open `godot/project.godot` in Godot 4.x for the presentation shell. The native
 core is deliberately testable without launching Godot. The optional C++
-GDExtension for Rolf's tour is built separately with `build-rolf.cmd`.
+GDExtension contains the tour/town, character/party, combat and sound-board
+scenes and is built separately with `.\build-rolf.cmd`. Both build helpers run
+the native tests; close running native demo scenes before rebuilding the DLL.
+The helpers currently expect Visual Studio Build Tools under the hard-coded
+`Microsoft Visual Studio\18\BuildTools` path. For other installations, use the
+CMake commands in a configured developer terminal and the
+[extension build options](docs/ROLF.md#build-boundary).
 
-The current scene compares nearest-neighbor, xBR level-2, and Maxim Stepin's HQx
+Set the game directory before launching a demo or running tests against original
+data. The environment variable overrides `opengold/game_directory` in
+`godot/project.godot`; point it at the directory containing the DAX files:
+
+```powershell
+$env:OPENGOLD_GAME_DIR = 'C:\Games\POOLRAD'
+```
+
+The shared party acceptance check exercises creation, the original shop, combat,
+level-two advancement, the temple, the inn and interrupted camping:
+
+```powershell
+godot --headless --path godot res://scenes/character_creation.tscn -- --party-check
+```
+
+It requires the built extension and original game data. Individual feature docs
+above describe their additional checks and supported data profiles.
+
+## Graphics comparison
+
+The default Godot scene compares nearest-neighbor, xBR level-2, and Maxim Stepin's HQx
 (HQ4x) side by side at 4x. The dropdown defaults to **Combat sprites** (`CPIC*.DAX`,
 `COMSPR.DAX`, `CHEAD.DAX`, and `CBODY.DAX`); **Encounter sprites** browses
 `SPRIT*.DAX`. Combat starts at `CPIC1.DAX` record 2 when available.
@@ -222,9 +305,3 @@ separate records are browsable individually rather than automatically animated.
 All views use the same background-composited image. The xBR shader retains
 Hyllian's MIT license notice; the HQ4x shader and lookup table retain their
 LGPL-2.1-or-later license and credits in [the HQx folder](godot/shaders/hqx/README.md).
-Override the configured development path with the directory that
-contains the DAX files:
-
-```powershell
-$env:OPENGOLD_GAME_DIR = 'C:\Games\POOLRAD'
-```
