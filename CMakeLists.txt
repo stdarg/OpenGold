@@ -52,6 +52,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/rolf_tour.cpp
     src/OpenGold.Core/src/phlan_session.cpp
     src/OpenGold.Core/src/combat_demo.cpp
+    src/OpenGold.Core/src/dungeon_battlefield.cpp
     src/OpenGold.Core/src/exploration_view.cpp
     src/OpenGold.Core/src/speaker_audio.cpp
     src/OpenGold.Core/src/sound_bank.cpp
@@ -71,6 +72,9 @@ target_link_libraries(opengold_core
 
 if(OPENGOLD_BUILD_TESTS)
     enable_testing()
+    add_executable(opengold_battlefield_tests tests/battlefield_tests.cpp)
+    target_link_libraries(opengold_battlefield_tests PRIVATE opengold_core)
+    add_test(NAME opengold_battlefield_tests COMMAND opengold_battlefield_tests)
     add_executable(opengold_core_tests
         tests/core_tests.cpp
     )
