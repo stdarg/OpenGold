@@ -45,6 +45,8 @@ public:
     void purchase(MemberId id,const por::Equipment& item);
     void set_wealth(MemberId id,std::array<std::uint16_t,7> wealth);
     void award_experience(unsigned amount,std::string reward_id);
+    // Atomic original loot delivery. A full set of purses leaves it unclaimed.
+    bool award_loot(const std::array<unsigned,7>& wealth,const std::vector<por::Equipment>& items,std::string reward_id);
     [[nodiscard]] bool rest();
     void temple_heal(MemberId target);
     void advance_time(unsigned minutes);

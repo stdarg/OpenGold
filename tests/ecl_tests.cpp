@@ -24,6 +24,19 @@ EclMachine machine(const Bytes& body)
 {
     EclMachine vm(program(body)); vm.bind_variable(0x9700,0); check(vm.start(0),"Start"); return vm;
 }
+void host_random_and_string_copy()
+{
+    EclMachine strings(program({9,129,0,0x97,129,0x20,0x97,0}));
+    strings.bind_string(0x9700,"ORCS");strings.bind_string(0x9720,".....");
+    check(strings.start(0)&&strings.run().state==EclState::completed&&strings.string(0x9720)=="ORCS","SAVE string reference copies text into string destination");
+    EclMachine vm(program({35,1,0,0x97,1,1,0x97,0,0,0,0,0}));
+    vm.bind_variable(0x9700,0);vm.bind_variable(0x9701,0);vm.enable_host(35);check(vm.start(0),"Host random start");
+    const auto request=vm.run().request;check(request.has_value(),"Surprise host request");auto replay=vm;
+    rejects([&]{(void)vm.host_random(request->id+1,6);});
+    rejects([&]{(void)vm.host_random(request->id,0);});
+    for(unsigned n=0;n<100;++n){const auto die=vm.host_random(request->id,6);check(die<6&&die==replay.host_random(request->id,6),"Host dice are bounded and checkpoint deterministic");}
+    check(vm.resume_host(request->id,{}),"Complete host dice request");rejects([&]{(void)vm.host_random(request->id,6);});
+}
 void decoding()
 {
     check(unpack_ecl_text(Bytes{4,32,192}) == "ABC","Six-bit packed text");
@@ -327,6 +340,6 @@ void catalogs()
 }
 int main()
 {
-    try { decoding(); arithmetic(); control(); suspension(); por_operations(); memory_and_input(); host_services(); catalogs(); std::cout << "ECL tests passed.\n"; }
+    try { host_random_and_string_copy();decoding(); arithmetic(); control(); suspension(); por_operations(); memory_and_input(); host_services(); catalogs(); std::cout << "ECL tests passed.\n"; }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

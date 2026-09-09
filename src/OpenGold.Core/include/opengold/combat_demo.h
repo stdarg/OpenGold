@@ -5,8 +5,17 @@
 #include "opengold/creature_catalog.h"
 #include "opengold/formats.h"
 #include "opengold/campaign_party.h"
+#include "opengold/dungeon_battlefield.h"
 namespace opengold {
 struct CombatArt { rules::EntityId entity{}; Image image; };
+struct CampaignEncounter {
+    por::DungeonBattlefield field;
+    std::vector<rules::Participant> enemies;
+    std::vector<CombatArt> art;
+    std::vector<Image> terrain_art;
+    unsigned facing{};
+    unsigned surprise{};
+};
 // A bounded demonstration/campaign adapter. It depends on the rules interface,
 // never on a specific edition. The application supplies the selected module.
 class CombatDemo {
@@ -16,6 +25,9 @@ public:
     void campaign_party(std::shared_ptr<CampaignParty> party);
     void training(std::uint64_t seed=42);
     void slums(const std::filesystem::path& game_directory,std::uint64_t seed=42);
+    void encounter(CampaignEncounter encounter,std::uint64_t seed);
+    [[nodiscard]] const auto& battlefield_tiles() const {return battlefield_tiles_;}
+    [[nodiscard]] const auto& terrain_art() const {return terrain_art_;}
     [[nodiscard]] const rules::CombatSession& combat() const;
     bool submit(const rules::Command& command);
     void continue_script();
@@ -41,6 +53,8 @@ private:
     std::optional<por::CreatureCatalog> creatures_;
     std::vector<rules::Participant> enemies_;
     std::vector<CombatArt> art_;
+    std::vector<std::uint8_t> battlefield_tiles_;
+    std::vector<Image> terrain_art_;
     std::filesystem::path game_directory_;
     std::string dialogue_,status_;
     std::uint64_t menu_ticket_{},combat_ticket_{},seed_{};

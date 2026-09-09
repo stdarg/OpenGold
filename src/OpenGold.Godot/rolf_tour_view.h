@@ -21,12 +21,15 @@ public:
     [[nodiscard]] bool can_leave() const {return !session_||session_->can_leave();}
     void resume_party(){shown_revision_=0;refresh();}
     [[nodiscard]] const opengold::por::RolfTourSession* saved_session() const {return session_?&*session_:nullptr;}
+    [[nodiscard]] std::optional<opengold::CampaignEncounter> pending_encounter() const {return session_?session_->pending_encounter():std::nullopt;}
+    bool resolve_combat(const opengold::rules::Snapshot& result){if(!session_||!session_->resolve_combat(result))return false;refresh();return true;}
     void restore_campaign(std::shared_ptr<opengold::CampaignParty> party,opengold::por::RolfTourSession session);
     void request_save(bool saving);
     std::function<void(const std::string&)> save_check;
     [[nodiscard]] bool party_route_checked() const {return shop_check_stage_==4;}
     void start_recovery_check();
     [[nodiscard]] bool recovery_checked() const {return recovery_stage_==8;}
+    bool check_expedition_step();
 protected:
     static void _bind_methods();
     void _notification(int what);

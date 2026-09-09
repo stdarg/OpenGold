@@ -589,6 +589,28 @@ void RolfTourView::check_walk_to(unsigned tx,unsigned ty)
     if(s.pose.facing==facing)check_pending_edge_={{origin,next}};
     get_node<Button>(s.pose.facing==facing?"Forward":"Right")->emit_signal("pressed");
 }
+bool RolfTourView::check_expedition_step()
+{
+    if(!session_)throw std::runtime_error("Expedition session missing");
+    const auto& s=session_->snapshot();
+    if(!session_->script_diagnostics().empty())throw std::runtime_error(session_->script_diagnostics().back());
+    if(s.phase==TourPhase::faulted)throw std::runtime_error(s.diagnostic);
+    if(s.phase==TourPhase::awaiting_continue){
+        const auto choice=s.choices.size()==5&&s.choices[0]=="Fight"?1:0;
+        get_node<ItemList>("Choices")->select(choice);get_node<Button>("Continue")->emit_signal("pressed");return false;
+    }
+    if(s.phase!=TourPhase::completed)return false;
+    if(s.area_id==0){
+        if(session_->script_variable(0x4ACA)==255)return true;
+        if(s.pose.x!=0||s.pose.y!=4)throw std::runtime_error("Unexpected tour destination");
+        if(s.pose.facing!=3)right();else forward();return false;
+    }
+    if(session_->script_variable(0x4ACA)==255){
+        if(s.pose.x!=15||s.pose.y!=4)check_walk_to(15,4);
+        else if(s.pose.facing!=1)right();else forward();
+    }else check_walk_to(12,1);
+    return false;
+}
 void RolfTourView::start_recovery_check()
 {
     // Deterministic wounded fixture and one platinum for the original inn payment.

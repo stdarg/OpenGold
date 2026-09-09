@@ -1,0 +1,75 @@
+# First Slums expedition
+
+The shared campaign can leave New Phlan through the western gate, enter the
+original Slums map, resolve supported roaming encounters and the four-orc paper
+encounter, and return through the same gate. Script-requested combat opens
+automatically. Victory resumes the waiting script and exploration; defeat opens
+the saved-game reload / Exit to OS screen.
+
+The arena uses the verified 50 by 25 dungeon geometry and original DUNGCOM tiles
+described in [combat-geometry.md](combat-geometry.md). Party and enemy placement
+is an authored formation inside a shared reachable component of that geometry.
+Placement never removes obstacles or omits requested enemies. It is not a claim
+to reproduce the original game's formation algorithm.
+
+## Encounter conversion
+
+MON2CHA identities, counts and requested CPIC2 art come from the original script.
+The following bounded SRD-compatible profiles are authored conversions, not
+complete official monster stat blocks or translations of AD&D statistics:
+
+| Original record | Profile | XP per creature |
+| --- | --- | --- |
+| 0 | Kobold | 25 |
+| 1, 11 | Kobold leader | 50 |
+| 2 | Goblin guard | 50 |
+| 3, 12 | Goblin leader | 100 |
+| 4, 13 | Orc | 75 |
+| 5, 14, 15 | Orc leader | 150 |
+| 63 | Bugbear | 200 |
+
+The four-orc event retains its approved 300 XP reward and stable completion
+identity. Existing campaign semantics award that amount to each living active
+member. Roaming encounters use a distinct persisted reward identity each time.
+Original groups can be large and dangerous to a new party; counts are preserved.
+
+The pre-combat menu uses Fight, Wait, Flee, Advance and Parley with the script's
+response table. Pre-combat escape is separate from retreat during combat, which
+remains deferred. Supported modern profiles have no original party surprise
+modifiers. Surprise rolls share the checkpointed ECL random stream; the resulting
+surprise uses initiative disadvantage in the selected SRD module. Original
+movement thresholds use the explicit conversion 30 modern feet = 12 original
+movement units for the menu's escape check.
+
+Coin denominations and carried items are taken from the defeated original
+records. The four-orc group carries 96 silver and one magic item from record 13.
+The item's original bytes and provenance are retained; no unsupported magic
+effect is invented. Script suppression of monster item drops is honored. Full
+purses defer collection without losing loot; deferred rewards survive saving.
+
+This does not make every Slums quest, creature, robbery or parley outcome
+supported. Unsupported paths retain explicit diagnostics and event rollback.
+Probabilistic Slums camping and other district transitions are outside this
+first expedition. The first-room victory and required route encounters are the
+acceptance target.
+
+## Review and validation
+
+From PowerShell, build with `.\build-rolf.cmd`. Run
+`.\review-character.cmd --expedition-check` for the visible automated trip and
+`user-data/slums-battlefield.png` capture. The fixture is six equipped level-two
+fighters; it does not demonstrate that six new level-one characters can defeat
+every original roaming group. Normal play uses `.\review-character.cmd`.
+
+Native tests cover original geometry, host dice, string-copy semantics, surprise
+initiative, large-arena checkpoints, coin overflow and duplicate loot. The
+installed-data route also checks the four-orc flag, original silver award and
+return to New Phlan. Campaign saves retain district, visited maps, script state,
+RNG and uncollected loot; version-one saves and the preceding additive rules
+content pack remain accepted.
+
+References: original installed ECL2/GEO2/MON2CHA/CPIC2/DUNGCOM resources;
+[Pool of Radiance technical FAQ](https://gamefaqs.gamespot.com/pc/564785-pool-of-radiance/faqs/73869)
+for the encounter host protocol;
+[SRD combat rules](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.pdf)
+for initiative disadvantage on surprise.

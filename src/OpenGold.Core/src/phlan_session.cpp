@@ -1,9 +1,26 @@
 #include "opengold/rolf_tour.h"
 #include <algorithm>
+#include <set>
 
 namespace opengold::por {
+const PhlanResources& RolfTourSession::area_resources() const
+{return current_area_?*town_->districts.at(current_area_):*town_;}
+void RolfTourSession::change_area(unsigned id)
+{
+    if(id==current_area_)return;
+    const auto& resource=id?*town_->districts.at(id):*town_;
+    if(!resource.map)throw EclError("District map is missing");
+    visited_areas_[current_area_]=snapshot_.visited;current_area_=id;snapshot_.area_id=id;
+    map_=*resource.map;wall_art_=resource.wall_art;snapshot_.visited=visited_areas_[id];
+    picture_.reset();++snapshot_.picture_revision;snapshot_.sprite_frame=-1;++snapshot_.revision;
+}
 void RolfTourSession::campaign_party(std::shared_ptr<opengold::CampaignParty> party)
 {campaign_=std::move(party);restart();}
+void RolfTourSession::attach_restored_party(std::shared_ptr<opengold::CampaignParty> party)
+{
+    campaign_=std::move(party);
+    if(campaign_)for(const std::uint8_t op:{11,29,30,34,35,41,54})machine_.enable_host(op);
+}
 namespace {
 constexpr std::array<std::uint16_t,7> money{0x6BBB,0x6BBD,0x6BBF,0x6BC1,0x6BC3,0x6BC5,0x6BC7};
 constexpr std::array<int,4> dx{0,1,0,-1}, dy{-1,0,1,0};
@@ -23,7 +40,7 @@ void RolfTourSession::configure_town()
     if(campaign_)selected_character_=campaign_->state().selected;
     for (const auto& w:character_reply(selected_character_).writes) machine_.bind_variable(w.address,w.value);
     for (const std::uint8_t op:{10,28,32,33,36,39,40,50,55,56,57}) machine_.enable_host(op);
-    if(campaign_)for(const std::uint8_t op:{29,30,54})machine_.enable_host(op);
+    if(campaign_)for(const std::uint8_t op:{11,29,30,34,35,41,54})machine_.enable_host(op);
     synchronize_clock();
 }
 void RolfTourSession::synchronize_clock()
@@ -88,33 +105,83 @@ bool RolfTourSession::move_party(ExplorationCommand command)
     else if (command==ExplorationCommand::forward) {
         if (machine_.variable(0x6DC9)==255) return false;
         const int x=static_cast<int>(pose.x)+dx[pose.facing],y=static_cast<int>(pose.y)+dy[pose.facing];
-        if (x<0 || y<0 || x>=16 || y>=16) return false;
-        const auto& a=map_.at(pose.x,pose.y); const auto& b=map_.at(x,y);
+        const auto wrapped_x=(x+16)%16,wrapped_y=(y+16)%16;
+        const auto& a=map_.at(pose.x,pose.y); const auto& b=map_.at(wrapped_x,wrapped_y);
         const auto side=pose.facing, other=(side+2)%4;
         // Ordinary doors are traversable. Locks retain their distinct codes.
         const auto blocked=[](unsigned wall,unsigned door){return door>1 || (wall && !door);};
         if (blocked(a.walls[side],a.doors[side]) || blocked(b.walls[other],b.doors[other])) return false;
         machine_.bind_variable(0x49F0,pose.x); machine_.bind_variable(0x49F1,pose.y);
-        pose.x=x;pose.y=y;++snapshot_.footsteps;
+        pose.x=wrapped_x;pose.y=wrapped_y;++snapshot_.footsteps;
     }
     bind_pose(pose);return true;
 }
 
 void RolfTourSession::begin_event(unsigned slot)
 {
+    claim_loot();
     synchronize_clock();
     if(campaign_){selected_character_=campaign_->state().selected;
         for(const auto& w:character_reply(selected_character_).writes)machine_.bind_variable(w.address,w.value);
         saved_campaign_=campaign_->checkpoint();}
     checkpoint_=machine_; saved_party_=party_; saved_script_=current_script_;
+    saved_area_=current_area_;
+    saved_visited_areas_=visited_areas_;saved_snapshot_=snapshot_;
     saved_selected_character_=selected_character_;
     event_stage_=slot==0?1:slot==2?4:2;
     machine_.bind_variable(0x6DC9,0);
-    machine_.bind_variable(0x6DD5,0); // No off-map move is proposed by this bounded town host.
+    bool off_map=false;
+    if(slot==0&&pending_movement_){const auto p=snapshot_.pose;const int x=static_cast<int>(p.x)+dx[p.facing],y=static_cast<int>(p.y)+dy[p.facing];
+        const auto& cell=map_.at(p.x,p.y);off_map=(x<0||y<0||x>=16||y>=16)&&cell.doors[p.facing]<=1&&(!cell.walls[p.facing]||cell.doors[p.facing]);}
+    machine_.bind_variable(0x6DD5,off_map?1:0);
     machine_.bind_variable(0x6DCA,slot==1?2:0);
     if (!machine_.start(slot)) { fail("Unable to start town script");return; }
     ++snapshot_.event_runs; snapshot_.phase=TourPhase::running;
     snapshot_.diagnostic.clear(); snapshot_.choices.clear(); ++snapshot_.revision;
+}
+void RolfTourSession::claim_loot()
+{
+    if(!campaign_)return;
+    for(auto it=pending_loot_.begin();it!=pending_loot_.end();){
+        if(campaign_->award_loot(it->wealth,it->items,it->reward_id)){
+            it=pending_loot_.erase(it);snapshot_.dialogue+="\nRecovered the encounter's original money and items.";++snapshot_.revision;
+        }else ++it;
+    }
+}
+bool RolfTourSession::resolve_combat(const rules::Snapshot& result)
+{
+    if(snapshot_.phase!=TourPhase::combat||!encounter_||!combat_request_||!campaign_||campaign_->in_combat()||result.outcome==rules::Outcome::ongoing||result.identity!=campaign_->identity())return false;
+    unsigned defeated=0;std::set<rules::EntityId> enemies,party_ids;
+    std::set<rules::EntityId> expected_party;for(auto id:campaign_->state().slots)if(id)expected_party.insert(id);
+    for(const auto& unit:result.combatants){
+        if(unit.side==1){if(unit.id<1000||unit.id>=1000+staged_records_.size()||!enemies.insert(unit.id).second)return false;if(unit.hit_points==0)++defeated;}
+        else if(unit.side!=0||!expected_party.contains(unit.id)||!party_ids.insert(unit.id).second||campaign_->member(unit.id).vitals!=unit.persistent)return false;
+    }
+    if(party_ids!=expected_party||enemies.size()!=staged_records_.size()||(result.outcome==rules::Outcome::victory&&defeated!=enemies.size()))return false;
+    if(result.outcome==rules::Outcome::defeat){snapshot_.phase=TourPhase::defeated;++snapshot_.revision;return true;}
+    const bool first=staged_records_==std::vector<unsigned>{13,4,4,4};
+    const auto reward=first?std::string("por:ECL2:20:search1:orcs:v1"):"por:ECL2:20:roaming:"+std::to_string(++next_ticket_);
+    unsigned experience=0;for(auto record:staged_records_)experience+=record==63?200:record==0?25:record==1||record==2||record==11?50:record==3||record==12?100:record==4||record==13?75:150;
+    campaign_->award_experience(experience,reward);
+    pending_loot_.push_back(slums_loot(staged_records_,reward+":loot",machine_.variable(0x6DE3)!=1));claim_loot();
+    auto reply=character_reply(selected_character_);for(auto write:std::array<EclMemoryWrite,7>{{{0x6DC7,0},{0x6DC8,static_cast<std::uint16_t>(defeated)},{0x6DCB,0},{0x6DE3,0},{0x6E70,0},{0x6E71,0},{0x6E72,0}}})reply.writes.push_back(write);
+    if(!machine_.resume_host(combat_request_,reply))throw EclError("Combat result rejected by original script");
+    combat_request_=0;encounter_.reset();staged_enemies_.clear();staged_art_.clear();staged_records_.clear();
+    // A later script fault must never restore pre-combat HP or erase a victory.
+    checkpoint_.reset();saved_campaign_.reset();snapshot_.phase=TourPhase::running;++snapshot_.revision;
+    if(!pending_loot_.empty())snapshot_.dialogue+="\nLoot is retained until your party has room in its purses.";
+    advance(0);return true;
+}
+PendingLoot RolfTourSession::slums_loot(std::vector<unsigned> records,std::string reward,bool items) const
+{
+    if(records.empty()||records.size()>56||reward.empty()||reward.size()>160)throw EclError("Invalid pending encounter loot");
+    PendingLoot loot;loot.reward_id=std::move(reward);loot.records=std::move(records);loot.include_items=items;
+    for(auto id:loot.records){
+        const auto& creature=town_->districts.at(20)->encounter_creatures.at(id);
+        for(unsigned coin=0;coin<7;++coin)loot.wealth[coin]+=creature.stored.wealth[coin];
+        if(items)loot.items.insert(loot.items.end(),creature.equipment.begin(),creature.equipment.end());
+    }
+    return loot;
 }
 
 void RolfTourSession::finish_event()
@@ -161,6 +228,40 @@ void RolfTourSession::finish_event()
     snapshot_.choices.clear(); snapshot_.continue_ticket=0; ++snapshot_.revision;
 }
 
+void RolfTourSession::show_encounter_menu()
+{
+    const auto& args=encounter_menu_->arguments;
+    for(unsigned frame=0;frame<3;++frame){auto image=decode_ega_sprite(area_resources().sprite_archive,args[2].value,frame);
+        if(!image)throw EclError("Unsupported roaming encounter sprite");sprites_[frame]=std::move(image.image);}
+    snapshot_.sprite_id=args[2].value;snapshot_.sprite_frame=encounter_distance_;
+    snapshot_.dialogue=args[9+encounter_distance_].text;
+    if(snapshot_.dialogue.empty())snapshot_.dialogue=args[9].text;
+    snapshot_.choices={"Fight","Wait","Flee","Advance","Parley"};
+    snapshot_.phase=TourPhase::awaiting_continue;snapshot_.continue_ticket=++next_ticket_;++snapshot_.revision;
+}
+bool RolfTourSession::choose_encounter(std::size_t choice)
+{
+    if(!encounter_menu_||choice>4)return false;
+    const auto& request=*encounter_menu_;const auto& args=request.arguments;
+    const auto response=args[4+choice].value;if(response>4)throw EclError("Invalid encounter response");
+    int slowest=1000,fastest=0;
+    for(auto id:campaign_->state().slots)if(id){const auto& member=campaign_->member(id);
+        // Conversion boundary: original movement 12 corresponds to a modern
+        // ordinary 30-foot creature. Unconscious members cannot escape on foot.
+        const int movement=member.vitals.dead||member.vitals.hit_points==0?0:campaign_->profile(id).movement_feet*2/5;
+        slowest=std::min(slowest,movement);fastest=std::max(fastest,movement);}
+    unsigned result=1;
+    if(choice==2&&slowest>=args[12].value)result=2;
+    else if(response==2&&(choice!=0||args[13].value>fastest))result=0;
+    else if(response==4)result=3;
+    else if(response==1&&(choice==1||(choice==3&&encounter_distance_>0))){
+        if(choice==3)--encounter_distance_;show_encounter_menu();return true;
+    }else if(response==3&&encounter_distance_>0){--encounter_distance_;show_encounter_menu();return true;}
+    EclHostReply reply;reply.writes={{args[3].value,static_cast<std::uint16_t>(result)}};
+    if(!machine_.resume_host(request.id,reply))return false;
+    encounter_menu_.reset();snapshot_.choices.clear();snapshot_.continue_ticket=0;snapshot_.phase=TourPhase::running;++snapshot_.revision;return true;
+}
+
 void RolfTourSession::notice(std::string message)
 {
     message_only_=true; snapshot_.dialogue=std::move(message);
@@ -186,6 +287,8 @@ bool RolfTourSession::choose(std::uint64_t ticket,std::size_t choice)
         }catch(const std::exception& e){
             campaign_->restore(std::move(before));snapshot_.diagnostic=e.what();++snapshot_.revision;return false;
         }
+    }else if(encounter_menu_){
+        return choose_encounter(choice);
     }else if(who_request_){
         const auto slot=who_slots_.at(choice);auto reply=character_reply(slot);
         if(!machine_.resume_host(who_request_,reply))return false;
@@ -272,7 +375,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         std::array<Image,3> decoded;
         if(arg(1)>2)throw EclError("Unsupported encounter distance");
         for (unsigned n=0;n<3;++n) {
-            auto image=decode_ega_sprite(town_->sprite_archive,arg(0),n);
+            auto image=decode_ega_sprite(area_resources().sprite_archive,arg(0),n);
             if (!image) throw EclError("Unsupported encounter sprite "+std::to_string(arg(0)));
             decoded[n]=std::move(image.image);
         }
@@ -285,12 +388,12 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         if(arg(0)==255)break;
         const auto head_id=machine_.variable(0x6DE1);
         if(head_id==255){
-            const auto found=town_->pictures.find(arg(0));
-            if(found==town_->pictures.end())throw EclError("Unsupported town picture "+std::to_string(arg(0)));
+            const auto found=area_resources().pictures.find(arg(0));
+            if(found==area_resources().pictures.end())throw EclError("Unsupported town picture "+std::to_string(arg(0)));
             picture_=found->second;
         }else{
-            const auto head=town_->heads.find(head_id),body=town_->bodies.find(arg(0));
-            if(head==town_->heads.end()||body==town_->bodies.end()||head->second.width!=88||body->second.width!=88||
+            const auto head=area_resources().heads.find(head_id),body=area_resources().bodies.find(arg(0));
+            if(head==area_resources().heads.end()||body==area_resources().bodies.end()||head->second.width!=88||body->second.width!=88||
                 head->second.height!=40||body->second.height!=48)throw EclError("Unsupported town portrait composition");
             Image portrait;portrait.width=portrait.height=88;
             portrait.rgba=head->second.rgba;
@@ -299,7 +402,32 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         }
         break;
     }
-    case 28: treasure_.clear();break;
+    case 11:{
+        const unsigned record=arg(0),count=arg(1);
+        if(current_area_!=20||!area_resources().encounter_creatures.contains(record)||!count||staged_enemies_.size()+count>56)
+            throw EclError("Encounter needs an explicit supported creature conversion: record "+std::to_string(record)+", count "+std::to_string(count)+", icon "+std::to_string(arg(2)));
+        const auto& creature=area_resources().encounter_creatures.at(record);auto icon=decode_ega_combat_icon(area_resources().combat_archive,arg(2),0);
+        if(!icon)throw EclError("Invalid original Slums combat icon");
+        const auto definition=record==63?"slums-bugbear":record==0?"slums-kobold":record==1||record==11?"slums-kobold-leader":record==2?"slums-goblin":record==3||record==12?"slums-goblin-leader":record==4||record==13?"slums-orc":"slums-orc-leader";
+        for(unsigned i=0;i<count;++i){const auto id=static_cast<rules::EntityId>(1000+staged_enemies_.size());staged_enemies_.push_back({id,definition,creature.stored.name+" "+std::to_string(staged_enemies_.size()+1),1,{}});staged_art_.push_back({id,icon.image});staged_records_.push_back(record);}
+        break;
+    }
+    case 28: treasure_.clear();staged_enemies_.clear();staged_art_.clear();staged_records_.clear();break;
+    case 34:{
+        // Supported converted party profiles have no original surprise modifiers.
+        std::map<std::uint16_t,std::uint16_t> outputs;outputs[arg(0)]=0;outputs[arg(1)]=0;
+        for(auto [address,value]:outputs)reply.writes.push_back({address,value});break;
+    }
+    case 35:{
+        const int party_threshold=2+int(arg(3))-int(machine_.variable(arg(0)));
+        const int monster_threshold=2+int(machine_.variable(arg(1)))-int(arg(2));
+        const bool party=int(machine_.host_random(request.id,6))+1<=party_threshold;
+        const bool monsters=int(machine_.host_random(request.id,6))+1<=monster_threshold;
+        reply.writes.push_back({0x6DCB,static_cast<std::uint16_t>((party?1:0)|(monsters?2:0))});break;
+    }
+    case 41:
+        if(current_area_!=20||arg(1)>2)throw EclError("Unsupported encounter menu context");
+        encounter_menu_=request;encounter_distance_=arg(1);show_encounter_menu();return true;
     case 29:
         read_character();reply.writes.push_back({static_cast<std::uint16_t>(arg(0)),static_cast<std::uint16_t>(campaign_->strength())});break;
     case 30:{
@@ -321,6 +449,11 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         treasure_.insert(treasure_.end(),found->second.begin(),found->second.end());break;
     }
     case 36:
+        if(current_area_==20&&!staged_enemies_.empty()){
+            read_character();const auto p=snapshot_.pose;
+            encounter_=opengold::CampaignEncounter{dungeon_battlefield(map_,p.x,p.y),staged_enemies_,staged_art_,area_resources().terrain_art,p.facing,machine_.variable(0x6DCB)};
+            combat_request_=request.id;snapshot_.phase=TourPhase::combat;++snapshot_.revision;return true;
+        }
         if(machine_.variable(0x6DE2)==1){
             if(!campaign_)throw EclError("Temple service requires a campaign party");
             read_character();temple_targets_.clear();snapshot_.choices.clear();
@@ -346,14 +479,21 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         const auto found=town_->programs.find(arg(0));
         if (found==town_->programs.end()) throw EclError("Travel outside New Phlan (script "+std::to_string(arg(0))+")");
         reply.next_program=found->second;
-        reply.writes={{0x49F2,static_cast<std::uint16_t>(current_script_)},{0x6E12,3}};
-        current_script_=arg(0);snapshot_.script_id=current_script_;transition_=true;break;
+        reply.writes={{0x49F2,static_cast<std::uint16_t>(current_script_)},{0x6E12,static_cast<std::uint16_t>(arg(0)==20?2:3)}};
+        current_script_=arg(0);snapshot_.script_id=current_script_;transition_=true;pending_movement_.reset();break;
     }
-    case 33:
-        if (arg(0)!=0 || arg(1)!=0 || arg(2)!=0) throw EclError("Resources outside the New Phlan profile");
-        break;
+    case 33:{
+        // Original gate transition refresh before NEW ECL selects its district.
+        if(arg(0)==255&&arg(1)==255&&arg(2)==127)break;
+        if(arg(0)==20&&arg(1)==2&&arg(2)==255&&current_script_==20)change_area(20);
+        else if(arg(0)==0&&arg(1)==0&&arg(2)==0)change_area(0);
+        else throw EclError("Resources outside the town/Slums profiles");
+        const auto& cell=map_.at(machine_.variable(0xC04B),machine_.variable(0xC04C));const auto facing=machine_.variable(0xC04D);
+        if(facing>=4)throw EclError("Invalid district entry facing");reply.writes={{0xC04E,cell.walls[facing]},{0xC04F,cell.event_raw}};break;
+    }
     case 55:
-        if (arg(0)!=127 || arg(1)!=127 || arg(2)!=127) throw EclError("Unverified wall resource profile");
+        if(current_area_==20){if(arg(0)!=2||arg(1)!=4||arg(2)!=1)throw EclError("Unverified Slums wall resource profile");}
+        else if(arg(0)!=127||arg(1)!=127||arg(2)!=127)throw EclError("Unverified town wall resource profile");
         break;
     case 50: {
         const bool found=campaign_?campaign_->has_item(arg(0)):std::any_of(party_.inventory.begin(),party_.inventory.end(),[&](const auto& i){return i.stored.type==arg(0);});
@@ -374,6 +514,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
     default: return false;
     }
     if (!machine_.resume_host(request.id,reply)) throw EclError("Town host reply rejected");
+    if(op==33)publish_pose();
     ++snapshot_.revision;return true;
 }
 }

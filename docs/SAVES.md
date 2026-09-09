@@ -1,6 +1,11 @@
 # Campaign saves
 
 The shared character/party/New Phlan flow supports manual named campaign saves.
+The first Slums expedition also supports saving during idle exploration, including
+its district map, script continuation and deferred original loot. Format version
+two retains version-one campaign loading. Adding the supported roaming creature
+profiles preserves compatibility with the preceding rules content pack; unrelated
+content changes still require a matching identity.
 Use **Save game** or **Load game** on the party roster or during idle town
 exploration. Select an existing slot or enter a new name. Overwriting requires
 confirmation and retains a previous version; loading always asks before replacing

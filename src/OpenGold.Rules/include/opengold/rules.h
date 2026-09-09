@@ -46,6 +46,7 @@ struct Participant {
     Cell cell;
     std::string character_profile;
     std::optional<VitalState> state;
+    bool surprised{}; // The rules module determines the mechanical effect.
 };
 struct Encounter { Battlefield battlefield; std::vector<Participant> participants; };
 struct Identity {
@@ -94,6 +95,7 @@ class RulesModule {
 public:
     virtual ~RulesModule() = default;
     [[nodiscard]] virtual Identity identity() const = 0;
+    [[nodiscard]] virtual bool accepts_campaign_identity(const Identity& saved) const {return saved==identity();}
     [[nodiscard]] virtual std::vector<std::string> supported_features() const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> create(Encounter encounter, std::uint64_t seed) const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const = 0;

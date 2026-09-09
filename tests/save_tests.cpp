@@ -4,6 +4,7 @@
 #include <iostream>
 #include <chrono>
 #include <fstream>
+#include <sstream>
 using namespace opengold;
 namespace {
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
@@ -21,6 +22,17 @@ auto prototype(){
 }
 void settle(por::RolfTourSession& town){for(int i=0;i<100&&town.snapshot().phase==por::TourPhase::running;++i)town.advance(1);check(town.can_leave(),"Fixture must finish");}
 void roundtrip(const std::filesystem::path& directory){
+    std::filesystem::create_directories(directory);
+    // A save from the preceding pack remains valid after additive encounters.
+    const auto old_pack=directory/"previous.rules";
+    {std::ifstream input(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");std::ofstream output(old_pack,std::ios::binary);std::string line;
+        while(std::getline(input,line)){if(!line.empty()&&line.back()=='\r')line.pop_back();
+            if(line.starts_with("creature slums-")&&!line.starts_with("creature slums-orc "))continue;
+            output<<line<<'\n';}}
+    CampaignParty previous(srd5::load(old_pack));previous.add_pc(character("fighter"));
+    auto old_save=encode_campaign(previous,nullptr,"fixture-v1");old_save.replace(0,old_save.find('\n')+1,"OPENGOLD-CAMPAIGN 1\n");
+    const auto imported=decode_campaign(old_save,*srd5::character_rules(),*module(),"fixture-v1",nullptr);
+    check(imported.party.roster.size()==1&&imported.party.roster[0].character.sheet().level==1,"Version-one campaign and preceding content pack remain compatible");
     auto party=std::make_shared<CampaignParty>(module());auto fighter=party->add_pc(character("fighter"));auto mage=party->add_pc(character("wizard"));auto reserve=party->add_pc(character("bard"));party->remove(reserve);
     party->set_wealth(fighter,{0,0,0,500,0,0,2});por::Equipment sword;sword.stored.type=36;sword.stored.stack_size=1;sword.stored.value=10;party->purchase(fighter,sword);party->equip(fighter,1);
     party->award_experience(300,"save:encounter");check(party->rest(),"Initial rest");

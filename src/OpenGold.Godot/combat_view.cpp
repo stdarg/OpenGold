@@ -50,16 +50,22 @@ void CombatView::_ready()
     get_node<Button>("Load")->connect("pressed",callable_mp(this,&CombatView::load_game));
     const auto args=OS::get_singleton()->get_cmdline_user_args();checking_=args.has("--combat-check");capture_=args.has("--capture");check_slums_=args.has("--slums");
     party_check_=campaign_&&args.has("--party-check");
+    expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
-    try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(check_slums_)slums();else training();sync_art();
-        if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();}
+    try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
+        if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
+        if(encounter_){get_node<Label>("Title")->set_text("SLUMS / Combat");get_node<Label>("Subtitle")->set_text("Choose an action, then click its target. Enter ends your turn.");
+            get_node<Label>("Footer")->set_text("Each square is 5 feet. Victory returns your party to exploration.");
+            get_node<Label>("Help")->set_text("Teal: party | Orange: enemies\nYour HP and spent resources carry forward.");}
+    }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::layout()
 {
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
-    const double tile=std::min(left_width/12,(height-280)/9);
-    board_rect_=Rect2(24,116,tile*12,tile*9);const double right=width-sidebar-24;
+    const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
+    const double tile=std::min(left_width/board.width,(height-280)/board.height);
+    board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
     place("Training",Rect2(right,20,112,34));place("Slums",Rect2(right+120,20,112,34));place("Replay",Rect2(right+240,20,118,34));
@@ -88,7 +94,11 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();if(!demo_)return;
+    art_.clear();terrain_art_.clear();if(!demo_)return;
+    for(const auto& source:demo_->terrain_art()){
+        PackedByteArray pixels;pixels.resize(source.rgba.size());std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
+        terrain_art_.push_back(ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels)));
+    }
     for(const auto& source:demo_->art()) {
         PackedByteArray pixels;pixels.resize(source.image.rgba.size());std::copy(source.image.rgba.begin(),source.image.rgba.end(),pixels.ptrw());
         const auto image=godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels);
@@ -143,7 +153,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto local=get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());if(!board_rect_.has_point(local))return;
     const auto s=demo_->combat().snapshot();const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0)return;
-    const auto relative=(local-board_rect_.position)/(board_rect_.size.x/12);const Cell cell{static_cast<int>(relative.x),static_cast<int>(relative.y)};
+    const auto relative=(local-board_rect_.position)/(board_rect_.size.x/demo_->combat().snapshot().battlefield.width);const Cell cell{static_cast<int>(relative.x),static_cast<int>(relative.y)};
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
         if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
@@ -180,11 +190,13 @@ void CombatView::refresh()
 void CombatView::_draw()
 {
     draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));draw_rect(board_rect_,Color("202d33"));if(!demo_||!demo_->has_combat())return;
-    const auto s=demo_->combat().snapshot();const double tile=board_rect_.size.x/12;const auto font=get_theme_default_font();
+    const auto s=demo_->combat().snapshot();const double tile=board_rect_.size.x/s.battlefield.width;const auto font=get_theme_default_font();
     for(int y=0;y<s.battlefield.height;++y)for(int x=0;x<s.battlefield.width;++x) {
         const Rect2 cell(board_rect_.position+Vector2(x*tile,y*tile),Vector2(tile,tile));
         const auto terrain=s.battlefield.at({x,y});draw_rect(cell,terrain==1?Color("64716d"):terrain==2?Color("665238"):((x+y)%2?Color("29373c"):Color("253137")));
-        draw_rect(cell,Color("172228"),false);
+        const auto index=y*s.battlefield.width+x;
+        if(index<demo_->battlefield_tiles().size()&&demo_->battlefield_tiles()[index]<terrain_art_.size())draw_texture_rect(terrain_art_[demo_->battlefield_tiles()[index]],cell,false);
+        else draw_rect(cell,Color("172228"),false);
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
@@ -197,7 +209,7 @@ void CombatView::_draw()
         draw_circle(center,tile*.34,a.conscious?color:Color("51595b"));
         if(a.id==s.actor&&s.outcome==Outcome::ongoing)draw_arc(center,tile*.42,0,6.283185,32,Color("e6c28a"),2);
         if(art_.contains(a.id)) {
-            const auto texture=art_.at(a.id);const double scale=std::max(1.0,std::floor(tile*.78/std::max(texture->get_width(),texture->get_height())));
+            const auto texture=art_.at(a.id);const double scale=tile*.9/std::max(texture->get_width(),texture->get_height());
             const Vector2 size(texture->get_width()*scale,texture->get_height()*scale);draw_texture_rect(texture,Rect2(center-size*.5,size),false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
         } else {
             const auto number=std::to_string(a.id);
@@ -215,13 +227,13 @@ void CombatView::_process(double delta)
 {
     if(Engine::get_singleton()->is_editor_hint())return;
     try {
-        if(checking_&&!error_.empty())throw std::runtime_error(error_);
+        if((checking_||expedition_check_)&&!error_.empty())throw std::runtime_error(error_);
         if(!demo_)return;
         if(checking_&&demo_->waiting()){next();return;}
         if(!demo_->has_combat())return;const auto s=demo_->combat().snapshot();
-        if(checking_&&capture_&&!captured_) {
+        if((checking_||expedition_check_)&&capture_&&!captured_) {
             if(++completion_frames_<3)return;completion_frames_=0;
-            const auto file=local_path(check_slums_?"res://../user-data/slums-combat.png":"res://../user-data/training-combat.png");std::filesystem::create_directories(file.parent_path());
+            const auto file=local_path(expedition_check_?"res://../user-data/slums-battlefield.png":check_slums_?"res://../user-data/slums-combat.png":"res://../user-data/training-combat.png");std::filesystem::create_directories(file.parent_path());
             const auto image=get_viewport()->get_texture()->get_image();if(image.is_null()||image->save_png(gs(file.generic_string()))!=OK)throw std::runtime_error("Combat capture failed");captured_=true;
         }
         if(s.outcome!=Outcome::ongoing) {
@@ -241,7 +253,7 @@ void CombatView::_process(double delta)
                 get_node<Button>(node)->emit_signal("pressed");
                 const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==command.target;});
                 Ref<InputEventMouseButton> mouse;mouse.instantiate();mouse->set_button_index(MouseButton::MOUSE_BUTTON_LEFT);mouse->set_pressed(true);
-                mouse->set_position(board_rect_.position+Vector2(target->cell.x+.5,target->cell.y+.5)*(board_rect_.size.x/12));
+                mouse->set_position(board_rect_.position+Vector2(target->cell.x+.5,target->cell.y+.5)*(board_rect_.size.x/demo_->combat().snapshot().battlefield.width));
                 get_viewport()->push_input(mouse,true);
                 if(demo_->combat().snapshot().revision!=s.revision+1)throw std::runtime_error("Action button/target click did not submit command");
                 checked_input_=true;++check_steps_;return;
@@ -265,5 +277,5 @@ void CombatView::_process(double delta)
             }
             act(choose_demo_command(demo_->combat()));
         }
-    }catch(const std::exception& e){error_=e.what();refresh();if(checking_||defeat_check_){UtilityFunctions::push_error(gs(error_));checking_=false;get_tree()->quit(1);}}
+    }catch(const std::exception& e){error_=e.what();refresh();if(checking_||defeat_check_||expedition_check_){UtilityFunctions::push_error(gs(error_));checking_=false;get_tree()->quit(1);}}
 }

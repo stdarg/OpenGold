@@ -289,7 +289,7 @@ void EclMachine::execute(const EclInstruction& i)
     }
     case 9: {
         const auto dest = destination(a[1]);
-        if (a[0].tag == 128) write_string(dest,text(a[0]));
+        if (a[0].tag == 128 || (a[0].tag == 129 && a[1].tag == 129)) write_string(dest,text(a[0]));
         else write(dest, a[0].tag == 129 ? a[0].value : value(a[0]));
         break;
     }
@@ -440,6 +440,14 @@ bool EclMachine::resume_input(std::uint64_t id, std::string_view input)
         } else return false;
     } catch (const EclError&) { return false; }
     finish_request(); return true;
+}
+unsigned EclMachine::host_random(std::uint64_t id,unsigned count)
+{
+    if(state_!=EclState::waiting||!pending_||pending_->id!=id||pending_->kind!=EclRequestKind::host||!count||count>65536)
+        throw EclError("Invalid host random request");
+    const std::uint32_t threshold=(0U-count)%count;std::uint32_t draw;
+    do{draw=static_cast<std::uint32_t>(random_());}while(draw<threshold);
+    return draw%count;
 }
 bool EclMachine::resume_host(std::uint64_t id, const EclHostReply& reply)
 {

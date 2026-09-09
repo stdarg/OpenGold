@@ -82,6 +82,8 @@ public:
     bool resume(std::uint64_t request_id, std::optional<std::size_t> choice = std::nullopt);
     bool resume_input(std::uint64_t request_id, std::string_view input);
     bool resume_host(std::uint64_t request_id, const EclHostReply& reply);
+    // Host dice share the checkpointed script RNG. Returns [0, count).
+    unsigned host_random(std::uint64_t request_id, unsigned count);
     [[nodiscard]] EclState state() const noexcept { return state_; }
     [[nodiscard]] std::uint32_t address() const noexcept { return pc_; }
     [[nodiscard]] const auto& trace() const noexcept { return trace_; }

@@ -51,6 +51,39 @@ void CombatDemo::start_encounter(std::vector<Participant> enemies,std::string re
         campaign_->begin_combat();owns_campaign_combat_=true;reward_id_=std::move(reward_id);}
     combat_=std::move(next);synchronize_party();
 }
+void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
+{
+    if(!campaign_||combat_)throw std::runtime_error("A new campaign combat owner is required");
+    if(campaign_->identity()!=module_->identity()||encounter.facing>=4)throw std::runtime_error("Invalid campaign encounter context");
+    const auto& board=encounter.field.geometry;
+    if(board.width<2||board.height<2||board.width>64||board.height>64||board.terrain.size()!=static_cast<std::size_t>(board.width*board.height)||encounter.surprise>3)
+        throw std::runtime_error("Invalid campaign battlefield");
+    // Converted party formation stays inside one reachable component of the
+    // original geometry. Never erase walls or silently omit a participant.
+    std::vector<Cell> cells;for(int y=0;y<board.height;++y)for(int x=0;x<board.width;++x)if(board.at({x,y})!=1)cells.push_back({x,y});
+    const auto distance=[](Cell a,Cell b){return std::abs(a.x-b.x)+std::abs(a.y-b.y);};
+    const Cell origin{25,13};if(cells.empty())throw std::runtime_error("Battlefield has no open cells");
+    std::stable_sort(cells.begin(),cells.end(),[&](Cell a,Cell b){return distance(a,origin)<distance(b,origin);});
+    std::vector<bool> seen(board.terrain.size(),false);std::queue<Cell> frontier;frontier.push(cells.front());seen[cells.front().y*board.width+cells.front().x]=true;
+    cells.clear();while(!frontier.empty()){
+        const auto p=frontier.front();frontier.pop();cells.push_back(p);
+        for(int y=-1;y<=1;++y)for(int x=-1;x<=1;++x){const Cell next{p.x+x,p.y+y};if((!x&&!y)||board.at(next)==1)continue;
+            if(x&&y&&(board.at({p.x+x,p.y})==1||board.at({p.x,p.y+y})==1))continue;
+            const auto index=next.y*board.width+next.x;if(seen[index])continue;seen[index]=true;frontier.push(next);}
+    }
+    auto participants=campaign_->participants();if(cells.size()<participants.size()+encounter.enemies.size())throw std::runtime_error("Original battlefield cannot fit the complete encounter");
+    const auto place=[&](Participant& participant,Cell target){
+        const auto cell=std::min_element(cells.begin(),cells.end(),[&](Cell a,Cell b){return distance(a,target)<distance(b,target);});participant.cell=*cell;cells.erase(cell);
+    };
+    for(auto& participant:participants){place(participant,origin);participant.surprised=encounter.surprise==1;}
+    constexpr std::array<Cell,4> forward{{{-5,-5},{6,0},{5,5},{-6,0}}};
+    const auto offset=forward[encounter.facing];const Cell target{origin.x+offset.x,origin.y+offset.y};
+    for(auto& enemy:encounter.enemies){place(enemy,target);enemy.surprised=encounter.surprise==2;participants.push_back(std::move(enemy));}
+    auto next=module_->create({encounter.field.geometry,std::move(participants)},seed);
+    campaign_->begin_combat();owns_campaign_combat_=true;combat_=std::move(next);seed_=seed;
+    battlefield_tiles_=std::move(encounter.field.tiles);terrain_art_=std::move(encounter.terrain_art);art_=std::move(encounter.art);
+    status_="Slums encounter / original dungeon geometry";dialogue_="The original script has requested combat.";synchronize_party();
+}
 const CombatSession& CombatDemo::combat() const
 {if(!combat_)throw std::runtime_error("No active combat");return *combat_;}
 void CombatDemo::training(std::uint64_t seed)
@@ -164,7 +197,7 @@ Command choose_demo_command(const CombatSession& session)
         }
     }
     const auto nearest=[&](Cell p){return routes[index(p)];};
-    for(const auto& command:offered)if(command.verb=="opportunity"||command.verb=="second_wind")return command;
+    for(const auto& command:offered)if(command.verb=="opportunity"||(command.verb=="second_wind"&&active.hit_points*2<=active.max_hit_points))return command;
     for(const auto& command:offered)if(command.verb=="cure_wounds") {
         const auto& target=*std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==command.target;});
         if(target.hit_points*2<target.max_hit_points)return command;

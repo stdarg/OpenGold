@@ -70,6 +70,7 @@ void CharacterCreationView::setup_party()
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
     setup_saves();setup_defeat();
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
+    expedition_check_=OS::get_singleton()->get_cmdline_user_args().has("--expedition-check");
 }
 void CharacterCreationView::party_layout()
 {
@@ -249,11 +250,58 @@ void CharacterCreationView::party_check()
 void CharacterCreationView::update_party_navigation()
 {
     bool allowed=true;
-    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"))){allowed=fight->can_leave();if(fight->defeated()&&!campaign_defeated_)show_defeat();}
+    auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
+    auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"));
+    if(!fight&&town&&town->is_visible()&&town->pending_encounter()){
+        std::vector<CombatArt> images;for(const auto& participant:campaign_->participants())
+            images.push_back({participant.id,art_->icon(campaign_->member(participant.id).character.appearance(),false)});
+        auto owned=scene("res://scenes/combat_demo.tscn");fight=Object::cast_to<CombatView>(owned.get());
+        if(!fight)throw std::runtime_error("Invalid combat scene");
+        fight->set_name("CampaignCombat");fight->campaign_party(campaign_,std::move(images));fight->campaign_encounter(*town->pending_encounter());
+        add_child(owned.get());owned.release();town->hide();town->set_process(false);town->set_process_input(false);party_layout();
+    }
+    if(fight){
+        if(fight->expedition()&&!campaign_defeated_)if(const auto outcome=fight->completed_outcome()){
+            if(!town||!town->resolve_combat(*outcome))throw std::runtime_error("Exploration rejected the combat result");
+            if(outcome->outcome==rules::Outcome::victory){
+                remove_child(fight);std::unique_ptr<Node,DeleteNode> released(fight);fight=nullptr;
+                town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
+            }
+        }
+        if(fight){allowed=fight->can_leave();if(fight->defeated()&&!campaign_defeated_)show_defeat();}
+    }
     if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown")))if(town->is_visible())allowed=town->can_leave();
     if(campaign_defeated_)allowed=false;
     auto* button=get_node<Button>("ReturnParty");button->set_disabled(!allowed);
     button->set_tooltip_text(allowed?"Inspect your party and equipment.":"Finish combat, dialogue or shopping before returning to the party.");
+}
+void CharacterCreationView::expedition_check()
+{
+    if(++expedition_frames_>20000)throw std::runtime_error("Expedition check timed out");
+    if(!expedition_started_){
+        for(unsigned i=0;i<6;++i){auto character=preview_guard();const auto id=campaign_->add_pc(std::move(character));campaign_->set_wealth(id,{0,0,0,500,0,0,0});
+            for(unsigned type:{36,55,59}){por::Equipment gear;gear.stored.type=type;gear.stored.stack_size=1;gear.stored.value=1;
+                campaign_->purchase(id,gear);campaign_->equip(id,campaign_->member(id).character.inventory().items().back().id);}}
+        campaign_->award_experience(300,"fixture:experienced-party");expedition_started_=true;party_action(7);return;
+    }
+    if(campaign_defeated_)throw std::runtime_error("Expedition fixture was defeated");
+    if(get_node_or_null("CampaignCombat"))return;
+    auto* town=get_node<RolfTourView>("CampaignTown");
+    if(const auto* state=town->saved_session();state&&state->can_leave()&&state->snapshot().area_id==20&&!expedition_saved_){
+        const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
+        const auto saved=encode_campaign(*campaign_,state,"expedition-fixture");
+        auto loaded=decode_campaign(saved,*srd5::character_rules(),*srd5::load(pack),"expedition-fixture",state);
+        loaded.town->attach_restored_party(campaign_);
+        if(encode_campaign(*campaign_,&*loaded.town,"expedition-fixture")!=saved)throw std::runtime_error("Slums district save round trip differs");
+        town->restore_campaign(campaign_,std::move(*loaded.town));expedition_saved_=true;return;
+    }
+    if(!town->check_expedition_step())return;
+    const auto* session=town->saved_session();
+    if(!session||session->script_variable(0x4ACA)!=255)throw std::runtime_error("Four-orc victory flag missing");
+    const auto& rewards=campaign_->state().claimed_rewards;
+    if(std::count(rewards.begin(),rewards.end(),"por:ECL2:20:search1:orcs:v1")!=1)throw std::runtime_error("Four-orc XP reward missing or repeated");
+    UtilityFunctions::print("Godot expedition passed: gate, roaming encounter, original arena, four-orc victory, automatic exploration return and town gate.");
+    expedition_check_=false;get_tree()->quit(0);
 }
 void CharacterCreationView::setup_defeat()
 {

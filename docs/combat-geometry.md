@@ -60,5 +60,6 @@ grid, for example from PowerShell after setting the installation environment:
 .\build\opengold_maps.exe $env:OPENGOLD_GAME_DIR --battlefield GEO2.DAX 20 12 1
 ```
 
-This is the geometry component. Exploration-to-combat integration remains a
-separate part of the expedition task.
+The shared campaign uses this geometry when the Slums script requests a supported
+fight. See [the expedition adapter](EXPEDITION.md) for formation, creature and
+reward conversion boundaries.

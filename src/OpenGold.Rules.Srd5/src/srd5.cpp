@@ -49,7 +49,7 @@ struct Definition {
     int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{};
     bool str_dex_disadvantage{};
 };
-struct Content { Identity identity; std::map<std::string,Definition> definitions; };
+struct Content { Identity identity; std::optional<Identity> previous_campaign_identity;std::map<std::string,Definition> definitions; };
 struct Actor {
     Participant source;
     Definition definition;
@@ -131,7 +131,7 @@ public:
     Session(std::shared_ptr<const Content> content,Encounter encounter,std::uint64_t seed,bool restoring=false)
         : content_(std::move(content)), board_(std::move(encounter.battlefield)), rng_(seed)
     {
-        if (board_.width<2 || board_.height<2 || board_.width>32 || board_.height>32 ||
+        if (board_.width<2 || board_.height<2 || board_.width>64 || board_.height>64 ||
             board_.terrain.size()!=static_cast<std::size_t>(board_.width*board_.height) ||
             std::any_of(board_.terrain.begin(),board_.terrain.end(),[](auto t){return t>2;}))
             throw std::runtime_error("Invalid battlefield");
@@ -145,7 +145,7 @@ public:
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
             Actor a; a.definition=d;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;
             if(a.source.state)restore_vitals(a,*a.source.state);
-            a.initiative=roll(20);if(d.str_dex_disadvantage)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
+            a.initiative=roll(20);if(d.str_dex_disadvantage||a.source.surprised)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
             actors_.push_back(std::move(a));
         }
         if (sides.size()!=2) throw std::runtime_error("Encounter needs both sides");
@@ -409,7 +409,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     in>>magic>>version>>std::quoted(id.module)>>std::quoted(id.version)>>std::quoted(id.content);
     if(!in||magic!="OGCOMBAT"||(version!=1&&version!=2)||id!=content->identity)throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter e;in>>e.battlefield.width>>e.battlefield.height;
-    if(!in||e.battlefield.width<2||e.battlefield.height<2||e.battlefield.width>32||e.battlefield.height>32)throw std::runtime_error("Invalid checkpoint board");
+    if(!in||e.battlefield.width<2||e.battlefield.height<2||e.battlefield.width>64||e.battlefield.height>64)throw std::runtime_error("Invalid checkpoint board");
     for(int i=0;i<e.battlefield.width*e.battlefield.height;++i){unsigned t;in>>t;if(!in||t>2)throw std::runtime_error("Invalid checkpoint terrain");e.battlefield.terrain.push_back(t);}
     std::uint64_t rng,revision;unsigned turn,round,count,outcome;in>>rng>>revision>>turn>>round>>outcome>>count;
     if(!in||count<2||count>64||turn>=count||round==0||round>100000||outcome>2||!revision)throw std::runtime_error("Invalid checkpoint header");
@@ -473,6 +473,9 @@ class Module final : public RulesModule {
 public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
+    bool accepts_campaign_identity(const Identity& saved) const override {
+        return saved==content_->identity||(content_->previous_campaign_identity&&saved==*content_->previous_campaign_identity);
+    }
     std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
@@ -561,6 +564,18 @@ std::unique_ptr<RulesModule> load(const std::filesystem::path& file)
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
     Content content;content.identity={"opengold.srd5","0.3.0",revision+"/"+std::to_string(hash)};
+    // Additive roaming profiles do not invalidate existing saved characters.
+    // Reconstruct the exact preceding pack identity; modifications to any old
+    // definition still produce a mismatch. Combat checkpoints remain strict.
+    std::istringstream previous_lines(bytes);std::string previous,line_before;
+    const std::array<std::string_view,6> additions{"slums-kobold","slums-goblin","slums-kobold-leader","slums-goblin-leader","slums-orc-leader","slums-bugbear"};
+    while(std::getline(previous_lines,line_before)){
+        std::istringstream row(line_before);std::string tag,key;row>>tag>>key;
+        if(tag=="creature"&&std::find(additions.begin(),additions.end(),key)!=additions.end())continue;
+        previous+=line_before+'\n';
+    }
+    std::uint64_t previous_hash=14695981039346656037ULL;for(unsigned char c:previous){previous_hash^=c;previous_hash*=1099511628211ULL;}
+    if(previous_hash!=hash)content.previous_campaign_identity=Identity{"opengold.srd5","0.3.0",revision+"/"+std::to_string(previous_hash)};
     while(std::getline(lines,line)) {
         if(line.empty()||line[0]=='#'||line=="\r")continue;
         std::istringstream row(line);std::string tag,key;Definition d;row>>tag>>key>>d.ac>>d.hp>>d.initiative>>d.speed>>d.melee_bonus>>d.melee.count>>d.melee.sides>>d.melee.bonus

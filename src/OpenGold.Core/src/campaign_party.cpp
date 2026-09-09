@@ -91,6 +91,27 @@ void CampaignParty::purchase(MemberId id,const por::Equipment& item)
     m.wealth[3]-=item.stored.value;
 }
 void CampaignParty::set_wealth(MemberId id,std::array<std::uint16_t,7> wealth){editable();edit(id).wealth=wealth;}
+bool CampaignParty::award_loot(const std::array<unsigned,7>& wealth,const std::vector<por::Equipment>& items,std::string reward_id)
+{
+    editable();if(reward_id.empty()||reward_id.size()>160)throw std::runtime_error("Loot requires a bounded stable identity");
+    if(std::find(state_.claimed_rewards.begin(),state_.claimed_rewards.end(),reward_id)!=state_.claimed_rewards.end())return true;
+    if(state_.claimed_rewards.size()>=1024||items.size()>256)throw std::runtime_error("Loot collection exceeds supported limits");
+    auto next=state_;std::vector<std::size_t> recipients;
+    for(auto id:next.slots)if(id){const auto found=std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});if(!found->vitals.dead)recipients.push_back(found-next.roster.begin());}
+    if(recipients.empty())return false;
+    for(unsigned coin=0;coin<7;++coin){
+        auto remaining=wealth[coin];
+        for(auto index:recipients){auto& purse=next.roster[index].wealth[coin];const auto amount=std::min(remaining,unsigned(65535-purse));purse+=amount;remaining-=amount;}
+        if(remaining)return false;
+    }
+    for(const auto& item:items){
+        const auto recipient=*std::min_element(recipients.begin(),recipients.end(),[&](auto a,auto b){return next.roster[a].character.inventory().items().size()<next.roster[b].character.inventory().items().size();});
+        auto& m=next.roster[recipient];
+        // Encounter rewards are retained even beyond the shop's purchase cap.
+        const auto id=m.character.inventory().add(equipment_conversion(item),item.label(),std::max(1u,unsigned(item.stored.stack_size)),item.stored.type);m.item_sources.emplace(id,item);
+    }
+    next.claimed_rewards.push_back(std::move(reward_id));state_=std::move(next);return true;
+}
 void CampaignParty::award_experience(unsigned amount,std::string reward_id)
 {
     editable();
@@ -166,7 +187,7 @@ std::array<unsigned,4> CampaignParty::query(unsigned address,unsigned effect) co
     if(address!=0x6C1B||effect)throw std::runtime_error("Unsupported CHECK PARTY attribute/effect conversion");
     unsigned count=0,low=255,high=0,total=0;
     for(auto id:state_.slots)if(id){const auto& m=member(id);
-        const unsigned move=m.vitals.dead||m.vitals.hit_points==0?0:profile(id).movement_feet/5;
+        const unsigned move=m.vitals.dead||m.vitals.hit_points==0?0:profile(id).movement_feet*2/5;
         low=std::min(low,move);high=std::max(high,move);total+=move;++count;}
     return count?std::array<unsigned,4>{low,high,total/count,0}:std::array<unsigned,4>{};
 }

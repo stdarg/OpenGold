@@ -86,6 +86,9 @@ private:
     void save_dialog_visibility_changed();
     void restore_defeat_dialog();
     void defeat_check();
+    void expedition_check();
+    bool expedition_check_{},expedition_started_{},expedition_saved_{};
+    unsigned expedition_frames_{};
     bool campaign_defeated_{},defeat_check_{};
     unsigned defeat_check_stage_{},defeat_check_frames_{};
     void open_saves(bool saving);

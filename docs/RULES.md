@@ -109,12 +109,14 @@ subset. Standalone party profiles are authored combat fixtures, not finished
 character sheets. The orc conversion is authored for this demo; its AC/HP are
 not an automatic conversion of original AD&D values.
 
-Not yet implemented: character creation, full class features or equipment,
+Not yet implemented: full class features or equipment,
 weapon mastery, Extra Attack, regular ability saving-throw effects, general
-advantage/condition handling, surprise, partial cover, prone/grappling, damage
+advantage/condition handling, partial cover, prone/grappling, damage
 types/resistance, multiple sizes, concentration, other spells, multiple spell
-levels/upcasting, split-target Magic Missile, retreat, morale, loot,
-serialized campaign checkpoints, or original tactical arena loading.
+levels/upcasting, split-target Magic Missile, retreat, morale, or complete
+campaign encounter coverage. The shared campaign now includes named saves,
+surprise initiative disadvantage, original dungeon geometry and bounded original
+loot; see [the expedition adapter](EXPEDITION.md) and [campaign saves](SAVES.md).
 Unconscious enemies are currently treated as defeated, and attacks against
 unconscious party members are not offered. Allied transit and diagonal geometry
 use the documented grid adjudication; this is not an implementation of every

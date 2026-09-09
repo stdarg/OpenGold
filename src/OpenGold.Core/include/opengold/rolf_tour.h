@@ -7,6 +7,7 @@
 #include "opengold/wall_art.h"
 #include "opengold/creature_catalog.h"
 #include "opengold/campaign_party.h"
+#include "opengold/combat_demo.h"
 #include <bitset>
 
 namespace opengold { struct SaveCodec; }
@@ -15,12 +16,19 @@ struct PartyPose {
     unsigned x{}, y{}, facing{}; // GEO coordinates, 0=N, 1=E, 2=S, 3=W.
     auto operator<=>(const PartyPose&) const = default;
 };
-enum class TourPhase { running, awaiting_continue, awaiting_input, shopping, completed, faulted };
+enum class TourPhase { running, awaiting_continue, awaiting_input, shopping, completed, faulted, combat, defeated };
 struct TownParty {
     std::string name{"Fighter"};
     unsigned level{1}, hit_points{12}, max_hit_points{12};
     std::array<std::uint16_t, 7> wealth{0,0,0,9999,0,0,0};
     std::vector<Equipment> inventory;
+};
+struct PendingLoot {
+    std::array<unsigned,7> wealth{};
+    std::vector<Equipment> items;
+    std::string reward_id;
+    std::vector<unsigned> records;
+    bool include_items{true};
 };
 struct PhlanResources {
     std::map<unsigned, std::shared_ptr<const EclProgram>> programs;
@@ -29,6 +37,13 @@ struct PhlanResources {
     std::map<unsigned,Image> heads,bodies,pictures;
     // Explicit converted NPC profiles scoped to this resource bank. No guessed ID conversion.
     std::map<unsigned,opengold::Character> npc_profiles;
+    // Immutable district profiles. Root owns districts; children never own root.
+    std::map<unsigned,std::shared_ptr<const PhlanResources>> districts;
+    std::optional<GeoMap> map;
+    WallArtSet wall_art;
+    std::map<unsigned,Creature> encounter_creatures;
+    std::vector<std::uint8_t> combat_archive;
+    std::vector<Image> terrain_art;
 };
 struct TourSnapshot {
     PartyPose pose;
@@ -39,6 +54,7 @@ struct TourSnapshot {
     int sprite_frame{-1}; // -1 hidden; native near/medium/far frames are 0/1/2.
     bool tour_finished{};
     unsigned script_id{}, event_runs{}, sprite_id{12};
+    unsigned area_id{};
     std::vector<std::string> choices;
     bool number_input{};
     std::uint64_t picture_revision{};
@@ -58,7 +74,7 @@ public:
     void restart();
     void campaign_party(std::shared_ptr<opengold::CampaignParty> party);
     // Attach an already validated replacement without restarting its restored VM.
-    void attach_restored_party(std::shared_ptr<opengold::CampaignParty> party) { campaign_=std::move(party); }
+    void attach_restored_party(std::shared_ptr<opengold::CampaignParty> party);
     [[nodiscard]] bool can_leave() const {return snapshot_.phase==TourPhase::completed;}
     void advance(double seconds);
     bool continue_dialogue(std::uint64_t ticket);
@@ -76,6 +92,8 @@ public:
     [[nodiscard]] const std::vector<std::string>& script_diagnostics() const noexcept { return diagnostics_; }
     [[nodiscard]] const std::optional<Image>& picture() const noexcept { return picture_; }
     [[nodiscard]] std::uint16_t script_variable(std::uint16_t address) const { return machine_.variable(address); }
+    [[nodiscard]] const std::optional<opengold::CampaignEncounter>& pending_encounter() const {return encounter_;}
+    bool resolve_combat(const rules::Snapshot& outcome);
 private:
     friend struct opengold::SaveCodec;
     GeoMap map_;
@@ -100,6 +118,24 @@ private:
     std::vector<std::string> diagnostics_;
     std::optional<ExplorationCommand> pending_movement_;
     unsigned current_script_{}, saved_script_{}, selected_character_{};
+    unsigned current_area_{},saved_area_{};
+    std::map<unsigned,std::bitset<256>> visited_areas_;
+    std::map<unsigned,std::bitset<256>> saved_visited_areas_;
+    std::optional<TourSnapshot> saved_snapshot_;
+    std::vector<rules::Participant> staged_enemies_;
+    std::vector<opengold::CombatArt> staged_art_;
+    std::vector<unsigned> staged_records_;
+    std::optional<EclRequest> encounter_menu_;
+    unsigned encounter_distance_{};
+    std::optional<opengold::CampaignEncounter> encounter_;
+    std::uint64_t combat_request_{};
+    std::vector<PendingLoot> pending_loot_;
+    void claim_loot();
+    [[nodiscard]] PendingLoot slums_loot(std::vector<unsigned> records,std::string reward,bool items) const;
+    void show_encounter_menu();
+    bool choose_encounter(std::size_t choice);
+    [[nodiscard]] const PhlanResources& area_resources() const;
+    void change_area(unsigned id);
     unsigned saved_selected_character_{};
     unsigned event_stage_{}; // 0 tour, 1 before step, 2 search, 3 area entry, 4 pre-camp, 5 interrupted.
     bool transition_{}, message_only_{};

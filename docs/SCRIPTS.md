@@ -100,9 +100,10 @@ Operand roles matter. Numeric tags 1/3 read logical cells; encoded addresses in
 branch, table-base and destination roles are not dereferenced. String operands
 in numeric roles supply their encoded length/address. Text roles expand inline
 packed strings (`128`) or bounded NUL-terminated string references (`129`).
-`SAVE` with inline text writes the decoded characters and terminator; with a
-string reference it writes the reference's numeric address. String destinations
-may themselves use tag `129`.
+`SAVE` with inline text writes the decoded characters and terminator. A string
+reference copied into a string destination copies its text, including the
+terminator; a reference in a numeric destination supplies its encoded address.
+The Slums encounter descriptions exercise the string-to-string case.
 
 `bind_variable()` and `bind_string()` establish research state while idle or
 completed. Program bytes have a private writable copy per machine, including

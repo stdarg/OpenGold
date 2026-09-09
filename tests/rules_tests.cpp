@@ -35,6 +35,16 @@ void next_round(CombatSession& session) {
 }
 void boundary_tests() {
     auto module=srd5::load(pack());
+    bool reduced=false;
+    for(unsigned seed=0;seed<40;++seed){auto plain=duel();auto ambushed=plain;ambushed.participants[0].surprised=true;
+        const auto normal=module->create(plain,seed),surprise=module->create(ambushed,seed);
+        check(unit(*surprise,1).initiative<=unit(*normal,1).initiative,"Surprise imposes initiative disadvantage");
+        reduced|=unit(*surprise,1).initiative<unit(*normal,1).initiative;
+        check(module->restore(surprise->save())->save()==surprise->save(),"Surprised initiative and RNG survive combat checkpoint");
+    }
+    check(reduced,"Surprise affects initiative across deterministic seeds");
+    auto wide=duel();wide.battlefield={50,25,std::vector<std::uint8_t>(1250)};
+    auto original=module->create(wide,42);check(module->restore(original->save())->snapshot().battlefield.width==50,"Original arena dimensions round trip");
     check(srd5::ability_modifier(9)==-1&&srd5::ability_modifier(13)==1,"Signed ability rounding");
     check(!srd5::attack_hits(1,100,1)&&srd5::attack_hits(20,-100,40),"Natural attack extremes");
     check(srd5::attack_hits(12,3,15)&&!srd5::attack_hits(11,3,15),"Attack meets ascending AC");

@@ -286,7 +286,7 @@ void script_handoff()
     check(party->member(second).wealth[3]==190&&party->member(first).wealth[3]==100,"Purchase debits only selected purse");
     check(party->has_item(59),"Script item query sees purchase");town.leave_shop(town.snapshot().continue_ticket);settle(town);
     check(town.script_variable(0x6BC1)==190&&town.can_leave(),"Shop return synchronizes selected character");
-    check(town.script_variable(0x9810)>0&&town.script_variable(0x9811)==6&&town.script_variable(0x9812)==6&&town.script_variable(0x9813)==6&&town.script_variable(0x9814)==0,"ECL party queries write all results");
+    check(town.script_variable(0x9810)>0&&town.script_variable(0x9811)==12&&town.script_variable(0x9812)==12&&town.script_variable(0x9813)==12&&town.script_variable(0x9814)==0,"ECL movement queries share encounter-menu conversion units");
     check(town.script_variable(0x9815)==1,"FIND ITEM drives actual bytecode branch after purchase");
     check(party->state().slots[6]&&party->member(party->state().slots[6]).morale==70,"ADD NPC uses explicit conversion and requested morale");
     party->equip(second,1);check(party->profile(second).armor_class==12+party->member(second).character.sheet().modifiers[1],"Cleric equips purchased shield");
@@ -298,8 +298,21 @@ void script_handoff()
     check(rollback.snapshot().phase==por::TourPhase::awaiting_continue&&party->member(second).vitals.hit_points==hp,"Unsupported event restores authoritative party checkpoint");
 }
 }
+void original_loot()
+{
+    CampaignParty party(module());const auto first=party.add_pc(character()),second=party.add_pc(character("cleric","Bo"));
+    party.set_wealth(first,{0,65530,0,0,0,0,0});party.set_wealth(second,{0,0,0,0,0,0,0});
+    por::Equipment scroll;scroll.stored.type=62;scroll.stored.magic_bonus=1;scroll.stored.stack_size=1;
+    check(party.award_loot({0,96,0,0,0,0,0},{scroll},"test:loot"),"Collect original coins and item");
+    check(party.member(first).wealth[1]==65535&&party.member(second).wealth[1]==91,"Coin overflow continues into another purse");
+    check(party.member(first).item_sources.size()==1&&party.member(first).character.inventory().items()[0].definition_id=="por:unsupported:62","Magic loot retains provenance without inventing a rules conversion");
+    check(party.award_loot({0,96,0,0,0,0,0},{scroll},"test:loot")&&party.member(second).wealth[1]==91,"Duplicate loot cannot pay twice");
+    party.set_wealth(second,{0,65535,0,0,0,0,0});const auto before=party.checkpoint();
+    check(!party.award_loot({0,1,0,0,0,0,0},{scroll},"test:overflow"),"Full party purses retain pending loot");
+    check(party.state().claimed_rewards==before.claimed_rewards&&party.member(first).item_sources.size()==1,"Failed collection changes neither reward history nor inventory");
+}
 int main()
 {
-    try{roster_and_equipment();untrained_equipment();combat_handoff();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

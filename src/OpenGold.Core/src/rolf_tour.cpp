@@ -112,6 +112,30 @@ RolfTourSession RolfTourSession::load(const std::filesystem::path& directory)
         }
     };
     pictures("HEAD3.DAX",town->heads);pictures("BODY3.DAX",town->bodies);pictures("PIC3.DAX",town->pictures);
+    town->map=map->get();town->wall_art=*wall_art;
+    auto district=std::make_shared<PhlanResources>();
+    const auto slums_program=catalog.find({"ECL2.DAX",20});const auto slums_map=maps.find({"GEO2.DAX",20});
+    if(!slums_program||!slums_map)throw EclError("Slums requires ECL2:20 and GEO2:20");
+    town->programs.emplace(20,slums_program);district->map=slums_map->get();
+    const auto slums_definitions=archive("WALLDEF2.DAX"),slums_tiles=archive("8X8D2.DAX");
+    // LOAD PIECES 2,4,1: three five-appearance banks, each with common tiles
+    // followed by its own 70 tiles. Decode independently before concatenating.
+    for(unsigned id:{2,4,1}){
+        WallTiles bank(1);auto common=decode_wall_tiles(find_record(shared,203));auto local_bank=decode_wall_tiles(find_record(slums_tiles,id));
+        if(!common||common->size()!=45||!local_bank||local_bank->size()!=70)throw EclError("Invalid Slums wall tile bank");
+        bank.insert(bank.end(),common->begin(),common->end());bank.insert(bank.end(),local_bank->begin(),local_bank->end());
+        auto decoded=decode_wall_art(find_record(slums_definitions,id),bank);
+        if(!decoded||decoded->appearances.size()!=5)throw EclError("Invalid Slums wall definition bank");
+        district->wall_art.appearances.insert(district->wall_art.appearances.end(),decoded->appearances.begin(),decoded->appearances.end());
+    }
+    district->sprite_archive=read_archive(resolve_archive(directory,"SPRIT2.DAX"));
+    const auto creatures=CreatureCatalog::load(directory);
+    for(unsigned id:{0,1,2,3,4,5,11,12,13,14,15,63}){const auto creature=creatures.find({2,static_cast<std::uint8_t>(id)});if(!creature)throw EclError("Missing original Slums creature");district->encounter_creatures.emplace(id,creature->get());}
+    district->combat_archive=read_archive(resolve_archive(directory,"CPIC2.DAX"));
+    const auto dungeon=read_archive(resolve_archive(directory,"DUNGCOM.DAX"));
+    for(unsigned tile=0;tile<25;++tile){auto image=decode_ega_combat_icon(dungeon,1,tile);if(!image||image.image.width!=24||image.image.height!=24)throw EclError("Invalid dungeon tactical tile");district->terrain_art.push_back(std::move(image.image));}
+    pictures("HEAD2.DAX",district->heads);pictures("BODY2.DAX",district->bodies);pictures("PIC2.DAX",district->pictures);
+    town->districts.emplace(20,std::move(district));
     return RolfTourSession(map->get(), program, std::move(sprites), 0xB071, std::move(*wall_art), std::move(town));
 }
 
@@ -126,12 +150,14 @@ RolfTourSession::RolfTourSession(GeoMap map, std::shared_ptr<const EclProgram> p
 
 void RolfTourSession::restart()
 {
+    current_area_=0;visited_areas_.clear();if(town_&&town_->map){map_=*town_->map;wall_art_=town_->wall_art;}
     const auto revision = snapshot_.revision + 1;
     machine_ = EclMachine(program_);
     snapshot_ = {}; snapshot_.revision = revision;
     menu_request_ = delayed_request_ = 0; remaining_delay_ = 0;
     party_ = {}; treasure_.clear(); picture_.reset();checkpoint_.reset(); diagnostics_.clear();
     current_script_ = selected_character_ = event_stage_ = 0;
+    staged_enemies_.clear();staged_art_.clear();staged_records_.clear();encounter_menu_.reset();encounter_.reset();combat_request_=0;pending_loot_.clear();
     who_request_=temple_request_=0;who_slots_.clear();temple_targets_.clear();saved_campaign_.reset();
     pending_movement_.reset(); transition_ = message_only_ = false; shop_request_ = 0;
     if (town_ && !town_->sprite_archive.empty()) for (unsigned n=0;n<3;++n) {
@@ -155,11 +181,13 @@ void RolfTourSession::fail(std::string diagnostic)
     if (snapshot_.tour_finished && checkpoint_) {
         diagnostics_.push_back(diagnostic);
         machine_ = std::move(*checkpoint_); checkpoint_.reset();
-        party_ = saved_party_; current_script_ = saved_script_;
+        party_ = saved_party_; current_script_ = saved_script_;change_area(saved_area_);
+        visited_areas_=saved_visited_areas_;if(saved_snapshot_){const auto revision=snapshot_.revision+1;snapshot_=*saved_snapshot_;snapshot_.revision=revision;}
         if(campaign_&&saved_campaign_)campaign_->restore(*saved_campaign_);
         who_request_=temple_request_=0;who_slots_.clear();temple_targets_.clear();
         selected_character_ = saved_selected_character_; pending_movement_.reset(); transition_ = false;
         delayed_request_ = shop_request_ = 0; treasure_.clear();
+        staged_enemies_.clear();staged_art_.clear();staged_records_.clear();encounter_menu_.reset();encounter_.reset();combat_request_=0;
         snapshot_.sprite_frame = -1;picture_.reset();++snapshot_.picture_revision;publish_pose();
         snapshot_.script_id = current_script_;
         notice("This event is not supported yet: " + diagnostic +
@@ -198,7 +226,12 @@ void RolfTourSession::handle_host(const EclRequest& request)
         remaining_delay_ = 0.22; delayed_request_ = request.id; ++snapshot_.revision; return;
     case 45: {
         const auto service = request.arguments[0].value;
-        if (service == 0x2C90) {
+        if(service==0xC01E){
+            PartyPose pose{machine_.variable(0xC04B),machine_.variable(0xC04C),machine_.variable(0xC04D)};
+            if(pose.x>=16||pose.y>=16||pose.facing>=4)throw EclError("Invalid scripted movement pose");
+            pose.x=(static_cast<int>(pose.x)+dx[pose.facing]+16)%16;pose.y=(static_cast<int>(pose.y)+dy[pose.facing]+16)%16;
+            const auto& cell=map_.at(pose.x,pose.y);reply.writes={{0xC04B,static_cast<std::uint16_t>(pose.x)},{0xC04C,static_cast<std::uint16_t>(pose.y)},{0xC04E,cell.walls[pose.facing]},{0xC04F,cell.event_raw}};
+        }else if (service == 0x2C90||service==0xC018) {
             const auto x = machine_.variable(0xC04B), y = machine_.variable(0xC04C), f = machine_.variable(0xC04D);
             if (x >= 16 || y >= 16 || f >= 4) throw EclError("Invalid redraw pose");
             const auto& cell = map_.at(x, y);
@@ -213,7 +246,7 @@ void RolfTourSession::handle_host(const EclRequest& request)
     default: throw EclError("Unsupported tour host request");
     }
     if (!machine_.resume_host(request.id, reply)) throw EclError("Tour host reply rejected");
-    if (opcode == 45 && request.arguments[0].value == 0x2C90) publish_pose();
+    if (opcode == 45 && (request.arguments[0].value == 0x2C90||request.arguments[0].value==0xC01E)) publish_pose();
     ++snapshot_.revision;
 }
 
@@ -276,7 +309,7 @@ bool RolfTourSession::explore(ExplorationCommand command)
             pending_movement_ = command; begin_event(0);
         } else if (command == ExplorationCommand::look) begin_event(1);
         else if (command == ExplorationCommand::camp) begin_event(2);
-        else { move_party(command); begin_event(1); }
+        else { move_party(command); return true; } // Original map menu turns without running search_location.
         advance(0); return true;
     }
     auto pose = snapshot_.pose;

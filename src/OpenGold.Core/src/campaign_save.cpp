@@ -21,6 +21,7 @@ std::uint64_t fingerprint(std::string_view data){std::uint64_t n=146959810393466
 // Explicit field encoding: no pointers, native object layouts or derived sheets.
 struct SaveCodec {
     bool reading{};
+    unsigned version{2};
     std::stringstream stream;
     const rules::CharacterRules* creation{};
     const rules::RulesModule* module{};
@@ -68,8 +69,29 @@ struct SaveCodec {
     void town(por::RolfTourSession& v){
         require(reading||(v.can_leave()&&v.snapshot_.tour_finished&&!v.checkpoint_&&!v.pending_movement_),"Save only during idle town exploration");
         fields(v.current_script_,v.selected_character_,v.next_ticket_);
+        if(version>=2){
+            unsigned area=v.current_area_;field(area);
+            std::map<unsigned,std::string> explored;
+            if(!reading){for(const auto& [id,cells]:v.visited_areas_)explored[id]=cells.to_string();explored[v.current_area_]=v.snapshot_.visited.to_string();}
+            field(explored);
+            if(reading){
+                require(v.town_&&(area==0||v.town_->districts.contains(area)),"Unsupported saved district");
+                require((v.current_script_==20)==(area==20),"Saved district and script disagree");
+                v.current_area_=0;v.snapshot_.area_id=0;if(v.town_->map){v.map_=*v.town_->map;v.wall_art_=v.town_->wall_art;}v.change_area(area);v.visited_areas_.clear();
+                for(const auto& [id,cells]:explored){require((id==0||v.town_->districts.contains(id))&&cells.size()==256&&cells.find_first_not_of("01")==std::string::npos,"Invalid saved district exploration");v.visited_areas_[id]=std::bitset<256>(cells);}
+            }
+            std::uint64_t pending=v.pending_loot_.size();field(pending);require(pending<=1024,"Too many pending rewards");
+            if(reading)v.pending_loot_.clear();
+            for(std::uint64_t index=0;index<pending;++index){
+                std::vector<unsigned> records;std::string reward;bool items=true;
+                if(!reading){const auto& loot=v.pending_loot_[index];records=loot.records;reward=loot.reward_id;items=loot.include_items;}
+                fields(records,reward,items);
+                if(reading){require(v.town_->districts.contains(20),"Pending Slums loot requires original resources");v.pending_loot_.push_back(v.slums_loot(std::move(records),std::move(reward),items));}
+            }
+        }else if(reading){require(v.current_script_!=20,"Version-one saves cannot contain the Slums");v.current_area_=0;v.snapshot_.area_id=0;v.visited_areas_.clear();v.pending_loot_.clear();if(v.town_->map){v.map_=*v.town_->map;v.wall_art_=v.town_->wall_art;}}
         if(reading){require(v.town_&&v.town_->programs.contains(v.current_script_)&&v.selected_character_<8,"Unsupported saved town context");v.machine_=por::EclMachine(v.town_->programs.at(v.current_script_));for(const std::uint8_t op:{12,13,14,45,49,58})v.machine_.enable_host(op);v.configure_town();}
         machine(v.machine_);
+        if(reading){v.combat_request_=0;v.staged_enemies_.clear();v.staged_art_.clear();v.encounter_.reset();}
         auto& s=v.snapshot_;fields(s.dialogue,s.prompts,s.redraws,s.footsteps,s.event_runs);
         std::string visited=s.visited.to_string();field(visited);
         if(reading){require(visited.size()==256&&visited.find_first_not_of("01")==std::string::npos,"Invalid visited map");s.visited=std::bitset<256>(visited);s.phase=por::TourPhase::completed;s.tour_finished=true;s.script_id=v.current_script_;s.sprite_frame=-1;s.choices.clear();s.continue_ticket=0;s.diagnostic.clear();++s.picture_revision;v.picture_.reset();v.checkpoint_.reset();v.saved_campaign_.reset();v.pending_movement_.reset();v.treasure_.clear();v.who_slots_.clear();v.temple_targets_.clear();v.menu_request_=v.delayed_request_=v.who_request_=v.temple_request_=v.shop_request_=0;v.remaining_delay_=0;v.transition_=v.message_only_=false;v.event_stage_=0;v.publish_pose();v.campaign_.reset();}
@@ -77,7 +99,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 1\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 2\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -95,8 +117,8 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 }
 }
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
-    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 1\n";require(bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
-    SaveCodec in(body);in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(identity==module.identity(),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
+    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 2\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header);require(old||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
+    SaveCodec in(body);in.version=old?1:2;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
 std::string read_campaign_file(const std::filesystem::path& path){auto size=std::filesystem::file_size(path);require(size<=limit,"Campaign file too large");std::ifstream in(path,std::ios::binary);require(bool(in),"Cannot open campaign file");std::string data{std::istreambuf_iterator<char>(in),{}};require(!in.bad()&&data.size()==size,"Incomplete campaign file read");return data;}
 std::string campaign_asset_identity(const std::filesystem::path& directory){
