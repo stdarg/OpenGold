@@ -78,6 +78,15 @@ private:
     void town_member_selected(std::int64_t slot);
     void close_town_sheet();
     void setup_party();
+    void setup_saves();
+    void open_saves(bool saving);
+    void save_campaign(const std::filesystem::path& path);
+    void load_campaign(const std::filesystem::path& path);
+    void save_checkpoint_check(const std::string& name);
+    void load_checkpoint_check();
+    bool save_read_check_{};
+    unsigned save_capture_frames_{};
+    void capture_save_ui();
     void party_action(int action);
     void party_selected(std::int64_t index);
     void refresh_party();

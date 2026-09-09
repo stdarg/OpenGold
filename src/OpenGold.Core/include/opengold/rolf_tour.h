@@ -9,6 +9,7 @@
 #include "opengold/campaign_party.h"
 #include <bitset>
 
+namespace opengold { struct SaveCodec; }
 namespace opengold::por {
 struct PartyPose {
     unsigned x{}, y{}, facing{}; // GEO coordinates, 0=N, 1=E, 2=S, 3=W.
@@ -56,6 +57,8 @@ public:
                    WallArtSet wall_art = {}, std::shared_ptr<const PhlanResources> town = {});
     void restart();
     void campaign_party(std::shared_ptr<opengold::CampaignParty> party);
+    // Attach an already validated replacement without restarting its restored VM.
+    void attach_restored_party(std::shared_ptr<opengold::CampaignParty> party) { campaign_=std::move(party); }
     [[nodiscard]] bool can_leave() const {return snapshot_.phase==TourPhase::completed;}
     void advance(double seconds);
     bool continue_dialogue(std::uint64_t ticket);
@@ -74,6 +77,7 @@ public:
     [[nodiscard]] const std::optional<Image>& picture() const noexcept { return picture_; }
     [[nodiscard]] std::uint16_t script_variable(std::uint16_t address) const { return machine_.variable(address); }
 private:
+    friend struct opengold::SaveCodec;
     GeoMap map_;
     std::shared_ptr<const EclProgram> program_;
     std::array<opengold::Image, 3> sprites_;

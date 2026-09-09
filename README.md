@@ -115,9 +115,7 @@ and grants no recovery. The temple offers a bounded **Cure Wounds** service for
 100 gp. Rest eligibility, payment and unsupported-event rollback are enforced.
 See [recovery, service limits and verification](docs/RECOVERY.md).
 
-Campaign file save/load, cross-area travel and general exploration-to-combat
-encounters remain future work. Closing the application discards the campaign
-session. The standalone combat Training mode has its own combat save/load.
+**Save game** and **Load game** support named campaign slots on the roster and idle town screens, with overwrite/load confirmation and previous-version recovery. See [save boundaries and restart verification](docs/SAVES.md). Cross-area travel and general exploration-to-combat encounters remain future work. The standalone combat Training mode has its own combat save/load.
 
 ## Native monster/NPC statistics
 

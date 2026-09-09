@@ -8,6 +8,7 @@
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <optional>
 #include <set>
+#include <functional>
 
 class RolfTourView : public godot::Control {
     GDCLASS(RolfTourView, godot::Control)
@@ -19,6 +20,10 @@ public:
     void campaign_party(std::shared_ptr<opengold::CampaignParty> party){campaign_=std::move(party);embedded_party_=true;}
     [[nodiscard]] bool can_leave() const {return !session_||session_->can_leave();}
     void resume_party(){shown_revision_=0;refresh();}
+    [[nodiscard]] const opengold::por::RolfTourSession* saved_session() const {return session_?&*session_:nullptr;}
+    void restore_campaign(std::shared_ptr<opengold::CampaignParty> party,opengold::por::RolfTourSession session);
+    void request_save(bool saving);
+    std::function<void(const std::string&)> save_check;
     [[nodiscard]] bool party_route_checked() const {return shop_check_stage_==4;}
     void start_recovery_check();
     [[nodiscard]] bool recovery_checked() const {return recovery_stage_==8;}
@@ -43,6 +48,7 @@ private:
     bool town_check_{},embedded_party_{};
     unsigned shop_check_stage_{};
     unsigned recovery_stage_{};
+    bool save_cancel_checked_{},save_cancel_pending_{};
     std::uint64_t recovery_capture_ticket_{};
     std::optional<opengold::PartyState> recovery_before_;
     std::set<std::pair<unsigned,unsigned>> check_refused_edges_;

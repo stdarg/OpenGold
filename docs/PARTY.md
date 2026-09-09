@@ -133,9 +133,7 @@ equipment and script writes are locked during combat. When combat finishes,
 editing resumes; no fresh HP or spell resources are granted on the next fight.
 The module identity is now 0.3.0 and combat checkpoint format is version 2,
 including character recipes. Old module saves fail the identity check explicitly.
-Campaign file save/load is disabled rather than saving an incomplete party/ECL
-state, but native `PartyState` checkpoints retain XP, claimed reward IDs and
-campaign time, rest timers and RNG for in-session rollback.
+[Campaign file saves](SAVES.md) now retain the complete supported party and idle New Phlan state. Native `PartyState` checkpoints remain the in-session rollback mechanism. Pending dialogue/services and combat are not campaign save boundaries.
 
 ## ECL adapter
 

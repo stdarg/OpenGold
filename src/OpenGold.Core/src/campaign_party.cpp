@@ -190,11 +190,12 @@ void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
     std::array<std::uint16_t,7> wealth;for(unsigned n=0;n<7;++n)wealth[n]=vm.variable(money[n]);
     m.wealth=wealth;m.vitals.hit_points=hp;
 }
-void CampaignParty::restore(PartyState state)
+void CampaignParty::validate(const PartyState& state)
 {
-    editable();if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024)throw std::runtime_error("Invalid party checkpoint");
-    std::set<MemberId> ids,active;std::set<std::string> sources;
+    if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024)throw std::runtime_error("Invalid party checkpoint");
+    std::set<MemberId> ids,active;std::set<std::string> sources,creation_sources;
     for(const auto& m:state.roster){
+        if(!m.creation_source.empty()&&(m.creation_source.size()>160||!creation_sources.insert(m.creation_source).second))throw std::runtime_error("Invalid creation source checkpoint");
         if(!m.id||m.id>=state.next_id||!ids.insert(m.id).second||m.vitals.hit_points<0||
             (m.last_rest_minutes&&*m.last_rest_minutes>state.time_minutes)||
             m.vitals.hit_points>m.character.sheet().hit_points||(m.vitals.dead&&m.vitals.hit_points)||m.morale>255||
@@ -210,8 +211,8 @@ void CampaignParty::restore(PartyState state)
         if((slot<6)!=it->npc_source.empty())throw std::runtime_error("Invalid PC/NPC checkpoint position");
     }
     if(!active.empty()&&!state.slots[state.selected])throw std::runtime_error("Invalid selected member checkpoint");
-    state_=std::move(state);
 }
+void CampaignParty::restore(PartyState state){editable();validate(state);state_=std::move(state);}
 std::vector<rules::Participant> CampaignParty::participants() const
 {
     std::vector<rules::Participant> result;

@@ -27,6 +27,7 @@
 using namespace godot;
 using namespace opengold::por;
 namespace {
+struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
 // Numeric constructors are safe before Godot initializes the extension interface.
 const Color background(18/255.f,26/255.f,32/255.f), panel(28/255.f,39/255.f,46/255.f),
     line(65/255.f,80/255.f,88/255.f), gold(215/255.f,180/255.f,121/255.f),
@@ -36,7 +37,7 @@ const std::array<const char*,4> direction_name{"North","East","South","West"};
 
 }
 
-void RolfTourView::_bind_methods() {ADD_SIGNAL(MethodInfo("party_member_selected",PropertyInfo(Variant::INT,"slot")));}
+void RolfTourView::_bind_methods() {ADD_SIGNAL(MethodInfo("save_requested",PropertyInfo(Variant::BOOL,"saving")));ADD_SIGNAL(MethodInfo("party_member_selected",PropertyInfo(Variant::INT,"slot")));}
 void RolfTourView::_notification(int what)
 {
     if (what==NOTIFICATION_RESIZED && ready_) {layout();queue_redraw();}
@@ -64,6 +65,7 @@ void RolfTourView::_ready()
     get_node<Window>("MemberSheet")->connect("close_requested",callable_mp(this,&RolfTourView::close_sheet));
     get_node<Button>("LeaveShop")->connect("pressed",callable_mp(this,&RolfTourView::leave_shop));
     get_window()->set_min_size(Vector2i(960,720));
+    for(bool saving:{true,false}){std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(saving?"SaveGame":"LoadGame");button->set_text(saving?"Save game":"Load game");add_child(button.get());button->connect("pressed",callable_mp(this,&RolfTourView::request_save).bind(saving));button->set_visible(embedded_party_);button.release();}
     layout();
     if (Engine::get_singleton()->is_editor_hint()) return;
     const auto args=OS::get_singleton()->get_cmdline_user_args();
@@ -100,6 +102,7 @@ void RolfTourView::layout()
     const auto place=[&](const char* name,Rect2 rect) {
         auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);
     };
+    place("SaveGame",Rect2(width-520,20,140,36));place("LoadGame",Rect2(width-370,20,140,36));
     place("Title",Rect2(margin,20,main_width,34));
     place("PartyList",Rect2(scene_rect_.get_end().x+16,102,main_width-scene_rect_.size.x-16,view_height));
     place("Location",Rect2(margin,68,main_width,26));
@@ -322,6 +325,7 @@ void RolfTourView::refresh()
     shown_revision_=s.revision;
     const bool waiting=loaded&&s.phase==TourPhase::awaiting_continue;
     const bool completed=loaded&&s.phase==TourPhase::completed;
+    get_node<Button>("SaveGame")->set_disabled(!completed);get_node<Button>("LoadGame")->set_disabled(!completed);
     const bool faulted=!loaded||s.phase==TourPhase::faulted;
     const bool shopping=loaded&&s.phase==TourPhase::shopping;
     const bool answer=loaded&&s.phase==TourPhase::awaiting_input;
@@ -601,6 +605,7 @@ void RolfTourView::check_recovery()
     const auto choose=[&](std::size_t choice){get_node<ItemList>("Choices")->select(choice);get_node<Button>("Continue")->emit_signal("pressed");};
     if(s.phase==TourPhase::awaiting_continue){
         if(recovery_stage_==3&&!s.choices.empty()&&s.choices[0].starts_with("Cure Wounds:")){
+            if(save_check&&!save_cancel_checked_){recovery_before_=campaign_->checkpoint();save_cancel_checked_=save_cancel_pending_=true;choose(s.choices.size()-1);return;}
             if(recovery_capture_ticket_!=s.continue_ticket){recovery_capture_ticket_=s.continue_ticket;return;}
             recovery_before_=campaign_->checkpoint();capture_frame("party-temple");choose(0);recovery_stage_=4;return;
         }
@@ -620,26 +625,35 @@ void RolfTourView::check_recovery()
     if(s.phase==TourPhase::awaiting_input){get_node<LineEdit>("Answer")->set_text("0");next();return;}
     if(s.phase!=TourPhase::completed)return;
     const auto& member=campaign_->member(id);
+    if(save_cancel_pending_){
+        if(member.wealth!=recovery_before_->roster.at(0).wealth||member.vitals!=recovery_before_->roster.at(0).vitals)throw std::runtime_error("Cancelled temple service changed party");
+        save_check("cancelled-service");save_cancel_pending_=false;
+    }
     if(recovery_stage_==1){get_node<Button>("Camp")->emit_signal("pressed");recovery_stage_=2;return;}
     if(recovery_stage_==2){
         if(campaign_->state().time_minutes!=recovery_before_->time_minutes+5||member.vitals!=recovery_before_->roster.at(0).vitals)
             throw std::runtime_error("Original city-watch interruption must consume five minutes without recovery");
+        if(save_check)save_check("interrupted-rest");
         recovery_stage_=3;
     }
     if(recovery_stage_==4){
         if(member.wealth[3]!=recovery_before_->roster.at(0).wealth[3]-100||member.vitals.hit_points<=1||session_->script_variable(0x6de2)!=0)
             throw std::runtime_error("Original temple must charge 100 gp, heal and resume ECL");
+        if(save_check)save_check("temple-payment");
         recovery_before_=campaign_->checkpoint();recovery_stage_=5;
     }
     if(recovery_stage_==5&&campaign_->state().time_minutes==recovery_before_->time_minutes+480){
         if(member.vitals.hit_points!=member.character.sheet().hit_points||member.wealth[4]!=0)
             throw std::runtime_error("Original inn payment and full recovery must persist");
+        if(save_check)save_check("inn-rest");
+        if(save_check){bool rejected=false;try{campaign_->temple_heal(id);}catch(const std::exception&){rejected=true;}if(!rejected)throw std::runtime_error("Full-health temple service should reject");save_check("rejected-service");}
         recovery_before_=campaign_->checkpoint();recovery_stage_=6;
     }
     if(recovery_stage_==6){get_node<Button>("Camp")->emit_signal("pressed");recovery_stage_=7;return;}
     if(recovery_stage_==7){
         if(campaign_->state().time_minutes!=recovery_before_->time_minutes||s.dialogue.find("Rest denied")==std::string::npos)
             throw std::runtime_error("Immediate repeated long rest must be denied");
+        if(save_check)save_check("denied-rest");
         capture_frame("party-rest");recovery_stage_=8;checking_=false;
         UtilityFunctions::print("Godot recovery check passed: original interruption, temple payment, inn rest and repeated-rest denial.");return;
     }

@@ -17,6 +17,7 @@ struct PartyMember {
     unsigned experience{};
     std::optional<std::uint64_t> last_rest_minutes;
     std::map<std::uint64_t,por::Equipment> item_sources;
+    std::string creation_source; // Stable pool candidate identity, empty for authored PCs.
 };
 struct PartyState {
     std::vector<PartyMember> roster;
@@ -56,6 +57,7 @@ public:
     void read_character(unsigned slot,const por::EclMachine& vm);
     [[nodiscard]] PartyState checkpoint() const {return state_;}
     void restore(PartyState state);
+    static void validate(const PartyState& state);
     [[nodiscard]] std::vector<rules::Participant> participants() const;
     void begin_combat();
     void apply_combat(const rules::Snapshot& snapshot);

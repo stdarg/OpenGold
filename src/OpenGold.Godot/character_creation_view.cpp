@@ -490,6 +490,8 @@ void CharacterCreationView::capture(const char* name)
 }
 void CharacterCreationView::_process(double)
 {
+    if(save_capture_frames_){try{capture_save_ui();}catch(const std::exception& e){UtilityFunctions::printerr(gs(e.what()));get_tree()->quit(1);}return;}
+    if(save_read_check_){try{load_checkpoint_check();}catch(const std::exception& e){UtilityFunctions::printerr("Save restart check failed: ",gs(e.what()));get_tree()->quit(1);}save_read_check_=false;return;}
     if(campaign_)update_party_navigation();
     if(party_check_&&!Engine::get_singleton()->is_editor_hint()){
         try{if(++check_frames_%4==0)party_check();if(check_frames_>3000)throw std::runtime_error("Party check timed out");}

@@ -108,6 +108,6 @@ Captures are written under ignored `user-data/phlan-shop.png` and
 Unimplemented branches include town combat/duels and their party-strength
 queries, training, temple spells beyond Cure Wounds, short rests and general
 rest interruptions, robbery, recruitment,
-non-shop treasure awards, external travel and saved-game persistence. Campaign
+non-shop treasure awards and external travel. The shared party flow supports [idle-town campaign saves](SAVES.md); pending events remain unsavable. Campaign
 flags affect which dialogue branches can be reached; this test is not exhaustive
 coverage of all choices, quest states, random outcomes, or camp interruptions.

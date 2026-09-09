@@ -658,6 +658,8 @@ to party ownership and preserve its live state according to validated behavior.
 
 ## Persistence and debugging
 
+The shared party/New Phlan host now implements [versioned idle-boundary campaign saves](SAVES.md). Pending-request serialization, cross-area state and standalone Slums campaign persistence remain future work. The broader design below describes those extensions.
+
 A session snapshot includes asset identities/hashes, compatibility-profile
 version, active program, PC, return stack, comparison state, mutable VM regions,
 resource context, pending request/continuation, trigger context/queue, RNG state,

@@ -56,6 +56,7 @@ void CharacterCreationView::pool_add()
     try{
         if(std::find(pool_added_.begin(),pool_added_.end(),pool_index_)!=pool_added_.end())return;
         const auto id=campaign_->add_pc(pool_.at(pool_index_));campaign_->set_wealth(id,{0,0,0,250,0,0,0});
+        auto state=campaign_->checkpoint();state.roster.back().creation_source="pool:v1:"+std::to_string(pool_index_);campaign_->restore(std::move(state));
         pool_added_.push_back(pool_index_);roster_index_=campaign_->state().roster.size()-1;
         refresh_party();pool_selected(pool_index_);
     }catch(const std::exception& e){get_node<Label>("PoolModal/Status")->set_text(gs(e.what()));}

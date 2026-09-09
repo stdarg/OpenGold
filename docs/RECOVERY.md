@@ -73,8 +73,7 @@ campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 ## Persistence and verification
 
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
-purses, recovery timers, clock and RNG for rollback. Campaign **file** save/load
-is still unavailable (issue #1); disk persistence is not claimed or tested.
+purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
 Combat checkpoint format remains version 2, with level-bearing PC2 recipes.
 The combat module identity is **0.3.0**, so incompatible earlier saves reject.
 

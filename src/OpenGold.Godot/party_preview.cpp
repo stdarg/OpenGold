@@ -65,6 +65,7 @@ void CharacterCreationView::setup_party()
     get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("PartyPanel/SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
+    setup_saves();
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
 }
 void CharacterCreationView::party_layout()
@@ -85,6 +86,7 @@ void CharacterCreationView::party_layout()
     const std::array<const char*,9> buttons{"Create","Remove","Rejoin","Recruit","Equip","Unequip","Explore","Combat","Close"};
     const double bw=(w-64)/5;
     for(unsigned i=0;i<buttons.size();++i)place((std::string("PartyPanel/")+buttons[i]).c_str(),Rect2(24+(i%5)*(bw+4),h-125+(i/5)*44,bw,36));
+    place("PartyPanel/Save",Rect2(w-520,24,140,36));place("PartyPanel/Load",Rect2(w-370,24,140,36));
     place("PartyPanel/Pool",Rect2(w-220,24,196,36));
     pool_layout();
     place("PartyPanel/Status",Rect2(24,h-39,w-48,32));
@@ -121,8 +123,9 @@ void CharacterCreationView::refresh_party()
             get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(icon.width,icon.height,false,godot::Image::FORMAT_RGBA8,rgba)));
         }
     }
+    if(state.roster.empty())for(const char* name:{"PartyPanel/Portrait","PartyPanel/ReadySprite","PartyPanel/ActionSprite"})get_node<TextureRect>(name)->set_texture({});
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_text(gs(sheet));
-    get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?"Session preview / New PCs receive 250 gp / Progress is not saved yet.":error_);
+    get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?"New PCs receive 250 gp / Save game stores this campaign on disk.":error_);
     for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat","Modifiers","SavingThrows"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
 }
 void CharacterCreationView::party_action(int action)
@@ -145,7 +148,7 @@ void CharacterCreationView::party_action(int action)
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
                 if(!town){auto owned=scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid exploration scene");
-                    town->set_name("CampaignTown");town->campaign_party(campaign_);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));add_child(owned.get());owned.release();}
+                    town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));add_child(owned.get());owned.release();}
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }else{
                 const auto participants=campaign_->participants();std::vector<CombatArt> images;
@@ -226,6 +229,7 @@ void CharacterCreationView::party_check()
         if(!fight->can_leave())return;press("ReturnParty");capture("party-after-combat.png");
         if(campaign_->in_combat()||campaign_->member(campaign_->state().slots[0]).vitals.resources.empty())throw std::runtime_error("Combat state was not returned");
         if(!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("Level 2")||!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("XP 300"))throw std::runtime_error("Victory advancement is missing from character sheet");
+        if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))save_checkpoint_check("advancement");
         ++party_check_stage_;break;}
     case 5:press("PartyPanel/Explore");get_node<RolfTourView>("CampaignTown")->start_recovery_check();++party_check_stage_;break;
     case 6:if(!get_node<RolfTourView>("CampaignTown")->recovery_checked())return;
@@ -234,6 +238,7 @@ void CharacterCreationView::party_check()
     case 8:if(!get_node<CombatView>("CampaignCombat")->can_leave())return;
         press("ReturnParty");
         if(campaign_->state().roster.at(0).experience!=300)throw std::runtime_error("Reopening party combat duplicated XP");
+        if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))save_checkpoint_check("final");
         UtilityFunctions::print("Godot party check passed: creation, shops, combat, level-two sheet, recovery services, subsequent combat and exactly-once XP");party_check_=false;get_tree()->quit(0);break;
     }
 }

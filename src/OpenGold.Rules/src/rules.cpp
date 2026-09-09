@@ -22,3 +22,5 @@ unsigned Battlefield::at(Cell p) const noexcept
     return index<terrain.size()?terrain[index]:1;
 }
 }
+
+void opengold::rules::RulesModule::validate_character_state(const CharacterSheet&,const VitalState&) const {throw std::runtime_error("Character state validation is unsupported by this rules module");}

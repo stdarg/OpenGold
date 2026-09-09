@@ -102,6 +102,7 @@ public:
     // False means this module's supported advancement ceiling was reached.
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;
     virtual void recover(VitalState& state, const CharacterSheet& sheet) const;
+    virtual void validate_character_state(const CharacterSheet&, const VitalState&) const;
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };

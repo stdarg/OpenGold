@@ -494,6 +494,11 @@ public:
         auto continuation=vitals(actor);sheet=std::move(next);state=std::move(continuation);
         return true;
     }
+    void validate_character_state(const CharacterSheet& sheet,const VitalState& state) const override
+    {
+        Actor actor;actor.definition=character_definition(character_profile(sheet,{}).data,false);
+        actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;restore_vitals(actor,state);
+    }
     RestPolicy long_rest_policy() const override {return {480,960};}
     void recover(VitalState& state,const CharacterSheet& sheet) const override
     {

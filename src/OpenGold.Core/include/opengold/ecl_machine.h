@@ -9,6 +9,7 @@
 #include <random>
 #include <set>
 
+namespace opengold { struct SaveCodec; }
 namespace opengold::por {
 struct ScriptId {
     std::string archive;
@@ -85,6 +86,7 @@ public:
     [[nodiscard]] std::uint32_t address() const noexcept { return pc_; }
     [[nodiscard]] const auto& trace() const noexcept { return trace_; }
 private:
+    friend struct opengold::SaveCodec;
     std::shared_ptr<const EclProgram> program_;
     EclState state_{EclState::idle};
     std::uint32_t pc_{};
