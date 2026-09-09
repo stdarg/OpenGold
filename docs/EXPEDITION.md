@@ -57,8 +57,9 @@ acceptance target.
 
 From PowerShell, build with `.\build-rolf.cmd`. Run
 `.\review-character.cmd --expedition-check` for the visible automated trip and
-`user-data/slums-battlefield.png` capture. The fixture is six equipped level-two
-fighters; it does not demonstrate that six new level-one characters can defeat
+`user-data/slums-battlefield.png` capture. The fixture is six equipped level-four
+fighters with explicitly confirmed Defense; it does not demonstrate that six
+new level-one characters can defeat
 every original roaming group. Normal play uses `.\review-character.cmd`.
 
 Native tests cover original geometry, host dice, string-copy semantics, surprise

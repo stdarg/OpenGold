@@ -1,6 +1,7 @@
 #ifndef OPENGOLD_RULES_H
 #define OPENGOLD_RULES_H
 #include <compare>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -11,6 +12,18 @@
 
 namespace opengold::rules {
 struct CharacterSheet;
+struct AdvancementChoice {
+    std::string feat;
+    std::array<unsigned,6> abilities{};
+    std::vector<std::string> spells;
+    bool operator==(const AdvancementChoice&) const = default;
+};
+struct AdvancementOption {std::string id,label,description;bool available{true};};
+struct AdvancementOptions {
+    unsigned level{};
+    std::vector<AdvancementOption> feats,spells;
+    std::string description;
+};
 struct CharacterProfile {
     std::string data;
     int hit_points{}, armor_class{};
@@ -103,6 +116,9 @@ public:
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
     // False means this module's supported advancement ceiling was reached.
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;
+    [[nodiscard]] virtual AdvancementOptions advancement_options(const CharacterSheet&) const {return {};}
+    [[nodiscard]] virtual AdvancementChoice default_advancement(const CharacterSheet&) const {return {};}
+    virtual bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const;
     virtual void recover(VitalState& state, const CharacterSheet& sheet) const;
     virtual void validate_character_state(const CharacterSheet&, const VitalState&) const;
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;

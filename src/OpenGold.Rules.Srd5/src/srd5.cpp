@@ -46,15 +46,16 @@ struct Definition {
     Dice melee;
     int ranged_bonus{};
     Dice ranged;
-    int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{};
-    bool str_dex_disadvantage{};
+    int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{},slots2{};
+    bool str_dex_disadvantage{},savage{};
 };
 struct Content { Identity identity; std::optional<Identity> previous_campaign_identity;std::map<std::string,Definition> definitions; };
 struct Actor {
     Participant source;
     Definition definition;
-    int hp{}, initiative{}, movement{}, winds{}, slots{}, successes{}, failures{};
+    int hp{}, initiative{}, movement{}, winds{}, slots{}, successes{}, failures{},slots2{};
     bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{}, stable{}, dead{};
+    bool spent_slot{},savage_used{};
 };
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
 Definition character_definition(std::string_view bytes,bool combat=true)
@@ -62,10 +63,11 @@ Definition character_definition(std::string_view bytes,bool combat=true)
     if(bytes.size()>1024)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
-    unsigned level=1;in>>magic;if(magic=="PC2")in>>level;in>>std::quoted(klass)>>std::quoted(race);
+    unsigned level=1,features=0,selected_spells=0;in>>magic;if(magic=="PC2"||magic=="PC3")in>>level;
+    if(magic=="PC3")in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
     in>>count;
-    if(!in||(magic!="PC1"&&magic!="PC2")||level<1||level>2||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
+    if(!in||(magic!="PC1"&&magic!="PC2"&&magic!="PC3")||level<1||level>(magic=="PC3"?4u:2u)||features>3||selected_spells>31||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
     if(combat&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")
         throw std::runtime_error("Campaign combat supports Fighter, Cleric and Wizard subsets only");
@@ -79,8 +81,14 @@ Definition character_definition(std::string_view bytes,bool combat=true)
     Definition d;d.hp=die+con+(race=="Dwarf"?int(level):0)+(level-1)*std::max(1,die/2+1+con);
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
     d.melee_bonus=2+str;d.melee={0,0,std::max(0,1+str)};
-    d.winds=klass=="Fighter"?2:0;d.slots=(klass=="Cleric"||klass=="Wizard")?(level==1?2:3):0;
+    d.winds=klass=="Fighter"?(level==4?3:2):0;d.slots=(klass=="Cleric"||klass=="Wizard")?(level==1?2:level==2?3:4):0;
+    d.slots2=(klass=="Cleric"||klass=="Wizard")&&level>=3?(level==3?2:3):0;
     d.casting=2+ability_modifier(scores[klass=="Cleric"?4:3]);d.spells=klass=="Cleric"?2:klass=="Wizard"?5:0;
+    if(magic=="PC3"){
+        const unsigned allowed=klass=="Cleric"?10:klass=="Wizard"?(level>=3?21:5):0;
+        if(selected_spells&~allowed||(features&1)&&klass!="Fighter")throw std::runtime_error("Invalid prepared spells or feat prerequisites");
+        d.spells=selected_spells;d.savage=(features&2)!=0;
+    }
     bool weapon=false,armor=false,shield=false;
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(key=="dagger"||key=="mace"||key=="longsword"||key=="quarterstaff"){
@@ -99,6 +107,7 @@ Definition character_definition(std::string_view bytes,bool combat=true)
     if(!armor&&klass=="Barbarian")d.ac=std::max(d.ac,10+dex+con);
     if(!armor&&!shield&&klass=="Monk")d.ac=std::max(d.ac,10+dex+ability_modifier(scores[4]));
     if(shield&&trained(klass,"shield"))d.ac+=2;
+    if(armor&&(features&1))++d.ac;
     in>>std::ws;if(!in.eof())throw std::runtime_error("Invalid character profile fields");return d;
 }
 void restore_vitals(Actor& a,const VitalState& state)
@@ -106,19 +115,22 @@ void restore_vitals(Actor& a,const VitalState& state)
     a.hp=state.hit_points;a.dead=state.dead;
     if(!state.resources.empty()) {
         std::istringstream in(state.resources);std::string magic;
-        in>>magic>>a.winds>>a.slots>>a.successes>>a.failures>>a.stable;
-        if(!in||magic!="SRD1")throw std::runtime_error("Invalid character resource state");
+        in>>magic>>a.winds>>a.slots;if(magic=="SRD2")in>>a.slots2;
+        in>>a.successes>>a.failures>>a.stable;
+        if(!in||(magic!="SRD1"&&magic!="SRD2"))throw std::runtime_error("Invalid character resource state");
         in>>std::ws;if(!in.eof())throw std::runtime_error("Trailing character resource state");
     }
     const auto& d=a.definition;
     if(a.hp<0||a.hp>d.hp||(a.dead&&a.hp!=0)||a.winds<0||a.winds>d.winds||a.slots<0||a.slots>d.slots||
-        a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
+        a.slots2<0||a.slots2>d.slots2||a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
 }
 VitalState vitals(const Actor& a)
 {
-    std::ostringstream out;out<<"SRD1 "<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '<<a.stable;
+    std::ostringstream out;out<<(a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
+    if(a.definition.slots2)out<<a.slots2<<' ';out<<a.successes<<' '<<a.failures<<' '<<a.stable;
     std::string description;
     if(a.definition.slots)description="Level-one spell slots: "+std::to_string(a.slots)+" / "+std::to_string(a.definition.slots);
+    if(a.definition.slots2)description+="\nLevel-two spell slots: "+std::to_string(a.slots2)+" / "+std::to_string(a.definition.slots2);
     if(a.definition.winds)description="Second Wind uses: "+std::to_string(a.winds)+" / "+std::to_string(a.definition.winds);
     if(a.hp==0)description+=(description.empty()?"":"\n")+std::string(a.dead?"Dead":a.stable?"Stable, unconscious":"Unconscious; death saves ")+(!a.dead&&!a.stable?std::to_string(a.successes)+" successes, "+std::to_string(a.failures)+" failures":"");
     return {a.hp,a.dead,out.str(),description};
@@ -143,7 +155,7 @@ public:
                 throw std::runtime_error("Invalid participant or unsupported rules definition: "+p.definition);
             sides.insert(p.side);
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
-            Actor a; a.definition=d;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;
+            Actor a; a.definition=d;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;
             if(a.source.state)restore_vitals(a,*a.source.state);
             a.initiative=roll(20);if(d.str_dex_disadvantage||a.source.surprised)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
             actors_.push_back(std::move(a));
@@ -188,7 +200,7 @@ private:
     std::vector<Cell> path_to(const Actor& a,Cell destination) const;
     bool occupied(Cell p) const {return std::any_of(actors_.begin(),actors_.end(),[&](const auto& a){return !a.dead && a.source.cell==p;});}
     EntityId pending() const {return reactor_index_<reactors_.size()?reactors_[reactor_index_]:0;}
-    void attack(Actor& a,Actor& target,bool ranged,bool spell=false);
+    void attack(Actor& a,Actor& target,bool ranged,bool spell=false,Dice spell_dice={1,10,0});
     void damage(Actor& target,int amount);
     void heal(Actor& target,int amount);
     void update_outcome();
@@ -264,6 +276,14 @@ std::vector<Command> Session::legal_commands() const
     const auto& a=actors_[turn_];if(a.hp<=0)return commands;const auto& d=def(a);const auto id=a.source.id;
     add(id,"end","End turn");
     if(a.bonus&&a.winds>0&&a.hp<d.hp)add(id,"second_wind","Second Wind",id);
+    const auto spell=[&](const char* verb,const char* label,EntityId target){
+        if(a.spent_slot)return;
+        if(a.slots>0)add(id,verb,label,target);
+        if(a.slots2>0)add(id,std::string(verb)+"_2",std::string(label)+" (level 2 slot)",target);
+    };
+    if(a.bonus&&(d.spells&8))for(const auto& other:actors_)
+        if(!other.dead&&other.source.side==a.source.side&&other.hp<def(other).hp&&distance(a.source.cell,other.source.cell)<=60&&line_of_sight(a.source.cell,other.source.cell))
+            spell("healing_word","Healing Word",other.source.id);
     if(a.action) {
         add(id,"dash","Dash");add(id,"dodge","Dodge");add(id,"disengage","Disengage");
         for(const auto& other:actors_) {
@@ -273,9 +293,10 @@ std::vector<Command> Session::legal_commands() const
                 if(feet<=5)add(id,"melee","Melee attack",other.source.id);
                 if(feet<=d.long_range)add(id,"ranged","Ranged attack",other.source.id);
                 if((d.spells&1)&&feet<=120)add(id,"fire_bolt","Fire Bolt",other.source.id);
-                if((d.spells&4)&&a.slots>0&&feet<=120)add(id,"magic_missile","Magic Missile",other.source.id);
-            } else if(other.source.side==a.source.side && other.hp<def(other).hp && feet<=5 && (d.spells&2)&&a.slots>0)
-                add(id,"cure_wounds","Cure Wounds",other.source.id);
+                if((d.spells&4)&&feet<=120)spell("magic_missile","Magic Missile",other.source.id);
+                if((d.spells&16)&&a.slots2>0&&!a.spent_slot&&feet<=120)add(id,"scorching_ray","Scorching Ray",other.source.id);
+            } else if(other.source.side==a.source.side && other.hp<def(other).hp && feet<=5 && (d.spells&2))
+                spell("cure_wounds","Cure Wounds",other.source.id);
         }
     }
     if(a.movement>0)for(int y=0;y<board_.height;++y)for(int x=0;x<board_.width;++x)
@@ -296,7 +317,7 @@ void Session::heal(Actor& target,int amount)
     const int restored=std::min(amount,def(target).hp-target.hp);target.hp+=restored;
     target.successes=target.failures=0;target.stable=false;log(target.source.name+" recovers "+std::to_string(restored)+" HP.");
 }
-void Session::attack(Actor& a,Actor& target,bool ranged,bool spell)
+void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_dice)
 {
     const auto& d=def(a);bool disadvantaged=target.dodge||(!spell&&d.str_dex_disadvantage);
     if(ranged) {
@@ -309,8 +330,9 @@ void Session::attack(Actor& a,Actor& target,bool ranged,bool spell)
     std::string message=a.source.name+" -> "+target.source.name+": d20 "+std::to_string(natural)+
         " + "+std::to_string(bonus)+" vs AC "+std::to_string(def(target).ac)+(disadvantaged?" (disadvantage)":"");
     if(!hit){log(message+" misses.");return;}
-    const Dice damage_dice=spell?Dice{1,10,0}:ranged?d.ranged:d.melee;
-    const int amount=dice(damage_dice,natural==20);
+    const Dice damage_dice=spell?spell_dice:ranged?d.ranged:d.melee;
+    int amount=dice(damage_dice,natural==20);
+    if(!spell&&damage_dice.count&&d.savage&&!a.savage_used){amount=std::max(amount,dice(damage_dice,natural==20));a.savage_used=true;message+=" (Savage Attacker)";}
     log(message+(natural==20?" CRITICAL":" hits")+" for "+std::to_string(amount)+" damage.");damage(target,amount);
 }
 void Session::update_outcome()
@@ -323,7 +345,9 @@ void Session::update_outcome()
 }
 void Session::begin_turn()
 {
+    for(auto& actor:actors_)actor.savage_used=false;
     auto& a=actors_[turn_];a.action=a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;
+    a.spent_slot=false;
     log("Round "+std::to_string(round_)+": "+a.source.name+" acts.");
 }
 void Session::end_turn()
@@ -366,6 +390,8 @@ bool Session::submit(const Command& command)
     const auto offered=legal_commands();
     if(std::none_of(offered.begin(),offered.end(),[&](const auto& c){return same_command(c,command);}))return false;
     auto& a=actor(command.actor);const auto& d=def(a);
+    const bool second=command.verb.ends_with("_2");
+    const auto spend=[&]{if(second||command.verb=="scorching_ray")--a.slots2;else --a.slots;a.spent_slot=true;};
     if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
         ++reactor_index_;update_outcome();if(outcome_==Outcome::ongoing)progress_movement();
@@ -373,16 +399,19 @@ bool Session::submit(const Command& command)
         path_=path_to(a,command.destination);path_index_=0;progress_movement();
     } else if(command.verb=="end")end_turn();
     else if(command.verb=="second_wind") {a.bonus=false;--a.winds;heal(a,roll(10)+d.level);}
+    else if(command.verb=="healing_word"||command.verb=="healing_word_2"){a.bonus=false;spend();heal(actor(command.target),dice({second?4:2,4,d.casting-2}));}
     else {
         a.action=false;
         if(command.verb=="dash"){a.movement+=d.speed;log(a.source.name+" dashes.");}
         else if(command.verb=="dodge"){a.dodge=true;log(a.source.name+" dodges.");}
         else if(command.verb=="disengage"){a.disengaged=true;log(a.source.name+" disengages.");}
-        else if(command.verb=="cure_wounds"){--a.slots;heal(actor(command.target),dice({2,8,d.casting-2}));}
-        else if(command.verb=="magic_missile") {
-            --a.slots;int total=0;for(int dart=0;dart<3;++dart)total+=roll(4)+1;
+        else if(command.verb=="cure_wounds"||command.verb=="cure_wounds_2"){spend();heal(actor(command.target),dice({second?4:2,8,d.casting-2}));}
+        else if(command.verb=="magic_missile"||command.verb=="magic_missile_2") {
+            spend();int total=0;for(int dart=0;dart<(second?4:3);++dart)total+=roll(4)+1;
             log(a.source.name+" casts Magic Missile for "+std::to_string(total)+" force damage.");damage(actor(command.target),total);
-        } else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
+        } else if(command.verb=="scorching_ray"){
+            spend();for(unsigned ray=0;ray<3&&actor(command.target).hp>0;++ray)attack(a,actor(command.target),true,true,{2,6,0});
+        }else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
     }
     ++revision_;update_outcome();
     if(outcome_==Outcome::ongoing&&!pending()&&actors_[turn_].hp==0)end_turn();
@@ -392,12 +421,12 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 2 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 3 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<'\n';
+        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<'\n';
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';return out.str();
@@ -407,7 +436,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     if(bytes.size()>65536)throw std::runtime_error("Combat checkpoint exceeds limit");
     std::istringstream in{std::string(bytes)};std::string magic;unsigned version;Identity id;
     in>>magic>>version>>std::quoted(id.module)>>std::quoted(id.version)>>std::quoted(id.content);
-    if(!in||magic!="OGCOMBAT"||(version!=1&&version!=2)||id!=content->identity)throw std::runtime_error("Combat checkpoint rules/content version mismatch");
+    if(!in||magic!="OGCOMBAT"||(version<1||version>3)||id!=content->identity)throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter e;in>>e.battlefield.width>>e.battlefield.height;
     if(!in||e.battlefield.width<2||e.battlefield.height<2||e.battlefield.width>64||e.battlefield.height>64)throw std::runtime_error("Invalid checkpoint board");
     for(int i=0;i<e.battlefield.width*e.battlefield.height;++i){unsigned t;in>>t;if(!in||t>2)throw std::runtime_error("Invalid checkpoint terrain");e.battlefield.terrain.push_back(t);}
@@ -416,12 +445,13 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::vector<Actor> actors;for(unsigned i=0;i<count;++i) {
         Actor a;in>>a.source.id>>std::quoted(a.source.definition)>>std::quoted(a.source.name)>>a.source.side>>a.source.cell.x>>a.source.cell.y
             >>a.hp>>a.initiative>>a.movement>>a.winds>>a.slots>>a.successes>>a.failures>>a.action>>a.bonus>>a.reaction>>a.dodge>>a.disengaged>>a.stable>>a.dead;
-        if(version==2)in>>std::quoted(a.source.character_profile);
+        if(version>=2)in>>std::quoted(a.source.character_profile);
+        if(version>=3)in>>a.slots2>>a.spent_slot>>a.savage_used;
         if(!in||(a.source.character_profile.empty()&&!content->definitions.contains(a.source.definition)))throw std::runtime_error("Invalid checkpoint actor");
         a.definition=a.source.character_profile.empty()?content->definitions.at(a.source.definition):character_definition(a.source.character_profile);
         const auto& d=a.definition;
         if(a.hp<0||a.hp>d.hp||a.movement<0||a.movement>d.speed*2||a.winds<0||a.winds>d.winds||a.slots<0||a.slots>d.slots||
-            a.successes<0||a.successes>3||a.failures<0||a.failures>4||(a.dead&&a.hp>0))throw std::runtime_error("Invalid checkpoint actor state");
+            a.slots2<0||a.slots2>d.slots2||a.successes<0||a.successes>3||a.failures<0||a.failures>4||(a.dead&&a.hp>0))throw std::runtime_error("Invalid checkpoint actor state");
         e.participants.push_back(a.source);actors.push_back(std::move(a));
     }
     // Constructor validates identities/geometry before mutable state is accepted.
@@ -474,47 +504,97 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        return saved==content_->identity||(content_->previous_campaign_identity&&saved==*content_->previous_campaign_identity);
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0")return false;
+        auto compatible=saved;compatible.version=content_->identity.version;
+        return compatible==content_->identity||(content_->previous_campaign_identity&&compatible==*content_->previous_campaign_identity);
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
     {static constexpr unsigned thresholds[]{0,0,300,900,2700};if(level<1||level>4)throw std::runtime_error("Unsupported character level");return thresholds[level];}
     bool advance_character(CharacterSheet& sheet,VitalState& state) const override
+    {return advance_character(sheet,state,default_advancement(sheet));}
+    AdvancementOptions advancement_options(const CharacterSheet& sheet) const override
     {
+        if(sheet.level>=4||(sheet.character_class!="Fighter"&&sheet.character_class!="Cleric"&&sheet.character_class!="Wizard"))return {};
+        AdvancementOptions result;result.level=sheet.level+1;
+        result.description="Fixed-average HP growth. Spendable resources gain only their new capacity; existing expenditure remains.";
+        if(result.level==4)result.feats={
+            {"ability_score_improvement","Ability points","Add 2 to one ability or 1 to two abilities; maximum 20."},
+            {"defense","Defense","+1 AC while wearing armor. Requires the Fighter's Fighting Style feature.",sheet.character_class=="Fighter"},
+            {"savage_attacker","Savage Attacker","Roll weapon damage twice on the first weapon hit each turn; use the higher result.",sheet.background!="Soldier"},
+            {"grappler","Grappler","Unavailable: grappling is not implemented.",false},
+            {"magic_initiate","Magic Initiate","Unavailable: its complete spell-selection feature is not implemented.",false}};
+        if(sheet.character_class=="Cleric")result.spells={
+            {"cure_wounds","Cure Wounds","Action; touch; heals 2d8 + Wisdom modifier."},
+            {"healing_word","Healing Word","Bonus action; 60 feet; heals 2d4 + Wisdom modifier."},
+            {"bless","Bless","Unavailable: concentration is not implemented.",false}};
+        if(sheet.character_class=="Wizard")result.spells={
+            {"magic_missile","Magic Missile","Action; 120 feet; three darts at one target."},
+            {"scorching_ray","Scorching Ray","Action; 120 feet; three spell attacks at one target. Requires level 3.",result.level>=3},
+            {"shield","Shield","Unavailable: spell reactions are not implemented.",false}};
+        return result;
+    }
+    AdvancementChoice default_advancement(const CharacterSheet& sheet) const override
+    {
+        AdvancementChoice choice;const auto options=advancement_options(sheet);if(!options.level)return choice;
+        choice.spells=sheet.prepared_spells;
+        if(choice.spells.empty()){if(sheet.character_class=="Cleric")choice.spells={"cure_wounds"};else if(sheet.character_class=="Wizard")choice.spells={"magic_missile"};}
+        if(options.level==4){
+            choice.feat="ability_score_improvement";const unsigned primary=sheet.character_class=="Fighter"?0:sheet.character_class=="Cleric"?4:3;
+            unsigned remaining=2;for(unsigned n=0;n<6&&remaining;++n){const auto index=(primary+n)%6;
+                choice.abilities[index]=std::min(remaining,unsigned(std::max(0,20-sheet.scores[index])));remaining-=choice.abilities[index];}
+        }
+        return choice;
+    }
+    bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice& choice) const override
+    {
+        const auto options=advancement_options(sheet);if(!options.level)return false;
         const auto old=character_definition(character_profile(sheet,{}).data);
-        if(sheet.level==2)return false;
-        Actor actor;actor.definition=old;actor.winds=old.winds;actor.slots=old.slots;restore_vitals(actor,state);
+        unsigned points=0;for(auto n:choice.abilities){if(n>2)throw std::runtime_error("An ability increase cannot exceed 2");points+=n;}
+        if(options.level==4){
+            const auto feat=std::find_if(options.feats.begin(),options.feats.end(),[&](const auto& f){return f.id==choice.feat&&f.available;});
+            if(feat==options.feats.end())throw std::runtime_error("Choose an available feat or ability points");
+            if(points!=(choice.feat=="ability_score_improvement"?2u:0u))throw std::runtime_error("Assign exactly two ability points, or choose a feat");
+        }else if(!choice.feat.empty()||points)throw std::runtime_error("Feats and ability points are available at level 4");
+        std::set<std::string> selected;
+        for(const auto& spell:choice.spells){if(!selected.insert(spell).second||std::none_of(options.spells.begin(),options.spells.end(),[&](const auto& s){return s.id==spell&&s.available;}))throw std::runtime_error("Choose only available, distinct spells");}
+        if(!options.spells.empty()&&choice.spells.empty())throw std::runtime_error("Choose at least one supported spell");
+        Actor actor;actor.definition=old;actor.winds=old.winds;actor.slots=old.slots;actor.slots2=old.slots2;restore_vitals(actor,state);
         auto next=sheet;++next.level;
-        const int growth=std::max(1,sheet.hit_die/2+1+ability_modifier(sheet.scores[2]))+(sheet.race=="Dwarf"?1:0);
-        next.hit_points+=growth;
-        next.hp_explanation="Level 2 HP total: "+std::to_string(next.hit_points)+". Gained "+std::to_string(growth)+" HP from the fixed average Hit Die and Constitution"+(sheet.race=="Dwarf"?" plus Dwarven Toughness.":".");
-        next.class_modifiers+="\nLevel 2 subset: fixed-average HP growth; Cleric/Wizard gain a third level-one slot. Additional class features are not implemented.";
+        for(unsigned n=0;n<6;++n){next.scores[n]+=choice.abilities[n];next.bonuses[n]+=choice.abilities[n];
+            if(next.scores[n]>20)throw std::runtime_error("Ability scores cannot exceed 20");
+            next.modifiers[n]=ability_modifier(next.scores[n]);next.saving_throws[n]=next.modifiers[n]+(next.save_proficiencies[n]?2:0);}
+        if(!choice.feat.empty())next.feats.push_back(choice.feat);next.prepared_spells=choice.spells;
+        const int con=next.modifiers[2];next.hit_points=next.hit_die+con+(next.race=="Dwarf"?next.level:0)+(next.level-1)*std::max(1,next.hit_die/2+1+con);
+        const int growth=next.hit_points-sheet.hit_points;
+        next.hp_explanation="Level "+std::to_string(next.level)+": "+std::to_string(next.hit_points)+" maximum HP; gain "+std::to_string(growth)+". Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.";
+        next.class_modifiers+="\nLevel "+std::to_string(next.level)+": HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.";
         actor.definition=character_definition(character_profile(next,{}).data);
         if(actor.hp>0)actor.hp+=growth;
-        actor.slots+=actor.definition.slots-old.slots;
+        actor.slots+=actor.definition.slots-old.slots;actor.slots2+=actor.definition.slots2-old.slots2;actor.winds+=actor.definition.winds-old.winds;
         auto continuation=vitals(actor);sheet=std::move(next);state=std::move(continuation);
         return true;
     }
     void validate_character_state(const CharacterSheet& sheet,const VitalState& state) const override
     {
         Actor actor;actor.definition=character_definition(character_profile(sheet,{}).data,false);
-        actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;restore_vitals(actor,state);
+        actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
     }
     RestPolicy long_rest_policy() const override {return {480,960};}
     void recover(VitalState& state,const CharacterSheet& sheet) const override
     {
         const auto d=character_definition(character_profile(sheet,{}).data,false);
-        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;restore_vitals(actor,state);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
-        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.successes=actor.failures=0;actor.stable=false;
+        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.successes=actor.failures=0;actor.stable=false;
         state=vitals(actor);
     }
     void temple_heal(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
     {
         const auto d=character_definition(character_profile(sheet,{}).data,false);
-        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;restore_vitals(actor,state);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp>=d.hp)throw std::runtime_error("Cure Wounds requires a wounded living member");
         // Authored temple caster: Cure Wounds, Wisdom +3. Same SplitMix64 as combat.
         auto rng=random_state;int amount=3;
@@ -524,13 +604,30 @@ public:
         auto next=vitals(actor);state=std::move(next);random_state=rng;
     }
     CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear) const override {
-        if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>2)throw std::runtime_error("Unsupported character rules identity or level");
-        std::ostringstream out;out<<"PC2 "<<sheet.level<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>4)throw std::runtime_error("Unsupported character rules identity or level");
+        unsigned features=sheet.background=="Soldier"?2:0;
+        if(sheet.feats.size()!=(sheet.level==4?1u:0u))throw std::runtime_error("Invalid advancement feat count");
+        for(const auto& feat:sheet.feats){
+            if(feat=="defense"&&sheet.character_class=="Fighter")features|=1;
+            else if(feat=="savage_attacker"&&sheet.background!="Soldier")features|=2;
+            else if(feat!="ability_score_improvement")throw std::runtime_error("Invalid advancement feat");
+        }
+        unsigned spells=sheet.character_class=="Wizard"?1:0;std::set<std::string> selected;
+        if(sheet.prepared_spells.empty()){if(sheet.character_class=="Wizard")spells|=4;else if(sheet.character_class=="Cleric")spells|=2;}
+        for(const auto& spell:sheet.prepared_spells){
+            if(!selected.insert(spell).second)throw std::runtime_error("Duplicate prepared spell");
+            if(spell=="cure_wounds"&&sheet.character_class=="Cleric")spells|=2;
+            else if(spell=="healing_word"&&sheet.character_class=="Cleric")spells|=8;
+            else if(spell=="magic_missile"&&sheet.character_class=="Wizard")spells|=4;
+            else if(spell=="scorching_ray"&&sheet.character_class=="Wizard"&&sheet.level>=3)spells|=16;
+            else throw std::runtime_error("Unsupported prepared spell");
+        }
+        std::ostringstream out;out<<"PC3 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
         const auto data=out.str();const auto d=character_definition(data,false);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
-        CharacterProfile result{data,d.hp,d.ac,"Level 1-2 combat subset: Fighter (Second Wind), Cleric (Cure Wounds), Wizard (Fire Bolt, Magic Missile). Other class/species/background features and spell choices are not implemented.",d.speed,d.melee_bonus};
+        CharacterProfile result{data,d.hp,d.ac,"Level 1-4 subset: HP, selected feats, supported prepared spells and level-one/two slots. Additional class/subclass and species features remain unavailable.",d.speed,d.melee_bonus};
         result.strength_dexterity_disadvantage=d.str_dex_disadvantage;
         for(const auto& key:gear){
             if(key=="shield")result.item_modifiers+=trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.\n":"Source: equipped Shield: +0 AC (untrained).\n";
@@ -539,6 +636,8 @@ public:
             else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage adds that ability modifier.\n";
         }
         for(const auto& key:gear)result.item_modifiers+="Source: equipped "+key+". "+equipment_note(sheet,key)+"\n";
+        if(features&1)result.item_modifiers+="Defense feat: +1 AC while wearing armor.\n";
+        if(features&2)result.item_modifiers+="Savage Attacker: higher of two weapon-damage rolls on the first weapon hit each turn.\n";
         if(gear.empty())result.item_modifiers="No equipment modifiers. Source: unarmed strike rules and Strength score "+std::to_string(sheet.scores[0])+". Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).";
         result.spell_modifiers="No active spell modifiers. Persistent spell effects are not implemented.";
         if(sheet.character_class=="Wizard")result.spell_modifiers="Source: Fire Bolt and Wizard spellcasting, Intelligence score "+std::to_string(sheet.scores[3])+". Attack: Intelligence modifier +2 level-one proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
@@ -563,7 +662,7 @@ std::unique_ptr<RulesModule> load(const std::filesystem::path& file)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.3.0",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.4.0",revision+"/"+std::to_string(hash)};
     // Additive roaming profiles do not invalidate existing saved characters.
     // Reconstruct the exact preceding pack identity; modifications to any old
     // definition still produce a mismatch. Combat checkpoints remain strict.
@@ -575,7 +674,7 @@ std::unique_ptr<RulesModule> load(const std::filesystem::path& file)
         previous+=line_before+'\n';
     }
     std::uint64_t previous_hash=14695981039346656037ULL;for(unsigned char c:previous){previous_hash^=c;previous_hash*=1099511628211ULL;}
-    if(previous_hash!=hash)content.previous_campaign_identity=Identity{"opengold.srd5","0.3.0",revision+"/"+std::to_string(previous_hash)};
+    if(previous_hash!=hash)content.previous_campaign_identity=Identity{"opengold.srd5","0.4.0",revision+"/"+std::to_string(previous_hash)};
     while(std::getline(lines,line)) {
         if(line.empty()||line[0]=='#'||line=="\r")continue;
         std::istringstream row(line);std::string tag,key;Definition d;row>>tag>>key>>d.ac>>d.hp>>d.initiative>>d.speed>>d.melee_bonus>>d.melee.count>>d.melee.sides>>d.melee.bonus

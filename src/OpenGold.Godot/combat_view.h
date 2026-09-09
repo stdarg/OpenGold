@@ -39,6 +39,8 @@ private:
     unsigned check_steps_{},completion_frames_{};
     void layout();void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
+    void spell_slot();
+    unsigned spell_slot_{1};
     void training();void slums();void replay();void next();void revisit();void save_game();void load_game();
     std::filesystem::path local_path(const char* path) const;
 };

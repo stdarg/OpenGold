@@ -21,7 +21,7 @@ std::uint64_t fingerprint(std::string_view data){std::uint64_t n=146959810393466
 // Explicit field encoding: no pointers, native object layouts or derived sheets.
 struct SaveCodec {
     bool reading{};
-    unsigned version{2};
+    unsigned version{3};
     std::stringstream stream;
     const rules::CharacterRules* creation{};
     const rules::RulesModule* module{};
@@ -43,6 +43,7 @@ struct SaveCodec {
     template<class T>void field(std::optional<T>& value){bool present=value.has_value();field(present);if(reading){if(present)value.emplace();else value.reset();}if(present)field(*value);}
     void field(rules::Identity& v){fields(v.module,v.version,v.content);}
     void field(rules::AbilityRoll& v){fields(v.dice,v.discarded);}
+    void field(rules::AdvancementChoice& v){fields(v.feat,v.abilities,v.spells);}
     void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);}
     void field(por::CharacterAppearance& v){fields(v.portrait_head,v.portrait_body,v.combat_head,v.combat_body,v.tall,v.colors);}
     void field(InventoryItem& v){fields(v.id,v.definition_id,v.name,v.quantity,v.original_type);}
@@ -57,8 +58,17 @@ struct SaveCodec {
     void field(PartyState& v){
         fields(v.slots,v.next_id,v.selected,v.time_minutes,v.random_state,v.claimed_rewards);
         std::uint64_t count=v.roster.size();field(count);require(count<=128,"Too many saved party members");
-        if(reading){v.roster.clear();for(std::uint64_t i=0;i<count;++i){rules::CharacterDraft draft;por::CharacterAppearance appearance;int level{};fields(draft,appearance,level);require(level>=1&&level<=2,"Unsupported saved character level");Character character(*creation,std::move(draft),appearance);rules::VitalState scratch;while(character.sheet().level<level)require(character.advance(*module,scratch),"Unsupported saved advancement");field(character.inventory());PartyMember m{0,std::move(character)};member(m);v.roster.push_back(std::move(m));}}
-        else for(auto& m:v.roster){auto draft=m.character.creation_data();auto appearance=m.character.appearance();auto level=m.character.sheet().level;fields(draft,appearance,level,m.character.inventory());member(m);}
+        if(reading){v.roster.clear();for(std::uint64_t i=0;i<count;++i){
+            rules::CharacterDraft draft;por::CharacterAppearance appearance;int level{};fields(draft,appearance,level);
+            require(level>=1&&level<=(version>=3?4:2),"Unsupported saved character level");
+            Character character(*creation,std::move(draft),appearance);rules::VitalState scratch;
+            if(version>=3){std::vector<rules::AdvancementChoice> history;field(history);require(history.size()==level-1,"Saved advancement history disagrees with level");
+                for(const auto& choice:history)require(character.advance(*module,scratch,choice),"Unsupported saved advancement choice");}
+            else while(character.sheet().level<level)require(character.advance(*module,scratch),"Unsupported saved advancement");
+            field(character.inventory());PartyMember m{0,std::move(character)};member(m);v.roster.push_back(std::move(m));
+        }}
+        else for(auto& m:v.roster){auto draft=m.character.creation_data();auto appearance=m.character.appearance();auto level=m.character.sheet().level;
+            fields(draft,appearance,level);auto history=m.character.advancements();field(history);field(m.character.inventory());member(m);}
     }
     void machine(por::EclMachine& v){
         require(v.state_==por::EclState::idle||v.state_==por::EclState::completed||reading,"Cannot save a pending script");
@@ -99,7 +109,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 2\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 3\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -117,8 +127,8 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 }
 }
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
-    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 2\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header);require(old||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
-    SaveCodec in(body);in.version=old?1:2;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
+    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 3\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");require(old||second||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
+    SaveCodec in(body);in.version=old?1:second?2:3;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
 std::string read_campaign_file(const std::filesystem::path& path){auto size=std::filesystem::file_size(path);require(size<=limit,"Campaign file too large");std::ifstream in(path,std::ios::binary);require(bool(in),"Cannot open campaign file");std::string data{std::istreambuf_iterator<char>(in),{}};require(!in.bad()&&data.size()==size,"Incomplete campaign file read");return data;}
 std::string campaign_asset_identity(const std::filesystem::path& directory){

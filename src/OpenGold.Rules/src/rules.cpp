@@ -7,6 +7,8 @@ unsigned RulesModule::experience_for_level(unsigned) const
 { throw std::runtime_error("This rules module does not support advancement"); }
 bool RulesModule::advance_character(CharacterSheet&, VitalState&) const
 { throw std::runtime_error("This rules module does not support advancement"); }
+bool RulesModule::advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const
+{return advance_character(sheet,state);}
 void RulesModule::recover(VitalState&, const CharacterSheet&) const
 { throw std::runtime_error("This rules module does not support recovery"); }
 RestPolicy RulesModule::long_rest_policy() const

@@ -19,8 +19,8 @@ removes the old combat scene. Standalone combat demos retain their restart contr
 
 Run `.\review-character.cmd --defeat-check` for the automated loss/reload/exit
 check and a capture at `user-data/party-defeat.png`. It uses an isolated save
-profile. This completes defeat handling for shared-party combat; town-to-Slums
-travel and original tactical geometry are still pending.
+profile. The [first Slums expedition](EXPEDITION.md) connects original district
+travel, automatic combat, original tactical geometry and persistent rewards.
 
 1. Finish a character, then select **Add to party** on the character sheet.
    The preview grants each new PC 250 gp. **View party** opens the roster.
@@ -59,16 +59,16 @@ travel and original tactical geometry are still pending.
 8. Finish the fight and return. HP, death state and spent resources persist.
    Reopening exploration resumes the town session at its previous position.
 
-Closing the application discards this session. Campaign file saving remains #1;
-the bounded [recovery and advancement subset](RECOVERY.md) covers part of #6.
-Cross-area travel remains #3. The
-preview opens combat explicitly; it does not add general town combat encounters.
+Use [Save game](SAVES.md) before closing the application to retain the campaign.
+The small arrow beside an eligible name opens [manual advancement](ADVANCEMENT.md).
+The [Slums expedition](EXPEDITION.md) opens its mapped encounters automatically;
+Party combat remains the explicitly launched training fight.
 
 ## Supported combat profiles
 
 The rules module evaluates the created scores and equipment; these characters
 do not select the old Vanguard/Adept/Healer fixture statistics. This first shared
-party increment supports **level 1-2 Fighter, Cleric and Wizard combat subsets**.
+party increment supports **level 1-4 Fighter, Cleric and Wizard combat subsets**.
 All twelve classes have exploration equipment profiles, including armor training,
 unarmored AC and HP. Other classes must still be put in
 reserve before combat. An unsupported active profile fails explicitly.

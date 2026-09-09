@@ -126,14 +126,30 @@ void CampaignParty::award_experience(unsigned amount,std::string reward_id)
         if(amount>std::numeric_limits<unsigned>::max()-member.experience)throw std::runtime_error("Experience overflow");
         awarded=true;
         member.experience+=amount;
-        while(member.experience>=rules_->experience_for_level(member.character.sheet().level+1)){
-            const auto level=member.character.sheet().level;
-            if(!member.character.advance(*rules_,member.vitals))break;
-            if(member.character.sheet().level!=level+1)throw std::runtime_error("Invalid rules advancement");
-        }
     }
     if(!awarded)throw std::runtime_error("Reward requires a living active member");
     next.claimed_rewards.push_back(std::move(reward_id));state_=std::move(next);
+}
+bool CampaignParty::can_advance(MemberId id) const
+{
+    if(combat_)return false;const auto& m=member(id);const auto options=rules_->advancement_options(m.character.sheet());
+    return !m.vitals.dead&&options.level&&m.experience>=rules_->experience_for_level(options.level);
+}
+rules::AdvancementOptions CampaignParty::advancement_options(MemberId id) const
+{return rules_->advancement_options(member(id).character.sheet());}
+rules::AdvancementChoice CampaignParty::default_advancement(MemberId id) const
+{return rules_->default_advancement(member(id).character.sheet());}
+PartyMember CampaignParty::preview_advancement(MemberId id,const rules::AdvancementChoice& choice) const
+{
+    if(!can_advance(id))throw std::runtime_error("This character is not ready to level up");
+    auto next=member(id);const auto level=next.character.sheet().level;
+    if(!next.character.advance(*rules_,next.vitals,choice)||next.character.sheet().level!=level+1)throw std::runtime_error("Unsupported advancement");
+    return next;
+}
+void CampaignParty::advance(MemberId id,const rules::AdvancementChoice& choice)
+{
+    editable();auto member=preview_advancement(id,choice);auto next=state_;
+    *std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;})=std::move(member);state_=std::move(next);
 }
 bool CampaignParty::rest()
 {

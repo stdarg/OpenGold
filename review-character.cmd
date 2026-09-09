@@ -3,6 +3,8 @@ setlocal
 if "%~1"=="--save-restart" set "APPDATA=%~dp0user-data\save-check-profile"
 if "%~1"=="--defeat-check" set "APPDATA=%~dp0user-data\defeat-check-profile"
 if "%~1"=="--expedition-check" set "APPDATA=%~dp0user-data\expedition-check-profile"
+if "%~1"=="--advancement-check" set "APPDATA=%~dp0user-data\advancement-check-profile"
+if "%~1"=="--level-up-review" set "APPDATA=%~dp0user-data\level-up-review-profile"
 if not exist "%~dp0godot\bin\opengold_godot.dll" (
     echo Build the C++ Godot extension first: build-rolf.cmd
     exit /b 1
@@ -12,6 +14,8 @@ if not "%errorlevel%"=="0" exit /b %errorlevel%
 if "%~1"=="--save-restart" goto save_restart
 if "%~1"=="--defeat-check" goto defeat_check
 if "%~1"=="--expedition-check" goto expedition_check
+if "%~1"=="--advancement-check" goto advancement_check
+if "%~1"=="--level-up-review" goto level_up_review
 godot --path "%~dp0godot" --resolution 1280x900 res://scenes/character_creation.tscn %*
 exit /b %errorlevel%
 
@@ -31,4 +35,12 @@ godot --headless --path "%~dp0godot" res://scenes/character_creation.tscn -- --p
 if not "%errorlevel%"=="0" exit /b %errorlevel%
 rem The writer has exited; this is a new process with new native/Godot owners.
 godot --headless --path "%~dp0godot" res://scenes/character_creation.tscn -- --save-check-read
+exit /b %errorlevel%
+
+:advancement_check
+godot --path "%~dp0godot" --resolution 1280x900 res://scenes/character_creation.tscn -- --advancement-check --capture
+exit /b %errorlevel%
+
+:level_up_review
+godot --path "%~dp0godot" --resolution 1280x900 res://scenes/character_creation.tscn -- --level-up-review
 exit /b %errorlevel%

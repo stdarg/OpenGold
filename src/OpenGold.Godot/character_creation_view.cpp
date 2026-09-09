@@ -490,9 +490,10 @@ void CharacterCreationView::capture(const char* name)
 }
 void CharacterCreationView::_process(double)
 {
+    if(advancement_check_||advancement_review_){try{advancement_check();}catch(const std::exception& e){UtilityFunctions::printerr("Advancement check failed: ",gs(e.what()));advancement_check_=advancement_review_=false;get_tree()->quit(1);}return;}
     if(save_capture_frames_){try{capture_save_ui();}catch(const std::exception& e){UtilityFunctions::printerr(gs(e.what()));get_tree()->quit(1);}return;}
     if(save_read_check_){try{load_checkpoint_check();}catch(const std::exception& e){UtilityFunctions::printerr("Save restart check failed: ",gs(e.what()));get_tree()->quit(1);}save_read_check_=false;return;}
-    try{if(campaign_)update_party_navigation();if(expedition_check_){expedition_check();return;}}catch(const std::exception& e){error_=gs(e.what());UtilityFunctions::push_error(error_);if(expedition_check_||party_check_||defeat_check_){get_tree()->quit(1);return;}get_node<Button>("ReturnParty")->set_tooltip_text(error_);return;}
+    try{if(campaign_){update_party_navigation();refresh_advancement_arrows();}if(expedition_check_){expedition_check();return;}}catch(const std::exception& e){error_=gs(e.what());UtilityFunctions::push_error(error_);if(expedition_check_||party_check_||defeat_check_){get_tree()->quit(1);return;}get_node<Button>("ReturnParty")->set_tooltip_text(error_);return;}
     if(defeat_check_&&!Engine::get_singleton()->is_editor_hint()){
         try{defeat_check();}catch(const std::exception& e){UtilityFunctions::printerr("Defeat check failed: ",gs(e.what()));defeat_check_=false;get_tree()->quit(1);}return;
     }

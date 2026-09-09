@@ -47,6 +47,18 @@ text = "Fire Bolt"
 text = "Magic Missile"
 [node name="CureWounds" type="Button" parent="."]
 text = "Cure Wounds"
+
+[node name="HealingWord" type="Button" parent="."]
+text = "Healing Word"
+tooltip_text = "Bonus action: heal a visible ally within 60 feet. Uses the selected slot level."
+
+[node name="ScorchingRay" type="Button" parent="."]
+text = "Scorching Ray"
+tooltip_text = "Action: three fire rays at one target within 120 feet. Uses a level 2 slot."
+
+[node name="SpellSlot" type="Button" parent="."]
+text = "Slot level 1"
+tooltip_text = "Switch the slot level used by Magic Missile, Cure Wounds and Healing Word."
 [node name="SecondWind" type="Button" parent="."]
 text = "Second Wind"
 [node name="Dash" type="Button" parent="."]

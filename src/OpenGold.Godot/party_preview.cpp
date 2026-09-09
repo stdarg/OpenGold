@@ -68,7 +68,7 @@ void CharacterCreationView::setup_party()
     get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("PartyPanel/SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
-    setup_saves();setup_defeat();
+    setup_saves();setup_defeat();setup_advancement();
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
     expedition_check_=OS::get_singleton()->get_cmdline_user_args().has("--expedition-check");
 }
@@ -153,7 +153,7 @@ void CharacterCreationView::party_action(int action)
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
                 if(!town){auto owned=scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid exploration scene");
-                    town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));add_child(owned.get());owned.release();}
+                    town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));add_child(owned.get());owned.release();}
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }else{
                 const auto participants=campaign_->participants();std::vector<CombatArt> images;
@@ -233,6 +233,13 @@ void CharacterCreationView::party_check()
     case 4:{auto* fight=get_node<CombatView>("CampaignCombat");
         if(!fight->can_leave())return;press("ReturnParty");capture("party-after-combat.png");
         if(campaign_->in_combat()||campaign_->member(campaign_->state().slots[0]).vitals.resources.empty())throw std::runtime_error("Combat state was not returned");
+        const auto id=campaign_->state().slots[0];
+        if(campaign_->member(id).character.sheet().level!=1||!campaign_->can_advance(id))throw std::runtime_error("XP must wait for explicit level-up confirmation");
+        refresh_advancement_arrows();const auto path="PartyPanel/Roster/Advance"+std::to_string(id);
+        press(path.c_str());if(!get_node<Window>("LevelUp")->is_visible())throw std::runtime_error("Level-up arrow did not open choices");
+        press("LevelUp/Cancel");if(campaign_->member(id).character.sheet().level!=1)throw std::runtime_error("Cancel applied advancement");
+        press(path.c_str());press("LevelUp/Confirm");
+        const auto slots=campaign_->state().slots;for(const auto other:slots)if(other&&other!=id&&campaign_->can_advance(other)){open_advancement(other);press("LevelUp/Confirm");}
         if(!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("Level 2")||!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("XP 300"))throw std::runtime_error("Victory advancement is missing from character sheet");
         if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))save_checkpoint_check("advancement");
         ++party_check_stage_;break;}
@@ -282,7 +289,10 @@ void CharacterCreationView::expedition_check()
         for(unsigned i=0;i<6;++i){auto character=preview_guard();const auto id=campaign_->add_pc(std::move(character));campaign_->set_wealth(id,{0,0,0,500,0,0,0});
             for(unsigned type:{36,55,59}){por::Equipment gear;gear.stored.type=type;gear.stored.stack_size=1;gear.stored.value=1;
                 campaign_->purchase(id,gear);campaign_->equip(id,campaign_->member(id).character.inventory().items().back().id);}}
-        campaign_->award_experience(300,"fixture:experienced-party");expedition_started_=true;party_action(7);return;
+        campaign_->award_experience(2700,"fixture:experienced-party");const auto slots=campaign_->state().slots;
+        for(const auto id:slots)if(id)for(unsigned level=2;level<=4;++level){auto choice=campaign_->default_advancement(id);
+            if(level==4){choice.feat="defense";choice.abilities={};}campaign_->advance(id,choice);}
+        expedition_started_=true;party_action(7);return;
     }
     if(campaign_defeated_)throw std::runtime_error("Expedition fixture was defeated");
     if(get_node_or_null("CampaignCombat"))return;

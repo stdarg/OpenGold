@@ -123,7 +123,10 @@ void progression_and_services()
     auto damaged=party.checkpoint();damaged.roster[0].vitals.hit_points-=2;party.restore(damaged);
     const auto starting_hp=party.member(pc).character.sheet().hit_points;
     party.award_experience(300,"quest:slums");
-    check(party.member(pc).experience==300&&party.member(pc).character.sheet().level==2,"Quest XP advances exactly at level threshold");
+    check(party.member(pc).experience==300&&party.member(pc).character.sheet().level==1&&party.can_advance(pc),"XP enables manual advancement without changing the level");
+    const auto preview=party.preview_advancement(pc,party.default_advancement(pc));
+    check(preview.character.sheet().level==2&&party.member(pc).character.sheet().hit_points==starting_hp,"Advancement preview does not mutate the character");
+    party.advance(pc,party.default_advancement(pc));
     check(party.member(pc).character.sheet().hit_points>starting_hp&&party.profile(pc).hit_points==party.member(pc).character.sheet().hit_points,"Level HP applies to combat profile");
     party.award_experience(300,"quest:slums");
     check(party.member(pc).experience==300,"Repeated reward id does not award XP twice");
@@ -147,7 +150,7 @@ void progression_and_services()
     party.restore(checkpoint);party.remove(pc);rejects([&]{party.temple_heal(pc);});check(!party.rest(),"Empty party cannot rest");party.rejoin(pc);
     rejects([&]{party.award_experience(std::numeric_limits<unsigned>::max(),"overflow");});
     check(party.member(pc).experience==300&&party.state().claimed_rewards.size()==1,"Overflow does not partially award XP");
-    party.award_experience(600,"next quest");check(party.member(pc).experience==900&&party.member(pc).character.sheet().level==2,"XP retained at the supported level ceiling");
+    party.award_experience(600,"next quest");check(party.member(pc).experience==900&&party.member(pc).character.sheet().level==2&&party.can_advance(pc),"Further XP waits for another explicit confirmation");
 }
 void caster_advancement()
 {
@@ -156,7 +159,7 @@ void caster_advancement()
         c=Character(*srd5::character_rules(),draft,{});const auto pc=party.add_pc(c);
         auto spent=party.checkpoint();spent.roster[0].vitals={c.sheet().hit_points-2,false,"SRD1 0 0 0 0 0"};party.restore(spent);
         party.award_experience(299,"below");check(party.member(pc).character.sheet().level==1,"Below threshold does not advance");
-        party.award_experience(1,"threshold");const auto& m=party.member(pc);
+        party.award_experience(1,"threshold");party.advance(pc,party.default_advancement(pc));const auto& m=party.member(pc);
         const auto growth=std::max(1,c.sheet().hit_die/2+1+c.sheet().modifiers[2])+1;
         check(m.character.sheet().hit_points==c.sheet().hit_points+growth&&m.vitals.hit_points==m.character.sheet().hit_points-2,"Dwarven growth preserves HP deficit");
         check(m.vitals.resources=="SRD1 0 1 0 0 0","Advancement grants new slot without refilling spent slots");

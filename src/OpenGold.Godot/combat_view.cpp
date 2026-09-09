@@ -22,9 +22,10 @@
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
-const std::array<std::pair<const char*,const char*>,8> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
+const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
     {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
-    {"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
+    {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
+std::string spell_verb(std::string verb,unsigned slot){if(slot==2&&(verb=="magic_missile"||verb=="cure_wounds"||verb=="healing_word"))verb+="_2";return verb;}
 }
 void CombatView::_bind_methods(){}
 void CombatView::_notification(int what){if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();}}
@@ -37,6 +38,7 @@ void CombatView::_ready()
     for(const auto& [node,verb]:action_buttons)
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
     get_node<Button>("Move")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String("move")));
+    get_node<Button>("SpellSlot")->connect("pressed",callable_mp(this,&CombatView::spell_slot));
     get_node<Button>("SecondWind")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("second_wind")));
     get_node<Button>("End")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("end")));
     get_node<Button>("React")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("opportunity")));
@@ -69,14 +71,14 @@ void CombatView::layout()
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
     place("Training",Rect2(right,20,112,34));place("Slums",Rect2(right+120,20,112,34));place("Replay",Rect2(right+240,20,118,34));
-    place("Turn",Rect2(right,70,sidebar,70));place("Roster",Rect2(right,148,sidebar,200));
-    place("Prompt",Rect2(right,358,sidebar,46));
+    place("Turn",Rect2(right,70,sidebar,70));place("Roster",Rect2(right,148,sidebar,160));
+    place("Prompt",Rect2(right,318,sidebar,46));
     unsigned index=0;
-    for(const char* name:{"Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","SecondWind","Dash","Dodge","Disengage","End","Continue"}) {
-        const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,410+row*43,114,36));++index;
+    for(const char* name:{"Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","SpellSlot","SecondWind","Dash","Dodge","Disengage","End","Continue"}) {
+        const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,370+row*43,114,36));++index;
     }
-    place("React",Rect2(right,587,174,36));place("Decline",Rect2(right+184,587,174,36));
-    place("Save",Rect2(right,636,112,34));place("Load",Rect2(right+122,636,112,34));place("Revisit",Rect2(right+244,636,114,34));
+    place("React",Rect2(right,590,174,36));place("Decline",Rect2(right+184,590,174,36));
+    place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
     place("Help",Rect2(right,686,sidebar,height-732));
     place("Log",Rect2(24,board_rect_.get_end().y+16,left_width,height-board_rect_.get_end().y-64));
     place("Footer",Rect2(24,height-34,width-48,24));
@@ -127,8 +129,9 @@ void CombatView::load_game()
 }
 void CombatView::select_mode(String verb)
 {
-    mode_=verb.utf8().get_data();if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
+    mode_=spell_verb(verb.utf8().get_data(),spell_slot_);if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
 }
+void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::immediate(String verb)
 {
     if(!demo_||!demo_->has_combat())return;const auto wanted=std::string(verb.utf8().get_data());
@@ -175,7 +178,9 @@ void CombatView::refresh()
     get_node<RichTextLabel>("Roster")->set_text(gs(roster));
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
-    for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(verb));
+    for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
+    get_node<Button>("SpellSlot")->set_text("Slot level "+String::num_uint64(spell_slot_));
+    get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,5>{{{"Move","move"},{"End","end"},{"SecondWind","second_wind"},{"React","opportunity"},{"Decline","decline"}}})
         get_node<Button>(node)->set_disabled(!enabled(verb));
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());

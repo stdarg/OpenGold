@@ -198,11 +198,11 @@ Command choose_demo_command(const CombatSession& session)
     }
     const auto nearest=[&](Cell p){return routes[index(p)];};
     for(const auto& command:offered)if(command.verb=="opportunity"||(command.verb=="second_wind"&&active.hit_points*2<=active.max_hit_points))return command;
-    for(const auto& command:offered)if(command.verb=="cure_wounds") {
+    for(const auto& command:offered)if(command.verb=="cure_wounds"||command.verb=="cure_wounds_2"||command.verb=="healing_word"||command.verb=="healing_word_2") {
         const auto& target=*std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==command.target;});
         if(target.hit_points*2<target.max_hit_points)return command;
     }
-    for(const auto verb:{"magic_missile","melee","fire_bolt","ranged"}) {
+    for(const auto verb:{"magic_missile","magic_missile_2","scorching_ray","melee","fire_bolt","ranged"}) {
         const Command* best=nullptr;int hp=100000; // Borrowed view into local offered commands.
         for(const auto& command:offered)if(command.verb==verb) {
             const auto& target=*std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==command.target;});

@@ -25,7 +25,9 @@ does not yet resolve typed damage.
 complete SRD class builds. `slums-orc` is an authored conversion selected for the
 original Slums ORC identities. None of these profiles claims to be an imported
 Open5E monster stat block. The party casters deliberately carry only two
-level-1 slots for this example; full level-3 slot progression is future work.
+level-1 slots for this standalone example. Shared campaign characters instead
+use [manual level-1–4 advancement](../../../docs/ADVANCEMENT.md), including
+level-two slots and selected supported spells/feats.
 
 To update content, fetch an explicitly filtered source, retain the response and
 provenance, compare supported fields with the official SRD, revise the curated

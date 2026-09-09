@@ -3,6 +3,7 @@
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/audio_stream_player.hpp>
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
@@ -37,7 +38,7 @@ const std::array<const char*,4> direction_name{"North","East","South","West"};
 
 }
 
-void RolfTourView::_bind_methods() {ADD_SIGNAL(MethodInfo("save_requested",PropertyInfo(Variant::BOOL,"saving")));ADD_SIGNAL(MethodInfo("party_member_selected",PropertyInfo(Variant::INT,"slot")));}
+void RolfTourView::_bind_methods() {ADD_SIGNAL(MethodInfo("save_requested",PropertyInfo(Variant::BOOL,"saving")));ADD_SIGNAL(MethodInfo("party_member_selected",PropertyInfo(Variant::INT,"slot")));ADD_SIGNAL(MethodInfo("level_up_requested",PropertyInfo(Variant::INT,"id")));}
 void RolfTourView::_notification(int what)
 {
     if (what==NOTIFICATION_RESIZED && ready_) {layout();queue_redraw();}
@@ -57,7 +58,9 @@ void RolfTourView::_ready()
     get_node<Button>("Camp")->connect("pressed",callable_mp(this,&RolfTourView::camp));
     get_node<Button>("Inventory")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
     get_node<Button>("InventoryPanel/Close")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
-    for(unsigned slot=0;slot<8;++slot)get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot))->connect("pressed",callable_mp(this,&RolfTourView::party_selected).bind(slot));
+    for(unsigned slot=0;slot<8;++slot){auto* member=get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot));member->connect("pressed",callable_mp(this,&RolfTourView::party_selected).bind(slot));
+        std::unique_ptr<Button,DeleteNode> arrow(memnew(Button));arrow->set_name("Advance");arrow->set_text(String::utf8("↑"));arrow->set_size(Vector2(30,26));arrow->set_tooltip_text("Level up");
+        arrow->connect("pressed",callable_mp(this,&RolfTourView::level_up_requested).bind(slot));member->add_child(arrow.get());arrow.release();}
     get_node<ItemList>("InventoryPanel/Items")->connect("item_selected",callable_mp(this,&RolfTourView::inventory_selected));
     get_node<Button>("InventoryPanel/Equip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(true));
     get_node<Button>("InventoryPanel/Unequip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(false));
@@ -250,6 +253,7 @@ void RolfTourView::party_selected(std::int64_t index)
     refresh();
 }
 void RolfTourView::close_sheet(){get_node<Window>("MemberSheet")->hide();}
+void RolfTourView::level_up_requested(int slot){if(embedded_party_&&campaign_&&session_&&session_->can_leave())emit_signal("level_up_requested",campaign_->state().slots.at(slot));}
 
 void RolfTourView::movement(ExplorationCommand command)
 {
@@ -378,6 +382,8 @@ void RolfTourView::refresh()
         const auto& m=campaign_->member(id);const auto& cs=m.character.sheet();
         const auto text=cs.name+"\n"+cs.character_class+" / AC "+std::to_string(campaign_->profile(id).armor_class)+" / HP "+std::to_string(m.vitals.hit_points)+"/"+std::to_string(cs.hit_points);
         button->set_text(String::utf8(text.c_str()));button->set_tooltip_text(String::utf8(text.c_str()));
+        auto* arrow=button->get_node<Button>("Advance");const auto width=Vector2(button->get_theme_font("font")->call("get_string_size",String::utf8(cs.name.c_str()),0,-1,button->get_theme_font_size("font_size"))).x;
+        arrow->set_position(Vector2(std::min(width+16,button->get_size().x-36),2));arrow->set_visible(embedded_party_&&campaign_->can_advance(id)&&session_->can_leave());
     }
     get_node<Button>("MapMode")->set_text(full_map_?"Map: full":"Map: visited");
     queue_redraw();

@@ -18,11 +18,14 @@ public:
     [[nodiscard]] const Inventory& inventory() const {return inventory_;}
     [[nodiscard]] Inventory& inventory() {return inventory_;}
     bool advance(const rules::RulesModule& rules, rules::VitalState& state);
+    bool advance(const rules::RulesModule& rules,rules::VitalState& state,const rules::AdvancementChoice& choice);
+    [[nodiscard]] const auto& advancements() const {return advancements_;}
 private:
     rules::CharacterDraft creation_;
     rules::CharacterSheet sheet_;
     por::CharacterAppearance appearance_;
     Inventory inventory_;
+    std::vector<rules::AdvancementChoice> advancements_;
 };
 }
 #endif

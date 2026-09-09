@@ -45,6 +45,11 @@ public:
     void purchase(MemberId id,const por::Equipment& item);
     void set_wealth(MemberId id,std::array<std::uint16_t,7> wealth);
     void award_experience(unsigned amount,std::string reward_id);
+    [[nodiscard]] bool can_advance(MemberId id) const;
+    [[nodiscard]] rules::AdvancementOptions advancement_options(MemberId id) const;
+    [[nodiscard]] rules::AdvancementChoice default_advancement(MemberId id) const;
+    [[nodiscard]] PartyMember preview_advancement(MemberId id,const rules::AdvancementChoice& choice) const;
+    void advance(MemberId id,const rules::AdvancementChoice& choice);
     // Atomic original loot delivery. A full set of purses leaves it unclaimed.
     bool award_loot(const std::array<unsigned,7>& wealth,const std::vector<por::Equipment>& items,std::string reward_id);
     [[nodiscard]] bool rest();

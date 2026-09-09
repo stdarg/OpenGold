@@ -30,12 +30,17 @@ void roundtrip(const std::filesystem::path& directory){
             if(line.starts_with("creature slums-")&&!line.starts_with("creature slums-orc "))continue;
             output<<line<<'\n';}}
     CampaignParty previous(srd5::load(old_pack));previous.add_pc(character("fighter"));
-    auto old_save=encode_campaign(previous,nullptr,"fixture-v1");old_save.replace(0,old_save.find('\n')+1,"OPENGOLD-CAMPAIGN 1\n");
+    auto old_save=encode_campaign(previous,nullptr,"fixture-v1");
     const auto imported=decode_campaign(old_save,*srd5::character_rules(),*module(),"fixture-v1",nullptr);
-    check(imported.party.roster.size()==1&&imported.party.roster[0].character.sheet().level==1,"Version-one campaign and preceding content pack remain compatible");
+    check(imported.party.roster.size()==1&&imported.party.roster[0].character.sheet().level==1,"Preceding content pack remains compatible");
+    for(unsigned version:{1,2}){
+        const auto fixture=read_campaign_file(std::filesystem::path(OPENGOLD_SOURCE_DIR)/("tests/fixtures/campaign-v"+std::to_string(version)+".ogs"));
+        const auto legacy=decode_campaign(fixture,*srd5::character_rules(),*module(),"fixture-v1",nullptr);
+        check(legacy.party.roster.size()==1&&legacy.party.roster[0].character.sheet().level==version,"Frozen saves from the old binary migrate without losing levels");
+    }
     auto party=std::make_shared<CampaignParty>(module());auto fighter=party->add_pc(character("fighter"));auto mage=party->add_pc(character("wizard"));auto reserve=party->add_pc(character("bard"));party->remove(reserve);
     party->set_wealth(fighter,{0,0,0,500,0,0,2});por::Equipment sword;sword.stored.type=36;sword.stored.stack_size=1;sword.stored.value=10;party->purchase(fighter,sword);party->equip(fighter,1);
-    party->award_experience(300,"save:encounter");check(party->rest(),"Initial rest");
+    party->award_experience(300,"save:encounter");party->advance(fighter,party->default_advancement(fighter));party->advance(mage,party->default_advancement(mage));check(party->rest(),"Initial rest");
     auto state=party->checkpoint();state.roster[0].vitals.hit_points=1;state.roster[1].vitals.resources="SRD1 0 1 0 0 0";party->restore(state);party->temple_heal(fighter);
     auto town=prototype();town.campaign_party(party);settle(town);town.explore(por::ExplorationCommand::look);settle(town);
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);

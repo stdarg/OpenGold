@@ -72,6 +72,10 @@ target_link_libraries(opengold_core
 
 if(OPENGOLD_BUILD_TESTS)
     enable_testing()
+    add_executable(opengold_advancement_tests tests/advancement_tests.cpp)
+    target_link_libraries(opengold_advancement_tests PRIVATE opengold_core opengold_rules_srd5)
+    target_compile_definitions(opengold_advancement_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_advancement_tests COMMAND opengold_advancement_tests)
     add_executable(opengold_battlefield_tests tests/battlefield_tests.cpp)
     target_link_libraries(opengold_battlefield_tests PRIVATE opengold_core)
     add_test(NAME opengold_battlefield_tests COMMAND opengold_battlefield_tests)

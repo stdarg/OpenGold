@@ -13,19 +13,12 @@ complete original campaign service coverage.
   same explicitly authored 300 XP conversion when a campaign party is attached.
   These amounts are conversion policies, not decoded original XP or general
   monster-XP calculations. Dead and reserve members receive no award.
-- Fighter, Cleric and Wizard advance at **300 XP to level 2**. Maximum HP grows
-  by the fixed-average class Hit Die plus Constitution (minimum 1), with a further
-  +1 for Dwarven Toughness. Conscious members retain their existing HP deficit;
-  advancement does not wake unconscious members or revive dead ones. Cleric and
-  Wizard gain a third level-one slot while retaining already-spent slots.
-  Second Wind already uses the actor's level in its healing calculation.
-- XP beyond level 2 is retained, but further advancement is stopped until
-  subclass, feat and higher-level spell support exists. Action Surge, Tactical
-  Mind, Channel Divinity, Scholar, spell selection and other unimplemented class
-  features are not granted. Other classes retain their level-one exploration
-  profiles and reject advancement explicitly. The character sheet displays live
-  level, XP, HP, Hit Dice and resource descriptions; subsequent combat uses the
-  updated rules recipe.
+- Fighter, Cleric and Wizard now use [manual advancement](ADVANCEMENT.md) through
+  level 4. XP enables a small arrow beside the name; Confirm applies one level,
+  while Cancel changes nothing. Fixed-average HP, supported feats and spells,
+  Constitution changes and new resource capacity apply together. Existing
+  expenditure is preserved; advancement does not wake or revive a character.
+  Full class/subclass features and other classes' advancement remain unavailable.
 - A group long rest requires every active member to have at least 1 HP, and at
   least 16 hours since their last completed long rest. It takes eight hours and
   restores HP and the supported spell/Second Wind resources. Empty parties,
@@ -48,7 +41,7 @@ payment dialogue. A safe, eligible request completes a long rest. The script
 collects one platinum piece from the chosen payer; the host does not invent a
 currency exchange. Failed services restore the event checkpoint, including any
 payment. Original training requests (PROGRAM 0) and victory services (PROGRAM 8)
-remain unsupported. Automatic SRD XP advancement does not imply payment of an
+remain unsupported. Manual SRD advancement does not imply payment of an
 original training fee or completion of a training-hall script.
 
 The original temple **COMBAT** request with `6DE2=1` offers the supported

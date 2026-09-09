@@ -70,6 +70,7 @@ private:
     void inventory_selected(std::int64_t index);
     void equip_item(bool equip);
     void party_selected(std::int64_t index);
+    void level_up_requested(int slot);
     void close_sheet();
     void leave_shop();
     void map_mode();

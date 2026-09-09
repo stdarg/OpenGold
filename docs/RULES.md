@@ -95,16 +95,16 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
   instant death from excess damage, enemy defeat, and party incapacitation.
 - Complete training checkpoints and a basic AI that uses the same public
   commands as the player.
-- The [campaign recovery subset](RECOVERY.md) advances Fighter/Cleric/Wizard
-  to level 2 at 300 XP, using fixed-average HP growth and updated caster slots.
-  Higher advancement stops explicitly. Eligible eight-hour long rests restore
-  supported resources; repeated rests require a 16-hour wait. Stable campaign
-  reward IDs survive scene recreation and native checkpoints.
+- [Manual advancement](ADVANCEMENT.md) supports Fighter/Cleric/Wizard levels 2–4
+  after explicit confirmation. XP alone does not change the level. Supported
+  feats, spells, HP and slots persist together. [Recovery](RECOVERY.md) restores
+  supported resources after eligible eight-hour rests; repeated rests require
+  a 16-hour wait. Stable reward IDs survive scene recreation and saves.
 - Temple Cure Wounds is a 100 gp atomic service for a wounded living active
   member. Dead targets reject; no resurrection is implied.
 
 The fixed profiles are intentionally limited to levels 1–4 and ordinary Medium-sized
-ground combatants. Created campaign profiles support the documented level 1–2
+ground combatants. Created campaign profiles support the documented level 1–4
 subset. Standalone party profiles are authored combat fixtures, not finished
 character sheets. The orc conversion is authored for this demo; its AC/HP are
 not an automatic conversion of original AD&D values.
@@ -112,8 +112,8 @@ not an automatic conversion of original AD&D values.
 Not yet implemented: full class features or equipment,
 weapon mastery, Extra Attack, regular ability saving-throw effects, general
 advantage/condition handling, partial cover, prone/grappling, damage
-types/resistance, multiple sizes, concentration, other spells, multiple spell
-levels/upcasting, split-target Magic Missile, retreat, morale, or complete
+types/resistance, multiple sizes, concentration, other spells, spell levels
+above two, split-target Magic Missile/Scorching Ray, retreat, morale, or complete
 campaign encounter coverage. The shared campaign now includes named saves,
 surprise initiative disadvantage, original dungeon geometry and bounded original
 loot; see [the expedition adapter](EXPEDITION.md) and [campaign saves](SAVES.md).
@@ -148,6 +148,9 @@ documented scratch fields. With the current fixture and seed, victory leaves
 This verifies the original event state in memory, not campaign persistence or
 post-combat treasure. Unknown service contexts fail rather than being simulated.
 
+See [manual advancement](ADVANCEMENT.md) for confirmed level-up choices, supported
+feats, Healing Word, Scorching Ray and level-two upcasting.
+
 ## Validation and next increments
 
 `build.cmd` tests the rules without Godot; `build-rolf.cmd` also builds the scene.
@@ -171,11 +174,8 @@ godot --headless --path godot res://scenes/combat_demo.tscn -- --combat-check --
 Add `--capture` to the user arguments in a graphical run (omit `--headless`) to
 save a local PNG in `user-data`. These checks exit automatically.
 
-Next increments should add one tested encounter's required mechanics at a time:
-regular saving throws and conditions, campaign party/encounter persistence,
-exploration-to-combat transitions and original battlefield geometry, then rewards
-and wider creature/spell coverage. Full character creation follows the fixed
-party milestone. The [standalone character creator](CHARACTER-CREATION.md) now
+Next increments should add regular saving throws, conditions and wider
+creature/spell coverage one tested encounter at a time. The [standalone character creator](CHARACTER-CREATION.md) now
 implements the requested identity, attribute, HP, and appearance flow through
 a separate optional native `CharacterRules` capability; it does not replace
 combat fixture definitions. Reverse engineering remains focused on campaign interfaces,

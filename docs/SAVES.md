@@ -3,7 +3,8 @@
 The shared character/party/New Phlan flow supports manual named campaign saves.
 The first Slums expedition also supports saving during idle exploration, including
 its district map, script continuation and deferred original loot. Format version
-two retains version-one campaign loading. Adding the supported roaming creature
+three retains version-one/two loading and stores confirmed advancement choices.
+Adding the supported roaming creature
 profiles preserves compatibility with the preceding rules content pack; unrelated
 content changes still require a matching identity.
 Use **Save game** or **Load game** on the party roster or during idle town
@@ -22,13 +23,14 @@ Saving/loading is supported from the party roster and idle New Phlan exploration
 Town controls are disabled while dialogue, input, shopping or services are pending.
 Combat must finish and return to the roster first. The core also rejects saving
 during combat or an unfinished town event. No autosaves, pending-request saves,
-mid-combat campaign saves, original DOS saves or cross-area expedition saves are
+mid-combat campaign saves or original DOS saves are
 implemented. The standalone tour and combat research demos retain their existing
 behavior; these campaign controls belong to the shared party flow.
 
-Format **OPENGOLD-CAMPAIGN 1** stores:
+Format **OPENGOLD-CAMPAIGN 3** stores:
 
-- Finished character drafts, appearances, levels, stable member and inventory IDs,
+- Finished character drafts, appearances, levels, advancement choices,
+  stable member and inventory IDs,
   inventory and original item provenance, equipment, purses, NPC identities/morale,
   active/reserve membership, selected slot and character-pool candidate identities.
 - HP/death state, opaque rules-owned resources, XP, claimed reward IDs, recovery
@@ -38,11 +40,10 @@ Format **OPENGOLD-CAMPAIGN 1** stores:
   RNG. The completed event is not replayed. Dialogue and visited cells persist;
   transient encounter pictures/sprites are cleared for the idle exploration view.
 
-Character sheets are reconstructed through the rules module; saved level/resource,
-equipment and roster state is validated before replacement. This version supports
-the existing level 1 exploration profiles and level 1–2 Fighter/Cleric/Wizard
-combat subset. New class features, training state and campaign reward mappings
-will need corresponding format/validation work when implemented.
+Character sheets are reconstructed through the rules module by replaying validated
+advancement choices. Levels 1–4 of the Fighter/Cleric/Wizard subset, selected
+feats/spells and spent level-one/two resources persist; see [advancement](ADVANCEMENT.md).
+Equipment and roster state are validated before replacement.
 
 ## File safety and compatibility
 
@@ -56,7 +57,8 @@ an ordered fingerprint manifest of installed DAX archives and ITEMS. A different
 asset installation, unknown definition, malformed resource state or incompatible
 version rejects explicitly. Reinstalling identical assets at a new path is valid.
 FNV-1a fingerprints/checksums detect accidental changes; they are not signatures
-or protection against deliberate tampering. No save migration is provided yet.
+or protection against deliberate tampering. Formats 1 and 2 and the supported
+rules 0.3.0 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
 
 Writes use a temporary file, flush it to disk and verify its bytes before replacing
 the destination. Windows uses `ReplaceFileW` with a retained backup, or
