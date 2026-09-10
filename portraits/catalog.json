@@ -360,6 +360,16 @@
         "sha256":  "d224acf94c31301c9c52a65a88f7d353309ad0077ed5727cfc89a22b4d1f2a57"
     },
     {
+        "file":  "dwarf_female_barbarian_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "4d78d140e07ff6ce27c377ab4f2d16e22afc80331ab72a0588963565969d89f9"
+    },
+    {
         "file":  "dwarf_female_barbarian_latino_001.png",
         "species":  "dwarf",
         "gender":  "female",
@@ -398,6 +408,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a2258754a6b5a82ef0a81d795910f5b09b9a16cea4f6339ca9818068d143879e"
+    },
+    {
+        "file":  "dwarf_female_bard_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "bard",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8d26ae4a2669aa5e1a85d8afd53397ced0a4b0508b115ac5469226c5a3fc69d0"
     },
     {
         "file":  "dwarf_female_bard_latino_001.png",
@@ -750,6 +770,16 @@
         "sha256":  "0515bfaacd6502b5f9089c809ae6c02188f823f30dbd63c695add087485a22af"
     },
     {
+        "file":  "dwarf_male_barbarian_black_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "fd622ce1603cf964d071d4bdb2bfa62ff83c0ed5a18964dcdf33907d35560702"
+    },
+    {
         "file":  "dwarf_male_barbarian_indigenous_american_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -780,6 +810,16 @@
         "sha256":  "446431cc68430eb99d4ae6a7d7b70deb1aef11d3caa402088d6d09e87748e50b"
     },
     {
+        "file":  "dwarf_male_bard_black_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "bard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "df4ccdf630de75b0632de60191d1374e673eab45b84bc31150781b0520771970"
+    },
+    {
         "file":  "dwarf_male_bard_indigenous_american_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -808,6 +848,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "4bffdaa753b54543bb07cd313ded44f113944b744cf0dcf4fc0241efd70ac194"
+    },
+    {
+        "file":  "dwarf_male_cleric_black_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "cleric",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "50751cd73a7cf40c1782adbf5f7628a7c932a0db3e2332fb0954779bc2d0f4df"
     },
     {
         "file":  "dwarf_male_cleric_indigenous_american_001.png",
@@ -1140,6 +1190,16 @@
         "sha256":  "f61de45107e1dbdf71e02a09f4836f5b45a50cd17170eb105d8c05f4c8120fbb"
     },
     {
+        "file":  "dwarf_nonbinary_barbarian_latino_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "07fbc23cc31df7d86917ce7616a5cc3f3a19b66e7ce820300965d28b0a8af4a8"
+    },
+    {
         "file":  "dwarf_nonbinary_barbarian_mena_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -1190,6 +1250,16 @@
         "sha256":  "3352b9f3b7b8fc74ae5744698eb18d9024c156073353852adb7deb968786e89d"
     },
     {
+        "file":  "dwarf_nonbinary_bard_white_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "bard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "cf27f7ca2ef046195efa8fcdceea1db0198b90cf271ae25f639c07f6aff87d94"
+    },
+    {
         "file":  "dwarf_nonbinary_cleric_black_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -1228,6 +1298,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "df03c7bb8acbb23337785496ae3da5d0e5f8ed8e7a80539233957090401c4a7f"
+    },
+    {
+        "file":  "dwarf_nonbinary_cleric_white_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "cleric",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "14dfb5583412db70868dd91bd09ff076a5de95dcea7993998d21cd830a10a13d"
     },
     {
         "file":  "dwarf_nonbinary_druid_black_001.png",
@@ -1500,6 +1580,16 @@
         "sha256":  "7083886fb0961d68327b231d5f727b10bdabf3671a4af341a86477d0c2a02c66"
     },
     {
+        "file":  "elf_female_barbarian_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8959d45d2f31d0da86032d77926bb7f36d1e257ad75e77433bd249c5c74d31c0"
+    },
+    {
         "file":  "elf_female_barbarian_latino_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -1540,6 +1630,16 @@
         "sha256":  "7bb60fe31808358285943b093a21facd868a929a0af76e1349ee92461e64452d"
     },
     {
+        "file":  "elf_female_bard_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "bard",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "aa9a4c49b70cff0913c5109a978bfec104f6035a7946c952c17ba304c137ce7b"
+    },
+    {
         "file":  "elf_female_bard_latino_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -1568,6 +1668,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "cb43ea219ad3797af76ed410eee0634bad6f8f25af2d0c54a1a9ea7e5ad6741e"
+    },
+    {
+        "file":  "elf_female_cleric_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "cleric",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0ddd1beefedc1cbf659188a3a90c51d5e45c07379ae3947a295c1ab244844517"
     },
     {
         "file":  "elf_female_cleric_latino_001.png",
@@ -1890,6 +2000,16 @@
         "sha256":  "1c43e53113727e4c8852429ce3d441a876d46fa0ed00f97335fb309a11c1e575"
     },
     {
+        "file":  "elf_male_barbarian_mena_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d9cc9119676a2823240b78846bc10049d05dcee0341688f1faf9eaa4f7e7a1cb"
+    },
+    {
         "file":  "elf_male_barbarian_south_asian_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -1908,6 +2028,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a4d16c9aa497f88c3fc6af5c3bd70d717df421f20afc28cd6939d3b9a0abd1ee"
+    },
+    {
+        "file":  "elf_male_bard_black_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "bard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a3860a152ed57cd3631393533156e145ec43fb2b4c086e646c3a3710ec73ee48"
     },
     {
         "file":  "elf_male_bard_indigenous_american_001.png",
@@ -1938,6 +2068,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "48b877d2289a365cae7e75c5547cf30d9c92500f48ddc039a0ee07dc648405bf"
+    },
+    {
+        "file":  "elf_male_cleric_black_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "cleric",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ea731dba576a608ae8424f8ad5f664c8e426312cdc6301c6d1059b1a42c2c605"
     },
     {
         "file":  "elf_male_cleric_indigenous_american_001.png",
@@ -2270,6 +2410,16 @@
         "sha256":  "03154531911150713f73f2d715a7cf01e7dd37d5cccb2d41d0727783c1f3a8c2"
     },
     {
+        "file":  "elf_nonbinary_barbarian_latino_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "529d26995a25a43e42fa142ea1bcd189dd9aa634e936315a83b9a760e04ff8c4"
+    },
+    {
         "file":  "elf_nonbinary_barbarian_mena_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -2298,6 +2448,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "5f5499327115eb7efe77354ac1d7639116311abb9389c44a29ba7f8170c4bfd9"
+    },
+    {
+        "file":  "elf_nonbinary_bard_latino_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "bard",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c0b173855810a55059c64b0c2f020ebf20cd6988336fd3b4908edb38d12ce135"
     },
     {
         "file":  "elf_nonbinary_bard_mena_001.png",
@@ -2630,6 +2790,16 @@
         "sha256":  "1b413593ab3fd40a470ba9f674ed8b8409680fb6bf212157f2be9b8897cab785"
     },
     {
+        "file":  "gnome_female_barbarian_indigenous_american_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f691b3dec63082a4fc212969e9489a549b6024f9b482c1a677080e07e13b9066"
+    },
+    {
         "file":  "gnome_female_barbarian_latino_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -2668,6 +2838,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "eb55e274d21b0d2c229305c3a42b6b523d3b55c55a5b97630af74459ea1dcaae"
+    },
+    {
+        "file":  "gnome_female_bard_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "bard",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "6271c2ab469c9c174c603d51e9e9c3ef4df9a298265677bae470b4163aea5a66"
     },
     {
         "file":  "gnome_female_bard_indigenous_american_001.png",
@@ -2990,6 +3170,16 @@
         "sha256":  "c19efb7a620752476e4e001a4fd2c69a16439a5a913f0e429460a517589bda9f"
     },
     {
+        "file":  "gnome_male_barbarian_black_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d2a09da52ca37cb825fa933e01842f0c41d5b84acb3a7c75d3f7d166a7e5e2d6"
+    },
+    {
         "file":  "gnome_male_barbarian_indigenous_american_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -3018,6 +3208,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "f379a3fab2ca0fb8b14426f6665962bcb987fc3fd6f9e1c016f18a40d483ab72"
+    },
+    {
+        "file":  "gnome_male_bard_black_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "bard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "16ba1d5deef8a6e877ec4dfcf44827a60f407a70d39504ad5556608028f39277"
     },
     {
         "file":  "gnome_male_bard_indigenous_american_001.png",
@@ -3380,6 +3580,16 @@
         "sha256":  "887733b8b3664ee537921718b15cc0c3ca8962c3cbf7b578c48724e706a65689"
     },
     {
+        "file":  "gnome_nonbinary_barbarian_white_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e8fbdcf4d8236375f82031148043ba92e5aac34ec4faf7725254c8e47bf87299"
+    },
+    {
         "file":  "gnome_nonbinary_bard_black_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -3410,6 +3620,16 @@
         "sha256":  "80fe79e1aeff3eaf02c6f87777bf4380d7977843f5f20557aa92086ce15d1d45"
     },
     {
+        "file":  "gnome_nonbinary_bard_white_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "bard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "53ad36633a610fde17b7f58dcfd7bd09c6993b8ebc8bb9d008ea04fac7e7424e"
+    },
+    {
         "file":  "gnome_nonbinary_cleric_black_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -3438,6 +3658,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "26ede944b57396f67ac00326a5dca034ed14ee4102fd8683d8c39437eb707aa0"
+    },
+    {
+        "file":  "gnome_nonbinary_cleric_white_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "cleric",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a730d5022fe154fb91a98e1557bcbce574d3476b0a42b5cf538d6ea36c078f2e"
     },
     {
         "file":  "gnome_nonbinary_druid_east_asian_001.png",
@@ -4490,6 +4720,16 @@
         "sha256":  "0d58d8e6c7fdb4536a334764c394298ce22cae166e83f2633a49c7a21bb139e0"
     },
     {
+        "file":  "human_female_bard_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "bard",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bc139d60f6c8f7a5d2e689dd192455b03d04c81b87f5f58eee3ba5491dfb2aa4"
+    },
+    {
         "file":  "human_female_bard_latino_001.png",
         "species":  "human",
         "gender":  "female",
@@ -4518,6 +4758,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d2d6ec14b938f2afc7a67e294b346c1b9a54f84eb55d34debb8296ae3dbbab72"
+    },
+    {
+        "file":  "human_female_cleric_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "cleric",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "24dda10f51983b54dee6ef85f006ca121185ea92ac566bab96bea634f7b9d4c4"
     },
     {
         "file":  "human_female_cleric_latino_001.png",
@@ -4840,6 +5090,16 @@
         "sha256":  "837618f6e2107909e72df8f35549872baecef59f19cc2186d871d4492e9f0a01"
     },
     {
+        "file":  "human_male_barbarian_mena_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a69d4bd375e2cffbe1419c4a7d6809e0f353d391bfb33ef26661cb0ee6747a1e"
+    },
+    {
         "file":  "human_male_barbarian_south_asian_001.png",
         "species":  "human",
         "gender":  "male",
@@ -4868,6 +5128,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d602f36f9b68e8e18061f6d138374c4bc95b813afc72ca4adace85f74fb28f8e"
+    },
+    {
+        "file":  "human_male_bard_mena_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "bard",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e2347e967e62a53dded6b9f79087149aed00f1dbd8efc674892670be55134a29"
     },
     {
         "file":  "human_male_bard_south_asian_001.png",
@@ -5220,6 +5490,16 @@
         "sha256":  "d60f4f2259048451ff502e52fde91e06428bb123d383500c351b83c7d2d8974b"
     },
     {
+        "file":  "human_nonbinary_barbarian_latino_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ce6040115212ef3f49dadc6ff897a00555fa65aae3584aeff17696e33eb77f17"
+    },
+    {
         "file":  "human_nonbinary_barbarian_mena_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -5250,6 +5530,16 @@
         "sha256":  "fc468b007bc5fd7b48811a7360f1a3524250fef4858561a355a1a299bfceb948"
     },
     {
+        "file":  "human_nonbinary_bard_latino_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "bard",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e108eb846e22d685001743ca1780580953cb71ce3edbf6e275d6820038e4fd82"
+    },
+    {
         "file":  "human_nonbinary_bard_mena_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -5278,6 +5568,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b134945594fddeded4029780e86951f4b85b5aafc534d87144beffe94ea4be76"
+    },
+    {
+        "file":  "human_nonbinary_cleric_latino_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "cleric",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "12eb0cddf307c8747aa2597f514e50bdad5f7f89af1a6d7ca74c3563370e8826"
     },
     {
         "file":  "human_nonbinary_cleric_mena_001.png",
