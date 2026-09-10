@@ -1,0 +1,11 @@
+{
+  "name": "elf_female_bard_south_asian_001",
+  "species": "elf",
+  "gender": "female",
+  "class": "bard",
+  "appearance": "south_asian",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Elf with clearly visible long pointed ears, elegant angular facial structure and subtle fey grace; female adult. Appearance: South Asian-inspired appearance with natural facial features and medium-to-deep brown skin. Class: bard; rich but practical embroidered traveling clothes, a lute edge visible low in frame, charismatic expression. Distinct individual variation seed: 163; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.",
+  "order": 111,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-836e8635-bb96-4358-9280-f7beede2f77c.png",
+  "tool": "built-in image_gen"
+}

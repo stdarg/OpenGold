@@ -1,0 +1,11 @@
+{
+  "name": "dwarf_nonbinary_cleric_latino_001",
+  "species": "dwarf",
+  "gender": "nonbinary",
+  "class": "cleric",
+  "appearance": "latino",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Dwarf with a broad sturdy face, strong nose, compact neck and stocky powerful shoulders; non-binary adult (gender is catalog metadata, not an anatomical stereotype), individual gender expression and natural presentation. Appearance: Latino-inspired appearance, a distinct individual with mixed-heritage facial features and warm medium-brown skin; no ethnic costume stereotypes. Class: cleric; chainmail and a modest ivory tabard, a small original abstract holy emblem, compassionate resolve. Distinct individual variation seed: 319; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.",
+  "order": 212,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-2b01591c-7f77-4276-88c2-fc0968f5050b.png",
+  "tool": "built-in image_gen"
+}
