@@ -60,6 +60,26 @@
         "sha256":  "511070f012ec8f8dd549cfb5621bb0719fd8e47269dd2d372559f22c4aae554a"
     },
     {
+        "file":  "dragonborn_female_paladin_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bc0873364b0d7f5babea79649c6b952d193a3b61e597b1bbc79edcf23641e541"
+    },
+    {
+        "file":  "dragonborn_female_ranger_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "03f466b8904d94dfbee2c2cbd8cc729a8015eacaba63c65e94951fee0ff5eb0e"
+    },
+    {
         "file":  "dragonborn_female_wizard_varied_001.png",
         "species":  "dragonborn",
         "gender":  "female",
@@ -200,6 +220,16 @@
         "sha256":  "9ed6c894c410eebe5eda9aea5cff576eaec0a783a990bb8068293010afc737da"
     },
     {
+        "file":  "dragonborn_nonbinary_paladin_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "dbb551e7926e5a87e223a613dd5eaf7977d0e519ddae7a65f3baf05afc21abee"
+    },
+    {
         "file":  "dragonborn_nonbinary_ranger_varied_001.png",
         "species":  "dragonborn",
         "gender":  "nonbinary",
@@ -290,6 +320,26 @@
         "sha256":  "af5284fb70407af8c70784c7c5313aab0871f0ca599b9e58f749f323d23dc534"
     },
     {
+        "file":  "dwarf_female_paladin_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "af8bf4f6bbd24f4dd0f1ceaa79c50b503cd3163ff3cc0f1e3ae75a8f1412cb76"
+    },
+    {
+        "file":  "dwarf_female_ranger_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "38b9679d959ada9bd51918f2ba3f27cb422b8395e7bd07f62400289aef20f4bb"
+    },
+    {
         "file":  "dwarf_female_wizard_latino_001.png",
         "species":  "dwarf",
         "gender":  "female",
@@ -368,6 +418,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a2fac66c984884a662902a9ddc9e900feff62cb0978657953cb719b65383315e"
+    },
+    {
+        "file":  "dwarf_male_paladin_south_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "39eeece3d42764109d6e376c759c75aa60615ad4efa69b6925152897cfcd7cd0"
+    },
+    {
+        "file":  "dwarf_male_ranger_south_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9b1ef38a0ca3ecdf8f81610924518afbeacbc7a5724f7a5f71332f1ba0119389"
     },
     {
         "file":  "dwarf_male_ranger_white_001.png",
@@ -548,6 +618,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "0ae677871e7dc450946b51a9bdfa6ef5ba12080eaf5b6961d15d0cd5fc25f086"
+    },
+    {
+        "file":  "elf_female_paladin_east_asian_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "936e475769bd73524cfafe43287141346917a0361a3b7026c3320ee94805ab30"
+    },
+    {
+        "file":  "elf_female_ranger_east_asian_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d5ee7a87e0bc4969ead9f6e496991d1826aceecbdf13039ce71f0acd5a5ac399"
     },
     {
         "file":  "elf_female_wizard_mena_001.png",
@@ -750,6 +840,26 @@
         "sha256":  "ee8856d29dab04b91dd6d6fb0c16b814df2e903e8f7d906bdecae8942e2c4746"
     },
     {
+        "file":  "elf_nonbinary_paladin_white_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "245e82cfb520fbcfa9196b26564dc5322c0f86140d79d4536573e8cdd5270db5"
+    },
+    {
+        "file":  "elf_nonbinary_ranger_white_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "375cb8a48b393e42114795de12a84a0274b7bb5d8a4701c3f5136f081adadf0b"
+    },
+    {
         "file":  "gnome_female_barbarian_south_asian_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -910,6 +1020,16 @@
         "sha256":  "37e6411f6be41cd9b963ea1d43731fe7c572dece27e94bf574abeab97e395f5a"
     },
     {
+        "file":  "gnome_male_paladin_south_asian_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ed7bbaf94b5c8f23723237f80c86439f735e199e591cc19212eeaa72f7b9bcb9"
+    },
+    {
         "file":  "gnome_male_ranger_mena_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -918,6 +1038,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "4c44e5dd25378f7a974abf1f4d72628e8d70306d36a5c341e25fecfec6fc1e59"
+    },
+    {
+        "file":  "gnome_male_ranger_south_asian_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8f06d7c0931e298df4bc75746868eb350c8e79653823b5c0ab5e2a15860e9393"
     },
     {
         "file":  "gnome_nonbinary_barbarian_latino_001.png",
@@ -988,6 +1118,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a154f4c7b5d713464888f959e63f7a43721a9031da8d38355ddb2c887b1b53f5"
+    },
+    {
+        "file":  "gnome_nonbinary_paladin_mena_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "611d8834a681bf41c2e12afd18ab1bf394c8fa6d5b8e9c2c945648ed92d15ab6"
+    },
+    {
+        "file":  "gnome_nonbinary_ranger_mena_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "77e7cc31f69e5423cbf308e32ffd771b9bb345450ec7eb23172ce4968cc53bc6"
     },
     {
         "file":  "gnome_nonbinary_warlock_black_001.png",
@@ -1070,6 +1220,26 @@
         "sha256":  "742364c3926514e70e0452abdcbca152dcc56172ecf0c50180c3476a8ce8b205"
     },
     {
+        "file":  "goliath_female_paladin_varied_001.png",
+        "species":  "goliath",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c009256fc1c93466485f7e034e51f464b74b9e45f17335d0f63e432af4955433"
+    },
+    {
+        "file":  "goliath_female_ranger_varied_001.png",
+        "species":  "goliath",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "862c61f1cd9b29d408adb7c496cad8efbed78fead81522de92e0da32307c6033"
+    },
+    {
         "file":  "goliath_female_rogue_varied_001.png",
         "species":  "goliath",
         "gender":  "female",
@@ -1148,6 +1318,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "01d88ad0f0864792cd86ace2f87e182c896ec15a99e8a5442150a89021c38cc6"
+    },
+    {
+        "file":  "goliath_male_ranger_varied_001.png",
+        "species":  "goliath",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1a89c4222e1e8eda8b6ac525c3cb91eac86fff74548f92dedee29c18605a25eb"
     },
     {
         "file":  "goliath_nonbinary_barbarian_varied_001.png",
@@ -1350,6 +1530,26 @@
         "sha256":  "57de68c8309de823be4317227a8cfd6730a863c5fc47b280dd607c0037961917"
     },
     {
+        "file":  "halfling_male_paladin_varied_001.png",
+        "species":  "halfling",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "7e083f33ecf6c1fa90d66e72eac07be13636193c9f5cc63738f3f31f1898586a"
+    },
+    {
+        "file":  "halfling_male_ranger_varied_001.png",
+        "species":  "halfling",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "115f262101c4ae7bc3c6f3b405630030979032c7c66289ac728b829c36fbd010"
+    },
+    {
         "file":  "halfling_male_sorcerer_varied_001.png",
         "species":  "halfling",
         "gender":  "male",
@@ -1418,6 +1618,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "dae6ba86f3d74e88fced7f808ff63d02d750b56cd656075c1e5f2eab1bb1fe68"
+    },
+    {
+        "file":  "halfling_nonbinary_paladin_varied_001.png",
+        "species":  "halfling",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "09489a6655ea669128af4b159dd9082a94ab95b56350e6404a240952550092ee"
     },
     {
         "file":  "human_female_barbarian_black_001.png",
@@ -1610,6 +1820,16 @@
         "sha256":  "a0f32f1d20b4533a07f8a2afdc5e084133dc45dce2585dc27dd89f2457fa7d51"
     },
     {
+        "file":  "human_male_ranger_black_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bb996720f814860360afdb396a7a4a5cc408459d40618832b9ae5fdc41163039"
+    },
+    {
         "file":  "human_male_ranger_latino_001.png",
         "species":  "human",
         "gender":  "male",
@@ -1690,6 +1910,16 @@
         "sha256":  "b58de3f0727e5d48e9a7fae7df134bf66f12ed0d2abe245f177ceccd0cbf55ad"
     },
     {
+        "file":  "human_nonbinary_ranger_white_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1351fe244ab47b260733163a9e7a017b7d957f65f685824276d90abccab1363c"
+    },
+    {
         "file":  "human_nonbinary_wizard_south_asian_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -1758,6 +1988,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "5c36f7269a2a1d7aec861939aca99af525e16c745a5ad51eac2d04ed6a820c33"
+    },
+    {
+        "file":  "orc_female_paladin_varied_001.png",
+        "species":  "orc",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ff3bb1805029a7b027b4fb34e23529e1dd0a027202404a3357cc00d656dbf85f"
     },
     {
         "file":  "orc_male_bard_varied_001.png",
@@ -1880,6 +2120,26 @@
         "sha256":  "bfebd6fb6f0eac9edea0806998b7ff078a38bfc8002f36579de7a1cbc705752b"
     },
     {
+        "file":  "orc_nonbinary_paladin_varied_001.png",
+        "species":  "orc",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b32a6e99a9b7de5876c5a69cc9426ff72d2de77fe8a015f89cd79ffdea8d4e25"
+    },
+    {
+        "file":  "orc_nonbinary_ranger_varied_001.png",
+        "species":  "orc",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "732f9e51321ca39a5efb8c0c40add0d3a96501128af568795faf5d99f84f89de"
+    },
+    {
         "file":  "orc_nonbinary_warlock_varied_001.png",
         "species":  "orc",
         "gender":  "nonbinary",
@@ -1948,6 +2208,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b6d49321367501a81f6737d20e6c45f4b560dc114f7e54866cd9e17fb1329f22"
+    },
+    {
+        "file":  "tiefling_female_paladin_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "05b00b0c9f51ed2ee50235bf0e31a6c83df7eb19949b42f26e64e992edebae61"
+    },
+    {
+        "file":  "tiefling_female_ranger_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8e6f49aebd0d84dfcd5945a8208b9d824b2a31ea5327660db1bbca92b4349f07"
     },
     {
         "file":  "tiefling_female_wizard_varied_001.png",
@@ -2020,6 +2300,16 @@
         "sha256":  "a891d5e4a18f073cf0cc22c5a25e6f4a22ae77785d8eb03c77420e60ce83913c"
     },
     {
+        "file":  "tiefling_male_paladin_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8b3527585e28aded9f51fecdd5bb9f219cf284c2b6742835d63321988fbf23cf"
+    },
+    {
         "file":  "tiefling_nonbinary_barbarian_varied_001.png",
         "species":  "tiefling",
         "gender":  "nonbinary",
@@ -2078,6 +2368,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "bea7a26185cc291e689820e69c57e787873108071958f9c92215a79bd40a7362"
+    },
+    {
+        "file":  "tiefling_nonbinary_paladin_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e20254e703d44e0868f0709ed6c2f719f7021ee37660d0b706dc2ae75488d96d"
     },
     {
         "file":  "tiefling_nonbinary_ranger_varied_001.png",
