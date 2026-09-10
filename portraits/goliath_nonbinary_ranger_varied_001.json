@@ -1,0 +1,11 @@
+{
+  "name": "goliath_nonbinary_ranger_varied_001",
+  "species": "goliath",
+  "gender": "nonbinary",
+  "class": "ranger",
+  "appearance": "varied",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Goliath, a towering giant-kin with a powerful broad face, stone-grey skin and natural dark stone-like markings; non-binary adult (gender is catalog metadata, not an anatomical stereotype), individual gender expression and natural presentation. Appearance: Distinctive natural variation appropriate to this fantasy species. Class: ranger; weathered forest-green cloak and leather armor, bow and quiver edge visible, alert observant expression. Distinct individual variation seed: 832; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: mature adult, about 45; three-quarter view facing slightly left, warm reserved smile. loose shoulder-length hair. Keep the established painted finish and large readable face.",
+  "order": 725,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-134d259d-8dbf-4b99-821a-8052acfb9b72.png",
+  "tool": "built-in image_gen"
+}

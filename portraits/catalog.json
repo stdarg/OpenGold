@@ -80,6 +80,16 @@
         "sha256":  "03f466b8904d94dfbee2c2cbd8cc729a8015eacaba63c65e94951fee0ff5eb0e"
     },
     {
+        "file":  "dragonborn_female_rogue_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0de5eed002ae20f320f0c28f558ab6209a1b50ec7180d21ff1ee94d0b29f88a6"
+    },
+    {
         "file":  "dragonborn_female_wizard_varied_001.png",
         "species":  "dragonborn",
         "gender":  "female",
@@ -158,6 +168,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "7c55af9ed4c66e01fbf26bb6c09154ff6bc0694c8e92ec12d466c0845b4a9777"
+    },
+    {
+        "file":  "dragonborn_male_ranger_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "75233aaa8aef306abecbe49e69968e34508667278dac29c82a58f4c75f012b8b"
+    },
+    {
+        "file":  "dragonborn_male_rogue_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "117db1835a906ccf844ba65f34cfa22243cd2fae7ac354cbbc188e8ab51a2c11"
     },
     {
         "file":  "dragonborn_nonbinary_barbarian_varied_001.png",
@@ -450,6 +480,16 @@
         "sha256":  "d0f8354b2af54f7fd5e254279c7812de3f7378bbcbb347f59c1f00c369c67bc4"
     },
     {
+        "file":  "dwarf_male_rogue_south_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "3694a90182626ed40936e521a00acea24f2e3aa3cc54f3ce59c1ad7793df3c7d"
+    },
+    {
         "file":  "dwarf_nonbinary_barbarian_east_asian_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -538,6 +578,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "0ebd6f87ff6728583aead8ef88a8ceb539786487b8dcaa60c54c788258be0d60"
+    },
+    {
+        "file":  "dwarf_nonbinary_ranger_mena_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "aec7127d4dffe79ddd4c3907b74e173dba42e82ab6c5d298ce5168ba6e68c6e0"
+    },
+    {
+        "file":  "dwarf_nonbinary_rogue_mena_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "61758d314fd058b00c3043eb6589f67a279ae46c154acdd299bd1562b15d8024"
     },
     {
         "file":  "dwarf_nonbinary_warlock_black_001.png",
@@ -638,6 +698,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d5ee7a87e0bc4969ead9f6e496991d1826aceecbdf13039ce71f0acd5a5ac399"
+    },
+    {
+        "file":  "elf_female_rogue_east_asian_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "87cc94bb1ad8d6fd1c8dd3f89cf7bf7205a244bd8902f026f633f1d76f39e5f8"
     },
     {
         "file":  "elf_female_wizard_mena_001.png",
@@ -750,6 +820,26 @@
         "sha256":  "7d6648fd57afc0594a3a1bd686ac3b76cd76305eaa7df0bc75126d0c7e9598ff"
     },
     {
+        "file":  "elf_male_ranger_south_asian_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "be04ac54059a5d5ad06a4cf0de8387ec0ccbe0d45ffe23ea10979b76efcdf0ec"
+    },
+    {
+        "file":  "elf_male_rogue_south_asian_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b8456724d976fe46ccf892d4424161094905dd9824b14e78787b2fab89b872de"
+    },
+    {
         "file":  "elf_male_sorcerer_south_asian_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -860,6 +950,16 @@
         "sha256":  "375cb8a48b393e42114795de12a84a0274b7bb5d8a4701c3f5136f081adadf0b"
     },
     {
+        "file":  "elf_nonbinary_rogue_mena_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9c3cf9568f65f503215c7bea2f0882daf5aa626df1beec875056dc829bd875df"
+    },
+    {
         "file":  "gnome_female_barbarian_south_asian_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -948,6 +1048,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c3a653fbefc5cdbf1fdec71cf5111bcd35b9971639e66cb742b823d5fe71b08d"
+    },
+    {
+        "file":  "gnome_female_ranger_latino_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "292c1ae73c88c0a2dee44a7b87ac79abb8a43d82a20b7dff39b352709d95fbc6"
+    },
+    {
+        "file":  "gnome_female_rogue_latino_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "40fe24430b19d4d3b9dff524037abdc4210300b19828746b09fde6d8e06a7180"
     },
     {
         "file":  "gnome_male_barbarian_mena_001.png",
@@ -1140,6 +1260,16 @@
         "sha256":  "77e7cc31f69e5423cbf308e32ffd771b9bb345450ec7eb23172ce4968cc53bc6"
     },
     {
+        "file":  "gnome_nonbinary_rogue_mena_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b297a885d77f65b8db5e1f4d1e90b65a10fdd3f0ea3211dded6c73e6dfef9ba4"
+    },
+    {
         "file":  "gnome_nonbinary_warlock_black_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -1330,6 +1460,16 @@
         "sha256":  "1a89c4222e1e8eda8b6ac525c3cb91eac86fff74548f92dedee29c18605a25eb"
     },
     {
+        "file":  "goliath_male_rogue_varied_001.png",
+        "species":  "goliath",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c192e90976d977a9284b7611c08a5e8a6463234833f6b1db88de6e5d05787b26"
+    },
+    {
         "file":  "goliath_nonbinary_barbarian_varied_001.png",
         "species":  "goliath",
         "gender":  "nonbinary",
@@ -1400,6 +1540,26 @@
         "sha256":  "986b3e58b4086f402bd6d1132bfd0e140cb2abd9941fa7bc38b6d7e4de6a02f2"
     },
     {
+        "file":  "goliath_nonbinary_ranger_varied_001.png",
+        "species":  "goliath",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bf4ae9c3f751f4cd6e83565d5059bb11aad0062e369b299781dd584154cc5a89"
+    },
+    {
+        "file":  "goliath_nonbinary_rogue_varied_001.png",
+        "species":  "goliath",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "415ec613b68c12cebad5991bf317e8ba1446fd05358003a82a542c2109ab4915"
+    },
+    {
         "file":  "halfling_female_barbarian_varied_001.png",
         "species":  "halfling",
         "gender":  "female",
@@ -1468,6 +1628,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a3b0db1e4c34bc24fc7206ac7abbd5c6b53e70f5eb5924d503ad3ab7f32e7586"
+    },
+    {
+        "file":  "halfling_female_ranger_varied_001.png",
+        "species":  "halfling",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1238c835db588133ca9a678e6a57ee9ae22c5738358e5870677807d4f898a30c"
+    },
+    {
+        "file":  "halfling_female_rogue_varied_001.png",
+        "species":  "halfling",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f7114c89a1c3a9915259aab4ad102b0106bb5165d8cc97203b68f2d4912c45b4"
     },
     {
         "file":  "halfling_male_barbarian_varied_001.png",
@@ -1630,6 +1810,26 @@
         "sha256":  "09489a6655ea669128af4b159dd9082a94ab95b56350e6404a240952550092ee"
     },
     {
+        "file":  "halfling_nonbinary_ranger_varied_001.png",
+        "species":  "halfling",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "6188cb61c9679aff0974d600be7d4f9fa10fbe9fb893e3f0b6ac8ddfb5855a6a"
+    },
+    {
+        "file":  "halfling_nonbinary_rogue_varied_001.png",
+        "species":  "halfling",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9d474123cfbff7adb51016df0b8709ff3515461e370a9b115885400ac88c8a41"
+    },
+    {
         "file":  "human_female_barbarian_black_001.png",
         "species":  "human",
         "gender":  "female",
@@ -1718,6 +1918,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "f63c91a905085452d950e94938a5ddf3b5b24df52cf1ba300da93200822aa9d7"
+    },
+    {
+        "file":  "human_female_ranger_east_asian_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "502f443060159288b0071e51d6ea0a044a71087f4bcc36eedd05f93b43d87d82"
     },
     {
         "file":  "human_female_rogue_east_asian_001.png",
@@ -1840,6 +2050,16 @@
         "sha256":  "100929a47f9e67c9406ba9a10f1033c230c3db0c7821d4ba2a8d70b2efc790eb"
     },
     {
+        "file":  "human_male_rogue_south_asian_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a1b80b7e061127cfab4b0bcee5eab60539786a4e290e015941d5cd746562369d"
+    },
+    {
         "file":  "human_nonbinary_barbarian_east_asian_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -1918,6 +2138,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "1351fe244ab47b260733163a9e7a017b7d957f65f685824276d90abccab1363c"
+    },
+    {
+        "file":  "human_nonbinary_rogue_white_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "70e412dee47f7aad0b1617d5440118430d42392fba2532ccab72e9aac966a955"
     },
     {
         "file":  "human_nonbinary_wizard_south_asian_001.png",
@@ -2000,6 +2230,26 @@
         "sha256":  "ff3bb1805029a7b027b4fb34e23529e1dd0a027202404a3357cc00d656dbf85f"
     },
     {
+        "file":  "orc_female_ranger_varied_001.png",
+        "species":  "orc",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "18c1bc1487a3fa3d6ac44e3e1125d9c9e5ece7c7460c192748be769783e32b6c"
+    },
+    {
+        "file":  "orc_female_rogue_varied_001.png",
+        "species":  "orc",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1e8d00c24f0ea95aa16b4c43c6c242d4e7d6e6eacaedda4abd87eb0845c904ff"
+    },
+    {
         "file":  "orc_male_bard_varied_001.png",
         "species":  "orc",
         "gender":  "male",
@@ -2058,6 +2308,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b37769fb833be5caf9c8343ae5ec86813b8adb1f29bd64a3ce4a7f0f5436c07e"
+    },
+    {
+        "file":  "orc_male_ranger_varied_001.png",
+        "species":  "orc",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ba26d328c5f63dd73a28f2e4d48abdf69d3497a0c7f37bdf83cfe9bc025f1a74"
+    },
+    {
+        "file":  "orc_male_rogue_varied_001.png",
+        "species":  "orc",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a67b2cc1855ecb6a8de393c5b367c1e8124a7407dc376337c19947d303a8eda6"
     },
     {
         "file":  "orc_nonbinary_barbarian_varied_001.png",
@@ -2310,6 +2580,26 @@
         "sha256":  "8b3527585e28aded9f51fecdd5bb9f219cf284c2b6742835d63321988fbf23cf"
     },
     {
+        "file":  "tiefling_male_ranger_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a614a999082337dc9430a1b09bf301adf23c0260ef0f3cda96288256a1755e87"
+    },
+    {
+        "file":  "tiefling_male_rogue_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a8df4e60d8be047be60e40af0fbe9d446714e0210e3d99d2444bcb4042fe6cea"
+    },
+    {
         "file":  "tiefling_nonbinary_barbarian_varied_001.png",
         "species":  "tiefling",
         "gender":  "nonbinary",
@@ -2388,5 +2678,15 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "47ae2c808d970dbc9415449624d5e184b43510450505df9b25383f78b8130e3c"
+    },
+    {
+        "file":  "tiefling_nonbinary_rogue_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "df77be24607266852079e9ac8f9d454572286d3053b2e661b565e93f7dd48ff4"
     }
 ]
