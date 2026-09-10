@@ -1,0 +1,11 @@
+{
+  "name": "gnome_male_monk_south_asian_001",
+  "species": "gnome",
+  "gender": "male",
+  "class": "monk",
+  "appearance": "south_asian",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Gnome with unmistakably small-folk proportions, expressive large eyes, prominent nose and pointed ears; clearly an adult; male adult. Appearance: South Asian-inspired appearance with natural facial features and medium-to-deep brown skin. Class: monk; simple layered earth-tone martial wraps, unarmored shoulders, centered attentive expression. Distinct individual variation seed: 520; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.",
+  "order": 523,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-2d659564-2074-4dc2-9e4c-8c140e24cbd0.png",
+  "tool": "built-in image_gen"
+}

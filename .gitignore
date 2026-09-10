@@ -13,3 +13,4 @@ godot/bin/
 
 # Newly generated OpenGold portrait artwork (not extracted game assets)
 !/data/art/portraits/*.png
+!/portraits/*.png
