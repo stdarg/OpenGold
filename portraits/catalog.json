@@ -680,6 +680,16 @@
         "sha256":  "c85b53bb77acef51fe24a8498c34e54a73ad4f975772565256a88d4f7ea946a2"
     },
     {
+        "file":  "dwarf_female_warlock_black_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "warlock",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "eb06408cab2f28c023340331d8a51a518f84c1609ccf4b032c094f83fe96a600"
+    },
+    {
         "file":  "dwarf_female_warlock_indigenous_american_001.png",
         "species":  "dwarf",
         "gender":  "female",
@@ -718,6 +728,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "15189fcceab79dd8f438f3441c5769b209d2d10d0d5e2d92bd956495c9d63ee3"
+    },
+    {
+        "file":  "dwarf_female_wizard_south_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a11b43ac081c05f4f0f0147b54c618e46483df791ece79907ef5710f5c17d990"
     },
     {
         "file":  "dwarf_female_wizard_white_001.png",
@@ -1040,6 +1060,16 @@
         "sha256":  "56a714705f63ae9a32e93f0d2b8d41a08e33eb602d607f555ae47955fc27943b"
     },
     {
+        "file":  "dwarf_male_sorcerer_white_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "sorcerer",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e29041c1c8451caea98b4feac8370b472da4cae35c9d9ab6d807813aa305a3b1"
+    },
+    {
         "file":  "dwarf_male_warlock_black_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -1060,6 +1090,16 @@
         "sha256":  "1082692eb561d92a518259b56bf0b3b88a7090b044d8b3427b2dc8860634010f"
     },
     {
+        "file":  "dwarf_male_warlock_white_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "warlock",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "aee80be530417f57fee5988492593ecd009a5ed321546ee648b68b4b6bd2d30b"
+    },
+    {
         "file":  "dwarf_male_wizard_black_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -1078,6 +1118,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "7f0ae0cb4714f38fa958377759952f440dd4c8a81d10eb2f5683b49912284f59"
+    },
+    {
+        "file":  "dwarf_male_wizard_white_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bf42bf39ed3ca5d12d471e28232925586be5f3b3971cc8e5ba436ef902c1eaa7"
     },
     {
         "file":  "dwarf_nonbinary_barbarian_east_asian_001.png",
@@ -1400,6 +1450,16 @@
         "sha256":  "38f74482901a5b9825e07fbea7804af93c91923e8787f0b7ba128a9ded6d766a"
     },
     {
+        "file":  "dwarf_nonbinary_warlock_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "warlock",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a704606643ecc8953c8d0a3b3c5f113139890ce154e5bb0d7cfaaae1b66cd8f7"
+    },
+    {
         "file":  "dwarf_nonbinary_warlock_white_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -1418,6 +1478,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "9b91c3aa8d7d16696e35852c402c2cfd1b9a164247c377e4612f7c65ed2a94ba"
+    },
+    {
+        "file":  "dwarf_nonbinary_wizard_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "3726b927753a19d97b4f422d6d28668ed5767e98adc74615d809eb2cb801ef70"
     },
     {
         "file":  "dwarf_nonbinary_wizard_white_001.png",
@@ -1710,6 +1780,16 @@
         "sha256":  "1ceba6797030f5eae8b3c10230a336cc6f26622d5fa7cbe592f714395237af7a"
     },
     {
+        "file":  "elf_female_sorcerer_black_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "sorcerer",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "894cd189e6d2449620e7f054d3d1e0bcda59da6692cd0abd35d86e4677cf8530"
+    },
+    {
         "file":  "elf_female_sorcerer_indigenous_american_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -1730,6 +1810,16 @@
         "sha256":  "34d2871a1dd1b6afe7a76d8138af8892ccb26dbe528a9309882483a98c6e0eb2"
     },
     {
+        "file":  "elf_female_warlock_black_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "warlock",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1a5e8d9b5de07976e07e3bf01c520c6d5c2d171c4ea7375fa58f1571c8a49407"
+    },
+    {
         "file":  "elf_female_warlock_indigenous_american_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -1748,6 +1838,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "bf231cf1d6267fc8133b8894f70a5ea39be9ccbd3cd1633967aaa25a97dfda13"
+    },
+    {
+        "file":  "elf_female_wizard_black_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "31f5fdb87bde697eb2202579d864525f46ebd33d355fc6b2381e25f0df5c03af"
     },
     {
         "file":  "elf_female_wizard_indigenous_american_001.png",
@@ -2120,6 +2220,16 @@
         "sha256":  "5d600e1332d222947da85b82a7d0d8a083a1b6fb66ff9b84429b4c4692ae8bfe"
     },
     {
+        "file":  "elf_male_warlock_white_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "warlock",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8474b7aec2051ba700acfb8cc5a3112b47f04a0405f302c1857c679cc9f73b50"
+    },
+    {
         "file":  "elf_male_wizard_black_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -2138,6 +2248,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c133a7e5f243abef9d33b59c1dc8dd4d4173797f9cc2cfb1848118075e513f03"
+    },
+    {
+        "file":  "elf_male_wizard_white_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f9b6f3217650af551c92e7a56ceef6fb14a5e31af5e15651238b6296d9f40db9"
     },
     {
         "file":  "elf_nonbinary_barbarian_east_asian_001.png",
@@ -2450,6 +2570,16 @@
         "sha256":  "76a196743c9533b3f28d7c291532887e784bc8d0c849573a3667eacdcca222fb"
     },
     {
+        "file":  "elf_nonbinary_warlock_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "warlock",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c2edc606ec5ccfd503ad731eac3220cc807c813bb1fbb176b9fe67b5c6e49b0f"
+    },
+    {
         "file":  "elf_nonbinary_warlock_latino_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -2478,6 +2608,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b32c55f2a599be64c966d02b159c00caa3fac8cff7b01348ed093c9dc2458323"
+    },
+    {
+        "file":  "elf_nonbinary_wizard_east_asian_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "602f4994303090c3834019b5c6e3b2c16be85183f41e6777cecebef20ebac2c4"
     },
     {
         "file":  "elf_nonbinary_wizard_white_001.png",
@@ -2800,6 +2940,16 @@
         "sha256":  "031268d04fc71dc949048653ada923124e4e0826a8ae146f0e93b9b7fc63f892"
     },
     {
+        "file":  "gnome_female_warlock_south_asian_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "warlock",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "593b8d3e31b62029b2464aa3dd4abe605ce76583b0e6f1222c1fb796ba794bdf"
+    },
+    {
         "file":  "gnome_female_warlock_white_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -2818,6 +2968,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "8c4d0409bbcf04cf102b235cf66d18c6189a39fe8e24b8798633fd7a5a533795"
+    },
+    {
+        "file":  "gnome_female_wizard_south_asian_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "4eaf4628c7062878afadc9b5979be54127d3291d12afbdeab959580376798256"
     },
     {
         "file":  "gnome_female_wizard_white_001.png",
@@ -3120,6 +3280,16 @@
         "sha256":  "8b15bb658c7bb7d2efd78caafd8b1b216b7184e936397d6783c99d1b8b8763f7"
     },
     {
+        "file":  "gnome_male_sorcerer_white_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "sorcerer",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "fef56432fe41868c7d48a22cd00e3b870734b863f4010fbe78fab8d87bdf7e8e"
+    },
+    {
         "file":  "gnome_male_warlock_black_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -3140,6 +3310,16 @@
         "sha256":  "31ee7073f5bf8de29d2b981c1203c72674eb00283e5b163cea7079ae03f7e224"
     },
     {
+        "file":  "gnome_male_warlock_white_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "warlock",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "5553fdb05f55a23158bf0bdf0fd4bb1bf36d86c94167af6ffe40f0ddf024ac1b"
+    },
+    {
         "file":  "gnome_male_wizard_east_asian_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -3148,6 +3328,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "1ec4a22d057192632b1293f5a93879000be9cc4491944f3ccf307b2b1dffbd58"
+    },
+    {
+        "file":  "gnome_male_wizard_mena_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "94f523feb2828843139be10ea05723598beefe1a871cbb8b35c045f363ec5dda"
     },
     {
         "file":  "gnome_male_wizard_south_asian_001.png",
@@ -3450,6 +3640,16 @@
         "sha256":  "42b7cf377b30dbd06a1568a988410000f8158cd180c03a42034973fc644422a2"
     },
     {
+        "file":  "gnome_nonbinary_sorcerer_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "sorcerer",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "78f1bacfcb1a2d01ba6655b55cb87bc75f7ca7fc99f8bc4be6a3e438c6e3dbdb"
+    },
+    {
         "file":  "gnome_nonbinary_sorcerer_white_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -3470,6 +3670,16 @@
         "sha256":  "dacbab38f733db7fed9eb4394ecea9d4cad2091071c6ea6fd3b32c27bef48f26"
     },
     {
+        "file":  "gnome_nonbinary_warlock_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "warlock",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e6b051adf0a2f5c6a86809b7c900bb64b7da1d14934aa9b25bc806eed119e0d0"
+    },
+    {
         "file":  "gnome_nonbinary_warlock_white_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -3488,6 +3698,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "223bcd11b0ae7148175369bf569d6705316200128f880778249f82a1249d044c"
+    },
+    {
+        "file":  "gnome_nonbinary_wizard_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "50d290bc32ad8d5335ad20a5540399c7386c689ac4652973c648848b2f027a73"
     },
     {
         "file":  "gnome_nonbinary_wizard_indigenous_american_001.png",
@@ -4250,6 +4470,16 @@
         "sha256":  "e0962441b014553b124e59cc1719d61cdde5eaa8ccc6c4f4271ee0ee3cae24ec"
     },
     {
+        "file":  "human_female_barbarian_south_asian_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d72fe1be9c9898a5bd14cd0df619da9ae6a14bb267178619a64c8a660edf17da"
+    },
+    {
         "file":  "human_female_barbarian_white_001.png",
         "species":  "human",
         "gender":  "female",
@@ -4540,6 +4770,16 @@
         "sha256":  "ef93d8598d2454da727a2160f5de20b04a137a6a827b4a5f3d15e03cb2312019"
     },
     {
+        "file":  "human_female_warlock_black_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "warlock",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "58839c40a227e50c2e1c3931d18ceed690980c264bac0f7476a9a49f339c8ce2"
+    },
+    {
         "file":  "human_female_warlock_indigenous_american_001.png",
         "species":  "human",
         "gender":  "female",
@@ -4558,6 +4798,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c4b6b30de211817d89a02c59b1df5254fc6fe6ebb8a22ac9bba235ff151941e8"
+    },
+    {
+        "file":  "human_female_wizard_black_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9cee41942fb554c99f17981c4a3011e2084588af0e0b701a998e6a4244613ad8"
     },
     {
         "file":  "human_female_wizard_indigenous_american_001.png",
@@ -4900,6 +5150,16 @@
         "sha256":  "6e684d3013d9c9bdf2b9522c5c2c429ee24be4a426796f5113dd87f729fe6211"
     },
     {
+        "file":  "human_male_warlock_latino_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "warlock",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "aa9e81e512bd23dda471afbe6eb8f9b9182867b21d3dca058a50088e548ca059"
+    },
+    {
         "file":  "human_male_warlock_mena_001.png",
         "species":  "human",
         "gender":  "male",
@@ -4938,6 +5198,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "24636537edc7f73cc0c8d8b12ad751a3da6c383760ef66fc2393a38156cd1e47"
+    },
+    {
+        "file":  "human_male_wizard_white_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "5eded1dae00d4f80c4dd9b8be5fe15cb4304926daee40a63ec92df3a043b8658"
     },
     {
         "file":  "human_nonbinary_barbarian_east_asian_001.png",
@@ -5210,6 +5480,16 @@
         "sha256":  "70e412dee47f7aad0b1617d5440118430d42392fba2532ccab72e9aac966a955"
     },
     {
+        "file":  "human_nonbinary_sorcerer_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "sorcerer",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "985b9335781aa584e967dea9ed3b004d1aa6a76798b7d177e4d619c16d265d50"
+    },
+    {
         "file":  "human_nonbinary_sorcerer_latino_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -5230,6 +5510,16 @@
         "sha256":  "fffce8a0842adc41be4d015bcfb75540456ec5a32742d4855e350135bd6210e8"
     },
     {
+        "file":  "human_nonbinary_warlock_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "warlock",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "2f5a7ca0c873169a3d27dd5059105f91e8070c07da8efb5e3a7da2ff9bdda868"
+    },
+    {
         "file":  "human_nonbinary_warlock_latino_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -5248,6 +5538,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "906288732243a2e0852609dafcccee7be4fb0c6652cdc0d0e2f78646722d36ad"
+    },
+    {
+        "file":  "human_nonbinary_wizard_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d0631c178e2a33f69c390d53b60a19f37f309969c7efedfc5c6a967fc9c72cba"
     },
     {
         "file":  "human_nonbinary_wizard_latino_001.png",

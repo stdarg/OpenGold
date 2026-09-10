@@ -1,0 +1,11 @@
+{
+  "name": "dwarf_male_warlock_white_001",
+  "species": "dwarf",
+  "gender": "male",
+  "class": "warlock",
+  "appearance": "white",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Dwarf with a broad sturdy face, strong nose, compact neck and stocky powerful shoulders; male adult. Appearance: White European-inspired appearance, fair skin with natural variation. Class: warlock; layered plum-black robes with an original pact talisman, restrained violet magical accent, thoughtful enigmatic expression. Distinct individual variation seed: 473; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: mature adult, about 45; three-quarter view facing slightly right, resolute expression. loose shoulder-length hair. Keep the established painted finish and large readable face.",
+  "order": 21012,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-37eff197-77c6-4c3b-828a-79f4d1f5b620.png",
+  "tool": "built-in image_gen"
+}
