@@ -1,0 +1,11 @@
+{
+  "name": "dragonborn_female_warlock_varied_001",
+  "species": "dragonborn",
+  "gender": "female",
+  "class": "warlock",
+  "appearance": "varied",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Dragonborn, a fully draconic humanoid with a scaled dragon face, pronounced reptilian muzzle, horns and no human hair; clearly not a human wearing a mask; female adult. Appearance: Distinctive natural variation appropriate to this fantasy species. Class: warlock; layered plum-black robes with an original pact talisman, restrained violet magical accent, thoughtful enigmatic expression. Distinct individual variation seed: 745; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: older adult, about 65 with visible natural age lines; three-quarter view facing slightly right, resolute expression. Scales in pearl white, a distinctive draconic muzzle and horn silhouette.Keep the established painted finish and large readable face.",
+  "order": 1014,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-2621f39d-044d-4987-bb65-4cd2d7102a4c.png",
+  "tool": "built-in image_gen"
+}

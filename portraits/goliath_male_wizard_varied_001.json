@@ -1,0 +1,11 @@
+{
+  "name": "goliath_male_wizard_varied_001",
+  "species": "goliath",
+  "gender": "male",
+  "class": "wizard",
+  "appearance": "varied",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Goliath, a towering giant-kin with a powerful broad face, stone-grey skin and natural dark stone-like markings; male adult. Appearance: Distinctive natural variation appropriate to this fantasy species. Class: wizard; deep teal scholarly robes and weathered book edge low in frame, original arcane brooch, intelligent attentive expression. Distinct individual variation seed: 894; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: older adult, about 65 with visible natural age lines; three-quarter view facing slightly right, resolute expression. loose shoulder-length hair. Keep the established painted finish and large readable face.",
+  "order": 1105,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-09c770f5-abcd-4916-9fec-082830bd729c.png",
+  "tool": "built-in image_gen"
+}
