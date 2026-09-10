@@ -600,6 +600,16 @@
         "sha256":  "38b9679d959ada9bd51918f2ba3f27cb422b8395e7bd07f62400289aef20f4bb"
     },
     {
+        "file":  "dwarf_female_ranger_mena_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f95ab023533c3fe568a39a4a23843f308f63b5ba0b03bbac6316a94ef345a14c"
+    },
+    {
         "file":  "dwarf_female_ranger_south_asian_001.png",
         "species":  "dwarf",
         "gender":  "female",
@@ -608,6 +618,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "0ca79c6b345e02d3ff7c7ccc093029691e6f784b6dd3300175e8ab8b48d07cee"
+    },
+    {
+        "file":  "dwarf_female_rogue_black_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "92fdfbc2f99172cfe528c2a6f7000db1e90af4db7bc84935385eded20950cd3d"
     },
     {
         "file":  "dwarf_female_rogue_indigenous_american_001.png",
@@ -628,6 +648,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "4ab3f1942eb6170101bca7e320bdcfd845583c1d66955f5bc322e4026d4370a2"
+    },
+    {
+        "file":  "dwarf_female_sorcerer_black_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "sorcerer",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b3405ab8f74098809153181681b5fc2bc20233d59e2e1c4ec1682377f5a9f6bc"
     },
     {
         "file":  "dwarf_female_sorcerer_indigenous_american_001.png",
@@ -920,6 +950,16 @@
         "sha256":  "39eeece3d42764109d6e376c759c75aa60615ad4efa69b6925152897cfcd7cd0"
     },
     {
+        "file":  "dwarf_male_ranger_latino_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "3c0a1028351a28114bfd7e72ec1e83ced39a7459e6f7f927de465494b6f88e33"
+    },
+    {
         "file":  "dwarf_male_ranger_mena_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -948,6 +988,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d0f8354b2af54f7fd5e254279c7812de3f7378bbcbb347f59c1f00c369c67bc4"
+    },
+    {
+        "file":  "dwarf_male_rogue_latino_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "cda57d1589fe26acd9aa8f3f896bd643519c525a08d6733b425d70e6f11d2840"
     },
     {
         "file":  "dwarf_male_rogue_mena_001.png",
@@ -1250,6 +1300,16 @@
         "sha256":  "0ebd6f87ff6728583aead8ef88a8ceb539786487b8dcaa60c54c788258be0d60"
     },
     {
+        "file":  "dwarf_nonbinary_ranger_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "40df088db9953c5ac8220e5421608b40a8fba335e8b1c67d41fc33fdf3f36d8e"
+    },
+    {
         "file":  "dwarf_nonbinary_ranger_latino_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -1270,6 +1330,16 @@
         "sha256":  "aec7127d4dffe79ddd4c3907b74e173dba42e82ab6c5d298ce5168ba6e68c6e0"
     },
     {
+        "file":  "dwarf_nonbinary_rogue_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d45c67b5dba8aef4754bd9c0cfa9ca389422d987ba7d01b0611ccdfeef9df7d7"
+    },
+    {
         "file":  "dwarf_nonbinary_rogue_latino_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -1288,6 +1358,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "61758d314fd058b00c3043eb6589f67a279ae46c154acdd299bd1562b15d8024"
+    },
+    {
+        "file":  "dwarf_nonbinary_sorcerer_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "sorcerer",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8e50247cdb54d63239e0a6b3ca08794765111ba653478ad70e34025df2051d27"
     },
     {
         "file":  "dwarf_nonbinary_sorcerer_latino_001.png",
@@ -1580,6 +1660,16 @@
         "sha256":  "d5ee7a87e0bc4969ead9f6e496991d1826aceecbdf13039ce71f0acd5a5ac399"
     },
     {
+        "file":  "elf_female_ranger_mena_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "973f5a5f435c5ecfbe1e9ac974815b75c9e7f5b739cbbbe396eb014b4053ee4b"
+    },
+    {
         "file":  "elf_female_ranger_south_asian_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -1598,6 +1688,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "87cc94bb1ad8d6fd1c8dd3f89cf7bf7205a244bd8902f026f633f1d76f39e5f8"
+    },
+    {
+        "file":  "elf_female_rogue_mena_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b89a9d1cbfd21f21ea2aa348d3e55f85f535de8ebb0cc6d6a8c6aac2c9e9c54d"
     },
     {
         "file":  "elf_female_rogue_south_asian_001.png",
@@ -1910,6 +2010,16 @@
         "sha256":  "7d6648fd57afc0594a3a1bd686ac3b76cd76305eaa7df0bc75126d0c7e9598ff"
     },
     {
+        "file":  "elf_male_ranger_latino_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "7e355be71e7158bc88465f8724fb1cc89d8b5acec8bf5be51ec609257764046b"
+    },
+    {
         "file":  "elf_male_ranger_mena_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -1930,6 +2040,16 @@
         "sha256":  "be04ac54059a5d5ad06a4cf0de8387ec0ccbe0d45ffe23ea10979b76efcdf0ec"
     },
     {
+        "file":  "elf_male_rogue_latino_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "7c9feeed15b1ba2854c8dddb44de940c9f509f2ac3f6d74af856b0e94f05b708"
+    },
+    {
         "file":  "elf_male_rogue_mena_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -1948,6 +2068,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b8456724d976fe46ccf892d4424161094905dd9824b14e78787b2fab89b872de"
+    },
+    {
+        "file":  "elf_male_sorcerer_latino_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "sorcerer",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "89d427158ae9c7695a4a58140ccbff8269a614afae9c15d27a72b6acf28d9006"
     },
     {
         "file":  "elf_male_sorcerer_mena_001.png",
@@ -2240,6 +2370,16 @@
         "sha256":  "1b35c7980e57f24ceac4b5c271fad990391eea0af1f5d91ca6a65d09ab8fc0e9"
     },
     {
+        "file":  "elf_nonbinary_ranger_south_asian_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "4f6bbd93f2e176125506d0e21eade91e7585187f948d5c9ab7d026707a0d0cb5"
+    },
+    {
         "file":  "elf_nonbinary_ranger_white_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -2248,6 +2388,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "375cb8a48b393e42114795de12a84a0274b7bb5d8a4701c3f5136f081adadf0b"
+    },
+    {
+        "file":  "elf_nonbinary_rogue_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "be8db0d3eda9a9323719b465482a4841a7d0fbeece651efab29f8628eae4268f"
     },
     {
         "file":  "elf_nonbinary_rogue_latino_001.png",
@@ -2268,6 +2418,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "9c3cf9568f65f503215c7bea2f0882daf5aa626df1beec875056dc829bd875df"
+    },
+    {
+        "file":  "elf_nonbinary_sorcerer_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "sorcerer",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "dc47c3ab609fe59cc06bb5da6d673c4457c7a3981a968319801c1f1961135bf2"
     },
     {
         "file":  "elf_nonbinary_sorcerer_latino_001.png",
@@ -2540,6 +2700,16 @@
         "sha256":  "6f0df439e53e16cf492b0de77764ef0028c6a7b5c1ad391bd6928b9bbfa37d70"
     },
     {
+        "file":  "gnome_female_ranger_black_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b4a9cb40941a04a4dec4190cd0763bc9abae24c0f6d10aeb71480cb2bf0e8613"
+    },
+    {
         "file":  "gnome_female_ranger_indigenous_american_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -2560,6 +2730,16 @@
         "sha256":  "292c1ae73c88c0a2dee44a7b87ac79abb8a43d82a20b7dff39b352709d95fbc6"
     },
     {
+        "file":  "gnome_female_rogue_black_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "6c174a285d8461c5b915392f12ddd19921835f1429391b9de4766fdb55ee69a9"
+    },
+    {
         "file":  "gnome_female_rogue_indigenous_american_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -2578,6 +2758,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "40fe24430b19d4d3b9dff524037abdc4210300b19828746b09fde6d8e06a7180"
+    },
+    {
+        "file":  "gnome_female_sorcerer_black_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "sorcerer",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "66f5c53a86b9b711dda0ee58849bcb1a4a982681a1d1211e1f557f1131d57f3c"
     },
     {
         "file":  "gnome_female_sorcerer_indigenous_american_001.png",
@@ -2850,6 +3040,16 @@
         "sha256":  "ed7bbaf94b5c8f23723237f80c86439f735e199e591cc19212eeaa72f7b9bcb9"
     },
     {
+        "file":  "gnome_male_ranger_latino_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "ranger",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b626a335c134ab5d9efe628912af27d330d9a9093e9acd8a5dc379675a19a83b"
+    },
+    {
         "file":  "gnome_male_ranger_mena_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -2888,6 +3088,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "ade32dc2053adeadce9b5071b7d6381a0f51606886eac5e9fa658b29f0e91f22"
+    },
+    {
+        "file":  "gnome_male_rogue_white_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d581bdc2894a8f0c81c18d43a57f38cdc8768a197d2598947e14916641bfb725"
     },
     {
         "file":  "gnome_male_sorcerer_black_001.png",
@@ -3170,6 +3380,16 @@
         "sha256":  "611d8834a681bf41c2e12afd18ab1bf394c8fa6d5b8e9c2c945648ed92d15ab6"
     },
     {
+        "file":  "gnome_nonbinary_ranger_indigenous_american_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "2b50b97cfd67594673627f4da0ab1d825739290385271be34d683551839688a4"
+    },
+    {
         "file":  "gnome_nonbinary_ranger_latino_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -3188,6 +3408,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "77e7cc31f69e5423cbf308e32ffd771b9bb345450ec7eb23172ce4968cc53bc6"
+    },
+    {
+        "file":  "gnome_nonbinary_rogue_indigenous_american_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "180593701e4855176db034772f55c98371fc7daf1d3c304b77b01fd37dd16474"
     },
     {
         "file":  "gnome_nonbinary_rogue_latino_001.png",
@@ -4230,6 +4460,16 @@
         "sha256":  "502f443060159288b0071e51d6ea0a044a71087f4bcc36eedd05f93b43d87d82"
     },
     {
+        "file":  "human_female_ranger_mena_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "ranger",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "6f18eab93cd2756d4fc7ff5b67bf85c3076b92ff35ad866307bdc25bc96cc33c"
+    },
+    {
         "file":  "human_female_ranger_south_asian_001.png",
         "species":  "human",
         "gender":  "female",
@@ -4250,6 +4490,16 @@
         "sha256":  "b5fd3d257201c36f4ca37427ff93f20be9a07e4c11f8911be906d52c5d9bbab6"
     },
     {
+        "file":  "human_female_rogue_mena_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "rogue",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d35c99d8680a6dba72a30e847f50f0eb092f04d95a2dfe0ed86c551cb335878e"
+    },
+    {
         "file":  "human_female_rogue_south_asian_001.png",
         "species":  "human",
         "gender":  "female",
@@ -4268,6 +4518,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "caf5d1bf9bda899987c65c0f80eab88b2250c56917cd729c2a500b45c0ec9e11"
+    },
+    {
+        "file":  "human_female_sorcerer_mena_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "sorcerer",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0443cb02b12af633d2713aa9158e6e2d811b47ddadff1e81721e514352fa9ada"
     },
     {
         "file":  "human_female_sorcerer_south_asian_001.png",
@@ -4580,6 +4840,16 @@
         "sha256":  "18749a1d2fcd370a254bad252502b94011c16101ce988255849517a03c8d8fe1"
     },
     {
+        "file":  "human_male_rogue_latino_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "rogue",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "4ead24fa847a8bc5bbe0db7325fbd4991c18e86e2503ed61dba305b11dc04052"
+    },
+    {
         "file":  "human_male_rogue_mena_001.png",
         "species":  "human",
         "gender":  "male",
@@ -4598,6 +4868,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a1b80b7e061127cfab4b0bcee5eab60539786a4e290e015941d5cd746562369d"
+    },
+    {
+        "file":  "human_male_sorcerer_latino_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "sorcerer",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8f20e9b61aa75c35b0b819ec74613060bfab2855bf592ffe67c981e648bba995"
     },
     {
         "file":  "human_male_sorcerer_mena_001.png",
@@ -4880,6 +5160,16 @@
         "sha256":  "178632d6d7aa1eb52c10d0733c319f469c773b249e3d11373a7bee62480c69b9"
     },
     {
+        "file":  "human_nonbinary_ranger_south_asian_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "ranger",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "31e41d20ac95173770ec41dc73eb942188dbc19d863329368106a8958ed86d19"
+    },
+    {
         "file":  "human_nonbinary_ranger_white_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -4898,6 +5188,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a851ca69bf284d06e58c912e0306cccdb5a85ad3993e08719c909cc8a4009117"
+    },
+    {
+        "file":  "human_nonbinary_rogue_south_asian_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "rogue",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f0e3380248d2fadeb7304842e16c3eda86dc25d65b49824a92045902f07cfc4f"
     },
     {
         "file":  "human_nonbinary_rogue_white_001.png",
