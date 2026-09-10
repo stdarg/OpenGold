@@ -1,0 +1,11 @@
+{
+  "name": "elf_male_ranger_black_001",
+  "species": "elf",
+  "gender": "male",
+  "class": "ranger",
+  "appearance": "black",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Elf with clearly visible long pointed ears, elegant angular facial structure and subtle fey grace; male adult. Appearance: Black-inspired appearance, deep brown skin, naturally textured tightly curled hair where appropriate. Class: ranger; weathered forest-green cloak and leather armor, bow and quiver edge visible, alert observant expression. Distinct individual variation seed: 288; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.",
+  "order": 40721,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-1648f7bb-97ca-4544-bc09-d7e17fd6be5f.png",
+  "tool": "built-in image_gen"
+}
