@@ -50,6 +50,16 @@
         "sha256":  "b606f51e10a79bf6be243e1ec1319a5714c825276a3229c1086473d6f41cae63"
     },
     {
+        "file":  "dragonborn_female_monk_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "511070f012ec8f8dd549cfb5621bb0719fd8e47269dd2d372559f22c4aae554a"
+    },
+    {
         "file":  "dragonborn_female_wizard_varied_001.png",
         "species":  "dragonborn",
         "gender":  "female",
@@ -110,6 +120,26 @@
         "sha256":  "9d868bc5eb0f0629cc6705c5a5d4115b18dc44c91cf75eaf99b3bad5897f8fcb"
     },
     {
+        "file":  "dragonborn_male_monk_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "5a5b7212bafb74e8f6d61466e45b82a22e746f0dfc8230a56f1d454db1804df5"
+    },
+    {
+        "file":  "dragonborn_male_paladin_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "7c55af9ed4c66e01fbf26bb6c09154ff6bc0694c8e92ec12d466c0845b4a9777"
+    },
+    {
         "file":  "dragonborn_nonbinary_barbarian_varied_001.png",
         "species":  "dragonborn",
         "gender":  "nonbinary",
@@ -158,6 +188,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "61790095431e535af59ecbe97595fb719221199218a5405dc60649246754e9bc"
+    },
+    {
+        "file":  "dragonborn_nonbinary_monk_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9ed6c894c410eebe5eda9aea5cff576eaec0a783a990bb8068293010afc737da"
     },
     {
         "file":  "dragonborn_nonbinary_ranger_varied_001.png",
@@ -228,6 +268,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "31ca9ecb315ca3ae629d96c52dc8431a61fe44a3b359aa93925c162918af060a"
+    },
+    {
+        "file":  "dwarf_female_monk_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a7d88ec2cb929cdccaf5ea3e7bfea1afff1369a21e7ee8b5ddf05284af7a2494"
     },
     {
         "file":  "dwarf_female_paladin_black_001.png",
@@ -390,6 +440,16 @@
         "sha256":  "8fc8ac0c375e6d8d370624bb91ae724a837b744ed01f41352e6c1ed84705d187"
     },
     {
+        "file":  "dwarf_nonbinary_monk_white_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "283a2a339af2a2b6fe6547f9f2178baa85bd95c8fce3f6e2a6c21ac290f0cd3c"
+    },
+    {
         "file":  "dwarf_nonbinary_paladin_east_asian_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -398,6 +458,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "805fcf9cce75e06733b817cd6132dfed57cd4857d8579bdb98cf47f9fa75337e"
+    },
+    {
+        "file":  "dwarf_nonbinary_paladin_white_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0ebd6f87ff6728583aead8ef88a8ceb539786487b8dcaa60c54c788258be0d60"
     },
     {
         "file":  "dwarf_nonbinary_warlock_black_001.png",
@@ -560,6 +630,26 @@
         "sha256":  "a2dac90f96e08f21f99d55e101136949d877e6d51edbd1a4e284c32527003de5"
     },
     {
+        "file":  "elf_male_monk_black_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e2f7523737b1444fffffe96bb58596e974acede15992a8b00a8bfb940631a90f"
+    },
+    {
+        "file":  "elf_male_paladin_black_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "dd049aa096c0d76b4c4cc8e3ed07f7c6422818e703f726dc4d24c657c586b2b6"
+    },
+    {
         "file":  "elf_male_ranger_black_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -640,6 +730,16 @@
         "sha256":  "3de4565c5e84bb90d86549a189acb5cf31f4bbab24d346db26eb8d96d5ac1216"
     },
     {
+        "file":  "elf_nonbinary_monk_white_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ab092435b6894280bb1553b5d535b1035a6ed6289e75babe7d3de9e6d4bb1e54"
+    },
+    {
         "file":  "elf_nonbinary_paladin_south_asian_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -718,6 +818,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "407e7631aaeb87fc01718a612b4c286722968edd5614a0d60d70fda3d326a59d"
+    },
+    {
+        "file":  "gnome_female_monk_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "2f8b8ffda7f735737ec6768c3b0dfb31da29b638e8e709e2da9719026a6a53e0"
+    },
+    {
+        "file":  "gnome_female_paladin_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c3a653fbefc5cdbf1fdec71cf5111bcd35b9971639e66cb742b823d5fe71b08d"
     },
     {
         "file":  "gnome_male_barbarian_mena_001.png",
@@ -850,6 +970,16 @@
         "sha256":  "c46f0f547cba91a3ca919f0a0b11b4ac1d0a7f16d42c4c208550387f83460589"
     },
     {
+        "file":  "gnome_nonbinary_monk_white_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "978cb2adb8a34f7aa2d592f0d54121e4a4dbcd7ff6a43eef464d982ca2e5159f"
+    },
+    {
         "file":  "gnome_nonbinary_paladin_black_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -930,6 +1060,16 @@
         "sha256":  "5d69bb5174cd994d8fd441a6b782d209e3066f8d68d5b28102474d1511e435c4"
     },
     {
+        "file":  "goliath_female_monk_varied_001.png",
+        "species":  "goliath",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "742364c3926514e70e0452abdcbca152dcc56172ecf0c50180c3476a8ce8b205"
+    },
+    {
         "file":  "goliath_female_rogue_varied_001.png",
         "species":  "goliath",
         "gender":  "female",
@@ -988,6 +1128,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c0d75289fb64d2c613a7209581c6494e86b600d61f69201c553fbe3a83b422cc"
+    },
+    {
+        "file":  "goliath_male_monk_varied_001.png",
+        "species":  "goliath",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9856dcce5f67bca7179d15af4aa48db4a83ba5741aa78999c4e2f74c10b112b0"
     },
     {
         "file":  "goliath_male_paladin_varied_001.png",
@@ -1050,6 +1200,26 @@
         "sha256":  "c05a7e260afdc3d278bd3753f810daf7487100d3aafeb9df653ab96414a222e3"
     },
     {
+        "file":  "goliath_nonbinary_monk_varied_001.png",
+        "species":  "goliath",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c807efb69a0461138216330b9307054091b0e01a4efadc0d44f54291b4b07158"
+    },
+    {
+        "file":  "goliath_nonbinary_paladin_varied_001.png",
+        "species":  "goliath",
+        "gender":  "nonbinary",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "986b3e58b4086f402bd6d1132bfd0e140cb2abd9941fa7bc38b6d7e4de6a02f2"
+    },
+    {
         "file":  "halfling_female_barbarian_varied_001.png",
         "species":  "halfling",
         "gender":  "female",
@@ -1100,6 +1270,26 @@
         "sha256":  "47bfc84a1b9cbd29570df48610c166c8d008f7172dcbdb3892f9d60869092e23"
     },
     {
+        "file":  "halfling_female_monk_varied_001.png",
+        "species":  "halfling",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "83623b5db3d6a8ec2d9152b8080153ad7401f78f7c2babbb99185c8e5537c2f4"
+    },
+    {
+        "file":  "halfling_female_paladin_varied_001.png",
+        "species":  "halfling",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a3b0db1e4c34bc24fc7206ac7abbd5c6b53e70f5eb5924d503ad3ab7f32e7586"
+    },
+    {
         "file":  "halfling_male_barbarian_varied_001.png",
         "species":  "halfling",
         "gender":  "male",
@@ -1148,6 +1338,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "3dff955266f9ee8ef9744317f47887837d1569fd2a8db0c517da098d540fd8ca"
+    },
+    {
+        "file":  "halfling_male_monk_varied_001.png",
+        "species":  "halfling",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "57de68c8309de823be4317227a8cfd6730a863c5fc47b280dd607c0037961917"
     },
     {
         "file":  "halfling_male_sorcerer_varied_001.png",
@@ -1208,6 +1408,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "501c1862492676dcbc68946a5c3535b20490ba10d7c6a8d33b933273c53a0491"
+    },
+    {
+        "file":  "halfling_nonbinary_monk_varied_001.png",
+        "species":  "halfling",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "dae6ba86f3d74e88fced7f808ff63d02d750b56cd656075c1e5f2eab1bb1fe68"
     },
     {
         "file":  "human_female_barbarian_black_001.png",
@@ -1278,6 +1488,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "e6822f4c48e25ca7c3abce72c021525b9c7662f3b488f6631f0d0d2b16400135"
+    },
+    {
+        "file":  "human_female_monk_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d391b638015dd512ee04974733518aaff2d35b97dbcd7b5a9ef76a1050f6cc46"
+    },
+    {
+        "file":  "human_female_paladin_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "paladin",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f63c91a905085452d950e94938a5ddf3b5b24df52cf1ba300da93200822aa9d7"
     },
     {
         "file":  "human_female_rogue_east_asian_001.png",
@@ -1358,6 +1588,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "1ab1dab41aaf73f4b995c40ff8a19a652c2e1dde731e8b9c23daaa64f8b6a015"
+    },
+    {
+        "file":  "human_male_monk_black_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "436c3a5986b02886a2ec568dcf8fb6c0ab911fc7a0dca2913a0a7a829f26f23b"
     },
     {
         "file":  "human_male_paladin_black_001.png",
@@ -1510,6 +1750,16 @@
         "sha256":  "b283896e36c0b416b8ea2a166df1776d38fa7202bf93b23aa0223c09735d58cd"
     },
     {
+        "file":  "orc_female_monk_varied_001.png",
+        "species":  "orc",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "5c36f7269a2a1d7aec861939aca99af525e16c745a5ad51eac2d04ed6a820c33"
+    },
+    {
         "file":  "orc_male_bard_varied_001.png",
         "species":  "orc",
         "gender":  "male",
@@ -1560,6 +1810,16 @@
         "sha256":  "2a8a9bdd553c60a31537db0e58f2ac532f844c9e8e59c53135c1a73670d49b19"
     },
     {
+        "file":  "orc_male_paladin_varied_001.png",
+        "species":  "orc",
+        "gender":  "male",
+        "class":  "paladin",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b37769fb833be5caf9c8343ae5ec86813b8adb1f29bd64a3ce4a7f0f5436c07e"
+    },
+    {
         "file":  "orc_nonbinary_barbarian_varied_001.png",
         "species":  "orc",
         "gender":  "nonbinary",
@@ -1608,6 +1868,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d333a060f265e0c215b7c749e4a7ad1af9ef35cd1708ea14745efcedce50e943"
+    },
+    {
+        "file":  "orc_nonbinary_monk_varied_001.png",
+        "species":  "orc",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bfebd6fb6f0eac9edea0806998b7ff078a38bfc8002f36579de7a1cbc705752b"
     },
     {
         "file":  "orc_nonbinary_warlock_varied_001.png",
@@ -1670,6 +1940,16 @@
         "sha256":  "c690a6c38aab323f8a9f00f6c41b78b9037848bc39d63777e8da0d8287fccd0d"
     },
     {
+        "file":  "tiefling_female_monk_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b6d49321367501a81f6737d20e6c45f4b560dc114f7e54866cd9e17fb1329f22"
+    },
+    {
         "file":  "tiefling_female_wizard_varied_001.png",
         "species":  "tiefling",
         "gender":  "female",
@@ -1730,6 +2010,16 @@
         "sha256":  "885c00b7b7f211e35feb820d86ae02c3cb62ef9f2c4df7ed96889d71888958be"
     },
     {
+        "file":  "tiefling_male_monk_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a891d5e4a18f073cf0cc22c5a25e6f4a22ae77785d8eb03c77420e60ce83913c"
+    },
+    {
         "file":  "tiefling_nonbinary_barbarian_varied_001.png",
         "species":  "tiefling",
         "gender":  "nonbinary",
@@ -1778,6 +2068,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "0f0be3c5843e4246619ee11100455eaf136e4923b118af7c41afce821c0b709c"
+    },
+    {
+        "file":  "tiefling_nonbinary_monk_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bea7a26185cc291e689820e69c57e787873108071958f9c92215a79bd40a7362"
     },
     {
         "file":  "tiefling_nonbinary_ranger_varied_001.png",

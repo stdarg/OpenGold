@@ -1,0 +1,11 @@
+{
+  "name": "dragonborn_nonbinary_monk_varied_001",
+  "species": "dragonborn",
+  "gender": "nonbinary",
+  "class": "monk",
+  "appearance": "varied",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Dragonborn, a fully draconic humanoid with a scaled dragon face, pronounced reptilian muzzle, horns and no human hair; clearly not a human wearing a mask; non-binary adult (gender is catalog metadata, not an anatomical stereotype), individual gender expression and natural presentation. Appearance: Distinctive natural variation appropriate to this fantasy species. Class: monk; simple layered earth-tone martial wraps, unarmored shoulders, centered attentive expression. Distinct individual variation seed: 657; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: young adult, about 25; near frontal view, calm thoughtful expression. Scales in charcoal black, a distinctive draconic muzzle and horn silhouette.Keep the established painted finish and large readable face.",
+  "order": 524,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-7e60c8cd-5c61-485e-ac17-7fb5128b5fa0.png",
+  "tool": "built-in image_gen"
+}
