@@ -1,0 +1,11 @@
+{
+  "name": "elf_female_druid_indigenous_american_001",
+  "species": "elf",
+  "gender": "female",
+  "class": "druid",
+  "appearance": "indigenous_american",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Elf with clearly visible long pointed ears, elegant angular facial structure and subtle fey grace; female adult. Appearance: Indigenous American-inspired appearance, warm copper-brown skin and natural facial features; no ceremonial headdress or ethnic costume stereotypes. Class: druid; woven moss-green layers with wooden fastenings and subtle leaf accents, calm perceptive expression. Distinct individual variation seed: 208; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: young adult, about 25; three-quarter view facing slightly right, resolute expression. close-shaved scalp. Keep the established painted finish and large readable face.",
+  "order": 321,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-7c547f8d-d89f-43d9-87f8-862f431abc8b.png",
+  "tool": "built-in image_gen"
+}

@@ -30,6 +30,16 @@
         "sha256":  "e56bdb44bce54b790239276a7e10a80fd41dacdf40cf8bbb738ba484a9e2b261"
     },
     {
+        "file":  "dragonborn_female_druid_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0d88a991340d456cfc2fc86f6d24bba1929c85e6347edf4ab1b097660a8644e6"
+    },
+    {
         "file":  "dragonborn_female_wizard_varied_001.png",
         "species":  "dragonborn",
         "gender":  "female",
@@ -70,6 +80,16 @@
         "sha256":  "bd2010ad83e45dcdfa2aff0fc48e1dbdb5e50095607832a20a3d41f4019e8937"
     },
     {
+        "file":  "dragonborn_male_druid_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "812c15fdc0a8eab4296873d54b4fd7443508539f9a38cbd13f3b214f4709e41c"
+    },
+    {
         "file":  "dragonborn_nonbinary_barbarian_varied_001.png",
         "species":  "dragonborn",
         "gender":  "nonbinary",
@@ -88,6 +108,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "f4d5c3d87eedca0467bffc379dc67070f6812d5114acfdd29f0355c8df647dda"
+    },
+    {
+        "file":  "dragonborn_nonbinary_cleric_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "nonbinary",
+        "class":  "cleric",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c087dfe56bc262fbffe86288a6fb2f68067e43e40e1a8dc57a99863f02b22302"
+    },
+    {
+        "file":  "dragonborn_nonbinary_druid_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1f33b9e41406e4a14b852ef1bcc7d669ad1a06436e3a48bdbc29f436b716c73e"
     },
     {
         "file":  "dragonborn_nonbinary_ranger_varied_001.png",
@@ -128,6 +168,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "63b39e7545f589b858cedc89b74b342ac94945b7db01a55b196e0c41f330f0ca"
+    },
+    {
+        "file":  "dwarf_female_cleric_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "cleric",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "269f13c9f9fc57732e8a1c6ab83098666372ed8b03de9e0afd1e579286ceebab"
+    },
+    {
+        "file":  "dwarf_female_druid_indigenous_american_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "927357449f3208dd337b84d1bc2d7c2b34253d92db4d81c74f92e1b175bc3a58"
     },
     {
         "file":  "dwarf_female_fighter_indigenous_american_001.png",
@@ -188,6 +248,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "e4c908879af1fb219c310370df1899304740547cd11638b5417419000e37b27c"
+    },
+    {
+        "file":  "dwarf_male_druid_black_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "006e950776f839cffcee2d2fcec874e7ec37a29c7dafffdda9d91024524405c6"
     },
     {
         "file":  "dwarf_male_druid_south_asian_001.png",
@@ -260,6 +330,16 @@
         "sha256":  "df03c7bb8acbb23337785496ae3da5d0e5f8ed8e7a80539233957090401c4a7f"
     },
     {
+        "file":  "dwarf_nonbinary_druid_latino_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d73379a937e90284f2ac14989a59ad7f5711c6577ca4491190b182c4a476bac2"
+    },
+    {
         "file":  "dwarf_nonbinary_paladin_east_asian_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -318,6 +398,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b6c02a075d6f51b7beac71ec8b38d8c6bc5b98b34ad31a68b2fc1df7e097ffd1"
+    },
+    {
+        "file":  "elf_female_druid_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a84664396501b4e3729e2313143a8bde3fafb14bb6afef9777ff10cd9bcb945a"
     },
     {
         "file":  "elf_female_fighter_indigenous_american_001.png",
@@ -380,6 +470,16 @@
         "sha256":  "3d109a79884d909585d1332dc65d7eaf0e3d615af9cd3f09ff0fc1764a0a490b"
     },
     {
+        "file":  "elf_male_druid_mena_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "85f270e72155144b375b0801e2e95ef6883c7fcf320f93180d6cb6801c93989c"
+    },
+    {
         "file":  "elf_male_fighter_latino_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -430,6 +530,16 @@
         "sha256":  "5f5499327115eb7efe77354ac1d7639116311abb9389c44a29ba7f8170c4bfd9"
     },
     {
+        "file":  "elf_nonbinary_cleric_latino_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "cleric",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "35740761ad91235bec22ead2a6dbda902f62cc13b6ceb6c5afeeaebdcc3e2673"
+    },
+    {
         "file":  "elf_nonbinary_cleric_white_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -438,6 +548,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "402293551318a964706587a0a1b97c279459b89e97904aa3b19c3e0a84809e34"
+    },
+    {
+        "file":  "elf_nonbinary_druid_latino_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "6f0b2ffb729d1f0d54d7f6700c5473a743ce300fecc63acb08dbfe41ced6023b"
     },
     {
         "file":  "elf_nonbinary_paladin_south_asian_001.png",
@@ -490,6 +610,16 @@
         "sha256":  "24a39665d4926e2425faf63d62b12d3592293e20573b386ba595526cd87bbc21"
     },
     {
+        "file":  "gnome_female_druid_indigenous_american_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "3aa15821f1fffdbc50314fda684100b45b8c8464660a30109da3beb770a2eda7"
+    },
+    {
         "file":  "gnome_female_fighter_south_asian_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -518,6 +648,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "3dfbf25d6b4e8f287470058dc5206412e84433700b5708176dafa362bf8d3897"
+    },
+    {
+        "file":  "gnome_male_cleric_black_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "cleric",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "48d8d35341a21ff88bed882ebb07aaa47114816b245576d0794f62567f347a00"
+    },
+    {
+        "file":  "gnome_male_druid_black_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a599f24487fa7d905ec3fb93cf41046aefd9b66b0560f2ce76939728fec918e6"
     },
     {
         "file":  "gnome_male_druid_east_asian_001.png",
@@ -580,6 +730,16 @@
         "sha256":  "26ede944b57396f67ac00326a5dca034ed14ee4102fd8683d8c39437eb707aa0"
     },
     {
+        "file":  "gnome_nonbinary_druid_white_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "6d9258dd0dfd5e8d8500c5d70e41b660dbdd8ada1b25096abfb90e980bc8979a"
+    },
+    {
         "file":  "gnome_nonbinary_paladin_black_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -628,6 +788,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "00eaaaa2ac8f3c5d6bdad5ccdbade516b3d782f0d9faa7ebf53614b8f68cb710"
+    },
+    {
+        "file":  "goliath_female_cleric_varied_001.png",
+        "species":  "goliath",
+        "gender":  "female",
+        "class":  "cleric",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "987fa3b91677828cad1ca3331a07d716dce77891eae3035eb85463bb576b3bf4"
+    },
+    {
+        "file":  "goliath_female_druid_varied_001.png",
+        "species":  "goliath",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "373442dcfc086de9117bfaee7ce8ff09c7a38a7850c57aad3383a8c0742613e3"
     },
     {
         "file":  "goliath_female_rogue_varied_001.png",
@@ -750,6 +930,16 @@
         "sha256":  "392ca4d606847d7cbe91c6bb824c41de2d7d4b7ef94a2f78739be55c98e42e9f"
     },
     {
+        "file":  "halfling_female_druid_varied_001.png",
+        "species":  "halfling",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "7d803f88429e1ea3508f0f071151c97660c5c5861a027df8ceab5f049457120a"
+    },
+    {
         "file":  "halfling_female_fighter_varied_001.png",
         "species":  "halfling",
         "gender":  "female",
@@ -778,6 +968,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b8d07567f93e5b890a5d5ecb1c458da94d776163e7779e6b6c269609e8501698"
+    },
+    {
+        "file":  "halfling_male_cleric_varied_001.png",
+        "species":  "halfling",
+        "gender":  "male",
+        "class":  "cleric",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "71f08f77a19bb61d74fb388d4d4a2ae3c4389fce99c09900265ea7fd6ffcc33b"
+    },
+    {
+        "file":  "halfling_male_druid_varied_001.png",
+        "species":  "halfling",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c3da2399a0e9b34a5bc45c5885700d55c20913774ffb8921a00231c337cd48d6"
     },
     {
         "file":  "halfling_male_sorcerer_varied_001.png",
@@ -860,6 +1070,16 @@
         "sha256":  "221c031cd6aa6c31ea9427bd23a2f949485cd95c71b80bd3968634f56b081359"
     },
     {
+        "file":  "human_female_druid_south_asian_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "56db105b6f8494b729cf7946efb57eac1e4889abea3dca3c045350fb658d26ba"
+    },
+    {
         "file":  "human_female_fighter_east_asian_001.png",
         "species":  "human",
         "gender":  "female",
@@ -910,6 +1130,16 @@
         "sha256":  "9ced908377c9d73ec71ffe3cc76e82cdd2746a85c25c71391626a5e24a5463d3"
     },
     {
+        "file":  "human_male_cleric_mena_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "cleric",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "12886bea02035ce2a533ead1211e1c7e330f511c8c3c94ef521020154d637093"
+    },
+    {
         "file":  "human_male_druid_black_001.png",
         "species":  "human",
         "gender":  "male",
@@ -918,6 +1148,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "85075415a9cc7ad87582bcf6295d7a098cbdbb2bbd223a727997b6444ee81d8d"
+    },
+    {
+        "file":  "human_male_druid_mena_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "635203df9090c385b3a572ca3eb2a0bc9ce466d85acb07c302a19d487f19aa21"
     },
     {
         "file":  "human_male_paladin_black_001.png",
@@ -1050,6 +1290,16 @@
         "sha256":  "353a54b41d278cf5840fcfa25283b6b66d932fd0c73ebab7b31c7d6cb52640bb"
     },
     {
+        "file":  "orc_male_druid_varied_001.png",
+        "species":  "orc",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "432a5502a2589098dfb8e95d20636df6af1327195639cb7d8687fc2f2b2a8cc2"
+    },
+    {
         "file":  "orc_male_monk_varied_001.png",
         "species":  "orc",
         "gender":  "male",
@@ -1080,6 +1330,26 @@
         "sha256":  "2b6c8e4ca1e184dc3d13048db77187f70828e278acf412ef5d427688af48e39b"
     },
     {
+        "file":  "orc_nonbinary_cleric_varied_001.png",
+        "species":  "orc",
+        "gender":  "nonbinary",
+        "class":  "cleric",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1335632b2d4fe562d05f1e6e3c2f5d4ab2c5293d49f5d6526c192a7a01449790"
+    },
+    {
+        "file":  "orc_nonbinary_druid_varied_001.png",
+        "species":  "orc",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "983800afd925d0ffc066f55800719da5412acc2cb04f7329205362df69645511"
+    },
+    {
         "file":  "orc_nonbinary_warlock_varied_001.png",
         "species":  "orc",
         "gender":  "nonbinary",
@@ -1108,6 +1378,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "f8504611a704b4d9a38f3e9d4d92b284e953620030b73be50a1763ac6b6d41f9"
+    },
+    {
+        "file":  "tiefling_female_cleric_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "female",
+        "class":  "cleric",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "92f0a3ed4da8f0a9f21cb9ff15c0e98378d2c7f6947280e0aa90a14c084dd6f2"
+    },
+    {
+        "file":  "tiefling_female_druid_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "00d8e5793c6f18c2d85bd82bc4e89c531b8d52b64a9709de6cb6cbc028939174"
     },
     {
         "file":  "tiefling_female_wizard_varied_001.png",
@@ -1178,6 +1468,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "30dfa9a7fa7a5783e2188c42cd2438c74893ce961d2bf9ecc6681e034e4483b7"
+    },
+    {
+        "file":  "tiefling_nonbinary_druid_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a02c70259077411a241b1a5391b193023bb0c55a18280b6c3c79bce1821fb8ea"
     },
     {
         "file":  "tiefling_nonbinary_ranger_varied_001.png",
