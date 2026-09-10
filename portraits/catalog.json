@@ -230,6 +230,16 @@
         "sha256":  "6a2deb155ca3e77ff13854896efc7d37fb5e73f6d60cd2d4bbf4c6ea1b674a86"
     },
     {
+        "file":  "dragonborn_male_wizard_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f937a7f33a96e92ec62f7443daf3bd5a1e00aaa3dc3ecaeec31bdb9476eb4bc3"
+    },
+    {
         "file":  "dragonborn_nonbinary_barbarian_varied_001.png",
         "species":  "dragonborn",
         "gender":  "nonbinary",
@@ -338,6 +348,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "b5b6a2f20a1831f936464d228b4ed6b8356c9d51edea8aa281e28886365bb4db"
+    },
+    {
+        "file":  "dragonborn_nonbinary_wizard_varied_001.png",
+        "species":  "dragonborn",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d224acf94c31301c9c52a65a88f7d353309ad0077ed5727cfc89a22b4d1f2a57"
+    },
+    {
+        "file":  "dwarf_female_barbarian_mena_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f5e3e3dca533eb0a7ee25acdffb53c0abf7d4f23678d54ea166afa557771fc79"
     },
     {
         "file":  "dwarf_female_barbarian_south_asian_001.png",
@@ -478,6 +508,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "15189fcceab79dd8f438f3441c5769b209d2d10d0d5e2d92bd956495c9d63ee3"
+    },
+    {
+        "file":  "dwarf_female_wizard_white_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0515bfaacd6502b5f9089c809ae6c02188f823f30dbd63c695add087485a22af"
     },
     {
         "file":  "dwarf_male_barbarian_mena_001.png",
@@ -630,6 +670,16 @@
         "sha256":  "f61de45107e1dbdf71e02a09f4836f5b45a50cd17170eb105d8c05f4c8120fbb"
     },
     {
+        "file":  "dwarf_nonbinary_barbarian_south_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1ea60ca9c53d4729e83f962986f3cd3b14ebacdb7c1a566f391b01da4e5c1330"
+    },
+    {
         "file":  "dwarf_nonbinary_bard_latino_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -748,6 +798,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "38f74482901a5b9825e07fbea7804af93c91923e8787f0b7ba128a9ded6d766a"
+    },
+    {
+        "file":  "dwarf_nonbinary_wizard_black_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "9b91c3aa8d7d16696e35852c402c2cfd1b9a164247c377e4612f7c65ed2a94ba"
+    },
+    {
+        "file":  "elf_female_barbarian_mena_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "474811e98e55b3f25c1d40629d13818157414f87132f07dca83afff6182bc096"
     },
     {
         "file":  "elf_female_barbarian_south_asian_001.png",
@@ -890,6 +960,16 @@
         "sha256":  "5f03f79cba67f95be32ec53d94de4985321ce0b127a06b39d92253bbf6e275dd"
     },
     {
+        "file":  "elf_male_barbarian_east_asian_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1c43e53113727e4c8852429ce3d441a876d46fa0ed00f97335fb309a11c1e575"
+    },
+    {
         "file":  "elf_male_barbarian_white_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -1030,6 +1110,16 @@
         "sha256":  "5d600e1332d222947da85b82a7d0d8a083a1b6fb66ff9b84429b4c4692ae8bfe"
     },
     {
+        "file":  "elf_male_wizard_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c133a7e5f243abef9d33b59c1dc8dd4d4173797f9cc2cfb1848118075e513f03"
+    },
+    {
         "file":  "elf_nonbinary_barbarian_east_asian_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -1038,6 +1128,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "03154531911150713f73f2d715a7cf01e7dd37d5cccb2d41d0727783c1f3a8c2"
+    },
+    {
+        "file":  "elf_nonbinary_barbarian_south_asian_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "41dcf1b3fee2d018c8572517f6cad46a21c6eb7b7961ad614f6506dd4b835211"
     },
     {
         "file":  "elf_nonbinary_bard_east_asian_001.png",
@@ -1158,6 +1258,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "cdacd0e6d43c6dbfc00bb9376eec0d39845fc9ae4429593f06dab21c8d5da124"
+    },
+    {
+        "file":  "elf_nonbinary_wizard_black_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b32c55f2a599be64c966d02b159c00caa3fac8cff7b01348ed093c9dc2458323"
+    },
+    {
+        "file":  "gnome_female_barbarian_mena_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0ab07e1c9dfc73c7e55aa37cac79e1ada0652e582c4a859f04c0ee6104c2f750"
     },
     {
         "file":  "gnome_female_barbarian_south_asian_001.png",
@@ -1290,6 +1410,26 @@
         "sha256":  "76dc8f22c3645e916113def6d6256c9a5da9215779c7e10f79979a83c89c49a6"
     },
     {
+        "file":  "gnome_female_wizard_white_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "c19efb7a620752476e4e001a4fd2c69a16439a5a913f0e429460a517589bda9f"
+    },
+    {
+        "file":  "gnome_male_barbarian_latino_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "071f787880dd9ad018a969d349d60c7efbc6039add8f62723995ec469907ed21"
+    },
+    {
         "file":  "gnome_male_barbarian_mena_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -1418,6 +1558,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "31ee7073f5bf8de29d2b981c1203c72674eb00283e5b163cea7079ae03f7e224"
+    },
+    {
+        "file":  "gnome_male_wizard_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1ec4a22d057192632b1293f5a93879000be9cc4491944f3ccf307b2b1dffbd58"
     },
     {
         "file":  "gnome_nonbinary_barbarian_latino_001.png",
@@ -1670,6 +1820,16 @@
         "sha256":  "ff323747c6d713ae4acc343f7144561f70f3cdb8874afda8ebd250e84f4613f5"
     },
     {
+        "file":  "goliath_female_wizard_varied_001.png",
+        "species":  "goliath",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b5ce2c9bda7a14115cc01bee2a313452ab033c42716a5a388af4d85cac4d18de"
+    },
+    {
         "file":  "goliath_male_barbarian_varied_001.png",
         "species":  "goliath",
         "gender":  "male",
@@ -1900,6 +2060,16 @@
         "sha256":  "be81efe1089d1e86d3202d1b1226c5f828cbbabc56e5ecb6df2a57d6ffcdbb6e"
     },
     {
+        "file":  "goliath_nonbinary_wizard_varied_001.png",
+        "species":  "goliath",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "7cef932f385fa221200ef5dc40257edb058f372c88a37c4e5baa6ca21006bdf0"
+    },
+    {
         "file":  "halfling_female_barbarian_varied_001.png",
         "species":  "halfling",
         "gender":  "female",
@@ -2008,6 +2178,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "806d98e1a13a7fe26ebb814d0c59bd68be1d6ebb1d8704e4d28f1d3d7e8091fa"
+    },
+    {
+        "file":  "halfling_female_wizard_varied_001.png",
+        "species":  "halfling",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "1383dc46513909aa4c4d677551c04344de491825161a81057aed42e2ec72c45e"
     },
     {
         "file":  "halfling_male_barbarian_varied_001.png",
@@ -2120,6 +2300,16 @@
         "sha256":  "b46e0f1d48592fa4fcd377f51378676e7b5e0973cf5a1da8dfc77faa335e6eff"
     },
     {
+        "file":  "halfling_male_wizard_varied_001.png",
+        "species":  "halfling",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "bd11b21c8f217d3ed0a0d0e68c84e61d8866cd1ea34da2a510ea6d26296fbb23"
+    },
+    {
         "file":  "halfling_nonbinary_barbarian_varied_001.png",
         "species":  "halfling",
         "gender":  "nonbinary",
@@ -2230,6 +2420,16 @@
         "sha256":  "7aad6a083e87f43f199d05a5afa172e747dc3c379b1a5212634cfa18a3b36329"
     },
     {
+        "file":  "halfling_nonbinary_wizard_varied_001.png",
+        "species":  "halfling",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d94aad40c3fc945ccbfc76d7a7a157536a9ec179daa304110ff5ab93789a1e13"
+    },
+    {
         "file":  "human_female_barbarian_black_001.png",
         "species":  "human",
         "gender":  "female",
@@ -2238,6 +2438,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "83e8ce704f41587402109fcd362830aeb13ac6932ff35bd9d5845ef09ea9aa9c"
+    },
+    {
+        "file":  "human_female_barbarian_white_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "barbarian",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "0d58d8e6c7fdb4536a334764c394298ce22cae166e83f2633a49c7a21bb139e0"
     },
     {
         "file":  "human_female_bard_mena_001.png",
@@ -2358,6 +2568,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c4b6b30de211817d89a02c59b1df5254fc6fe6ebb8a22ac9bba235ff151941e8"
+    },
+    {
+        "file":  "human_female_wizard_latino_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "02a5f77528da691ae7d2f6b6dd60547d69c011bc857ad7326472351bb79ae9dd"
+    },
+    {
+        "file":  "human_male_barbarian_east_asian_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "barbarian",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "837618f6e2107909e72df8f35549872baecef59f19cc2186d871d4492e9f0a01"
     },
     {
         "file":  "human_male_barbarian_white_001.png",
@@ -2500,6 +2730,16 @@
         "sha256":  "bbb9e52384d0b410bace4acc746d02820f42b1adf9d59f3fc12eb9e409338e22"
     },
     {
+        "file":  "human_male_wizard_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "24636537edc7f73cc0c8d8b12ad751a3da6c383760ef66fc2393a38156cd1e47"
+    },
+    {
         "file":  "human_nonbinary_barbarian_east_asian_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -2508,6 +2748,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d60f4f2259048451ff502e52fde91e06428bb123d383500c351b83c7d2d8974b"
+    },
+    {
+        "file":  "human_nonbinary_barbarian_south_asian_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "barbarian",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "f45af152c08203aade474d8958fce4bd657197e8b7ffd121163c7c79d7462c49"
     },
     {
         "file":  "human_nonbinary_bard_east_asian_001.png",
@@ -2740,6 +2990,16 @@
         "sha256":  "b9d0f8ae946d5d3d98fdc093a0fffd55d094268c37ab45dd3fdbd1219098d72f"
     },
     {
+        "file":  "orc_female_wizard_varied_001.png",
+        "species":  "orc",
+        "gender":  "female",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "fa6dcafbd7cee648712facb7fc0ec3656b94104d97263c9371449191f308fd71"
+    },
+    {
         "file":  "orc_male_bard_varied_001.png",
         "species":  "orc",
         "gender":  "male",
@@ -2838,6 +3098,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a1d6affaa8c834e85620c0c60ea394e7589e337d241a143d10347f7879cf91c1"
+    },
+    {
+        "file":  "orc_male_wizard_varied_001.png",
+        "species":  "orc",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "a371ea4c36178132cb5cf047064fce9ed263da3aed6c9d2ba9ddbacf0c232ecd"
     },
     {
         "file":  "orc_nonbinary_barbarian_varied_001.png",
@@ -2948,6 +3218,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "d557b4360a7b08816256feae942b7c14d83a262be5bbb6303438ecdcc6a4b2b4"
+    },
+    {
+        "file":  "orc_nonbinary_wizard_varied_001.png",
+        "species":  "orc",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "d2d8a5474757bd3883b7f6b586036c06e3ae734c5833eb0b839ccb7bd365e488"
     },
     {
         "file":  "tiefling_female_barbarian_varied_001.png",
@@ -3180,6 +3460,16 @@
         "sha256":  "43e765d2b0b6443c5e69c3cdc77e63b169c27334c3c1f3da1621206997d5fdfe"
     },
     {
+        "file":  "tiefling_male_wizard_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "male",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "177e9be031b0f84837e1c07bd12b654c4b94764d81c8c2cc964f08c5d8b80453"
+    },
+    {
         "file":  "tiefling_nonbinary_barbarian_varied_001.png",
         "species":  "tiefling",
         "gender":  "nonbinary",
@@ -3288,5 +3578,15 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "1d76203991eccd4e92d5454eb10e71aba3434066d74dc44671c0a0f9a0622454"
+    },
+    {
+        "file":  "tiefling_nonbinary_wizard_varied_001.png",
+        "species":  "tiefling",
+        "gender":  "nonbinary",
+        "class":  "wizard",
+        "appearance":  "varied",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "2c591da3eac09ff8925a3cb40bbd6dc900d917f6ff35c8a5ef0f0fb902928286"
     }
 ]
