@@ -1,0 +1,11 @@
+{
+  "name": "dwarf_female_fighter_black_001",
+  "species": "dwarf",
+  "gender": "female",
+  "class": "fighter",
+  "appearance": "black",
+  "prompt": "Use case: stylized-concept. Create one original finished fantasy RPG character portrait for OpenGold. Target 1024x1024 square or larger native square. One complete unified chest-up portrait, never separate head/body parts. Traditional hand-painted fantasy CRPG portrait aesthetic, realistic textured brushwork, rich restrained palette, soft warm key light and muted dark charcoal atmospheric background. Face large and readable as a small party icon, full top of head including horns within frame, shoulders visible, breathing room above head. All characters adults with individual faces and varied adult ages; fantasy anatomy must clearly communicate the species. Practical class clothing, no sexualized poses. Single individual only; no collage, panels, borders, text, watermark, logos or existing copyrighted characters. Original independently designed artwork, not derived from the screenshot or original game assets.\nSubject: Dwarf with a broad sturdy face, strong nose, compact neck and stocky powerful shoulders; female adult. Appearance: Black-inspired appearance, deep brown skin, naturally textured tightly curled hair where appropriate. Class: fighter; weathered practical steel armor with leather straps, disciplined expression, sword hilt at edge. Distinct individual variation seed: 351; use this only to vary age, hairstyle, face, pose and costume detail, never render numbers.\nIndividual art direction: mature adult, about 45; three-quarter view facing slightly right, resolute expression. short tight curls. Keep the established painted finish and large readable face.",
+  "order": 10402,
+  "source": "C:\\Users\\imper\\.codex\\generated_images\\01a088ad-4dd2-7c80-96dd-f17c71292ca6\\exec-8e82586e-9a04-4fd4-a153-9e2b73692d23.png",
+  "tool": "built-in image_gen"
+}

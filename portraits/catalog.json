@@ -430,6 +430,16 @@
         "sha256":  "269f13c9f9fc57732e8a1c6ab83098666372ed8b03de9e0afd1e579286ceebab"
     },
     {
+        "file":  "dwarf_female_druid_black_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "cf8146f040843fcb9e566485a9e608e275df0422ffb1855cc0af2deb74ebe445"
+    },
+    {
         "file":  "dwarf_female_druid_indigenous_american_001.png",
         "species":  "dwarf",
         "gender":  "female",
@@ -438,6 +448,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "927357449f3208dd337b84d1bc2d7c2b34253d92db4d81c74f92e1b175bc3a58"
+    },
+    {
+        "file":  "dwarf_female_fighter_black_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "fighter",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "2c5b64a94714530dca465fdece3455b4a79567a7438e332d56a3163115c9e69c"
     },
     {
         "file":  "dwarf_female_fighter_indigenous_american_001.png",
@@ -458,6 +478,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a7d88ec2cb929cdccaf5ea3e7bfea1afff1369a21e7ee8b5ddf05284af7a2494"
+    },
+    {
+        "file":  "dwarf_female_monk_south_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "46b27fd596737694cb166e910c155405d9faec2b482217faffac25adba1c666b"
     },
     {
         "file":  "dwarf_female_paladin_black_001.png",
@@ -620,6 +650,16 @@
         "sha256":  "a530395ba55e8104812ba2dd3991b46135cb0db28f75055af59a0015d080d6c0"
     },
     {
+        "file":  "dwarf_male_druid_white_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e9f3c87ac076a7ad95932e29d55db170df70aa68bd8edc63c58326300f81f9d0"
+    },
+    {
         "file":  "dwarf_male_fighter_black_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -630,6 +670,16 @@
         "sha256":  "5234b2dc59831a589c0194221df066a860a5a96868300425af73de93443b0fdf"
     },
     {
+        "file":  "dwarf_male_fighter_white_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "fighter",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "2a980838aef8991eb86a08c2474c54f82cd4b1e0327f280a697300a4828239de"
+    },
+    {
         "file":  "dwarf_male_monk_black_001.png",
         "species":  "dwarf",
         "gender":  "male",
@@ -638,6 +688,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "a2fac66c984884a662902a9ddc9e900feff62cb0978657953cb719b65383315e"
+    },
+    {
+        "file":  "dwarf_male_monk_white_001.png",
+        "species":  "dwarf",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "874f2a92af1aef33e6bcd40ef16b113e3fffc0af034b9d47d17b87623c65b3d3"
     },
     {
         "file":  "dwarf_male_paladin_south_asian_001.png",
@@ -800,6 +860,16 @@
         "sha256":  "d73379a937e90284f2ac14989a59ad7f5711c6577ca4491190b182c4a476bac2"
     },
     {
+        "file":  "dwarf_nonbinary_fighter_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "fighter",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "fc4d91456968797f48f3d7bf3ea2599a846ce0dc24d134119962b12e37ea824a"
+    },
+    {
         "file":  "dwarf_nonbinary_fighter_white_001.png",
         "species":  "dwarf",
         "gender":  "nonbinary",
@@ -808,6 +878,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "8fc8ac0c375e6d8d370624bb91ae724a837b744ed01f41352e6c1ed84705d187"
+    },
+    {
+        "file":  "dwarf_nonbinary_monk_east_asian_001.png",
+        "species":  "dwarf",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "4172078e1e410228ab484822d2bfb9316d416845a521c9fc5f18a8b84dcab7a4"
     },
     {
         "file":  "dwarf_nonbinary_monk_white_001.png",
@@ -960,6 +1040,16 @@
         "sha256":  "b6c02a075d6f51b7beac71ec8b38d8c6bc5b98b34ad31a68b2fc1df7e097ffd1"
     },
     {
+        "file":  "elf_female_druid_black_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "druid",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e8e77b19b2563b1cd8cc173a587d0e2ffc09d3dae03b620ce06e92875f5f3296"
+    },
+    {
         "file":  "elf_female_druid_indigenous_american_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -970,6 +1060,16 @@
         "sha256":  "a84664396501b4e3729e2313143a8bde3fafb14bb6afef9777ff10cd9bcb945a"
     },
     {
+        "file":  "elf_female_fighter_black_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "fighter",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "70c5c8f38a600e8b4b27eda11de0ae856c537a2d4084c57a5f74e96179cdfe70"
+    },
+    {
         "file":  "elf_female_fighter_indigenous_american_001.png",
         "species":  "elf",
         "gender":  "female",
@@ -978,6 +1078,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "5d856ccc460a72d56c1da5063511d3f1adcd67ba9e9a18d35bc69300f0da8928"
+    },
+    {
+        "file":  "elf_female_monk_black_001.png",
+        "species":  "elf",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "212ca9813ca89d7b965cb06a98eefdf8cd6597ab580ba7c6431c80b68c008697"
     },
     {
         "file":  "elf_female_monk_indigenous_american_001.png",
@@ -1170,6 +1280,16 @@
         "sha256":  "a2dac90f96e08f21f99d55e101136949d877e6d51edbd1a4e284c32527003de5"
     },
     {
+        "file":  "elf_male_fighter_white_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "fighter",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "4b5db694e7f7fd482b6e44efd207e14acc304ba87c976a8c03d48c60496266a9"
+    },
+    {
         "file":  "elf_male_monk_black_001.png",
         "species":  "elf",
         "gender":  "male",
@@ -1178,6 +1298,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "e2f7523737b1444fffffe96bb58596e974acede15992a8b00a8bfb940631a90f"
+    },
+    {
+        "file":  "elf_male_monk_white_001.png",
+        "species":  "elf",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b06ffdcb8ddff2add9cabf432b89b9f2425a2011736ca9f62801100671d0bd90"
     },
     {
         "file":  "elf_male_paladin_black_001.png",
@@ -1320,6 +1450,16 @@
         "sha256":  "402293551318a964706587a0a1b97c279459b89e97904aa3b19c3e0a84809e34"
     },
     {
+        "file":  "elf_nonbinary_druid_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "e1eeaa59b227991080e06a565826d5401f09eb5175d4aa198c7eeef3ed5363b2"
+    },
+    {
         "file":  "elf_nonbinary_druid_latino_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -1330,6 +1470,16 @@
         "sha256":  "6f0b2ffb729d1f0d54d7f6700c5473a743ce300fecc63acb08dbfe41ced6023b"
     },
     {
+        "file":  "elf_nonbinary_fighter_indigenous_american_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "fighter",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "770201f63d1b86c90fd84822ec71d01874be16c703c5bf6d19bc8bf0b3090527"
+    },
+    {
         "file":  "elf_nonbinary_fighter_latino_001.png",
         "species":  "elf",
         "gender":  "nonbinary",
@@ -1338,6 +1488,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "3de4565c5e84bb90d86549a189acb5cf31f4bbab24d346db26eb8d96d5ac1216"
+    },
+    {
+        "file":  "elf_nonbinary_monk_east_asian_001.png",
+        "species":  "elf",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "3a053b404251f49ace58cd173bc4f9ddaca89ff9da09b49b53ee59e4b0be55b8"
     },
     {
         "file":  "elf_nonbinary_monk_white_001.png",
@@ -1540,6 +1700,16 @@
         "sha256":  "2f8b8ffda7f735737ec6768c3b0dfb31da29b638e8e709e2da9719026a6a53e0"
     },
     {
+        "file":  "gnome_female_monk_south_asian_001.png",
+        "species":  "gnome",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "south_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "cb17b103bb508e54cbad7dd5680dfcbea605a5798af785c5385ec969986e73fc"
+    },
+    {
         "file":  "gnome_female_paladin_east_asian_001.png",
         "species":  "gnome",
         "gender":  "female",
@@ -1680,6 +1850,16 @@
         "sha256":  "94128b0a316f84318a404fd18885808bf51601f1522d3f54f25d1169051835c6"
     },
     {
+        "file":  "gnome_male_druid_white_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "druid",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "32661a4cd3883999e65fe392c51521177b617e4cf59aaaa93e6ab416e41a0d9d"
+    },
+    {
         "file":  "gnome_male_fighter_black_001.png",
         "species":  "gnome",
         "gender":  "male",
@@ -1688,6 +1868,26 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "0c97c09bb9dd7a666b44a7e05b3dd6bc65bc413aaf366cfe884aa76ebad25808"
+    },
+    {
+        "file":  "gnome_male_fighter_white_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "fighter",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "b02870e04234bcc42aa31e9146f3a0b4dac18811d7182d27ec216c004d9b834a"
+    },
+    {
+        "file":  "gnome_male_monk_mena_001.png",
+        "species":  "gnome",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "mena",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "27fc0df6f28f75177981bfb674d59d1b897860cb4d75880dac02715e141b3765"
     },
     {
         "file":  "gnome_male_monk_south_asian_001.png",
@@ -1830,6 +2030,16 @@
         "sha256":  "26ede944b57396f67ac00326a5dca034ed14ee4102fd8683d8c39437eb707aa0"
     },
     {
+        "file":  "gnome_nonbinary_druid_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "348593b3c7a5e8f6c42e8a1b4ac548817147884abb7b886865a971c4a1f1e8c8"
+    },
+    {
         "file":  "gnome_nonbinary_druid_white_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -1840,6 +2050,16 @@
         "sha256":  "6d9258dd0dfd5e8d8500c5d70e41b660dbdd8ada1b25096abfb90e980bc8979a"
     },
     {
+        "file":  "gnome_nonbinary_fighter_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "fighter",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "ff4172cc974845237a27c3a4b1227f5f235b836ced3c90363164203e6c426f80"
+    },
+    {
         "file":  "gnome_nonbinary_fighter_white_001.png",
         "species":  "gnome",
         "gender":  "nonbinary",
@@ -1848,6 +2068,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c46f0f547cba91a3ca919f0a0b11b4ac1d0a7f16d42c4c208550387f83460589"
+    },
+    {
+        "file":  "gnome_nonbinary_monk_east_asian_001.png",
+        "species":  "gnome",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "east_asian",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8475ad9033de1ae62ce0da6ccb56543af11b27e2dbaf311d8f314a4b70001173"
     },
     {
         "file":  "gnome_nonbinary_monk_white_001.png",
@@ -2740,6 +2970,16 @@
         "sha256":  "56db105b6f8494b729cf7946efb57eac1e4889abea3dca3c045350fb658d26ba"
     },
     {
+        "file":  "human_female_fighter_black_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "fighter",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "3d21f05d414e204863b769e7f42ce337dfe9375377a556416de02a4ac82a3c47"
+    },
+    {
         "file":  "human_female_fighter_east_asian_001.png",
         "species":  "human",
         "gender":  "female",
@@ -2758,6 +2998,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "e6822f4c48e25ca7c3abce72c021525b9c7662f3b488f6631f0d0d2b16400135"
+    },
+    {
+        "file":  "human_female_monk_black_001.png",
+        "species":  "human",
+        "gender":  "female",
+        "class":  "monk",
+        "appearance":  "black",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "57d6c88bd8209b0e4f3c5c82ad68a95868b6e2432c3bb2fbe315710e362fdfdd"
     },
     {
         "file":  "human_female_monk_indigenous_american_001.png",
@@ -2930,6 +3180,16 @@
         "sha256":  "635203df9090c385b3a572ca3eb2a0bc9ce466d85acb07c302a19d487f19aa21"
     },
     {
+        "file":  "human_male_fighter_latino_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "fighter",
+        "appearance":  "latino",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "8cd619b938161a0251a8fd80d91a22fd20ff8de3429b207ccf94524b6f28d4c4"
+    },
+    {
         "file":  "human_male_fighter_mena_001.png",
         "species":  "human",
         "gender":  "male",
@@ -2948,6 +3208,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "436c3a5986b02886a2ec568dcf8fb6c0ab911fc7a0dca2913a0a7a829f26f23b"
+    },
+    {
+        "file":  "human_male_monk_white_001.png",
+        "species":  "human",
+        "gender":  "male",
+        "class":  "monk",
+        "appearance":  "white",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "954c6c0f043d254331f44504b6ee9dc36960436964106ecdb51ca27de7baa524"
     },
     {
         "file":  "human_male_paladin_black_001.png",
@@ -3080,6 +3350,16 @@
         "sha256":  "fc6b21c1e1c031f1046bc17e45b32924ab93f11992eb8bd16b3f1ab8c9028c5a"
     },
     {
+        "file":  "human_nonbinary_druid_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "druid",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "178158c20c1d197f74ac5d72195f7184221cc3aa0613b51c26f8f321c7328b08"
+    },
+    {
         "file":  "human_nonbinary_druid_latino_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -3090,6 +3370,16 @@
         "sha256":  "5297e76345eef524b204f51bfb2cd8d5480303f44ca4233a2eeaba6f5e856a2b"
     },
     {
+        "file":  "human_nonbinary_fighter_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "fighter",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "45f22c5c87ee796d181f49eaabfbef8d2e98301469a83422cf800afdb9ac849c"
+    },
+    {
         "file":  "human_nonbinary_fighter_latino_001.png",
         "species":  "human",
         "gender":  "nonbinary",
@@ -3098,6 +3388,16 @@
         "width":  1254,
         "height":  1254,
         "sha256":  "c09f3d0413ea8310fedb048803d236478846886ab572fefe2db0597a62b3080e"
+    },
+    {
+        "file":  "human_nonbinary_monk_indigenous_american_001.png",
+        "species":  "human",
+        "gender":  "nonbinary",
+        "class":  "monk",
+        "appearance":  "indigenous_american",
+        "width":  1254,
+        "height":  1254,
+        "sha256":  "48673b915a438ccf90da0565718ebff77b7841bcdc7379a28b96cc3a6aaca369"
     },
     {
         "file":  "human_nonbinary_monk_latino_001.png",
