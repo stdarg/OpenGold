@@ -1,0 +1,32 @@
+{
+  "human-female-wizard-01.png": {
+    "Class": "Wizard",
+    "Gender": "Female",
+    "Race": "Human"
+  },
+  "orc-female-paladin-01.png": {
+    "Class": "Paladin",
+    "Gender": "Female",
+    "Race": "Orc"
+  },
+  "elf-nonbinary-rogue-01.png": {
+    "Class": "Rogue",
+    "Gender": "Nonbinary",
+    "Race": "Elf"
+  },
+  "dwarf-male-cleric-01.png": {
+    "Class": "Cleric",
+    "Gender": "Male",
+    "Race": "Dwarf"
+  },
+  "goliath-male-ranger-01.png": {
+    "Class": "Ranger",
+    "Gender": "Male",
+    "Race": "Goliath"
+  },
+  "tiefling-nonbinary-bard-01.png": {
+    "Class": "Bard",
+    "Gender": "Nonbinary",
+    "Race": "Tiefling"
+  }
+}
