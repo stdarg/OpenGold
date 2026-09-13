@@ -65,7 +65,7 @@ void prepare_script(const std::filesystem::path& directory)
     if (!program) return;
     EclMachine machine(program);
     machine.bind_variable(0xC04F, 1); // Explicit research input: event byte.
-    machine.seed_random(1234);      // Reproducible OpenGold sequence.
+    machine.seed_random(1234);      // Reproducible OpenGoldBox sequence.
     // Bind all other required variables and provide real engine services.
     if (!machine.start(1)) return;
     const auto result = machine.run(1000);
@@ -286,7 +286,7 @@ revisit state; loot, campaign persistence and original battlefield loading remai
 Create minimal ECL fixtures for GETTABLE comparison flags, RANDOM's upper endpoint,
 conditional-skip quirks and runtime script writes. Run them in an isolated copy
 of the original DOS game and compare instruction addresses, operands, condition
-flags and memory changes with OpenGold. Use Companion's ECL-monitor for live
+flags and memory changes with OpenGoldBox. Use Companion's ECL-monitor for live
 script/flag observation and debugger breakpoints for instruction-level questions;
 the [audit](script-source-audit.md) links the tools and relevant handler ranges.
 Record the executable version and resource hashes with every observation.
@@ -332,7 +332,7 @@ pinned revision `eac30abaa6ee66aea6f5d65ebe6d676b10015a8f`:
 - Its [map loader](https://github.com/bsimser/Gold-Box-Explorer/blob/eac30abaa6ee66aea6f5d65ebe6d676b10015a8f/src/Common/Plugins/GeoDax/GeoDaxFile.cs#L92)
   recognizes three immediate operands and stores them as wall-set IDs in encoded
   order: `(a, b, c)`. It scans raw byte patterns and keeps the first valid
-  candidate; this is not proof that the command executes. OpenGold's inventory
+  candidate; this is not proof that the command executes. OpenGoldBox's inventory
   should use decoded instruction paths, since embedded data can resemble opcodes.
 - Its [wall renderer](https://github.com/bsimser/Gold-Box-Explorer/blob/eac30abaa6ee66aea6f5d65ebe6d676b10015a8f/src/Common/Plugins/GeoDax/GeoDaxFileViewer.cs#L634)
   assigns successive groups of wall types to those sets. It derives each group's
@@ -342,7 +342,7 @@ pinned revision `eac30abaa6ee66aea6f5d65ebe6d676b10015a8f`:
   PoR rules.
 - Its [ECL disassembler](https://github.com/bsimser/Gold-Box-Explorer/blob/eac30abaa6ee66aea6f5d65ebe6d676b10015a8f/src/Common/Plugins/DaxEcl/Commands.cs#L277)
   prints LOAD PIECES operands in **reverse encoded order**. Number operands from
-  the tagged bytecode and OpenGold decoder, not from that textual listing.
+  the tagged bytecode and OpenGoldBox decoder, not from that textual listing.
 
 Explorer supports multiple games and is not an execution oracle. These findings
 support a testable hypothesis; they do not close the compatibility gap.
@@ -414,7 +414,7 @@ first-person wall rendering needs the verified selection behavior.
 
 Build a native, resumable ECL interpreter for the Pool of Radiance DOS release.
 Keep binary decoding, script execution, game rules, and presentation separate.
-Execute original ECL through explicit OpenGold operations; original machine-code
+Execute original ECL through explicit OpenGoldBox operations; original machine-code
 routines and DOS addresses must never become native calls or pointers.
 
 The first playable milestone is one verified location event that displays text,
@@ -670,7 +670,7 @@ pointers. Restore only against matching assets and supported snapshot versions.
 Permit saves initially at defined boundaries: idle or waiting on a supported
 serializable request. An interrupted combat is not resumable until combat state
 has its own snapshot contract. Pending UI requests are reconstructed on load;
-completed mutations are not reissued. This provides OpenGold saves, not automatic
+completed mutations are not reissued. This provides OpenGoldBox saves, not automatic
 compatibility with original DOS save files.
 
 Extend the map review tool with a read-only script inspector: candidate programs

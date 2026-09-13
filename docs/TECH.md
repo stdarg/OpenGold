@@ -1,14 +1,14 @@
-# OpenGold Technical Design Document
+# OpenGoldBox Technical Design Document
 
 Date: 2026-08-29
 Status: Draft v0.1
-Project: OpenGold
+Project: OpenGoldBox
 
 ## 1. Purpose
 
-This document captures the current technical design for OpenGold based on the technology decisions discussed in the "Pool of Radiance Re-Master" project chat. It complements the current PRD in `docs/PRD.md` by translating product direction into an implementable architecture.
+This document captures the current technical design for OpenGoldBox based on the technology decisions discussed in the "Pool of Radiance Re-Master" project chat. It complements the current PRD in `docs/PRD.md` by translating product direction into an implementable architecture.
 
-OpenGold is intended to be a modern, open-source reimplementation of the SSI Gold Box engine that:
+OpenGoldBox is intended to be a modern, open-source reimplementation of the SSI Gold Box engine that:
 
 - uses user-supplied original game files at runtime
 - preserves original progression and content behavior while using the selected combat rules module
@@ -19,7 +19,7 @@ OpenGold is intended to be a modern, open-source reimplementation of the SSI Gol
 
 This design is based on these decisions and strong preferences from the referenced chat:
 
-- use `OpenGold` as the project identity rather than a Pool of Radiance-branded product
+- use `OpenGoldBox` as the project identity rather than a Pool of Radiance-branded product
 - build the presentation layer with `Godot 4.x`
 - use `C/C++` for both engine logic and Godot-facing code
 - keep the core engine independent from the renderer and UI
@@ -87,7 +87,7 @@ One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and t
 
 ## 5. High-Level Architecture
 
-OpenGold should be implemented as a small set of clearly separated modules:
+OpenGoldBox should be implemented as a small set of clearly separated modules:
 
 ```text
 src/
@@ -122,7 +122,7 @@ This layer converts raw files into typed structures. It should not contain gamep
 
 ### `OpenGold.Core`
 
-Responsible for engine behavior implemented by OpenGold:
+Responsible for engine behavior implemented by OpenGoldBox:
 
 - world state
 - party state
@@ -176,7 +176,7 @@ The intended runtime flow is:
 ```text
 User selects Pool of Radiance installation
         ↓
-OpenGold validates required files
+OpenGoldBox validates required files
         ↓
 OpenGold.Formats decodes DAX/ECL/maps/items/graphics
         ↓
@@ -187,7 +187,7 @@ OpenGold.Core simulates gameplay
 OpenGold.Godot renders state and collects player input
 ```
 
-The original SSI executable never runs. OpenGold interprets game data through its own code.
+The original SSI executable never runs. OpenGoldBox interprets game data through its own code.
 
 ## 7. Reverse Engineering Approach
 
@@ -213,7 +213,7 @@ The key rule is that repository artifacts should describe file formats and obser
 
 ## 8. Content and Asset Strategy
 
-OpenGold must not ship copyrighted Pool of Radiance assets or data. The application should:
+OpenGoldBox must not ship copyrighted Pool of Radiance assets or data. The application should:
 
 - prompt the user to locate a valid game installation
 - verify required files are present
@@ -226,7 +226,7 @@ It must not:
 - ship original maps, text, portraits, or music
 - convert copyrighted assets into distributable project content
 
-This keeps the distribution limited to OpenGold-authored code, UI, shaders, and documentation.
+This keeps the distribution limited to OpenGoldBox-authored code, UI, shaders, and documentation.
 
 ## 9. Graphics and Rendering Design
 
@@ -299,10 +299,10 @@ This cache is a local optimization, not a distributed asset pack.
 
 The ECL system is a critical part of the design.
 
-OpenGold should:
+OpenGoldBox should:
 
 - decode ECL resources into typed instruction data
-- execute those instructions in an OpenGold-owned runtime
+- execute those instructions in an OpenGoldBox-owned runtime
 - let original scripts drive progression and event behavior where practical
 
 Target flow:
@@ -314,7 +314,7 @@ EclDecoder
    ↓
 Instruction stream / IR
    ↓
-OpenGold ECL runtime
+OpenGoldBox ECL runtime
    ↓
 Core state changes, encounters, dialogs, flags, transitions
 ```
@@ -471,4 +471,4 @@ The current technical recommendation is:
 - shader-based graphics enhancement with `xBR`-style filtering
 - test-driven compatibility work from the start
 
-This gives OpenGold the best balance of faithfulness, maintainability, legal caution, and room to grow into a reusable Gold Box engine.
+This gives OpenGoldBox the best balance of faithfulness, maintainability, legal caution, and room to grow into a reusable Gold Box engine.

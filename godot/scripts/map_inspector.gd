@@ -21,7 +21,7 @@ func _ready() -> void:
 	get_window().min_size = Vector2i(1100, 720)
 	RenderingServer.set_default_clear_color(Color("101722"))
 	var title := Label.new()
-	title.text = "OpenGold  /  Map inspector"
+	title.text = "OpenGoldBox  /  Map inspector"
 	title.add_theme_font_size_override("font_size", 26)
 	title.position = Vector2(32, 18)
 	add_child(title)

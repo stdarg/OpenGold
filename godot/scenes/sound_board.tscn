@@ -9,7 +9,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Eyebrow" type="Label" parent="."]
-text = "OPENGOLD / POOL OF RADIANCE"
+text = "OPENGOLDBOX / POOL OF RADIANCE"
 theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.475, 0.839, 0.831, 1)
 

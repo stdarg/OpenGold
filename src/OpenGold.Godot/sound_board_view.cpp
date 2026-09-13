@@ -36,7 +36,7 @@ void SoundBoardView::_notification(int what)
 void SoundBoardView::_ready()
 {
     ready_=true;get_window()->set_min_size(Vector2i(960,760));
-    get_window()->set_title("OpenGold - Pool of Radiance Sound Board");
+    get_window()->set_title("OpenGoldBox - Pool of Radiance Sound Board");
     // Node lookups are borrowed from the scene tree; resources use Godot Ref RAII.
     for(int i=0;i<21;++i) {
         auto* button=get_node<Button>(button_name(i));

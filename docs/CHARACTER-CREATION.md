@@ -42,7 +42,7 @@ launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
    abilities do not meet the SRD multiclass prerequisite of 13 are disabled.
    Fighter requires Strength or Dexterity; Monk and Ranger require Dexterity
    and Wisdom; Paladin requires Strength and Charisma. Applying these minimums
-   to the initial class is the requested OpenGold house rule, not an SRD
+   to the initial class is the requested OpenGoldBox house rule, not an SRD
    level-one restriction. Background bonuses count toward eligibility.
    Return to Attributes to change assignments or bonuses if needed.
 5. Enter a name, up to 40 characters. There is no separate HP step.
@@ -149,7 +149,7 @@ archive IDs and indexed combat pixels. No extracted artwork is distributed.
   identical copies of an ID and rejects conflicting copies. It exposes the
   available original parts, without claiming a race/class-specific selection
   list. A head is 88 x 40 pixels, followed by an 88 x 48 body.
-- The ten approved [OpenGold heads](../data/art/portraits/README.md) are loaded
+- The ten approved [OpenGoldBox heads](../data/art/portraits/README.md) are loaded
   in addition to the original heads. Their stable IDs 256..265 do not overlap
   the original byte-sized DAX IDs and are retained in `CharacterAppearance`.
   `build-rolf.cmd` copies their source PNGs into `godot/bin/portraits/`;

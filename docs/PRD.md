@@ -1,20 +1,20 @@
-# Product Requirements Document: OpenGold
+# Product Requirements Document: OpenGoldBox
 
 **Document:** PRD.md  
-**Project:** OpenGold  
+**Project:** OpenGoldBox
 **Status:** Draft / Living Document  
 **Primary Platform:** Desktop PC  
 **Target OS:** Windows, Linux, macOS  
 **Engine:** Godot 4.x  
 **Core Language:** C/C++  
 **Godot Integration:** GDExtension  
-**License for Original OpenGold Code:** MPL-2.0
+**License for Original OpenGoldBox Code:** MPL-2.0
 
 ---
 
 ## 1. Product Summary
 
-OpenGold is an open-source modernization and reimplementation of the 1988 SSI *Pool of Radiance* game experience.
+OpenGoldBox is an open-source modernization and reimplementation of the 1988 SSI *Pool of Radiance* game experience.
 
 The project aims to preserve the campaign, content structure, maps, encounters, and feel of the original game while replacing its DOS-era executable and interface with a modern, maintainable implementation.
 
@@ -26,9 +26,9 @@ campaign/script behavior and encounter identities/counts through explicit
 conversion adapters. The first milestone uses an approved fixed party, curated
 monsters and authored test arena; see [implementation scope](RULES.md).
 
-OpenGold is **not** intended to redistribute copyrighted SSI, TSR, Wizards of the Coast, or other third-party game assets. Users must provide their own legally obtained copy of the original game files. OpenGold will read and interpret those files at runtime.
+OpenGoldBox is **not** intended to redistribute copyrighted SSI, TSR, Wizards of the Coast, or other third-party game assets. Users must provide their own legally obtained copy of the original game files. OpenGoldBox will read and interpret those files at runtime.
 
-The project should ultimately allow a player who owns the original game to launch OpenGold, point it at the original game data, and play a faithful version of *Pool of Radiance* through a modern interface.
+The project should ultimately allow a player who owns the original game to launch OpenGoldBox, point it at the original game data, and play a faithful version of *Pool of Radiance* through a modern interface.
 
 ---
 
@@ -141,7 +141,7 @@ Original SSI file
       ↓
 Binary parser
       ↓
-Validated OpenGold data structures
+Validated OpenGoldBox data structures
       ↓
 Game engine
       ↓
@@ -228,7 +228,7 @@ The preferred architecture is:
                      GDExtension
                           |
 +-------------------------v-------------------------+
-|               OpenGold C/C++ Core                 |
+|             OpenGoldBox C/C++ Core                 |
 |                                                   |
 | Game State | Combat | Rules | Characters | Maps   |
 | Events | Inventory | Saving | Data Interpretation |
@@ -302,7 +302,7 @@ Original copyrighted game files must not be committed to the repository.
 
 ### 9.1 User-Owned Assets
 
-OpenGold should require the player to supply the original *Pool of Radiance* installation files.
+OpenGoldBox should require the player to supply the original *Pool of Radiance* installation files.
 
 The application should provide an initial setup flow that:
 
@@ -315,7 +315,7 @@ The application should provide an initial setup flow that:
 
 ### 9.2 Asset Policy
 
-The OpenGold repository must not contain:
+The OpenGoldBox repository must not contain:
 
 - original SSI art,
 - original maps,
@@ -332,7 +332,7 @@ Small byte sequences used solely for tests should preferably be synthetic.
 
 The original files should remain authoritative whenever practical.
 
-OpenGold may:
+OpenGoldBox may:
 
 - parse them at runtime,
 - cache derived representations,
@@ -372,7 +372,7 @@ For each subsystem:
 4. Document the discovered format or behavior.
 5. Create synthetic tests.
 6. Implement equivalent behavior independently.
-7. Compare OpenGold output against the original game.
+7. Compare OpenGoldBox output against the original game.
 8. Record discrepancies.
 
 ### 10.3 Documentation Standard
@@ -692,9 +692,9 @@ Controller support is desirable but not required for the first playable mileston
 
 ## 14. Save Games
 
-### 14.1 OpenGold Save Format
+### 14.1 OpenGoldBox Save Format
 
-OpenGold may use its own versioned save format.
+OpenGoldBox may use its own versioned save format.
 
 The format should include enough information to restore:
 
@@ -769,7 +769,7 @@ Original campaign behavior should remain separately selectable.
 
 ## 17. Diagnostics and Developer Tools
 
-Reverse engineering will be much easier if OpenGold includes small inspection tools.
+Reverse engineering will be much easier if OpenGoldBox includes small inspection tools.
 
 Useful tools include:
 
@@ -805,7 +805,7 @@ original input
       ↓
 expected observations
 
-OpenGold input
+OpenGoldBox input
       ↓
 actual observations
 
@@ -859,7 +859,7 @@ When users provide game files locally, optional developer tests may compare deco
 
 ## 19. Error Handling
 
-OpenGold should fail loudly and usefully when data cannot be interpreted.
+OpenGoldBox should fail loudly and usefully when data cannot be interpreted.
 
 Bad:
 
@@ -884,7 +884,7 @@ Reverse-engineering projects live or die by good diagnostics.
 
 ## 20. Security
 
-OpenGold processes externally supplied binary files.
+OpenGoldBox processes externally supplied binary files.
 
 All parsers must treat game data as untrusted input.
 
@@ -922,9 +922,9 @@ Frame rate is not a meaningful simulation constraint.
 
 ## 22. Licensing
 
-### 22.1 OpenGold Source Code
+### 22.1 OpenGoldBox Source Code
 
-Original OpenGold source code should be licensed under:
+Original OpenGoldBox source code should be licensed under:
 
 **Mozilla Public License 2.0 (MPL-2.0)**
 
@@ -944,7 +944,7 @@ Each dependency should be documented.
 
 ### 22.3 Original Game Rights
 
-The OpenGold license does not grant rights to:
+The OpenGoldBox license does not grant rights to:
 
 - *Pool of Radiance*
 - Dungeons & Dragons
@@ -960,7 +960,7 @@ The README should make this distinction explicit.
 
 ## 23. Project Naming
 
-**OpenGold** is the current working project name.
+**OpenGoldBox** is the current working project name.
 
 The name reflects the project's relationship to the Gold Box lineage without claiming ownership of the original trademarks.
 
@@ -1010,7 +1010,7 @@ Do **not** begin by implementing the entire game.
 
 The first phase should answer the question:
 
-> Can OpenGold reliably interpret original game resources and present them through Godot?
+> Can OpenGoldBox reliably interpret original game resources and present them through Godot?
 
 ### Milestone 0: Repository Bootstrap
 
@@ -1040,7 +1040,7 @@ Deliver:
 
 **Success criterion:**
 
-> OpenGold renders one original *Pool of Radiance* image correctly from the user's game files.
+> OpenGoldBox renders one original *Pool of Radiance* image correctly from the user's game files.
 
 This is the project's first vertical slice.
 
@@ -1160,7 +1160,7 @@ It provides a visible result without requiring speculative architecture for the 
 
 The minimum playable product is achieved when a player can:
 
-1. install OpenGold,
+1. install OpenGoldBox,
 2. select a valid original *Pool of Radiance* installation,
 3. create or load a party,
 4. enter the campaign,
@@ -1181,7 +1181,7 @@ The game must, however, be completable.
 
 ## 28. Definition of Version 1.0
 
-OpenGold 1.0 should meet the following bar:
+OpenGoldBox 1.0 should meet the following bar:
 
 ### Gameplay
 
@@ -1315,4 +1315,4 @@ The following items require further investigation:
 
 ## 32. Product Principle in One Sentence
 
-**OpenGold is an open-source C/C++ and Godot reimplementation of SSI's 1988 *Pool of Radiance* that uses player-supplied original game assets to preserve the original gameplay while providing a modern, portable interface.**
+**OpenGoldBox is an open-source C/C++ and Godot reimplementation of SSI's 1988 *Pool of Radiance* that uses player-supplied original game assets to preserve the original gameplay while providing a modern, portable interface.**

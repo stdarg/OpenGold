@@ -3,7 +3,7 @@
 The sound board reads the user's `START.EXE` on startup. It unpacks EXEPACK
 in memory, decodes the sound sequences, and synthesizes PC-speaker PCM in memory.
 It never saves an unpacked executable, extracted sound data, or audio files.
-No original executable instructions run in OpenGold.
+No original executable instructions run in OpenGoldBox.
 
 ## Sources and scope
 

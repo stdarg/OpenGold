@@ -1,6 +1,6 @@
 # Complete character portraits
 
-Original AI-generated painted fantasy portraits for OpenGold, made with the built-in image generation tool. These are complete portraits, not interchangeable heads and bodies, and are not extracted from Icewind Dale or Pool of Radiance.
+Original AI-generated painted fantasy portraits for OpenGoldBox, made with the built-in image generation tool. These are complete portraits, not interchangeable heads and bodies, and are not extracted from Icewind Dale or Pool of Radiance.
 
 Target: native square PNGs at least 1024 pixels per side, suitable for the character sheet and later party-icon cropping. Preserve the original generated files at their native resolution.
 

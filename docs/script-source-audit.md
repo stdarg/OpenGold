@@ -74,10 +74,10 @@ already selects only the actual branch and reads tables as data.
 | Topic | Current decision / next evidence needed |
 | --- | --- |
 | GETTABLE condition flags | Preserves flags. The FAQ's detailed IF-handler list mentions GETTABLE, but its GETTABLE description and Explorer do not describe a flag update. Trace/disassemble `19B5:0E5E..0EBB` before introducing a new side effect. |
-| RANDOM upper endpoint | Uses the saturated increment described for `19B5:0234..0291`, so argument 255 produces 0..254. The general opcode prose suggests an inclusive bound instead. Ordinary bounds are tested; verify the 255 corner case against DOS. OpenGold's seedable RNG intentionally has a different sequence. |
+| RANDOM upper endpoint | Uses the saturated increment described for `19B5:0234..0291`, so argument 255 produces 0..254. The general opcode prose suggests an inclusive bound instead. Ordinary bounds are tested; verify the 255 corner case against DOS. OpenGoldBox's seedable RNG intentionally has a different sequence. |
 | Conditional skip quirks | Skips one whole decoded instruction. The original has skip bugs for some variable-length/other commands; bug-for-bug behavior needs specific traces, not a general broken decoder. |
 | `0x1F` | Two-operand grammar, undefined handler. Execution faults; it is not a guessed command or silent success. |
-| ECL CLOCK | One operand is confirmed. Original execution uses an uninitialized value, so OpenGold faults instead of inventing elapsed time. |
+| ECL CLOCK | One operand is confirmed. Original execution uses an uninitialized value, so OpenGoldBox faults instead of inventing elapsed time. |
 | Runtime code changes | Private script writes and subsequent fetches are implemented and isolated. Original self-modifying command sequences still need a dedicated DOS compatibility trace. |
 | Mapped engine fields | Bindings are explicit research state. Character-name special handling, selected-creature views, position/wall updates, time and inventory must be connected to authoritative world objects. |
 | Engine services | Opcodes have opt-in host requests, not complete gameplay implementations. Reply acceptance means the registered host has performed the service. The native console registers none of these services. |
@@ -92,7 +92,7 @@ versus loading map resources. These are separate operations in the request API.
 
 The next validation step is to record a DOS event using Companion's monitor or
 a debugger and compare request PCs, decoded operands, state writes and branch
-choices with OpenGold. Start with the existing Slums event fixture, replacing its
+choices with OpenGoldBox. Start with the existing Slums event fixture, replacing its
 mock fight result with an observed result. Then cover map transitions, a text
 input event, party queries and a table-driven random encounter. Record executable
 version and resource hashes with each trace; findings from another release must

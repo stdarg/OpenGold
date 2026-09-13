@@ -19,7 +19,7 @@ review-combat.cmd
 ```
 
 The existing build helper builds both native Godot scenes and runs five test
-suites. Close any running OpenGold scene before rebuilding its shared DLL.
+suites. Close any running OpenGoldBox scene before rebuilding its shared DLL.
 See [native build prerequisites](ROLF.md#build-boundary).
 
 Training uses one martial fixture against an SRD Bandit and needs no original

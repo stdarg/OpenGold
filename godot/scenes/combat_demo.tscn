@@ -11,7 +11,7 @@ grow_vertical = 2
 [node name="Title" type="Label" parent="."]
 theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
 theme_override_font_sizes/font_size = 27
-text = "OPENGOLD / Turn-based combat"
+text = "OPENGOLDBOX / Turn-based combat"
 
 [node name="Subtitle" type="Label" parent="."]
 theme_override_font_sizes/font_size = 17

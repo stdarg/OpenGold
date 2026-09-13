@@ -2,7 +2,7 @@
 
 `combat.rules` is a small, offline, curated combat pack, revision
 `srd-5.2.1-demo.1`. The runtime validates it directly; it makes no HTTP requests.
-Open5E provides reference data, while OpenGold implements executable behavior.
+Open5E provides reference data, while OpenGoldBox implements executable behavior.
 
 `open5e-bandit.json` is the complete Open5E response fetched on 2026-09-06 from:
 

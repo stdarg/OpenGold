@@ -94,7 +94,7 @@ private:
     std::uint32_t pc_{};
     std::map<std::uint16_t, std::uint16_t> variables_;
     std::vector<std::uint8_t> image_;
-    std::mt19937 random_{5489U}; // Reproducible OpenGold RNG, not the DOS RNG sequence.
+    std::mt19937 random_{5489U}; // Reproducible OpenGoldBox RNG, not the DOS RNG sequence.
     std::set<std::uint8_t> host_opcodes_;
     std::map<std::uint32_t, std::uint32_t> instruction_spans_;
     std::vector<std::uint32_t> stack_, trace_;

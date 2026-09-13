@@ -1,5 +1,9 @@
 # Campaign saves
 
+The OpenGoldBox rename preserves the original `user://` location using an explicit
+custom user directory. Existing saves remain accessible without moving files.
+The `OPENGOLD-CAMPAIGN` format identifier is unchanged for compatibility.
+
 The shared character/party/New Phlan flow supports manual named campaign saves.
 The first Slums expedition also supports saving during idle exploration, including
 its district map, script continuation and deferred original loot. Format version

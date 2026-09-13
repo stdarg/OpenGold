@@ -1,6 +1,6 @@
 # Original game artwork
 
-New OpenGold portrait artwork for male and female Gnomes, Orcs, Goliaths,
+New OpenGoldBox portrait artwork for male and female Gnomes, Orcs, Goliaths,
 Tieflings and Dragonborn is in [Additional portrait heads](../data/art/portraits/README.md).
 The native character creator now includes these heads, fits them to its
 portrait panel at load time, and retains their approved colors.

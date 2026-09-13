@@ -1,4 +1,4 @@
-# OpenGold contributor guidance
+# OpenGoldBox contributor guidance
 
 - Use RAII for every owned resource in native code.
 - Do not represent ownership with raw pointers. Prefer value types and standard
@@ -25,7 +25,7 @@
 
 - Read docs/TECH.md and the relevant requirements before selecting
   an implementation approach.
-- Follow OpenGold's established Godot 4.x, C++20, and GDExtension
+- Follow OpenGoldBox's established Godot 4.x, C++20, and GDExtension
   architecture and documented language boundaries.
 - Reuse existing components, build tools, and launch conventions.
 - Do not introduce another UI stack, runtime, or framework without

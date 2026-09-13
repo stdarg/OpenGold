@@ -9,7 +9,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Title" type="Label" parent="."]
-text = "OPENGOLD / Create a character"
+text = "OPENGOLDBOX / Create a character"
 theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
 
@@ -150,7 +150,7 @@ autowrap_mode = 2
 theme_override_font_sizes/font_size = 16
 
 [node name="Footer" type="Label" parent="."]
-text = "Original game art + OpenGold portraits / SRD 5.2.1"
+text = "Original game art + OpenGoldBox portraits / SRD 5.2.1"
 theme_override_font_sizes/font_size = 14
 
 [node name="Ability0" type="Button" parent="."]

@@ -74,7 +74,7 @@ void RolfTourView::_ready()
     const auto args=OS::get_singleton()->get_cmdline_user_args();
     town_check_=args.has("--town-check");checking_=args.has("--tour-check")||town_check_;capture_=args.has("--capture");
     if(campaign_&&args.has("--party-check"))town_check_=checking_=true;
-    // An original OpenGold footstep cue, not extracted SSI sound data.
+    // An original OpenGoldBox footstep cue, not extracted SSI sound data.
     footstep_.instantiate();footstep_->set_format(AudioStreamWAV::FORMAT_16_BITS);
     footstep_->set_mix_rate(22050);
     PackedByteArray samples; samples.resize(2205*2);

@@ -239,7 +239,7 @@ void RolfTourSession::handle_host(const EclRequest& request)
             ++snapshot_.redraws;
         } else if (service == 0xBA03) {
             if (machine_.variable(0x03DE) != 8) throw EclError("Unsupported tour sound selector");
-            ++snapshot_.footsteps; // Presentation plays an original OpenGold footstep cue.
+            ++snapshot_.footsteps; // Presentation plays an original OpenGoldBox footstep cue.
         } else throw EclError("Unsupported native service in tour: " + std::to_string(service));
         break;
     }

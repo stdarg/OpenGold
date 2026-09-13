@@ -13,7 +13,7 @@ shader = ExtResource("2")
 shader = ExtResource("3")
 shader_parameter/lookup_table = ExtResource("4")
 
-[node name="OpenGold" type="Control"]
+[node name="OpenGoldBox" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -53,7 +53,7 @@ theme_override_constants/separation = 24
 [node name="Title" type="Label" parent="Scroll/Center/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "OpenGold - Scaling Comparison"
+text = "OpenGoldBox - Scaling Comparison"
 horizontal_alignment = 1
 
 [node name="CategorySelect" type="OptionButton" parent="Scroll/Center/Content"]

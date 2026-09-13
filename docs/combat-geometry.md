@@ -15,7 +15,7 @@ The ignored `user-data/probe_battlefield.py` runs only the original dungeon
 generator and original GEO accessors in a research-only CPU emulator. Its inputs
 are synthetic 16 by 16 maps. It stops before random floor decoration, records
 the arena, and can record the tiles contributed by one exploration cell.
-No original instruction bytes, game maps or emulator are shipped with OpenGold.
+No original instruction bytes, game maps or emulator are shipped with OpenGoldBox.
 The native implementation is written from these geometric observations.
 
 The probe tested all 27 combinations of open passage, solid wall and doorway

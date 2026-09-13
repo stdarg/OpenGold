@@ -1,4 +1,12 @@
-# OpenGold
+# OpenGoldBox
+
+An open-source role-playing game engine for Gold Box games.
+
+The project was previously named OpenGold. The display name and documentation
+now use OpenGoldBox. Existing `opengold` C++ namespaces, build targets,
+`OPENGOLD_GAME_DIR`, source-directory names, save-format identifiers, and the
+GitHub repository URL remain stable for compatibility. Existing campaign saves
+continue to use the original Godot user-data directory.
 
 A modern Godot-based reimplementation of SSI's Gold Box engine that reads the
 original game data and assets while adding a cleaner UI, improved rendering,
@@ -67,7 +75,7 @@ See [controls, library boundaries, supported rules, and remaining work](docs/RUL
 Create level-one characters with nine species, twelve classes, four SRD
 backgrounds, 4d6-drop-lowest rolls, drag-and-drop ability assignment and score
 swapping. Background bonuses update the scores and class eligibility immediately.
-Starting-class prerequisite checks are an OpenGold house rule. A scrollable
+Starting-class prerequisite checks are an OpenGoldBox house rule. A scrollable
 **Target class(es)** checklist records future goals and shows unmet ability
 requirements; acquiring additional classes is not implemented.
 
@@ -241,7 +249,7 @@ Save names before closing.
 
 ## Build setup
 
-OpenGold uses CMake to build a portable C++20 native core, and the Godot project
+OpenGoldBox uses CMake to build a portable C++20 native core, and the Godot project
 lives under `godot/`.
 
 Install the prerequisites listed in [docs/INSTALL.md](docs/INSTALL.md), then

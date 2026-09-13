@@ -90,7 +90,7 @@ The loader checks the expected entry instructions before running.
 | `0xB0B9`, helper `0xAF1F` | Original introduction and a single Continue choice. Later text executes from the original program. |
 | `0xC04B` / `0xC04C` / `0xC04D` | Authoritative VM party X / Y / facing, with 0=N, 1=E, 2=S, 3=W. |
 | CALL `0x2C90` | Validate pose, derive current wall/event cells and publish a shared view snapshot. |
-| CALL `0xBA03`, selector 8 | Emit a footstep cue; Godot plays newly generated OpenGold audio. |
+| CALL `0xBA03`, selector 8 | Emit a footstep cue; Godot plays newly generated OpenGoldBox audio. |
 | DELAY | Nonblocking 0.22-second presentation pause; original timing is not verified. |
 | `0x4AC5` | Original script writes 1; replay explicitly resets the research session. |
 

@@ -3,7 +3,7 @@
 See [ECL decoding and execution design](SCRIPTS.md) for the proposed script
 interpreter, map-event dispatch, and gameplay integration.
 
-OpenGold can load Pool of Radiance's exploration maps and wall artwork from the
+OpenGoldBox can load Pool of Radiance's exploration maps and wall artwork from the
 original game installation. GEO map decoding and a top-down inspection demo are
 implemented. The native [Rolf tour](ROLF.md) now assembles and displays the
 original Phlan wall artwork, ordinary-door traversal and the bounded
@@ -143,7 +143,7 @@ for arbitrary 3D wall meshes.
 
 Resolve map and wall-set selection through decoded ECL instructions and their
 resource context. The reference viewer scans byte patterns for some of these
-relationships; OpenGold should not use that shortcut, since operands and embedded
+relationships; OpenGoldBox should not use that shortcut, since operands and embedded
 data can resemble instructions.
 
 ## Map geometry
@@ -214,7 +214,7 @@ Neither event zero nor the indoor high bit should be used as a universal test fo
 whether scripts run. The high bit is not established as activation/completion
 state, and finishing an event must not automatically clear it.
 
-### Format knowledge already used by OpenGold
+### Format knowledge already used by OpenGoldBox
 
 The existing [PoR ECL inspector](../godot/scripts/por_ecl_decoder.gd) removes a
 two-byte record prefix and interprets code at virtual origin `0x9900`. These
@@ -262,7 +262,7 @@ complete execution semantics. See [NPC art findings](npc-art-identification.md).
 | `LOAD MONSTER` (`0x0B`) | Has distinct creature, count, and combat-icon operands. Resolve the creature bank before using `CreatureFactory`; keep artwork identity separate. |
 | `SETUP MONSTER` (`0x0C`) | Selects encounter presentation separately from combat creature loading. |
 | `COMBAT` (`0x24`) and `ADD NPC` (`0x36`) | Connect scripts to encounter resolution and recruitment; decoding these commands does not yet implement those behaviors. |
-| `CALL` (`0x2D`) | Requires explicit OpenGold implementations of referenced engine services. Never execute a stored DOS address as native code. |
+| `CALL` (`0x2D`) | Requires explicit OpenGoldBox implementations of referenced engine services. Never execute a stored DOS address as native code. |
 
 To identify an area's script, follow decoded map-loading instructions and inspect
 their control flow, dialogue, and transitions. These can corroborate reference
@@ -271,7 +271,7 @@ association until its bank context and execution path are resolved.
 
 ### Current capability and execution plan
 
-OpenGold has a native ECL loader and resumable interpreter for control flow,
+OpenGoldBox has a native ECL loader and resumable interpreter for control flow,
 explicitly bound variables, arithmetic, table data, strings, input and menus,
 alongside the existing inspector and asset-evidence analysis. Engine services
 have opt-in host requests; their concrete gameplay implementations and mapped

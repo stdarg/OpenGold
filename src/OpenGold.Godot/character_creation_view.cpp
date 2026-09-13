@@ -321,7 +321,7 @@ void CharacterCreationView::refresh()
             }
             if(choices[i].id==selection(d,field)){list->select(i);get_node<RichTextLabel>("Description")->set_text(gs(choices[i].description));}
         }
-        if(step==CreationStep::character_class)get_node<RichTextLabel>("Description")->append_text("\n\nStarting-class minimums use the multiclass prerequisites as an OpenGold house rule. Disabled classes do not qualify; go Back to reassign scores or bonuses.");
+        if(step==CreationStep::character_class)get_node<RichTextLabel>("Description")->append_text("\n\nStarting-class minimums use the multiclass prerequisites as an OpenGoldBox house rule. Disabled classes do not qualify; go Back to reassign scores or bonuses.");
         instructions=step==CreationStep::character_class?"Choose one starting class. Checked targets are future plans, not additional class levels.":step==CreationStep::race?"Choose your race (species in SRD 5.2.1) and gender.":"Select an option, then continue.";
     }
     if(step==CreationStep::race){
