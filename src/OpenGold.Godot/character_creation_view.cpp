@@ -482,7 +482,7 @@ void CharacterCreationView::_process(double)
     }
     if(!checking_||Engine::get_singleton()->is_editor_hint())return;
     try{if(fatal_||!error_.is_empty())throw std::runtime_error(error_.utf8().get_data());if(++check_frames_%4==0)check_run();
-        if(check_frames_>400)throw std::runtime_error("Character UI check timed out");}
+        if(check_frames_>400+portraits_.size()*4)throw std::runtime_error("Character UI check timed out");}
     catch(const std::exception& e){UtilityFunctions::printerr("Character UI check failed at stage ",check_stage_,": ",gs(e.what()));checking_=false;get_tree()->quit(1);}
 }
 

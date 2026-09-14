@@ -209,7 +209,7 @@ godot --headless --path godot res://scenes/character_creation.tscn -- --characte
 ```
 
 This exercises choices, rolling, swaps, background bonuses, HP, name entry,
-all 36 portraits, combined optional filters, race/gender defaults, all twelve
+all catalog portraits, combined optional filters, race/gender defaults, all twelve
 colors, sheet review and restart. Each
 palette click checks the preview texture pixels against the composed icon and
 counts changed pixels in each pose; it also checks that the portrait is intact.

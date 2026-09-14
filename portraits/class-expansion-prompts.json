@@ -1,0 +1,258 @@
+{
+  "tool": "built-in image_gen",
+  "reference": "Original approved 36-portrait contact sheet, style only.",
+  "portraits": [
+    {
+      "file": "human-female-barbarian-02.png",
+      "Class": "Barbarian",
+      "Gender": "Female",
+      "Race": "Human",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Athletic older woman with deep brown skin, broad nose, strong cheekbones, salt-and-pepper tightly curled mohawk, weathered grin. Sideways torso, face turned back toward viewer, heavy iron war pick resting across far shoulder. Ochre quilted sleeveless gambeson over charcoal long sleeves, wide slate leather harness, small bone clasps. No fur cape, no axe, no gold trim."
+    },
+    {
+      "file": "orc-male-barbarian-02.png",
+      "Class": "Barbarian",
+      "Gender": "Male",
+      "Race": "Orc",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Orc Male Barbarian. Broad heavyset moss-green Orc man, East Asian-inspired eyelids and cheek structure, small tusks, shaved head with a long straight black queue. Low-angle three-quarter face looking upward right, fierce focused expression. Indigo padded war coat open at crossed russet straps over cream shirt, rough iron stud shoulder belt, huge wooden maul handle against chest. No armor plates or fur."
+    },
+    {
+      "file": "goliath-nonbinary-barbarian-02.png",
+      "Class": "Barbarian",
+      "Gender": "Nonbinary",
+      "Race": "Goliath",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Goliath Nonbinary Barbarian. Androgynous towering Goliath adult, cool gray skin with bold dark geometric natural markings, broad flat nose and full lips inspired by West African ancestry, silver short twists swept high. Lean wiry torso, chin lowered looking left, both forearms folded at lower chest. Burgundy wrapped wool tunic, asymmetric pale leather shoulder covering, copper clasp and frayed rope belt. No weapon raised, no cape."
+    },
+    {
+      "file": "dwarf-female-bard-02.png",
+      "Class": "Bard",
+      "Gender": "Female",
+      "Race": "Dwarf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dwarf Female Bard. Compact broad-shouldered dwarf woman with warm olive skin, hooked nose, heavy dark brows, long black hair in looped braids, knowing half-smile. Three-quarter right, head tilted and looking directly at viewer, holding a small wooden frame drum diagonally at lower chest. Plum brocade waistcoat over moss-green billowing sleeves, angular silver ear cuffs, no cape or lute."
+    },
+    {
+      "file": "human-male-bard-02.png",
+      "Class": "Bard",
+      "Gender": "Male",
+      "Race": "Human",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Human Male Bard. Slender elderly East Asian man, warm tan skin, long narrow face, deep smile lines, thin silver moustache, shoulder-length straight silver hair. Singing with a gentle open mouth and eyes looking left, slender wooden transverse flute held lowered across chest. Weathered brick-red traveling coat, dark teal scarf, ivory linen shirt, stitched patch on elbow. No violin or gold embroidery."
+    },
+    {
+      "file": "elf-nonbinary-bard-02.png",
+      "Class": "Bard",
+      "Gender": "Nonbinary",
+      "Race": "Elf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Elf Nonbinary Bard. Androgynous Elf with very dark brown skin, full lips, wide cheekbones, long pointed ears, tightly coiled hair in two short sculptural knots, no beard. Playful sideways glance while torso twists opposite way. Sleeveless midnight-blue tunic over copper-orange loose shirt, asymmetrical layered fabric collar and tiny bronze bells; holding a folded ivory theatrical half-mask near shoulder. No instrument or purple coat."
+    },
+    {
+      "file": "halfling-female-cleric-02.png",
+      "Class": "Cleric",
+      "Gender": "Female",
+      "Race": "Halfling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Halfling Female Cleric. Middle-aged halfling woman with South Asian-inspired features, medium brown skin, round kind face, strong rounded nose, thick wavy dark hair partly covered by a slate-blue headwrap. Looking down compassionately at a shallow bronze healing bowl held near sternum. Sturdy terracotta apron over cream long-sleeved tunic, plain geometric copper holy pendant and rolled bandages. No armor, cape or book."
+    },
+    {
+      "file": "dragonborn-male-cleric-02.png",
+      "Class": "Cleric",
+      "Gender": "Male",
+      "Race": "Dragonborn",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dragonborn Male Cleric. Blue-scaled Dragonborn man with broad crocodilian snout, small swept ivory horns and pale throat scales, robust build, steady frontal gaze, no human hair. Three-quarter torso, one hand touching a circular silver sun medallion. White and charcoal clerical tabard over understated iron mail, blue fabric sleeve bindings. No halo or glowing magic."
+    },
+    {
+      "file": "orc-nonbinary-cleric-02.png",
+      "Class": "Cleric",
+      "Gender": "Nonbinary",
+      "Race": "Orc",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Orc Nonbinary Cleric. Androgynous lean Orc with sage-green skin, African-inspired full lips and broad nose, small tusks, short silver microbraids tucked behind pointed ears. Quiet closed-mouth smile and face turned right, narrow shoulders relaxed. Layered dark umber robes with a pale blue woven stole, carved wooden star pendant, simple upright ash staff alongside shoulder. No glasses, cape or metal armor."
+    },
+    {
+      "file": "tiefling-female-druid-02.png",
+      "Class": "Druid",
+      "Gender": "Female",
+      "Race": "Tiefling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Tiefling Female Druid. Elderly tiefling woman with deep violet skin, Middle Eastern-inspired long aquiline nose, soft heavy-lidded eyes, fine wrinkles, two short curved ivory horns through long white wavy hair. Profile facing left with attentive eyes, holding a tiny fern sprig near chin. Dark green rough linen coat with ochre moss shawl and black wooden clasps, no bare midriff or magic orb."
+    },
+    {
+      "file": "gnome-male-druid-02.png",
+      "Class": "Druid",
+      "Gender": "Male",
+      "Race": "Gnome",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Gnome Male Druid. Stocky gnome man with warm brown skin, rounded cheeks, broad nose, dark tight curls and a thick short beard with one white streak. Leaning inward toward viewer, warm toothy grin, big weathered gardener hands cupping a little seedling below chest. Patchwork slate-blue and rust work vest over beige high-neck wool, mushroom-shaped bone brooch, no leafy cape."
+    },
+    {
+      "file": "dwarf-nonbinary-druid-02.png",
+      "Class": "Druid",
+      "Gender": "Nonbinary",
+      "Race": "Dwarf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dwarf Nonbinary Druid. Androgynous dwarf with light freckled skin, broad square face, cropped copper hair swept to one side, no beard, solid compact physique. Face turned upward right, thoughtful expression, one hand lightly gripping a dark antler-shaped wooden staff. Deep charcoal felt robe with pale gray feathered shoulder mantle and teal woven chest panel, sparse silver clasps. No animal companion or leafy collar."
+    },
+    {
+      "file": "elf-female-fighter-02.png",
+      "Class": "Fighter",
+      "Gender": "Female",
+      "Race": "Elf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Elf Female Fighter. Tall athletic Elf woman with warm brown skin, East Asian-inspired cheekbones and eyes, long angular face, black hair in a tight high braided bun, narrow pointed ears. Alert glance over left shoulder, torso three-quarter right, polished steel spear shaft vertical at far edge. Ivory and oxblood lamellar cuirass over dark gray sleeves, one modest rectangular shoulder plate, no cape or exposed skin armor."
+    },
+    {
+      "file": "halfling-male-fighter-02.png",
+      "Class": "Fighter",
+      "Gender": "Male",
+      "Race": "Halfling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Halfling Male Fighter. Broad halfling man with medium olive skin, strong hooked nose, smiling crinkled eyes, dark wavy hair cropped close, thick short moustache. Facing front with head tilted right, gloved hand resting on crossbow stock diagonally across lower chest. Worn bottle-green leather jack, orange padded collar, steel elbow guard, patched tan shoulder strap. No plate breastplate or round shield."
+    },
+    {
+      "file": "gnome-nonbinary-fighter-02.png",
+      "Class": "Fighter",
+      "Gender": "Nonbinary",
+      "Race": "Gnome",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Gnome Nonbinary Fighter. Androgynous muscular gnome adult with deep brown skin, wide cheekbones, flat broad nose, short tightly coiled platinum hair, pointed ears, calm direct stare. Torso leaning slightly left, arms folded across chest. Dark iron segmented cuirass with narrow copper rivets over muted saffron gambeson, one burgundy leather pauldron, square steel gorget. No weapon, robe or cape."
+    },
+    {
+      "file": "orc-female-monk-02.png",
+      "Class": "Monk",
+      "Gender": "Female",
+      "Race": "Orc",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Orc Female Monk. Lean athletic emerald-green Orc woman with Southeast Asian-inspired cheek structure, small upward tusks, straight black bob tucked behind pointed ears, narrow scar across eyebrow. Upright near profile facing right, open palm held vertically near chest in disciplined guard. Pale gray wrapped training jacket, muted red woven sash crossing shoulder, dark brown forearm wraps. No jewelry or armor."
+    },
+    {
+      "file": "goliath-male-monk-02.png",
+      "Class": "Monk",
+      "Gender": "Male",
+      "Race": "Goliath",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Goliath Male Monk. Older muscular Goliath man with pale slate-gray skin, dark irregular natural markings, long broad nose and strong cheek structure, bald head with bushy white eyebrows and no beard. Eyes softly shut, chin lowered, hands meeting in a relaxed meditative seal at sternum. Layered indigo and cream full-coverage robes, heavy wooden beads crossing chest, no weapons or metal plates."
+    },
+    {
+      "file": "human-nonbinary-monk-02.png",
+      "Class": "Monk",
+      "Gender": "Nonbinary",
+      "Race": "Human",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Human Nonbinary Monk. Androgynous South Asian adult with deep warm brown skin, straight nose, long oval face, dark wavy hair in a short loose bun, lithe build. Body turned left, looking back with bright focused eyes, one elbow raised at bottom edge. Moss-green high-neck sleeveless vest over charcoal close-fitting long sleeves, wide amber sash and plain cloth wrist wraps. No armor, book or halo."
+    },
+    {
+      "file": "gnome-female-paladin-02.png",
+      "Class": "Paladin",
+      "Gender": "Female",
+      "Race": "Gnome",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Gnome Female Paladin. Sturdy gnome woman with East Asian-inspired almond eyes, light golden skin, broad jaw, straight dark hair in a low compact bun, small pointed ears. Stern three-quarter left face, chin lifted, left gauntlet laid flat across chest. Deep blue enameled plate with brushed silver edges, cream quilted neck protector, small silver crescent emblem; no cape, gold or shield."
+    },
+    {
+      "file": "dwarf-male-paladin-02.png",
+      "Class": "Paladin",
+      "Gender": "Male",
+      "Race": "Dwarf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dwarf Male Paladin. Older dwarf man with rich dark brown skin, broad round nose, deeply set eyes, long tightly curled silver beard with square bronze cuffs, bald crown. Quiet compassionate expression facing right, broad shield with geometric white tower emblem across lower torso. Heavy charcoal plate over burgundy wool, pale blue scarf tucked inside gorget, no sunburst or crown."
+    },
+    {
+      "file": "dragonborn-nonbinary-paladin-02.png",
+      "Class": "Paladin",
+      "Gender": "Nonbinary",
+      "Race": "Dragonborn",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dragonborn Nonbinary Paladin. Androgynous copper-scaled Dragonborn with slender long snout, small swept black horns and pale gold throat plates. Three-quarter facing left, eyes looking slightly upward, upright dignified narrow shoulders. Ivory ceramic-looking scale armor with dark teal fabric sleeves and red-brown leather fastenings; small rectangular votive reliquary held to chest. No cloak, exposed belly or human hair."
+    },
+    {
+      "file": "human-female-ranger-02.png",
+      "Class": "Ranger",
+      "Gender": "Female",
+      "Race": "Human",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Human Female Ranger. Older weathered woman with Indigenous American-inspired broad cheekbones, medium copper-brown skin, strong nose, long straight black braid with silver streak, serious watchful eyes. Leaning forward in three-quarter view, looking sharply right. Sand-colored hood pushed back over dark plum quilted scouting coat, simple leather quiver strap, hand gripping recurve bow edge at lower left. No feathers or stereotyped ceremonial symbols."
+    },
+    {
+      "file": "tiefling-male-ranger-02.png",
+      "Class": "Ranger",
+      "Gender": "Male",
+      "Race": "Tiefling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Tiefling Male Ranger. Slender tiefling man with dusty mauve skin, African-inspired broad nose and full lips, short tightly coiled black hair, asymmetrical short charcoal horns. Wary sideways glance left, body turned right, chin slightly tucked. Faded gray-green hooded rain cape folded off head over dark blue ring-bound leather jacket, narrow orange cord at collar, crossbow strap. No orb or ornate robe."
+    },
+    {
+      "file": "halfling-nonbinary-ranger-02.png",
+      "Class": "Ranger",
+      "Gender": "Nonbinary",
+      "Race": "Halfling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Halfling Nonbinary Ranger. Androgynous stocky halfling with pale freckled skin, upturned nose, wide-set hazel eyes, tousled short auburn hair, no beard. Looking up at viewer from slightly lowered head, elbow resting on a tall walking stick. Rust-brown waxed cloak over cream cable-knit collar and muted blue leather vest, brass compass near chest. No bow, floral adornment or plate armor."
+    },
+    {
+      "file": "goliath-female-rogue-02.png",
+      "Class": "Rogue",
+      "Gender": "Female",
+      "Race": "Goliath",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Goliath Female Rogue. Lean Goliath woman with cool stone-gray skin and subtle black angular natural markings, East Asian-inspired eyes and high cheekbones, sharp chin, sleek straight black undercut swept across forehead. Torso angled strongly right, face glancing left, one gloved hand adjusting scarf at neck. Deep eggplant fitted leather coat, slate blue silk scarf, pale steel buckle and fine lockpicks in breast pocket. No huge weapons or hood."
+    },
+    {
+      "file": "human-male-rogue-02.png",
+      "Class": "Rogue",
+      "Gender": "Male",
+      "Race": "Human",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Human Male Rogue. Lanky middle-aged South Asian man with medium brown skin, long hooked nose, clever narrow eyes, receding wavy black hair, narrow moustache and pointed goatee. Mischievous half-smile, shoulders tilted, rolling a silver coin across raised knuckles. Sand-colored linen shirt with rolled sleeves, dark burgundy shoulder holster and worn black waistcoat, no cape or armor plates."
+    },
+    {
+      "file": "tiefling-nonbinary-rogue-02.png",
+      "Class": "Rogue",
+      "Gender": "Nonbinary",
+      "Race": "Tiefling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Tiefling Nonbinary Rogue. Androgynous tiefling with turquoise-blue skin, full lips and round cheekbones, short white locs, two tiny swept-back black horns, slim shoulders. Face nearly in profile right, eye turned toward viewer, hand holding a narrow sheathed dagger against chest. Asymmetric charcoal hood pushed back, dull copper quilted doublet, pale gray fingerless glove. No purple robe or gold trim."
+    },
+    {
+      "file": "dragonborn-female-sorcerer-02.png",
+      "Class": "Sorcerer",
+      "Gender": "Female",
+      "Race": "Dragonborn",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dragonborn Female Sorcerer. Silver-scaled Dragonborn woman with sharp angular snout, short crown of icy blue horns, dark navy throat scales and intense amber eyes. Three-quarter frontal, chin raised, open hand low beside shoulder carrying a compact amber flame. Deep maroon silk high-collar coat with asymmetric dark iron fastening, layered charcoal sleeves, no staff or book."
+    },
+    {
+      "file": "elf-male-sorcerer-02.png",
+      "Class": "Sorcerer",
+      "Gender": "Male",
+      "Race": "Elf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Elf Male Sorcerer. Broad-shouldered Elf man with dark brown skin, broad nose, full lips, closely shaved hair with a single long thin braid, pointed ears and strong square jaw. Face looking down-left, subtle smile, raised hand surrounded by a few sparse pale blue electric sparks. Cream wrapped long-sleeve tunic under a teal sash with weathered silver clasp, no ornate coat or armor."
+    },
+    {
+      "file": "gnome-nonbinary-sorcerer-02.png",
+      "Class": "Sorcerer",
+      "Gender": "Nonbinary",
+      "Race": "Gnome",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Gnome Nonbinary Sorcerer. Androgynous elderly gnome with warm olive skin, deep laugh lines, large hooked nose, straight gray hair in a spiky crop, pointed ears, slight compact body. Looking upward with amazed eyes, hands braced around a small floating red crystal at sternum. Desaturated mauve layered wool tunic with ochre geometric woven yoke, mismatched plain cloth cuffs. No jewelry clutter, glasses or cape."
+    },
+    {
+      "file": "dwarf-female-warlock-02.png",
+      "Class": "Warlock",
+      "Gender": "Female",
+      "Race": "Dwarf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Dwarf Female Warlock. Dwarf woman with deep brown skin, angular cheekbones, thick eyebrows, broad nose, shaved sides and a thick black braided crown, sturdy chest. Calm challenging direct gaze, head slightly lowered, hand holding a dull iron key near cheek. Pale ash-gray high-collared coat with moss-green velvet panels, dark leather gloves, no glowing wand, horns or armor."
+    },
+    {
+      "file": "orc-male-warlock-02.png",
+      "Class": "Warlock",
+      "Gender": "Male",
+      "Race": "Orc",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Orc Male Warlock. Tall thin forest-green Orc man with Middle Eastern-inspired aquiline nose and heavy-lidded eyes, discreet tusks, wavy shoulder-length black hair and short pointed beard. Three-quarter face left, suspicious over-shoulder glance, one hand resting on a sealed black book against ribs. Faded ivory hood draped behind head, dark rust layered robe with geometric black edging, no glasses, skulls or purple cloak."
+    },
+    {
+      "file": "goliath-nonbinary-warlock-02.png",
+      "Class": "Warlock",
+      "Gender": "Nonbinary",
+      "Race": "Goliath",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Goliath Nonbinary Warlock. Androgynous Goliath with dark basalt-gray skin, pale stone natural markings, wide nose, strong cheekbones, cropped silver tight curls, narrow angular torso. Nearly profile facing right, eyes gazing down at a tiny green spectral moth hovering above open hand. Indigo fitted travel tunic under asymmetric bone-white shoulder cape, plain iron rings at collar. No glowing orb, staff or plate."
+    },
+    {
+      "file": "halfling-female-wizard-02.png",
+      "Class": "Wizard",
+      "Gender": "Female",
+      "Race": "Halfling",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Halfling Female Wizard. Elderly East Asian-inspired halfling woman with light warm beige skin, round face, narrow kind eyes, thin lips, wispy straight silver hair in a small top knot. Seated-looking relaxed shoulders, head tilted right, holding a long narrow rolled chart diagonally across chest. Deep red scholarly jacket with slate-gray high collar, cream cuffs, small brass spectacles on nose. No blue robe, book or large hat."
+    },
+    {
+      "file": "gnome-male-wizard-02.png",
+      "Class": "Wizard",
+      "Gender": "Male",
+      "Race": "Gnome",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Gnome Male Wizard. Young adult gnome man with medium brown skin, rounded nose and cheeks, wide curious eyes, dense dark curls loosely falling over brow, very short neat beard. Torso three-quarter left, examining a small brass astrolabe held low near chest. Dark teal wool scholar robe with ochre leather shoulder capelet and cream cloth bindings, ink-stained fingertips, no glasses or magic fire."
+    },
+    {
+      "file": "elf-nonbinary-wizard-02.png",
+      "Class": "Wizard",
+      "Gender": "Nonbinary",
+      "Race": "Elf",
+      "prompt": "Generate ONE NEW standalone square complete chest-up fantasy RPG portrait. Reference sheet is STYLE ONLY: match crisp deliberate pixel clusters, rich restrained color ramps and black background; do NOT copy any existing face, body, outfit or pose. Integrated head/neck/torso, natural anatomy, expressive large face, readable at 88x88 and beautiful enlarged. High-resolution square PNG, approximately 176x176 logical pixel detail, hard pixel edges, no smooth painting, blur, noisy texture, text, border or multiple panels. Keep full hair/ears/horns inside square with top margin. Fully clothed adult, tasteful individual costume. Distinct class identity through silhouette and equipment. Respectful ancestry-inspired individual features, never caricature. Nonbinary subjects must have androgynous face and presentation. Orc skin MUST be visibly green. SUBJECT: Elf Nonbinary Wizard. Androgynous older Elf with warm olive skin, long aquiline nose, hollow cheeks, straight jet-black hair cut blunt at jaw with two silver front strands, long pointed ears and no beard. Frontal face with eyes glancing left, slim shoulders upright, one hand pointing gently at open dark leather spellbook at chest. Ivory and charcoal geometric paneled coat, wine-red high inner collar, no horns or spectacles."
+    }
+  ]
+}

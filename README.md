@@ -79,7 +79,7 @@ Starting-class prerequisite checks are an OpenGoldBox house rule. A scrollable
 **Target class(es)** checklist records future goals and shows unmet ability
 requirements; acquiring additional classes is not implemented.
 
-Choose from 36 complete portraits with optional gender, class, and in-game race
+Choose from 72 complete portraits with optional gender, class, and in-game race
 filters. Portrait controls stay available throughout creation and sheet review;
 selected artwork carries into the party and campaign saves. Customize ready/action combat sprites with separate head/body parts
 and twelve region colors. The shared character sheet includes inventory, live
