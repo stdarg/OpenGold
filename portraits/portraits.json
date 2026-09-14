@@ -1,32 +1,182 @@
 {
-  "human-female-wizard-01.png": {
-    "Class": "Wizard",
-    "Gender": "Female",
-    "Race": "Human"
-  },
-  "orc-female-paladin-01.png": {
-    "Class": "Paladin",
-    "Gender": "Female",
-    "Race": "Orc"
-  },
-  "elf-nonbinary-rogue-01.png": {
-    "Class": "Rogue",
-    "Gender": "Nonbinary",
-    "Race": "Elf"
-  },
-  "dwarf-male-cleric-01.png": {
-    "Class": "Cleric",
-    "Gender": "Male",
-    "Race": "Dwarf"
-  },
-  "goliath-male-ranger-01.png": {
-    "Class": "Ranger",
-    "Gender": "Male",
-    "Race": "Goliath"
-  },
-  "tiefling-nonbinary-bard-01.png": {
-    "Class": "Bard",
-    "Gender": "Nonbinary",
-    "Race": "Tiefling"
-  }
+    "human-female-wizard-01.png":  {
+                                       "Class":  "Wizard",
+                                       "Gender":  "Female",
+                                       "Race":  "Human"
+                                   },
+    "orc-female-paladin-01.png":  {
+                                      "Class":  "Paladin",
+                                      "Gender":  "Female",
+                                      "Race":  "Orc"
+                                  },
+    "elf-nonbinary-rogue-01.png":  {
+                                       "Class":  "Rogue",
+                                       "Gender":  "Nonbinary",
+                                       "Race":  "Elf"
+                                   },
+    "dwarf-male-cleric-01.png":  {
+                                     "Class":  "Cleric",
+                                     "Gender":  "Male",
+                                     "Race":  "Dwarf"
+                                 },
+    "goliath-male-ranger-01.png":  {
+                                       "Class":  "Ranger",
+                                       "Gender":  "Male",
+                                       "Race":  "Goliath"
+                                   },
+    "tiefling-nonbinary-bard-01.png":  {
+                                           "Class":  "Bard",
+                                           "Gender":  "Nonbinary",
+                                           "Race":  "Tiefling"
+                                       },
+    "human-male-fighter-01.png":  {
+                                      "Class":  "Fighter",
+                                      "Gender":  "Male",
+                                      "Race":  "Human"
+                                  },
+    "human-nonbinary-druid-01.png":  {
+                                         "Class":  "Druid",
+                                         "Gender":  "Nonbinary",
+                                         "Race":  "Human"
+                                     },
+    "human-female-sorcerer-01.png":  {
+                                         "Class":  "Sorcerer",
+                                         "Gender":  "Female",
+                                         "Race":  "Human"
+                                     },
+    "orc-male-wizard-01.png":  {
+                                   "Class":  "Wizard",
+                                   "Gender":  "Male",
+                                   "Race":  "Orc"
+                               },
+    "orc-nonbinary-monk-01.png":  {
+                                      "Class":  "Monk",
+                                      "Gender":  "Nonbinary",
+                                      "Race":  "Orc"
+                                  },
+    "orc-female-bard-01.png":  {
+                                   "Class":  "Bard",
+                                   "Gender":  "Female",
+                                   "Race":  "Orc"
+                               },
+    "elf-female-cleric-01.png":  {
+                                     "Class":  "Cleric",
+                                     "Gender":  "Female",
+                                     "Race":  "Elf"
+                                 },
+    "elf-male-warlock-01.png":  {
+                                    "Class":  "Warlock",
+                                    "Gender":  "Male",
+                                    "Race":  "Elf"
+                                },
+    "elf-nonbinary-ranger-01.png":  {
+                                        "Class":  "Ranger",
+                                        "Gender":  "Nonbinary",
+                                        "Race":  "Elf"
+                                    },
+    "dwarf-female-barbarian-01.png":  {
+                                          "Class":  "Barbarian",
+                                          "Gender":  "Female",
+                                          "Race":  "Dwarf"
+                                      },
+    "dwarf-nonbinary-sorcerer-01.png":  {
+                                            "Class":  "Sorcerer",
+                                            "Gender":  "Nonbinary",
+                                            "Race":  "Dwarf"
+                                        },
+    "dwarf-male-rogue-01.png":  {
+                                    "Class":  "Rogue",
+                                    "Gender":  "Male",
+                                    "Race":  "Dwarf"
+                                },
+    "goliath-female-druid-01.png":  {
+                                        "Class":  "Druid",
+                                        "Gender":  "Female",
+                                        "Race":  "Goliath"
+                                    },
+    "goliath-nonbinary-fighter-01.png":  {
+                                             "Class":  "Fighter",
+                                             "Gender":  "Nonbinary",
+                                             "Race":  "Goliath"
+                                         },
+    "goliath-male-paladin-01.png":  {
+                                        "Class":  "Paladin",
+                                        "Gender":  "Male",
+                                        "Race":  "Goliath"
+                                    },
+    "tiefling-female-warlock-01.png":  {
+                                           "Class":  "Warlock",
+                                           "Gender":  "Female",
+                                           "Race":  "Tiefling"
+                                       },
+    "tiefling-male-monk-01.png":  {
+                                      "Class":  "Monk",
+                                      "Gender":  "Male",
+                                      "Race":  "Tiefling"
+                                  },
+    "tiefling-nonbinary-wizard-01.png":  {
+                                             "Class":  "Wizard",
+                                             "Gender":  "Nonbinary",
+                                             "Race":  "Tiefling"
+                                         },
+    "gnome-female-rogue-01.png":  {
+                                      "Class":  "Rogue",
+                                      "Gender":  "Female",
+                                      "Race":  "Gnome"
+                                  },
+    "gnome-male-bard-01.png":  {
+                                   "Class":  "Bard",
+                                   "Gender":  "Male",
+                                   "Race":  "Gnome"
+                               },
+    "gnome-nonbinary-cleric-01.png":  {
+                                          "Class":  "Cleric",
+                                          "Gender":  "Nonbinary",
+                                          "Race":  "Gnome"
+                                      },
+    "gnome-female-ranger-01.png":  {
+                                       "Class":  "Ranger",
+                                       "Gender":  "Female",
+                                       "Race":  "Gnome"
+                                   },
+    "halfling-female-monk-01.png":  {
+                                        "Class":  "Monk",
+                                        "Gender":  "Female",
+                                        "Race":  "Halfling"
+                                    },
+    "halfling-male-sorcerer-01.png":  {
+                                          "Class":  "Sorcerer",
+                                          "Gender":  "Male",
+                                          "Race":  "Halfling"
+                                      },
+    "halfling-nonbinary-paladin-01.png":  {
+                                              "Class":  "Paladin",
+                                              "Gender":  "Nonbinary",
+                                              "Race":  "Halfling"
+                                          },
+    "halfling-nonbinary-warlock-01.png":  {
+                                              "Class":  "Warlock",
+                                              "Gender":  "Nonbinary",
+                                              "Race":  "Halfling"
+                                          },
+    "dragonborn-female-fighter-01.png":  {
+                                             "Class":  "Fighter",
+                                             "Gender":  "Female",
+                                             "Race":  "Dragonborn"
+                                         },
+    "dragonborn-male-druid-01.png":  {
+                                         "Class":  "Druid",
+                                         "Gender":  "Male",
+                                         "Race":  "Dragonborn"
+                                     },
+    "dragonborn-male-barbarian-01.png":  {
+                                             "Class":  "Barbarian",
+                                             "Gender":  "Male",
+                                             "Race":  "Dragonborn"
+                                         },
+    "dragonborn-nonbinary-barbarian-01.png":  {
+                                                  "Class":  "Barbarian",
+                                                  "Gender":  "Nonbinary",
+                                                  "Race":  "Dragonborn"
+                                              }
 }

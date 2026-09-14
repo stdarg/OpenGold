@@ -1,6 +1,6 @@
 {
   "tool": "built-in image_gen",
-  "status": "Six portrait style-review sample; remaining 30 await user review.",
+  "status": "Initial six portraits approved for style. The 30 expansion prompts are in roster-prompts.json.",
   "reference": "Local original-portrait contact sheet used for general style study only; not included in repository.",
   "portraits": [
     {
