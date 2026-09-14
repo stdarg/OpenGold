@@ -1,0 +1,22 @@
+{
+  "tool": "built-in image_gen",
+  "purpose": "User-requested green skin correction preserving original facial features and character identity.",
+  "portraits": [
+    {
+      "file": "orc-female-paladin-01.png",
+      "prompt": "Edit this exact supplied portrait. ONLY recolor all exposed Orc skin (face, nose, lips, ears, neck, and hands/arms wherever visible) to medium muted leaf-green skin, with deep forest-green shadows and lighter sage-green highlights. Green must be unmistakably dominant, not human brown, copper, yellow or gold. Preserve original lighting and pixel shading structure. CRITICAL: retain the identical character identity and real-world ancestry-inspired facial characteristics: EXACT same nose shape, eye shape, cheeks, lips, jaw, expression, age, proportions, hair style and texture. Preserve exact tusks, eyebrows, eyes, hair colors, clothing, jewelry, weapons/props, pose, framing, black background, and pixel-art style. Do not change anatomy or redraw any facial features, costume or objects. No new accessories, no crop, no added text or border. This is strictly a skin-palette correction of the existing complete portrait, not a new character. Output one square PNG at the source resolution, 1254 x 1254."
+    },
+    {
+      "file": "orc-female-bard-01.png",
+      "prompt": "Edit this exact supplied portrait. ONLY recolor all exposed Orc skin (face, nose, lips, ears, neck, and hands/arms wherever visible) to warm medium moss-green skin, with dark fern-green shadows and soft fresh green highlights. Green must be unmistakably dominant, not human brown, copper, yellow or gold. Preserve original lighting and pixel shading structure. CRITICAL: retain the identical character identity and real-world ancestry-inspired facial characteristics: EXACT same nose shape, eye shape, cheeks, lips, jaw, expression, age, proportions, hair style and texture. Preserve exact tusks, eyebrows, eyes, hair colors, clothing, jewelry, weapons/props, pose, framing, black background, and pixel-art style. Do not change anatomy or redraw any facial features, costume or objects. No new accessories, no crop, no added text or border. This is strictly a skin-palette correction of the existing complete portrait, not a new character. Output one square PNG at the source resolution, 1254 x 1254."
+    },
+    {
+      "file": "orc-male-wizard-01.png",
+      "prompt": "Edit this exact supplied portrait. ONLY recolor all exposed Orc skin (face, nose, lips, ears, neck, and hands/arms wherever visible) to deep dark forest-green skin, preserving the original darker complexion value range, with restrained lighter moss-green highlights. Green must be unmistakably dominant, not human brown, copper, yellow or gold. Preserve original lighting and pixel shading structure. CRITICAL: retain the identical character identity and real-world ancestry-inspired facial characteristics: EXACT same nose shape, eye shape, cheeks, lips, jaw, expression, age, proportions, hair style and texture. Preserve exact tusks, eyebrows, eyes, hair colors, clothing, jewelry, weapons/props, pose, framing, black background, and pixel-art style. Do not change anatomy or redraw any facial features, costume or objects. No new accessories, no crop, no added text or border. This is strictly a skin-palette correction of the existing complete portrait, not a new character. Output one square PNG at the source resolution, 1254 x 1254."
+    },
+    {
+      "file": "orc-nonbinary-monk-01.png",
+      "prompt": "Edit this exact supplied portrait. ONLY recolor all exposed Orc skin (face, nose, lips, ears, neck, and hands/arms wherever visible) to muted medium jade-green skin, with dark evergreen shadows and lighter desaturated green highlights. Green must be unmistakably dominant, not human brown, copper, yellow or gold. Preserve original lighting and pixel shading structure. CRITICAL: retain the identical character identity and real-world ancestry-inspired facial characteristics: EXACT same nose shape, eye shape, cheeks, lips, jaw, expression, age, proportions, hair style and texture. Preserve exact tusks, eyebrows, eyes, hair colors, clothing, jewelry, weapons/props, pose, framing, black background, and pixel-art style. Do not change anatomy or redraw any facial features, costume or objects. No new accessories, no crop, no added text or border. This is strictly a skin-palette correction of the existing complete portrait, not a new character. Output one square PNG at the source resolution, 1254 x 1254."
+    }
+  ]
+}

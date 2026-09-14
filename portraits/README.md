@@ -20,6 +20,12 @@ original game's local contact sheet informed general palette, framing, and
 readability of the approved six; the expansion uses those approved portraits
 as a rendering-style reference. No extracted original assets are included here.
 
+The four Orc portraits were subsequently revised to visibly green skin at the
+user's request, retaining their individual ancestry-inspired facial features,
+hair, expressions, costumes, and poses. `orc-green-revision-prompts.json` records
+the built-in image-generation edit prompts. Their basenames and catalog metadata
+remain the same. Earlier generation prompts document the original versions.
+
 All 36 PNGs retain the generator's 1254 x 1254 full-resolution output. Pixel-art styling does
 not guarantee a mathematically uniform low-resolution pixel grid. Local review
 previews render each at 88 x 88 as well as enlarged sizes; these are visual
