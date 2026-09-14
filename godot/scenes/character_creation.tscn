@@ -67,28 +67,33 @@ autowrap_mode = 2
 placeholder_text = "Enter a character name"
 max_length = 40
 
-[node name="HeadPrevious" type="Button" parent="."]
+[node name="PortraitPrevious" type="Button" parent="."]
 text = "<"
-tooltip_text = "Previous portrait head"
+tooltip_text = "Previous matching portrait"
 
-[node name="HeadNext" type="Button" parent="."]
+[node name="PortraitNext" type="Button" parent="."]
 text = ">"
-tooltip_text = "Next portrait head"
+tooltip_text = "Next matching portrait"
 
-[node name="PortraitHead" type="OptionButton" parent="."]
+[node name="PortraitSelect" type="OptionButton" parent="."]
 fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait select"
 
+[node name="PortraitGender" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait gender"
 
-[node name="BodyPrevious" type="Button" parent="."]
-text = "<"
-tooltip_text = "Previous portrait body"
+[node name="PortraitClass" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait class"
 
-[node name="BodyNext" type="Button" parent="."]
-text = ">"
-tooltip_text = "Next portrait body"
-
-[node name="BodyLabel" type="Label" parent="."]
-
+[node name="PortraitRace" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait race"
 
 [node name="CombatHeadPrevious" type="Button" parent="."]
 text = "< Head"

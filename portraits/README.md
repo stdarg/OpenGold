@@ -2,7 +2,8 @@
 
 The roster contains 36 independently composed portraits. The initial six were
 approved for style, and the remaining 30 extend that direction. These files are
-an artwork collection; game integration is a separate step.
+used by the Character Review demo, character pool, and party previews.
+The selector offers optional gender, class, and in-game race filters.
 
 Each PNG contains a complete chest-up character on a black background. Faces,
 physiques, poses, and clothing are individually designed rather than assembled
@@ -29,7 +30,7 @@ remain the same. Earlier generation prompts document the original versions.
 All 36 PNGs retain the generator's 1254 x 1254 full-resolution output. Pixel-art styling does
 not guarantee a mathematically uniform low-resolution pixel grid. Local review
 previews render each at 88 x 88 as well as enlarged sizes; these are visual
-readability checks, not a claim of tested runtime integration or a separately
+readability checks, not a claim of a separately
 hand-tuned 88 x 88 asset set.
 
 Local roster overview: `../user-data/portrait-review/roster-contact-sheet.png`.

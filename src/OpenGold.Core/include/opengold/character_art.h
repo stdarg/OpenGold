@@ -20,6 +20,7 @@ struct CharacterAppearance {
     // Weapon, body, hair/face, shield, arms, legs; Color-1 then Color-2.
     std::array<std::array<unsigned, 6>, 2> colors{{
         {7, 1, 6, 6, 1, 6}, {15, 9, 12, 14, 9, 14}}};
+    std::string portrait; // Complete portrait basename; empty in legacy saves.
     bool operator==(const CharacterAppearance&) const = default;
 };
 // Structural validation; CharacterArt additionally checks available portrait IDs.

@@ -109,6 +109,8 @@ void validate_character_appearance(const CharacterAppearance& a)
     if((a.portrait_head>255&&std::none_of(additional_heads.begin(),additional_heads.end(),[&](const auto& h){return h.id==a.portrait_head;}))||
         a.portrait_body>255||a.combat_head>=14||a.combat_body>=32)
         throw std::runtime_error("Invalid appearance reference");
+    if(!a.portrait.empty() && (a.portrait.size()>160 || !a.portrait.ends_with(".png") || a.portrait.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789-_.")!=std::string::npos || a.portrait.find("..")!=std::string::npos))
+        throw std::runtime_error("Invalid portrait filename");
     for(const auto& bank:a.colors)for(auto color:bank)(void)character_color(color);
 }
 std::array<std::uint8_t, 3> character_color(unsigned index)

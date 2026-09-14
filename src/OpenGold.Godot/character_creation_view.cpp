@@ -76,7 +76,7 @@ void CharacterCreationView::_ready()
     for(int i=0;i<12;++i)get_node<CheckBox>(gs("Targets/Rows/Class"+std::to_string(i)))->connect("toggled",callable_mp(this,&CharacterCreationView::target_toggled).bind(i));
     get_node<ScrollContainer>("Targets")->add_theme_stylebox_override("panel",box(Color("10171c"),Color("687d88")));
     get_node<OptionButton>("Bonus")->connect("item_selected",callable_mp(this,&CharacterCreationView::bonus_selected));
-    get_node<OptionButton>("PortraitHead")->connect("item_selected",callable_mp(this,&CharacterCreationView::portrait_head_selected));
+    get_node<OptionButton>("PortraitSelect")->connect("item_selected",callable_mp(this,&CharacterCreationView::portrait_selected));
     get_node<LineEdit>("Name")->connect("text_changed",callable_mp(this,&CharacterCreationView::name_changed));
     for(int i=0;i<6;++i){
         get_node<Button>(gs("Ability"+std::to_string(i)))->connect("pressed",callable_mp(this,&CharacterCreationView::score_selected).bind(i));
@@ -100,8 +100,7 @@ void CharacterCreationView::_ready()
     get_node<Window>("ModifiersModal")->connect("close_requested",callable_mp(this,&CharacterCreationView::close_modifiers));
     for(int direction:{-1,1}) {
         const auto suffix=direction<0?"Previous":"Next";
-        get_node<Button>(gs(std::string("Head")+suffix))->connect("pressed",callable_mp(this,&CharacterCreationView::portrait_part).bind(0,direction));
-        get_node<Button>(gs(std::string("Body")+suffix))->connect("pressed",callable_mp(this,&CharacterCreationView::portrait_part).bind(1,direction));
+        get_node<Button>(gs(std::string("Portrait")+suffix))->connect("pressed",callable_mp(this,&CharacterCreationView::portrait_part).bind(direction));
         get_node<Button>(gs(std::string("CombatHead")+suffix))->connect("pressed",callable_mp(this,&CharacterCreationView::combat_part).bind(0,direction));
         get_node<Button>(gs(std::string("Weapon")+suffix))->connect("pressed",callable_mp(this,&CharacterCreationView::combat_part).bind(1,direction));
     }
@@ -123,9 +122,9 @@ void CharacterCreationView::_ready()
         auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
         if(directory.is_empty())directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
         art_=por::CharacterArt::load(std::filesystem::u8path(directory.utf8().get_data()));
-        load_additional_heads();
+        load_additional_heads();load_portraits();
         const auto seed=(checking_||args.has("--party-check"))?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-        creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_head();refresh();
+        creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_portrait();refresh();
     } catch(const std::exception& e) {
         fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-rolf.cmd, then review-character.cmd.");
         get_node<Label>("Status")->set_text(error_);get_node<Button>("Next")->set_disabled(true);
@@ -205,16 +204,17 @@ void CharacterCreationView::layout()
     const double px=preview_rect_.position.x,py=preview_rect_.position.y;
     place("PreviewTitle",Rect2(px+18,py+18,282,24));place("PreviewName",Rect2(px+18,py+50,282,36));
     portrait_rect_=Rect2(px+27,py+100,264,264);
-    for(const auto& stem:{std::string("Head"),std::string("Body")}){
-        const double cy=py+374+(stem=="Body"?40:0);
-        place(gs(stem+"Previous"),Rect2(px+18,cy,36,32));
-        place(gs(stem+"Next"),Rect2(px+264,cy,36,32));
-        place(stem=="Head"?"PortraitHead":"BodyLabel",Rect2(px+60,cy,198,32));
-    }
-    const double sprite=std::min(120.0,std::max(72.0,ph-540));
-    ready_rect_=Rect2(px+86-sprite/2,py+482,sprite,sprite);action_rect_=Rect2(px+232-sprite/2,py+482,sprite,sprite);
-    place("ReadyLabel",Rect2(px+26,py+452,120,28));place("ActionLabel",Rect2(px+172,py+452,120,28));
-    place("PreviewSummary",Rect2(px+18,py+490+sprite,282,std::max(42.0,ph-502-sprite)));
+    place("PortraitPrevious",Rect2(px+18,py+374,36,32));
+    place("PortraitSelect",Rect2(px+60,py+374,198,32));
+    place("PortraitNext",Rect2(px+264,py+374,36,32));
+    place("PortraitGender",Rect2(px+18,py+414,136,32));
+    place("PortraitClass",Rect2(px+164,py+414,136,32));
+    place("PortraitRace",Rect2(px+18,py+454,282,32));
+    const double sprite=72;
+    ready_rect_=Rect2(px+50,py+516,sprite,sprite);action_rect_=Rect2(px+196,py+516,sprite,sprite);
+    place("ReadyLabel",Rect2(px+26,py+488,120,28));place("ActionLabel",Rect2(px+172,py+488,120,28));
+    get_node<Control>("PreviewSummary")->set_visible(ph>=656);
+    place("PreviewSummary",Rect2(px+18,py+596,282,std::max(1.0,ph-604)));
     place("Back",Rect2(x,h-60,150,38));place("Next",Rect2(x+pw-190,h-60,190,38));
     place("Status",Rect2(x+160,h-62,std::max(1.0,pw-360),44));
     place("Footer",Rect2(24,h-25,w-48,22));
@@ -252,19 +252,20 @@ void CharacterCreationView::load_additional_heads()
         art_->add_portrait_head(head.id,por::prepare_portrait_head(decoded,head.id));
     }
 }
-void CharacterCreationView::recommend_head()
+void CharacterCreationView::recommend_portrait()
 {
     if(portrait_chosen_)return;
     auto a=creator_->appearance();const auto& d=creator_->draft();
-    a.portrait_head=por::matching_portrait_head(d.race,d.gender).value_or(1);
+    a.portrait=recommended_portrait(d);
     creator_->appearance(a);
 }
 void CharacterCreationView::refresh_art()
 {
     if(!creator_||!art_||rendered_==creator_->appearance())return;
     const auto& a=creator_->appearance();
-    const std::array<opengold::Image,3> images{art_->portrait(a),art_->icon(a,false),art_->icon(a,true)};
-    for(unsigned i=0;i<images.size();++i) {
+    const std::array<opengold::Image,3> images{opengold::Image{},art_->icon(a,false),art_->icon(a,true)};
+    images_[0]=portrait_texture(a,creator_->draft());
+    for(unsigned i=1;i<images.size();++i) {
         const auto& source=images[i];PackedByteArray pixels;pixels.resize(source.rgba.size());
         std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
         images_[i]=ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels));
@@ -288,8 +289,8 @@ void CharacterCreationView::refresh()
     for(unsigned i=0;i<6;++i)show(gs("Warning"+std::to_string(i)),stats&&creator_->rules().unmet_targets(d)[i]);
     for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
     show("Name",step==CreationStep::name);
-    for(const auto* n:{"HeadPrevious","HeadNext","PortraitHead","BodyPrevious","BodyNext","BodyLabel"})show(n,true);
-    for(const auto* n:{"HeadPrevious","HeadNext","PortraitHead","BodyPrevious","BodyNext"})get_node<Button>(n)->set_disabled(added_to_party_);
+    for(const auto* n:{"PortraitPrevious","PortraitNext","PortraitSelect","PortraitGender","PortraitClass","PortraitRace"})show(n,true);
+    for(const auto* n:{"PortraitPrevious","PortraitNext","PortraitSelect","PortraitGender","PortraitClass","PortraitRace"})get_node<Button>(n)->set_disabled(added_to_party_);
     for(const auto* n:{"CombatHeadPrevious","CombatHeadNext","CombatHeadLabel","WeaponPrevious","WeaponNext","WeaponLabel","Size","ColorTitle","Color1Title","Color2Title","PaletteHint"})show(n,icon);
     for(int i=0;i<6;++i) {
         for(const auto& stem:{std::string("Ability"),std::string("Dice"),std::string("Score"),std::string("BonusScore"),std::string("TotalScore")})get_node<Control>(gs(stem+std::to_string(i)))->set_visible(stats);
@@ -378,14 +379,7 @@ void CharacterCreationView::refresh()
     }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
     if(icon)instructions="Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.";
-    {
-        auto* heads=get_node<OptionButton>("PortraitHead");heads->clear();
-        for(const auto& [id,part]:art_->heads) {
-            heads->add_item(gs(part.label.empty()?"Original head "+std::to_string(id):part.label),id);
-            if(id==a.portrait_head)heads->select(heads->get_item_count()-1);
-        }
-    }
-    get_node<Label>("BodyLabel")->set_text(gs("Body "+std::to_string(a.portrait_body)));
+    refresh_portraits();
     get_node<Label>("CombatHeadLabel")->set_text(gs("Head "+std::to_string(a.combat_head+1)+" / 14"));
     get_node<Label>("WeaponLabel")->set_text(gs("Weapon "+std::to_string(a.combat_body+1)+" / 32"));
     get_node<Button>("Size")->set_text(a.tall?"Size: Tall":"Size: Short");
@@ -410,7 +404,7 @@ void CharacterCreationView::refresh()
         }
     }
     if(step==CreationStep::sheet) {
-        instructions="Review your character and use the portrait controls to adjust its head and body before adding it to the party.";
+        instructions="Review your character and use the portrait controls to choose a complete portrait before adding it to the party.";
         get_node<RichTextLabel>("Description")->set_text(sheet_text(*completed_));
     }
     get_node<Label>("Instructions")->set_text(gs(instructions));
@@ -448,11 +442,11 @@ void CharacterCreationView::target_toggled(bool selected,int index)
 {if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
 void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}
 void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
-void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_head();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
+void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_portrait();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
 void CharacterCreationView::choice_selected(std::int64_t index)
-{if(refreshing_)return;perform([&]{const auto f=choice_field(creator_->step());creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race)recommend_head();});}
+{if(refreshing_)return;perform([&]{const auto f=choice_field(creator_->step());creator_->select(f,creator_->rules().choices(f).at(index).id);if(f==CreationField::race||f==CreationField::character_class)recommend_portrait();});}
 void CharacterCreationView::gender_selected(std::int64_t index)
-{if(refreshing_)return;perform([&]{creator_->select(CreationField::gender,creator_->rules().choices(CreationField::gender).at(index).id);recommend_head();});}
+{if(refreshing_)return;perform([&]{creator_->select(CreationField::gender,creator_->rules().choices(CreationField::gender).at(index).id);recommend_portrait();});}
 void CharacterCreationView::background_selected(std::int64_t index)
 {if(refreshing_)return;perform([&]{creator_->select(CreationField::background,creator_->rules().choices(CreationField::background).at(index).id);});}
 void CharacterCreationView::bonus_selected(std::int64_t index)
@@ -461,21 +455,6 @@ void CharacterCreationView::roll(){perform([&]{creator_->roll();selected_score_=
 void CharacterCreationView::score_selected(int index)
 {perform([&]{if(selected_score_<0)selected_score_=index;else{creator_->swap_scores(selected_score_,index);selected_score_=-1;}});}
 void CharacterCreationView::name_changed(String value){perform([&]{creator_->name(value.utf8().get_data());});}
-void CharacterCreationView::portrait_part(int part,int direction)
-{
-    if(added_to_party_)return;
-    perform([&]{auto a=creator_->appearance();auto& id=part==0?a.portrait_head:a.portrait_body;const auto& parts=part==0?art_->heads:art_->bodies;
-        auto it=parts.find(id);if(direction>0){if(++it==parts.end())it=parts.begin();}else{if(it==parts.begin())it=parts.end();--it;}
-        id=it->first;creator_->appearance(a);if(completed_)completed_->appearance(a);if(part==0)portrait_chosen_=true;});
-}
-void CharacterCreationView::portrait_head_selected(std::int64_t index)
-{
-    if(refreshing_||added_to_party_)return;
-    perform([&]{auto* heads=get_node<OptionButton>("PortraitHead");
-        if(index<0||index>=heads->get_item_count())throw std::runtime_error("Invalid portrait head selection");
-        auto a=creator_->appearance();a.portrait_head=heads->get_item_id(index);art_->validate(a);
-        creator_->appearance(a);if(completed_)completed_->appearance(a);portrait_chosen_=true;});
-}
 void CharacterCreationView::combat_part(int part,int direction)
 {perform([&]{auto a=creator_->appearance();auto& id=part==0?a.combat_head:a.combat_body;const int count=part==0?14:32;id=(static_cast<int>(id)+direction+count)%count;creator_->appearance(a);});}
 void CharacterCreationView::toggle_size(){perform([&]{auto a=creator_->appearance();a.tall=!a.tall;creator_->appearance(a);});}
@@ -506,21 +485,7 @@ void CharacterCreationView::_process(double)
         if(check_frames_>400)throw std::runtime_error("Character UI check timed out");}
     catch(const std::exception& e){UtilityFunctions::printerr("Character UI check failed at stage ",check_stage_,": ",gs(e.what()));checking_=false;get_tree()->quit(1);}
 }
-void CharacterCreationView::capture_portrait_armor()
-{
-    if(!capture_)return;
-    constexpr std::array<unsigned,5> heads{1,258,260,262,264};
-    constexpr std::array<unsigned,3> bodies{1,18,26};
-    PackedByteArray pixels;pixels.resize(440*264*4);
-    for(unsigned row=0;row<bodies.size();++row)for(unsigned column=0;column<heads.size();++column) {
-        por::CharacterAppearance a;a.portrait_head=heads[column];a.portrait_body=bodies[row];const auto portrait=art_->portrait(a);
-        for(unsigned y=0;y<88;++y)std::copy_n(portrait.rgba.begin()+y*88*4,88*4,pixels.ptrw()+((row*88+y)*440+column*88)*4);
-    }
-    const auto image=godot::Image::create_from_data(440,264,false,godot::Image::FORMAT_RGBA8,pixels);
-    image->resize(1760,1056,godot::Image::INTERPOLATE_NEAREST);
-    const auto path=ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-portrait-armor.png");
-    if(image->save_png(path)!=OK)throw std::runtime_error("Portrait armor capture failed");
-}
+
 void CharacterCreationView::check_run()
 {
     if(check_stage_==6&&drag_check_stage_<12){
@@ -599,58 +564,24 @@ void CharacterCreationView::check_run()
         for(unsigned i=0;i<choices.size();++i)if(choices[i].id==id){auto* list=get_node<ItemList>("Choices");click(list->get_global_position()+list->get_item_rect(i).get_center());return;}
         throw std::runtime_error("Missing UI choice");
     };
-    // ItemList lays out refreshed entries on the next frame. Keep race and
-    // gender clicks on separate idle turns, as a player would see them.
-    if(check_stage_==0&&check_default_<8) {
-        if(check_default_==0)capture("character-race-columns.png");
-        if(check_default_<5) {
-            const auto& head=por::additional_portrait_heads()[check_default_*2+1];
-            choose(CreationField::race,std::string(head.race).c_str());
-            if(creator_->appearance().portrait_head!=head.id)throw std::runtime_error("Race did not recommend its new head: "+std::string(head.race));
-        } else if(check_default_==5) {choose(CreationField::race,"goliath");}
-        else if(check_default_==6) {
-            choose(CreationField::gender,"male");if(creator_->appearance().portrait_head!=260)throw std::runtime_error("Male Goliath recommendation failed");
-        } else {
-            choose(CreationField::gender,"female");if(creator_->appearance().portrait_head!=261)throw std::runtime_error("Female Goliath recommendation failed");
-            if(get_node<Label>("PageTitle")->get_text()!="Race & Gender"||!get_node<Label>("Steps")->get_text().contains("7. Character sheet"))throw std::runtime_error("Combined race and gender steps not renumbered");
-        }
-        ++check_default_;return;
+    if(check_stage_==0&&check_head_<portraits_.size()){
+        if(check_head_==0){capture("character-race-columns.png");portrait_selected(0);}
+        const auto& p=portraits_[check_head_];
+        if(creator_->appearance().portrait!=p.filename||images_[0]->get_width()!=1254)throw std::runtime_error("Portrait navigation or full-resolution texture failed");
+        ++check_head_;press("PortraitNext");return;
     }
-    // Walk all ten new heads through the actual arrow buttons. Allow a draw
-    // between selections so captures show the corresponding composed portrait.
-    if(check_stage_==11&&check_head_<10) {
-        const auto& head=por::additional_portrait_heads()[9-check_head_];
-        const auto& a=creator_->appearance();
-        if(a.portrait_head!=head.id||get_node<OptionButton>("PortraitHead")->get_selected_id()!=head.id)
-            throw std::runtime_error("New head navigation or dropdown selection failed");
-        const auto expected=art_->portrait(a);const auto pixels=images_[0]->get_image()->get_data();
-        if(pixels.size()!=expected.rgba.size()||!std::equal(expected.rgba.begin(),expected.rgba.end(),pixels.ptr()))
-            throw std::runtime_error("New portrait preview texture is stale");
-        for(const auto& [body_id,body]:art_->bodies) {
-            auto selection=a;selection.portrait_body=body_id;const auto joined=art_->portrait(selection);
-            unsigned left=88,right=0;
-            for(unsigned x=30;x<62;++x)if(body.image.rgba[x*4]==255&&body.image.rgba[x*4+1]==85&&body.image.rgba[x*4+2]==85){left=std::min(left,x);right=x+1;}
-            if(right<=left)throw std::runtime_error("Original body has no neck opening");
-            for(const auto x:{left,right-1}) {
-                const auto p=(39*88+x)*4;
-                if(std::max({joined.rgba[p],joined.rgba[p+1],joined.rgba[p+2]})<=24)
-                    throw std::runtime_error("Portrait neck misses body opening: "+std::string(head.filename)+" / "+std::to_string(body_id));
-            }
-            if(!std::equal(body.image.rgba.begin(),body.image.rgba.end(),joined.rgba.begin()+88*40*4))
-                throw std::runtime_error("Neck alignment changed the original body");
+    if(check_stage_==0&&check_default_==0){
+        const auto before=creator_->appearance();const auto draft=creator_->draft();
+        for(const auto* gender:{"Female","Male","Nonbinary"})for(const auto* klass:{"Barbarian","Wizard"})for(const auto* race:{"Human","Orc","Dragonborn"}){
+            for(const auto& filter:std::array<std::pair<const char*,const char*>,3>{{{"PortraitGender",gender},{"PortraitClass",klass},{"PortraitRace",race}}}){
+                auto* c=get_node<OptionButton>(filter.first);for(int i=1;i<c->get_item_count();++i)if(c->get_item_text(i)==filter.second){c->select(i);c->emit_signal("item_selected",i);break;}}
+            std::size_t count=0;for(const auto& p:portraits_)if(p.gender==gender&&p.klass==klass&&p.race==race)++count;
+            if(filtered_portraits_.size()!=count||get_node<Button>("PortraitNext")->is_disabled()!=(count==0))throw std::runtime_error("Portrait intersection or empty-state failed");
+            if(creator_->appearance()!=before||creator_->draft().race!=draft.race||creator_->draft().gender!=draft.gender||creator_->draft().character_class!=draft.character_class)throw std::runtime_error("Filters changed the character");
         }
-        press("BodyNext");
-        const auto changed_body=art_->portrait(creator_->appearance());const auto changed_pixels=images_[0]->get_image()->get_data();
-        if(changed_pixels.size()!=changed_body.rgba.size()||!std::equal(changed_body.rgba.begin(),changed_body.rgba.end(),changed_pixels.ptr()))
-            throw std::runtime_error("Changing bodies did not update neck alignment");
-        press("BodyPrevious");
-        if(head.race=="goliath") {
-            unsigned colored=0;for(unsigned p=0;p<88*40*4;p+=4)
-                if(std::max({pixels[p],pixels[p+1],pixels[p+2]})-std::min({pixels[p],pixels[p+1],pixels[p+2]})>20)++colored;
-            if(colored<100)throw std::runtime_error("Goliath portrait lost its approved colors");
-        }
-        capture(("character-portrait-"+std::string(head.filename)).c_str());
-        ++check_head_;press("HeadPrevious");return;
+        for(const auto* name:{"PortraitGender","PortraitClass","PortraitRace"}){get_node<OptionButton>(name)->select(0);portrait_filter_selected(0);}
+        if(filtered_portraits_.size()!=portraits_.size())throw std::runtime_error("Clearing filters failed");
+        ++check_default_;restart();return;
     }
     switch(check_stage_++) {
     case 0:choose(CreationField::race,"dwarf");break;
@@ -685,16 +616,14 @@ void CharacterCreationView::check_run()
         for(char c:std::string("Mira Stoneward"))for(bool pressed:{true,false}){Ref<InputEventKey> event;event.instantiate();event->set_unicode(c);
             event->set_keycode(static_cast<Key>(c>='a'&&c<='z'?c-32:c));event->set_pressed(pressed);get_viewport()->push_input(event,true);}
         break; // LineEdit publishes text_changed on the next idle turn.
-    case 10:press("Next");press("BodyNext");
-        get_node<OptionButton>("PortraitHead")->select(0);get_node<OptionButton>("PortraitHead")->emit_signal("item_selected",0);
-        press("HeadPrevious");break;
+    case 10:press("Next");
+        get_node<OptionButton>("PortraitSelect")->select(0);get_node<OptionButton>("PortraitSelect")->emit_signal("item_selected",0);
+        press("PortraitPrevious");break;
     case 11:
-        // Select a new head using the dropdown as well as the arrow buttons.
-        {auto* heads=get_node<OptionButton>("PortraitHead");
-        for(int i=0;i<heads->get_item_count();++i)if(heads->get_item_id(i)==261){heads->select(i);heads->emit_signal("item_selected",i);break;}}
-        if(creator_->appearance().portrait_head!=261)throw std::runtime_error("Portrait dropdown input failed");
-        press("Back");press("Next"); // Returning through Name must preserve a manual head choice.
-        if(creator_->appearance().portrait_head!=261)throw std::runtime_error("Manual head selection was replaced on Back/Next");
+        {auto* list=get_node<OptionButton>("PortraitSelect");list->select(0);list->emit_signal("item_selected",0);
+        const auto chosen=creator_->appearance().portrait;
+        press("Back");press("Next");
+        if(chosen!=creator_->appearance().portrait)throw std::runtime_error("Manual portrait changed on Back/Next");}
         if(creator_->step()!=CreationStep::combat_icon)throw std::runtime_error("Name must advance directly to combat appearance");
         for(int bank=0;bank<2;++bank)for(int part:{0,3})
             if(!get_node<Button>(gs("Color"+std::to_string(bank)+"_"+std::to_string(part)))->is_disabled())throw std::runtime_error("Absent weapon/shield control enabled");
@@ -720,18 +649,17 @@ void CharacterCreationView::check_run()
             }
         }break;
     case 13:capture("character-appearance.png");press("Next");break;
-    case 14:if(creator_->step()!=CreationStep::sheet||!completed_||completed_->sheet().name!="Mira Stoneward"||!completed_->inventory().empty()||completed_->appearance()!=creator_->appearance()||completed_->appearance().portrait_head!=261)throw std::runtime_error("Character not completed with the selected new head");
-        {const auto before=completed_->appearance();press("BodyNext");press("HeadNext");
+    case 14:if(creator_->step()!=CreationStep::sheet||!completed_||completed_->sheet().name!="Mira Stoneward"||!completed_->inventory().empty()||completed_->appearance()!=creator_->appearance()||completed_->appearance().portrait.empty())throw std::runtime_error("Character not completed with the selected portrait");
+        {const auto before=completed_->appearance();press("PortraitNext");
         if(completed_->appearance()==before||completed_->appearance()!=creator_->appearance()||creator_->step()!=CreationStep::sheet)throw std::runtime_error("Portrait controls did not update the reviewed character");
-        press("HeadPrevious");press("BodyPrevious");}
+        press("PortraitPrevious");}
         capture("character-sheet.png");press("Back");break;
     case 15:{const auto a=creator_->appearance();press("Size");press("CombatHeadNext");
         if(!get_node<Button>("Color0_2")->is_disabled())throw std::runtime_error("Helmet-covered hair control enabled");
         press("CombatHeadPrevious");press("Size");press("Next");
         if(a!=creator_->appearance()||a!=completed_->appearance())throw std::runtime_error("Appearance lost on part changes or review");press("Restart");break;}
     case 16:if(completed_||creator_->draft().rolled||!creator_->draft().name.empty()||creator_->step()!=CreationStep::race)throw std::runtime_error("Start over did not clear the character");
-        if(creator_->appearance().portrait_head!=265)throw std::runtime_error("Restart did not restore the default race's recommended head");
-        capture_portrait_armor();
-        UtilityFunctions::print("Godot C++ character check passed: choices, mouse drag assignment, swaps, background, HP, name, portrait heads/bodies, race/gender defaults, live texture recolors, saving throws, modifier modal, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
+        if(creator_->appearance().portrait!=recommended_portrait(creator_->draft()))throw std::runtime_error("Restart did not restore the default race's recommended head");
+        UtilityFunctions::print("Godot C++ character check passed: choices, mouse drag assignment, swaps, background, HP, name, complete portraits, race/gender defaults, live texture recolors, saving throws, modifier modal, character/inventory, sheet, edit, restart");checking_=false;get_tree()->quit(0);break;
     }
 }

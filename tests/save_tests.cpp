@@ -11,7 +11,7 @@ void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message)
 template<class F>void rejects(F f){bool caught=false;try{f();}catch(const std::exception&){caught=true;}check(caught,"Invalid save must reject");}
 std::string changed_identity(const std::string& saved,const std::string& identity){auto start=saved.find('\n',saved.find('\n')+1)+1;auto body=saved.substr(start);auto position=body.find('"'+identity+'"');check(position!=body.npos,"Identity must be present");body.replace(position,identity.size()+2,"\"incompatible\"");std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}return saved.substr(0,saved.find('\n')+1)+std::to_string(hash)+'\n'+body;}
 auto module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
-Character character(std::string klass){rules::CharacterDraft d;d.race="human";d.gender="female";d.character_class=klass;d.alignment="neutral_good";d.background="soldier";d.name="Save test "+klass;d.rolled=true;for(auto& r:d.rolls)r={{6,5,4,1},3};return Character(*srd5::character_rules(),d,{});}
+Character character(std::string klass){rules::CharacterDraft d;d.race="human";d.gender="female";d.character_class=klass;d.alignment="neutral_good";d.background="soldier";d.name="Save test "+klass;d.rolled=true;for(auto& r:d.rolls)r={{6,5,4,1},3};por::CharacterAppearance a;a.portrait="human-male-fighter-01.png";return Character(*srd5::character_rules(),d,a);}
 auto prototype(){
     std::vector<std::uint8_t> bytes{0,0};for(int n=0;n<5;++n)bytes.insert(bytes.end(),{1,1,0x15,0x99});bytes.push_back(0);
     // Each LOOK increments a persistent cell, then completes.
@@ -31,6 +31,15 @@ void roundtrip(const std::filesystem::path& directory){
             output<<line<<'\n';}}
     CampaignParty previous(srd5::load(old_pack));previous.add_pc(character("fighter"));
     auto old_save=encode_campaign(previous,nullptr,"fixture-v1");
+    // Version 3 encoded the same appearance fields without the new filename.
+    auto legacy_body=old_save.substr(old_save.find('\n',old_save.find('\n')+1)+1);
+    const std::string portrait_field="\"human-male-fighter-01.png\" ";
+    const auto portrait_position=legacy_body.find(portrait_field);check(portrait_position!=legacy_body.npos,"Portrait filename is serialized");
+    legacy_body.erase(portrait_position,portrait_field.size());
+    std::uint64_t legacy_hash=14695981039346656037ULL;for(unsigned char c:legacy_body){legacy_hash^=c;legacy_hash*=1099511628211ULL;}
+    const auto legacy_v3=decode_campaign("OPENGOLD-CAMPAIGN 3\n"+std::to_string(legacy_hash)+"\n"+legacy_body,*srd5::character_rules(),*module(),"fixture-v1",nullptr);
+    check(legacy_v3.party.roster[0].character.appearance().portrait.empty(),"Version 3 loads without inventing a saved portrait");
+    for(const auto* filename:{"../portrait.png","a/b.png","a\\b.png","portrait.jpg"})rejects([&]{por::CharacterAppearance a;a.portrait=filename;por::validate_character_appearance(a);});
     const auto imported=decode_campaign(old_save,*srd5::character_rules(),*module(),"fixture-v1",nullptr);
     check(imported.party.roster.size()==1&&imported.party.roster[0].character.sheet().level==1,"Preceding content pack remains compatible");
     for(unsigned version:{1,2}){

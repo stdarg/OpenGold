@@ -31,7 +31,7 @@ void CharacterCreationView::pool_layout()
 void CharacterCreationView::show_pool()
 {
     try{
-        if(pool_.empty())pool_=character_pool(creator_->rules(),*art_);
+        if(pool_.empty()){pool_=character_pool(creator_->rules(),*art_);for(auto& c:pool_){auto a=c.appearance();a.portrait=recommended_portrait(c.creation_data());c.appearance(a);}}
         auto* list=get_node<ItemList>("PoolModal/List");list->clear();
         for(const auto& character:pool_)list->add_item(gs(character.sheet().character_class+" / "+character.sheet().name));
         list->select(pool_index_);pool_selected(pool_index_);get_node<Window>("PoolModal")->popup_centered();
@@ -42,7 +42,8 @@ void CharacterCreationView::pool_selected(std::int64_t index)
     if(index<0||static_cast<std::size_t>(index)>=pool_.size())return;
     pool_index_=static_cast<unsigned>(index);const auto& character=pool_[pool_index_];
     get_node<RichTextLabel>("PoolModal/Text")->set_text(sheet_text(character));
-    for(unsigned i=0;i<3;++i){const auto source=i?art_->icon(character.appearance(),i==2):art_->portrait(character.appearance());
+    get_node<TextureRect>("PoolModal/Portrait")->set_texture(portrait_texture(character.appearance(),character.creation_data()));
+    for(unsigned i=1;i<3;++i){const auto source=art_->icon(character.appearance(),i==2);
         PackedByteArray pixels;pixels.resize(source.rgba.size());std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
         get_node<TextureRect>(i==0?"PoolModal/Portrait":i==1?"PoolModal/Ready":"PoolModal/Action")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels)));}
     const bool added=std::find(pool_added_.begin(),pool_added_.end(),pool_index_)!=pool_added_.end();

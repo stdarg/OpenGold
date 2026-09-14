@@ -120,8 +120,7 @@ void CharacterCreationView::refresh_party()
         const auto& m=state.roster[roster_index_];
         sheet=sheet_text(m.character,&m).utf8().get_data();
         for(const auto& item:m.character.inventory().items())items->add_item(gs(std::string(std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?"Equipped / ":"")+item.name+" x"+std::to_string(item.quantity)));
-        const auto image=art_->portrait(m.character.appearance());PackedByteArray pixels;pixels.resize(image.rgba.size());std::copy(image.rgba.begin(),image.rgba.end(),pixels.ptrw());
-        get_node<TextureRect>("PartyPanel/Portrait")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(image.width,image.height,false,godot::Image::FORMAT_RGBA8,pixels)));
+        get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         for(unsigned pose=0;pose<2;++pose){
             const auto icon=art_->icon(m.character.appearance(),pose!=0);PackedByteArray rgba;rgba.resize(icon.rgba.size());std::copy(icon.rgba.begin(),icon.rgba.end(),rgba.ptrw());
             get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(icon.width,icon.height,false,godot::Image::FORMAT_RGBA8,rgba)));
@@ -198,7 +197,7 @@ void CharacterCreationView::party_check()
     switch(party_check_stage_){
     case 0:{
         creator_->select(rules::CreationField::race,"human");creator_->select(rules::CreationField::character_class,"fighter");
-        recommend_head();creator_->roll();creator_->name("Party check fighter");
+        recommend_portrait();creator_->roll();creator_->name("Party check fighter");
         for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
         for(unsigned attempt=0;!creator_->rules().class_eligible(creator_->draft(),"fighter");++attempt){
             if(attempt==100)throw std::runtime_error("Could not roll qualified party-check fixture");
@@ -208,10 +207,10 @@ void CharacterCreationView::party_check()
             const auto before=creator_->step();next();
             if(creator_->step()==before)throw std::runtime_error("Party-check creation did not advance");
         }
-        press("BodyNext");const auto chosen=completed_->appearance();
+        press("PortraitNext");const auto chosen=completed_->appearance();
         press("AddParty");if(campaign_->state().slots[0]==0)throw std::runtime_error("Add party callback failed");
-        if(!get_node<Button>("BodyNext")->is_disabled()||!get_node<Button>("PortraitHead")->is_disabled())throw std::runtime_error("Added portrait controls remained enabled");
-        portrait_part(1,1);
+        if(!get_node<Button>("PortraitNext")->is_disabled()||!get_node<Button>("PortraitSelect")->is_disabled())throw std::runtime_error("Added portrait controls remained enabled");
+        portrait_part(1);
         if(completed_->appearance()!=chosen||campaign_->member(campaign_->state().slots[0]).character.appearance()!=chosen)throw std::runtime_error("Party portrait changed after adding");
         press("PartyPanel/Recruit");if(!campaign_->state().slots[6])throw std::runtime_error("Recruit callback failed");
         press("PartyPanel/Remove");press("PartyPanel/Rejoin");
