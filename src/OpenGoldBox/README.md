@@ -79,3 +79,17 @@ Shutdown checks use `tests/shutdown_tests.gd` with `--shutdown-close` or
 and `--shutdown-paused` cover other active views. Tests verify one shutdown
 request and scene teardown. The packaged executable also passed a native
 Windows `WM_CLOSE` check with exit code 0.
+
+Combat terrain, figures, and battlefield overlays render at 3x magnification.
+Use the mouse wheel to scroll vertically, Shift+wheel to scroll horizontally,
+or hold the middle mouse button and drag to pan. Both scrollbars are always
+visible and support keyboard focus; arrow keys pan one square when the view or
+a scrollbar has focus. The camera centers on the active combatant
+at the start of a turn and after they move; manual panning persists otherwise.
+Menus and the combat log retain their normal size.
+
+Combat viewport checks:
+
+```powershell
+godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
+```

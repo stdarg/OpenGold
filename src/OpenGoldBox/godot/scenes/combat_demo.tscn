@@ -96,3 +96,12 @@ scroll_active = true
 theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
 theme_override_font_sizes/font_size = 14
 text = "SRD 5.2.1 combat subset | Authored test arena | Original Slums dialogue and art load locally"
+
+[node name="BattlefieldScroll" type="ScrollContainer" parent="."]
+clip_contents = true
+focus_mode = 2
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 2
+
+[node name="Canvas" type="Control" parent="BattlefieldScroll"]
+mouse_filter = 2

@@ -6,6 +6,9 @@
 #include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
+#include <godot_cpp/classes/input_event_mouse_motion.hpp>
+#include <godot_cpp/classes/scroll_container.hpp>
+#include <godot_cpp/classes/scroll_bar.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -22,6 +25,7 @@
 #include <fstream>
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
+constexpr double combat_zoom=3.0;
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
 const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
     {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
@@ -34,6 +38,7 @@ std::filesystem::path CombatView::local_path(const char* path) const
 {return std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(path).utf8().get_data());}
 void CombatView::_ready()
 {
+    get_node<Control>("BattlefieldScroll/Canvas")->connect("draw",callable_mp(this,&CombatView::draw_battlefield));
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
@@ -56,19 +61,27 @@ void CombatView::_ready()
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
     try{demo_=std::make_unique<CombatDemo>(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
+        get_node<Label>("Help")->set_text("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate");
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         if(encounter_){get_node<Label>("Title")->set_text("SLUMS / Combat");get_node<Label>("Subtitle")->set_text("Choose an action, then click its target. Enter ends your turn.");
-            get_node<Label>("Footer")->set_text("Each square is 5 feet. Victory returns your party to exploration.");
-            get_node<Label>("Help")->set_text("Teal: party | Orange: enemies\nYour HP and spent resources carry forward.");}
+            get_node<Label>("Footer")->set_text("Each square is 5 feet. Victory returns your party to exploration.");}
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::layout()
 {
+    followed_.reset();
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
     const double tile=std::min(left_width/board.width,(height-280)/board.height);
     board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
+    auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
+    for(int i=0;i<scroll->get_child_count(true);++i) {
+        if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))bar->set_focus_mode(FOCUS_ALL);
+    }
+    scroll->set_position(board_rect_.position);scroll->set_size(board_rect_.size);
+    get_node<Control>("BattlefieldScroll/Canvas")->set_custom_minimum_size(board_rect_.size*combat_zoom);
+    get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
     place("Training",Rect2(right,20,112,34));place("Slums",Rect2(right+120,20,112,34));place("Replay",Rect2(right+240,20,118,34));
@@ -147,17 +160,58 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
-    if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
+    if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
+    if(!defeated()&&key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
         if(demo_->waiting())next();else immediate("end");get_viewport()->set_input_as_handled();return;
     }
+    if(!demo_->has_combat())return;
+    auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
+    if(key.is_valid()&&key->is_pressed()) {
+        bool focused=scroll->has_focus();
+        for(int i=0;i<scroll->get_child_count(true);++i) {
+            if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))focused|=bar->has_focus();
+        }
+        if(focused) {
+            const int step=std::max(1,static_cast<int>(combat_zoom*board_rect_.size.x/demo_->combat().snapshot().battlefield.width));
+            switch(key->get_keycode()) {
+            case Key::KEY_LEFT:scroll->set_h_scroll(scroll->get_h_scroll()-step);break;
+            case Key::KEY_RIGHT:scroll->set_h_scroll(scroll->get_h_scroll()+step);break;
+            case Key::KEY_UP:scroll->set_v_scroll(scroll->get_v_scroll()-step);break;
+            case Key::KEY_DOWN:scroll->set_v_scroll(scroll->get_v_scroll()+step);break;
+            default:return;
+            }
+            get_viewport()->set_input_as_handled();return;
+        }
+    }
+    const Ref<InputEventMouseMotion> motion=event;
+    if(motion.is_valid()&&panning_) {
+        if(!motion->get_button_mask().has_flag(MouseButtonMask::MOUSE_BUTTON_MASK_MIDDLE)){panning_=false;return;}
+        const auto inverse=get_global_transform_with_canvas().affine_inverse();
+        const auto delta=inverse.basis_xform(motion->get_relative());
+        scroll->set_h_scroll(scroll->get_h_scroll()-static_cast<int>(delta.x));
+        scroll->set_v_scroll(scroll->get_v_scroll()-static_cast<int>(delta.y));
+        get_viewport()->set_input_as_handled();return;
+    }
     const Ref<InputEventMouseButton> mouse=event;
-    if(mouse.is_null()||!mouse->is_pressed()||mouse->get_button_index()!=MouseButton::MOUSE_BUTTON_LEFT||!demo_->has_combat())return;
-    const auto local=get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());if(!board_rect_.has_point(local))return;
+    if(mouse.is_null())return;
+    if(mouse->get_button_index()==MouseButton::MOUSE_BUTTON_MIDDLE&&!mouse->is_pressed()){panning_=false;return;}
+    const auto local=get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
+    // Keep clicks on the scrollbars out of combat targeting.
+    if(!board_rect_.has_point(local))return;
+    for(int i=0;i<scroll->get_child_count(true);++i) {
+        auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true));
+        if(bar&&bar->is_visible()&&Rect2(Vector2(),bar->get_size()).has_point(bar->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position())))return;
+    }
+    if(mouse->get_button_index()==MouseButton::MOUSE_BUTTON_MIDDLE&&mouse->is_pressed()) {
+        panning_=true;scroll->grab_focus();get_viewport()->set_input_as_handled();return;
+    }
+    if(defeated()||!mouse->is_pressed()||mouse->get_button_index()!=MouseButton::MOUSE_BUTTON_LEFT)return;
     const auto s=demo_->combat().snapshot();const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0)return;
-    const auto relative=(local-board_rect_.position)/(board_rect_.size.x/demo_->combat().snapshot().battlefield.width);const Cell cell{static_cast<int>(relative.x),static_cast<int>(relative.y)};
+    const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
+    const auto relative=canvas/(combat_zoom*board_rect_.size.x/s.battlefield.width);
+    const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
         if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
@@ -191,42 +245,56 @@ void CombatView::refresh()
     std::string log=demo_?demo_->dialogue()+"\n\n":"";for(const auto& entry:s.log)log+=entry+"\n";
     if(!error_.empty())log+="\n"+error_;
     get_node<RichTextLabel>("Log")->set_text(gs(log));get_node<RichTextLabel>("Log")->scroll_to_line(std::max(0,get_node<RichTextLabel>("Log")->get_line_count()-1));
+    get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
+}
+void CombatView::center_on(Cell cell)
+{
+    auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
+    const double tile=combat_zoom*board_rect_.size.x/demo_->combat().snapshot().battlefield.width;
+    scroll->set_h_scroll(static_cast<int>((cell.x+.5)*tile-scroll->get_size().x*.5));
+    scroll->set_v_scroll(static_cast<int>((cell.y+.5)*tile-scroll->get_size().y*.5));
 }
 void CombatView::_draw()
 {
-    draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));draw_rect(board_rect_,Color("202d33"));if(!demo_||!demo_->has_combat())return;
+    draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));draw_rect(board_rect_,Color("202d33"));
+}
+void CombatView::draw_battlefield()
+{
+    if(!demo_||!demo_->has_combat())return;
+    auto* canvas=get_node<Control>("BattlefieldScroll/Canvas");
+    canvas->draw_set_transform(Vector2(),0,Vector2(combat_zoom,combat_zoom));
     const auto s=demo_->combat().snapshot();const double tile=board_rect_.size.x/s.battlefield.width;const auto font=get_theme_default_font();
     for(int y=0;y<s.battlefield.height;++y)for(int x=0;x<s.battlefield.width;++x) {
-        const Rect2 cell(board_rect_.position+Vector2(x*tile,y*tile),Vector2(tile,tile));
-        const auto terrain=s.battlefield.at({x,y});draw_rect(cell,terrain==1?Color("64716d"):terrain==2?Color("665238"):((x+y)%2?Color("29373c"):Color("253137")));
+        const Rect2 cell(Vector2(x*tile,y*tile),Vector2(tile,tile));
+        const auto terrain=s.battlefield.at({x,y});canvas->draw_rect(cell,terrain==1?Color("64716d"):terrain==2?Color("665238"):((x+y)%2?Color("29373c"):Color("253137")));
         const auto index=y*s.battlefield.width+x;
-        if(index<demo_->battlefield_tiles().size()&&demo_->battlefield_tiles()[index]<terrain_art_.size())draw_texture_rect(terrain_art_[demo_->battlefield_tiles()[index]],cell,false);
-        else draw_rect(cell,Color("172228"),false);
+        if(index<demo_->battlefield_tiles().size()&&demo_->battlefield_tiles()[index]<terrain_art_.size())canvas->draw_texture_rect(terrain_art_[demo_->battlefield_tiles()[index]],cell,false);
+        else canvas->draw_rect(cell,Color("172228"),false);
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
-        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,.17));
+        canvas->draw_rect(Rect2(Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,.17));
     }
     for(const auto& a:s.combatants) {
-        const auto center=board_rect_.position+Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
+        const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
         const auto color=a.side==0?Color("79d6d4"):Color("dd9874");
-        draw_circle(center,tile*.34,a.conscious?color:Color("51595b"));
-        if(a.id==s.actor&&s.outcome==Outcome::ongoing)draw_arc(center,tile*.42,0,6.283185,32,Color("e6c28a"),2);
+        canvas->draw_circle(center,tile*.34,a.conscious?color:Color("51595b"));
+        if(a.id==s.actor&&s.outcome==Outcome::ongoing)canvas->draw_arc(center,tile*.42,0,6.283185,32,Color("e6c28a"),2);
         if(art_.contains(a.id)) {
             const auto texture=art_.at(a.id);const double scale=tile*.9/std::max(texture->get_width(),texture->get_height());
-            const Vector2 size(texture->get_width()*scale,texture->get_height()*scale);draw_texture_rect(texture,Rect2(center-size*.5,size),false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
+            const Vector2 size(texture->get_width()*scale,texture->get_height()*scale);canvas->draw_texture_rect(texture,Rect2(center-size*.5,size),false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
         } else {
             const auto number=std::to_string(a.id);
             auto cursor=center+Vector2(-5.5*number.size(),7);
             for(const char digit:number) {
-                draw_char(font,cursor,gs(std::string(1,digit)),20,Color("142027"));
+                canvas->draw_char(font,cursor,gs(std::string(1,digit)),20,Color("142027"));
                 cursor.x+=11;
             }
         }
-        draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7,4)),Color("101719"));
-        draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7*a.hit_points/a.max_hit_points,4)),color);
+        canvas->draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7,4)),Color("101719"));
+        canvas->draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7*a.hit_points/a.max_hit_points,4)),color);
     }
 }
 void CombatView::_process(double delta)
@@ -237,6 +305,10 @@ void CombatView::_process(double delta)
         if(!demo_)return;
         if(checking_&&demo_->waiting()){next();return;}
         if(!demo_->has_combat())return;const auto s=demo_->combat().snapshot();
+        for(const auto& a:s.combatants)if(a.id==s.actor) {
+            const auto current=std::pair{a.id,a.cell};
+            if(followed_!=current){center_on(a.cell);followed_=current;}
+        }
         if((checking_||expedition_check_)&&capture_&&!captured_) {
             if(++completion_frames_<3)return;completion_frames_=0;
             const auto file=local_path(expedition_check_?"user://checks/slums-battlefield.png":check_slums_?"user://checks/slums-combat.png":"user://checks/training-combat.png");std::filesystem::create_directories(file.parent_path());
@@ -259,7 +331,11 @@ void CombatView::_process(double delta)
                 get_node<Button>(node)->emit_signal("pressed");
                 const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==command.target;});
                 Ref<InputEventMouseButton> mouse;mouse.instantiate();mouse->set_button_index(MouseButton::MOUSE_BUTTON_LEFT);mouse->set_pressed(true);
-                mouse->set_position(board_rect_.position+Vector2(target->cell.x+.5,target->cell.y+.5)*(board_rect_.size.x/demo_->combat().snapshot().battlefield.width));
+                if(!check_target_centered_) {
+                    center_on(target->cell);check_target_centered_=true;
+                    return; // ScrollContainer applies the canvas offset during its layout pass.
+                }
+                mouse->set_position(get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().xform(Vector2(target->cell.x+.5,target->cell.y+.5)*(combat_zoom*board_rect_.size.x/s.battlefield.width)));
                 get_viewport()->push_input(mouse,true);
                 if(demo_->combat().snapshot().revision!=s.revision+1)throw std::runtime_error("Action button/target click did not submit command");
                 checked_input_=true;++check_steps_;return;
