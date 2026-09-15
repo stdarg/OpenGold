@@ -31,13 +31,13 @@ Tests do not require Godot.
 
 ## Godot project
 
-Open `godot/project.godot` in Godot. The existing main scene remains the art
+Open `demos/godot/project.godot` in Godot. The existing main scene remains the art
 comparison tool. Build and launch the C++ Rolf tour from Windows CMD with
-`build-rolf.cmd` and `review-rolf.cmd`. The optional GDExtension fetches pinned
+`demos\build-rolf.cmd` and `demos\review-rolf.cmd`. The optional GDExtension fetches pinned
 official Godot C++ bindings; the core remains independently testable.
 See [Rolf's tour](ROLF.md) for build options, controls and data configuration.
 The same extension also contains the native combat scene: run
-`review-combat.cmd` after building. See [combat controls and scope](RULES.md).
+`demos\review-combat.cmd` after building. See [combat controls and scope](RULES.md).
 
 Do not commit original SSI game files or derived assets. Keep local copies in
 ignored directories such as `testdata/local/` or `user-data/`.

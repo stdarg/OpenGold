@@ -14,8 +14,8 @@ below retain their fixed fixtures; the character scene injects the actual party.
 From the repository root:
 
 ```cmd
-build-rolf.cmd
-review-combat.cmd
+demos\build-rolf.cmd
+demos\review-combat.cmd
 ```
 
 The existing build helper builds both native Godot scenes and runs five test
@@ -25,11 +25,11 @@ See [native build prerequisites](ROLF.md#build-boundary).
 Training uses one martial fixture against an SRD Bandit and needs no original
 game files. Select **Slums event** for a fixed four-person party against the
 original event's four orcs. Original files come from `OPENGOLD_GAME_DIR`, falling
-back to `opengold/game_directory` in `godot/project.godot`:
+back to `opengold/game_directory` in `demos/godot/project.godot`:
 
 ```cmd
 set "OPENGOLD_GAME_DIR=C:\Games\POOLRAD"
-review-combat.cmd -- --slums
+demos\review-combat.cmd -- --slums
 ```
 
 Select an action, then click a highlighted destination or target. Dash, Dodge,
@@ -153,7 +153,7 @@ feats, Healing Word, Scorching Ray and level-two upcasting.
 
 ## Validation and next increments
 
-`build.cmd` tests the rules without Godot; `build-rolf.cmd` also builds the scene.
+`build.cmd` tests the rules without Godot; `demos\build-rolf.cmd` also builds the scene.
 With `OPENGOLD_GAME_DIR` set, `opengold_rules_tests` executes the installed Slums
 script, fights using actual legal commands, checks result writes and revisits.
 The older ECL mock remains a separate bytecode regression test.
@@ -167,8 +167,8 @@ Godot scene checks use the actual native action-button signal and target-input
 path, prevent Enter from skipping enemy turns, and finish combat automatically:
 
 ```cmd
-godot --headless --path godot res://scenes/combat_demo.tscn -- --combat-check
-godot --headless --path godot res://scenes/combat_demo.tscn -- --combat-check --slums
+godot --headless --path demos/godot res://scenes/combat_demo.tscn -- --combat-check
+godot --headless --path demos/godot res://scenes/combat_demo.tscn -- --combat-check --slums
 ```
 
 Add `--capture` to the user arguments in a graphical run (omit `--headless`) to

@@ -130,12 +130,12 @@ and releases its output on failed construction. Mute previously attenuated by
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-sounds.cmd
+.\demos\build-rolf.cmd
+.\demos\review-sounds.cmd
 ```
 
 The demo uses `OPENGOLD_GAME_DIR`, falling back to `opengold/game_directory`
-in `godot/project.godot`. Set the variable to the folder containing `START.EXE`.
+in `demos/godot/project.godot`. Set the variable to the folder containing `START.EXE`.
 Click a sound to play/restart it; a new selection stops the previous sound.
 Stop, mute and volume are available below the buttons.
 
@@ -152,5 +152,5 @@ with original-game recordings remains outside this verification.
 
 ```powershell
 .\build\godot\opengold_sound_player_tests.exe
-godot --headless --path godot res://scenes/sound_board.tscn -- --sound-check
+godot --headless --path demos/godot res://scenes/sound_board.tscn -- --sound-check
 ```

@@ -47,7 +47,7 @@ Character preview_guard()
 }
 void CharacterCreationView::setup_party()
 {
-    const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
+    const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
     campaign_=std::make_shared<CampaignParty>(srd5::load(pack));
     auto panel=scene("res://scenes/party_panel.tscn");add_child(panel.get());panel.release();
     get_node<Control>("PartyPanel")->hide();
@@ -187,7 +187,7 @@ void CharacterCreationView::party_check()
             if(names.size()!=48||classes.size()!=12||std::any_of(classes.begin(),classes.end(),[](const auto& c){return c.second!=4;}))throw std::runtime_error("Pool class counts or names invalid");
             pool_selected(19);get_node<ItemList>("PoolModal/List")->select(19);
         }else{
-            if(capture_){const auto image=get_node<Window>("PoolModal")->get_texture()->get_image();if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-pool.png"));}
+            if(capture_){const auto image=get_node<Window>("PoolModal")->get_texture()->get_image();if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/character-pool.png"));}
             const auto state=campaign_->checkpoint();pool_add();pool_add();
             if(campaign_->state().roster.size()!=state.roster.size()+1)throw std::runtime_error("Pool add or duplicate guard failed");
             campaign_->restore(state);pool_added_.clear();roster_index_=0;close_pool();
@@ -297,7 +297,7 @@ void CharacterCreationView::expedition_check()
     if(get_node_or_null("CampaignCombat"))return;
     auto* town=get_node<RolfTourView>("CampaignTown");
     if(const auto* state=town->saved_session();state&&state->can_leave()&&state->snapshot().area_id==20&&!expedition_saved_){
-        const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
+        const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
         const auto saved=encode_campaign(*campaign_,state,"expedition-fixture");
         auto loaded=decode_campaign(saved,*srd5::character_rules(),*srd5::load(pack),"expedition-fixture",state);
         loaded.town->attach_restored_party(campaign_);
@@ -373,7 +373,7 @@ void CharacterCreationView::defeat_check()
     if(defeat_check_stage_==2){
         if(!dialog->is_visible())throw std::runtime_error("Cancel bypassed defeat");
         auto* fight=get_node<CombatView>("CampaignCombat");
-        const auto broken=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../user-data/save-check/defeat-corrupt.ogs").utf8().get_data());
+        const auto broken=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/save-check/defeat-corrupt.ogs").utf8().get_data());
         write_campaign_file(broken,"corrupt");const auto original=campaign_;bool rejected=false;
         try{load_campaign(broken);}catch(const std::exception&){rejected=true;}
         if(!rejected||campaign_!=original||!fight->defeated()||!dialog->is_visible())throw std::runtime_error("Rejected defeat load changed campaign");
@@ -381,7 +381,7 @@ void CharacterCreationView::defeat_check()
     }
     if(defeat_check_stage_==3){
         if(defeat_check_frames_<4)return;
-        if(capture_){const auto image=dialog->get_texture()->get_image();if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/party-defeat.png"))!=OK)throw std::runtime_error("Cannot capture defeat screen");}
+        if(capture_){const auto image=dialog->get_texture()->get_image();if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/party-defeat.png"))!=OK)throw std::runtime_error("Cannot capture defeat screen");}
         dialog->get_node<Button>("Reload")->emit_signal("pressed");auto* slots=saves->get_node<ItemList>("Slots");int selected=-1;
         for(int i=0;i<slots->get_item_count();++i)if(slots->get_item_text(i)=="Defeat test")selected=i;
         if(selected<0)throw std::runtime_error("Defeat save slot missing");slots->select(selected);slots->emit_signal("item_selected",selected);

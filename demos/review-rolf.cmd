@@ -1,7 +1,7 @@
 @echo off
 setlocal
 if not exist "%~dp0godot\bin\opengold_godot.dll" (
-    echo Build the C++ Godot extension first: build-rolf.cmd
+    echo Build the C++ Godot extension first: demos\build-rolf.cmd
     exit /b 1
 )
 godot --headless --editor --path "%~dp0godot" --import --quit

@@ -83,7 +83,7 @@ func _load_maps() -> void:
 	var game_directory := OS.get_environment("OPENGOLD_GAME_DIR")
 	if game_directory.is_empty():
 		game_directory = ProjectSettings.get_setting("opengold/game_directory", "")
-	var executable := ProjectSettings.globalize_path("res://../build/opengold_maps.exe" if OS.get_name() == "Windows" else "res://../build/opengold_maps")
+	var executable := ProjectSettings.globalize_path("res://../../build/opengold_maps.exe" if OS.get_name() == "Windows" else "res://../../build/opengold_maps")
 	if not FileAccess.file_exists(executable):
 		info.text = "Map loader is missing. Run build.cmd from the repository root, then reopen this demo."
 		return

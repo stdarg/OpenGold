@@ -45,7 +45,7 @@ func _run() -> void:
 	if "--capture" in OS.get_cmdline_user_args():
 		await process_frame
 		await RenderingServer.frame_post_draw
-		var path := ProjectSettings.globalize_path("res://../user-data/map-inspector.png")
+		var path := ProjectSettings.globalize_path("res://../../user-data/map-inspector.png")
 		DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 		assert(root.get_texture().get_image().save_png(path) == OK)
 		print("Screenshot: ", path)

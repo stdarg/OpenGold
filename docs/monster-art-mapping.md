@@ -9,7 +9,7 @@ full monster database is bundled in the repository.
 Run from the repository root:
 
 ```powershell
-godot_console --headless --path godot --script ../tools/research_monster_art.gd
+godot_console --headless --path demos/godot --script ../../tools/research_monster_art.gd
 ```
 
 The tool honors `OPENGOLD_GAME_DIR`, falling back to the Godot project setting.

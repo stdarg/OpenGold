@@ -1,6 +1,6 @@
 @echo off
 setlocal
-if not exist "%~dp0build\opengold_maps.exe" (
+if not exist "%~dp0..\build\opengold_maps.exe" (
     echo Build the native map loader first by running build.cmd.
     exit /b 1
 )

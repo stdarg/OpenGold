@@ -5,8 +5,8 @@ character creator, town and combat scenes through reusable C++20 classes.
 Run from PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-character.cmd
+.\demos\build-rolf.cmd
+.\demos\review-character.cmd
 ```
 
 ## Preview flow
@@ -17,7 +17,7 @@ Reload uses the existing named-save dialog. Cancelling or rejecting a damaged
 save retains the defeated campaign; a confirmed valid load replaces it and
 removes the old combat scene. Standalone combat demos retain their restart controls.
 
-Run `.\review-character.cmd --defeat-check` for the automated loss/reload/exit
+Run `.\demos\review-character.cmd --defeat-check` for the automated loss/reload/exit
 check and a capture at `user-data/party-defeat.png`. It uses an isolated save
 profile. The [first Slums expedition](EXPEDITION.md) connects original district
 travel, automatic combat, original tactical geometry and persistent rewards.
@@ -192,7 +192,7 @@ The Godot acceptance route uses the actual installed original town shop and
 native control callbacks, then equips and fights with that same party:
 
 ```powershell
-godot --headless --path godot res://scenes/character_creation.tscn -- --party-check
+godot --headless --path demos/godot res://scenes/character_creation.tscn -- --party-check
 ```
 
 For local screenshots, omit `--headless` and append `--capture`. Inspect at

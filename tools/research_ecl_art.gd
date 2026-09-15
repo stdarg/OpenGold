@@ -23,7 +23,7 @@ func _initialize() -> void:
             result.record = id
             scripts.append(result)
             print("%s/%d: %d instructions, %d diagnostics %s" % [archive,id,result.nodes.size(),result.diagnostics.size(),result.diagnostics])
-    var output := ProjectSettings.globalize_path("res://../user-data/ecl-art-research.json")
+    var output := ProjectSettings.globalize_path("res://../../user-data/ecl-art-research.json")
     DirAccess.make_dir_recursive_absolute(output.get_base_dir())
     var file := FileAccess.open(output,FileAccess.WRITE)
     file.store_string(JSON.stringify({"scripts":scripts},"  "))
@@ -31,11 +31,11 @@ func _initialize() -> void:
     print(output)
     var evidence = Evidence.new()
     evidence.build(folder)
-    var evidence_file := FileAccess.open("res://../user-data/art-script-evidence.json",FileAccess.WRITE)
+    var evidence_file := FileAccess.open("res://../../user-data/art-script-evidence.json",FileAccess.WRITE)
     evidence_file.store_string(JSON.stringify(evidence.export_data(),"  "))
     evidence_file.close()
     print("Evidence: ",evidence.summary)
-    var report := FileAccess.open("res://../user-data/unresolved-art-evidence.md",FileAccess.WRITE)
+    var report := FileAccess.open("res://../../user-data/unresolved-art-evidence.md",FileAccess.WRITE)
     report.store_line("# Unresolved art evidence\n\nStatic candidates; resource banks and gameplay remain unverified.\n")
     var inventory_path := "user://art-group-inventory.json"
     if FileAccess.file_exists(inventory_path):

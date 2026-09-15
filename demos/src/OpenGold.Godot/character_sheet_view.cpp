@@ -97,7 +97,7 @@ void CharacterCreationView::show_modifiers()
     text+="\n\n[b]Class / "+s.character_class+"[/b]\n"+s.class_modifiers;
     text+="\n\n[b]Background / "+s.background+"[/b]\n"+s.background_modifiers;
     try{
-        const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
+        const auto pack=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules").utf8().get_data());
         const auto profile=member?campaign_->profile(member->id):srd5::load(pack)->character_profile(s,{});
         text+="\n\n[b]Items[/b]\n"+profile.item_modifiers+"\n\n[b]Spells[/b]\n"+profile.spell_modifiers+"\n\n"+profile.description;
     }catch(const std::exception& e){

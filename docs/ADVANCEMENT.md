@@ -60,9 +60,9 @@ per-turn spell/feat usage. Old-module combat checkpoints are not migrated.
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-character.cmd --advancement-check
-.\review-character.cmd --level-up-review
+.\demos\build-rolf.cmd
+.\demos\review-character.cmd --advancement-check
+.\demos\review-character.cmd --level-up-review
 ```
 
 The automated check exercises real roster and town buttons, Cancel, invalid

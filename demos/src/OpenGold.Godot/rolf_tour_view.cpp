@@ -153,7 +153,7 @@ void RolfTourView::restart()
     try {
         error_="";
         if(!campaign_||!embedded_party_){
-            const auto pack=ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules");
+            const auto pack=ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules");
             campaign_=std::make_shared<opengold::CampaignParty>(opengold::srd5::load(std::filesystem::u8path(pack.utf8().get_data())));
             opengold::rules::CharacterDraft d;d.race="human";d.gender="female";d.character_class="fighter";d.alignment="neutral_good";d.background="soldier";d.name="Adventurer";d.rolled=true;
             for(auto& roll:d.rolls)roll={{6,5,4,1},3};
@@ -449,7 +449,7 @@ void RolfTourView::draw_map()
 void RolfTourView::capture_frame(const String& name)
 {
     if (!capture_) return;
-    const auto directory=ProjectSettings::get_singleton()->globalize_path("res://../user-data");
+    const auto directory=ProjectSettings::get_singleton()->globalize_path("res://../../user-data");
     std::filesystem::create_directories(std::filesystem::u8path(directory.utf8().get_data()));
     const auto path=directory.path_join(name+String(".png"));
     const auto image=get_viewport()->get_texture()->get_image();

@@ -12,20 +12,20 @@ and waterfront pieces directly from your installed game files.
 From the repository root:
 
 ```cmd
-build-rolf.cmd
-review-rolf.cmd
+demos\build-rolf.cmd
+demos\review-rolf.cmd
 ```
 
 The first command builds the C++ GDExtension and runs all five native test suites.
 The second imports the extension and opens the Godot scene. Once built, use only
-`review-rolf.cmd` to run it again. Close the scene before rebuilding its DLL.
+`demos\review-rolf.cmd` to run it again. Close the scene before rebuilding its DLL.
 
 Game data uses `OPENGOLD_GAME_DIR`, falling back to `opengold/game_directory` in
-`godot/project.godot`. To override it in CMD:
+`demos/godot/project.godot`. To override it in CMD:
 
 ```cmd
 set "OPENGOLD_GAME_DIR=C:\Games\POOLRAD"
-review-rolf.cmd
+demos\review-rolf.cmd
 ```
 
 Use **Continue** or **Enter** at each pause. Movement remains locked until the
@@ -42,8 +42,8 @@ map visibility; visited means cells actually occupied, not a line-of-sight rule.
 
 ## Build boundary
 
-The scene is `godot/scenes/rolf_tour.tscn`. Its `RolfTourView` node is implemented
-in `src/OpenGold.Godot` using C++; no GDScript drives this scene. The native
+The scene is `demos/godot/scenes/rolf_tour.tscn`. Its `RolfTourView` node is implemented
+in `demos/src/OpenGold.Godot` using C++; no GDScript drives this scene. The native
 `opengold::por::RolfTourSession` reuses `EclMachine`, `MapCatalog` and the existing
 sprite decoder. Core code has no Godot dependency. Scene nodes own their children;
 the wrapper uses Godot `Ref` values for textures/audio and value-owned session
@@ -66,7 +66,7 @@ The first configure fetches official MIT-licensed
 `e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77` (`godot-4.5-stable`). Supply
 `-DPython3_EXECUTABLE=C:/path/to/python.exe` if Python is not on PATH. A local
 checkout can be supplied with `-DFETCHCONTENT_SOURCE_DIR_GODOT_CPP=...`.
-Libraries and the generated extension descriptor go in ignored `godot/bin/`.
+Libraries and the generated extension descriptor go in ignored `demos/godot/bin/`.
 The default native-only build requires neither Python nor Godot bindings.
 
 Verified here on Windows x64 with Godot 4.7.2 and MSVC. Linux/macOS builds have
@@ -134,13 +134,13 @@ tests attempt all numbered town cells and buy from all four shop types.
 After building, check the actual Godot scene and input path:
 
 ```cmd
-review-rolf.cmd --headless -- --tour-check
+demos\review-rolf.cmd --headless -- --tour-check
 ```
 
 To capture its eight rendered pauses for local inspection:
 
 ```cmd
-review-rolf.cmd -- --tour-check --capture
+demos\review-rolf.cmd -- --tour-check --capture
 ```
 
 Screenshots go to ignored `user-data/rolf-tour-1.png` through `rolf-tour-8.png`.

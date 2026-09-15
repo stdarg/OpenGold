@@ -22,7 +22,7 @@ using namespace opengold;
 namespace {
 struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
 std::filesystem::path game_directory(){auto dir=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");if(dir.is_empty())dir=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");return std::filesystem::u8path(dir.utf8().get_data());}
-auto rules_module(){return srd5::load(std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../data/rules/srd-5.2.1/combat.rules").utf8().get_data()));}
+auto rules_module(){return srd5::load(std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules").utf8().get_data()));}
 }
 void CharacterCreationView::setup_saves(){
     save_read_check_=OS::get_singleton()->get_cmdline_user_args().has("--save-check-read");
@@ -65,7 +65,7 @@ void RolfTourView::restore_campaign(std::shared_ptr<CampaignParty> party,por::Ro
 void RolfTourView::request_save(bool saving){if(embedded_party_&&session_&&session_->can_leave())emit_signal("save_requested",saving);}
 
 void CharacterCreationView::save_checkpoint_check(const std::string& name){
-    auto directory=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../user-data/save-check").utf8().get_data());
+    auto directory=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/save-check").utf8().get_data());
     save_campaign(directory/(name+".ogs"));error_="";
     if(name=="final"){
         open_saves(true);auto* dialog=get_node<SaveSlots>("SaveSlots");dialog->get_node<LineEdit>("Name")->set_text("Restart test");
@@ -75,7 +75,7 @@ void CharacterCreationView::save_checkpoint_check(const std::string& name){
     UtilityFunctions::print("Saved restart case: ",String::utf8(name.c_str()));
 }
 void CharacterCreationView::load_checkpoint_check(){
-    auto directory=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../user-data/save-check").utf8().get_data());
+    auto directory=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/save-check").utf8().get_data());
     const auto assets=campaign_asset_identity(game_directory());
     for(const char* name:{"advancement","interrupted-rest","cancelled-service","temple-payment","inn-rest","rejected-service","denied-rest","final"}){
         auto path=directory/(std::string(name)+".ogs");load_campaign(path);auto* town=get_node<RolfTourView>("CampaignTown");
@@ -98,7 +98,7 @@ void CharacterCreationView::load_checkpoint_check(){
 void CharacterCreationView::capture_save_ui(){
     if(++save_capture_frames_==4){
         auto* dialog=get_node<SaveSlots>("SaveSlots");const auto image=dialog->get_texture()->get_image();
-        if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/campaign-load-dialog.png"))!=OK)throw std::runtime_error("Cannot capture save dialog");dialog->hide();
+        if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/campaign-load-dialog.png"))!=OK)throw std::runtime_error("Cannot capture save dialog");dialog->hide();
     }
     if(save_capture_frames_==8){capture("campaign-party.png");party_action(7);}
     if(save_capture_frames_==12){capture("campaign-town.png");save_capture_frames_=0;get_tree()->quit(0);}

@@ -54,7 +54,7 @@ void CombatView::_ready()
     party_check_=campaign_&&args.has("--party-check");
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
-    try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
+    try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         if(encounter_){get_node<Label>("Title")->set_text("SLUMS / Combat");get_node<Label>("Subtitle")->set_text("Choose an action, then click its target. Enter ends your turn.");
             get_node<Label>("Footer")->set_text("Each square is 5 feet. Victory returns your party to exploration.");
@@ -111,7 +111,7 @@ void CombatView::sync_art()
 }
 void CombatView::save_game()
 {
-    try{const auto bytes=demo_->save_combat();const auto path=local_path("res://../user-data/combat.save");std::filesystem::create_directories(path.parent_path());
+    try{const auto bytes=demo_->save_combat();const auto path=local_path("res://../../user-data/combat.save");std::filesystem::create_directories(path.parent_path());
         auto temporary=path;temporary+=".tmp";auto backup=path;backup+=".bak";
         {std::ofstream output(temporary,std::ios::binary|std::ios::trunc);output<<bytes;output.close();if(!output)throw std::runtime_error("Combat save failed");}
         const bool previous=std::filesystem::exists(path);
@@ -122,7 +122,7 @@ void CombatView::save_game()
 }
 void CombatView::load_game()
 {
-    try{const auto path=local_path("res://../user-data/combat.save");if(std::filesystem::file_size(path)>65536)throw std::runtime_error("Combat save exceeds limit");
+    try{const auto path=local_path("res://../../user-data/combat.save");if(std::filesystem::file_size(path)>65536)throw std::runtime_error("Combat save exceeds limit");
         std::ifstream input(path,std::ios::binary);const std::string bytes{std::istreambuf_iterator<char>(input),{}};if(input.bad())throw std::runtime_error("Combat save read failed");
         demo_->restore_combat(bytes);error_.clear();refresh();
     }catch(const std::exception& e){error_=e.what();refresh();}
@@ -238,7 +238,7 @@ void CombatView::_process(double delta)
         if(!demo_->has_combat())return;const auto s=demo_->combat().snapshot();
         if((checking_||expedition_check_)&&capture_&&!captured_) {
             if(++completion_frames_<3)return;completion_frames_=0;
-            const auto file=local_path(expedition_check_?"res://../user-data/slums-battlefield.png":check_slums_?"res://../user-data/slums-combat.png":"res://../user-data/training-combat.png");std::filesystem::create_directories(file.parent_path());
+            const auto file=local_path(expedition_check_?"res://../../user-data/slums-battlefield.png":check_slums_?"res://../../user-data/slums-combat.png":"res://../../user-data/training-combat.png");std::filesystem::create_directories(file.parent_path());
             const auto image=get_viewport()->get_texture()->get_image();if(image.is_null()||image->save_png(gs(file.generic_string()))!=OK)throw std::runtime_error("Combat capture failed");captured_=true;
         }
         if(s.outcome!=Outcome::ongoing) {

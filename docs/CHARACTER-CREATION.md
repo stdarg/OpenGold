@@ -6,14 +6,14 @@ character sheet. It uses SRD 5.2.1 and complete OpenGoldBox portraits and the or
 Run from Windows CMD at the repository root:
 
 ```cmd
-build-rolf.cmd
-review-character.cmd
+demos\build-rolf.cmd
+demos\review-character.cmd
 ```
 
 The shared extension uses the existing [build prerequisites](ROLF.md). The
-launcher opens `godot/scenes/character_creation.tscn`. Art loads from the
+launcher opens `demos/godot/scenes/character_creation.tscn`. Art loads from the
 `OPENGOLD_GAME_DIR` environment variable, falling back to
-`opengold/game_directory` in `godot/project.godot`.
+`opengold/game_directory` in `demos/godot/project.godot`.
 
 ## Creation flow
 
@@ -141,7 +141,7 @@ effect support.
 archive IDs and indexed combat pixels. No extracted artwork is distributed.
 
 - Complete portraits and metadata come from `art/portraits/portraits.json` and its
-  sibling PNGs. Build copies go to `godot/bin/portraits/`. The Godot boundary
+  sibling PNGs. Build copies go to `demos/godot/bin/portraits/`. The Godot boundary
   parses the catalog and loads full-resolution images, displayed with nearest
   filtering in creation, pool and party previews.
 - Campaign format 4 saves the selected basename. Versions 1?3 remain readable;
@@ -186,7 +186,7 @@ are not used as an assumed list of available archive IDs.
 
 ## Verification
 
-`build.cmd` and `build-rolf.cmd` include `opengold_character_tests`. Synthetic
+`build.cmd` and `demos\build-rolf.cmd` include `opengold_character_tests`. Synthetic
 tests cover deterministic rolls, retained dice, swaps, all class HP values,
 background bonuses, invalid selections, name validation, navigation, restart,
 truncation, all twelve color controls, head composition, fixed pixels,
@@ -205,7 +205,7 @@ build.cmd
 Run the Godot scene's automated creation check:
 
 ```cmd
-godot --headless --path godot res://scenes/character_creation.tscn -- --character-check
+godot --headless --path demos/godot res://scenes/character_creation.tscn -- --character-check
 ```
 
 This exercises choices, rolling, swaps, background bonuses, HP, name entry,

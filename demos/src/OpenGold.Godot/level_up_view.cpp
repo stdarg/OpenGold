@@ -120,7 +120,7 @@ void CharacterCreationView::advancement_check(){
     const auto press=[&](const String& path){auto* button=get_node<Button>(path);if(button->is_disabled())throw std::runtime_error("Disabled advancement check control");button->emit_signal("pressed");};
     const auto arrow=[](opengold::MemberId id){return String("PartyPanel/Roster/Advance")+String::num_uint64(id);};
     const auto capture_dialog=[&](const char* name){if(!capture_)return;const auto image=get_node<Window>("LevelUp")->get_texture()->get_image();
-        if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path(String("res://../user-data/")+name))!=OK)throw std::runtime_error("Level-up capture failed");};
+        if(image.is_null()||image->save_png(ProjectSettings::get_singleton()->globalize_path(String("res://../../user-data/")+name))!=OK)throw std::runtime_error("Level-up capture failed");};
     const auto select=[&](const String& path,int index){auto* option=get_node<OptionButton>(path);option->select(index);option->emit_signal("item_selected",index);};
     const auto id=campaign_->state().roster.empty()?0:campaign_->state().slots[0];
     switch(advancement_stage_){

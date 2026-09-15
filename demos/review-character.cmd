@@ -1,12 +1,12 @@
 @echo off
 setlocal
-if "%~1"=="--save-restart" set "APPDATA=%~dp0user-data\save-check-profile"
-if "%~1"=="--defeat-check" set "APPDATA=%~dp0user-data\defeat-check-profile"
-if "%~1"=="--expedition-check" set "APPDATA=%~dp0user-data\expedition-check-profile"
-if "%~1"=="--advancement-check" set "APPDATA=%~dp0user-data\advancement-check-profile"
-if "%~1"=="--level-up-review" set "APPDATA=%~dp0user-data\level-up-review-profile"
+if "%~1"=="--save-restart" set "APPDATA=%~dp0..\user-data\save-check-profile"
+if "%~1"=="--defeat-check" set "APPDATA=%~dp0..\user-data\defeat-check-profile"
+if "%~1"=="--expedition-check" set "APPDATA=%~dp0..\user-data\expedition-check-profile"
+if "%~1"=="--advancement-check" set "APPDATA=%~dp0..\user-data\advancement-check-profile"
+if "%~1"=="--level-up-review" set "APPDATA=%~dp0..\user-data\level-up-review-profile"
 if not exist "%~dp0godot\bin\opengold_godot.dll" (
-    echo Build the C++ Godot extension first: build-rolf.cmd
+    echo Build the C++ Godot extension first: demos\build-rolf.cmd
     exit /b 1
 )
 godot --headless --editor --path "%~dp0godot" --import --quit
@@ -30,7 +30,7 @@ exit /b %errorlevel%
 
 :save_restart
 rem Isolate acceptance saves from the player's normal per-user saves.
-set "APPDATA=%~dp0user-data\save-check-profile"
+set "APPDATA=%~dp0..\user-data\save-check-profile"
 godot --headless --path "%~dp0godot" res://scenes/character_creation.tscn -- --party-check --save-check-write
 if not "%errorlevel%"=="0" exit /b %errorlevel%
 rem The writer has exited; this is a new process with new native/Godot owners.

@@ -4,7 +4,7 @@ The [party preview](PARTY.md) can inject created PCs/NPCs into this same native
 host, including shared purses/inventory, WHO and character/party queries.
 The standalone launcher retains the single-fighter fixture described below.
 
-`review-rolf.cmd` runs the C++/Godot Rolf tour followed by free exploration of
+`demos\review-rolf.cmd` runs the C++/Godot Rolf tour followed by free exploration of
 the complete 16 x 16 New Phlan map, including building locations. The current
 scope is the civilized town; ruined districts and boat destinations are outside
 this host. A fixed level-1 fighter starts with 12/12 HP, 9,999 gold pieces and
@@ -12,8 +12,8 @@ an empty inventory. Combat rules remain the separate SRD 5.2.1 module.
 
 ## Playing
 
-From CMD in the repository root, build once with `build-rolf.cmd`, then run
-`review-rolf.cmd`. Existing game-directory configuration is unchanged.
+From CMD in the repository root, build once with `demos\build-rolf.cmd`, then run
+`demos\review-rolf.cmd`. Existing game-directory configuration is unchanged.
 
 - Complete Rolf's eight dialogue pauses with Continue/Enter.
 - Arrow keys or the turn/step buttons move the party; stepping crosses ordinary
@@ -98,8 +98,8 @@ The Godot check completes the tour, uses movement/button callbacks to reach
 the arms shop, purchases a shield, opens inventory and leaves the shop:
 
 ```cmd
-review-rolf.cmd --headless -- --town-check
-review-rolf.cmd -- --town-check --capture
+demos\review-rolf.cmd --headless -- --town-check
+demos\review-rolf.cmd -- --town-check --capture
 ```
 
 Captures are written under ignored `user-data/phlan-shop.png` and

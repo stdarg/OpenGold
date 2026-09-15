@@ -18,14 +18,14 @@ overland travel are outside this initial exploration-map scope.
 
 ## Run the map demo
 
-From the repository root, run `build.cmd` followed by `review-maps.cmd`, or:
+From the repository root, run `build.cmd` followed by `demos\review-maps.cmd`, or:
 
 ```powershell
-godot --path godot res://scenes/map_inspector.tscn
+godot --path demos/godot res://scenes/map_inspector.tscn
 ```
 
 The demo uses `OPENGOLD_GAME_DIR`, falling back to `opengold/game_directory` in
-`godot/project.godot`. Point it at the directory containing the GEO DAX files.
+`demos/godot/project.godot`. Point it at the directory containing the GEO DAX files.
 The inspected DOS installation loads **29 maps**, each with 1026 decoded bytes.
 
 - Select a location in the dropdown, or use Previous / Next. Location names
@@ -104,7 +104,7 @@ cells, coordinate bounds, event flags, raw-byte preservation, truncation, archiv
 identity, case normalization, duplicate record rejection, and atomic failure.
 
 ```powershell
-godot_console --headless --path godot --script ../tests/map_inspector_tests.gd
+godot_console --headless --path demos/godot --script ../../tests/map_inspector_tests.gd
 ```
 
 The inspector tests use a synthetic map for event lists and cell selection, and
@@ -114,7 +114,7 @@ the screenshot is saved under ignored `user-data/map-inspector.png`.
 
 ## Wall artwork
 
-The Phlan profile is implemented in C++ and used by `review-rolf.cmd`. See
+The Phlan profile is implemented in C++ and used by `demos\review-rolf.cmd`. See
 [the fifteen appearance IDs, resources and verification](phlan-wall-art.md).
 The pipeline below describes the reusable format boundary and the remaining
 general area-selection work.

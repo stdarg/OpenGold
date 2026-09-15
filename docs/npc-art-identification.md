@@ -59,15 +59,15 @@ prevent this inference. The result remains a possible static table binding.
 
 ## Implementation and saved evidence
 
-- `godot/scripts/por_ecl_decoder.gd`: strips the two-byte record prefix, reads
+- `demos/godot/scripts/por_ecl_decoder.gd`: strips the two-byte record prefix, reads
   the five entry jumps at VM origin 9900, decodes typed operands and packed text,
   and traverses branches and conditional instruction skips. Pool opcode 34 has
   one operand; the inspected reference implementation's two-operand version
   misaligns the local ECL7/17 routine at 9D37.
-- `godot/scripts/por_ecl_tables.gd`: bounded backwards definition analysis for
+- `demos/godot/scripts/por_ecl_tables.gd`: bounded backwards definition analysis for
   adjacent parallel table reads. Random results are represented conservatively
   as an inclusive range, without claiming every branch combination occurs.
-- `godot/scripts/art_script_evidence.gd`: indexes art selections, follows bounded
+- `demos/godot/scripts/art_script_evidence.gd`: indexes art selections, follows bounded
   possible paths with matched subroutine returns, and gathers literal dialogue,
   recruitment and combat references. Context traversal stops at scene changes,
   resource loads, native calls, combat, and explicit exits. Depth/size limits are
@@ -76,7 +76,7 @@ prevent this inference. The result remains a possible static table binding.
   roles. Script candidates supersede weak same-ID suggestions; explicit reviews
   and legacy rejections still take precedence. No automatic confirmation occurs.
 
-Run `review-art.cmd` normally. The index is rebuilt for the configured local
+Run `demos\review-art.cmd` normally. The index is rebuilt for the configured local
 installation and written to `user://art-script-evidence.json`. Group inventory
 entries link to script locations; detailed evidence contains archive candidates,
 VM addresses, decompressed-record offsets, decoded operands, a script-content
@@ -86,8 +86,8 @@ decisions remain separate files.
 For reproducible offline output:
 
 ```powershell
-godot_console --headless --path godot --script ../tools/research_ecl_art.gd
-godot_console --headless --path godot --script ../tests/ecl_art_tests.gd
+godot_console --headless --path demos/godot --script ../../tools/research_ecl_art.gd
+godot_console --headless --path demos/godot --script ../../tests/ecl_art_tests.gd
 ```
 
 The research command writes `user-data/ecl-art-research.json`,

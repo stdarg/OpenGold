@@ -76,8 +76,8 @@ explicitly choose its previous version in **Load game**.
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-character.cmd --save-restart
+.\demos\build-rolf.cmd
+.\demos\review-character.cmd --save-restart
 ```
 
 The launcher uses an isolated profile under `user-data/save-check-profile`, writes
@@ -100,7 +100,7 @@ For visual checks, after the restart route:
 
 ```powershell
 $env:APPDATA = Join-Path $PWD 'user-data/save-check-profile'
-godot --path godot --resolution 1280x900 res://scenes/character_creation.tscn -- --save-check-read --capture
+godot --path demos/godot --resolution 1280x900 res://scenes/character_creation.tscn -- --save-check-read --capture
 ```
 
 Run the visual command from a temporary PowerShell session so its profile override

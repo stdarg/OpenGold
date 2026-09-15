@@ -2,9 +2,9 @@
 /build/
 
 # Godot generated state and imports
-godot/.godot/
-godot/*.tmp
-godot/bin/
+demos/godot/.godot/
+demos/godot/*.tmp
+demos/godot/bin/
 
 # Local user data and derived original-game assets
 /user-data/
@@ -15,3 +15,5 @@ godot/bin/
 !/data/art/portraits/*.png
 !/art/portraits/*.png
 !/art/portraits/NPCs/*.png
+
+!/demos/godot/shaders/hqx/hq4x.png

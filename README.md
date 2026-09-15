@@ -22,6 +22,10 @@ For the connected character, town and combat flow, start with
 [character creation and the shared party preview](#character-creation-and-shared-party).
 See [build setup](#build-setup) for prerequisites and game-directory configuration.
 
+All existing demo scenes, presentation source, and launchers are preserved under
+[`demos/`](demos/README.md) for reference. They are separate from future game
+development; the launch instructions below run those demos.
+
 ## Sound board
 
 Play the 19 original PC-speaker effects from your installed `START.EXE`, including
@@ -32,8 +36,8 @@ the scene uses a separate Godot audio adapter.
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-sounds.cmd
+.\demos\build-rolf.cmd
+.\demos\review-sounds.cmd
 ```
 
 See [sound data, supported release and verification](docs/sound-format.md).
@@ -48,8 +52,8 @@ See [New Phlan exploration](docs/PHLAN.md) for controls and current script limit
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-rolf.cmd
+.\demos\build-rolf.cmd
+.\demos\review-rolf.cmd
 ```
 
 See [build prerequisites, controls and current limits](docs/ROLF.md).
@@ -61,8 +65,8 @@ combat scene and an offline curated rules pack. The standalone modes use fixed
 fixtures; the shared party preview uses your created characters. From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-combat.cmd
+.\demos\build-rolf.cmd
+.\demos\review-combat.cmd
 ```
 
 Training works without original files. **Slums event** runs the original four-orc
@@ -88,8 +92,8 @@ stats, a **Modifiers** dialog and a **Saving Throws** calculator.
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-.\review-character.cmd
+.\demos\build-rolf.cmd
+.\demos\review-character.cmd
 ```
 
 See [controls, rules and scope](docs/CHARACTER-CREATION.md).
@@ -161,7 +165,7 @@ missing gameplay host capabilities and unbound engine variables produce explicit
 
 ## Map inspector
 
-Run `.\build.cmd`, then `.\review-maps.cmd` from PowerShell to browse the original
+Run `.\build.cmd`, then `.\demos\review-maps.cmd` from PowerShell to browse the original
 GEO maps as a top-down grid with walls, doors, and numbered event markers. Click cells or event
 locations to inspect their raw data. The demo uses the configured game directory
 and the reusable native `MapCatalog` loader. Markers expose potential script
@@ -171,10 +175,10 @@ See [map loading, demo controls, and tests](docs/MAPS.md).
 
 ## Monster art review tool
 
-Run `.\review-art.cmd` from PowerShell at the repository root, or:
+Run `.\demos\review-art.cmd` from PowerShell at the repository root, or:
 
 ```powershell
-godot --path godot res://scenes/monster_art_review.tscn
+godot --path demos/godot res://scenes/monster_art_review.tscn
 ```
 
 The review tool is organized around unique art groups rather than monster records.
@@ -233,11 +237,11 @@ this new view. Original DAX files are unchanged.
 
 Script evidence is rebuilt from the selected game installation on startup and
 saved separately in `user://art-script-evidence.json`. For an offline research
-report, run `godot_console --headless --path godot --script ../tools/research_ecl_art.gd`.
+report, run `godot_console --headless --path demos/godot --script ../../tools/research_ecl_art.gd`.
 This writes the decoded ECL index, evidence JSON, and a report for the saved
 unresolved groups under ignored `user-data/`. See [NPC art findings](docs/npc-art-identification.md)
 for the discoveries and remaining validation. Test with
-`godot_console --headless --path godot --script ../tests/ecl_art_tests.gd`.
+`godot_console --headless --path demos/godot --script ../../tests/ecl_art_tests.gd`.
 
 This review tool covers CPIC, SPRIT, CHEAD, CBODY and COMSPR. It does not
 categorize portraits, scene illustrations, walls/terrain or non-image assets.
@@ -250,7 +254,7 @@ Save names before closing.
 ## Build setup
 
 OpenGoldBox uses CMake to build a portable C++20 native core, and the Godot project
-lives under `godot/`.
+lives under `demos/godot/`.
 
 Install the prerequisites listed in [docs/INSTALL.md](docs/INSTALL.md), then
 configure and build from the repository root:
@@ -268,10 +272,10 @@ initializes Visual Studio and uses its installed CMake directly:
 .\build.cmd
 ```
 
-Open `godot/project.godot` in Godot 4.x for the presentation shell. The native
+Open `demos/godot/project.godot` in Godot 4.x for the presentation shell. The native
 core is deliberately testable without launching Godot. The optional C++
 GDExtension contains the tour/town, character/party, combat and sound-board
-scenes and is built separately with `.\build-rolf.cmd`. Both build helpers run
+scenes and is built separately with `.\demos\build-rolf.cmd`. Both build helpers run
 the native tests; close running native demo scenes before rebuilding the DLL.
 The helpers currently expect Visual Studio Build Tools under the hard-coded
 `Microsoft Visual Studio\18\BuildTools` path. For other installations, use the
@@ -280,7 +284,7 @@ CMake commands in a configured developer terminal and the
 
 Set the game directory before launching a demo or running tests against original
 data. The environment variable overrides `opengold/game_directory` in
-`godot/project.godot`; point it at the directory containing the DAX files:
+`demos/godot/project.godot`; point it at the directory containing the DAX files:
 
 ```powershell
 $env:OPENGOLD_GAME_DIR = 'C:\Games\POOLRAD'
@@ -290,7 +294,7 @@ The shared party acceptance check exercises creation, the original shop, combat,
 level-two advancement, the temple, the inn and interrupted camping:
 
 ```powershell
-godot --headless --path godot res://scenes/character_creation.tscn -- --party-check
+godot --headless --path demos/godot res://scenes/character_creation.tscn -- --party-check
 ```
 
 It requires the built extension and original game data. Individual feature docs
@@ -310,4 +314,4 @@ Combat head/body components are shown individually, and combat poses stored in
 separate records are browsable individually rather than automatically animated.
 All views use the same background-composited image. The xBR shader retains
 Hyllian's MIT license notice; the HQ4x shader and lookup table retain their
-LGPL-2.1-or-later license and credits in [the HQx folder](godot/shaders/hqx/README.md).
+LGPL-2.1-or-later license and credits in [the HQx folder](demos/godot/shaders/hqx/README.md).

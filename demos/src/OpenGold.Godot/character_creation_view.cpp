@@ -126,7 +126,7 @@ void CharacterCreationView::_ready()
         const auto seed=(checking_||args.has("--party-check"))?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_portrait();refresh();
     } catch(const std::exception& e) {
-        fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-rolf.cmd, then review-character.cmd.");
+        fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run demos/build-rolf.cmd, then demos/review-character.cmd.");
         get_node<Label>("Status")->set_text(error_);get_node<Button>("Next")->set_disabled(true);
         for(int i=0;i<get_child_count();++i)if(auto* c=Object::cast_to<Control>(get_child(i)))
             if(c->get_name()!=StringName("Title")&&c->get_name()!=StringName("Instructions")&&c->get_name()!=StringName("Status"))c->hide();
@@ -242,7 +242,7 @@ void CharacterCreationView::load_additional_heads()
     for(const auto& head:por::additional_portrait_heads()) {
         const auto path=gs("res://bin/portraits/"+std::string(head.filename));
         Ref<Texture2D> texture=ResourceLoader::get_singleton()->load(path);
-        if(texture.is_null())throw std::runtime_error("Missing portrait: "+std::string(head.filename)+". Run build-rolf.cmd and review-character.cmd.");
+        if(texture.is_null())throw std::runtime_error("Missing portrait: "+std::string(head.filename)+". Run demos/build-rolf.cmd and demos/review-character.cmd.");
         auto source=texture->get_image();
         if(source.is_null()||(source->is_compressed()&&source->decompress()!=OK))throw std::runtime_error("Cannot decode portrait: "+std::string(head.filename));
         source->convert(godot::Image::FORMAT_RGBA8);
@@ -463,7 +463,7 @@ void CharacterCreationView::palette_selected(int index){perform([&]{auto a=creat
 void CharacterCreationView::capture(const char* name)
 {
     if(!capture_)return;
-    const auto path=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(gs(std::string("res://../user-data/")+name)).utf8().get_data());
+    const auto path=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(gs(std::string("res://../../user-data/")+name)).utf8().get_data());
     std::filesystem::create_directories(path.parent_path());const auto image=get_viewport()->get_texture()->get_image();
     if(image.is_null()||image->save_png(gs(path.generic_string()))!=OK)throw std::runtime_error("Character capture failed");
 }
@@ -529,7 +529,7 @@ void CharacterCreationView::check_run()
             }
         }else if(modal_check_stage_==1){
             if(capture_){const auto image=get_node<Window>("ModifiersModal")->get_texture()->get_image();
-                if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-modifiers.png"));}
+                if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/character-modifiers.png"));}
             get_node<Button>("ModifiersModal/Close")->emit_signal("pressed");
         }else if(modal_check_stage_==2){
             if(get_node<Window>("ModifiersModal")->is_visible())throw std::runtime_error("Modifier modal did not close");
@@ -539,7 +539,7 @@ void CharacterCreationView::check_run()
             if(!get_node<Window>("SavingThrowsModal")->is_visible()||!text.contains("Strength save:")||!text.contains("Fighter saving throw proficiency"))throw std::runtime_error("Saving throw modal omitted sources");
         }else if(modal_check_stage_==4){
             if(capture_){const auto image=get_node<Window>("SavingThrowsModal")->get_texture()->get_image();
-                if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../user-data/character-saving-throws.png"));}
+                if(image.is_valid())image->save_png(ProjectSettings::get_singleton()->globalize_path("res://../../user-data/character-saving-throws.png"));}
             auto* dc=get_node<LineEdit>("SavingThrowsModal/DC");
             const auto edit=[&](const char* value){dc->set_text(value);dc->emit_signal("text_changed",String(value));return get_node<RichTextLabel>("SavingThrowsModal/Text")->get_text();};
             if(!edit("999").contains("Cannot reach this DC")||!edit("1").contains("Any d20 roll saves")||!edit("").contains("Enter a whole-number")||!edit("abc").contains("Enter a whole-number")||!edit("0").contains("Enter a whole-number"))throw std::runtime_error("Saving throw DC changes failed");

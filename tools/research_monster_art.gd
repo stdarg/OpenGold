@@ -1,12 +1,12 @@
 extends SceneTree
 # Research tool: extracts names, checks same-ID CPIC candidates and ID+128 pairs.
 # It does not claim that matching IDs prove the game's runtime resource selection.
-# Run: godot_console --headless --path godot --script ../tools/research_monster_art.gd
+# Run: godot_console --headless --path demos/godot --script ../../tools/research_monster_art.gd
 func _initialize() -> void:
     var folder := OS.get_environment("OPENGOLD_GAME_DIR")
     if folder.is_empty():
         folder = ProjectSettings.get_setting("opengold/game_directory", "")
-    var output_dir := ProjectSettings.globalize_path("res://../user-data")
+    var output_dir := ProjectSettings.globalize_path("res://../../user-data")
     DirAccess.make_dir_recursive_absolute(output_dir)
     var loader := DaxSpriteLoader.new()
     var monsters: Array[Dictionary] = []

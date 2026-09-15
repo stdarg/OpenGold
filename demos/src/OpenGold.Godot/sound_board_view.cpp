@@ -164,7 +164,7 @@ void SoundBoardView::_process(double delta)
     }
     if(audio_&&selected_>=0&&!audio_->current_sound())finished();
     if(capture_&&!captured_&&frames_>5) {
-        const auto path=ProjectSettings::get_singleton()->globalize_path("res://../user-data/sound-board.png");
+        const auto path=ProjectSettings::get_singleton()->globalize_path("res://../../user-data/sound-board.png");
         get_viewport()->get_texture()->get_image()->save_png(path);captured_=true;
     }
     if(!checking_||!loaded_||frames_<8)return;

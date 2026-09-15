@@ -16,7 +16,7 @@ void CharacterCreationView::load_portraits()
 {
     Ref<JSON> json;json.instantiate();
     if(json->parse(FileAccess::get_file_as_string("res://bin/portraits/portraits.json"))!=OK||json->get_data().get_type()!=Variant::DICTIONARY)
-        throw std::runtime_error("Cannot read portrait catalog. Run build-rolf.cmd.");
+        throw std::runtime_error("Cannot read portrait catalog. Run demos/build-rolf.cmd.");
     const Dictionary catalog=json->get_data();const Array keys=catalog.keys();
     for(int64_t i=0;i<keys.size();++i){
         if(catalog[keys[i]].get_type()!=Variant::DICTIONARY)throw std::runtime_error("Invalid portrait metadata");

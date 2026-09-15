@@ -73,8 +73,8 @@ The combat module identity is **0.3.0**, so incompatible earlier saves reject.
 From PowerShell:
 
 ```powershell
-.\build-rolf.cmd
-godot --headless --path godot res://scenes/character_creation.tscn -- --party-check
+.\demos\build-rolf.cmd
+godot --headless --path demos/godot res://scenes/character_creation.tscn -- --party-check
 ```
 
 The deterministic route uses the actual creation/shop/combat callbacks, verifies

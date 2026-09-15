@@ -273,7 +273,7 @@ opengold/
 │   ├── src/
 │   └── tests/
 │
-├── godot/
+├── demos/godot/
 │   ├── project.godot
 │   ├── scenes/
 │   ├── scripts/
