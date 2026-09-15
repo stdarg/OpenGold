@@ -11,11 +11,12 @@ config_version=5
 [application]
 
 config/name="OpenGoldBox"
+boot_splash/show_image=false
 ; Keep existing saves accessible after the display-name change.
 config/use_custom_user_dir=true
 config/custom_user_dir_name="Godot/app_userdata/OpenGold"
 config/custom_user_dir_name.linuxbsd="godot/app_userdata/OpenGold"
-run/main_scene="res://scenes/character_creation.tscn"
+run/main_scene="res://scenes/startup.tscn"
 config/features=PackedStringArray("4.7")
 
 [display]

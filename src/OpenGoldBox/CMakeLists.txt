@@ -32,7 +32,7 @@ configure_file(export_presets.cfg.in "${game_project}/export_presets.cfg" @ONLY)
 
 add_library(opengoldbox_game SHARED rolf_tour_view.cpp combat_view.cpp character_creation_view.cpp
     portrait_picker.cpp party_preview.cpp level_up_view.cpp campaign_save_view.cpp save_slots.cpp
-    character_pool_view.cpp character_sheet_view.cpp godot_sound_output.cpp register_types.cpp)
+    character_pool_view.cpp character_sheet_view.cpp godot_sound_output.cpp register_types.cpp startup_view.cpp)
 target_link_libraries(opengoldbox_game PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
 target_compile_features(opengoldbox_game PRIVATE cxx_std_20)
 target_compile_definitions(opengoldbox_game PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>)
@@ -50,7 +50,17 @@ foreach(source IN LISTS portrait_sources)
         DEPENDS "${source}" VERBATIM)
     list(APPEND portrait_outputs "${output}")
 endforeach()
-add_custom_target(opengoldbox_assets DEPENDS ${portrait_outputs})
+set(splash_outputs)
+foreach(name OpenGoldBoxSplash OpenGoldBoxPoolOfRadiance)
+    set(source "${PROJECT_SOURCE_DIR}/art/${name}.png")
+    set(output "${game_project}/bin/splashes/${name}.png")
+    add_custom_command(OUTPUT "${output}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${game_project}/bin/splashes"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${source}" "${output}"
+        DEPENDS "${source}" VERBATIM)
+    list(APPEND splash_outputs "${output}")
+endforeach()
+add_custom_target(opengoldbox_assets DEPENDS ${portrait_outputs} ${splash_outputs})
 add_dependencies(opengoldbox_game opengoldbox_assets)
 
 # Godot exports the executable; the C++ game code is its GDExtension.

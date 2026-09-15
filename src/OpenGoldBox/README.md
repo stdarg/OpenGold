@@ -25,6 +25,13 @@ From the repository root in PowerShell:
 .\win-package\opengoldbox.exe
 ```
 
+By default startup opens character generation directly. To show the two splash
+screens first, run `./win-package/opengoldbox.exe --splash`. Any key advances
+from the OpenGoldBox image to the Pool of Radiance image, then to character
+generation. Escape skips directly to character generation from either image.
+Images fit the window without cropping or stretching, with black letterboxing.
+Both source images in `art/` are copied and packed automatically by the build.
+
 The CMake target is `OpenGoldBox`. Its output is
 `win-package/opengoldbox.exe`. Every build creates and provisions `win-package/`
 at the repository root with the PCK (scenes, theme, and portraits), GDExtension
@@ -51,3 +58,14 @@ Validation: the game build and all 12 native test suites pass. The exported
 `opengoldbox.exe` passes headless character and party integration checks,
 including tour, shops, combat, recovery, and XP awards, from the output folder.
 These automated checks do not establish full campaign completion.
+
+Startup input checks (run once without `--splash` and once with it):
+
+```powershell
+godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/startup_tests.gd
+godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/startup_tests.gd -- --splash
+```
+
+These cover key progression, Escape from either splash, and ignored mouse,
+key-release, and held-key repeat events. Both screens were also visually checked
+at the default 1280 x 900 window size.
