@@ -37,7 +37,7 @@ previews render each at 88 x 88 as well as enlarged sizes; these are visual
 readability checks, not a claim of a separately
 hand-tuned 88 x 88 asset set.
 
-Local roster overviews: `../user-data/portrait-review/roster-contact-sheet-1.png`
+Local roster overviews: `../../user-data/portrait-review/roster-contact-sheet-1.png`
 and `roster-contact-sheet-2.png`. Eight `roster-detail-1.png` through
 `roster-detail-8.png` sheets in that directory
 show 352 x 352 and native 88 x 88 previews, using nearest-neighbor sampling.

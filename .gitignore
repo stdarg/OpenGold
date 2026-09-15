@@ -11,9 +11,7 @@ godot/bin/
 /testdata/local/
 *.png
 
-./portraits
-
 # Newly generated OpenGoldBox portrait artwork (not extracted game assets)
 !/data/art/portraits/*.png
-!/portraits/*.png
-!/portraits/NPCs/*.png
+!/art/portraits/*.png
+!/art/portraits/NPCs/*.png

@@ -140,7 +140,7 @@ effect support.
 `CharacterArt` in `OpenGold.Core` reads the installed game's DAX files, retaining
 archive IDs and indexed combat pixels. No extracted artwork is distributed.
 
-- Complete portraits and metadata come from `portraits/portraits.json` and its
+- Complete portraits and metadata come from `art/portraits/portraits.json` and its
   sibling PNGs. Build copies go to `godot/bin/portraits/`. The Godot boundary
   parses the catalog and loads full-resolution images, displayed with nearest
   filtering in creation, pool and party previews.
