@@ -1,0 +1,635 @@
+[gd_scene format=3]
+
+[node name="CharacterCreation" type="CharacterCreationView"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="."]
+text = "OPENGOLDBOX / Create a character"
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+
+[node name="Subtitle" type="Label" parent="."]
+text = "SRD 5.2.1 / Level 1"
+theme_override_font_sizes/font_size = 17
+
+[node name="Steps" type="Label" parent="."]
+theme_override_font_sizes/font_size = 17
+
+[node name="PageTitle" type="Label" parent="."]
+theme_override_font_sizes/font_size = 25
+
+[node name="Instructions" type="Label" parent="."]
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="Choices" type="ItemList" parent="."]
+max_columns = 2
+same_column_width = true
+theme_override_font_sizes/font_size = 20
+
+[node name="Description" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+theme_override_constants/table_h_separation = 16
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="GenderLabel" type="Label" parent="."]
+text = "Gender"
+
+[node name="Gender" type="OptionButton" parent="."]
+
+[node name="BackgroundLabel" type="Label" parent="."]
+text = "Background"
+
+[node name="Background" type="OptionButton" parent="."]
+
+
+[node name="BonusLabel" type="Label" parent="."]
+text = "Bonuses"
+
+[node name="Bonus" type="OptionButton" parent="."]
+
+
+[node name="Columns" type="Label" parent="."]
+text = "Attribute"
+
+[node name="Roll" type="Button" parent="."]
+text = "Roll all six"
+
+[node name="SwapHint" type="Label" parent="."]
+autowrap_mode = 2
+
+[node name="Name" type="LineEdit" parent="."]
+placeholder_text = "Enter a character name"
+max_length = 40
+
+[node name="PortraitPrevious" type="Button" parent="."]
+text = "<"
+tooltip_text = "Previous matching portrait"
+
+[node name="PortraitNext" type="Button" parent="."]
+text = ">"
+tooltip_text = "Next matching portrait"
+
+[node name="PortraitSelect" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait select"
+
+[node name="PortraitGender" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait gender"
+
+[node name="PortraitClass" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait class"
+
+[node name="PortraitRace" type="OptionButton" parent="."]
+fit_to_longest_item = false
+clip_text = true
+tooltip_text = "Portrait race"
+
+[node name="CombatHeadPrevious" type="Button" parent="."]
+text = "< Head"
+
+[node name="CombatHeadNext" type="Button" parent="."]
+text = "Head >"
+
+[node name="CombatHeadLabel" type="Label" parent="."]
+
+
+[node name="WeaponPrevious" type="Button" parent="."]
+text = "< Weapon"
+
+[node name="WeaponNext" type="Button" parent="."]
+text = "Weapon >"
+
+[node name="WeaponLabel" type="Label" parent="."]
+
+
+[node name="Size" type="Button" parent="."]
+text = "Size: Tall"
+
+[node name="ColorTitle" type="Label" parent="."]
+text = "Part"
+
+[node name="PaletteHint" type="Label" parent="."]
+
+
+[node name="Back" type="Button" parent="."]
+text = "Back"
+
+[node name="Next" type="Button" parent="."]
+text = "Next"
+
+[node name="Restart" type="Button" parent="."]
+text = "Start over"
+
+[node name="Status" type="Label" parent="."]
+autowrap_mode = 2
+
+[node name="PreviewTitle" type="Label" parent="."]
+text = "CHARACTER PREVIEW"
+theme_override_font_sizes/font_size = 16
+
+[node name="PreviewName" type="Label" parent="."]
+theme_override_font_sizes/font_size = 22
+text_overrun_behavior = 3
+
+[node name="ReadyLabel" type="Label" parent="."]
+text = "Ready"
+horizontal_alignment = 1
+
+[node name="ActionLabel" type="Label" parent="."]
+text = "Action"
+horizontal_alignment = 1
+
+[node name="PreviewSummary" type="Label" parent="."]
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="Footer" type="Label" parent="."]
+text = "Original game art + OpenGoldBox portraits / SRD 5.2.1"
+theme_override_font_sizes/font_size = 14
+
+[node name="Ability0" type="Button" parent="."]
+
+
+[node name="Dice0" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 16
+
+[node name="Score0" type="Button" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Ability1" type="Button" parent="."]
+
+
+[node name="Dice1" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 16
+
+[node name="Score1" type="Button" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Ability2" type="Button" parent="."]
+
+
+[node name="Dice2" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 16
+
+[node name="Score2" type="Button" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Ability3" type="Button" parent="."]
+
+
+[node name="Dice3" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 16
+
+[node name="Score3" type="Button" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Ability4" type="Button" parent="."]
+
+
+[node name="Dice4" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 16
+
+[node name="Score4" type="Button" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Ability5" type="Button" parent="."]
+
+
+[node name="Dice5" type="RichTextLabel" parent="."]
+bbcode_enabled = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 16
+
+[node name="Score5" type="Button" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Part0" type="Label" parent="."]
+text = "Weapon"
+
+[node name="Color0_0" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Color1_0" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Part1" type="Label" parent="."]
+text = "Body"
+
+[node name="Color0_1" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Color1_1" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Part2" type="Label" parent="."]
+text = "Hair / Face"
+
+[node name="Color0_2" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Color1_2" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Part3" type="Label" parent="."]
+text = "Shield"
+
+[node name="Color0_3" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Color1_3" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Part4" type="Label" parent="."]
+text = "Arms"
+
+[node name="Color0_4" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Color1_4" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Part5" type="Label" parent="."]
+text = "Legs"
+
+[node name="Color0_5" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Color1_5" type="Button" parent="."]
+theme_override_font_sizes/font_size = 14
+
+[node name="Palette0" type="Button" parent="."]
+
+
+[node name="Palette1" type="Button" parent="."]
+
+
+[node name="Palette2" type="Button" parent="."]
+
+
+[node name="Palette3" type="Button" parent="."]
+
+
+[node name="Palette4" type="Button" parent="."]
+
+
+[node name="Palette5" type="Button" parent="."]
+
+
+[node name="Palette6" type="Button" parent="."]
+
+
+[node name="Palette7" type="Button" parent="."]
+
+
+[node name="Palette8" type="Button" parent="."]
+
+
+[node name="Palette9" type="Button" parent="."]
+
+
+[node name="Palette10" type="Button" parent="."]
+
+
+[node name="Palette11" type="Button" parent="."]
+
+
+[node name="Palette12" type="Button" parent="."]
+
+
+[node name="Palette13" type="Button" parent="."]
+
+
+[node name="Palette14" type="Button" parent="."]
+
+
+[node name="Palette15" type="Button" parent="."]
+
+[node name="DiceHeader" type="Label" parent="."]
+text = "Dice Rolls"
+horizontal_alignment = 0
+
+[node name="DiceHint" type="Label" parent="."]
+text = "Drag to the ability score of your choice."
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="BaseHeader" type="Label" parent="."]
+text = "Base"
+horizontal_alignment = 0
+
+[node name="BonusHeader" type="Label" parent="."]
+text = "Bonus"
+horizontal_alignment = 0
+
+[node name="TotalHeader" type="Label" parent="."]
+text = "Total"
+horizontal_alignment = 0
+
+[node name="Color1Title" type="Label" parent="."]
+text = "Color-1"
+horizontal_alignment = 1
+
+[node name="Color2Title" type="Label" parent="."]
+text = "Color-2"
+horizontal_alignment = 1
+
+[node name="BonusScore0" type="Label" parent="."]
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="TotalScore0" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="BonusScore1" type="Label" parent="."]
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="TotalScore1" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="BonusScore2" type="Label" parent="."]
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="TotalScore2" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="BonusScore3" type="Label" parent="."]
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="TotalScore3" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="BonusScore4" type="Label" parent="."]
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="TotalScore4" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="BonusScore5" type="Label" parent="."]
+vertical_alignment = 1
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 14
+
+[node name="TotalScore5" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="Party" type="Button" parent="."]
+text = "View party"
+
+[node name="AddParty" type="Button" parent="."]
+visible = false
+text = "Add to party"
+
+[node name="ReturnParty" type="Button" parent="."]
+visible = false
+text = "Return to party"
+
+[node name="Modifiers" type="Button" parent="."]
+visible = false
+text = "Modifiers"
+
+[node name="ModifiersModal" type="Window" parent="."]
+title = "Character modifiers"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(780, 680)
+
+[node name="Background" type="ColorRect" parent="ModifiersModal"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Title" type="Label" parent="ModifiersModal"]
+theme_override_font_sizes/font_size = 24
+
+[node name="Text" type="RichTextLabel" parent="ModifiersModal"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="ModifiersModal"]
+text = "Close"
+
+[node name="SavingThrows" type="Button" parent="."]
+visible = false
+text = "Saving Throws"
+
+[node name="SavingThrowsModal" type="Window" parent="."]
+title = "Saving Throws"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(780, 680)
+
+[node name="Background" type="ColorRect" parent="SavingThrowsModal"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Title" type="Label" parent="SavingThrowsModal"]
+theme_override_font_sizes/font_size = 24
+
+[node name="DCLabel" type="Label" parent="SavingThrowsModal"]
+text = "Target DC"
+
+[node name="DC" type="LineEdit" parent="SavingThrowsModal"]
+text = "15"
+max_length = 3
+select_all_on_focus = true
+
+[node name="Text" type="RichTextLabel" parent="SavingThrowsModal"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="SavingThrowsModal"]
+text = "Close"
+
+[node name="PoolModal" type="Window" parent="."]
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(1000, 680)
+
+[node name="Background" type="ColorRect" parent="PoolModal"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="RichTextLabel" parent="PoolModal"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 17
+
+[node name="Close" type="Button" parent="PoolModal"]
+text = "Close"
+
+[node name="TownSheet" type="Window" parent="."]
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(1000, 680)
+
+[node name="Background" type="ColorRect" parent="TownSheet"]
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="RichTextLabel" parent="TownSheet"]
+bbcode_enabled = true
+theme_override_font_sizes/normal_font_size = 17
+
+[node name="Close" type="Button" parent="TownSheet"]
+text = "Close"
+
+[node name="List" type="ItemList" parent="PoolModal"]
+theme_override_font_sizes/font_size = 16
+
+[node name="Title" type="Label" parent="PoolModal"]
+text = "Character Pool / 48 level-one characters"
+theme_override_font_sizes/font_size = 23
+
+[node name="Add" type="Button" parent="PoolModal"]
+text = "Add to party"
+
+[node name="Status" type="Label" parent="PoolModal"]
+autowrap_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="PoolModal"]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="Ready" type="TextureRect" parent="PoolModal"]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="Action" type="TextureRect" parent="PoolModal"]
+expand_mode = 1
+stretch_mode = 5
+texture_filter = 1
+
+[node name="TargetsTitle" type="Label" parent="."]
+text = "Target class(es)"
+theme_override_font_sizes/font_size = 16
+
+[node name="Targets" type="ScrollContainer" parent="."]
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Rows" type="VBoxContainer" parent="Targets"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TargetHint" type="Label" parent="."]
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Future goals only. Choose one starting class next. Later Ability Score Improvements can raise scores to help you qualify."
+
+[node name="Class0" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class1" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class2" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class3" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class4" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class5" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class6" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class7" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class8" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class9" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class10" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Class11" type="CheckBox" parent="Targets/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+
+[node name="Warning0" type="Label" parent="."]
+mouse_filter = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Does not meet targeted class requirements"
+
+[node name="Warning1" type="Label" parent="."]
+mouse_filter = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Does not meet targeted class requirements"
+
+[node name="Warning2" type="Label" parent="."]
+mouse_filter = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Does not meet targeted class requirements"
+
+[node name="Warning3" type="Label" parent="."]
+mouse_filter = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Does not meet targeted class requirements"
+
+[node name="Warning4" type="Label" parent="."]
+mouse_filter = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Does not meet targeted class requirements"
+
+[node name="Warning5" type="Label" parent="."]
+mouse_filter = 2
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Does not meet targeted class requirements"

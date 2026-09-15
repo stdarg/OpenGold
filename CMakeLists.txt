@@ -14,6 +14,7 @@ endif()
 
 option(OPENGOLD_BUILD_TESTS "Build the native test suite" ${BUILD_TESTING})
 option(OPENGOLD_BUILD_GODOT "Build the C++ Godot tour and combat scenes" OFF)
+option(OPENGOLD_BUILD_GAME "Build the OpenGoldBox Windows game" OFF)
 
 add_library(opengold_rules STATIC src/OpenGold.Rules/src/rules.cpp src/OpenGold.Rules/src/character_rules.cpp)
 target_include_directories(opengold_rules PUBLIC src/OpenGold.Rules/include)
@@ -126,4 +127,8 @@ target_link_libraries(opengold_scripts PRIVATE opengold_core)
 if(OPENGOLD_BUILD_GODOT)
     set_target_properties(opengold_core opengold_formats opengold_rules opengold_rules_srd5 PROPERTIES POSITION_INDEPENDENT_CODE ON)
     add_subdirectory(demos/src/OpenGold.Godot)
+endif()
+
+if(OPENGOLD_BUILD_GAME)
+    add_subdirectory(src/OpenGoldBox)
 endif()

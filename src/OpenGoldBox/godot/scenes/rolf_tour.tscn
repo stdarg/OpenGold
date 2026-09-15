@@ -1,0 +1,205 @@
+[gd_scene load_steps=2 format=3]
+
+[sub_resource type="StyleBoxFlat" id="InventoryStyle"]
+bg_color = Color(0.11, 0.15, 0.18, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.843, 0.706, 0.475, 1)
+
+[node name="RolfTour" type="RolfTourView"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 27
+text = "OPENGOLDBOX  /  Rolf's welcome"
+
+[node name="Location" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+
+[node name="MapTitle" type="Label" parent="."]
+theme_override_font_sizes/font_size = 19
+text = "New Phlan    N ↑"
+
+[node name="MapMode" type="Button" parent="."]
+text = "Map: full"
+
+[node name="Coordinates" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.475, 0.839, 0.831, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="Legend" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+text = "Arrow: party & facing\nGold: doors   Teal: visited"
+
+[node name="Speaker" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 19
+
+[node name="Dialogue" type="RichTextLabel" parent="."]
+theme_override_colors/default_color = Color(0.906, 0.902, 0.855, 1)
+theme_override_font_sizes/normal_font_size = 18
+bbcode_enabled = false
+scroll_active = true
+
+[node name="Continue" type="Button" parent="."]
+text = "Continue  [Enter]"
+
+[node name="Progress" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+
+[node name="Movement" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+
+[node name="Left" type="Button" parent="."]
+text = "← Turn"
+
+[node name="Forward" type="Button" parent="."]
+text = "↑ Step"
+
+[node name="Right" type="Button" parent="."]
+text = "Turn →"
+
+[node name="Restart" type="Button" parent="."]
+text = "Replay tour"
+
+[node name="Footer" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.690, 0.741, 0.765, 1)
+theme_override_font_sizes/font_size = 14
+text = "Arrow keys: move / turn   •   L: look   •   Original New Phlan scripts and shop stock"
+
+[node name="Choices" type="ItemList" parent="."]
+visible = false
+theme_override_font_sizes/font_size = 17
+
+[node name="Answer" type="LineEdit" parent="."]
+visible = false
+max_length = 40
+
+[node name="LeaveShop" type="Button" parent="."]
+visible = false
+text = "Leave shop"
+
+[node name="Look" type="Button" parent="."]
+text = "Look [L]"
+
+[node name="Camp" type="Button" parent="."]
+text = "Camp [C]"
+tooltip_text = "Run the area's pre-camp check and attempt an eight-hour long rest."
+
+[node name="Inventory" type="Button" parent="."]
+text = "Inventory"
+
+[node name="Party" type="Label" parent="."]
+theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="InventoryPanel" type="Panel" parent="."]
+visible = false
+z_index = 2
+mouse_filter = 0
+theme_override_styles/panel = SubResource("InventoryStyle")
+
+[node name="Items" type="ItemList" parent="InventoryPanel"]
+theme_override_font_sizes/font_size = 18
+
+[node name="Close" type="Button" parent="InventoryPanel"]
+text = "Close inventory"
+
+[node name="Footstep" type="AudioStreamPlayer" parent="."]
+volume_db = -12.0
+
+[node name="PartyList" type="ScrollContainer" parent="."]
+horizontal_scroll_mode = 0
+
+[node name="Rows" type="VBoxContainer" parent="PartyList"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Header" type="Label" parent="InventoryPanel"]
+theme_override_font_sizes/font_size = 20
+
+[node name="Status" type="Label" parent="InventoryPanel"]
+autowrap_mode = 2
+
+[node name="Equip" type="Button" parent="InventoryPanel"]
+text = "Equip"
+
+[node name="Unequip" type="Button" parent="InventoryPanel"]
+text = "Unequip"
+
+[node name="MemberSheet" type="Window" parent="."]
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+title = "Character Sheet"
+
+[node name="Text" type="RichTextLabel" parent="MemberSheet"]
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Close" type="Button" parent="MemberSheet"]
+text = "Close"
+
+[node name="Member0" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member1" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member2" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member3" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member4" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member5" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member6" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16
+
+[node name="Member7" type="Button" parent="PartyList/Rows"]
+custom_minimum_size = Vector2(0, 56)
+size_flags_horizontal = 3
+alignment = 0
+clip_text = true
+theme_override_font_sizes/font_size = 16

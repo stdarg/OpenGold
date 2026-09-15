@@ -1,0 +1,86 @@
+#ifndef OPENGOLD_ROLF_TOUR_VIEW_H
+#define OPENGOLD_ROLF_TOUR_VIEW_H
+
+#include "opengold/rolf_tour.h"
+#include <godot_cpp/classes/control.hpp>
+#include <godot_cpp/classes/input_event.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/audio_stream_wav.hpp>
+#include <optional>
+#include <set>
+#include <functional>
+
+class RolfTourView : public godot::Control {
+    GDCLASS(RolfTourView, godot::Control)
+public:
+    void _ready() override;
+    void _process(double delta) override;
+    void _draw() override;
+    void _input(const godot::Ref<godot::InputEvent>& event) override;
+    void campaign_party(std::shared_ptr<opengold::CampaignParty> party){campaign_=std::move(party);embedded_party_=true;}
+    [[nodiscard]] bool can_leave() const {return !session_||session_->can_leave();}
+    void resume_party(){shown_revision_=0;refresh();}
+    [[nodiscard]] const opengold::por::RolfTourSession* saved_session() const {return session_?&*session_:nullptr;}
+    [[nodiscard]] std::optional<opengold::CampaignEncounter> pending_encounter() const {return session_?session_->pending_encounter():std::nullopt;}
+    bool resolve_combat(const opengold::rules::Snapshot& result){if(!session_||!session_->resolve_combat(result))return false;refresh();return true;}
+    void restore_campaign(std::shared_ptr<opengold::CampaignParty> party,opengold::por::RolfTourSession session);
+    void request_save(bool saving);
+    std::function<void(const std::string&)> save_check;
+    [[nodiscard]] bool party_route_checked() const {return shop_check_stage_==4;}
+    void start_recovery_check();
+    [[nodiscard]] bool recovery_checked() const {return recovery_stage_==8;}
+    bool check_expedition_step();
+protected:
+    static void _bind_methods();
+    void _notification(int what);
+private:
+    std::optional<opengold::por::RolfTourSession> session_;
+    std::shared_ptr<opengold::CampaignParty> campaign_;
+    std::array<godot::Ref<godot::ImageTexture>, 3> sprites_;
+    godot::Ref<godot::ImageTexture> wall_view_;
+    std::optional<opengold::por::PartyPose> rendered_pose_;
+    godot::Ref<godot::AudioStreamWAV> footstep_;
+    godot::Rect2 scene_rect_, map_rect_, dialogue_rect_;
+    godot::String error_;
+    std::uint64_t shown_revision_{}, checked_ticket_{};
+    unsigned played_footsteps_{}, check_frames_{}, check_prompts_{};
+    unsigned rendered_sprite_id_{999};
+    std::uint64_t displayed_ticket_{};
+    std::uint64_t rendered_picture_revision_{};
+    bool full_map_{true}, ready_{}, checking_{}, capture_{}, capture_pending_{};
+    bool town_check_{},embedded_party_{};
+    unsigned shop_check_stage_{};
+    unsigned recovery_stage_{};
+    bool save_cancel_checked_{},save_cancel_pending_{};
+    std::uint64_t recovery_capture_ticket_{};
+    std::optional<opengold::PartyState> recovery_before_;
+    std::set<std::pair<unsigned,unsigned>> check_refused_edges_;
+    std::optional<std::pair<unsigned,unsigned>> check_pending_edge_;
+    void layout();
+    void refresh();
+    void restart();
+    void next();
+    void left();
+    void right();
+    void forward();
+    void look();
+    void camp();
+    void inventory();
+    void refresh_inventory();
+    void inventory_selected(std::int64_t index);
+    void equip_item(bool equip);
+    void party_selected(std::int64_t index);
+    void level_up_requested(int slot);
+    void close_sheet();
+    void leave_shop();
+    void map_mode();
+    void movement(opengold::por::ExplorationCommand command);
+    void draw_scene();
+    void draw_map();
+    void check_run();
+    void check_town();
+    void check_recovery();
+    void check_walk_to(unsigned x,unsigned y);
+    void capture_frame(const godot::String& name);
+};
+#endif

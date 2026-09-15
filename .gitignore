@@ -1,5 +1,9 @@
 # Native build output
 /build/
+/src/OpenGoldBox/godot/.godot/
+/src/OpenGoldBox/godot/bin/
+/src/OpenGoldBox/godot/data/
+/src/OpenGoldBox/godot/export_presets.cfg
 
 # Godot generated state and imports
 demos/godot/.godot/

@@ -26,8 +26,9 @@ portrait copies go to `demos/godot/bin/`. Captures and isolated test profiles
 remain under the root `user-data/`. Original game files are still supplied by
 the user through `OPENGOLD_GAME_DIR` or the demo project's existing setting.
 
-No game project is created by this reorganization. See the root [README](../README.md)
-and [feature documentation](../docs/CHARACTER-CREATION.md) for demo limitations.
+The game now has a separate source copy in [src/OpenGoldBox](../src/OpenGoldBox/README.md).
+See the root [README](../README.md) and
+[feature documentation](../docs/CHARACTER-CREATION.md) for demo limitations.
 
 ## Relocation validation
 
