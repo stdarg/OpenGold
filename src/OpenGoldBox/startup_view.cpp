@@ -42,6 +42,8 @@ void StartupView::_input(const Ref<InputEvent>& event)
 {
     const Ref<InputEventKey> key = event;
     if (finishing_ || key.is_null() || !key->is_pressed() || key->is_echo()) return;
+    // The application-wide shutdown shortcut must not advance a splash.
+    if (key->is_ctrl_pressed() && key->get_keycode() == KEY_X) return;
     get_viewport()->set_input_as_handled();
     if (key->get_keycode() == KEY_ESCAPE || screen_ == 1) {
         finish();

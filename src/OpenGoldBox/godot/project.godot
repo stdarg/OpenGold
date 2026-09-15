@@ -19,6 +19,10 @@ config/custom_user_dir_name.linuxbsd="godot/app_userdata/OpenGold"
 run/main_scene="res://scenes/startup.tscn"
 config/features=PackedStringArray("4.7")
 
+[autoload]
+
+ApplicationLifecycle="*res://scenes/game_lifecycle.tscn"
+
 [display]
 
 window/size/viewport_width=1280

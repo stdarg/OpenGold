@@ -32,6 +32,10 @@ generation. Escape skips directly to character generation from either image.
 Images fit the window without cropping or stretching, with black letterboxing.
 Both source images in `art/` are copied and packed automatically by the build.
 
+Close the main window with its X button, or press Ctrl+X from any screen or
+dialog, to exit through the same normal shutdown path. The scene tree and native
+resources are released as Godot shuts down. Ctrl+X does not advance splash screens.
+
 The CMake target is `OpenGoldBox`. Its output is
 `win-package/opengoldbox.exe`. Every build creates and provisions `win-package/`
 at the repository root with the PCK (scenes, theme, and portraits), GDExtension
@@ -69,3 +73,9 @@ godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/st
 These cover key progression, Escape from either splash, and ignored mouse,
 key-release, and held-key repeat events. Both screens were also visually checked
 at the default 1280 x 900 window size.
+
+Shutdown checks use `tests/shutdown_tests.gd` with `--shutdown-close` or
+`--shutdown-key`; optional `--splash`, `--shutdown-second`, `--shutdown-dialog`,
+and `--shutdown-paused` cover other active views. Tests verify one shutdown
+request and scene teardown. The packaged executable also passed a native
+Windows `WM_CLOSE` check with exit code 0.

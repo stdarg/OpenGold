@@ -3,6 +3,7 @@
 #include "character_creation_view.h"
 #include "save_slots.h"
 #include "startup_view.h"
+#include "game_lifecycle.h"
 #include <godot_cpp/godot.hpp>
 
 namespace {
@@ -14,6 +15,7 @@ void initialize(godot::ModuleInitializationLevel level)
         godot::ClassDB::register_class<CharacterCreationView>();
         godot::ClassDB::register_class<SaveSlots>();
         godot::ClassDB::register_class<StartupView>();
+        godot::ClassDB::register_class<GameLifecycle>();
     }
 }
 void terminate(godot::ModuleInitializationLevel) {}
