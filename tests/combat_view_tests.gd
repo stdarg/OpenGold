@@ -71,7 +71,7 @@ func run_checks() -> void:
     await settle()
     require(canvas.size.is_equal_approx(scroll.size * 3), "Resize must preserve 3x magnification")
     if OS.get_cmdline_user_args().has("--capture"):
-        root.size = Vector2i(1280, 900)
+        root.size = Vector2i(1920, 1080)
         await settle()
         await RenderingServer.frame_post_draw
         var path := ProjectSettings.globalize_path("res://../../../build/checks/combat-zoom.png")

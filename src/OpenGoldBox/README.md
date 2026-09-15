@@ -25,12 +25,22 @@ From the repository root in PowerShell:
 .\win-package\opengoldbox.exe
 ```
 
+The game requests a **1920 x 1080** window (16:9, excluding window borders).
+The minimum resizable game area remains 1120 x 800. To launch fullscreen at the
+monitor's dimensions, run `./win-package/opengoldbox.exe --fullscreen`.
+
 By default startup opens character generation directly. To show the two splash
 screens first, run `./win-package/opengoldbox.exe --splash`. Any key advances
 from the OpenGoldBox image to the Pool of Radiance image, then to character
 generation. Escape skips directly to character generation from either image.
-Images fit the window without cropping or stretching, with black letterboxing.
-Both source images in `art/` are copied and packed automatically by the build.
+Both splash screens use the same static background texture; only the native
+Godot title, subtitle, and footer change. The background is identical to the
+pixel throughout the transition. Text scales with the background, using the
+Windows Georgia serif font with Times New Roman fallback.
+The shared generator output is 1672 x 941 and fits the display proportionally;
+other aspect ratios use black letterboxing. The two screen previews in `art/`
+are 1920 x 1080 captures from Godot. The build packages the shared background.
+See `art/OpenGoldBoxScreens.provenance.md` for sources and prompts.
 
 Close the main window with its X button, or press Ctrl+X from any screen or
 dialog, to exit through the same normal shutdown path. The scene tree and native
@@ -72,7 +82,8 @@ godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/st
 
 These cover key progression, Escape from either splash, and ignored mouse,
 key-release, and held-key repeat events. Both screens were also visually checked
-at the default 1280 x 900 window size.
+at the 1920 x 1080 target size; the rendered check verifies identical background
+pixels across the text transition.
 
 Shutdown checks use `tests/shutdown_tests.gd` with `--shutdown-close` or
 `--shutdown-key`; optional `--splash`, `--shutdown-second`, `--shutdown-dialog`,

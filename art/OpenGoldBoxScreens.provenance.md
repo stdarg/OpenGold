@@ -1,25 +1,41 @@
-# OpenGoldBox screen review assets
+# OpenGoldBox splash artwork provenance
 
-Generated with the built-in image generation tool from user-supplied
-`art/TitleScreen.png`, preserving its background composition at the user's request.
-These are static local review assets, not integrated into the application.
-They supersede the earlier OpenGold review screens, which remain unchanged.
+## Current game presentation - 2026-09-15
 
-- `OpenGoldBoxSplash.png`: OpenGoldBox engine introduction, using the user's
-  sentence: "An open-source role-playing game engine for Gold Box games."
-- `OpenGoldBoxPoolOfRadiance.png`: Pool of Radiance introduction with
-  "An unofficial adaptation powered by OpenGoldBox" and the footer
-  "Not affiliated with or endorsed by Wizards of the Coast."
+The game targets **1920 x 1080**. Both splash screens use exactly the same
+`OpenGoldBoxSplashBackground.png` texture, loaded once by `StartupView`.
+Only the native Godot text changes when the user advances. This guarantees
+pixel-identical background rendering without independent AI variations.
 
-The background's authorship and distribution rights remain unverified.
-The new name and revised text do not establish trademark or artwork clearance.
-AI editing preserves the composition with small texture differences.
-PNGs remain local under the repository's existing ignore rules.
+- `OpenGoldBoxSplashBackground.png`: the shared, text-free background, generated
+  with the built-in image tool. Actual source dimensions: 1672 x 941. The tool
+  did not produce the requested 1920 x 1080 raster. This file is unmodified;
+  Godot fits it uniformly to the display, preserving natural proportions.
+- `OpenGoldBoxSplash.png`: 1920 x 1080 capture of the final engine screen.
+- `OpenGoldBoxPoolOfRadiance.png`: 1920 x 1080 capture of the final game screen.
+  These two files are review snapshots. Runtime uses the shared background
+  and native labels, not separate screen textures.
 
-## Engine screen prompt
+The engine screen reads "OpenGoldBox" and "An open-source role-playing game
+engine for Gold Box games." The game screen reads "POOL OF RADIANCE",
+"An unofficial adaptation powered by OpenGoldBox", and "Not affiliated with
+or endorsed by Wizards of the Coast."
 
-Edit the supplied title screen into an engine introduction screen. Preserve the same background composition: stone wall, left torch and red banner, dragon shadow upper right, blue water and foreground rocks, same 16:9 wide framing, warm amber and cool blue lighting. Remove ALL existing lettering and trademark symbols, reconstructing stone. Add main title exactly "OPENGOLDBOX" in one centered line of elegant gold beveled classical serif capitals at about 40% height, with comfortable margins. Beneath, centered smaller highly readable warm ivory serif text exactly "An open-source role-playing game engine for Gold Box games." This subtitle may wrap into two balanced lines. No other text, no logos, no buttons, no official licensing claim, no borders. Match the existing gold fantasy visual treatment, with crisp clean spelling. Output one complete screen.
+Typography is rendered by Godot with the Windows Georgia system serif font
+and Times New Roman fallback; no system font files are redistributed.
+The scene uses gold titles and ivory supporting text, with dark shadows.
 
-## Game screen prompt
+See [generation prompts](OpenGoldBoxScreens.fullhd-prompts.md) for the exact
+fresh composition and text-removal prompts. The design continues the earlier
+user-supplied `art/TitleScreen.png` direction: stone wall, left torch and red
+banner, dragon shadow, blue water, and warm/cool lighting.
 
-Edit the supplied image to be the matching game-introduction screen that follows this OpenGoldBox engine splash. Preserve the same background composition, stone wall, torch and banner left, dragon shadow upper right, blue water, rocks, 16:9 framing and warm/cool lighting. Remove ALL current lettering and reconstruct stone behind it. Main title exactly "POOL OF" then "RADIANCE" on two centered lines, elegant gold beveled classical serif, comfortable margins, block around y=23% to 52%. Under it a clearly readable warm ivory subtitle exactly "An unofficial adaptation powered by OpenGoldBox". Near bottom, above the water in a calm darker area, add a smaller but comfortably readable warm ivory footer exactly "Not affiliated with or endorsed by Wizards of the Coast." Match first screen typography and color treatment. No Forgotten Realms wording, no D&D or SSI logos, no trademark symbols, no official licensing claim, no buttons, no additional text. Single full-screen image.
+The earlier independently generated full-screen images were superseded to meet
+the user's requirement that only the text change between screens. The rendered
+startup check hides the text and compares the entire background pixel buffer
+across both screens.
+
+PNGs remain local under the repository's existing ignore rules. The build
+copies the shared backdrop into the game package. Background rights and
+trademark clearance have not been independently verified; provenance is not
+legal clearance.

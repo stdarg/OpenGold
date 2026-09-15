@@ -392,6 +392,41 @@ For uncertain binary structures:
 
 The technical design assumes a modern mouse-first desktop UI with keyboard support.
 
+### Display baseline
+
+The game application in `src/OpenGoldBox/godot` uses **1920 x 1080 pixels
+(Full HD, 16:9)** as its reference viewport and default requested window client
+size. These dimensions exclude the operating system's title bar and borders.
+The existing resizable game screens retain their 1120 x 800 minimum client size;
+window managers may constrain the initial window to the available desktop area.
+Fullscreen is available through Godot's `--fullscreen` launch option and uses
+the display's fullscreen dimensions. The 1920 x 1080 baseline is a design target,
+not a requirement to change the monitor's display mode.
+
+The two startup screens share one static texture,
+`art/OpenGoldBoxSplashBackground.png`. It is loaded once; advancing the sequence
+changes only native Godot title, subtitle, and footer labels. The background's
+pixels, placement, and sampling remain identical across both screens.
+The text uses a gold/ivory system serif font (Georgia, with Times New Roman
+fallback) and scales with the centered background rectangle.
+
+The generator returned a 1672 x 941 background despite the requested Full HD
+canvas. It remains unmodified. Godot applies a uniform aspect-preserving fit;
+at 1920 x 1080 this leaves about one pixel of total horizontal margin. Other
+aspect ratios use black letterboxing. Text is rendered at the current display
+resolution. The two 1920 x 1080 PNG screen previews in `art/` are captured from
+Godot's final rendering; the runtime uses the shared backdrop and native labels.
+
+Startup retains the optional `--splash` sequence: engine introduction, then
+Pool of Radiance introduction, then character creation. Any key advances;
+Escape skips the splash sequence. Default startup opens character creation.
+The build copies the local shared backdrop from `art/` into the game package.
+See `art/OpenGoldBoxScreens.provenance.md` for artwork sources and prompts.
+The rendered startup check compares both backgrounds byte for byte with the
+text hidden, in addition to verifying the text and navigation behavior.
+
+### Screen structure
+
 Primary Godot-driven screens include:
 
 - exploration

@@ -4,6 +4,9 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
 #include <godot_cpp/classes/texture_rect.hpp>
+#include <godot_cpp/classes/label.hpp>
+#include <algorithm>
+#include <cmath>
 #include <godot_cpp/classes/texture2d.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -27,15 +30,49 @@ void StartupView::_ready()
 
 void StartupView::show_screen()
 {
-    const char* path = screen_ == 0 ? "res://bin/splashes/OpenGoldBoxSplash.png"
-                                  : "res://bin/splashes/OpenGoldBoxPoolOfRadiance.png";
-    Ref<Texture2D> texture = ResourceLoader::get_singleton()->load(path);
-    if (texture.is_null()) {
-        UtilityFunctions::push_error(String("Missing splash image: ") + path);
-        finish();
-        return;
+    auto* image = get_node<TextureRect>("Image"); // scene-owned
+    // Load once: advancing changes only text, never the backdrop texture or geometry.
+    if (image->get_texture().is_null()) {
+        Ref<Texture2D> texture = ResourceLoader::get_singleton()->load("res://bin/splashes/OpenGoldBoxSplashBackground.png");
+        if (texture.is_null()) {
+            UtilityFunctions::push_error("Missing shared splash background");
+            finish();
+            return;
+        }
+        image->set_texture(texture);
     }
-    get_node<TextureRect>("Image")->set_texture(texture);
+    get_node<Label>("Text/Title")->set_text(screen_ == 0 ? "OpenGoldBox" : "POOL OF\nRADIANCE");
+    get_node<Label>("Text/Subtitle")->set_text(screen_ == 0
+        ? "An open-source role-playing game\nengine for Gold Box games."
+        : "An unofficial adaptation powered by OpenGoldBox");
+    get_node<Label>("Text/Footer")->set_text(screen_ == 0 ? "" : "Not affiliated with or endorsed by Wizards of the Coast.");
+    layout_text();
+}
+
+void StartupView::_notification(int what)
+{
+    if (what == NOTIFICATION_RESIZED && is_node_ready()) layout_text();
+}
+
+void StartupView::layout_text()
+{
+    // The text uses the same centered, uniform fit as the shared background.
+    const auto texture = get_node<TextureRect>("Image")->get_texture();
+    if (texture.is_null()) return;
+    const auto source = texture->get_size();
+    const double fit = std::min(get_size().x / source.x, get_size().y / source.y);
+    const auto fitted = source * fit;
+    const auto origin = (get_size() - fitted) * .5;
+    const Vector2 unit(fitted.x / 1920.0, fitted.y / 1080.0);
+    const auto place = [&](const char* name, Rect2 rect, int font_size) {
+        auto* label = get_node<Label>(name); // scene-owned
+        label->set_position(origin + rect.position * unit);
+        label->add_theme_font_size_override("font_size", std::max(1, static_cast<int>(std::lround(font_size * unit.y))));
+        label->set_size(rect.size * unit);
+    };
+    place("Text/Title", screen_ == 0 ? Rect2(280, 300, 1360, 200) : Rect2(280, 210, 1360, 390), screen_ == 0 ? 140 : 156);
+    place("Text/Subtitle", screen_ == 0 ? Rect2(260, 520, 1400, 140) : Rect2(240, 630, 1440, 100), screen_ == 0 ? 50 : 44);
+    place("Text/Footer", Rect2(260, 850, 1400, 70), 30);
 }
 
 void StartupView::_input(const Ref<InputEvent>& event)

@@ -621,6 +621,10 @@ No scaler should be required for gameplay.
 
 ### 12.3 UI Scaling
 
+The game uses **1920 x 1080 (Full HD, 16:9)** as its reference layout and
+default requested window size. Startup splash artwork targets the same resolution
+and preserves its aspect ratio when fitted to other display sizes.
+
 The UI must be usable at:
 
 - 1080p

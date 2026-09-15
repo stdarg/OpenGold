@@ -51,7 +51,7 @@ foreach(source IN LISTS portrait_sources)
     list(APPEND portrait_outputs "${output}")
 endforeach()
 set(splash_outputs)
-foreach(name OpenGoldBoxSplash OpenGoldBoxPoolOfRadiance)
+foreach(name OpenGoldBoxSplashBackground)
     set(source "${PROJECT_SOURCE_DIR}/art/${name}.png")
     set(output "${game_project}/bin/splashes/${name}.png")
     add_custom_command(OUTPUT "${output}"
