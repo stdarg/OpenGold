@@ -126,7 +126,7 @@ void CharacterCreationView::_ready()
         const auto seed=(checking_||args.has("--party-check"))?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_portrait();refresh();
     } catch(const std::exception& e) {
-        fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-game.cmd, then opengoldbox.exe.");
+        fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-opengoldbox.cmd, then opengoldbox.exe.");
         get_node<Label>("Status")->set_text(error_);get_node<Button>("Next")->set_disabled(true);
         for(int i=0;i<get_child_count();++i)if(auto* c=Object::cast_to<Control>(get_child(i)))
             if(c->get_name()!=StringName("Title")&&c->get_name()!=StringName("Instructions")&&c->get_name()!=StringName("Status"))c->hide();
@@ -242,7 +242,7 @@ void CharacterCreationView::load_additional_heads()
     for(const auto& head:por::additional_portrait_heads()) {
         const auto path=gs("res://bin/portraits/"+std::string(head.filename));
         Ref<Texture2D> texture=ResourceLoader::get_singleton()->load(path);
-        if(texture.is_null())throw std::runtime_error("Missing portrait: "+std::string(head.filename)+". Run build-game.cmd and opengoldbox.exe.");
+        if(texture.is_null())throw std::runtime_error("Missing portrait: "+std::string(head.filename)+". Run build-opengoldbox.cmd and opengoldbox.exe.");
         auto source=texture->get_image();
         if(source.is_null()||(source->is_compressed()&&source->decompress()!=OK))throw std::runtime_error("Cannot decode portrait: "+std::string(head.filename));
         source->convert(godot::Image::FORMAT_RGBA8);

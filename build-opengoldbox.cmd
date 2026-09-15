@@ -12,15 +12,15 @@ if not exist "%CMAKE_EXE%" (
 )
 call "%VSDEV_CMD%" -arch=x64
 if not "%errorlevel%"=="0" exit /b %errorlevel%
-if "%~1"=="" if exist "%~dp0build\game\build.ninja" goto build
 if exist "%~dp0build\_deps\godot-cpp-src\CMakeLists.txt" (
-    "%CMAKE_EXE%" -S "%~dp0." -B "%~dp0build/game" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DOPENGOLD_BUILD_GAME=ON "-DFETCHCONTENT_SOURCE_DIR_GODOT_CPP=%~dp0build/_deps/godot-cpp-src" %*
+    "%CMAKE_EXE%" -S "%~dp0." -B "%~dp0build/game" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DOPENGOLD_BUILD_GAME=ON "-DFETCHCONTENT_SOURCE_DIR_GODOT_CPP=%~dp0build/_deps/godot-cpp-src" %*
 ) else (
-    "%CMAKE_EXE%" -S "%~dp0." -B "%~dp0build/game" -G Ninja -DCMAKE_BUILD_TYPE=Debug -DOPENGOLD_BUILD_GAME=ON %*
+    "%CMAKE_EXE%" -S "%~dp0." -B "%~dp0build/game" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DOPENGOLD_BUILD_GAME=ON %*
 )
 if not "%errorlevel%"=="0" exit /b %errorlevel%
-:build
 "%CMAKE_EXE%" --build "%~dp0build/game" --parallel 6
 if not "%errorlevel%"=="0" exit /b %errorlevel%
 "%CMAKE_EXE%" -E chdir "%~dp0build/game" ctest --output-on-failure
-exit /b %errorlevel%
+if not "%errorlevel%"=="0" exit /b %errorlevel%
+echo Game package ready: "%~dp0win-package\opengoldbox.exe"
+exit /b 0

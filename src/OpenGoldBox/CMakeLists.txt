@@ -22,7 +22,12 @@ if(NOT EXISTS "${OPENGOLDBOX_DEBUG_TEMPLATE}")
 endif()
 file(TO_CMAKE_PATH "${OPENGOLDBOX_DEBUG_TEMPLATE}" OPENGOLDBOX_DEBUG_TEMPLATE)
 set(game_project "${CMAKE_CURRENT_SOURCE_DIR}/godot")
-set(game_output "${PROJECT_SOURCE_DIR}/build/OpenGoldBox")
+set(game_output "${PROJECT_SOURCE_DIR}/win-package")
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+include(InstallRequiredSystemLibraries)
+if(NOT CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+    message(FATAL_ERROR "Visual C++ runtime DLLs were not found for the Windows package.")
+endif()
 configure_file(export_presets.cfg.in "${game_project}/export_presets.cfg" @ONLY)
 
 add_library(opengoldbox_game SHARED rolf_tour_view.cpp combat_view.cpp character_creation_view.cpp
@@ -57,5 +62,6 @@ add_custom_target(OpenGoldBox ALL
     COMMAND "${OPENGOLDBOX_GODOT}" --headless --editor --path "${game_project}" --import --quit
     COMMAND "${OPENGOLDBOX_GODOT}" --headless --path "${game_project}" --export-debug "Windows Desktop" "${game_output}/opengoldbox.exe"
     COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${game_output}/data/rules/srd-5.2.1"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} "${game_output}"
     DEPENDS opengoldbox_game opengoldbox_assets
     VERBATIM)

@@ -27,8 +27,8 @@ All existing demo scenes, presentation source, and launchers are preserved under
 development; the launch instructions below run those demos.
 
 The game application now starts from a separate copy of character creation in
-[`src/OpenGoldBox/`](src/OpenGoldBox/README.md). Build it with `.\build-game.cmd`;
-the `OpenGoldBox` target produces `build/OpenGoldBox/opengoldbox.exe`.
+[`src/OpenGoldBox/`](src/OpenGoldBox/README.md). Build it with `.\build-opengoldbox.cmd`;
+the `OpenGoldBox` target produces `win-package/opengoldbox.exe`.
 
 ## Sound board
 

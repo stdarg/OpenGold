@@ -21,14 +21,17 @@ are local build dependencies, not repository content.
 From the repository root in PowerShell:
 
 ```powershell
-.\build-game.cmd
-.\build\OpenGoldBox\opengoldbox.exe
+.\build-opengoldbox.cmd
+.\win-package\opengoldbox.exe
 ```
 
 The CMake target is `OpenGoldBox`. Its output is
-`build/OpenGoldBox/opengoldbox.exe`, with the PCK, GDExtension DLL, and rules data
-beside it. Keep the whole output folder together. This is a debug development
-build and uses the Visual C++ debug runtime supplied by the build tools.
+`win-package/opengoldbox.exe`. Every build creates and provisions `win-package/`
+at the repository root with the PCK (scenes, theme, and portraits), GDExtension
+DLL, rules data and notices, and Visual C++ runtime DLLs. Keep the whole package
+folder together. Native code uses `RelWithDebInfo` and the redistributable runtime;
+the Godot debug template retains development checks. Visual Studio is not needed
+to run the package.
 To build the executable target directly after configuring:
 
 ```powershell
