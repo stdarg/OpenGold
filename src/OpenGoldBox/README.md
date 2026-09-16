@@ -64,7 +64,7 @@ cmake --build build/game --target OpenGoldBox
 
 The game reads original assets from the path saved in `settings.cfg` beside the
 executable, with `OPENGOLD_GAME_DIR` as a runtime override. Missing settings prompt
-for the game folder, then language. `--reset-game-path` and `--reset-lang` force
+for the language, then the game folder. `--reset-game-path` and `--reset-lang` force
 selection again. See [configuration](../../docs/CONFIGURATION.md) for portable
 settings, environment overrides and checksum warnings. The game preserves the
 existing per-user save directory. Rules and

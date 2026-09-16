@@ -455,7 +455,7 @@ See [LOCALIZATION.md](LOCALIZATION.md) for catalog maintenance, artwork and cove
 
 `application_settings` resolves the original-game path for all game views and
 save identity checks. Portable `settings.cfg` beside the executable stores the
-path and language; missing/invalid values prompt before splashes, folder first.
+path and language; missing/invalid values prompt before splashes, language first.
 The development editor uses an ignored project-local config. `--reset-game-path`
 and `--reset-lang` force selection without deleting prior values. Environment
 overrides are `OPENGOLD_GAME_DIR` and `OPENGOLD_LANG`; explicit selections and

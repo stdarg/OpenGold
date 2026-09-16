@@ -390,7 +390,7 @@ msgstr "Campaign loaded."
 msgid "Campaign saved."
 msgstr "Campaign saved."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:58 src/OpenGoldBox/save_slots.cpp:31 src/OpenGoldBox/startup_view.cpp:178
+#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:58 src/OpenGoldBox/save_slots.cpp:31 src/OpenGoldBox/startup_view.cpp:185
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -406,11 +406,11 @@ msgstr "Cannot reach this DC on a d20"
 msgid "Cannot read the bundled game-file checksum manifest."
 msgstr "Cannot read the bundled game-file checksum manifest."
 
-#: src/OpenGoldBox/startup_view.cpp:179
+#: src/OpenGoldBox/startup_view.cpp:186
 msgid "Cannot save language."
 msgstr "Cannot save language."
 
-#: src/OpenGoldBox/startup_view.cpp:128
+#: src/OpenGoldBox/startup_view.cpp:135
 msgid "Cannot save settings beside the executable. Check that the folder is writable and settings.cfg is valid."
 msgstr "Cannot save settings beside the executable. Check that the folder is writable and settings.cfg is valid."
 
@@ -482,7 +482,7 @@ msgstr "Choose an existing folder containing the Pool of Radiance game files."
 msgid "Choose game folder"
 msgstr "Choose game folder"
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:176
+#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:183
 msgid "Choose language"
 msgstr "Choose language"
 
@@ -567,7 +567,7 @@ msgstr "Confirm load"
 msgid "Constitution"
 msgstr "Constitution"
 
-#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:163 src/OpenGoldBox/godot/scenes/startup.tscn:228 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:177
+#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:163 src/OpenGoldBox/godot/scenes/startup.tscn:228 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:184
 msgid "Continue"
 msgstr "Continue"
 
@@ -941,7 +941,7 @@ msgstr "Item unequipped."
 msgid "Items"
 msgstr "Items"
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:175
+#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:182
 msgid "Language"
 msgstr "Language"
 
@@ -1089,7 +1089,7 @@ msgstr "Melee"
 msgid "Melee attack"
 msgstr "Melee attack"
 
-#: src/OpenGoldBox/startup_view.cpp:110
+#: src/OpenGoldBox/startup_view.cpp:117
 msgid "Missing or unreadable game files:"
 msgstr "Missing or unreadable game files:"
 

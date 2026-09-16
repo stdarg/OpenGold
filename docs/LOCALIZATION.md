@@ -21,7 +21,7 @@ immediately translates the dialog title, instructions, button and any error into
 that language. Language names remain in their native form. Previewing does not
 save a preference; confirmation saves the choice and immediately applies it to
 startup and the game. A missing language preference also opens this dialog,
-after any required game-folder selection. Otherwise startup uses the saved choice
+before any game-folder selection or checksum validation. Otherwise startup uses the saved choice
 or `OPENGOLD_LANG` override. A language value is not required after
 the flag. Closing this dialog with X or Ctrl+X exits through the normal graceful
 shutdown path. If the preference cannot be saved, the dialog displays

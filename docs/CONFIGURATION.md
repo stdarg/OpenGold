@@ -18,7 +18,7 @@ The supported language codes are `en` and `es`.
 
 ## Startup and reset controls
 
-If the config is absent, the game asks for the folder first, then the language.
+If the config is absent, the game asks for the language first, then the game folder.
 If only one value is missing or invalid, it asks only for that value. A saved
 folder that disappears or lacks required files must be selected again.
 Setup completes before the optional splash screens.
@@ -34,8 +34,8 @@ win-package\opengoldbox.exe --reset-game-path --reset-lang --splash
 `--lang` has been removed. `--reset-lang` forces language selection;
 `--reset-game-path` forces folder selection. Neither deletes the previous value
 on launch. Cancel, the dialog X, and Ctrl+X exit through normal shutdown.
-Only a confirmed replacement is saved. If the folder is confirmed and the user
-then cancels language selection, the confirmed folder remains saved.
+Only a confirmed replacement is saved. If the language is confirmed and the user
+then cancels folder selection, the confirmed language remains saved.
 
 The folder dialog accepts a typed path or **Browse...**, followed by **Continue**.
 The language dialog offers native names **English** and **Español**. Highlighting

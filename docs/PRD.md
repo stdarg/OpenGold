@@ -1284,7 +1284,7 @@ falls back to its source wording until separate translation overrides exist.
 See [LOCALIZATION.md](LOCALIZATION.md) for current coverage and workflow.
 
 Persist the original game-folder path and language beside the executable. On
-first run request the folder and then language; otherwise prompt only for missing
+first run request the language and then the folder; otherwise prompt only for missing
 or invalid settings. Provide `--reset-game-path` and `--reset-lang` (replacing
 `--lang`), preserving previous values until confirmation. Support environment
 overrides for both values. Compare consumed original assets against reference

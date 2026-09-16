@@ -32,7 +32,14 @@ void StartupView::_ready()
 {
     set_process(false);
     i18n::initialize();
-    i18n::prepare_ui(*this);
+    choose_language();
+}
+
+void StartupView::choose_game_path()
+{
+    // Translate these dialogs only after language selection has been confirmed.
+    i18n::prepare_ui(*get_node<Window>("PathDialog"));
+    i18n::prepare_ui(*get_node<Window>("ChecksumWarning"));
     auto* dialog=get_node<Window>("PathDialog"); // scene-owned
     dialog->connect("close_requested",callable_mp(this,&StartupView::close_language));
     dialog->get_node<Button>("Cancel")->connect("pressed",callable_mp(this,&StartupView::close_language));
@@ -73,7 +80,7 @@ void StartupView::choose_language()
         dialog->get_node<Button>("Cancel")->connect("pressed",callable_mp(this,&StartupView::close_language));
         return;
     }
-    begin_startup();
+    choose_game_path();
 }
 
 void StartupView::show_path(const String& message)
@@ -130,7 +137,7 @@ void StartupView::continue_path()
     save_pending_path_=false;
     choosing_path_=false;
     get_viewport()->set_input_as_handled();
-    choose_language();
+    begin_startup();
 }
 
 void StartupView::begin_startup()
@@ -159,7 +166,7 @@ void StartupView::accept_language()
     dialog->hide();choosing_language_=false;
     // Do not let the Enter press used here also advance the first splash.
     dialog->set_input_as_handled();
-    begin_startup();
+    choose_game_path();
 }
 
 void StartupView::activate_language(std::int64_t) { accept_language(); }

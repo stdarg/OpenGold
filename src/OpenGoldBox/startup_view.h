@@ -32,6 +32,7 @@ private:
     void preview_language(std::int64_t index);
     void close_language();
     void choose_language();
+    void choose_game_path();
     void show_path(const godot::String& message = {});
     void browse_path();
     void picked_path(const godot::String& directory);
