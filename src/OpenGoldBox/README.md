@@ -24,8 +24,10 @@ open mac-package/OpenGoldBox.app
 ```
 
 The `macos-universal` preset compiles the game GDExtension for `arm64` and
-`x86_64` and exports a Universal 2 Godot app. The app is ad hoc signed for local
-testing. The native rules files live inside the app bundle; settings are saved
+`x86_64` and populates `mac-package/OpenGoldBox.app`. The executable, GDExtension,
+packed scenes and artwork, and native rules files are all inside that app bundle.
+The build checks for those files before reporting success. The app is ad hoc signed for local
+testing. Settings are saved
 in Godot's per-user data directory because app bundles are not writable after
 installation. Distribution signing and notarization are separate release steps.
 

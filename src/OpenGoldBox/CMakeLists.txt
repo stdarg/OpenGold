@@ -83,7 +83,8 @@ if(WIN32)
 else()
     set(package_commands
         COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${export_path}/Contents/MacOS/data/rules/srd-5.2.1"
-        COMMAND codesign --force --deep --sign - "${export_path}")
+        COMMAND codesign --force --deep --sign - "${export_path}"
+        COMMAND "${CMAKE_COMMAND}" "-DAPP_BUNDLE=${export_path}" -P "${CMAKE_CURRENT_SOURCE_DIR}/verify_macos_package.cmake")
 endif()
 add_custom_target(OpenGoldBox ALL
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/opengold.gdextension" "${game_project}/bin/opengold.gdextension"
