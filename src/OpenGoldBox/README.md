@@ -11,6 +11,26 @@ installed Godot editor is needed when running the exported game folder.
 
 ## Build
 
+### macOS (Apple silicon and Intel)
+
+Install CMake 3.24+, Apple Command Line Tools, Python 3.8+, Godot 4.5+
+and its matching macOS export templates. From a macOS bash shell at the repository root:
+
+```bash
+cmake --preset macos-universal
+cmake --build --preset macos-universal
+ctest --preset macos-universal
+open mac-package/OpenGoldBox.app
+```
+
+The `macos-universal` preset compiles the game GDExtension for `arm64` and
+`x86_64` and exports a Universal 2 Godot app. The app is ad hoc signed for local
+testing. The native rules files live inside the app bundle; settings are saved
+in Godot's per-user data directory because app bundles are not writable after
+installation. Distribution signing and notarization are separate release steps.
+
+### Windows
+
 Use the existing Visual Studio/CMake/Godot prerequisites. Install a Windows x64
 debug export template matching the Godot editor. The default template location
 is `build/export-templates/windows_debug_x86_64.exe`; alternatively pass

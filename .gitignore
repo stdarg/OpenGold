@@ -1,6 +1,7 @@
 # Native build output
 /build/
 /win-package/
+/mac-package/
 /src/OpenGoldBox/godot/.godot/
 /src/OpenGoldBox/godot/bin/
 /src/OpenGoldBox/godot/data/

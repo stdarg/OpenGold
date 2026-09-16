@@ -38,8 +38,11 @@ bool flag(const char* name) {
 String path() {
     auto* os=OS::get_singleton();
     // Editor runs share Godot's executable, so keep development settings in the project.
-    return os->has_feature("editor")?ProjectSettings::get_singleton()->globalize_path("res://settings.cfg"):
-        os->get_executable_path().get_base_dir().path_join("settings.cfg");
+    if (os->has_feature("editor"))
+        return ProjectSettings::get_singleton()->globalize_path("res://settings.cfg");
+    if (os->has_feature("macos"))
+        return ProjectSettings::get_singleton()->globalize_path("user://settings.cfg");
+    return os->get_executable_path().get_base_dir().path_join("settings.cfg");
 }
 String saved_game_path(){return read("game","path");}
 String saved_language(){return read("interface","language");}

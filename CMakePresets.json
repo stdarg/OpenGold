@@ -15,13 +15,28 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "BUILD_TESTING": "ON"
             }
+        },
+        {
+            "name": "macos-universal",
+            "displayName": "macOS Universal 2 game",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/macos-universal",
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+                "OPENGOLD_BUILD_GAME": "ON",
+                "BUILD_TESTING": "ON"
+            }
         }
     ],
     "buildPresets": [
         {
             "name": "default",
             "configurePreset": "default"
-        }
+        },
+        { "name": "macos-universal", "configurePreset": "macos-universal" }
     ],
     "testPresets": [
         {
@@ -30,6 +45,11 @@
             "output": {
                 "outputOnFailure": true
             }
+        },
+        {
+            "name": "macos-universal",
+            "configurePreset": "macos-universal",
+            "output": { "outputOnFailure": true }
         }
     ]
 }
