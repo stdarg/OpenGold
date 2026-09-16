@@ -1,3 +1,4 @@
+#include "localization.h"
 #include "game_resources.h"
 #include "character_creation_view.h"
 #include "rolf_tour_view.h"
@@ -28,7 +29,7 @@ auto rules_module(){return srd5::load(std::filesystem::u8path(game_rules_file().
 void CharacterCreationView::setup_saves(){
     save_read_check_=OS::get_singleton()->get_cmdline_user_args().has("--save-check-read");
     std::unique_ptr<SaveSlots,DeleteNode> dialog(memnew(SaveSlots));dialog->set_name("SaveSlots");dialog->save=[this](const auto& p){save_campaign(p);};dialog->load=[this](const auto& p){load_campaign(p);};add_child(dialog.get());dialog.release();
-    for(bool saving:{true,false}){std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(saving?"Save":"Load");button->set_text(saving?"Save game":"Load game");button->connect("pressed",callable_mp(this,&CharacterCreationView::open_saves).bind(saving));get_node<Control>("PartyPanel")->add_child(button.get());button.release();}
+    for(bool saving:{true,false}){std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(saving?"Save":"Load");button->set_text(i18n::text(saving?N_("Save game"):N_("Load game")));button->connect("pressed",callable_mp(this,&CharacterCreationView::open_saves).bind(saving));get_node<Control>("PartyPanel")->add_child(button.get());button.release();}
 }
 void CharacterCreationView::open_saves(bool saving){
     if(campaign_->in_combat())return;
@@ -40,7 +41,7 @@ void CharacterCreationView::save_campaign(const std::filesystem::path& path){
     if(campaign_defeated_)throw std::runtime_error("Load a saved game after defeat");
     const auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
     const auto bytes=encode_campaign(*campaign_,town?town->saved_session():nullptr,campaign_asset_identity(game_directory()));
-    write_campaign_file(path,bytes);error_="Campaign saved.";refresh_party();
+    write_campaign_file(path,bytes);error_=i18n::text("Campaign saved.");refresh_party();
 }
 void CharacterCreationView::load_campaign(const std::filesystem::path& path){
     if(campaign_->in_combat())throw std::runtime_error("Finish combat before loading");
@@ -58,7 +59,7 @@ void CharacterCreationView::load_campaign(const std::filesystem::path& path){
     if(saved.town){town->restore_campaign(campaign_,std::move(*saved.town));town->hide();town->set_process(false);town->set_process_input(false);}
     else if(town){remove_child(town);std::unique_ptr<Node,DeleteNode> removed(town);}
     pool_added_.clear();for(unsigned i=0;i<48;++i)for(const auto& m:campaign_->state().roster)if(m.creation_source=="pool:v1:"+std::to_string(i))pool_added_.push_back(i);completed_.reset();added_to_party_=false;roster_index_=0;party_open_=true;
-    get_node<Button>("ReturnParty")->hide();get_node<Control>("PartyPanel")->show();error_="Campaign loaded.";refresh_party();party_layout();
+    get_node<Button>("ReturnParty")->hide();get_node<Control>("PartyPanel")->show();error_=i18n::text("Campaign loaded.");refresh_party();party_layout();
 }
 void RolfTourView::restore_campaign(std::shared_ptr<CampaignParty> party,por::RolfTourSession session){
     session.attach_restored_party(party);campaign_=std::move(party);session_=std::move(session);shown_revision_=0;rendered_pose_.reset();rendered_sprite_id_=999;rendered_picture_revision_=0;played_footsteps_=session_->snapshot().footsteps;refresh();
@@ -69,7 +70,7 @@ void CharacterCreationView::save_checkpoint_check(const std::string& name){
     auto directory=std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("user://checks/save-check").utf8().get_data());
     save_campaign(directory/(name+".ogs"));error_="";
     if(name=="final"){
-        open_saves(true);auto* dialog=get_node<SaveSlots>("SaveSlots");dialog->get_node<LineEdit>("Name")->set_text("Restart test");
+        open_saves(true);auto* dialog=get_node<SaveSlots>("SaveSlots");dialog->get_node<LineEdit>("Name")->set_text(i18n::text(N_("Restart test")));
         dialog->get_node<Button>("Action")->emit_signal("pressed");if(dialog->is_visible())dialog->get_node<Button>("Action")->emit_signal("pressed");
         if(dialog->is_visible())throw std::runtime_error("Save slot UI did not complete its write");error_="";
     }

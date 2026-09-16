@@ -1,6 +1,7 @@
 #ifndef OPENGOLD_CHARACTER_RULES_H
 #define OPENGOLD_CHARACTER_RULES_H
 #include "opengold/rules.h"
+#include "opengold/message.h"
 #include <array>
 
 namespace opengold::rules {
@@ -40,6 +41,8 @@ struct CharacterSheet {
     std::array<int,6> saving_throws{};
     std::array<bool,6> save_proficiencies{};
     std::string racial_modifiers, class_modifiers, background_modifiers;
+    // Derived presentation messages; not character identity or save-file keys.
+    std::vector<Message> hp_messages, racial_messages, class_messages, background_messages;
     std::vector<std::string> feats,prepared_spells;
 };
 // Creation is a separate optional capability: campaign and Godot code do not

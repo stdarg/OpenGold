@@ -1,3 +1,4 @@
+#include "localization.h"
 #include "game_resources.h"
 #include "combat_view.h"
 #include "opengold/srd5.h"
@@ -38,6 +39,7 @@ std::filesystem::path CombatView::local_path(const char* path) const
 {return std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(path).utf8().get_data());}
 void CombatView::_ready()
 {
+    i18n::prepare_ui(*this);
     get_node<Control>("BattlefieldScroll/Canvas")->connect("draw",callable_mp(this,&CombatView::draw_battlefield));
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
@@ -61,10 +63,10 @@ void CombatView::_ready()
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
     try{demo_=std::make_unique<CombatDemo>(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
-        get_node<Label>("Help")->set_text("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate");
+        get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
-        if(encounter_){get_node<Label>("Title")->set_text("SLUMS / Combat");get_node<Label>("Subtitle")->set_text("Choose an action, then click its target. Enter ends your turn.");
-            get_node<Label>("Footer")->set_text("Each square is 5 feet. Victory returns your party to exploration.");}
+        if(encounter_){get_node<Label>("Title")->set_text(i18n::text(N_("SLUMS / Combat")));get_node<Label>("Subtitle")->set_text(i18n::text(N_("Choose an action, then click its target. Enter ends your turn.")));
+            get_node<Label>("Footer")->set_text(i18n::text(N_("Each square is 5 feet. Victory returns your party to exploration.")));}
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -131,7 +133,7 @@ void CombatView::save_game()
         const bool previous=std::filesystem::exists(path);
         if(previous){std::filesystem::remove(backup);std::filesystem::rename(path,backup);}
         try{std::filesystem::rename(temporary,path);}catch(...){if(previous)std::filesystem::rename(backup,path);throw;}
-        error_.clear();get_node<Label>("Prompt")->set_text("Training combat saved.");
+        error_.clear();get_node<Label>("Prompt")->set_text(i18n::text(N_("Training combat saved.")));
     }catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::load_game()
@@ -222,29 +224,38 @@ void CombatView::refresh()
 {
     if(!ready_)return;
     const bool loaded=demo_&&demo_->has_combat();Snapshot s;if(loaded)s=demo_->combat().snapshot();
-    bool player=false;std::string turn=demo_?demo_->status():"Unable to load rules";
+    bool player=false;String turn=i18n::text(demo_?demo_->status():N_("Unable to load rules"));
     if(loaded&&s.outcome==Outcome::ongoing)for(const auto& a:s.combatants)if(a.id==s.actor) {
-        player=a.side==0;turn="Round "+std::to_string(s.round)+" / "+a.name+(s.reaction_pending?" reaction":" turn")+
-            "\nMove "+std::to_string(a.movement_feet)+" ft | "+(a.action?"Action ready":"Action spent")+"\n"+a.status;
+        player=a.side==0;
+        turn=i18n::format(s.reaction_pending?N_("Round {round} / {name} reaction\nMove {feet} ft | {action}"):N_("Round {round} / {name} turn\nMove {feet} ft | {action}"),
+            {{"round",s.round},{"name",gs(a.name)},{"feet",a.movement_feet},{"action",i18n::text(a.action?N_("Action ready"):N_("Action spent"))}});
+        turn+="\n"+(a.status_messages.empty()?i18n::text(a.status):i18n::render(a.status_messages));
     }
-    if(loaded&&s.outcome!=Outcome::ongoing)turn=s.outcome==Outcome::victory?"Victory":"Party incapacitated / defeat";
-    get_node<Label>("Turn")->set_text(gs(turn));
-    std::string roster;for(const auto& a:s.combatants)roster+=(a.id==s.actor?"> ":"  ")+std::to_string(a.id)+" "+a.name+"  "+std::to_string(a.hit_points)+"/"+std::to_string(a.max_hit_points)+" HP  AC "+std::to_string(a.armor_class)+"\n";
-    get_node<RichTextLabel>("Roster")->set_text(gs(roster));
+    if(loaded&&s.outcome!=Outcome::ongoing)turn=i18n::text(s.outcome==Outcome::victory?N_("Victory"):N_("Party incapacitated / defeat"));
+    get_node<Label>("Turn")->set_text(turn);
+    String roster;for(const auto& a:s.combatants)roster+=String(a.id==s.actor?"> ":"  ")+i18n::format("{id} {name}  {current}/{maximum} HP  AC {ac}\n",
+        {{"id",a.id},{"name",gs(a.name)},{"current",a.hit_points},{"maximum",a.max_hit_points},{"ac",a.armor_class}});
+    get_node<RichTextLabel>("Roster")->set_text(roster);
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
-    get_node<Button>("SpellSlot")->set_text("Slot level "+String::num_uint64(spell_slot_));
+    get_node<Button>("SpellSlot")->set_text(i18n::format("Slot level {level}",{{"level",spell_slot_}}));
     get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,5>{{{"Move","move"},{"End","end"},{"SecondWind","second_wind"},{"React","opportunity"},{"Decline","decline"}}})
         get_node<Button>(node)->set_disabled(!enabled(verb));
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());
     get_node<Button>("Save")->set_disabled(!loaded||demo_->is_slums());get_node<Button>("Load")->set_disabled(!loaded||demo_->is_slums());
     get_node<Button>("Revisit")->set_disabled(!loaded||!demo_->script_complete()||s.outcome!=Outcome::victory);
-    get_node<Label>("Prompt")->set_text(gs(!error_.empty()?error_:demo_&&demo_->waiting()?"Read the encounter text, then Continue.":loaded&&s.outcome!=Outcome::ongoing?demo_->status():s.reaction_pending?"Use or decline the opportunity attack.":player?"Selected: "+mode_+". Click a highlighted square.":"Enemy turn"));
-    std::string log=demo_?demo_->dialogue()+"\n\n":"";for(const auto& entry:s.log)log+=entry+"\n";
-    if(!error_.empty())log+="\n"+error_;
-    get_node<RichTextLabel>("Log")->set_text(gs(log));get_node<RichTextLabel>("Log")->scroll_to_line(std::max(0,get_node<RichTextLabel>("Log")->get_line_count()-1));
+    String action=i18n::text("Move");
+    for(const auto& command:offered)if(command.verb==mode_){action=i18n::text(command.label);break;}
+    get_node<Label>("Prompt")->set_text(!error_.empty()?i18n::text(error_):demo_&&demo_->waiting()?i18n::text("Read the encounter text, then Continue."):
+        loaded&&s.outcome!=Outcome::ongoing?i18n::text(demo_->status()):s.reaction_pending?i18n::text("Use or decline the opportunity attack."):
+        player?i18n::format("Selected: {action}. Click a highlighted square.",{{"action",action}}):i18n::text("Enemy turn"));
+    String log=demo_?i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n":String();
+    if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
+    else for(const auto& entry:s.log)log+=i18n::text(entry)+"\n";
+    if(!error_.empty())log+="\n"+i18n::text(error_);
+    get_node<RichTextLabel>("Log")->set_text(log);get_node<RichTextLabel>("Log")->scroll_to_line(std::max(0,get_node<RichTextLabel>("Log")->get_line_count()-1));
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
 }

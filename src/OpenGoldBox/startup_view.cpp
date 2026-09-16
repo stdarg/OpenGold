@@ -1,5 +1,11 @@
 #include "startup_view.h"
+#include "localization.h"
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/item_list.hpp>
+#include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/window.hpp>
+#include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
@@ -19,12 +25,60 @@ void StartupView::_bind_methods()
 
 void StartupView::_ready()
 {
+    set_process(false);
+    auto* os = OS::get_singleton(); // borrowed engine singleton
+    if (os->get_cmdline_args().has("--lang") || os->get_cmdline_user_args().has("--lang")) {
+        choosing_language_=true;
+        auto* dialog=get_node<Window>("LanguageDialog"); // scene-owned
+        // Native language names and bilingual instructions stay readable in either locale.
+        dialog->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
+        dialog->connect("close_requested",callable_mp(this,&StartupView::close_language));
+        auto* choices=dialog->get_node<ItemList>("Choices");
+        choices->add_item("English");choices->set_item_metadata(0,"en");
+        choices->add_item(String::utf8("Español"));choices->set_item_metadata(1,"es");
+        choices->select(i18n::language()=="es"?1:0);
+        choices->connect("item_activated",callable_mp(this,&StartupView::activate_language));
+        dialog->get_node<Button>("Continue")->connect("pressed",callable_mp(this,&StartupView::accept_language));
+        dialog->popup_centered();choices->grab_focus();
+        return;
+    }
+    begin_startup();
+}
+
+void StartupView::begin_startup()
+{
     auto* os = OS::get_singleton(); // borrowed engine singleton
     if (!os->get_cmdline_args().has("--splash") && !os->get_cmdline_user_args().has("--splash")) {
         finish();
         return;
     }
     show_screen();
+}
+
+void StartupView::accept_language()
+{
+    if(!choosing_language_||finishing_)return;
+    auto* dialog=get_node<Window>("LanguageDialog");
+    auto* choices=dialog->get_node<ItemList>("Choices");
+    const auto selected=choices->get_selected_items();
+    if(selected.is_empty())return;
+    const String locale=choices->get_item_metadata(selected[0]);
+    if(!i18n::select_language(locale)){
+        dialog->get_node<Label>("Status")->set_text(String::utf8("Cannot save language. / No se puede guardar el idioma."));
+        return;
+    }
+    dialog->hide();choosing_language_=false;
+    // Do not let the Enter press used here also advance the first splash.
+    dialog->set_input_as_handled();
+    begin_startup();
+}
+
+void StartupView::activate_language(std::int64_t) { accept_language(); }
+
+void StartupView::close_language()
+{
+    // The startup dialog's X follows the same global graceful shutdown path.
+    get_tree()->get_root()->emit_signal("close_requested");
 }
 
 void StartupView::show_screen()
@@ -40,9 +94,9 @@ void StartupView::show_screen()
         }
         image->set_texture(texture);
     }
-    const char* lettering_path = screen_ == 0
-        ? "res://bin/splashes/OpenGoldBoxEngineLettering.png"
-        : "res://bin/splashes/OpenGoldBoxGameLettering.png";
+    const String lettering_path = String("res://bin/splashes/") +
+        (screen_ == 0 ? "OpenGoldBoxEngineLettering" : "OpenGoldBoxGameLettering") +
+        (i18n::language() == "es" ? ".es.png" : ".png");
     Ref<Texture2D> lettering = ResourceLoader::get_singleton()->load(lettering_path);
     if (lettering.is_null()) {
         UtilityFunctions::push_error(String("Missing splash lettering: ") + lettering_path);
@@ -89,7 +143,7 @@ void StartupView::layout_text()
 void StartupView::_input(const Ref<InputEvent>& event)
 {
     const Ref<InputEventKey> key = event;
-    if (finishing_ || key.is_null() || !key->is_pressed() || key->is_echo()) return;
+    if (finishing_ || choosing_language_ || key.is_null() || !key->is_pressed() || key->is_echo()) return;
     // The application-wide shutdown shortcut must not advance a splash.
     if (key->is_ctrl_pressed() && key->get_keycode() == KEY_X) return;
     get_viewport()->set_input_as_handled();

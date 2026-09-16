@@ -1,3 +1,4 @@
+#include "localization.h"
 #include "character_creation_view.h"
 #include "rolf_tour_view.h"
 #include <godot_cpp/classes/button.hpp>
@@ -33,29 +34,29 @@ void CharacterCreationView::setup_advancement(){
     get_node<ItemList>("PartyPanel/Roster")->add_theme_constant_override("v_separation",8);
     const auto args=OS::get_singleton()->get_cmdline_user_args();advancement_check_=args.has("--advancement-check");advancement_review_=args.has("--level-up-review");
     std::unique_ptr<Window,DeleteNode> owned(memnew(Window));owned->set_name("LevelUp");
-    owned->set_title("Level up");owned->set_size(Vector2i(700,670));owned->set_min_size(Vector2i(700,670));
+    owned->set_title(i18n::text(N_("Level up")));owned->set_size(Vector2i(700,670));owned->set_min_size(Vector2i(700,670));
     owned->set_flag(Window::FLAG_RESIZE_DISABLED,true);owned->set_transient(true);owned->set_exclusive(true);
     owned->hide();auto* window=owned.get();add_child(owned.get());owned.release();
     window->connect("close_requested",callable_mp(this,&CharacterCreationView::close_advancement));
     auto* title=control<Label>(window,"Title",Rect2(24,20,652,40));title->add_theme_font_size_override("font_size",24);title->set_clip_text(true);
     control<Label>(window,"HP",Rect2(24,70,652,42));
-    control<Label>(window,"FeatLabel",Rect2(24,122,652,28))->set_text("Feat or ability points");
+    control<Label>(window,"FeatLabel",Rect2(24,122,652,28))->set_text(i18n::text(N_("Feat or ability points")));
     auto* feat=control<OptionButton>(window,"Feat",Rect2(24,155,652,38));
     feat->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
     for(unsigned i=0;i<6;++i){
-        control<Label>(window,String("AbilityLabel")+String::num_uint64(i),Rect2(24+i*110,205,100,25))->set_text(abilities[i]);
+        control<Label>(window,String("AbilityLabel")+String::num_uint64(i),Rect2(24+i*110,205,100,25))->set_text(i18n::text(abilities[i]));
         auto* points=control<OptionButton>(window,String("Ability")+String::num_uint64(i),Rect2(24+i*110,236,100,36));
         for(int n=0;n<=2;++n)points->add_item(String("+")+String::num_int64(n));
         points->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     }
-    control<Label>(window,"SpellLabel",Rect2(24,292,652,28))->set_text("Prepared spells");
+    control<Label>(window,"SpellLabel",Rect2(24,292,652,28))->set_text(i18n::text(N_("Prepared spells")));
     for(int i=0;i<4;++i){auto* spell=control<CheckBox>(window,String("Spell")+String::num_int64(i),Rect2(24,325+i*38,652,36));
         spell->connect("toggled",callable_mp(this,&CharacterCreationView::advancement_spell_changed).bind(i));}
-    auto* note=control<Label>(window,"Note",Rect2(24,489,652,66));note->set_text("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.");note->add_theme_font_size_override("font_size",15);
+    auto* note=control<Label>(window,"Note",Rect2(24,489,652,66));note->set_text(i18n::text(N_("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.")));note->add_theme_font_size_override("font_size",15);
     auto* error=control<Label>(window,"Error",Rect2(24,560,652,34));error->add_theme_font_size_override("font_size",15);
-    auto* cancel=control<Button>(window,"Cancel",Rect2(386,610,136,40));cancel->set_text("Cancel");cancel->connect("pressed",callable_mp(this,&CharacterCreationView::close_advancement));
-    auto* confirm=control<Button>(window,"Confirm",Rect2(536,610,140,40));confirm->set_text("Confirm");confirm->connect("pressed",callable_mp(this,&CharacterCreationView::confirm_advancement));
+    auto* cancel=control<Button>(window,"Cancel",Rect2(386,610,136,40));cancel->set_text(i18n::text(N_("Cancel")));cancel->connect("pressed",callable_mp(this,&CharacterCreationView::close_advancement));
+    auto* confirm=control<Button>(window,"Confirm",Rect2(536,610,140,40));confirm->set_text(i18n::text(N_("Confirm")));confirm->connect("pressed",callable_mp(this,&CharacterCreationView::confirm_advancement));
 }
 void CharacterCreationView::refresh_advancement_arrows(){
     auto* list=get_node<ItemList>("PartyPanel/Roster");if(!list->is_visible_in_tree())return;
@@ -63,9 +64,9 @@ void CharacterCreationView::refresh_advancement_arrows(){
     const auto& roster=campaign_->state().roster;
     for(std::size_t i=0;i<roster.size();++i){const auto& member=roster[i];const auto name=String("Advance")+String::num_uint64(member.id);
         auto* arrow=Object::cast_to<Button>(list->get_node_or_null(name));
-        if(!arrow){arrow=control<Button>(list,name,Rect2(0,0,30,26));arrow->set_text(String::utf8("↑"));arrow->set_tooltip_text("Level up "+gs(member.character.sheet().name));
+        if(!arrow){arrow=control<Button>(list,name,Rect2(0,0,30,26));arrow->set_text(String::utf8("↑"));arrow->set_tooltip_text(i18n::format("Level up {name}",{{"name",gs(member.character.sheet().name)}}));
             arrow->add_theme_font_size_override("font_size",14);arrow->connect("pressed",callable_mp(this,&CharacterCreationView::open_advancement).bind(member.id));}
-        arrow->set_tooltip_text("Level up "+gs(member.character.sheet().name));
+        arrow->set_tooltip_text(i18n::format("Level up {name}",{{"name",gs(member.character.sheet().name)}}));
         const auto rect=list->get_item_rect(i);const float y=rect.position.y-list->get_v_scroll_bar()->get_value();
         const auto font=list->get_theme_font("font");const float width=Vector2(font->call("get_string_size",gs(member.character.sheet().name),0,-1,list->get_theme_font_size("font_size"))).x;
         arrow->set_position(Vector2(std::min(width+16,list->get_size().x-52),y));
@@ -81,15 +82,15 @@ void CharacterCreationView::open_advancement(std::int64_t id){
     if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));town&&town->is_visible()&&!town->can_leave())return;
     advancing_=id;advancement_options_=campaign_->advancement_options(id);advancement_choice_=campaign_->default_advancement(id);
     advancement_refreshing_=true;auto* window=get_node<Window>("LevelUp");
-    window->get_node<Label>("Title")->set_text(gs(campaign_->member(id).character.sheet().name)+" / Level "+String::num_uint64(advancement_options_.level));
+    window->get_node<Label>("Title")->set_text(i18n::format("{name} / Level {level}",{{"name",gs(campaign_->member(id).character.sheet().name)},{"level",advancement_options_.level}}));
     auto* feat=window->get_node<OptionButton>("Feat");feat->clear();
-    if(advancement_options_.feats.empty())feat->add_item("No feat or ability increase at this level");
-    for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feat->add_item(gs(option.label)+(option.available?"":" (Unavailable)"));feat->set_item_disabled(i,!option.available);feat->set_item_tooltip(i,gs(option.description));if(option.id==advancement_choice_.feat)feat->select(i);}
+    if(advancement_options_.feats.empty())feat->add_item(i18n::text(N_("No feat or ability increase at this level")));
+    for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feat->add_item(i18n::text(option.label)+(option.available?String():i18n::text(" (Unavailable)")));feat->set_item_disabled(i,!option.available);feat->set_item_tooltip(i,i18n::text(option.description));if(option.id==advancement_choice_.feat)feat->select(i);}
     feat->set_disabled(advancement_options_.feats.empty());
     for(unsigned i=0;i<6;++i)window->get_node<OptionButton>(String("Ability")+String::num_uint64(i))->select(advancement_choice_.abilities[i]);
-    window->get_node<Label>("SpellLabel")->set_text(advancement_options_.spells.empty()?"No spell choices for this class":"Prepared spells: select at least one");
+    window->get_node<Label>("SpellLabel")->set_text(i18n::text(advancement_options_.spells.empty()?N_("No spell choices for this class"):N_("Prepared spells: select at least one")));
     for(unsigned i=0;i<4;++i){auto* spell=window->get_node<CheckBox>(String("Spell")+String::num_uint64(i));spell->set_visible(i<advancement_options_.spells.size());if(i>=advancement_options_.spells.size())continue;
-        const auto& option=advancement_options_.spells[i];spell->set_text(gs(option.label)+(option.available?"":" (Unavailable)"));spell->set_tooltip_text(gs(option.description));spell->set_disabled(!option.available);spell->set_pressed_no_signal(std::find(advancement_choice_.spells.begin(),advancement_choice_.spells.end(),option.id)!=advancement_choice_.spells.end());}
+        const auto& option=advancement_options_.spells[i];spell->set_text(i18n::text(option.label)+(option.available?String():i18n::text(" (Unavailable)")));spell->set_tooltip_text(i18n::text(option.description));spell->set_disabled(!option.available);spell->set_pressed_no_signal(std::find(advancement_choice_.spells.begin(),advancement_choice_.spells.end(),option.id)!=advancement_choice_.spells.end());}
     advancement_refreshing_=false;advancement_changed();window->popup_centered();window->get_node<Button>("Cancel")->grab_focus();
 }
 void CharacterCreationView::advancement_spell_changed(bool,int){advancement_changed();}
@@ -99,19 +100,19 @@ void CharacterCreationView::advancement_changed(std::int64_t){
     const bool ability=advancement_choice_.feat=="ability_score_improvement";
     for(unsigned i=0;i<6;++i){auto* points=window->get_node<OptionButton>(String("Ability")+String::num_uint64(i));points->set_disabled(!ability);if(!ability)points->select(0);advancement_choice_.abilities[i]=ability?points->get_selected():0;
         const auto value=campaign_->member(advancing_).character.sheet().scores[i];const std::array<const char*,6> labels{"STR","DEX","CON","INT","WIS","CHA"};
-        window->get_node<Label>(String("AbilityLabel")+String::num_uint64(i))->set_text(String(labels[i])+" "+String::num_int64(value)+String::utf8(" → ")+String::num_int64(value+advancement_choice_.abilities[i]));}
+        window->get_node<Label>(String("AbilityLabel")+String::num_uint64(i))->set_text(i18n::text(labels[i])+" "+String::num_int64(value)+String::utf8(" → ")+String::num_int64(value+advancement_choice_.abilities[i]));}
     advancement_choice_.spells.clear();for(unsigned i=0;i<advancement_options_.spells.size();++i)if(window->get_node<CheckBox>(String("Spell")+String::num_uint64(i))->is_pressed())advancement_choice_.spells.push_back(advancement_options_.spells[i].id);
     try{const auto preview=campaign_->preview_advancement(advancing_,advancement_choice_);const auto& old=campaign_->member(advancing_);
-        window->get_node<Label>("HP")->set_text("Maximum HP: "+String::num_int64(old.character.sheet().hit_points)+String::utf8(" → ")+String::num_int64(preview.character.sheet().hit_points)+"   /   Current HP: "+String::num_int64(preview.vitals.hit_points));
+        window->get_node<Label>("HP")->set_text(i18n::format("Maximum HP: {old} -> {new} / Current HP: {current}",{{"old",old.character.sheet().hit_points},{"new",preview.character.sheet().hit_points},{"current",preview.vitals.hit_points}}));
         window->get_node<Label>("Error")->set_text("");window->get_node<Button>("Confirm")->set_disabled(false);
-    }catch(const std::exception& e){window->get_node<Label>("HP")->set_text("Choose valid options to preview your new HP.");window->get_node<Label>("Error")->set_text(gs(e.what()));window->get_node<Button>("Confirm")->set_disabled(true);}
+    }catch(const std::exception& e){window->get_node<Label>("HP")->set_text(i18n::text(N_("Choose valid options to preview your new HP.")));window->get_node<Label>("Error")->set_text(i18n::text(e.what()));window->get_node<Button>("Confirm")->set_disabled(true);}
 }
 void CharacterCreationView::close_advancement(){get_node<Window>("LevelUp")->hide();advancing_=0;}
 void CharacterCreationView::confirm_advancement(){
     if(!advancing_)return;
     try{campaign_->advance(advancing_,advancement_choice_);close_advancement();refresh_party();refresh_advancement_arrows();
         if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown")))town->resume_party();
-    }catch(const std::exception& e){get_node<Label>("LevelUp/Error")->set_text(gs(e.what()));}
+    }catch(const std::exception& e){get_node<Label>("LevelUp/Error")->set_text(i18n::text(e.what()));}
 }
 void CharacterCreationView::advancement_check(){
     if(advancement_frames_>6000)throw std::runtime_error("Advancement check timed out");

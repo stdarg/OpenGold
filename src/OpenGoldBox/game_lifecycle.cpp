@@ -1,4 +1,5 @@
 #include "game_lifecycle.h"
+#include "localization.h"
 #include <godot_cpp/classes/input_event_key.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -11,6 +12,7 @@ void GameLifecycle::_bind_methods() {}
 
 void GameLifecycle::_ready()
 {
+    i18n::initialize();
     set_process_mode(PROCESS_MODE_ALWAYS);
     auto* tree = get_tree(); // borrowed; SceneTree owns this autoload
     tree->set_auto_accept_quit(false);

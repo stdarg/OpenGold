@@ -16,11 +16,16 @@ protected:
 private:
     unsigned screen_{};
     bool finishing_{};
+    bool choosing_language_{};
     double fade_elapsed_{};
     void show_screen();
     void layout_text();
     void finish();
     void open_character_creation();
+    void begin_startup();
+    void accept_language();
+    void activate_language(std::int64_t index);
+    void close_language();
 };
 
 #endif

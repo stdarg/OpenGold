@@ -31,6 +31,11 @@ No system fonts or local image resampling are used.
 See [lettering prompts](OpenGoldBoxScreens.lettering-prompts.md) for the exact
 prompts and source filenames.
 
+Spanish uses separate `.es.png` lettering overlays and the same unchanged
+background. The approved Spanish game title is **Estanque de Resplandor**.
+See [Spanish prompts and hashes](OpenGoldBoxScreens.spanish-prompts.md) and
+[localization architecture](../docs/LOCALIZATION.md).
+
 See [generation prompts](OpenGoldBoxScreens.fullhd-prompts.md) for the exact
 fresh composition and text-removal prompts. The design continues the earlier
 user-supplied `art/TitleScreen.png` direction: stone wall, left torch and red

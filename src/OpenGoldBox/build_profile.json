@@ -3,7 +3,7 @@
         "JSON", "FileAccess", "VScrollBar", "CheckBox", "ScrollContainer", "Control", "Button", "Label", "RichTextLabel", "PanelContainer", "ItemList", "LineEdit", "OptionButton",
         "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
         "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton", "InputEventMouseMotion",
-        "ProjectSettings", "ResourceLoader", "OS", "Engine", "Window", "SceneTree",
+        "ProjectSettings", "ResourceLoader", "OS", "Engine", "Window", "SceneTree", "TranslationServer", "ConfigFile",
         "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture", "HSlider", "PackedScene", "TextureRect", "ColorRect"
     ]
 }

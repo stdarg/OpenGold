@@ -432,6 +432,24 @@ See `art/OpenGoldBoxScreens.provenance.md` for artwork sources and prompts.
 The rendered startup check compares both backgrounds byte for byte with the
 text hidden, in addition to verifying the selected overlay, its alpha transparency, and navigation behavior.
 
+### Localization
+
+The game uses Godot TranslationServer with English and Spanish gettext catalogs.
+Native presentation translates complete messages with named arguments; the
+C++20 rules modules emit engine-independent message templates and literal values.
+Stable identifiers, saved names and campaign state do not depend on language.
+Scene-authored text is translated once before native refresh methods take over.
+
+`--lang` opens a centered modal before the optional splashes, with English and
+Español rows, mouse/arrow-key selection and Enter or Continue / Continuar to
+confirm. The selection is saved in `user://settings.cfg`; later launches use it
+without prompting. The default otherwise follows the system language, with
+English fallback. Closing the selector follows the global graceful exit path.
+Spanish splash lettering uses `.es.png` variants over the same shared background
+and the title Estanque de Resplandor. Original campaign dialogue supports separate
+context-keyed overrides and retains source text when untranslated.
+See [LOCALIZATION.md](LOCALIZATION.md) for catalog maintenance, artwork and coverage.
+
 ### Screen structure
 
 Primary Godot-driven screens include:

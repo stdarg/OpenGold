@@ -1,4 +1,5 @@
 #include "character_creation_view.h"
+#include "character_text.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/check_box.hpp>
@@ -32,7 +33,7 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,7> steps{"Race & Gender","Alignment","Attributes","Class","Name","Combat appearance","Character sheet"};
+const std::array<const char*,7> steps{N_("Race & Gender"),N_("Alignment"),N_("Attributes"),N_("Class"),N_("Name"),N_("Combat appearance"),N_("Character sheet")};
 CreationField choice_field(CreationStep step)
 {
     switch(step){case CreationStep::race:return CreationField::race;
@@ -41,9 +42,9 @@ CreationField choice_field(CreationStep step)
     default:throw std::runtime_error("This step has no choice list");}
 }
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
-const std::array<const char*,6> full_abilities{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
-const std::array<const char*,16> colors{"Black","Blue","Green","Cyan","Red","Magenta","Brown","Light gray","Dark gray","Light blue","Light green","Light cyan","Light red","Pink","Yellow","White"};
-const std::array<const char*,6> parts{"Weapon","Body","Hair / Face","Shield","Arms","Legs"};
+const std::array<const char*,6> full_abilities{N_("Strength"),N_("Dexterity"),N_("Constitution"),N_("Intelligence"),N_("Wisdom"),N_("Charisma")};
+const std::array<const char*,16> colors{N_("Black"),N_("Blue"),N_("Green"),N_("Cyan"),N_("Red"),N_("Magenta"),N_("Brown"),N_("Light gray"),N_("Dark gray"),N_("Light blue"),N_("Light green"),N_("Light cyan"),N_("Light red"),N_("Pink"),N_("Yellow"),N_("White")};
+const std::array<const char*,6> parts{N_("Weapon"),N_("Body"),N_("Hair / Face"),N_("Shield"),N_("Arms"),N_("Legs")};
 std::string signed_number(int n){return (n>=0?"+":"")+std::to_string(n);}
 Color ega(unsigned index){const auto c=por::character_color(index);return Color(c[0]/255.f,c[1]/255.f,c[2]/255.f);}
 Ref<StyleBoxFlat> box(Color color,Color border,int width=1)
@@ -64,6 +65,8 @@ void CharacterCreationView::_notification(int what)
 {if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();}}
 void CharacterCreationView::_ready()
 {
+    i18n::prepare_ui(*this);
+    get_node<Label>("PreviewName")->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);
     // All node pointers here and below are borrowed from the owning scene tree.
     get_node<Button>("Next")->connect("pressed",callable_mp(this,&CharacterCreationView::next));
@@ -82,13 +85,13 @@ void CharacterCreationView::_ready()
         get_node<Button>(gs("Ability"+std::to_string(i)))->connect("pressed",callable_mp(this,&CharacterCreationView::score_selected).bind(i));
         get_node<Control>(gs("Dice"+std::to_string(i)))->set_drag_forwarding(callable_mp(this,&CharacterCreationView::drag_roll).bind(i),Callable(),Callable());
         get_node<Control>(gs("Dice"+std::to_string(i)))->set_default_cursor_shape(Control::CURSOR_DRAG);
-        get_node<Control>(gs("Dice"+std::to_string(i)))->set_tooltip_text("Drag this rolled result onto an attribute to assign it.");
+        get_node<Control>(gs("Dice"+std::to_string(i)))->set_tooltip_text(i18n::text(N_("Drag this rolled result onto an attribute to assign it.")));
         for(const char* stem:{"Ability","Score","BonusScore","TotalScore"})
             get_node<Control>(gs(std::string(stem)+std::to_string(i)))->set_drag_forwarding(Callable(),callable_mp(this,&CharacterCreationView::can_drop_roll).bind(i),callable_mp(this,&CharacterCreationView::drop_roll).bind(i));
         auto* score=get_node<Button>(gs("Score"+std::to_string(i)));
         score->set_drag_forwarding(callable_mp(this,&CharacterCreationView::drag_roll).bind(i+6),callable_mp(this,&CharacterCreationView::can_drop_roll).bind(i),callable_mp(this,&CharacterCreationView::drop_roll).bind(i));
         score->set_default_cursor_shape(Control::CURSOR_DRAG);
-        score->set_tooltip_text("Drop a roll here. Drag a filled box onto another ability to swap.");
+        score->set_tooltip_text(i18n::text(N_("Drop a roll here. Drag a filled box onto another ability to swap.")));
         score->add_theme_stylebox_override("normal",box(Color("10171c"),Color("687d88")));
     }
     get_node<Button>("SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
@@ -110,7 +113,7 @@ void CharacterCreationView::_ready()
     for(int i=0;i<16;++i) {
         auto* button=get_node<Button>(gs("Palette"+std::to_string(i)));
         button->connect("pressed",callable_mp(this,&CharacterCreationView::palette_selected).bind(i));
-        button->set_tooltip_text(colors[i]);button->add_theme_stylebox_override("normal",box(ega(i),Color("667680")));
+        button->set_tooltip_text(i18n::text(colors[i]));button->add_theme_stylebox_override("normal",box(ega(i),Color("667680")));
         button->add_theme_stylebox_override("hover",box(ega(i),Color("e6c28a"),3));
         button->add_theme_stylebox_override("focus",box(Color(0,0,0,0),Color("ffffff"),2));
     }
@@ -126,7 +129,7 @@ void CharacterCreationView::_ready()
         const auto seed=(checking_||args.has("--party-check"))?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_portrait();refresh();
     } catch(const std::exception& e) {
-        fatal_=true;error_=gs(e.what());get_node<Label>("Instructions")->set_text("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-opengoldbox.cmd, then opengoldbox.exe.");
+        fatal_=true;error_=i18n::text(e.what());get_node<Label>("Instructions")->set_text(i18n::text(N_("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-opengoldbox.cmd, then opengoldbox.exe.")));
         get_node<Label>("Status")->set_text(error_);get_node<Button>("Next")->set_disabled(true);
         for(int i=0;i<get_child_count();++i)if(auto* c=Object::cast_to<Control>(get_child(i)))
             if(c->get_name()!=StringName("Title")&&c->get_name()!=StringName("Instructions")&&c->get_name()!=StringName("Status"))c->hide();
@@ -299,15 +302,15 @@ void CharacterCreationView::refresh()
         for(int bank=0;bank<2;++bank)get_node<Control>(gs("Color"+std::to_string(bank)+"_"+std::to_string(i)))->set_visible(icon);
     }
     for(int i=0;i<16;++i)get_node<Control>(gs("Palette"+std::to_string(i)))->set_visible(icon);
-    get_node<Label>("PageTitle")->set_text(gs(steps[static_cast<unsigned>(step)]));
+    get_node<Label>("PageTitle")->set_text(i18n::text(steps[static_cast<unsigned>(step)]));
     std::string progress;
-    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==static_cast<unsigned>(CreationStep::combat_icon)?"Combat icon":steps[i])+"\n\n";
+    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+i18n::utf8(i==static_cast<unsigned>(CreationStep::combat_icon)?N_("Combat icon"):steps[i])+"\n\n";
     get_node<Label>("Steps")->set_text(gs(progress));
     get_node<Button>("Back")->set_disabled(step==CreationStep::race);
-    get_node<Button>("Back")->set_text(step==CreationStep::sheet?"Edit appearance":"Back");
+    get_node<Button>("Back")->set_text(i18n::text(step==CreationStep::sheet?N_("Edit appearance"):N_("Back")));
     show("Next",step!=CreationStep::sheet);
     if(campaign_)get_node<Button>("AddParty")->set_visible(step==CreationStep::sheet&&!added_to_party_);
-    get_node<Button>("Next")->set_text(icon?"Show character sheet":"Next");
+    get_node<Button>("Next")->set_text(i18n::text(icon?N_("Show character sheet"):N_("Next")));
     get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::character_class&&!creator_->rules().class_eligible(d,d.character_class))||(step==CreationStep::name&&d.name.empty()));
     get_node<Label>("Status")->set_text(error_);
     std::string instructions;
@@ -315,43 +318,43 @@ void CharacterCreationView::refresh()
         const auto field=choice_field(step);const auto choices=creator_->rules().choices(field);
         auto* list=get_node<ItemList>("Choices");list->clear();list->add_theme_constant_override("v_separation",18);
         for(unsigned i=0;i<choices.size();++i) {
-            list->add_item(gs(choices[i].label));
+            list->add_item(i18n::text(choices[i].label));
             if(step==CreationStep::character_class){
                 list->set_item_disabled(i,!creator_->rules().class_eligible(d,choices[i].id));
-                list->set_item_tooltip(i,gs("Requires "+creator_->rules().class_requirements(choices[i].id).description));
+                list->set_item_tooltip(i,i18n::format("Requires {requirements}", {{"requirements",i18n::requirements(creator_->rules().class_requirements(choices[i].id))}}));
             }
-            if(choices[i].id==selection(d,field)){list->select(i);get_node<RichTextLabel>("Description")->set_text(gs(choices[i].description));}
+            if(choices[i].id==selection(d,field)){list->select(i);get_node<RichTextLabel>("Description")->set_text(i18n::text(choices[i].description));}
         }
-        if(step==CreationStep::character_class)get_node<RichTextLabel>("Description")->append_text("\n\nStarting-class minimums use the multiclass prerequisites as an OpenGoldBox house rule. Disabled classes do not qualify; go Back to reassign scores or bonuses.");
-        instructions=step==CreationStep::character_class?"Choose one starting class. Checked targets are future plans, not additional class levels.":step==CreationStep::race?"Choose your race (species in SRD 5.2.1) and gender.":"Select an option, then continue.";
+        if(step==CreationStep::character_class)get_node<RichTextLabel>("Description")->append_text("\n\n"+i18n::text("Starting-class minimums use the multiclass prerequisites as an OpenGoldBox house rule. Disabled classes do not qualify; go Back to reassign scores or bonuses."));
+        instructions=step==CreationStep::character_class?N_("Choose one starting class. Checked targets are future plans, not additional class levels."):step==CreationStep::race?N_("Choose your race (species in SRD 5.2.1) and gender."):N_("Select an option, then continue.");
     }
     if(step==CreationStep::race){
         auto* gender=get_node<OptionButton>("Gender");gender->clear();
         const auto choices=creator_->rules().choices(CreationField::gender);
-        for(unsigned i=0;i<choices.size();++i){gender->add_item(gs(choices[i].label));if(choices[i].id==d.gender)gender->select(i);}
+        for(unsigned i=0;i<choices.size();++i){gender->add_item(i18n::text(choices[i].label));if(choices[i].id==d.gender)gender->select(i);}
     }
     if(stats) {
         const auto targets=creator_->rules().choices(CreationField::character_class);
         for(unsigned i=0;i<targets.size();++i){
             auto* check=get_node<CheckBox>(gs("Targets/Rows/Class"+std::to_string(i)));
             const auto requirements=creator_->rules().class_requirements(targets[i].id);
-            check->set_text(gs(targets[i].label+"\n"+requirements.description));
-            check->set_tooltip_text(gs(targets[i].description+"\n"+(creator_->rules().class_eligible(d,targets[i].id)?"Requirements met.":"Not yet qualified. You may still plan for this class.")));
+            check->set_text(i18n::text(targets[i].label)+"\n"+i18n::requirements(requirements));
+            check->set_tooltip_text(i18n::text(targets[i].description)+"\n"+i18n::text(creator_->rules().class_eligible(d,targets[i].id)?N_("Requirements met."):N_("Not yet qualified. You may still plan for this class.")));
             check->set_pressed_no_signal(std::find(d.target_classes.begin(),d.target_classes.end(),targets[i].id)!=d.target_classes.end());
         }
         auto* background=get_node<OptionButton>("Background");background->clear();
         const auto choices=creator_->rules().choices(CreationField::background);
-        for(unsigned i=0;i<choices.size();++i){background->add_item(gs(choices[i].label));if(choices[i].id==d.background)background->select(i);}
+        for(unsigned i=0;i<choices.size();++i){background->add_item(i18n::text(choices[i].label));if(choices[i].id==d.background)background->select(i);}
         auto* bonus=get_node<OptionButton>("Bonus");bonus->clear();
-        for(const auto& option:creator_->rules().adjustments(d.background))bonus->add_item(gs(option.label));bonus->select(d.adjustment);
-        get_node<Button>("Roll")->set_text(d.rolled?"Reroll all six":"Roll all six");
-        get_node<Label>("SwapHint")->set_text("Fill all six boxes to continue.\nAssigned scores include bonuses.");
+        for(const auto& option:creator_->rules().adjustments(d.background))bonus->add_item(i18n::adjustment(option));bonus->select(d.adjustment);
+        get_node<Button>("Roll")->set_text(i18n::text(d.rolled?N_("Reroll all six"):N_("Roll all six")));
+        get_node<Label>("SwapHint")->set_text(i18n::text(N_("Fill all six boxes to continue.\nAssigned scores include bonuses.")));
     }
     std::optional<CharacterSheet> s;
     if(completed_)s=completed_->sheet();
     else if(creator_->scores_assigned())s=creator_->sheet();
     if(stats)for(unsigned i=0;i<6;++i) {
-        auto* b=get_node<Button>(gs("Ability"+std::to_string(i)));b->set_text(gs(std::string(selected_score_==i?"> ":"")+full_abilities[i]));b->set_disabled(!d.rolled);
+        auto* b=get_node<Button>(gs("Ability"+std::to_string(i)));b->set_text(String(selected_score_==i?"> ":"")+i18n::text(full_abilities[i]));b->set_disabled(!d.rolled);
         std::string dice;
         if(d.rolled&&std::find(d.assignment.begin(),d.assignment.end(),i)==d.assignment.end()) {
             dice=std::to_string(d.rolls[i].total());
@@ -372,30 +375,30 @@ void CharacterCreationView::refresh()
         if(score&&change){
             const auto backgrounds=creator_->rules().choices(CreationField::background);
             const auto found=std::find_if(backgrounds.begin(),backgrounds.end(),[&](const auto& b){return b.id==d.background;});
-            modifier=found->label+" ("+signed_number(change)+")";
+            modifier=i18n::utf8(found->label)+" ("+signed_number(change)+")";
         }
         get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(gs(modifier));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
-    if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
-    if(icon)instructions="Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.";
+    if(step==CreationStep::name)instructions=N_("Choose a name for your character (up to 40 characters).");
+    if(icon)instructions=N_("Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.");
     refresh_portraits();
-    get_node<Label>("CombatHeadLabel")->set_text(gs("Head "+std::to_string(a.combat_head+1)+" / 14"));
-    get_node<Label>("WeaponLabel")->set_text(gs("Weapon "+std::to_string(a.combat_body+1)+" / 32"));
-    get_node<Button>("Size")->set_text(a.tall?"Size: Tall":"Size: Short");
+    get_node<Label>("CombatHeadLabel")->set_text(i18n::format("Head {number} / 14", {{"number",a.combat_head+1}}));
+    get_node<Label>("WeaponLabel")->set_text(i18n::format("Weapon {number} / 32", {{"number",a.combat_body+1}}));
+    get_node<Button>("Size")->set_text(i18n::text(a.tall?N_("Size: Tall"):N_("Size: Short")));
     if(icon) {
         const auto usage=art_->color_usage(a);
         if(!usage.contains(color_bank_,color_part_)) {
             for(unsigned i=0;i<12;++i)if(usage.contains(i/6,i%6)){color_bank_=i/6;color_part_=i%6;break;}
         }
-        get_node<Label>("PaletteHint")->set_text(gs(std::string(parts[color_part_])+" / Color-"+std::to_string(color_bank_+1)+": choose a color"));
+        get_node<Label>("PaletteHint")->set_text(i18n::format("{part} / Color-{bank}: choose a color", {{"part",i18n::text(parts[color_part_])},{"bank",color_bank_+1}}));
         for(int bank=0;bank<2;++bank)for(int part=0;part<6;++part) {
             auto* button=get_node<Button>(gs("Color"+std::to_string(bank)+"_"+std::to_string(part)));
             const bool selected=bank==color_bank_&&part==color_part_;const auto color=ega(a.colors[bank][part]);
             const bool present=usage.contains(bank,part);
             button->set_disabled(!present);
-            button->set_tooltip_text(present?"Choose a swatch to recolor this part in the combat preview.":"This part is not present in either pose. Choose another head or weapon to use it.");
-            button->set_text(present?gs(std::string(selected?"> ":"")+colors[a.colors[bank][part]]):String("Not present"));
+            button->set_tooltip_text(i18n::text(present?N_("Choose a swatch to recolor this part in the combat preview."):N_("This part is not present in either pose. Choose another head or weapon to use it.")));
+            button->set_text(present?String(selected?"> ":"")+i18n::text(colors[a.colors[bank][part]]):i18n::text("Not present"));
             button->add_theme_stylebox_override("normal",box(color,selected?Color("f1d29c"):Color("62707a"),selected?3:1));
             button->add_theme_stylebox_override("hover",box(color,Color("ffffff"),2));
             button->add_theme_stylebox_override("disabled",box(Color("253038"),Color("405058")));
@@ -404,16 +407,16 @@ void CharacterCreationView::refresh()
         }
     }
     if(step==CreationStep::sheet) {
-        instructions="Review your character and use the portrait controls to choose a complete portrait before adding it to the party.";
+        instructions=N_("Review your character and use the portrait controls to choose a complete portrait before adding it to the party.");
         get_node<RichTextLabel>("Description")->set_text(sheet_text(*completed_));
     }
-    get_node<Label>("Instructions")->set_text(gs(instructions));
-    get_node<Label>("PreviewTitle")->set_text(icon?"COMBAT PREVIEW":"CHARACTER PREVIEW");
-    get_node<Label>("PreviewName")->set_text(d.name.empty()?"Unnamed character":gs(d.name));
+    get_node<Label>("Instructions")->set_text(i18n::text(instructions));
+    get_node<Label>("PreviewTitle")->set_text(i18n::text(icon?N_("COMBAT PREVIEW"):N_("CHARACTER PREVIEW")));
+    get_node<Label>("PreviewName")->set_text(d.name.empty()?i18n::text("Unnamed character"):gs(d.name));
     std::string identity;
     for(const auto field:{CreationField::race,CreationField::gender,CreationField::character_class})
-        for(const auto& choice:creator_->rules().choices(field))if(choice.id==selection(d,field))identity+=(identity.empty()?"":" / ")+choice.label;
-    get_node<Label>("PreviewSummary")->set_text(gs(identity+(s?"\n"+s->alignment+" / "+std::to_string(s->hit_points)+" HP":"")));
+        for(const auto& choice:creator_->rules().choices(field))if(choice.id==selection(d,field))identity+=(identity.empty()?"":" / ")+i18n::utf8(choice.label);
+    get_node<Label>("PreviewSummary")->set_text(gs(identity)+(s?"\n"+i18n::format("{alignment} / {hp} HP", {{"alignment",i18n::text(s->alignment)},{"hp",s->hit_points}}):String()));
     refresh_art();layout();queue_redraw();refreshing_=false;
 }
 void CharacterCreationView::_draw()
@@ -436,7 +439,7 @@ void CharacterCreationView::perform(const std::function<void()>& action)
 {
     if(!creator_||fatal_)return;
     try{error_="";action();refresh();}
-    catch(const std::exception& e){error_=gs(e.what());refreshing_=false;get_node<Label>("Status")->set_text(error_);}
+    catch(const std::exception& e){error_=i18n::text(e.what());refreshing_=false;get_node<Label>("Status")->set_text(error_);}
 }
 void CharacterCreationView::target_toggled(bool selected,int index)
 {if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
@@ -472,7 +475,7 @@ void CharacterCreationView::_process(double)
     if(advancement_check_||advancement_review_){try{advancement_check();}catch(const std::exception& e){UtilityFunctions::printerr("Advancement check failed: ",gs(e.what()));advancement_check_=advancement_review_=false;get_tree()->quit(1);}return;}
     if(save_capture_frames_){try{capture_save_ui();}catch(const std::exception& e){UtilityFunctions::printerr(gs(e.what()));get_tree()->quit(1);}return;}
     if(save_read_check_){try{load_checkpoint_check();}catch(const std::exception& e){UtilityFunctions::printerr("Save restart check failed: ",gs(e.what()));get_tree()->quit(1);}save_read_check_=false;return;}
-    try{if(campaign_){update_party_navigation();refresh_advancement_arrows();}if(expedition_check_){expedition_check();return;}}catch(const std::exception& e){error_=gs(e.what());UtilityFunctions::push_error(error_);if(expedition_check_||party_check_||defeat_check_){get_tree()->quit(1);return;}get_node<Button>("ReturnParty")->set_tooltip_text(error_);return;}
+    try{if(campaign_){update_party_navigation();refresh_advancement_arrows();}if(expedition_check_){expedition_check();return;}}catch(const std::exception& e){error_=i18n::text(e.what());UtilityFunctions::push_error(error_);if(expedition_check_||party_check_||defeat_check_){get_tree()->quit(1);return;}get_node<Button>("ReturnParty")->set_tooltip_text(error_);return;}
     if(defeat_check_&&!Engine::get_singleton()->is_editor_hint()){
         try{defeat_check();}catch(const std::exception& e){UtilityFunctions::printerr("Defeat check failed: ",gs(e.what()));defeat_check_=false;get_tree()->quit(1);}return;
     }

@@ -153,6 +153,21 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     s.racial_modifiers+="\nOther racial traits and conditional effects are not implemented.";
     s.background_modifiers="Source: "+s.background+" background, selected ability increases. "+options[d.adjustment].label+". Other background features are not implemented.";
     s.hit_points=s.hit_die+s.modifiers[2]+racial_hp;
+    s.class_messages = {{"Source: {class} class, level 1. Saving-throw training adds +2 proficiency to {first} and {second}.",
+        {{"class",s.character_class,true},{"first",ability_names[trained[0]],true},{"second",ability_names[trained[1]],true}}},
+        {"Source: {class} Hit Die and Constitution score {score}. Starting HP: maximum d{die} + Constitution modifier ({modifier}).",
+        {{"class",s.character_class,true},{"score",std::to_string(s.scores[2])},{"die",std::to_string(s.hit_die)},{"modifier",std::to_string(s.modifiers[2])}}}};
+    if (racial_hp) s.racial_messages.push_back({"Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1.",{}});
+    else if (d.race=="goliath") s.racial_messages.push_back({"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).",{}});
+    else s.racial_messages.push_back({"No numeric racial modifiers are currently applied.",{}});
+    s.racial_messages.push_back({"Other racial traits and conditional effects are not implemented.",{}});
+    s.background_messages.push_back({"Source: {background} background, selected ability increases.",{{"background",s.background,true}}});
+    for (unsigned i=0;i<6;++i) if (s.bonuses[i])
+        s.background_messages.push_back({"{ability} +{bonus}",{{"ability",ability_names[i],true},{"bonus",std::to_string(s.bonuses[i])}}});
+    s.background_messages.push_back({"Other background features are not implemented.",{}});
+    s.hp_messages.push_back({"{die} (maximum d{die}) {modifier} (Constitution) + {racial} (racial bonus) = {hp} HP",
+        {{"die",std::to_string(s.hit_die)},{"modifier",std::string(s.modifiers[2]<0?"":"+")+std::to_string(s.modifiers[2])},
+         {"racial",std::to_string(racial_hp)},{"hp",std::to_string(s.hit_points)}}});
     s.hp_explanation=std::to_string(s.hit_die)+" (maximum d"+std::to_string(s.hit_die)+") "+
         (s.modifiers[2]<0?"- ":"+ ")+std::to_string(std::abs(s.modifiers[2]))+" (Constitution)"+
         (racial_hp?" + 1 (Dwarven Toughness)":"")+" = "+std::to_string(s.hit_points)+" HP";

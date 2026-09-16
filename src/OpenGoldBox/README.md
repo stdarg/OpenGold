@@ -107,3 +107,9 @@ Combat viewport checks:
 ```powershell
 godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
 ```
+## Language selection
+
+English and Spanish are available. Launch `win-package\opengoldbox.exe --lang`
+from CMD to select **English** or **Español**. The selection is saved for later
+launches. Combine with `--splash` to show the translated splash lettering after
+selection. See [translation setup and coverage](../../docs/LOCALIZATION.md).

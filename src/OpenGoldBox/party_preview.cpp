@@ -1,3 +1,4 @@
+#include "localization.h"
 #include "game_resources.h"
 #include "character_creation_view.h"
 #include "combat_view.h"
@@ -50,7 +51,7 @@ void CharacterCreationView::setup_party()
 {
     const auto pack=std::filesystem::u8path(game_rules_file().utf8().get_data());
     campaign_=std::make_shared<CampaignParty>(srd5::load(pack));
-    auto panel=scene("res://scenes/party_panel.tscn");add_child(panel.get());panel.release();
+    auto panel=scene("res://scenes/party_panel.tscn");i18n::prepare_ui(*panel);add_child(panel.get());panel.release();
     get_node<Control>("PartyPanel")->hide();
     get_node<Button>("Party")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(0));
     get_node<Button>("AddParty")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(1));
@@ -112,15 +113,15 @@ void CharacterCreationView::refresh_party()
     const auto& state=campaign_->state();
     for(const auto& m:state.roster){
         auto slot=std::find(state.slots.begin(),state.slots.end(),m.id);
-        list->add_item(gs(m.character.sheet().name+(slot==state.slots.end()?" (Reserve)":"")));
+        list->add_item(gs(m.character.sheet().name)+(slot==state.slots.end()?i18n::text(" (Reserve)"):String()));
     }
     auto* items=get_node<ItemList>("PartyPanel/Inventory");items->clear();
-    std::string sheet="Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster.";
+    std::string sheet=i18n::utf8("Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster.");
     if(!state.roster.empty()){
         roster_index_=std::min(roster_index_,state.roster.size()-1);list->select(roster_index_);
         const auto& m=state.roster[roster_index_];
         sheet=sheet_text(m.character,&m).utf8().get_data();
-        for(const auto& item:m.character.inventory().items())items->add_item(gs(std::string(std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?"Equipped / ":"")+item.name+" x"+std::to_string(item.quantity)));
+        for(const auto& item:m.character.inventory().items())items->add_item((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?i18n::text("Equipped / "):String())+i18n::format("{item} x{quantity}",{{"item",i18n::text(item.name)},{"quantity",item.quantity}}));
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         for(unsigned pose=0;pose<2;++pose){
             const auto icon=art_->icon(m.character.appearance(),pose!=0);PackedByteArray rgba;rgba.resize(icon.rgba.size());std::copy(icon.rgba.begin(),icon.rgba.end(),rgba.ptrw());
@@ -129,7 +130,7 @@ void CharacterCreationView::refresh_party()
     }
     if(state.roster.empty())for(const char* name:{"PartyPanel/Portrait","PartyPanel/ReadySprite","PartyPanel/ActionSprite"})get_node<TextureRect>(name)->set_texture({});
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_text(gs(sheet));
-    get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?"New PCs receive 250 gp / Save game stores this campaign on disk.":error_);
+    get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?i18n::text("New PCs receive 250 gp / Save game stores this campaign on disk."):error_);
     for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat","Modifiers","SavingThrows"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
 }
 void CharacterCreationView::party_action(int action)
@@ -148,7 +149,7 @@ void CharacterCreationView::party_action(int action)
         if(action==6||action==10){const auto selection=get_node<ItemList>("PartyPanel/Inventory")->get_selected_items();
             if(selection.is_empty())throw std::runtime_error("Select an inventory item first");
             const auto items=campaign_->member(id).character.inventory().items();const auto selected=items[selection[0]].id;
-            if(action==6){campaign_->equip(id,selected);equipment_notice=gs("Equipped. "+srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
+            if(action==6){campaign_->equip(id,selected);equipment_notice=i18n::text("Equipped.")+" "+i18n::text(srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
         if(action==7||action==8){
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
@@ -171,7 +172,7 @@ void CharacterCreationView::party_action(int action)
             get_node<Button>("ReturnParty")->hide();
         }
         party_open_=true;auto* panel=get_node<Control>("PartyPanel");move_child(panel,get_child_count()-1);panel->show();refresh_party();if(!equipment_notice.is_empty())get_node<Label>("PartyPanel/Status")->set_text(equipment_notice);
-    }catch(const std::exception& e){error_=gs(e.what());get_node<Label>("Status")->set_text(error_);get_node<Label>("PartyPanel/Status")->set_text(error_);
+    }catch(const std::exception& e){error_=i18n::text(e.what());get_node<Label>("Status")->set_text(error_);get_node<Label>("PartyPanel/Status")->set_text(error_);
         get_node<Button>("ReturnParty")->set_tooltip_text(error_);}
 }
 void CharacterCreationView::party_check()
@@ -280,7 +281,7 @@ void CharacterCreationView::update_party_navigation()
     if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown")))if(town->is_visible())allowed=town->can_leave();
     if(campaign_defeated_)allowed=false;
     auto* button=get_node<Button>("ReturnParty");button->set_disabled(!allowed);
-    button->set_tooltip_text(allowed?"Inspect your party and equipment.":"Finish combat, dialogue or shopping before returning to the party.");
+    button->set_tooltip_text(i18n::text(allowed?N_("Inspect your party and equipment."):N_("Finish combat, dialogue or shopping before returning to the party.")));
 }
 void CharacterCreationView::expedition_check()
 {
@@ -316,15 +317,15 @@ void CharacterCreationView::expedition_check()
 void CharacterCreationView::setup_defeat()
 {
     std::unique_ptr<Window,DeleteNode> window(memnew(Window));window->set_name("Defeat");
-    window->set_title("Defeat");window->set_size(Vector2i(520,240));window->set_min_size(Vector2i(520,240));
+    window->set_title(i18n::text(N_("Defeat")));window->set_size(Vector2i(520,240));window->set_min_size(Vector2i(520,240));
     window->set_flag(Window::FLAG_RESIZE_DISABLED,true);window->set_transient(true);window->set_exclusive(true);
     window->hide();add_child(window.get());window.release();
     auto* dialog=get_node<Window>("Defeat");
-    std::unique_ptr<Label,DeleteNode> title(memnew(Label));title->set_name("Title");title->set_text("Your party has been defeated.");
+    std::unique_ptr<Label,DeleteNode> title(memnew(Label));title->set_name("Title");title->set_text(i18n::text(N_("Your party has been defeated.")));
     title->set_position(Vector2(24,30));title->set_size(Vector2(472,44));title->add_theme_font_size_override("font_size",24);dialog->add_child(title.get());title.release();
-    std::unique_ptr<Label,DeleteNode> body(memnew(Label));body->set_text("Load a saved game to continue.");body->set_position(Vector2(24,90));body->set_size(Vector2(472,36));dialog->add_child(body.get());body.release();
+    std::unique_ptr<Label,DeleteNode> body(memnew(Label));body->set_text(i18n::text(N_("Load a saved game to continue.")));body->set_position(Vector2(24,90));body->set_size(Vector2(472,36));dialog->add_child(body.get());body.release();
     for(bool reload:{true,false}){
-        std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(reload?"Reload":"Exit");button->set_text(reload?"Reload a Saved Game":"Exit to OS");
+        std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(reload?"Reload":"Exit");button->set_text(i18n::text(reload?N_("Reload a Saved Game"):N_("Exit to OS")));
         button->set_position(Vector2(reload?24:308,170));button->set_size(Vector2(reload?268:188,44));
         button->connect("pressed",reload?callable_mp(this,&CharacterCreationView::reload_after_defeat):callable_mp(this,&CharacterCreationView::exit_after_defeat));dialog->add_child(button.get());button.release();
     }
@@ -358,7 +359,7 @@ void CharacterCreationView::defeat_check()
     if(++defeat_check_frames_>4000)throw std::runtime_error("Defeat check timed out");
     if(defeat_check_stage_==0){
         const auto id=campaign_->add_pc(preview_guard());campaign_->set_wealth(id,{0,0,0,250,0,0,0});
-        open_saves(true);saves->get_node<LineEdit>("Name")->set_text("Defeat test");saves->get_node<Button>("Action")->emit_signal("pressed");
+        open_saves(true);saves->get_node<LineEdit>("Name")->set_text(i18n::text(N_("Defeat test")));saves->get_node<Button>("Action")->emit_signal("pressed");
         if(saves->is_visible())saves->get_node<Button>("Action")->emit_signal("pressed");
         if(saves->is_visible())throw std::runtime_error("Defeat fixture save failed");
         party_action(8);++defeat_check_stage_;return;

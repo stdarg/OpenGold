@@ -1,5 +1,6 @@
 #ifndef OPENGOLD_RULES_H
 #define OPENGOLD_RULES_H
+#include "opengold/message.h"
 #include <compare>
 #include <array>
 #include <cstdint>
@@ -31,6 +32,7 @@ struct CharacterProfile {
     int movement_feet{}, melee_attack_bonus{};
     std::string item_modifiers, spell_modifiers;
     bool strength_dexterity_disadvantage{};
+    std::vector<Message> item_messages, spell_messages;
 };
 // Module-owned continuation, separate from encounter turn budgets.
 struct VitalState {
@@ -76,6 +78,7 @@ struct CombatantView {
     bool action{}, bonus_action{}, reaction{}, conscious{}, dead{};
     std::string status;
     VitalState persistent;
+    std::vector<Message> status_messages;
 };
 struct Snapshot {
     Identity identity;
@@ -86,6 +89,7 @@ struct Snapshot {
     Battlefield battlefield;
     std::vector<CombatantView> combatants; // Initiative order.
     std::vector<std::string> log;
+    std::vector<Message> log_messages;
     bool reaction_pending{};
 };
 // Verbs are owned by a module, not an enumeration of edition-specific rules.

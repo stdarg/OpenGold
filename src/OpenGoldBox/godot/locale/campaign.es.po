@@ -1,0 +1,4 @@
+# Optional campaign translations; see docs/LOCALIZATION.md.
+# No decoded original game text is distributed in this catalog.
+msgid ""
+msgstr "Project-Id-Version: OpenGoldBox\nLanguage: es\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\n"

@@ -29,6 +29,56 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
+[node name="LanguageDialog" type="Window" parent="."]
+title = "Language / Idioma"
+initial_position = 1
+size = Vector2i(560, 330)
+min_size = Vector2i(560, 330)
+visible = false
+unresizable = true
+transient = true
+exclusive = true
+auto_translate_mode = 2
+
+[node name="Background" type="ColorRect" parent="LanguageDialog"]
+offset_right = 560.0
+offset_bottom = 330.0
+mouse_filter = 2
+color = Color(0.0706, 0.102, 0.1255, 1)
+
+[node name="Title" type="Label" parent="LanguageDialog"]
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 536.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(0.9059, 0.7686, 0.4667, 1)
+theme_override_font_sizes/font_size = 24
+text = "Choose language / Elige idioma"
+
+[node name="Choices" type="ItemList" parent="LanguageDialog"]
+offset_left = 24.0
+offset_top = 76.0
+offset_right = 536.0
+offset_bottom = 192.0
+theme_override_font_sizes/font_size = 22
+theme_override_constants/v_separation = 18
+allow_reselect = true
+
+[node name="Status" type="Label" parent="LanguageDialog"]
+offset_left = 24.0
+offset_top = 202.0
+offset_right = 536.0
+offset_bottom = 244.0
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="Continue" type="Button" parent="LanguageDialog"]
+offset_left = 24.0
+offset_top = 262.0
+offset_right = 536.0
+offset_bottom = 306.0
+text = "Continue / Continuar"
+
 [node name="Text" type="TextureRect" parent="."]
 mouse_filter = 2
 expand_mode = 1

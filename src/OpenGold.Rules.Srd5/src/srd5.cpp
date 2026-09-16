@@ -181,6 +181,7 @@ private:
     unsigned turn_{}, round_{1};
     Outcome outcome_{Outcome::ongoing};
     std::vector<std::string> log_;
+    std::vector<Message> log_messages_;
     std::vector<Cell> path_;
     std::size_t path_index_{};
     std::vector<EntityId> reactors_;
@@ -195,7 +196,11 @@ private:
     int roll(int sides) {const auto n=static_cast<std::uint64_t>(sides), threshold=(-n)%n;
         auto value=next_random();while(value<threshold)value=next_random();return static_cast<int>(value%n)+1;}
     int dice(Dice d,bool critical=false) {int total=d.bonus;for(int i=0;i<d.count*(critical?2:1);++i)total+=roll(d.sides);return std::max(0,total);}
-    void log(std::string message) {if(log_.size()==80)log_.erase(log_.begin());log_.push_back(std::move(message));}
+    void log(std::string english, Message message={}) {
+        if(message.source.empty())message.source=english;
+        if(log_.size()==80){log_.erase(log_.begin());log_messages_.erase(log_messages_.begin());}
+        log_.push_back(std::move(english));log_messages_.push_back(std::move(message));
+    }
     bool line_of_sight(Cell a,Cell b) const;
     std::vector<Cell> path_to(const Actor& a,Cell destination) const;
     bool occupied(Cell p) const {return std::any_of(actors_.begin(),actors_.end(),[&](const auto& a){return !a.dead && a.source.cell==p;});}
@@ -253,13 +258,17 @@ std::vector<Cell> Session::path_to(const Actor& a,Cell destination) const
 Snapshot Session::snapshot() const
 {
     Snapshot s;s.identity=content_->identity;s.revision=revision_;s.round=round_;s.outcome=outcome_;
-    s.actor=pending()?pending():actors_[turn_].source.id;s.reaction_pending=pending()!=0;s.battlefield=board_;s.log=log_;
+    s.actor=pending()?pending():actors_[turn_].source.id;s.reaction_pending=pending()!=0;s.battlefield=board_;s.log=log_;s.log_messages=log_messages_;
     for(const auto& a:actors_) {
         std::string status=a.dead?"Dead":a.hp==0?(a.stable?"Stable, unconscious":"Unconscious"):a.dodge?"Dodging":"Ready";
         if(def(a).slots)status+=" | slots "+std::to_string(a.slots);
         if(def(a).winds)status+=" | Second Wind "+std::to_string(a.winds);
         s.combatants.push_back({a.source.id,a.source.name,a.source.definition,a.source.side,a.source.cell,
             a.hp,def(a).hp,def(a).ac,a.initiative,a.movement,a.action,a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,status,vitals(a)});
+        auto& messages=s.combatants.back().status_messages;
+        messages.push_back({a.dead?"Dead":a.hp==0?(a.stable?"Stable, unconscious":"Unconscious"):a.dodge?"Dodging":"Ready",{}});
+        if(def(a).slots)messages.push_back({"Spell slots: {count}",{{"count",std::to_string(a.slots)}}});
+        if(def(a).winds)messages.push_back({"Second Wind: {count}",{{"count",std::to_string(a.winds)}}});
     }
     return s;
 }
@@ -309,13 +318,15 @@ void Session::damage(Actor& target,int amount)
     if(target.hp==0) {
         target.dodge=false;
         if(target.source.side==1 || remaining>=def(target).hp)target.dead=true;
-        log(target.source.name+(target.dead?" is defeated.":" falls unconscious."));
+        log(target.source.name+(target.dead?" is defeated.":" falls unconscious."),
+            {target.dead?"{name} is defeated.":"{name} falls unconscious.",{{"name",target.source.name}}});
     }
 }
 void Session::heal(Actor& target,int amount)
 {
     const int restored=std::min(amount,def(target).hp-target.hp);target.hp+=restored;
-    target.successes=target.failures=0;target.stable=false;log(target.source.name+" recovers "+std::to_string(restored)+" HP.");
+    target.successes=target.failures=0;target.stable=false;log(target.source.name+" recovers "+std::to_string(restored)+" HP.",
+        {"{name} recovers {hp} HP.",{{"name",target.source.name},{"hp",std::to_string(restored)}}});
 }
 void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_dice)
 {
@@ -329,11 +340,17 @@ void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
     const bool hit=attack_hits(natural,bonus,def(target).ac);
     std::string message=a.source.name+" -> "+target.source.name+": d20 "+std::to_string(natural)+
         " + "+std::to_string(bonus)+" vs AC "+std::to_string(def(target).ac)+(disadvantaged?" (disadvantage)":"");
-    if(!hit){log(message+" misses.");return;}
+    std::vector<MessageArgument> arguments{{"actor",a.source.name},{"target",target.source.name},{"roll",std::to_string(natural)},
+        {"bonus",std::to_string(bonus)},{"ac",std::to_string(def(target).ac)},{"disadvantage",disadvantaged?" (disadvantage)":"",true}};
+    if(!hit){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});return;}
     const Dice damage_dice=spell?spell_dice:ranged?d.ranged:d.melee;
     int amount=dice(damage_dice,natural==20);
-    if(!spell&&damage_dice.count&&d.savage&&!a.savage_used){amount=std::max(amount,dice(damage_dice,natural==20));a.savage_used=true;message+=" (Savage Attacker)";}
-    log(message+(natural==20?" CRITICAL":" hits")+" for "+std::to_string(amount)+" damage.");damage(target,amount);
+    bool savage=false;
+    if(!spell&&damage_dice.count&&d.savage&&!a.savage_used){amount=std::max(amount,dice(damage_dice,natural==20));a.savage_used=true;savage=true;message+=" (Savage Attacker)";}
+    arguments.push_back({"savage",savage?" (Savage Attacker)":"",true});
+    arguments.push_back({"hit",natural==20?"CRITICAL":"hits",true});arguments.push_back({"damage",std::to_string(amount)});
+    log(message+(natural==20?" CRITICAL":" hits")+" for "+std::to_string(amount)+" damage.",
+        {"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage}{savage} {hit} for {damage} damage.",arguments});damage(target,amount);
 }
 void Session::update_outcome()
 {
@@ -348,7 +365,7 @@ void Session::begin_turn()
     for(auto& actor:actors_)actor.savage_used=false;
     auto& a=actors_[turn_];a.action=a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;
     a.spent_slot=false;
-    log("Round "+std::to_string(round_)+": "+a.source.name+" acts.");
+    log("Round "+std::to_string(round_)+": "+a.source.name+" acts.",{"Round {round}: {name} acts.",{{"round",std::to_string(round_)},{"name",a.source.name}}});
 }
 void Session::end_turn()
 {
@@ -358,7 +375,7 @@ void Session::end_turn()
         if(a.dead)continue;
         if(a.hp==0) {
             if(!a.stable) {
-                const int result=roll(20);log(a.source.name+" death save: "+std::to_string(result));
+                const int result=roll(20);log(a.source.name+" death save: "+std::to_string(result),{"{name} death save: {roll}",{{"name",a.source.name},{"roll",std::to_string(result)}}});
                 if(result==20){a.hp=1;a.successes=a.failures=0;}
                 else if(result>=10)++a.successes;else a.failures+=result==1?2:1;
                 if(a.failures>=3)a.dead=true;if(a.successes>=3)a.stable=true;
@@ -402,13 +419,14 @@ bool Session::submit(const Command& command)
     else if(command.verb=="healing_word"||command.verb=="healing_word_2"){a.bonus=false;spend();heal(actor(command.target),dice({second?4:2,4,d.casting-2}));}
     else {
         a.action=false;
-        if(command.verb=="dash"){a.movement+=d.speed;log(a.source.name+" dashes.");}
-        else if(command.verb=="dodge"){a.dodge=true;log(a.source.name+" dodges.");}
-        else if(command.verb=="disengage"){a.disengaged=true;log(a.source.name+" disengages.");}
+        if(command.verb=="dash"){a.movement+=d.speed;log(a.source.name+" dashes.",{"{name} dashes.",{{"name",a.source.name}}});}
+        else if(command.verb=="dodge"){a.dodge=true;log(a.source.name+" dodges.",{"{name} dodges.",{{"name",a.source.name}}});}
+        else if(command.verb=="disengage"){a.disengaged=true;log(a.source.name+" disengages.",{"{name} disengages.",{{"name",a.source.name}}});}
         else if(command.verb=="cure_wounds"||command.verb=="cure_wounds_2"){spend();heal(actor(command.target),dice({second?4:2,8,d.casting-2}));}
         else if(command.verb=="magic_missile"||command.verb=="magic_missile_2") {
             spend();int total=0;for(int dart=0;dart<(second?4:3);++dart)total+=roll(4)+1;
-            log(a.source.name+" casts Magic Missile for "+std::to_string(total)+" force damage.");damage(actor(command.target),total);
+            log(a.source.name+" casts Magic Missile for "+std::to_string(total)+" force damage.",
+                {"{name} casts Magic Missile for {damage} force damage.",{{"name",a.source.name},{"damage",std::to_string(total)}}});damage(actor(command.target),total);
         } else if(command.verb=="scorching_ray"){
             spend();for(unsigned ray=0;ray<3&&actor(command.target).hp>0;++ray)attack(a,actor(command.target),true,true,{2,6,0});
         }else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
@@ -495,8 +513,8 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
                 throw std::runtime_error("Invalid checkpoint opportunity attack");
         }
     }
-    in>>n;if(!in||n>80)throw std::runtime_error("Invalid checkpoint log");s->log_.clear();
-    for(std::size_t i=0;i<n;++i){std::string line;in>>std::quoted(line);if(!in||line.size()>1000)throw std::runtime_error("Invalid checkpoint log line");s->log_.push_back(std::move(line));}
+    in>>n;if(!in||n>80)throw std::runtime_error("Invalid checkpoint log");s->log_.clear();s->log_messages_.clear();
+    for(std::size_t i=0;i<n;++i){std::string line;in>>std::quoted(line);if(!in||line.size()>1000)throw std::runtime_error("Invalid checkpoint log line");s->log_messages_.push_back({line,{}});s->log_.push_back(std::move(line));}
     in>>std::ws;if(!in.eof())throw std::runtime_error("Trailing checkpoint data");return s;
 }
 class Module final : public RulesModule {
@@ -570,7 +588,10 @@ public:
         const int con=next.modifiers[2];next.hit_points=next.hit_die+con+(next.race=="Dwarf"?next.level:0)+(next.level-1)*std::max(1,next.hit_die/2+1+con);
         const int growth=next.hit_points-sheet.hit_points;
         next.hp_explanation="Level "+std::to_string(next.level)+": "+std::to_string(next.hit_points)+" maximum HP; gain "+std::to_string(growth)+". Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.";
+        next.hp_messages={{"Level {level}: {hp} maximum HP; gain {growth}. Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.",
+            {{"level",std::to_string(next.level)},{"hp",std::to_string(next.hit_points)},{"growth",std::to_string(growth)}}}};
         next.class_modifiers+="\nLevel "+std::to_string(next.level)+": HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.";
+        next.class_messages.push_back({"Level {level}: HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.",{{"level",std::to_string(next.level)}}});
         actor.definition=character_definition(character_profile(next,{}).data);
         if(actor.hp>0)actor.hp+=growth;
         actor.slots+=actor.definition.slots-old.slots;actor.slots2+=actor.definition.slots2-old.slots2;actor.winds+=actor.definition.winds-old.winds;
@@ -643,6 +664,23 @@ public:
         if(sheet.character_class=="Wizard")result.spell_modifiers="Source: Fire Bolt and Wizard spellcasting, Intelligence score "+std::to_string(sheet.scores[3])+". Attack: Intelligence modifier +2 level-one proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
         if(sheet.character_class=="Cleric")result.spell_modifiers="Source: Cure Wounds and Cleric spellcasting, Wisdom score "+std::to_string(sheet.scores[4])+". Healing: 2d8 + Wisdom modifier ("+std::to_string(d.casting-2)+").\n"+result.spell_modifiers;
         if(d.str_dex_disadvantage)result.spell_modifiers="Cannot cast spells while wearing untrained armor.\n"+result.spell_modifiers;
+        // Language-independent presentation of the same computed rule results.
+        for(const auto& key:gear){
+            if(key=="shield")result.item_messages.push_back({trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.":"Source: equipped Shield: +0 AC (untrained).",{}});
+            else if(key=="leather")result.item_messages.push_back({"Source: equipped Leather armor and Dexterity score {score}. AC becomes 11 + Dexterity modifier ({modifier}).",{{"score",std::to_string(sheet.scores[1])},{"modifier",std::to_string(sheet.modifiers[1])}}});
+            else if(key=="chain_mail")result.item_messages.push_back({"Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength {score}).",{{"score",std::to_string(sheet.scores[0])}}});
+            else result.item_messages.push_back({"Source: equipped {item} and {class} weapon proficiency. Melee attack uses {ability} modifier {proficiency}; damage adds that ability modifier.",
+                {{"item",key,true},{"class",sheet.character_class,true},{"ability",key=="dagger"?"higher of Strength or Dexterity":"Strength",true},
+                 {"proficiency",trained(sheet.character_class,key)?"+2 class proficiency":"without proficiency",true}}});
+            result.item_messages.push_back({equipment_note(sheet,key),{}});
+        }
+        if(features&1)result.item_messages.push_back({"Defense feat: +1 AC while wearing armor.",{}});
+        if(features&2)result.item_messages.push_back({"Savage Attacker: higher of two weapon-damage rolls on the first weapon hit each turn.",{}});
+        if(gear.empty())result.item_messages.push_back({"No equipment modifiers. Source: unarmed strike rules and Strength score {score}. Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).",{{"score",std::to_string(sheet.scores[0])}}});
+        if(d.str_dex_disadvantage)result.spell_messages.push_back({"Cannot cast spells while wearing untrained armor.",{}});
+        if(sheet.character_class=="Wizard")result.spell_messages.push_back({"Source: Fire Bolt and Wizard spellcasting, Intelligence score {score}. Attack: Intelligence modifier +2 level-one proficiency = {attack}. Magic Missile has no ability modifier to damage.",{{"score",std::to_string(sheet.scores[3])},{"attack",std::to_string(d.casting)}}});
+        if(sheet.character_class=="Cleric")result.spell_messages.push_back({"Source: Cure Wounds and Cleric spellcasting, Wisdom score {score}. Healing: 2d8 + Wisdom modifier ({modifier}).",{{"score",std::to_string(sheet.scores[4])},{"modifier",std::to_string(d.casting-2)}}});
+        result.spell_messages.push_back({"No active spell modifiers. Persistent spell effects are not implemented.",{}});
         return result;
     }
 private: std::shared_ptr<const Content> content_;

@@ -1,4 +1,5 @@
 #include "character_creation_view.h"
+#include "localization.h"
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/option_button.hpp>
@@ -30,10 +31,10 @@ void CharacterCreationView::load_portraits()
     if(portraits_.empty())throw std::runtime_error("Empty portrait catalog");
     std::sort(portraits_.begin(),portraits_.end(),[](const auto& a,const auto& b){return a.filename<b.filename;});
     for(int field=0;field<3;++field){
-        const char* names[]{"PortraitGender","PortraitClass","PortraitRace"};const char* labels[]{"All genders","All classes","All races"};
-        auto* control=get_node<OptionButton>(names[field]);control->add_item(labels[field]);
+        const char* names[]{"PortraitGender","PortraitClass","PortraitRace"};const char* labels[]{N_("All genders"),N_("All classes"),N_("All races")};
+        auto* control=get_node<OptionButton>(names[field]);control->add_item(i18n::text(labels[field]));
         std::set<std::string> values;for(const auto& p:portraits_)values.insert(field==0?p.gender:field==1?p.klass:p.race);
-        for(const auto& value:values)control->add_item(gs(value));
+        for(const auto& value:values){control->add_item(i18n::text(value));control->set_item_metadata(control->get_item_count()-1,gs(value));}
         control->connect("item_selected",callable_mp(this,&CharacterCreationView::portrait_filter_selected));
     }
 }
@@ -56,19 +57,19 @@ Ref<ImageTexture> CharacterCreationView::portrait_texture(const opengold::por::C
 void CharacterCreationView::refresh_portraits()
 {
     filtered_portraits_.clear();auto* list=get_node<OptionButton>("PortraitSelect");list->clear();
-    const auto matches=[&](const char* node,const std::string& value){auto* c=get_node<OptionButton>(node);return c->get_selected()<=0||c->get_item_text(c->get_selected())==gs(value);};
+    const auto matches=[&](const char* node,const std::string& value){auto* c=get_node<OptionButton>(node);return c->get_selected()<=0||String(c->get_item_metadata(c->get_selected()))==gs(value);};
     int selected=-1;
     for(std::size_t i=0;i<portraits_.size();++i){const auto& p=portraits_[i];
         if(!matches("PortraitGender",p.gender)||!matches("PortraitClass",p.klass)||!matches("PortraitRace",p.race))continue;
         if(p.filename==creator_->appearance().portrait)selected=filtered_portraits_.size();
-        filtered_portraits_.push_back(i);list->add_item(gs(p.klass+" / "+p.race+" / "+p.gender));
+        filtered_portraits_.push_back(i);list->add_item(i18n::text(p.klass)+" / "+i18n::text(p.race)+" / "+i18n::text(p.gender));
     }
     list->select(selected);
-    if(selected<0)list->set_text(filtered_portraits_.empty()?"No matching portraits":"Choose portrait");
+    if(selected<0)list->set_text(i18n::text(filtered_portraits_.empty()?N_("No matching portraits"):N_("Choose portrait")));
     const bool disabled=added_to_party_||filtered_portraits_.empty();list->set_disabled(disabled);
     get_node<Button>("PortraitPrevious")->set_disabled(disabled);get_node<Button>("PortraitNext")->set_disabled(disabled);
     const auto& filename=creator_->appearance().portrait;
-    list->set_tooltip_text(gs("Current portrait: "+filename+"\n"+std::to_string(filtered_portraits_.size())+" matching portraits. Filters do not change your character."));
+    list->set_tooltip_text(i18n::format("Current portrait: {file}\n{matches} Filters do not change your character.", {{"file",gs(filename)},{"matches",i18n::plural("{count} matching portrait.", "{count} matching portraits.", static_cast<int>(filtered_portraits_.size()))}}));
 }
 void CharacterCreationView::portrait_filter_selected(std::int64_t){if(!refreshing_)refresh();}
 void CharacterCreationView::portrait_part(int direction)
