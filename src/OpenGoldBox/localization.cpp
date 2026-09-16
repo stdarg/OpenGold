@@ -1,4 +1,5 @@
 #include "localization.h"
+#include "application_settings.h"
 #include <godot_cpp/classes/config_file.hpp>
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/label.hpp>
@@ -13,7 +14,6 @@
 using namespace godot;
 namespace {
 String gs(std::string_view value) { return String::utf8(value.data(), value.size()); }
-constexpr auto settings_path = "user://settings.cfg";
 // Substitute once over the template. Braces inside a player-entered name are
 // literal data and must never be interpreted as another format expression.
 String interpolate(const String& message, const Dictionary& values) {
@@ -91,26 +91,11 @@ String render(const std::vector<opengold::rules::Message>& messages) {
 }
 String language() { return supported(TranslationServer::get_singleton()->get_locale()); }
 void initialize() {
-    Ref<ConfigFile> settings; settings.instantiate();
-    auto locale = supported(OS::get_singleton()->get_locale_language());
-    if (settings->load(settings_path) == OK) {
-        const String saved = settings->get_value("interface", "language", locale);
-        // Ignore damaged/obsolete preferences rather than enabling an unsupported locale.
-        if (saved == "en" || saved == "es") locale = saved;
-    }
-    TranslationServer::get_singleton()->set_locale(locale);
+    TranslationServer::get_singleton()->set_locale(settings::language());
 }
 bool select_language(const String& locale) {
-    if (locale != "en" && locale != "es") return false;
-    Ref<ConfigFile> settings; settings.instantiate();
-    const auto loaded = settings->load(settings_path);
-    if (loaded != OK && loaded != ERR_FILE_NOT_FOUND) {
-        UtilityFunctions::push_warning("Cannot read language preferences.");
-        return false;
-    }
-    settings->set_value("interface", "language", locale);
-    if (settings->save(settings_path) != OK) return false;
-    TranslationServer::get_singleton()->set_locale(locale);
+    if(!settings::save_language(locale))return false;
+    initialize();
     return true;
 }
 }

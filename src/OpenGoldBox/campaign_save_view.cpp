@@ -1,3 +1,4 @@
+#include "application_settings.h"
 #include "localization.h"
 #include "game_resources.h"
 #include "character_creation_view.h"
@@ -23,7 +24,7 @@ using namespace godot;
 using namespace opengold;
 namespace {
 struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
-std::filesystem::path game_directory(){auto dir=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");if(dir.is_empty())dir=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");return std::filesystem::u8path(dir.utf8().get_data());}
+std::filesystem::path game_directory(){const auto dir=settings::game_path();return std::filesystem::u8path(dir.utf8().get_data());}
 auto rules_module(){return srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));}
 }
 void CharacterCreationView::setup_saves(){

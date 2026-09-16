@@ -5,6 +5,8 @@
 /src/OpenGoldBox/godot/bin/
 /src/OpenGoldBox/godot/data/
 /src/OpenGoldBox/godot/export_presets.cfg
+/src/OpenGoldBox/godot/settings.cfg
+/src/OpenGoldBox/godot/settings.cfg.tmp
 
 # Godot generated state and imports
 demos/godot/.godot/

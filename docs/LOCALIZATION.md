@@ -10,21 +10,26 @@ their existing entry points and presentation.
 From **cmd.exe**:
 
 ```bat
-win-package\opengoldbox.exe --lang
-win-package\opengoldbox.exe --lang --splash
+win-package\opengoldbox.exe --reset-lang
+win-package\opengoldbox.exe --reset-lang --splash
 ```
 
-`--lang` opens a centered language dialog before the optional splash screens.
+`--reset-lang` opens a centered language dialog before the optional splash screens.
 Select **English** or **Español** with the mouse or arrow keys, then press Enter
 or **Continue** (shown as **Continuar** in Spanish). Highlighting a language
 immediately translates the dialog title, instructions, button and any error into
 that language. Language names remain in their native form. Previewing does not
 save a preference; confirmation saves the choice and immediately applies it to
-startup and the game. Without `--lang`, startup uses the saved choice, or the
-system language with English fallback. A language value is not required after
+startup and the game. A missing language preference also opens this dialog,
+after any required game-folder selection. Otherwise startup uses the saved choice
+or `OPENGOLD_LANG` override. A language value is not required after
 the flag. Closing this dialog with X or Ctrl+X exits through the normal graceful
-shutdown path. If the preference cannot be saved, the dialog displays a
-error in the highlighted language and remains open.
+shutdown path. If the preference cannot be saved, the dialog displays
+an error in the highlighted language and remains open.
+
+Both the game path and language live in `settings.cfg` beside the executable.
+See [CONFIGURATION.md](CONFIGURATION.md) for first-run setup, `--reset-game-path`,
+environment overrides and MD5 compatibility warnings. `--lang` is removed.
 
 `--splash` remains independent: without it, selection proceeds directly to
 character creation; with it, both translated lettering overlays fade in using
@@ -88,7 +93,7 @@ they are strings.
   an English class name. Substitution examines the template once; braces in a
   name are never interpreted as placeholders. Rich-text character names are
   escaped before presentation.
-- Language preference is application configuration (`user://settings.cfg`,
+- Language preference is application configuration (`settings.cfg` beside the executable,
   section `interface`, key `language`), not campaign state. On startup the saved
   supported language takes precedence over the system language; otherwise use
   Spanish for a Spanish system locale and English as fallback.
@@ -139,7 +144,7 @@ repository's PNG ignore rule. See
 
 ## Validation
 
-`tests/language_dialog_tests.gd` checks `--lang` with and without `--splash`,
+`tests/language_dialog_tests.gd` checks `--reset-lang` with and without `--splash`,
 keyboard and button confirmation, preference persistence, and the first-splash
 input boundary. Its `--language-restore` mode verifies the saved Spanish choice
 in a fresh process; `--language-close` and `--language-ctrl-x` check scene teardown.

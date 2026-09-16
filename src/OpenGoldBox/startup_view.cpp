@@ -1,5 +1,9 @@
 #include "startup_view.h"
 #include "localization.h"
+#include "application_settings.h"
+#include <godot_cpp/classes/line_edit.hpp>
+#include <godot_cpp/classes/file_dialog.hpp>
+#include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/item_list.hpp>
@@ -27,8 +31,31 @@ void StartupView::_bind_methods()
 void StartupView::_ready()
 {
     set_process(false);
-    auto* os = OS::get_singleton(); // borrowed engine singleton
-    if (os->get_cmdline_args().has("--lang") || os->get_cmdline_user_args().has("--lang")) {
+    i18n::initialize();
+    i18n::prepare_ui(*this);
+    auto* dialog=get_node<Window>("PathDialog"); // scene-owned
+    dialog->connect("close_requested",callable_mp(this,&StartupView::close_language));
+    dialog->get_node<Button>("Cancel")->connect("pressed",callable_mp(this,&StartupView::close_language));
+    dialog->get_node<Button>("Continue")->connect("pressed",callable_mp(this,&StartupView::accept_path));
+    dialog->get_node<Button>("Browse")->connect("pressed",callable_mp(this,&StartupView::browse_path));
+    dialog->get_node<LineEdit>("Path")->connect("text_submitted",callable_mp(this,&StartupView::submitted_path));
+    dialog->get_node<FileDialog>("BrowseDialog")->connect("dir_selected",callable_mp(this,&StartupView::picked_path));
+    auto* warning=get_node<Window>("ChecksumWarning");
+    warning->connect("close_requested",callable_mp(this,&StartupView::close_language));
+    warning->get_node<Button>("Quit")->connect("pressed",callable_mp(this,&StartupView::close_language));
+    warning->get_node<Button>("Continue")->connect("pressed",callable_mp(this,&StartupView::continue_path));
+    const auto saved=settings::saved_game_path();
+    pending_path_=settings::game_path();
+    if(pending_path_.is_empty())pending_path_=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
+    if(settings::flag("--reset-game-path")||saved.is_empty()||!settings::validate_game_path(saved).usable) {
+        show_path();return;
+    }
+    check_path();
+}
+
+void StartupView::choose_language()
+{
+    if(settings::flag("--reset-lang")||!settings::valid_language(settings::saved_language())) {
         choosing_language_=true;
         auto* dialog=get_node<Window>("LanguageDialog"); // scene-owned
         // Native language names remain stable; other text previews the selected locale.
@@ -43,9 +70,67 @@ void StartupView::_ready()
         choices->connect("item_activated",callable_mp(this,&StartupView::activate_language));
         dialog->get_node<Button>("Continue")->connect("pressed",callable_mp(this,&StartupView::accept_language));
         dialog->popup_centered();choices->grab_focus();
+        dialog->get_node<Button>("Cancel")->connect("pressed",callable_mp(this,&StartupView::close_language));
         return;
     }
     begin_startup();
+}
+
+void StartupView::show_path(const String& message)
+{
+    choosing_path_=true;
+    auto* dialog=get_node<Window>("PathDialog");
+    dialog->get_node<LineEdit>("Path")->set_text(pending_path_);
+    dialog->get_node<Label>("Status")->set_text(message);
+    dialog->popup_centered();
+    dialog->get_node<LineEdit>("Path")->grab_focus();
+}
+void StartupView::browse_path()
+{
+    auto* browser=get_node<FileDialog>("PathDialog/BrowseDialog");
+    browser->set_current_dir(get_node<LineEdit>("PathDialog/Path")->get_text());
+    browser->popup_centered_ratio(.7);
+}
+void StartupView::picked_path(const String& directory)
+{
+    get_node<LineEdit>("PathDialog/Path")->set_text(directory);
+    get_node<Button>("PathDialog/Continue")->grab_focus();
+}
+void StartupView::submitted_path(const String&) {accept_path();}
+void StartupView::accept_path()
+{
+    pending_path_=get_node<LineEdit>("PathDialog/Path")->get_text().strip_edges();
+    save_pending_path_=true;
+    check_path();
+}
+void StartupView::check_path()
+{
+    const auto result=settings::validate_game_path(pending_path_);
+    if(!result.usable) {
+        String message=result.error.is_empty()?i18n::text("Missing or unreadable game files:"):i18n::text(result.error.utf8().get_data());
+        for(int i=0;i<std::min<int>(result.missing.size(),5);++i)message+=" " + result.missing[i];
+        if(result.missing.size()>5)message+=" ...";
+        show_path(message);return;
+    }
+    get_node<Window>("PathDialog")->hide();
+    if(!result.different.is_empty()) {
+        choosing_path_=true;
+        auto* warning=get_node<Window>("ChecksumWarning");
+        warning->get_node<RichTextLabel>("Files")->set_text(pending_path_+"\n\n"+String("\n").join(result.different));
+        warning->popup_centered();warning->get_node<Button>("Quit")->grab_focus();return;
+    }
+    continue_path();
+}
+void StartupView::continue_path()
+{
+    get_node<Window>("ChecksumWarning")->hide();
+    if(save_pending_path_&&!settings::save_game_path(pending_path_)) {
+        show_path(i18n::text("Cannot save settings beside the executable. Check that the folder is writable and settings.cfg is valid."));return;
+    }
+    save_pending_path_=false;
+    choosing_path_=false;
+    get_viewport()->set_input_as_handled();
+    choose_language();
 }
 
 void StartupView::begin_startup()
@@ -90,6 +175,7 @@ void StartupView::preview_language(std::int64_t index)
     dialog->set_title(i18n::text("Language"));
     dialog->get_node<Label>("Title")->set_text(i18n::text("Choose language"));
     dialog->get_node<Button>("Continue")->set_text(i18n::text("Continue"));
+    dialog->get_node<Button>("Cancel")->set_text(i18n::text("Cancel"));
     dialog->get_node<Label>("Status")->set_text(language_save_failed_?i18n::text("Cannot save language."):String());
     // Preview does not change the active or saved language until confirmation.
     translations->set_locale(previous);
@@ -163,7 +249,7 @@ void StartupView::layout_text()
 void StartupView::_input(const Ref<InputEvent>& event)
 {
     const Ref<InputEventKey> key = event;
-    if (finishing_ || choosing_language_ || key.is_null() || !key->is_pressed() || key->is_echo()) return;
+    if (finishing_ || choosing_language_ || choosing_path_ || key.is_null() || !key->is_pressed() || key->is_echo()) return;
     // The application-wide shutdown shortcut must not advance a splash.
     if (key->is_ctrl_pressed() && key->get_keycode() == KEY_X) return;
     get_viewport()->set_input_as_handled();

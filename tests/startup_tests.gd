@@ -31,7 +31,8 @@ func is_splash(index: int) -> bool:
 		shared_texture = image.texture
 	if not require(image.texture == shared_texture, "Both splash screens must use the same background texture"): return false
 	var lettering: TextureRect = current_scene.get_node("Text")
-	var expected := "OpenGoldBoxEngineLettering.png" if index == 0 else "OpenGoldBoxGameLettering.png"
+	var expected := "OpenGoldBoxEngineLettering" if index == 0 else "OpenGoldBoxGameLettering"
+	expected += ".es.png" if TranslationServer.get_locale() == "es" else ".png"
 	if not require(lettering.texture != null and lettering.texture.resource_path.ends_with(expected), "Wrong splash lettering"): return false
 	if not require(lettering.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "Lettering must preserve its proportions"): return false
 	var pixels := lettering.texture.get_image()

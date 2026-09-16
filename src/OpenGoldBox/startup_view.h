@@ -18,6 +18,9 @@ private:
     bool finishing_{};
     bool choosing_language_{};
     bool language_save_failed_{};
+    bool choosing_path_{};
+    bool save_pending_path_{};
+    godot::String pending_path_;
     double fade_elapsed_{};
     void show_screen();
     void layout_text();
@@ -28,6 +31,14 @@ private:
     void activate_language(std::int64_t index);
     void preview_language(std::int64_t index);
     void close_language();
+    void choose_language();
+    void show_path(const godot::String& message = {});
+    void browse_path();
+    void picked_path(const godot::String& directory);
+    void submitted_path(const godot::String& directory);
+    void accept_path();
+    void check_path();
+    void continue_path();
 };
 
 #endif

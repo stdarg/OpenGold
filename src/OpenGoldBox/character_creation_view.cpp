@@ -1,3 +1,4 @@
+#include "application_settings.h"
 #include "character_creation_view.h"
 #include "character_text.h"
 #include "opengold/srd5.h"
@@ -122,14 +123,13 @@ void CharacterCreationView::_ready()
     if(Engine::get_singleton()->is_editor_hint())return;
     const auto args=OS::get_singleton()->get_cmdline_user_args();checking_=args.has("--character-check");capture_=args.has("--capture");
     try {
-        auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
-        if(directory.is_empty())directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
+        const auto directory=settings::game_path();
         art_=por::CharacterArt::load(std::filesystem::u8path(directory.utf8().get_data()));
         load_additional_heads();load_portraits();
         const auto seed=(checking_||args.has("--party-check"))?42ULL:static_cast<std::uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         creator_=std::make_unique<CharacterCreator>(srd5::character_rules(),seed);setup_party();recommend_portrait();refresh();
     } catch(const std::exception& e) {
-        fatal_=true;error_=i18n::text(e.what());get_node<Label>("Instructions")->set_text(i18n::text(N_("Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-opengoldbox.cmd, then opengoldbox.exe.")));
+        fatal_=true;error_=i18n::text(e.what());get_node<Label>("Instructions")->set_text(i18n::text(N_("Character art could not be loaded. Restart with --reset-game-path to choose your Pool of Radiance folder.")));
         get_node<Label>("Status")->set_text(error_);get_node<Button>("Next")->set_disabled(true);
         for(int i=0;i<get_child_count();++i)if(auto* c=Object::cast_to<Control>(get_child(i)))
             if(c->get_name()!=StringName("Title")&&c->get_name()!=StringName("Instructions")&&c->get_name()!=StringName("Status"))c->hide();

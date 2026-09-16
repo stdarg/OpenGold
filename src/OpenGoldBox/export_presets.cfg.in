@@ -4,7 +4,7 @@ platform="Windows Desktop"
 runnable=true
 export_filter="all_resources"
 include_filter="*.json"
-exclude_filter="data/*"
+exclude_filter="data/*,settings.cfg,settings.cfg.tmp"
 export_path=""
 
 [preset.0.options]

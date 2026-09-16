@@ -73,7 +73,7 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 
 [node name="Continue" type="Button" parent="LanguageDialog"]
-offset_left = 24.0
+offset_left = 292.0
 offset_top = 262.0
 offset_right = 536.0
 offset_bottom = 306.0
@@ -83,3 +83,146 @@ text = "Continue"
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
+
+[node name="Cancel" type="Button" parent="LanguageDialog"]
+offset_left = 24.0
+offset_top = 262.0
+offset_right = 268.0
+offset_bottom = 306.0
+text = "Cancel"
+
+[node name="PathDialog" type="Window" parent="."]
+title = "Pool of Radiance game files"
+initial_position = 1
+size = Vector2i(760, 330)
+min_size = Vector2i(760, 330)
+visible = false
+unresizable = true
+transient = true
+exclusive = true
+auto_translate_mode = 2
+
+[node name="Background" type="ColorRect" parent="PathDialog"]
+offset_right = 760.0
+offset_bottom = 330.0
+mouse_filter = 2
+color = Color(0.0706, 0.102, 0.1255, 1)
+
+[node name="Title" type="Label" parent="PathDialog"]
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 736.0
+offset_bottom = 58.0
+text = "Pool of Radiance game files"
+theme_override_font_sizes/font_size = 24
+
+[node name="Instructions" type="Label" parent="PathDialog"]
+offset_left = 24.0
+offset_top = 66.0
+offset_right = 736.0
+offset_bottom = 116.0
+text = "Choose the folder containing START.EXE and the original DAX game files."
+autowrap_mode = 3
+
+[node name="Path" type="LineEdit" parent="PathDialog"]
+offset_left = 24.0
+offset_top = 130.0
+offset_right = 584.0
+offset_bottom = 174.0
+
+
+[node name="Browse" type="Button" parent="PathDialog"]
+offset_left = 600.0
+offset_top = 130.0
+offset_right = 736.0
+offset_bottom = 174.0
+text = "Browse..."
+
+
+[node name="Status" type="Label" parent="PathDialog"]
+offset_left = 24.0
+offset_top = 182.0
+offset_right = 736.0
+offset_bottom = 248.0
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="Cancel" type="Button" parent="PathDialog"]
+offset_left = 24.0
+offset_top = 262.0
+offset_right = 240.0
+offset_bottom = 306.0
+text = "Cancel"
+
+
+[node name="Continue" type="Button" parent="PathDialog"]
+offset_left = 520.0
+offset_top = 262.0
+offset_right = 736.0
+offset_bottom = 306.0
+text = "Continue"
+
+
+[node name="BrowseDialog" type="FileDialog" parent="PathDialog"]
+title = "Choose game folder"
+size = Vector2i(900, 600)
+visible = false
+transient = true
+exclusive = true
+file_mode = 2
+access = 2
+
+[node name="ChecksumWarning" type="Window" parent="."]
+title = "Game file warning"
+initial_position = 1
+size = Vector2i(760, 530)
+min_size = Vector2i(760, 530)
+visible = false
+unresizable = true
+transient = true
+exclusive = true
+auto_translate_mode = 2
+
+[node name="Background" type="ColorRect" parent="ChecksumWarning"]
+offset_right = 760.0
+offset_bottom = 530.0
+mouse_filter = 2
+color = Color(0.0706, 0.102, 0.1255, 1)
+
+[node name="Title" type="Label" parent="ChecksumWarning"]
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 736.0
+offset_bottom = 60.0
+text = "Game file warning"
+theme_override_font_sizes/font_size = 24
+
+[node name="Instructions" type="Label" parent="ChecksumWarning"]
+offset_left = 24.0
+offset_top = 68.0
+offset_right = 736.0
+offset_bottom = 178.0
+text = "These files do not match the supported Pool of Radiance PC 1.3 checksums. You can continue, but some game features may not work."
+autowrap_mode = 3
+
+[node name="Files" type="RichTextLabel" parent="ChecksumWarning"]
+offset_left = 24.0
+offset_top = 184.0
+offset_right = 736.0
+offset_bottom = 448.0
+bbcode_enabled = false
+
+[node name="Quit" type="Button" parent="ChecksumWarning"]
+offset_left = 24.0
+offset_top = 464.0
+offset_right = 320.0
+offset_bottom = 508.0
+text = "Quit to OS"
+
+
+[node name="Continue" type="Button" parent="ChecksumWarning"]
+offset_left = 440.0
+offset_top = 464.0
+offset_right = 736.0
+offset_bottom = 508.0
+text = "Continue"

@@ -1,3 +1,4 @@
+#include "application_settings.h"
 #include "localization.h"
 #include "game_resources.h"
 #include "rolf_tour_view.h"
@@ -166,8 +167,7 @@ void RolfTourView::restart()
         }
         if (session_) {session_->restart();session_->campaign_party(campaign_);}
         else {
-            auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
-            if (directory.is_empty()) directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
+            const auto directory=settings::game_path();
             session_.emplace(RolfTourSession::load(std::filesystem::u8path(directory.utf8().get_data())));
             if(campaign_)session_->campaign_party(campaign_);
             for (unsigned i=0;i<sprites_.size();++i) {
@@ -344,7 +344,7 @@ void RolfTourView::refresh()
     get_node<Label>("Speaker")->set_text(i18n::text(faulted?N_("Unable to continue"):shopping?N_("Shop / select an item"):s.tour_finished?N_("New Phlan"):N_("Rolf  /  Council guide")));
     const auto resource="por/area/"+std::to_string(s.area_id)+"/script/"+std::to_string(s.script_id);
     get_node<RichTextLabel>("Dialogue")->set_text(faulted?
-        (loaded?i18n::text(s.diagnostic):error_)+"\n"+i18n::text("Set OPENGOLD_GAME_DIR to your Pool of Radiance data folder, then restart."):
+        (loaded?i18n::text(s.diagnostic):error_)+"\n"+i18n::text("Restart with --reset-game-path to choose your Pool of Radiance data folder."):
         s.dialogue.empty()?i18n::text("Following Rolf..."):i18n::campaign(resource+"/dialogue",s.dialogue));
     get_node<Button>("Continue")->set_disabled(!waiting&&!shopping&&!answer);
     get_node<Button>("Continue")->set_text(i18n::text(shopping?N_("Buy [Enter]"):multiple?N_("Choose [Enter]"):answer?N_("Submit [Enter]"):N_("Continue [Enter]")));

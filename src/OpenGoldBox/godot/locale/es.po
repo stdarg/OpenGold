@@ -201,7 +201,7 @@ msgstr "Añade primero un miembro al grupo"
 msgid "Add to party"
 msgstr "Añadir al grupo"
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Alignment"
 msgstr "Alineamiento"
 
@@ -241,7 +241,7 @@ msgstr "Un guerrero ligado a un juramento. Características principales: Fuerza 
 msgid "Any d20 roll saves"
 msgstr "Cualquier resultado del d20 supera la salvación"
 
-#: src/OpenGoldBox/character_creation_view.cpp:47 src/OpenGoldBox/godot/scenes/character_creation.tscn:264
+#: src/OpenGoldBox/character_creation_view.cpp:48 src/OpenGoldBox/godot/scenes/character_creation.tscn:264
 msgid "Arms"
 msgstr "Brazos"
 
@@ -273,7 +273,7 @@ msgstr "Bonificaciones: Inteligencia, Sabiduría y Carisma."
 msgid "Attribute bonuses: Strength, Dexterity, Constitution."
 msgstr "Bonificaciones: Fuerza, Destreza y Constitución."
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Attributes"
 msgstr "Características"
 
@@ -314,7 +314,7 @@ msgstr "Bardo"
 msgid "Base"
 msgstr "Base"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Black"
 msgstr "Negro"
 
@@ -322,11 +322,11 @@ msgstr "Negro"
 msgid "Bless"
 msgstr "Bendecir"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Blue"
 msgstr "Azul"
 
-#: src/OpenGoldBox/character_creation_view.cpp:47 src/OpenGoldBox/godot/scenes/character_creation.tscn:237
+#: src/OpenGoldBox/character_creation_view.cpp:48 src/OpenGoldBox/godot/scenes/character_creation.tscn:237
 msgid "Body"
 msgstr "Cuerpo"
 
@@ -346,9 +346,13 @@ msgstr "Acción adicional; 60 pies; cura 2d4 + modificador de Sabiduría."
 msgid "Bonuses"
 msgstr "Bonos"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Brown"
 msgstr "Marrón"
+
+#: src/OpenGoldBox/godot/scenes/startup.tscn:139
+msgid "Browse..."
+msgstr "Examinar..."
 
 #: src/OpenGoldBox/rolf_tour_view.cpp:350
 msgid "Buy [Enter]"
@@ -378,15 +382,15 @@ msgstr "CRÍTICO"
 msgid "Camp [C]"
 msgstr "Acampar [C]"
 
-#: src/OpenGoldBox/campaign_save_view.cpp:62
+#: src/OpenGoldBox/campaign_save_view.cpp:63
 msgid "Campaign loaded."
 msgstr "Campaña cargada."
 
-#: src/OpenGoldBox/campaign_save_view.cpp:44
+#: src/OpenGoldBox/campaign_save_view.cpp:45
 msgid "Campaign saved."
 msgstr "Campaña guardada."
 
-#: src/OpenGoldBox/level_up_view.cpp:58 src/OpenGoldBox/save_slots.cpp:31
+#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:58 src/OpenGoldBox/save_slots.cpp:31 src/OpenGoldBox/startup_view.cpp:178
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -398,9 +402,17 @@ msgstr "No puedes lanzar conjuros con una armadura para la que no tienes entrena
 msgid "Cannot reach this DC on a d20"
 msgstr "Esta CD no se puede alcanzar con un d20"
 
-#: src/OpenGoldBox/startup_view.cpp:93
+#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+msgid "Cannot read the bundled game-file checksum manifest."
+msgstr "No se puede leer la lista de comprobación de archivos del juego."
+
+#: src/OpenGoldBox/startup_view.cpp:179
 msgid "Cannot save language."
 msgstr "No se puede guardar el idioma."
+
+#: src/OpenGoldBox/startup_view.cpp:128
+msgid "Cannot save settings beside the executable. Check that the folder is writable and settings.cfg is valid."
+msgstr "No se puede guardar la configuración junto al ejecutable. Comprueba los permisos de la carpeta y que settings.cfg sea válido."
 
 #: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 msgid "Chain Mail"
@@ -431,18 +443,18 @@ msgid "Character Sheet"
 msgstr "Hoja de personaje"
 
 #: src/OpenGoldBox/character_creation_view.cpp:132
-msgid "Character art could not be loaded. Check OPENGOLD_GAME_DIR and run build-opengoldbox.cmd, then opengoldbox.exe."
-msgstr "No se pudieron cargar las imágenes. Comprueba OPENGOLD_GAME_DIR y ejecuta build-opengoldbox.cmd y después opengoldbox.exe."
+msgid "Character art could not be loaded. Restart with --reset-game-path to choose your Pool of Radiance folder."
+msgstr "No se pudieron cargar los gráficos del personaje. Reinicia con --reset-game-path para elegir la carpeta de Pool of Radiance."
 
 #: src/OpenGoldBox/godot/scenes/character_creation.tscn:421
 msgid "Character modifiers"
 msgstr "Modificadores del personaje"
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Character sheet"
 msgstr "Hoja de personaje"
 
-#: src/OpenGoldBox/character_creation_view.cpp:45 src/OpenGoldBox/character_text.h:10
+#: src/OpenGoldBox/character_creation_view.cpp:46 src/OpenGoldBox/character_text.h:10
 msgid "Charisma"
 msgstr "Carisma"
 
@@ -458,11 +470,19 @@ msgstr "Elige un nombre para tu personaje (hasta 40 caracteres)."
 msgid "Choose a swatch to recolor this part in the combat preview."
 msgstr "Elige una muestra para cambiar el color de esta parte en la vista de combate."
 
-#: src/OpenGoldBox/combat_view.cpp:68
+#: src/OpenGoldBox/combat_view.cpp:69
 msgid "Choose an action, then click its target. Enter ends your turn."
 msgstr "Elige una acción y haz clic en su objetivo. Enter termina tu turno."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:91
+#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+msgid "Choose an existing folder containing the Pool of Radiance game files."
+msgstr "Elige una carpeta existente con los archivos de Pool of Radiance."
+
+#: src/OpenGoldBox/godot/scenes/startup.tscn:167
+msgid "Choose game folder"
+msgstr "Elige la carpeta del juego"
+
+#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:176
 msgid "Choose language"
 msgstr "Elige idioma"
 
@@ -474,6 +494,10 @@ msgstr "Elige una clase inicial. Las clases marcadas son objetivos futuros, no n
 msgid "Choose portrait"
 msgstr "Elegir retrato"
 
+#: src/OpenGoldBox/godot/scenes/startup.tscn:124
+msgid "Choose the folder containing START.EXE and the original DAX game files."
+msgstr "Elige la carpeta que contiene START.EXE y los archivos DAX originales del juego."
+
 #: src/OpenGoldBox/level_up_view.cpp:108
 msgid "Choose valid options to preview your new HP."
 msgstr "Elige opciones válidas para ver tus nuevos PG."
@@ -482,7 +506,7 @@ msgstr "Elige opciones válidas para ver tus nuevos PG."
 msgid "Choose your race (species in SRD 5.2.1) and gender."
 msgstr "Elige tu raza (especie en SRD 5.2.1) y género."
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Class"
 msgstr "Clase"
 
@@ -519,7 +543,7 @@ msgstr "Color-1"
 msgid "Color-2"
 msgstr "Color-2"
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Combat appearance"
 msgstr "Aspecto en combate"
 
@@ -539,11 +563,11 @@ msgstr "Confirmar"
 msgid "Confirm load"
 msgstr "Confirmar carga"
 
-#: src/OpenGoldBox/character_creation_view.cpp:45 src/OpenGoldBox/character_text.h:9
+#: src/OpenGoldBox/character_creation_view.cpp:46 src/OpenGoldBox/character_text.h:9
 msgid "Constitution"
 msgstr "Constitución"
 
-#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:92
+#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:163 src/OpenGoldBox/godot/scenes/startup.tscn:228 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:177
 msgid "Continue"
 msgstr "Continuar"
 
@@ -580,7 +604,7 @@ msgstr "Curar heridas (espacio de nivel 2)"
 msgid "Current portrait: {file}\n{matches} Filters do not change your character."
 msgstr "Retrato actual: {file}\n{matches} Los filtros no cambian tu personaje."
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Cyan"
 msgstr "Cian"
 
@@ -592,7 +616,7 @@ msgstr "DES"
 msgid "Dagger"
 msgstr "Daga"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Dark gray"
 msgstr "Gris oscuro"
 
@@ -624,7 +648,7 @@ msgstr "Defensa"
 msgid "Defense feat: +1 AC while wearing armor."
 msgstr "Dote Defensa: +1 a la CA al llevar armadura."
 
-#: src/OpenGoldBox/character_creation_view.cpp:45 src/OpenGoldBox/character_text.h:9
+#: src/OpenGoldBox/character_creation_view.cpp:46 src/OpenGoldBox/character_text.h:9
 msgid "Dexterity"
 msgstr "Destreza"
 
@@ -652,7 +676,7 @@ msgstr "Esquivando"
 msgid "Does not meet targeted class requirements"
 msgstr "No cumple los requisitos de las clases objetivo"
 
-#: src/OpenGoldBox/character_creation_view.cpp:88
+#: src/OpenGoldBox/character_creation_view.cpp:89
 msgid "Drag this rolled result onto an attribute to assign it."
 msgstr "Arrastra este resultado a una característica para asignarlo."
 
@@ -664,7 +688,7 @@ msgstr "Arrastra a la característica que elijas."
 msgid "Dragonborn"
 msgstr "Dracónido"
 
-#: src/OpenGoldBox/character_creation_view.cpp:94
+#: src/OpenGoldBox/character_creation_view.cpp:95
 msgid "Drop a roll here. Drag a filled box onto another ability to swap."
 msgstr "Suelta una tirada aquí. Arrastra una casilla ocupada a otra característica para intercambiarlas."
 
@@ -680,7 +704,7 @@ msgstr "Enano"
 msgid "Each roll must be assigned exactly once"
 msgstr "Cada tirada debe asignarse una sola vez"
 
-#: src/OpenGoldBox/combat_view.cpp:69
+#: src/OpenGoldBox/combat_view.cpp:70
 msgid "Each square is 5 feet. Victory returns your party to exploration."
 msgstr "Cada casilla equivale a 5 pies. Tras la victoria, el grupo vuelve a explorar."
 
@@ -816,6 +840,10 @@ msgstr "Clases objetivo: {classes}\n\n"
 msgid "Future goals only. Choose one starting class next. Later Ability Score Improvements can raise scores to help you qualify."
 msgstr "Solo son objetivos futuros. Después elegirás una clase inicial. Las mejoras de características posteriores pueden ayudarte a cumplir sus requisitos."
 
+#: src/OpenGoldBox/godot/scenes/startup.tscn:176 src/OpenGoldBox/godot/scenes/startup.tscn:197
+msgid "Game file warning"
+msgstr "Advertencia sobre los archivos del juego"
+
 #: src/OpenGoldBox/godot/scenes/character_creation.tscn:41
 msgid "Gender"
 msgstr "Género"
@@ -836,7 +864,7 @@ msgstr "Goliat"
 msgid "Grappler"
 msgstr "Apresador"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Green"
 msgstr "Verde"
 
@@ -848,7 +876,7 @@ msgstr "Se guía por la compasión, el deber y el orden."
 msgid "Guided by rules, tradition, or a personal code."
 msgstr "Se guía por las normas, la tradición o un código personal."
 
-#: src/OpenGoldBox/character_creation_view.cpp:47 src/OpenGoldBox/godot/scenes/character_creation.tscn:246
+#: src/OpenGoldBox/character_creation_view.cpp:48 src/OpenGoldBox/godot/scenes/character_creation.tscn:246
 msgid "Hair / Face"
 msgstr "Pelo / Cara"
 
@@ -893,7 +921,7 @@ msgstr "INT"
 msgid "Inspect your party and equipment."
 msgstr "Examina tu grupo y su equipo."
 
-#: src/OpenGoldBox/character_creation_view.cpp:45 src/OpenGoldBox/character_text.h:10
+#: src/OpenGoldBox/character_creation_view.cpp:46 src/OpenGoldBox/character_text.h:10
 msgid "Intelligence"
 msgstr "Inteligencia"
 
@@ -913,7 +941,7 @@ msgstr "Objeto desequipado."
 msgid "Items"
 msgstr "Objetos"
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:90
+#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:175
 msgid "Language"
 msgstr "Idioma"
 
@@ -941,7 +969,7 @@ msgstr "Salir de la tienda"
 msgid "Leave temple [Enter]"
 msgstr "Salir del templo [Enter]"
 
-#: src/OpenGoldBox/character_creation_view.cpp:47 src/OpenGoldBox/godot/scenes/character_creation.tscn:273
+#: src/OpenGoldBox/character_creation_view.cpp:48 src/OpenGoldBox/godot/scenes/character_creation.tscn:273
 msgid "Legs"
 msgstr "Piernas"
 
@@ -949,7 +977,7 @@ msgstr "Piernas"
 msgid "Level 1-4 subset: HP, selected feats, supported prepared spells and level-one/two slots. Additional class/subclass and species features remain unavailable."
 msgstr "Niveles 1–4: PG, algunas dotes, conjuros preparados compatibles y espacios de nivel 1 y 2. Los demás rasgos de clase, subclase y especie aún no están disponibles."
 
-#: src/OpenGoldBox/level_up_view.cpp:37 src/OpenGoldBox/rolf_tour_view.cpp:66
+#: src/OpenGoldBox/level_up_view.cpp:37 src/OpenGoldBox/rolf_tour_view.cpp:67
 msgid "Level up"
 msgstr "Subir de nivel"
 
@@ -968,23 +996,23 @@ msgstr "Nivel {level}: se han aumentado los PG y los espacios de conjuro. Los de
 msgid "Level {level}: {hp} maximum HP; gain {growth}. Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase."
 msgstr "Nivel {level}: {hp} PG máximos; aumento de {growth}. La media fija del dado de golpe incluye Constitución y sus aumentos retroactivos."
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Light blue"
 msgstr "Azul claro"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Light cyan"
 msgstr "Cian claro"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Light gray"
 msgstr "Gris claro"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Light green"
 msgstr "Verde claro"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Light red"
 msgstr "Rojo claro"
 
@@ -1000,7 +1028,7 @@ msgstr "Carga una partida guardada para continuar."
 msgid "Load combat"
 msgstr "Cargar combate"
 
-#: src/OpenGoldBox/campaign_save_view.cpp:32 src/OpenGoldBox/rolf_tour_view.cpp:75 src/OpenGoldBox/save_slots.cpp:35
+#: src/OpenGoldBox/campaign_save_view.cpp:33 src/OpenGoldBox/rolf_tour_view.cpp:76 src/OpenGoldBox/save_slots.cpp:35
 msgid "Load game"
 msgstr "Cargar partida"
 
@@ -1020,7 +1048,7 @@ msgstr "Mirar [L]"
 msgid "Mace"
 msgstr "Maza"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Magenta"
 msgstr "Magenta"
 
@@ -1061,6 +1089,10 @@ msgstr "Cuerpo a cuerpo"
 msgid "Melee attack"
 msgstr "Ataque cuerpo a cuerpo"
 
+#: src/OpenGoldBox/startup_view.cpp:110
+msgid "Missing or unreadable game files:"
+msgstr "Faltan archivos del juego o no se pueden leer:"
+
 #: src/OpenGoldBox/godot/scenes/character_creation.tscn:418 src/OpenGoldBox/godot/scenes/party_panel.tscn:66
 msgid "Modifiers"
 msgstr "Modificadores"
@@ -1077,7 +1109,7 @@ msgstr "Mover"
 msgid "Movement paused"
 msgstr "Movimiento en pausa"
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Name"
 msgstr "Nombre"
 
@@ -1241,9 +1273,13 @@ msgstr "Entrenamiento del grupo"
 msgid "Pause {number}"
 msgstr "Pausa {number}"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Pink"
 msgstr "Rosa"
+
+#: src/OpenGoldBox/godot/scenes/startup.tscn:116 src/OpenGoldBox/godot/scenes/startup.tscn:95
+msgid "Pool of Radiance game files"
+msgstr "Archivos de Pool of Radiance"
 
 #: src/OpenGoldBox/godot/scenes/character_creation.tscn:91
 msgid "Portrait class"
@@ -1294,7 +1330,11 @@ msgstr "Persigue fines egoístas sin lealtad al orden ni a la libertad."
 msgid "Quarterstaff"
 msgstr "Bastón"
 
-#: src/OpenGoldBox/character_creation_view.cpp:36
+#: src/OpenGoldBox/godot/scenes/startup.tscn:220
+msgid "Quit to OS"
+msgstr "Salir del juego"
+
+#: src/OpenGoldBox/character_creation_view.cpp:37
 msgid "Race & Gender"
 msgstr "Raza y género"
 
@@ -1331,7 +1371,7 @@ msgstr "Listo para subir de nivel"
 msgid "Recruit preview guard"
 msgstr "Reclutar guardia de prueba"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Red"
 msgstr "Rojo"
 
@@ -1368,9 +1408,13 @@ msgstr "Volver a tirar"
 msgid "Restart"
 msgstr "Reiniciar"
 
-#: src/OpenGoldBox/campaign_save_view.cpp:73
+#: src/OpenGoldBox/campaign_save_view.cpp:74
 msgid "Restart test"
 msgstr "Prueba de reinicio"
+
+#: src/OpenGoldBox/rolf_tour_view.cpp:347
+msgid "Restart with --reset-game-path to choose your Pool of Radiance data folder."
+msgstr "Reinicia con --reset-game-path para elegir la carpeta de datos de Pool of Radiance."
 
 #: src/OpenGoldBox/godot/scenes/character_creation.tscn:414
 msgid "Return to party"
@@ -1438,7 +1482,7 @@ msgstr "Asalto {round}: actúa {name}."
 msgid "Run the area's pre-camp check and attempt an eight-hour long rest."
 msgstr "Comprueba si se puede acampar e intenta un descanso largo de ocho horas."
 
-#: src/OpenGoldBox/combat_view.cpp:68
+#: src/OpenGoldBox/combat_view.cpp:69
 msgid "SLUMS / Combat"
 msgstr "BARRIOS BAJOS / Combate"
 
@@ -1478,7 +1522,7 @@ msgstr "Guardar"
 msgid "Save combat"
 msgstr "Guardar combate"
 
-#: src/OpenGoldBox/campaign_save_view.cpp:32 src/OpenGoldBox/rolf_tour_view.cpp:75 src/OpenGoldBox/save_slots.cpp:35
+#: src/OpenGoldBox/campaign_save_view.cpp:33 src/OpenGoldBox/rolf_tour_view.cpp:76 src/OpenGoldBox/save_slots.cpp:35
 msgid "Save game"
 msgstr "Guardar partida"
 
@@ -1536,11 +1580,7 @@ msgstr "Elige una opción y continúa."
 msgid "Selected: {action}. Click a highlighted square."
 msgstr "Selección: {action}. Haz clic en una casilla resaltada."
 
-#: src/OpenGoldBox/rolf_tour_view.cpp:347
-msgid "Set OPENGOLD_GAME_DIR to your Pool of Radiance data folder, then restart."
-msgstr "Configura OPENGOLD_GAME_DIR con la carpeta de datos de Pool of Radiance y reinicia."
-
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:554 src/OpenGoldBox/character_creation_view.cpp:47 src/OpenGoldBox/godot/scenes/character_creation.tscn:255
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:554 src/OpenGoldBox/character_creation_view.cpp:48 src/OpenGoldBox/godot/scenes/character_creation.tscn:255
 msgid "Shield"
 msgstr "Escudo"
 
@@ -1682,7 +1722,7 @@ msgstr "Empieza con 250 po. Esta clase puede explorar y equiparse; sus rasgos de
 msgid "Stopped"
 msgstr "Detenido"
 
-#: src/OpenGoldBox/character_creation_view.cpp:45 src/OpenGoldBox/character_text.h:9
+#: src/OpenGoldBox/character_creation_view.cpp:46 src/OpenGoldBox/character_text.h:9
 msgid "Strength"
 msgstr "Fuerza"
 
@@ -1706,7 +1746,7 @@ msgstr "Clases objetivo"
 msgid "Teal: party | Orange: enemies\nStone: obstacle | Brown: difficult terrain\nSaving is available in training combat."
 msgstr "Turquesa: grupo | Naranja: enemigos\nPiedra: obstáculo | Marrón: terreno difícil\nPuedes guardar en el combate de entrenamiento."
 
-#: src/OpenGoldBox/combat_view.cpp:66
+#: src/OpenGoldBox/combat_view.cpp:67
 msgid "Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate"
 msgstr "Turquesa: grupo | Naranja: enemigos\nRueda: desplazar | Mayús+rueda: lateral\nArrastrar botón central: mover vista | Barras: navegar"
 
@@ -1721,6 +1761,10 @@ msgstr "El grupo está incapacitado. Derrota."
 #: src/OpenGoldBox/rolf_tour_view.cpp:268
 msgid "The way is blocked"
 msgstr "El paso está bloqueado"
+
+#: src/OpenGoldBox/godot/scenes/startup.tscn:205
+msgid "These files do not match the supported Pool of Radiance PC 1.3 checksums. You can continue, but some game features may not work."
+msgstr "Estos archivos no coinciden con las sumas de comprobación de Pool of Radiance PC 1.3. Puedes continuar, pero algunas funciones del juego podrían fallar."
 
 #: src/OpenGoldBox/character_creation_view.cpp:400
 msgid "This part is not present in either pose. Choose another head or weapon to use it."
@@ -1842,7 +1886,7 @@ msgstr "SAB"
 msgid "Warlock"
 msgstr "Brujo"
 
-#: src/OpenGoldBox/character_creation_view.cpp:47 src/OpenGoldBox/godot/scenes/character_creation.tscn:228
+#: src/OpenGoldBox/character_creation_view.cpp:48 src/OpenGoldBox/godot/scenes/character_creation.tscn:228
 msgid "Weapon"
 msgstr "Arma"
 
@@ -1855,11 +1899,11 @@ msgstr "Arma >"
 msgid "Weapon {number} / 32"
 msgstr "Arma {number} / 32"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "White"
 msgstr "Blanco"
 
-#: src/OpenGoldBox/character_creation_view.cpp:45 src/OpenGoldBox/character_text.h:10
+#: src/OpenGoldBox/character_creation_view.cpp:46 src/OpenGoldBox/character_text.h:10
 msgid "Wisdom"
 msgstr "Sabiduría"
 
@@ -1867,7 +1911,7 @@ msgstr "Sabiduría"
 msgid "Wizard"
 msgstr "Mago"
 
-#: src/OpenGoldBox/character_creation_view.cpp:46
+#: src/OpenGoldBox/character_creation_view.cpp:47
 msgid "Yellow"
 msgstr "Amarillo"
 

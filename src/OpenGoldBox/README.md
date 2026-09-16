@@ -62,8 +62,12 @@ To build the executable target directly after configuring:
 cmake --build build/game --target OpenGoldBox
 ```
 
-The game reads original assets from `OPENGOLD_GAME_DIR`, falling back to its
-project setting. It preserves the existing per-user save directory. Rules and
+The game reads original assets from the path saved in `settings.cfg` beside the
+executable, with `OPENGOLD_GAME_DIR` as a runtime override. Missing settings prompt
+for the game folder, then language. `--reset-game-path` and `--reset-lang` force
+selection again. See [configuration](../../docs/CONFIGURATION.md) for portable
+settings, environment overrides and checksum warnings. The game preserves the
+existing per-user save directory. Rules and
 authored portraits are copied from root `data/` and `art/` at build time.
 No original game assets are copied or exported. Diagnostic captures use
 `user://checks` so exported builds do not depend on the repository layout.
@@ -109,7 +113,7 @@ godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/co
 ```
 ## Language selection
 
-English and Spanish are available. Launch `win-package\opengoldbox.exe --lang`
+English and Spanish are available. Launch `win-package\opengoldbox.exe --reset-lang`
 from CMD to select **English** or **Español**. The selection is saved for later
 launches. Combine with `--splash` to show the translated splash lettering after
 selection. See [translation setup and coverage](../../docs/LOCALIZATION.md).

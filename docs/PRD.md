@@ -1274,7 +1274,7 @@ Possible later projects:
 
 These should remain separate from strict compatibility mode.
 
-The game interface already supports English and Spanish. `--lang` must offer
+The game interface already supports English and Spanish. `--reset-lang` must offer
 English and Español in a centered dialog before optional splash screens, support
 mouse, arrow keys and Enter, and save the confirmed selection for later launches.
 Highlighting a language immediately translates the dialog into that language;
@@ -1282,6 +1282,15 @@ language names remain in their native form and previewing does not save a choice
 Spanish uses Estanque de Resplandor on the game splash. Original campaign text
 falls back to its source wording until separate translation overrides exist.
 See [LOCALIZATION.md](LOCALIZATION.md) for current coverage and workflow.
+
+Persist the original game-folder path and language beside the executable. On
+first run request the folder and then language; otherwise prompt only for missing
+or invalid settings. Provide `--reset-game-path` and `--reset-lang` (replacing
+`--lang`), preserving previous values until confirmation. Support environment
+overrides for both values. Compare consumed original assets against reference
+MD5 fingerprints and offer Quit to OS or Continue when they differ. Missing
+required files must be corrected before proceeding. See
+[CONFIGURATION.md](CONFIGURATION.md).
 
 ---
 

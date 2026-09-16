@@ -440,17 +440,28 @@ C++20 rules modules emit engine-independent message templates and literal values
 Stable identifiers, saved names and campaign state do not depend on language.
 Scene-authored text is translated once before native refresh methods take over.
 
-`--lang` opens a centered modal before the optional splashes, with English and
+`--reset-lang` opens a centered modal before the optional splashes, with English and
 Español rows, mouse/arrow-key selection and Enter or the translated Continue button
 to confirm. Highlighting a row previews the dialog text in that language while
 language names retain their native spelling. Only confirmation changes the
-active language and saves it in `user://settings.cfg`; later launches use it
-without prompting. The default otherwise follows the system language, with
-English fallback. Closing the selector follows the global graceful exit path.
+active language and saves it in `settings.cfg` beside the executable. Later launches
+use the saved value or environment override; a missing value prompts again.
+Initial setup follows the system language, with English fallback.
+Closing the selector follows the global graceful exit path.
 Spanish splash lettering uses `.es.png` variants over the same shared background
 and the title Estanque de Resplandor. Original campaign dialogue supports separate
 context-keyed overrides and retains source text when untranslated.
 See [LOCALIZATION.md](LOCALIZATION.md) for catalog maintenance, artwork and coverage.
+
+`application_settings` resolves the original-game path for all game views and
+save identity checks. Portable `settings.cfg` beside the executable stores the
+path and language; missing/invalid values prompt before splashes, folder first.
+The development editor uses an ignored project-local config. `--reset-game-path`
+and `--reset-lang` force selection without deleting prior values. Environment
+overrides are `OPENGOLD_GAME_DIR` and `OPENGOLD_LANG`; explicit selections and
+reset flags take precedence for the current run. MD5 checks against a bundled
+PC 1.3 manifest produce a Quit/Continue warning on mismatches. Missing files
+must be corrected. See [CONFIGURATION.md](CONFIGURATION.md) for full semantics.
 
 ### Screen structure
 

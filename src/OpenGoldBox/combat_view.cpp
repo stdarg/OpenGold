@@ -1,3 +1,4 @@
+#include "application_settings.h"
 #include "localization.h"
 #include "game_resources.h"
 #include "combat_view.h"
@@ -102,8 +103,7 @@ void CombatView::layout()
 void CombatView::training(){try{error_.clear();demo_->training();art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::slums()
 {
-    try{error_.clear();auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
-        if(directory.is_empty())directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
+    try{error_.clear();const auto directory=settings::game_path();
         demo_->slums(std::filesystem::u8path(directory.utf8().get_data()));mode_="move";sync_art();refresh();
     }catch(const std::exception& e){error_=e.what();refresh();}
 }

@@ -34,10 +34,6 @@ window/size/window_height_override=1080
 
 theme/custom="res://themes/opengold.tres"
 
-[opengold]
-
-game_directory="D:/SteamLibrary/steamapps/common/Forgotten Realms The Archives - Collection Two/games/POOLRAD/GAME/POOLRAD"
-
 [internationalization]
 
 locale/translations=PackedStringArray("res://locale/en.po", "res://locale/es.po", "res://locale/campaign.es.po")
