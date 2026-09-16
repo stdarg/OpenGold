@@ -405,17 +405,18 @@ not a requirement to change the monitor's display mode.
 
 The two startup screens share one static texture,
 `art/OpenGoldBoxSplashBackground.png`. It is loaded once; advancing the sequence
-changes only native Godot title, subtitle, and footer labels. The background's
+changes only a transparent lettering texture containing the title and supporting text. The background's
 pixels, placement, and sampling remain identical across both screens.
-The text uses a gold/ivory system serif font (Georgia, with Times New Roman
-fallback) and scales with the centered background rectangle.
+The lettering textures reproduce the reference's textured metallic gold faces,
+beveled rims, shadows, and slender ivory serif supporting text. Godot displays
+them with aspect-preserving `TextureRect` fitting over the shared backdrop;
+no installed font is required. Both overlays have genuine alpha transparency.
 
 The generator returned a 1672 x 941 background despite the requested Full HD
 canvas. It remains unmodified. Godot applies a uniform aspect-preserving fit;
 at 1920 x 1080 this leaves about one pixel of total horizontal margin. Other
-aspect ratios use black letterboxing. Text is rendered at the current display
-resolution. The two 1920 x 1080 PNG screen previews in `art/` are captured from
-Godot's final rendering; the runtime uses the shared backdrop and native labels.
+aspect ratios use black letterboxing. The generated lettering layers also remain at their original 1672 x 941 size. The two 1920 x 1080 PNG screen previews in `art/` are captured from
+Godot's final rendering; the runtime uses the shared backdrop and transparent lettering layers.
 
 Startup retains the optional `--splash` sequence: engine introduction, then
 Pool of Radiance introduction, then character creation. Any key advances;
@@ -423,7 +424,7 @@ Escape skips the splash sequence. Default startup opens character creation.
 The build copies the local shared backdrop from `art/` into the game package.
 See `art/OpenGoldBoxScreens.provenance.md` for artwork sources and prompts.
 The rendered startup check compares both backgrounds byte for byte with the
-text hidden, in addition to verifying the text and navigation behavior.
+text hidden, in addition to verifying the selected overlay, its alpha transparency, and navigation behavior.
 
 ### Screen structure
 

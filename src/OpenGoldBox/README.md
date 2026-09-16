@@ -33,13 +33,13 @@ By default startup opens character generation directly. To show the two splash
 screens first, run `./win-package/opengoldbox.exe --splash`. Any key advances
 from the OpenGoldBox image to the Pool of Radiance image, then to character
 generation. Escape skips directly to character generation from either image.
-Both splash screens use the same static background texture; only the native
-Godot title, subtitle, and footer change. The background is identical to the
-pixel throughout the transition. Text scales with the background, using the
-Windows Georgia serif font with Times New Roman fallback.
+Both splash screens use the same static background texture; only the transparent
+lettering overlay changes. The background is identical to the
+pixel throughout the transition. The lettering restores the reference
+image's beveled metallic gold title and slender ivory serif supporting text.
 The shared generator output is 1672 x 941 and fits the display proportionally;
 other aspect ratios use black letterboxing. The two screen previews in `art/`
-are 1920 x 1080 captures from Godot. The build packages the shared background.
+are 1920 x 1080 captures from Godot. The build packages the shared background and both transparent lettering layers.
 See `art/OpenGoldBoxScreens.provenance.md` for sources and prompts.
 
 Close the main window with its X button, or press Ctrl+X from any screen or

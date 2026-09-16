@@ -4,9 +4,7 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
 #include <godot_cpp/classes/texture_rect.hpp>
-#include <godot_cpp/classes/label.hpp>
 #include <algorithm>
-#include <cmath>
 #include <godot_cpp/classes/texture2d.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -41,11 +39,16 @@ void StartupView::show_screen()
         }
         image->set_texture(texture);
     }
-    get_node<Label>("Text/Title")->set_text(screen_ == 0 ? "OpenGoldBox" : "POOL OF\nRADIANCE");
-    get_node<Label>("Text/Subtitle")->set_text(screen_ == 0
-        ? "An open-source role-playing game\nengine for Gold Box games."
-        : "An unofficial adaptation powered by OpenGoldBox");
-    get_node<Label>("Text/Footer")->set_text(screen_ == 0 ? "" : "Not affiliated with or endorsed by Wizards of the Coast.");
+    const char* lettering_path = screen_ == 0
+        ? "res://bin/splashes/OpenGoldBoxEngineLettering.png"
+        : "res://bin/splashes/OpenGoldBoxGameLettering.png";
+    Ref<Texture2D> lettering = ResourceLoader::get_singleton()->load(lettering_path);
+    if (lettering.is_null()) {
+        UtilityFunctions::push_error(String("Missing splash lettering: ") + lettering_path);
+        finish();
+        return;
+    }
+    get_node<TextureRect>("Text")->set_texture(lettering);
     layout_text();
 }
 
@@ -63,16 +66,11 @@ void StartupView::layout_text()
     const double fit = std::min(get_size().x / source.x, get_size().y / source.y);
     const auto fitted = source * fit;
     const auto origin = (get_size() - fitted) * .5;
-    const Vector2 unit(fitted.x / 1920.0, fitted.y / 1080.0);
-    const auto place = [&](const char* name, Rect2 rect, int font_size) {
-        auto* label = get_node<Label>(name); // scene-owned
-        label->set_position(origin + rect.position * unit);
-        label->add_theme_font_size_override("font_size", std::max(1, static_cast<int>(std::lround(font_size * unit.y))));
-        label->set_size(rect.size * unit);
-    };
-    place("Text/Title", screen_ == 0 ? Rect2(280, 300, 1360, 200) : Rect2(280, 210, 1360, 390), screen_ == 0 ? 140 : 156);
-    place("Text/Subtitle", screen_ == 0 ? Rect2(260, 520, 1400, 140) : Rect2(240, 630, 1440, 100), screen_ == 0 ? 50 : 44);
-    place("Text/Footer", Rect2(260, 850, 1400, 70), 30);
+    // Keep the lettering proportions and comfortable margins from the reference.
+    const auto lettering_size = fitted * .8;
+    auto* lettering = get_node<TextureRect>("Text"); // scene-owned
+    lettering->set_position(origin + (fitted - lettering_size) * .5 - Vector2(0, fitted.y * .03));
+    lettering->set_size(lettering_size);
 }
 
 void StartupView::_input(const Ref<InputEvent>& event)

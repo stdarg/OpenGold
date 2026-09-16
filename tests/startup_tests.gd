@@ -30,12 +30,12 @@ func is_splash(index: int) -> bool:
 	if shared_texture == null:
 		shared_texture = image.texture
 	if not require(image.texture == shared_texture, "Both splash screens must use the same background texture"): return false
-	var expected_title := "OpenGoldBox" if index == 0 else "POOL OF\nRADIANCE"
-	if not require(current_scene.get_node("Text/Title").text == expected_title, "Wrong splash title"): return false
-	var expected_subtitle := "An open-source role-playing game\nengine for Gold Box games." if index == 0 else "An unofficial adaptation powered by OpenGoldBox"
-	if not require(current_scene.get_node("Text/Subtitle").text == expected_subtitle, "Wrong splash subtitle"): return false
-	var expected_footer := "" if index == 0 else "Not affiliated with or endorsed by Wizards of the Coast."
-	if not require(current_scene.get_node("Text/Footer").text == expected_footer, "Wrong splash footer"): return false
+	var lettering: TextureRect = current_scene.get_node("Text")
+	var expected := "OpenGoldBoxEngineLettering.png" if index == 0 else "OpenGoldBoxGameLettering.png"
+	if not require(lettering.texture != null and lettering.texture.resource_path.ends_with(expected), "Wrong splash lettering"): return false
+	if not require(lettering.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "Lettering must preserve its proportions"): return false
+	var pixels := lettering.texture.get_image()
+	if not require(pixels.detect_alpha() != Image.ALPHA_NONE and pixels.get_pixel(0, 0).a == 0, "Lettering must have a transparent background"): return false
 	return require(image.texture != null and image.texture.resource_path.ends_with(filename), "Wrong splash image") and require(image.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "Splash must preserve aspect ratio") and require(current_scene.get_node("Background").color == Color.BLACK, "Letterbox must be black")
 
 func key(code: Key, pressed := true, echo := false) -> void:

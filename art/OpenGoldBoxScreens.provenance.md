@@ -4,7 +4,7 @@
 
 The game targets **1920 x 1080**. Both splash screens use exactly the same
 `OpenGoldBoxSplashBackground.png` texture, loaded once by `StartupView`.
-Only the native Godot text changes when the user advances. This guarantees
+Only the transparent lettering overlay changes when the user advances. This guarantees
 pixel-identical background rendering without independent AI variations.
 
 - `OpenGoldBoxSplashBackground.png`: the shared, text-free background, generated
@@ -14,16 +14,22 @@ pixel-identical background rendering without independent AI variations.
 - `OpenGoldBoxSplash.png`: 1920 x 1080 capture of the final engine screen.
 - `OpenGoldBoxPoolOfRadiance.png`: 1920 x 1080 capture of the final game screen.
   These two files are review snapshots. Runtime uses the shared background
-  and native labels, not separate screen textures.
+  and transparent lettering overlays, not separate screen textures.
 
 The engine screen reads "OpenGoldBox" and "An open-source role-playing game
 engine for Gold Box games." The game screen reads "POOL OF RADIANCE",
 "An unofficial adaptation powered by OpenGoldBox", and "Not affiliated with
 or endorsed by Wizards of the Coast."
 
-Typography is rendered by Godot with the Windows Georgia system serif font
-and Times New Roman fallback; no system font files are redistributed.
-The scene uses gold titles and ivory supporting text, with dark shadows.
+Typography uses generated transparent overlays, matching the user's reference
+`exec-ea5a6b9d-cb6e-4113-b9c6-366dda33d13c.png`: textured metallic gold,
+beveled rims and dark shadows, with slender ivory supporting text.
+`OpenGoldBoxEngineLettering.png` and `OpenGoldBoxGameLettering.png` are both
+1672 x 941 RGBA PNGs, copied unchanged from the built-in generator. Godot
+fits them proportionally with comfortable margins over the existing backdrop.
+No system fonts or local image resampling are used.
+See [lettering prompts](OpenGoldBoxScreens.lettering-prompts.md) for the exact
+prompts and source filenames.
 
 See [generation prompts](OpenGoldBoxScreens.fullhd-prompts.md) for the exact
 fresh composition and text-removal prompts. The design continues the earlier
