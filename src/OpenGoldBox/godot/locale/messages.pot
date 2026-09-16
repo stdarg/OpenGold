@@ -390,7 +390,7 @@ msgstr ""
 msgid "Campaign saved."
 msgstr ""
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:58 src/OpenGoldBox/save_slots.cpp:31 src/OpenGoldBox/startup_view.cpp:185
+#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:58 src/OpenGoldBox/save_slots.cpp:31 src/OpenGoldBox/startup_view.cpp:192
 msgid "Cancel"
 msgstr ""
 
@@ -406,11 +406,11 @@ msgstr ""
 msgid "Cannot read the bundled game-file checksum manifest."
 msgstr ""
 
-#: src/OpenGoldBox/startup_view.cpp:186
+#: src/OpenGoldBox/startup_view.cpp:193
 msgid "Cannot save language."
 msgstr ""
 
-#: src/OpenGoldBox/startup_view.cpp:135
+#: src/OpenGoldBox/startup_view.cpp:142
 msgid "Cannot save settings beside the executable. Check that the folder is writable and settings.cfg is valid."
 msgstr ""
 
@@ -482,7 +482,7 @@ msgstr ""
 msgid "Choose game folder"
 msgstr ""
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:183
+#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:190
 msgid "Choose language"
 msgstr ""
 
@@ -567,7 +567,7 @@ msgstr ""
 msgid "Constitution"
 msgstr ""
 
-#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:163 src/OpenGoldBox/godot/scenes/startup.tscn:228 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:184
+#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:163 src/OpenGoldBox/godot/scenes/startup.tscn:228 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:191
 msgid "Continue"
 msgstr ""
 
@@ -941,7 +941,7 @@ msgstr ""
 msgid "Items"
 msgstr ""
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:182
+#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:189
 msgid "Language"
 msgstr ""
 
@@ -1089,7 +1089,7 @@ msgstr ""
 msgid "Melee attack"
 msgstr ""
 
-#: src/OpenGoldBox/startup_view.cpp:117
+#: src/OpenGoldBox/startup_view.cpp:124
 msgid "Missing or unreadable game files:"
 msgstr ""
 

@@ -113,6 +113,19 @@ func run_checks() -> void:
 			await settle()
 			require(path_dialog.visible and not path_dialog.get_node("Status").text.is_empty(), "Invalid folder was accepted")
 			require(path_dialog.get_node("Status").text == TranslationServer.translate("Choose an existing folder containing the Pool of Radiance game files."), "Validation error did not use the chosen language")
+			var field: LineEdit = path_dialog.get_node("Path")
+			field.grab_focus()
+			field.caret_column = field.text.length()
+			var edit := InputEventKey.new()
+			edit.keycode = KEY_BACKSPACE
+			edit.pressed = true
+			path_dialog.push_input(edit, true)
+			await settle()
+			require(field.text != "X:/not-a-game-folder", "Keyboard edit did not change the path")
+			require(path_dialog.get_node("Status").text.is_empty(), "Editing the path left a stale error")
+			path_dialog.get_node("Continue").pressed.emit()
+			await settle()
+			require(not path_dialog.get_node("Status").text.is_empty(), "Retrying an invalid path must show a fresh error")
 			path_dialog.get_node("Browse").pressed.emit()
 			await settle()
 			var browser: FileDialog = path_dialog.get_node("BrowseDialog")
@@ -120,6 +133,7 @@ func run_checks() -> void:
 			browser.dir_selected.emit(real_path)
 			browser.hide()
 			require(path_dialog.get_node("Path").text == real_path, "Browse result was not applied")
+			require(path_dialog.get_node("Status").text.is_empty(), "Browse selection left a stale error")
 		var selected := real_path
 		if scenario in ["mismatch", "warning-quit", "missing-file", "first-warning"]:
 			selected = ProjectSettings.globalize_path("user://synthetic-files-" + scenario)

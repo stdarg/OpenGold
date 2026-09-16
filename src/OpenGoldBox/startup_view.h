@@ -36,6 +36,7 @@ private:
     void show_path(const godot::String& message = {});
     void browse_path();
     void picked_path(const godot::String& directory);
+    void path_edited(const godot::String& directory);
     void submitted_path(const godot::String& directory);
     void accept_path();
     void check_path();

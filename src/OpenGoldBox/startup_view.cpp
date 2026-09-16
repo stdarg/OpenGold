@@ -46,6 +46,7 @@ void StartupView::choose_game_path()
     dialog->get_node<Button>("Continue")->connect("pressed",callable_mp(this,&StartupView::accept_path));
     dialog->get_node<Button>("Browse")->connect("pressed",callable_mp(this,&StartupView::browse_path));
     dialog->get_node<LineEdit>("Path")->connect("text_submitted",callable_mp(this,&StartupView::submitted_path));
+    dialog->get_node<LineEdit>("Path")->connect("text_changed",callable_mp(this,&StartupView::path_edited));
     dialog->get_node<FileDialog>("BrowseDialog")->connect("dir_selected",callable_mp(this,&StartupView::picked_path));
     auto* warning=get_node<Window>("ChecksumWarning");
     warning->connect("close_requested",callable_mp(this,&StartupView::close_language));
@@ -101,7 +102,13 @@ void StartupView::browse_path()
 void StartupView::picked_path(const String& directory)
 {
     get_node<LineEdit>("PathDialog/Path")->set_text(directory);
+    // Programmatic text changes do not emit LineEdit's text_changed signal.
+    path_edited(directory);
     get_node<Button>("PathDialog/Continue")->grab_focus();
+}
+void StartupView::path_edited(const String&)
+{
+    get_node<Label>("PathDialog/Status")->set_text(String());
 }
 void StartupView::submitted_path(const String&) {accept_path();}
 void StartupView::accept_path()
