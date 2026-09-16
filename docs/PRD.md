@@ -1277,6 +1277,8 @@ These should remain separate from strict compatibility mode.
 The game interface already supports English and Spanish. `--lang` must offer
 English and Español in a centered dialog before optional splash screens, support
 mouse, arrow keys and Enter, and save the confirmed selection for later launches.
+Highlighting a language immediately translates the dialog into that language;
+language names remain in their native form and previewing does not save a choice.
 Spanish uses Estanque de Resplandor on the game splash. Original campaign text
 falls back to its source wording until separate translation overrides exist.
 See [LOCALIZATION.md](LOCALIZATION.md) for current coverage and workflow.

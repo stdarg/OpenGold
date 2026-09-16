@@ -17,6 +17,7 @@ private:
     unsigned screen_{};
     bool finishing_{};
     bool choosing_language_{};
+    bool language_save_failed_{};
     double fade_elapsed_{};
     void show_screen();
     void layout_text();
@@ -25,6 +26,7 @@ private:
     void begin_startup();
     void accept_language();
     void activate_language(std::int64_t index);
+    void preview_language(std::int64_t index);
     void close_language();
 };
 

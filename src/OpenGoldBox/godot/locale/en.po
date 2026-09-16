@@ -398,6 +398,10 @@ msgstr "Cannot cast spells while wearing untrained armor."
 msgid "Cannot reach this DC on a d20"
 msgstr "Cannot reach this DC on a d20"
 
+#: src/OpenGoldBox/startup_view.cpp:93
+msgid "Cannot save language."
+msgstr "Cannot save language."
+
 #: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 msgid "Chain Mail"
 msgstr "Chain Mail"
@@ -458,9 +462,9 @@ msgstr "Choose a swatch to recolor this part in the combat preview."
 msgid "Choose an action, then click its target. Enter ends your turn."
 msgstr "Choose an action, then click its target. Enter ends your turn."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:56
-msgid "Choose language / Elige idioma"
-msgstr "Choose language / Elige idioma"
+#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:91
+msgid "Choose language"
+msgstr "Choose language"
 
 #: src/OpenGoldBox/character_creation_view.cpp:329
 msgid "Choose one starting class. Checked targets are future plans, not additional class levels."
@@ -539,17 +543,13 @@ msgstr "Confirm load"
 msgid "Constitution"
 msgstr "Constitution"
 
-#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73
+#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:92
 msgid "Continue"
 msgstr "Continue"
 
 #: src/OpenGoldBox/godot/scenes/rolf_tour.tscn:53
 msgid "Continue  [Enter]"
 msgstr "Continue  [Enter]"
-
-#: src/OpenGoldBox/godot/scenes/startup.tscn:80
-msgid "Continue / Continuar"
-msgstr "Continue / Continuar"
 
 #: src/OpenGoldBox/rolf_tour_view.cpp:350
 msgid "Continue [Enter]"
@@ -913,9 +913,9 @@ msgstr "Item unequipped."
 msgid "Items"
 msgstr "Items"
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:33
-msgid "Language / Idioma"
-msgstr "Language / Idioma"
+#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:90
+msgid "Language"
+msgstr "Language"
 
 #: src/OpenGold.Rules.Srd5/src/character_rules.cpp:57
 msgid "Lawful Evil"

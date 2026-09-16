@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/item_list.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/window.hpp>
+#include <godot_cpp/classes/translation_server.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -30,13 +31,15 @@ void StartupView::_ready()
     if (os->get_cmdline_args().has("--lang") || os->get_cmdline_user_args().has("--lang")) {
         choosing_language_=true;
         auto* dialog=get_node<Window>("LanguageDialog"); // scene-owned
-        // Native language names and bilingual instructions stay readable in either locale.
+        // Native language names remain stable; other text previews the selected locale.
         dialog->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
         dialog->connect("close_requested",callable_mp(this,&StartupView::close_language));
         auto* choices=dialog->get_node<ItemList>("Choices");
         choices->add_item("English");choices->set_item_metadata(0,"en");
         choices->add_item(String::utf8("Español"));choices->set_item_metadata(1,"es");
         choices->select(i18n::language()=="es"?1:0);
+        choices->connect("item_selected",callable_mp(this,&StartupView::preview_language));
+        preview_language(choices->get_selected_items()[0]);
         choices->connect("item_activated",callable_mp(this,&StartupView::activate_language));
         dialog->get_node<Button>("Continue")->connect("pressed",callable_mp(this,&StartupView::accept_language));
         dialog->popup_centered();choices->grab_focus();
@@ -64,7 +67,8 @@ void StartupView::accept_language()
     if(selected.is_empty())return;
     const String locale=choices->get_item_metadata(selected[0]);
     if(!i18n::select_language(locale)){
-        dialog->get_node<Label>("Status")->set_text(String::utf8("Cannot save language. / No se puede guardar el idioma."));
+        language_save_failed_=true;
+        preview_language(selected[0]);
         return;
     }
     dialog->hide();choosing_language_=false;
@@ -74,6 +78,22 @@ void StartupView::accept_language()
 }
 
 void StartupView::activate_language(std::int64_t) { accept_language(); }
+
+void StartupView::preview_language(std::int64_t index)
+{
+    auto* dialog=get_node<Window>("LanguageDialog");
+    auto* choices=dialog->get_node<ItemList>("Choices");
+    if(index<0||index>=choices->get_item_count())return;
+    auto* translations=TranslationServer::get_singleton();
+    const String previous=translations->get_locale();
+    translations->set_locale(choices->get_item_metadata(index));
+    dialog->set_title(i18n::text("Language"));
+    dialog->get_node<Label>("Title")->set_text(i18n::text("Choose language"));
+    dialog->get_node<Button>("Continue")->set_text(i18n::text("Continue"));
+    dialog->get_node<Label>("Status")->set_text(language_save_failed_?i18n::text("Cannot save language."):String());
+    // Preview does not change the active or saved language until confirmation.
+    translations->set_locale(previous);
+}
 
 void StartupView::close_language()
 {

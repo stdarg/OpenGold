@@ -16,12 +16,15 @@ win-package\opengoldbox.exe --lang --splash
 
 `--lang` opens a centered language dialog before the optional splash screens.
 Select **English** or **Español** with the mouse or arrow keys, then press Enter
-or **Continue / Continuar**. The choice is saved and immediately applies to
+or **Continue** (shown as **Continuar** in Spanish). Highlighting a language
+immediately translates the dialog title, instructions, button and any error into
+that language. Language names remain in their native form. Previewing does not
+save a preference; confirmation saves the choice and immediately applies it to
 startup and the game. Without `--lang`, startup uses the saved choice, or the
 system language with English fallback. A language value is not required after
 the flag. Closing this dialog with X or Ctrl+X exits through the normal graceful
 shutdown path. If the preference cannot be saved, the dialog displays a
-bilingual error and remains open.
+error in the highlighted language and remains open.
 
 `--splash` remains independent: without it, selection proceeds directly to
 character creation; with it, both translated lettering overlays fade in using

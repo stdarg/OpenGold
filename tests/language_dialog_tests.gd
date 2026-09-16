@@ -58,6 +58,7 @@ func run_checks() -> void:
 	require(choices.item_count == 2, "Only English and Spanish should be offered")
 	require(choices.get_item_text(0) == "English" and choices.get_item_text(1) == "Español", "Native language names are incorrect")
 	require(choices.get_selected_items() == PackedInt32Array([0]), "Current locale must be selected")
+	require(dialog.title == "Language" and dialog.get_node("Title").text == "Choose language" and dialog.get_node("Continue").text == "Continue", "English dialog preview is incorrect")
 	require(current_scene.get_node("Image").texture == null and current_scene.get_node("Text").texture == null, "Splash must not start behind the language dialog")
 	await capture(dialog, "language-dialog")
 	if args.has("--language-close"):
@@ -79,6 +80,9 @@ func run_checks() -> void:
 		return
 	await key(dialog, KEY_DOWN)
 	require(choices.get_selected_items() == PackedInt32Array([1]), "Arrow key did not select Spanish")
+	require(dialog.title == "Idioma" and dialog.get_node("Title").text == "Elige idioma" and dialog.get_node("Continue").text == "Continuar", "Highlighting Spanish did not translate the dialog")
+	require(TranslationServer.get_locale() == "en", "Preview changed the active language before confirmation")
+	await capture(dialog, "language-dialog-spanish")
 	await key(dialog, KEY_ENTER)
 	require(TranslationServer.get_locale() == "es", "Enter did not activate Spanish")
 	var config := ConfigFile.new()
@@ -116,6 +120,8 @@ func run_checks() -> void:
 	choices = dialog.get_node("Choices")
 	require(choices.get_selected_items() == PackedInt32Array([1]), "Reopened dialog did not select the active locale")
 	choices.select(0)
+	choices.item_selected.emit(0)
+	require(dialog.get_node("Title").text == "Choose language" and dialog.get_node("Continue").text == "Continue", "Selecting English did not restore the dialog text")
 	dialog.get_node("Continue").pressed.emit()
 	await settle()
 	require(TranslationServer.get_locale() == "en", "Continue button did not select English")

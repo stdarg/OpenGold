@@ -398,6 +398,10 @@ msgstr "No puedes lanzar conjuros con una armadura para la que no tienes entrena
 msgid "Cannot reach this DC on a d20"
 msgstr "Esta CD no se puede alcanzar con un d20"
 
+#: src/OpenGoldBox/startup_view.cpp:93
+msgid "Cannot save language."
+msgstr "No se puede guardar el idioma."
+
 #: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 msgid "Chain Mail"
 msgstr "Cota de malla"
@@ -458,9 +462,9 @@ msgstr "Elige una muestra para cambiar el color de esta parte en la vista de com
 msgid "Choose an action, then click its target. Enter ends your turn."
 msgstr "Elige una acción y haz clic en su objetivo. Enter termina tu turno."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:56
-msgid "Choose language / Elige idioma"
-msgstr "Choose language / Elige idioma"
+#: src/OpenGoldBox/godot/scenes/startup.tscn:56 src/OpenGoldBox/startup_view.cpp:91
+msgid "Choose language"
+msgstr "Elige idioma"
 
 #: src/OpenGoldBox/character_creation_view.cpp:329
 msgid "Choose one starting class. Checked targets are future plans, not additional class levels."
@@ -539,17 +543,13 @@ msgstr "Confirmar carga"
 msgid "Constitution"
 msgstr "Constitución"
 
-#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73
+#: src/OpenGoldBox/godot/scenes/combat_demo.tscn:73 src/OpenGoldBox/godot/scenes/startup.tscn:80 src/OpenGoldBox/startup_view.cpp:92
 msgid "Continue"
 msgstr "Continuar"
 
 #: src/OpenGoldBox/godot/scenes/rolf_tour.tscn:53
 msgid "Continue  [Enter]"
 msgstr "Continuar  [Enter]"
-
-#: src/OpenGoldBox/godot/scenes/startup.tscn:80
-msgid "Continue / Continuar"
-msgstr "Continue / Continuar"
 
 #: src/OpenGoldBox/rolf_tour_view.cpp:350
 msgid "Continue [Enter]"
@@ -913,9 +913,9 @@ msgstr "Objeto desequipado."
 msgid "Items"
 msgstr "Objetos"
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:33
-msgid "Language / Idioma"
-msgstr "Language / Idioma"
+#: src/OpenGoldBox/godot/scenes/startup.tscn:33 src/OpenGoldBox/startup_view.cpp:90
+msgid "Language"
+msgstr "Idioma"
 
 #: src/OpenGold.Rules.Srd5/src/character_rules.cpp:57
 msgid "Lawful Evil"
