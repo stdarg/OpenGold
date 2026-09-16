@@ -32,7 +32,10 @@ monitor's dimensions, run `./win-package/opengoldbox.exe --fullscreen`.
 By default startup opens character generation directly. To show the two splash
 screens first, run `./win-package/opengoldbox.exe --splash`. Any key advances
 from the OpenGoldBox image to the Pool of Radiance image, then to character
-generation. Escape skips directly to character generation from either image.
+generation. The background appears immediately and the first lettering fades
+in over 0.6 seconds. Advancing clears it immediately and fades the second
+lettering in over 0.6 seconds. Keys remain responsive during either fade;
+Escape skips directly to character generation from either image.
 Both splash screens use the same static background texture; only the transparent
 lettering overlay changes. The background is identical to the
 pixel throughout the transition. The lettering restores the reference

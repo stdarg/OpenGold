@@ -419,7 +419,13 @@ aspect ratios use black letterboxing. The generated lettering layers also remain
 Godot's final rendering; the runtime uses the shared backdrop and transparent lettering layers.
 
 Startup retains the optional `--splash` sequence: engine introduction, then
-Pool of Radiance introduction, then character creation. Any key advances;
+Pool of Radiance introduction, then character creation. The background appears
+immediately. Each lettering layer fades linearly from transparent to opaque
+over 0.6 seconds, using C++ `_process` delta time. A key clears the first lettering
+and starts the second fade; a further key opens character creation. Input
+remains responsive during fades and held-key repeats do not advance.
+Only the lettering opacity animates; the shared background remains unchanged.
+Any key advances;
 Escape skips the splash sequence. Default startup opens character creation.
 The build copies the local shared backdrop from `art/` into the game package.
 See `art/OpenGoldBoxScreens.provenance.md` for artwork sources and prompts.

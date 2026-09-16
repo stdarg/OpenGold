@@ -10,6 +10,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
+namespace { constexpr double text_fade_seconds = 0.6; }
 
 void StartupView::_bind_methods()
 {
@@ -48,8 +49,20 @@ void StartupView::show_screen()
         finish();
         return;
     }
-    get_node<TextureRect>("Text")->set_texture(lettering);
+    auto* text = get_node<TextureRect>("Text"); // scene-owned
+    text->set_texture(lettering);
+    text->set_self_modulate(Color(1, 1, 1, 0));
+    fade_elapsed_ = 0;
+    set_process(true);
     layout_text();
+}
+
+void StartupView::_process(double delta)
+{
+    if (finishing_) return;
+    fade_elapsed_ = std::min(text_fade_seconds, fade_elapsed_ + std::max(0.0, delta));
+    get_node<TextureRect>("Text")->set_self_modulate(Color(1, 1, 1, fade_elapsed_ / text_fade_seconds));
+    if (fade_elapsed_ >= text_fade_seconds) set_process(false);
 }
 
 void StartupView::_notification(int what)
@@ -92,6 +105,7 @@ void StartupView::finish()
 {
     if (finishing_) return;
     finishing_ = true;
+    set_process(false);
     // Scene changes must occur after ready/input dispatch has completed.
     call_deferred("open_character_creation");
 }

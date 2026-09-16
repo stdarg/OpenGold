@@ -67,7 +67,27 @@ func capture(filename: String) -> void:
 			current_scene.get_node("Text").show()
 			await settle()
 
+func check_fade(prefix: String) -> bool:
+	var text: TextureRect = current_scene.get_node("Text")
+	var backdrop: TextureRect = current_scene.get_node("Image")
+	if not require(text.self_modulate.a == 0.0, "Each splash must start with invisible lettering"): return false
+	if not require(backdrop.self_modulate.a == 1.0 and backdrop.modulate.a == 1.0, "Background must appear immediately"): return false
+	await capture(prefix + "-background.png")
+	Engine.time_scale = 1.0
+	await create_timer(0.2).timeout
+	Engine.time_scale = 0.0
+	if not require(text.self_modulate.a > 0.1 and text.self_modulate.a < 0.9, "Lettering must gradually fade in"): return false
+	if not require(backdrop.self_modulate.a == 1.0, "Text fade must not fade the background"): return false
+	await capture(prefix + "-partial.png")
+	Engine.time_scale = 1.0
+	await create_timer(0.45).timeout
+	Engine.time_scale = 0.0
+	if not require(is_equal_approx(text.self_modulate.a, 1.0), "Lettering must finish fading after 0.6 seconds"): return false
+	return true
+
 func run_checks() -> void:
+	# Freeze process delta for exact initial-state checks; check_fade advances it.
+	Engine.time_scale = 0.0
 	for setting in ["viewport_width", "window_width_override"]:
 		if not require(ProjectSettings.get_setting("display/window/size/" + setting) == 1920, "Game width must default to 1920"): return
 	for setting in ["viewport_height", "window_height_override"]:
@@ -81,6 +101,7 @@ func run_checks() -> void:
 		quit(0)
 		return
 	if not is_splash(0): return
+	if not await check_fade("first"): return
 	await capture("splash-first.png")
 	await key(KEY_SPACE, false)
 	if not is_splash(0): return
@@ -92,6 +113,7 @@ func run_checks() -> void:
 	if not is_splash(0): return
 	await key(KEY_SPACE)
 	if not is_splash(1): return
+	if not await check_fade("second"): return
 	await capture("splash-second.png")
 	await key(KEY_SPACE, true, true)
 	if not is_splash(1): return
@@ -107,5 +129,5 @@ func run_checks() -> void:
 	if not is_splash(1): return
 	await key(KEY_ESCAPE)
 	if not require(current_scene.name == "CharacterCreation", "Escape must skip second splash"): return
-	print("Startup check passed: two splashes, key progression, ignored release/repeat/mouse, Escape from either screen")
+	print("Startup check passed: two 0.6s text fades, key progression, ignored release/repeat/mouse, Escape during either fade")
 	quit(0)
