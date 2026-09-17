@@ -21,6 +21,7 @@ config/features=PackedStringArray("4.7")
 
 [autoload]
 
+Screenshots="*res://scenes/screenshots.tscn"
 ApplicationLifecycle="*res://scenes/game_lifecycle.tscn"
 
 [display]

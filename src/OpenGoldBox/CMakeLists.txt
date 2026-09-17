@@ -44,7 +44,7 @@ configure_file("${export_config}" "${game_project}/export_presets.cfg" @ONLY)
 
 add_library(opengoldbox_game SHARED rolf_tour_view.cpp combat_view.cpp character_creation_view.cpp
     portrait_picker.cpp party_preview.cpp level_up_view.cpp campaign_save_view.cpp save_slots.cpp
-    character_pool_view.cpp character_sheet_view.cpp godot_sound_output.cpp register_types.cpp startup_view.cpp game_lifecycle.cpp localization.cpp application_settings.cpp)
+    character_pool_view.cpp character_sheet_view.cpp godot_sound_output.cpp register_types.cpp startup_view.cpp game_lifecycle.cpp screenshot_service.cpp localization.cpp application_settings.cpp)
 target_link_libraries(opengoldbox_game PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
 target_compile_features(opengoldbox_game PRIVATE cxx_std_20)
 target_compile_definitions(opengoldbox_game PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>)
@@ -76,6 +76,8 @@ endforeach()
 add_custom_target(opengoldbox_assets DEPENDS ${portrait_outputs} ${splash_outputs})
 
 if(OPENGOLD_BUILD_TESTS)
+    add_test(NAME opengold_screenshot_tool_tests
+        COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/screenshot_tool_tests.py")
     # These checks use synthetic combat and first-run setup, without original
     # game files, export templates, or a packaged application.
     add_custom_target(opengoldbox_test_project
@@ -94,10 +96,11 @@ if(OPENGOLD_BUILD_TESTS)
             -P "${PROJECT_SOURCE_DIR}/tests/run_godot_test.cmake")
         set_tests_properties("opengold_godot_${name}" PROPERTIES FIXTURES_REQUIRED godot_project
             TIMEOUT 40 LABELS godot RESOURCE_LOCK godot_project
-            ENVIRONMENT "OPENGOLD_GAME_DIR=;OPENGOLD_LANG=en")
+            ENVIRONMENT "OPENGOLD_GAME_DIR=;OPENGOLD_LANG=en;OPENGOLD_SCREENSHOT_DIR=${CMAKE_BINARY_DIR}/screenshots-test/${name}")
     endfunction()
     opengold_godot_test(combat_view combat_view_tests "Game combat view checks passed")
     opengold_godot_test(node_ownership node_ownership_tests "Native node ownership checks passed")
+    opengold_godot_test(screenshots screenshot_tests "Screenshot checks passed")
     opengold_godot_test(shutdown_key shutdown_tests "Shutdown check passed" --reset-game-path --shutdown-key)
     opengold_godot_test(shutdown_close shutdown_tests "Shutdown check passed" --reset-game-path --shutdown-close)
     opengold_godot_test(shutdown_dialog_paused shutdown_tests "Shutdown check passed"

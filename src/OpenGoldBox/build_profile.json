@@ -4,6 +4,7 @@
         "MarginContainer", "HBoxContainer", "VBoxContainer", "StyleBoxFlat",
         "Image", "ImageTexture", "Font", "InputEventKey", "InputEventMouseButton", "InputEventMouseMotion",
         "ProjectSettings", "ResourceLoader", "OS", "Engine", "Window", "SceneTree", "TranslationServer", "ConfigFile",
+        "RenderingServer", "DisplayServer", "Time", "CanvasLayer",
         "AudioStreamPlayer", "AudioStreamWAV", "ViewportTexture", "HSlider", "PackedScene", "TextureRect", "ColorRect"
     ]
 }

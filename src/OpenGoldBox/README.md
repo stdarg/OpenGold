@@ -134,12 +134,55 @@ Combat viewport checks:
 godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
 ```
 
+## Screenshots
+
+Press **Ctrl+S** at any time to save timestamped PNGs in **user://screenshots**.
+This works in setup, game screens, focused dialogs, and while paused. Each capture
+saves the main game view and a separate image for every visible game dialog;
+embedded dialogs are also visible in the main image. Earlier captures are kept.
+A brief notice at the bottom left confirms the folder or explains a failure.
+The notice does not take focus and is excluded from the next capture.
+
+Default folders:
+
+- macOS: `~/Library/Application Support/Godot/app_userdata/OpenGold/screenshots`
+- Windows: `%APPDATA%\Godot\app_userdata\OpenGold\screenshots`
+
+For agent inspection while the game is running, from the repository root:
+
+```bash
+python3 tools/screenshot.py
+```
+
+The command requests a new capture, waits for completion, and prints its image
+paths. These paths can be opened directly by an image viewer or agent image tool.
+It does not change scenes or restart the game. It reports a timeout if the game
+is not running. PNG capture requires a graphical run; `--headless` reports that
+rendering is unavailable.
+
+For development, choose an absolute folder when launching Godot. In macOS bash:
+
+```bash
+export OPENGOLD_SCREENSHOT_DIR="$PWD/build/screenshots"
+godot --path src/OpenGoldBox/godot
+```
+
+In another terminal, run `python3 tools/screenshot.py --directory build/screenshots`.
+Use a different folder for each simultaneously running instance.
+The service watches `capture.request` in that folder, and publishes `latest.json`
+after capture with the request ID, success/error, and image paths/dimensions.
+The helper publishes a complete request atomically, preserves other pending
+requests, and removes its own request on timeout. Godot callers can also call
+`/root/Screenshots.request_capture()` and listen for `capture_completed(files, error)`.
+
 ## Tests
 
 Native CTest checks run in both Debug and release configurations. With
 `OPENGOLD_BUILD_GAME=ON` and `OPENGOLD_BUILD_TESTS=ON`, CTest also runs the combat
 canvas, native node ownership, and keyboard/window/dialog shutdown checks in
-headless Godot. The setup fixture builds and imports the extension automatically;
+headless Godot. Screenshot tests also cover input, pause, request/report handling,
+unavailable rendering, unwritable output, and the external helper's request cleanup.
+The setup fixture builds and imports the extension automatically;
 these checks require neither export templates nor original game files.
 
 To run only these Godot checks from a macOS bash shell:
@@ -152,6 +195,12 @@ The shutdown cases force first-run setup and do not save configuration. Test
 processes have timeouts; script errors and missing completion markers fail the run.
 Original-data integration still requires `OPENGOLD_GAME_DIR` and runs separately
 from these synthetic checks.
+
+To verify actual screenshot pixels, run `tests/screenshot_tests.gd` in graphical
+Godot with `OPENGOLD_SCREENSHOT_DIR` set to an isolated output folder. It checks
+saved PNG dimensions and colors, native dialog capture, unique filenames,
+notification placement, and failure handling. `tests/run_godot_test.cmake`
+accepts `-DGRAPHICAL=ON` for the same timeout/error/completion checks used by CTest.
 
 ## Language selection
 

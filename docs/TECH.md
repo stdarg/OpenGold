@@ -388,6 +388,13 @@ the extension, copies the pinned rules, and imports the game project without an
 export or original game data. Each script must exit successfully and print its
 completion marker within a timeout. See the [game test commands](../src/OpenGoldBox/README.md#tests).
 
+Runtime screenshots belong to the Godot presentation boundary. The native
+`ScreenshotService` autoload captures completed renderer frames and owns no
+campaign state. Global input routes Ctrl+S to that service, including input from
+dialog windows; a local request file exposes the same capture operation to tools.
+Godot references and scene ownership manage images, file handles, and notification
+nodes. The service continues processing while paused and bounds waits for frames.
+
 ### Behavioral Oracle Testing
 
 The original game should be used as an observation oracle:

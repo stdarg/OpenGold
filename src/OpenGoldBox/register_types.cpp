@@ -4,6 +4,7 @@
 #include "save_slots.h"
 #include "startup_view.h"
 #include "game_lifecycle.h"
+#include "screenshot_service.h"
 #include <godot_cpp/godot.hpp>
 
 namespace {
@@ -16,6 +17,7 @@ void initialize(godot::ModuleInitializationLevel level)
         godot::ClassDB::register_class<SaveSlots>();
         godot::ClassDB::register_class<StartupView>();
         godot::ClassDB::register_class<GameLifecycle>();
+        godot::ClassDB::register_class<ScreenshotService>();
     }
 }
 void terminate(godot::ModuleInitializationLevel) {}

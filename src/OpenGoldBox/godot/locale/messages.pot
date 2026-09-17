@@ -394,8 +394,16 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+#: src/OpenGoldBox/screenshot_service.cpp:106 src/OpenGoldBox/screenshot_service.cpp:118 src/OpenGoldBox/screenshot_service.cpp:142 src/OpenGoldBox/screenshot_service.cpp:76
+msgid "Cannot capture the current game frame."
+msgstr ""
+
 #: src/OpenGold.Rules.Srd5/src/srd5.cpp:674
 msgid "Cannot cast spells while wearing untrained armor."
+msgstr ""
+
+#: src/OpenGoldBox/screenshot_service.cpp:98
+msgid "Cannot create the screenshots folder."
 msgstr ""
 
 #: src/OpenGoldBox/character_sheet_view.cpp:144
@@ -408,6 +416,11 @@ msgstr ""
 
 #: src/OpenGoldBox/startup_view.cpp:193
 msgid "Cannot save language."
+msgstr ""
+
+#: src/OpenGoldBox/screenshot_service.cpp:121
+#. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
+msgid "Cannot save screenshot: {path}"
 msgstr ""
 
 #: src/OpenGoldBox/startup_view.cpp:142
@@ -1536,6 +1549,19 @@ msgstr ""
 
 #: src/OpenGold.Rules.Srd5/src/srd5.cpp:548 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:56
 msgid "Scorching Ray"
+msgstr ""
+
+#: src/OpenGoldBox/screenshot_service.cpp:164
+#. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
+msgid "Screenshot saved to {path}"
+msgstr ""
+
+#: src/OpenGoldBox/screenshot_service.cpp:101
+msgid "Screenshots require a running graphical game window."
+msgstr ""
+
+#: src/OpenGoldBox/screenshot_service.cpp:161
+msgid "Screenshots saved, but the capture report could not be written."
 msgstr ""
 
 #: src/OpenGoldBox/godot/scenes/combat_demo.tscn:63

@@ -394,9 +394,17 @@ msgstr "Campaña guardada."
 msgid "Cancel"
 msgstr "Cancelar"
 
+#: src/OpenGoldBox/screenshot_service.cpp:106 src/OpenGoldBox/screenshot_service.cpp:118 src/OpenGoldBox/screenshot_service.cpp:142 src/OpenGoldBox/screenshot_service.cpp:76
+msgid "Cannot capture the current game frame."
+msgstr "No se puede capturar la imagen actual del juego."
+
 #: src/OpenGold.Rules.Srd5/src/srd5.cpp:674
 msgid "Cannot cast spells while wearing untrained armor."
 msgstr "No puedes lanzar conjuros con una armadura para la que no tienes entrenamiento."
+
+#: src/OpenGoldBox/screenshot_service.cpp:98
+msgid "Cannot create the screenshots folder."
+msgstr "No se puede crear la carpeta de capturas de pantalla."
 
 #: src/OpenGoldBox/character_sheet_view.cpp:144
 msgid "Cannot reach this DC on a d20"
@@ -409,6 +417,11 @@ msgstr "No se puede leer la lista de comprobación de archivos del juego."
 #: src/OpenGoldBox/startup_view.cpp:193
 msgid "Cannot save language."
 msgstr "No se puede guardar el idioma."
+
+#: src/OpenGoldBox/screenshot_service.cpp:121
+#. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
+msgid "Cannot save screenshot: {path}"
+msgstr "No se puede guardar la captura de pantalla: {path}"
 
 #: src/OpenGoldBox/startup_view.cpp:142
 msgid "Cannot save settings beside the executable. Check that the folder is writable and settings.cfg is valid."
@@ -1537,6 +1550,19 @@ msgstr "Salvaciones"
 #: src/OpenGold.Rules.Srd5/src/srd5.cpp:548 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:56
 msgid "Scorching Ray"
 msgstr "Rayo abrasador"
+
+#: src/OpenGoldBox/screenshot_service.cpp:164
+#. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
+msgid "Screenshot saved to {path}"
+msgstr "Captura de pantalla guardada en {path}"
+
+#: src/OpenGoldBox/screenshot_service.cpp:101
+msgid "Screenshots require a running graphical game window."
+msgstr "Las capturas requieren una ventana gráfica del juego en ejecución."
+
+#: src/OpenGoldBox/screenshot_service.cpp:161
+msgid "Screenshots saved, but the capture report could not be written."
+msgstr "Se guardaron las capturas, pero no se pudo escribir el informe de captura."
 
 #: src/OpenGoldBox/godot/scenes/combat_demo.tscn:63
 msgid "Second Wind"
