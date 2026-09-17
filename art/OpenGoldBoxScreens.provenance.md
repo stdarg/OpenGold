@@ -46,7 +46,7 @@ the user's requirement that only the text change between screens. The rendered
 startup check hides the text and compares the entire background pixel buffer
 across both screens.
 
-PNGs remain local under the repository's existing ignore rules. The build
-copies the shared backdrop into the game package. Background rights and
+The five runtime PNGs are tracked in the repository. The build copies the
+shared backdrop and lettering overlays into the game package. Background rights and
 trademark clearance have not been independently verified; provenance is not
 legal clearance.
