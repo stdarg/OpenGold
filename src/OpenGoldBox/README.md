@@ -134,6 +134,13 @@ Combat viewport checks:
 godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
 ```
 
+## Combat sprite scale demo
+
+Launch with `--sprite-demo` to compare customizable short, normal, and Large Form
+player sprites with five monsters on a combat map. All figures switch poses every
+second. The demo includes ±10% and ±100% zoom buttons, pixel measurements, and
+Ctrl+S screenshots. See [launch commands and size conventions](../../docs/SPRITE-DEMO.md).
+
 ## Screenshots
 
 Press **Ctrl+S** at any time to save timestamped PNGs in **user://screenshots**.
@@ -179,7 +186,7 @@ requests, and removes its own request on timeout. Godot callers can also call
 
 Native CTest checks run in both Debug and release configurations. With
 `OPENGOLD_BUILD_GAME=ON` and `OPENGOLD_BUILD_TESTS=ON`, CTest also runs the combat
-canvas, native node ownership, and keyboard/window/dialog shutdown checks in
+canvas, sprite scale demo, native node ownership, and keyboard/window/dialog shutdown checks in
 headless Godot. Screenshot tests also cover input, pause, request/report handling,
 unavailable rendering, unwritable output, and the external helper's request cleanup.
 The setup fixture builds and imports the extension automatically;

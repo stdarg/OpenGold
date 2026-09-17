@@ -30,6 +30,10 @@ The game now has a separate source copy in [src/OpenGoldBox](../src/OpenGoldBox/
 See the root [README](../README.md) and
 [feature documentation](../docs/CHARACTER-CREATION.md) for demo limitations.
 
+The new [combat sprite scale demo](../docs/SPRITE-DEMO.md) runs through the game's
+`--sprite-demo` option so it uses the current renderer, customization, and
+screenshot service.
+
 ## Relocation validation
 
 The demo build and all 12 native tests pass. Headless character, training combat,
