@@ -1,3 +1,5 @@
+#include "godot_images.h"
+#include "godot_nodes.h"
 #include "application_settings.h"
 #include "localization.h"
 #include "game_resources.h"
@@ -31,7 +33,6 @@
 using namespace godot;
 using namespace opengold::por;
 namespace {
-struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
 // Numeric constructors are safe before Godot initializes the extension interface.
 const Color background(18/255.f,26/255.f,32/255.f), panel(28/255.f,39/255.f,46/255.f),
     line(65/255.f,80/255.f,88/255.f), gold(215/255.f,180/255.f,121/255.f),
@@ -64,8 +65,8 @@ void RolfTourView::_ready()
     get_node<Button>("Inventory")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
     get_node<Button>("InventoryPanel/Close")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
     for(unsigned slot=0;slot<8;++slot){auto* member=get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot));member->connect("pressed",callable_mp(this,&RolfTourView::party_selected).bind(slot));
-        std::unique_ptr<Button,DeleteNode> arrow(memnew(Button));arrow->set_name("Advance");arrow->set_text(String::utf8("↑"));arrow->set_size(Vector2(30,26));arrow->set_tooltip_text(i18n::text(N_("Level up")));
-        arrow->connect("pressed",callable_mp(this,&RolfTourView::level_up_requested).bind(slot));member->add_child(arrow.get());arrow.release();}
+        auto arrow=presentation::make_node<Button>();arrow->set_name("Advance");arrow->set_text(String::utf8("↑"));arrow->set_size(Vector2(30,26));arrow->set_tooltip_text(i18n::text(N_("Level up")));
+        arrow->connect("pressed",callable_mp(this,&RolfTourView::level_up_requested).bind(slot));presentation::attach_child(*member,std::move(arrow));}
     get_node<ItemList>("InventoryPanel/Items")->connect("item_selected",callable_mp(this,&RolfTourView::inventory_selected));
     get_node<Button>("InventoryPanel/Equip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(true));
     get_node<Button>("InventoryPanel/Unequip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(false));
@@ -73,7 +74,7 @@ void RolfTourView::_ready()
     get_node<Window>("MemberSheet")->connect("close_requested",callable_mp(this,&RolfTourView::close_sheet));
     get_node<Button>("LeaveShop")->connect("pressed",callable_mp(this,&RolfTourView::leave_shop));
     get_window()->set_min_size(Vector2i(960,720));
-    for(bool saving:{true,false}){std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(saving?"SaveGame":"LoadGame");button->set_text(i18n::text(saving?N_("Save game"):N_("Load game")));add_child(button.get());button->connect("pressed",callable_mp(this,&RolfTourView::request_save).bind(saving));button->set_visible(embedded_party_);button.release();}
+    for(bool saving:{true,false}){auto button=presentation::make_node<Button>();button->set_name(saving?"SaveGame":"LoadGame");button->set_text(i18n::text(saving?N_("Save game"):N_("Load game")));button->connect("pressed",callable_mp(this,&RolfTourView::request_save).bind(saving));button->set_visible(embedded_party_);presentation::attach_child(*this,std::move(button));}
     ready_=true;
     layout();
     if (Engine::get_singleton()->is_editor_hint()) return;
@@ -172,10 +173,7 @@ void RolfTourView::restart()
             if(campaign_)session_->campaign_party(campaign_);
             for (unsigned i=0;i<sprites_.size();++i) {
                 const auto& source=session_->sprites()[i];
-                PackedByteArray pixels;pixels.resize(source.rgba.size());
-                std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
-                const auto image=godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels);
-                sprites_[i]=ImageTexture::create_from_image(image);
+                sprites_[i]=presentation::image_texture(source);
             }
         }
         rendered_pose_.reset();
@@ -308,9 +306,7 @@ void RolfTourView::refresh()
     layout();
     if(session_ && rendered_sprite_id_!=session_->snapshot().sprite_id){
         for(unsigned n=0;n<3;++n){const auto& source=session_->sprites()[n];
-            PackedByteArray pixels;pixels.resize(source.rgba.size());
-            std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
-            sprites_[n]=ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels));
+            sprites_[n]=presentation::image_texture(source);
         }
         rendered_sprite_id_=session_->snapshot().sprite_id;
     }
@@ -318,9 +314,7 @@ void RolfTourView::refresh()
         try {
             const auto pose = session_->snapshot().pose;
             const auto source = session_->picture()?*session_->picture():compose_exploration_view(session_->map(), session_->wall_art(), pose.x, pose.y, pose.facing);
-            PackedByteArray pixels; pixels.resize(source.rgba.size());
-            std::copy(source.rgba.begin(), source.rgba.end(), pixels.ptrw());
-            const auto image = godot::Image::create_from_data(source.width, source.height, false, godot::Image::FORMAT_RGBA8, pixels);
+            const auto image = presentation::rgba_image(source);
             if (wall_view_.is_null()) wall_view_ = ImageTexture::create_from_image(image);
             else wall_view_->set_image(image);
             rendered_pose_ = pose;

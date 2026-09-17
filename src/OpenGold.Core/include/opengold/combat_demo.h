@@ -43,10 +43,23 @@ public:
     [[nodiscard]] unsigned script_variable(std::uint16_t address) const;
     [[nodiscard]] const auto& art() const noexcept{return art_;}
 private:
+    class CampaignCombat {
+    public:
+        explicit CampaignCombat(std::shared_ptr<CampaignParty> party);
+        ~CampaignCombat();
+        CampaignCombat(const CampaignCombat&) = delete;
+        CampaignCombat& operator=(const CampaignCombat&) = delete;
+        CampaignCombat(CampaignCombat&&) noexcept = default;
+        CampaignCombat& operator=(CampaignCombat&&) = delete;
+    private:
+        std::shared_ptr<CampaignParty> party_;
+    };
     std::unique_ptr<rules::RulesModule> module_;
     std::unique_ptr<rules::CombatSession> combat_;
     std::shared_ptr<CampaignParty> campaign_;
-    bool owns_campaign_combat_{};
+    std::optional<CampaignCombat> campaign_combat_;
+    void install_combat(std::unique_ptr<rules::CombatSession> next, std::string reward_id);
+    void finish_campaign_combat(rules::Outcome outcome);
     void start_encounter(std::vector<rules::Participant> enemies, std::string reward_id);
     void synchronize_party();
     std::optional<por::EclMachine> vm_;

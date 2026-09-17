@@ -1,3 +1,4 @@
+#include "godot_nodes.h"
 #include "application_settings.h"
 #include "localization.h"
 #include "game_resources.h"
@@ -23,14 +24,13 @@
 using namespace godot;
 using namespace opengold;
 namespace {
-struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
 std::filesystem::path game_directory(){const auto dir=settings::game_path();return std::filesystem::u8path(dir.utf8().get_data());}
 auto rules_module(){return srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));}
 }
 void CharacterCreationView::setup_saves(){
     save_read_check_=OS::get_singleton()->get_cmdline_user_args().has("--save-check-read");
-    std::unique_ptr<SaveSlots,DeleteNode> dialog(memnew(SaveSlots));dialog->set_name("SaveSlots");dialog->save=[this](const auto& p){save_campaign(p);};dialog->load=[this](const auto& p){load_campaign(p);};add_child(dialog.get());dialog.release();
-    for(bool saving:{true,false}){std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(saving?"Save":"Load");button->set_text(i18n::text(saving?N_("Save game"):N_("Load game")));button->connect("pressed",callable_mp(this,&CharacterCreationView::open_saves).bind(saving));get_node<Control>("PartyPanel")->add_child(button.get());button.release();}
+    auto dialog=presentation::make_node<SaveSlots>();dialog->set_name("SaveSlots");dialog->save=[this](const auto& p){save_campaign(p);};dialog->load=[this](const auto& p){load_campaign(p);};presentation::attach_child(*this,std::move(dialog));
+    for(bool saving:{true,false}){auto button=presentation::make_node<Button>();button->set_name(saving?"Save":"Load");button->set_text(i18n::text(saving?N_("Save game"):N_("Load game")));button->connect("pressed",callable_mp(this,&CharacterCreationView::open_saves).bind(saving));presentation::attach_child(*get_node<Control>("PartyPanel"),std::move(button));}
 }
 void CharacterCreationView::open_saves(bool saving){
     if(campaign_->in_combat())return;
@@ -51,14 +51,14 @@ void CharacterCreationView::load_campaign(const std::filesystem::path& path){
     auto saved=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*module,campaign_asset_identity(directory),&prototype);
     auto replacement=std::make_shared<CampaignParty>(std::move(module));replacement->restore(std::move(saved.party));
     for(const auto& m:replacement->state().roster){art_->validate(m.character.appearance());(void)replacement->profile(m.id);}
-    std::unique_ptr<Node,DeleteNode> owned;
-    if(saved.town&&!town){Ref<PackedScene> packed=ResourceLoader::get_singleton()->load("res://scenes/rolf_tour.tscn");if(packed.is_null())throw std::runtime_error("Missing town scene");owned.reset(packed->instantiate());town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid town scene");town->set_name("CampaignTown");town->campaign_party(replacement);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));add_child(owned.get());owned.release();}
+    presentation::NodeOwner<Node> owned;
+    if(saved.town&&!town){owned=presentation::instantiate_scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid town scene");town->set_name("CampaignTown");town->campaign_party(replacement);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));presentation::attach_child(*this,std::move(owned));}
     // All decoding, resource loading and character validation completed above.
     campaign_=std::move(replacement);
     campaign_defeated_=false;get_node<Window>("Defeat")->hide();
-    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"))){remove_child(fight);std::unique_ptr<Node,DeleteNode> removed(fight);}
+    if(auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"))){remove_child(fight);presentation::NodeOwner<Node> removed(fight);}
     if(saved.town){town->restore_campaign(campaign_,std::move(*saved.town));town->hide();town->set_process(false);town->set_process_input(false);}
-    else if(town){remove_child(town);std::unique_ptr<Node,DeleteNode> removed(town);}
+    else if(town){remove_child(town);presentation::NodeOwner<Node> removed(town);}
     pool_added_.clear();for(unsigned i=0;i<48;++i)for(const auto& m:campaign_->state().roster)if(m.creation_source=="pool:v1:"+std::to_string(i))pool_added_.push_back(i);completed_.reset();added_to_party_=false;roster_index_=0;party_open_=true;
     get_node<Button>("ReturnParty")->hide();get_node<Control>("PartyPanel")->show();error_=i18n::text("Campaign loaded.");refresh_party();party_layout();
 }

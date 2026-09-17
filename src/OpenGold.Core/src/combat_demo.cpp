@@ -29,27 +29,50 @@ std::optional<Image> original_icon(const std::filesystem::path& directory,unsign
 }
 CombatDemo::CombatDemo(std::unique_ptr<RulesModule> module):module_(std::move(module))
 {if(!module_)throw std::runtime_error("A combat rules module is required");}
-CombatDemo::~CombatDemo(){if(campaign_&&owns_campaign_combat_)campaign_->end_combat();}
+CombatDemo::~CombatDemo() = default;
+CombatDemo::CampaignCombat::CampaignCombat(std::shared_ptr<CampaignParty> party)
+    : party_(std::move(party))
+{party_->begin_combat();}
+CombatDemo::CampaignCombat::~CampaignCombat()
+{if(party_)party_->end_combat();}
 void CombatDemo::campaign_party(std::shared_ptr<CampaignParty> party)
 {if(combat_)throw std::runtime_error("Attach party before starting combat");campaign_=std::move(party);}
 void CombatDemo::synchronize_party()
 {
-    if(campaign_&&combat_&&owns_campaign_combat_){campaign_->apply_combat(combat_->snapshot());
-        if(combat_->snapshot().outcome!=Outcome::ongoing){
-            campaign_->end_combat();owns_campaign_combat_=false;
-            if(combat_->snapshot().outcome==Outcome::victory&&!reward_id_.empty()){
-                campaign_->award_experience(300,reward_id_);reward_id_.clear();
-            }
-        }}
+    if(!campaign_combat_)return;
+    const auto state=combat_->snapshot();
+    campaign_->apply_combat(state);
+    finish_campaign_combat(state.outcome);
+}
+void CombatDemo::finish_campaign_combat(Outcome outcome)
+{
+    if(outcome==Outcome::ongoing)return;
+    campaign_combat_.reset();
+    if(outcome==Outcome::victory&&!reward_id_.empty()){
+        campaign_->award_experience(300,reward_id_);reward_id_.clear();
+    }
+}
+void CombatDemo::install_combat(std::unique_ptr<CombatSession> next,std::string reward_id)
+{
+    if(!next)throw std::runtime_error("Rules module returned no combat session");
+    if(!campaign_){combat_=std::move(next);return;}
+    if(campaign_->identity()!=module_->identity())throw std::runtime_error("Party and combat rules differ");
+    // Failed snapshot validation releases the edit lock and leaves the previous
+    // session intact. Only a successful handoff transfers the lock to this owner.
+    CampaignCombat ownership(campaign_);
+    const auto state=next->snapshot();
+    campaign_->apply_combat(state);
+    combat_=std::move(next);
+    campaign_combat_.emplace(std::move(ownership));
+    reward_id_=std::move(reward_id);
+    finish_campaign_combat(state.outcome);
 }
 void CombatDemo::start_encounter(std::vector<Participant> enemies,std::string reward_id)
 {
     auto participants=campaign_?campaign_->participants():party();
     participants.insert(participants.end(),enemies.begin(),enemies.end());
     auto next=module_->create({arena(),std::move(participants)},seed_);
-    if(campaign_){if(campaign_->identity()!=module_->identity())throw std::runtime_error("Party and combat rules differ");
-        campaign_->begin_combat();owns_campaign_combat_=true;reward_id_=std::move(reward_id);}
-    combat_=std::move(next);synchronize_party();
+    install_combat(std::move(next),std::move(reward_id));
 }
 void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
 {
@@ -80,9 +103,9 @@ void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
     const auto offset=forward[encounter.facing];const Cell target{origin.x+offset.x,origin.y+offset.y};
     for(auto& enemy:encounter.enemies){place(enemy,target);enemy.surprised=encounter.surprise==2;participants.push_back(std::move(enemy));}
     auto next=module_->create({encounter.field.geometry,std::move(participants)},seed);
-    campaign_->begin_combat();owns_campaign_combat_=true;combat_=std::move(next);seed_=seed;
+    install_combat(std::move(next),{});seed_=seed;
     battlefield_tiles_=std::move(encounter.field.tiles);terrain_art_=std::move(encounter.terrain_art);art_=std::move(encounter.art);
-    status_="Slums encounter / original dungeon geometry";dialogue_="The original script has requested combat.";synchronize_party();
+    status_="Slums encounter / original dungeon geometry";dialogue_="The original script has requested combat.";
 }
 const CombatSession& CombatDemo::combat() const
 {if(!combat_)throw std::runtime_error("No active combat");return *combat_;}
@@ -98,6 +121,7 @@ void CombatDemo::training(std::uint64_t seed)
 }
 void CombatDemo::slums(const std::filesystem::path& directory,std::uint64_t seed)
 {
+    if(campaign_combat_)throw std::runtime_error("Finish combat before changing the party");
     const auto catalog=EclCatalog::load(directory);const auto program=catalog.find({"ECL2.DAX",20});
     if(!program)throw std::runtime_error("Slums profile requires ECL2.DAX:20");
     auto creatures=CreatureCatalog::load(directory);

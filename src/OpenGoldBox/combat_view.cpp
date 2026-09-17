@@ -1,8 +1,10 @@
+#include "godot_images.h"
 #include "application_settings.h"
 #include "localization.h"
 #include "game_resources.h"
 #include "combat_view.h"
 #include "opengold/srd5.h"
+#include "opengold/save_file.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/font.hpp>
@@ -24,7 +26,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <fstream>
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 constexpr double combat_zoom=3.0;
@@ -114,32 +115,23 @@ void CombatView::sync_art()
 {
     art_.clear();terrain_art_.clear();if(!demo_)return;
     for(const auto& source:demo_->terrain_art()){
-        PackedByteArray pixels;pixels.resize(source.rgba.size());std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
-        terrain_art_.push_back(ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels)));
+        terrain_art_.push_back(presentation::image_texture(source));
     }
     for(const auto& source:demo_->art()) {
-        PackedByteArray pixels;pixels.resize(source.image.rgba.size());std::copy(source.image.rgba.begin(),source.image.rgba.end(),pixels.ptrw());
-        const auto image=godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels);
-        art_[source.entity]=ImageTexture::create_from_image(image);
+        art_[source.entity]=presentation::image_texture(source.image);
     }
-    for(const auto& source:campaign_art_){PackedByteArray pixels;pixels.resize(source.image.rgba.size());std::copy(source.image.rgba.begin(),source.image.rgba.end(),pixels.ptrw());
-        art_[source.entity]=ImageTexture::create_from_image(godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels));}
+    for(const auto& source:campaign_art_){
+        art_[source.entity]=presentation::image_texture(source.image);}
 }
 void CombatView::save_game()
 {
-    try{const auto bytes=demo_->save_combat();const auto path=local_path("user://checks/combat.save");std::filesystem::create_directories(path.parent_path());
-        auto temporary=path;temporary+=".tmp";auto backup=path;backup+=".bak";
-        {std::ofstream output(temporary,std::ios::binary|std::ios::trunc);output<<bytes;output.close();if(!output)throw std::runtime_error("Combat save failed");}
-        const bool previous=std::filesystem::exists(path);
-        if(previous){std::filesystem::remove(backup);std::filesystem::rename(path,backup);}
-        try{std::filesystem::rename(temporary,path);}catch(...){if(previous)std::filesystem::rename(backup,path);throw;}
+    try{write_save_file(local_path("user://checks/combat.save"),demo_->save_combat(),65536);
         error_.clear();get_node<Label>("Prompt")->set_text(i18n::text(N_("Training combat saved.")));
     }catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::load_game()
 {
-    try{const auto path=local_path("user://checks/combat.save");if(std::filesystem::file_size(path)>65536)throw std::runtime_error("Combat save exceeds limit");
-        std::ifstream input(path,std::ios::binary);const std::string bytes{std::istreambuf_iterator<char>(input),{}};if(input.bad())throw std::runtime_error("Combat save read failed");
+    try{const auto bytes=read_save_file(local_path("user://checks/combat.save"),65536);
         demo_->restore_combat(bytes);error_.clear();refresh();
     }catch(const std::exception& e){error_=e.what();refresh();}
 }

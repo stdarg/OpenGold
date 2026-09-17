@@ -1,3 +1,4 @@
+#include "godot_images.h"
 #include "application_settings.h"
 #include "character_creation_view.h"
 #include "character_text.h"
@@ -269,9 +270,7 @@ void CharacterCreationView::refresh_art()
     const std::array<opengold::Image,3> images{opengold::Image{},art_->icon(a,false),art_->icon(a,true)};
     images_[0]=portrait_texture(a,creator_->draft());
     for(unsigned i=1;i<images.size();++i) {
-        const auto& source=images[i];PackedByteArray pixels;pixels.resize(source.rgba.size());
-        std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
-        images_[i]=ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels));
+        const auto& source=images[i];images_[i]=presentation::image_texture(source);
     }
     rendered_=a;
 }

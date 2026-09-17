@@ -64,6 +64,21 @@ One earlier exploratory answer suggested `C# + MonoGame`. Later discussion and t
 - maintain separation of concerns between file-format decoding, engine and game
   rules, campaign-specific behavior, and Godot presentation code
 
+Shared implementation boundaries:
+
+- `OpenGold.Core/save_file` owns bounded file reads and verified, durable save
+  replacement. Campaign serialization and the game's combat view use this service;
+  neither duplicates platform file handling. Temporary files and native handles
+  have scoped owners, including failed writes.
+- `CombatDemo` holds a scoped campaign edit lock. A failed initial snapshot
+  validation releases the lock before returning an error; completing or destroying
+  combat releases it as well.
+- The game's `godot_nodes.h` owns detached nodes until Godot accepts them as
+  children. Returned node pointers borrow from the parent. `godot_images.h`
+  centralizes conversion from engine RGBA images to Godot resources.
+- The SRD module shares one deterministic dice implementation across character
+  creation, combat, and temple healing, preserving saved random sequences.
+
 ### Why This Stack
 
 `C/C++` fits the project because it supports a portable native engine with direct integration into Godot:

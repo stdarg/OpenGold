@@ -1,3 +1,4 @@
+#include "godot_nodes.h"
 #include "localization.h"
 #include "character_creation_view.h"
 #include "rolf_tour_view.h"
@@ -23,40 +24,35 @@
 using namespace godot;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),s.size());}
-struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
-template<class T> T* control(Node* parent,const String& name,Rect2 rect){
-    std::unique_ptr<T,DeleteNode> owned(memnew(T));owned->set_name(name);
-    owned->set_position(rect.position);owned->set_size(rect.size);
-    auto* borrowed=owned.get();parent->add_child(owned.get());owned.release();return borrowed;
-}
+
 }
 void CharacterCreationView::setup_advancement(){
     get_node<ItemList>("PartyPanel/Roster")->add_theme_constant_override("v_separation",8);
     const auto args=OS::get_singleton()->get_cmdline_user_args();advancement_check_=args.has("--advancement-check");advancement_review_=args.has("--level-up-review");
-    std::unique_ptr<Window,DeleteNode> owned(memnew(Window));owned->set_name("LevelUp");
+    auto owned=presentation::make_node<Window>();owned->set_name("LevelUp");
     owned->set_title(i18n::text(N_("Level up")));owned->set_size(Vector2i(700,670));owned->set_min_size(Vector2i(700,670));
     owned->set_flag(Window::FLAG_RESIZE_DISABLED,true);owned->set_transient(true);owned->set_exclusive(true);
-    owned->hide();auto* window=owned.get();add_child(owned.get());owned.release();
+    owned->hide();auto* window=owned.get();presentation::attach_child(*this,std::move(owned));
     window->connect("close_requested",callable_mp(this,&CharacterCreationView::close_advancement));
-    auto* title=control<Label>(window,"Title",Rect2(24,20,652,40));title->add_theme_font_size_override("font_size",24);title->set_clip_text(true);
-    control<Label>(window,"HP",Rect2(24,70,652,42));
-    control<Label>(window,"FeatLabel",Rect2(24,122,652,28))->set_text(i18n::text(N_("Feat or ability points")));
-    auto* feat=control<OptionButton>(window,"Feat",Rect2(24,155,652,38));
+    auto* title=presentation::add_control<Label>(*window,"Title",Rect2(24,20,652,40));title->add_theme_font_size_override("font_size",24);title->set_clip_text(true);
+    presentation::add_control<Label>(*window,"HP",Rect2(24,70,652,42));
+    presentation::add_control<Label>(*window,"FeatLabel",Rect2(24,122,652,28))->set_text(i18n::text(N_("Feat or ability points")));
+    auto* feat=presentation::add_control<OptionButton>(*window,"Feat",Rect2(24,155,652,38));
     feat->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
     for(unsigned i=0;i<6;++i){
-        control<Label>(window,String("AbilityLabel")+String::num_uint64(i),Rect2(24+i*110,205,100,25))->set_text(i18n::text(abilities[i]));
-        auto* points=control<OptionButton>(window,String("Ability")+String::num_uint64(i),Rect2(24+i*110,236,100,36));
+        presentation::add_control<Label>(*window,String("AbilityLabel")+String::num_uint64(i),Rect2(24+i*110,205,100,25))->set_text(i18n::text(abilities[i]));
+        auto* points=presentation::add_control<OptionButton>(*window,String("Ability")+String::num_uint64(i),Rect2(24+i*110,236,100,36));
         for(int n=0;n<=2;++n)points->add_item(String("+")+String::num_int64(n));
         points->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     }
-    control<Label>(window,"SpellLabel",Rect2(24,292,652,28))->set_text(i18n::text(N_("Prepared spells")));
-    for(int i=0;i<4;++i){auto* spell=control<CheckBox>(window,String("Spell")+String::num_int64(i),Rect2(24,325+i*38,652,36));
+    presentation::add_control<Label>(*window,"SpellLabel",Rect2(24,292,652,28))->set_text(i18n::text(N_("Prepared spells")));
+    for(int i=0;i<4;++i){auto* spell=presentation::add_control<CheckBox>(*window,String("Spell")+String::num_int64(i),Rect2(24,325+i*38,652,36));
         spell->connect("toggled",callable_mp(this,&CharacterCreationView::advancement_spell_changed).bind(i));}
-    auto* note=control<Label>(window,"Note",Rect2(24,489,652,66));note->set_text(i18n::text(N_("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.")));note->add_theme_font_size_override("font_size",15);
-    auto* error=control<Label>(window,"Error",Rect2(24,560,652,34));error->add_theme_font_size_override("font_size",15);
-    auto* cancel=control<Button>(window,"Cancel",Rect2(386,610,136,40));cancel->set_text(i18n::text(N_("Cancel")));cancel->connect("pressed",callable_mp(this,&CharacterCreationView::close_advancement));
-    auto* confirm=control<Button>(window,"Confirm",Rect2(536,610,140,40));confirm->set_text(i18n::text(N_("Confirm")));confirm->connect("pressed",callable_mp(this,&CharacterCreationView::confirm_advancement));
+    auto* note=presentation::add_control<Label>(*window,"Note",Rect2(24,489,652,66));note->set_text(i18n::text(N_("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.")));note->add_theme_font_size_override("font_size",15);
+    auto* error=presentation::add_control<Label>(*window,"Error",Rect2(24,560,652,34));error->add_theme_font_size_override("font_size",15);
+    auto* cancel=presentation::add_control<Button>(*window,"Cancel",Rect2(386,610,136,40));cancel->set_text(i18n::text(N_("Cancel")));cancel->connect("pressed",callable_mp(this,&CharacterCreationView::close_advancement));
+    auto* confirm=presentation::add_control<Button>(*window,"Confirm",Rect2(536,610,140,40));confirm->set_text(i18n::text(N_("Confirm")));confirm->connect("pressed",callable_mp(this,&CharacterCreationView::confirm_advancement));
 }
 void CharacterCreationView::refresh_advancement_arrows(){
     auto* list=get_node<ItemList>("PartyPanel/Roster");if(!list->is_visible_in_tree())return;
@@ -64,7 +60,7 @@ void CharacterCreationView::refresh_advancement_arrows(){
     const auto& roster=campaign_->state().roster;
     for(std::size_t i=0;i<roster.size();++i){const auto& member=roster[i];const auto name=String("Advance")+String::num_uint64(member.id);
         auto* arrow=Object::cast_to<Button>(list->get_node_or_null(name));
-        if(!arrow){arrow=control<Button>(list,name,Rect2(0,0,30,26));arrow->set_text(String::utf8("↑"));arrow->set_tooltip_text(i18n::format("Level up {name}",{{"name",gs(member.character.sheet().name)}}));
+        if(!arrow){arrow=presentation::add_control<Button>(*list,name,Rect2(0,0,30,26));arrow->set_text(String::utf8("↑"));arrow->set_tooltip_text(i18n::format("Level up {name}",{{"name",gs(member.character.sheet().name)}}));
             arrow->add_theme_font_size_override("font_size",14);arrow->connect("pressed",callable_mp(this,&CharacterCreationView::open_advancement).bind(member.id));}
         arrow->set_tooltip_text(i18n::format("Level up {name}",{{"name",gs(member.character.sheet().name)}}));
         const auto rect=list->get_item_rect(i);const float y=rect.position.y-list->get_v_scroll_bar()->get_value();

@@ -1,3 +1,4 @@
+#include "godot_images.h"
 #include "localization.h"
 #include "character_creation_view.h"
 #include "rolf_tour_view.h"
@@ -45,8 +46,7 @@ void CharacterCreationView::pool_selected(std::int64_t index)
     get_node<RichTextLabel>("PoolModal/Text")->set_text(sheet_text(character));
     get_node<TextureRect>("PoolModal/Portrait")->set_texture(portrait_texture(character.appearance(),character.creation_data()));
     for(unsigned i=1;i<3;++i){const auto source=art_->icon(character.appearance(),i==2);
-        PackedByteArray pixels;pixels.resize(source.rgba.size());std::copy(source.rgba.begin(),source.rgba.end(),pixels.ptrw());
-        get_node<TextureRect>(i==0?"PoolModal/Portrait":i==1?"PoolModal/Ready":"PoolModal/Action")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(source.width,source.height,false,godot::Image::FORMAT_RGBA8,pixels)));}
+        get_node<TextureRect>(i==0?"PoolModal/Portrait":i==1?"PoolModal/Ready":"PoolModal/Action")->set_texture(presentation::image_texture(source));}
     const bool added=std::find(pool_added_.begin(),pool_added_.end(),pool_index_)!=pool_added_.end();
     const bool full=std::none_of(campaign_->state().slots.begin(),campaign_->state().slots.begin()+6,[](auto id){return !id;});
     get_node<Button>("PoolModal/Add")->set_disabled(added||full);

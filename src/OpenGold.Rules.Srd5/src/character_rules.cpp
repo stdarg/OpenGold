@@ -1,3 +1,4 @@
+#include "dice.h"
 #include "opengold/srd5.h"
 #include <algorithm>
 #include <cstdlib>
@@ -95,15 +96,8 @@ ClassRequirements CreatorRules::class_requirements(std::string_view id) const
 }
 std::array<AbilityRoll,6> CreatorRules::roll(std::uint64_t& state) const
 {
-    const auto die=[&]() {
-        // SplitMix64 and rejection sampling, stable across platforms.
-        std::uint64_t z;
-        do {z=(state+=0x9e3779b97f4a7c15ULL);z=(z^(z>>30))*0xbf58476d1ce4e5b9ULL;
-            z=(z^(z>>27))*0x94d049bb133111ebULL;z^=z>>31;} while(z<4);
-        return static_cast<int>(z%6)+1;
-    };
     std::array<AbilityRoll,6> result;
-    for(auto& r:result) {for(auto& n:r.dice)n=die();r.discarded=static_cast<unsigned>(std::min_element(r.dice.begin(),r.dice.end())-r.dice.begin());}
+    for(auto& r:result) {for(auto& n:r.dice)n=roll_die(state,6);r.discarded=static_cast<unsigned>(std::min_element(r.dice.begin(),r.dice.end())-r.dice.begin());}
     return result;
 }
 std::optional<int> CreatorRules::ability_score(const CharacterDraft& d,unsigned ability) const

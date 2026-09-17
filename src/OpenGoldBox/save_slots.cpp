@@ -1,3 +1,4 @@
+#include "godot_nodes.h"
 #include "localization.h"
 #include "save_slots.h"
 #include <godot_cpp/classes/button.hpp>
@@ -11,18 +12,15 @@
 #include <stdexcept>
 using namespace godot;
 namespace {
-struct DeleteNode {void operator()(Node* n)const{memdelete(n);}};
-template<class T>void add(Window& parent,const char* name,Rect2 rect){
-    std::unique_ptr<T,DeleteNode> child(memnew(T));child->set_name(name);child->set_position(rect.position);child->set_size(rect.size);parent.add_child(child.get());child.release();
-}
+
 std::string encoded(std::string_view name){static constexpr char hex[]="0123456789abcdef";std::string result;for(unsigned char c:name){result+=hex[c>>4];result+=hex[c&15];}return result;}
 std::string decoded(std::string_view stem){std::string result;if(stem.size()%2)return {};for(std::size_t i=0;i<stem.size();i+=2){const auto digit=[](char c){return c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:-1;};int a=digit(stem[i]),b=digit(stem[i+1]);if(a<0||b<0)return {};result+=static_cast<char>(a*16+b);}return result;}
 }
 void SaveSlots::_ready(){
     set_size(Vector2i(620,470));set_min_size(Vector2i(620,470));set_flag(Window::FLAG_RESIZE_DISABLED,true);set_exclusive(true);set_transient(true);
-    add<Label>(*this,"Help",Rect2(20,16,580,42));add<ItemList>(*this,"Slots",Rect2(20,66,580,230));
-    add<LineEdit>(*this,"Name",Rect2(20,310,580,36));add<Label>(*this,"Status",Rect2(20,354,580,58));
-    add<Button>(*this,"Action",Rect2(300,420,145,36));add<Button>(*this,"Cancel",Rect2(455,420,145,36));
+    presentation::add_control<Label>(*this,"Help",Rect2(20,16,580,42));presentation::add_control<ItemList>(*this,"Slots",Rect2(20,66,580,230));
+    presentation::add_control<LineEdit>(*this,"Name",Rect2(20,310,580,36));presentation::add_control<Label>(*this,"Status",Rect2(20,354,580,58));
+    presentation::add_control<Button>(*this,"Action",Rect2(300,420,145,36));presentation::add_control<Button>(*this,"Cancel",Rect2(455,420,145,36));
     get_node<Label>("Status")->set("autowrap_mode",3);
     get_node<LineEdit>("Name")->set_placeholder(i18n::text(N_("Save name")));get_node<LineEdit>("Name")->set_max_length(60);
     get_node<ItemList>("Slots")->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);

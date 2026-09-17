@@ -44,6 +44,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/character.cpp
     src/OpenGold.Core/src/campaign_party.cpp
     src/OpenGold.Core/src/campaign_save.cpp
+    src/OpenGold.Core/src/save_file.cpp
     src/OpenGold.Core/src/inventory.cpp
     src/OpenGold.Core/src/creature_catalog.cpp
     src/OpenGold.Core/src/creature_factory.cpp

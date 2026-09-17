@@ -1,3 +1,4 @@
+#include "godot_nodes.h"
 #include "game_resources.h"
 #include "character_text.h"
 #include "character_creation_view.h"
@@ -17,7 +18,6 @@ const std::array<const char*,6> names{"Strength","Dexterity","Constitution","Int
 std::string number(int n){return (n>=0?"+":"")+std::to_string(n);}
 std::string literal(std::string_view value){std::string text;for(char c:value)text+=c=='['?"[lb]":std::string(1,c);return text;}
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
-struct DeleteNode {void operator()(Node* node) const {memdelete(node);}};
 }
 Variant CharacterCreationView::drag_roll(Vector2,int index)
 {
@@ -25,7 +25,7 @@ Variant CharacterCreationView::drag_roll(Vector2,int index)
     const auto& d=creator_->draft();
     const unsigned roll=index<6?index:d.assignment[index-6];
     if(roll>=6||(index<6&&std::find(d.assignment.begin(),d.assignment.end(),roll)!=d.assignment.end()))return {};
-    auto preview=std::unique_ptr<Label,DeleteNode>(memnew(Label));
+    auto preview=presentation::make_node<Label>();
     preview->set_text(gs(std::to_string(d.rolls[roll].total())));
     get_node<Control>(gs(std::string(index<6?"Dice":"Score")+std::to_string(index%6)))->set_drag_preview(preview.get());preview.release();
     Dictionary data;data["opengold_ability_roll"]=roll;return data;

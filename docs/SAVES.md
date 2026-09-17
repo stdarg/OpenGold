@@ -68,6 +68,9 @@ Writes use a temporary file, flush it to disk and verify its bytes before replac
 the destination. Windows uses `ReplaceFileW` with a retained backup, or
 `MoveFileExW` for a new slot. Failed replacement leaves the existing save intact.
 Truncated/corrupt loads and validation failures preserve the current campaign.
+Each write uses a separate temporary filename and removes that file on failure;
+files left by interrupted writes do not block later saves. The game's training
+combat saves use the same storage service with their own size limit and codec.
 Temporary files are ignored by the slot list. If the newest save is damaged,
 explicitly choose its previous version in **Load game**.
 

@@ -1,3 +1,4 @@
+#include "dice.h"
 #include "opengold/srd5.h"
 #include <algorithm>
 #include <array>
@@ -188,13 +189,7 @@ private:
     std::size_t reactor_index_{};
     const Definition& def(const Actor& a) const {return a.definition;}
     Actor& actor(EntityId id) { return *std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;}); }
-    std::uint64_t next_random() {
-        // SplitMix64 with explicit integer arithmetic: stable across compilers.
-        auto z=(rng_+=0x9e3779b97f4a7c15ULL);z=(z^(z>>30))*0xbf58476d1ce4e5b9ULL;
-        z=(z^(z>>27))*0x94d049bb133111ebULL;return z^(z>>31);
-    }
-    int roll(int sides) {const auto n=static_cast<std::uint64_t>(sides), threshold=(-n)%n;
-        auto value=next_random();while(value<threshold)value=next_random();return static_cast<int>(value%n)+1;}
+    int roll(int sides) {return roll_die(rng_,sides);}
     int dice(Dice d,bool critical=false) {int total=d.bonus;for(int i=0;i<d.count*(critical?2:1);++i)total+=roll(d.sides);return std::max(0,total);}
     void log(std::string english, Message message={}) {
         if(message.source.empty())message.source=english;
@@ -619,8 +614,7 @@ public:
         if(actor.dead||actor.hp>=d.hp)throw std::runtime_error("Cure Wounds requires a wounded living member");
         // Authored temple caster: Cure Wounds, Wisdom +3. Same SplitMix64 as combat.
         auto rng=random_state;int amount=3;
-        for(int i=0;i<2;++i){auto z=(rng+=0x9e3779b97f4a7c15ULL);z=(z^(z>>30))*0xbf58476d1ce4e5b9ULL;
-            z=(z^(z>>27))*0x94d049bb133111ebULL;amount+=int((z^(z>>31))%8)+1;}
+        for(int i=0;i<2;++i)amount+=roll_die(rng,8);
         actor.hp=std::min(d.hp,actor.hp+amount);actor.successes=actor.failures=0;actor.stable=false;
         auto next=vitals(actor);state=std::move(next);random_state=rng;
     }

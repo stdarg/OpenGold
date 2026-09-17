@@ -117,6 +117,50 @@ void combat_handoff()
         check(party->member(pc).vitals==retained,"Next encounter does not refill resources");finish(fight);
     }
 }
+// A replacement module can create a session whose initial snapshot is invalid.
+// Rejection must not strand a party in combat or install the rejected session.
+class InvalidInitialSession final : public CombatSession {
+public:
+    Snapshot snapshot() const override {return {};}
+    std::vector<Command> legal_commands() const override {return {};}
+    bool submit(const Command&) override {return false;}
+    std::string save() const override {return {};}
+};
+class InvalidInitialModule final : public RulesModule {
+public:
+    Identity identity() const override {return module()->identity();}
+    std::vector<std::string> supported_features() const override {return {};}
+    std::unique_ptr<CombatSession> create(Encounter,std::uint64_t) const override
+    {return std::make_unique<InvalidInitialSession>();}
+    std::unique_ptr<CombatSession> restore(std::string_view) const override
+    {throw std::runtime_error("Unused test restore");}
+};
+void combat_ownership()
+{
+    auto party=std::make_shared<CampaignParty>(module());
+    const auto id=party->add_pc(character());
+    const auto before=party->member(id).vitals;
+    CombatDemo invalid(std::make_unique<InvalidInitialModule>());
+    invalid.campaign_party(party);
+    rejects([&]{invalid.training();});
+    check(!invalid.has_combat()&&!party->in_combat(),"Failed handoff releases its lock without installing combat");
+    check(party->member(id).vitals==before,"Failed handoff preserves party vitals");
+    party->select(0);
+    {
+        CombatDemo active(module());active.campaign_party(party);active.training();
+        check(party->in_combat(),"Successful handoff holds the edit lock");
+        const auto checkpoint=active.combat().save();
+        rejects([&]{active.training();});
+        check(party->in_combat()&&active.combat().save()==checkpoint,"Rejected restart retains active combat and lock");
+        {
+            CombatDemo contender(module());contender.campaign_party(party);
+            rejects([&]{contender.training();});
+        }
+        check(party->in_combat(),"Rejected contender cannot release another session's lock");
+    }
+    check(!party->in_combat(),"Destroying an unfinished combat releases the edit lock");
+    party->select(0);
+}
 void progression_and_services()
 {
     CampaignParty party(module());const auto pc=party.add_pc(character("fighter","Progress"));
@@ -316,6 +360,6 @@ void original_loot()
 }
 int main()
 {
-    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

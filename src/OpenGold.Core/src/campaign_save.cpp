@@ -1,16 +1,9 @@
 #include "opengold/campaign_save.h"
+#include "opengold/save_file.h"
 #include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
-#ifdef _WIN32
-#define NOMINMAX
-#include <windows.h>
-#else
-#include <fcntl.h>
-#include <unistd.h>
-#endif
 
 namespace opengold {
 namespace {
@@ -130,25 +123,14 @@ SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules
     require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 4\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");const bool third=bytes.starts_with("OPENGOLD-CAMPAIGN 3\n");require(old||second||third||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
     SaveCodec in(body);in.version=old?1:second?2:third?3:4;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
-std::string read_campaign_file(const std::filesystem::path& path){auto size=std::filesystem::file_size(path);require(size<=limit,"Campaign file too large");std::ifstream in(path,std::ios::binary);require(bool(in),"Cannot open campaign file");std::string data{std::istreambuf_iterator<char>(in),{}};require(!in.bad()&&data.size()==size,"Incomplete campaign file read");return data;}
+std::string read_campaign_file(const std::filesystem::path& path)
+{return read_save_file(path,limit);}
+
 std::string campaign_asset_identity(const std::filesystem::path& directory){
     std::map<std::string,std::uint64_t> files;for(const auto& entry:std::filesystem::directory_iterator(directory)){if(!entry.is_regular_file())continue;auto name=entry.path().filename().string();for(auto& c:name)if(c>='a'&&c<='z')c-=32;
         if(name.ends_with(".DAX")||name=="ITEMS"){require(!files.contains(name),"Ambiguous original asset filename");files.emplace(name,fingerprint(read_campaign_file(entry.path())));}}
     require(files.contains("ECL3.DAX")&&files.contains("GEO3.DAX")&&files.contains("ITEMS"),"Missing campaign assets");std::ostringstream out;for(auto& [name,hash]:files)out<<name<<':'<<hash<<';';return out.str();
 }
-void write_campaign_file(const std::filesystem::path& path,std::string_view bytes){
-    require(bytes.size()<=limit,"Campaign file too large");std::filesystem::create_directories(path.parent_path());auto temp=path;temp+=".tmp";auto backup=path;backup+=".bak";
-#ifdef _WIN32
-    struct CloseHandleOwner{void operator()(void* h)const{CloseHandle(h);}};
-    const auto raw=CreateFileW(temp.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);require(raw!=INVALID_HANDLE_VALUE,"Cannot create temporary campaign save");std::unique_ptr<void,CloseHandleOwner> handle(raw);DWORD written{};require(WriteFile(handle.get(),bytes.data(),static_cast<DWORD>(bytes.size()),&written,nullptr)&&written==bytes.size()&&FlushFileBuffers(handle.get()),"Cannot flush campaign save");handle.reset();
-#else
-    struct Descriptor{int fd;~Descriptor(){if(fd>=0)::close(fd);}} handle{::open(temp.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0600)};require(handle.fd>=0,"Cannot create temporary campaign save");std::size_t pos=0;while(pos<bytes.size()){auto n=::write(handle.fd,bytes.data()+pos,bytes.size()-pos);require(n>0,"Cannot write campaign save");pos+=n;}require(::fsync(handle.fd)==0,"Cannot flush campaign save");
-#endif
-    require(read_campaign_file(temp)==bytes,"Campaign save verification failed");
-#ifdef _WIN32
-    if(std::filesystem::exists(path))require(ReplaceFileW(path.c_str(),temp.c_str(),backup.c_str(),0,nullptr,nullptr),"Cannot replace campaign save; previous file retained");else require(MoveFileExW(temp.c_str(),path.c_str(),MOVEFILE_WRITE_THROUGH),"Cannot install campaign save");
-#else
-    if(std::filesystem::exists(path))std::filesystem::copy_file(path,backup,std::filesystem::copy_options::overwrite_existing);std::filesystem::rename(temp,path);Descriptor directory{::open(path.parent_path().c_str(),O_RDONLY|O_DIRECTORY)};require(directory.fd>=0&&::fsync(directory.fd)==0,"Cannot flush save directory");
-#endif
-}
+void write_campaign_file(const std::filesystem::path& path,std::string_view bytes)
+{write_save_file(path,bytes,limit);}
 }

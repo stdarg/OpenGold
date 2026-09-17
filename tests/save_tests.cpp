@@ -1,4 +1,5 @@
 #include "opengold/campaign_save.h"
+#include "opengold/save_file.h"
 #include "opengold/srd5.h"
 #include "opengold/combat_demo.h"
 #include <iostream>
@@ -7,6 +8,14 @@
 #include <sstream>
 using namespace opengold;
 namespace {
+struct TestDirectory {
+    std::filesystem::path path=std::filesystem::temp_directory_path()/
+        ("opengold-save-test-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    TestDirectory()=default;
+    TestDirectory(const TestDirectory&)=delete;
+    TestDirectory& operator=(const TestDirectory&)=delete;
+    ~TestDirectory(){std::error_code ignored;std::filesystem::remove_all(path,ignored);}
+};
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 template<class F>void rejects(F f){bool caught=false;try{f();}catch(const std::exception&){caught=true;}check(caught,"Invalid save must reject");}
 std::string changed_identity(const std::string& saved,const std::string& identity){auto start=saved.find('\n',saved.find('\n')+1)+1;auto body=saved.substr(start);auto position=body.find('"'+identity+'"');check(position!=body.npos,"Identity must be present");body.replace(position,identity.size()+2,"\"incompatible\"");std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}return saved.substr(0,saved.find('\n')+1)+std::to_string(hash)+'\n'+body;}
@@ -21,6 +30,45 @@ auto prototype(){
     return por::RolfTourSession({},p,{},0x9914,{},resources);
 }
 void settle(por::RolfTourSession& town){for(int i=0;i<100&&town.snapshot().phase==por::TourPhase::running;++i)town.advance(1);check(town.can_leave(),"Fixture must finish");}
+void file_safety(const std::filesystem::path& directory)
+{
+    const auto path=directory/"storage.save";
+    auto temporary=path;temporary+=".tmp";
+    auto backup=path;backup+=".bak";
+    const auto has_temporary=[&]{
+        for(const auto& entry:std::filesystem::directory_iterator(directory))
+            if(entry.path().filename().string().starts_with("storage.save.tmp"))return true;
+        return false;
+    };
+    const std::string first("first\0checkpoint",16);
+    write_save_file(path,first,64);
+    check(read_save_file(path,64)==first,"Storage preserves binary checkpoint bytes");
+    check(!has_temporary(),"Successful save consumes its temporary file");
+    write_save_file(path,"second",64);
+    check(read_save_file(backup,64)==first,"Storage retains the preceding checkpoint");
+    rejects([&]{write_save_file(path,"oversized",4);});
+    rejects([&]{(void)read_save_file(path,4);});
+    check(read_save_file(path,64)=="second"&&!has_temporary(),"Size rejection leaves the current save intact");
+
+    // Force failure after the temporary file is written and verified.
+    std::filesystem::remove(backup);
+    std::filesystem::create_directory(backup);
+    rejects([&]{write_save_file(path,"third",64);});
+    check(read_save_file(path,64)=="second","Failed backup/replacement preserves the current save");
+    check(!has_temporary(),"Failed replacement removes its owned temporary file");
+    std::filesystem::remove(backup);
+    write_save_file(path,"third",64);
+    check(read_save_file(path,64)=="third"&&read_save_file(backup,64)=="second","Retry succeeds after replacement failure");
+
+    // Files left by interrupted or concurrent writes are not ours to remove.
+    {std::ofstream held(temporary,std::ios::binary);held<<"another writer";}
+    write_save_file(path,"fourth",64);
+    check(read_save_file(temporary,64)=="another writer"&&read_save_file(path,64)=="fourth","Unowned temporary file survives and does not block a save");
+    std::filesystem::remove(temporary);
+    write_save_file(path,{},64);
+    check(read_save_file(path,64).empty(),"Empty checkpoints round trip");
+    rejects([&]{(void)read_save_file(directory/"missing.save",64);});
+}
 void roundtrip(const std::filesystem::path& directory){
     std::filesystem::create_directories(directory);
     // A save from the preceding pack remains valid after additive encounters.
@@ -76,4 +124,4 @@ void roundtrip(const std::filesystem::path& directory){
     auto busy=prototype();rejects([&]{(void)encode_campaign(*party,&busy,"fixture-v1");});
 }
 }
-int main(){try{const auto directory=std::filesystem::temp_directory_path()/("opengold-save-test-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));roundtrip(directory);for(const auto& p:std::filesystem::directory_iterator(directory))std::filesystem::remove(p.path());std::filesystem::remove(directory);std::cout<<"Campaign file save tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{TestDirectory directory;roundtrip(directory.path);file_safety(directory.path);std::cout<<"Campaign file save tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

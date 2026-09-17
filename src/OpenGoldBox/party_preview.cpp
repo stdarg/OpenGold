@@ -1,3 +1,5 @@
+#include "godot_images.h"
+#include "godot_nodes.h"
 #include "localization.h"
 #include "game_resources.h"
 #include "character_creation_view.h"
@@ -31,13 +33,6 @@ using namespace godot;
 using namespace opengold;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
-struct DeleteNode {void operator()(Node* node) const {memdelete(node);}};
-std::unique_ptr<Node,DeleteNode> scene(const char* path)
-{
-    Ref<PackedScene> packed=ResourceLoader::get_singleton()->load(path);
-    if(packed.is_null())throw std::runtime_error(std::string("Missing scene: ")+path);
-    return std::unique_ptr<Node,DeleteNode>(packed->instantiate());
-}
 Character preview_guard()
 {
     auto rules=srd5::character_rules();rules::CharacterDraft draft;
@@ -51,7 +46,7 @@ void CharacterCreationView::setup_party()
 {
     const auto pack=std::filesystem::u8path(game_rules_file().utf8().get_data());
     campaign_=std::make_shared<CampaignParty>(srd5::load(pack));
-    auto panel=scene("res://scenes/party_panel.tscn");i18n::prepare_ui(*panel);add_child(panel.get());panel.release();
+    auto panel=presentation::instantiate_scene("res://scenes/party_panel.tscn");i18n::prepare_ui(*panel);presentation::attach_child(*this,std::move(panel));
     get_node<Control>("PartyPanel")->hide();
     get_node<Button>("Party")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(0));
     get_node<Button>("AddParty")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(1));
@@ -124,8 +119,8 @@ void CharacterCreationView::refresh_party()
         for(const auto& item:m.character.inventory().items())items->add_item((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?i18n::text("Equipped / "):String())+i18n::format("{item} x{quantity}",{{"item",i18n::text(item.name)},{"quantity",item.quantity}}));
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         for(unsigned pose=0;pose<2;++pose){
-            const auto icon=art_->icon(m.character.appearance(),pose!=0);PackedByteArray rgba;rgba.resize(icon.rgba.size());std::copy(icon.rgba.begin(),icon.rgba.end(),rgba.ptrw());
-            get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(ImageTexture::create_from_image(godot::Image::create_from_data(icon.width,icon.height,false,godot::Image::FORMAT_RGBA8,rgba)));
+            const auto icon=art_->icon(m.character.appearance(),pose!=0);
+            get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(presentation::image_texture(icon));
         }
     }
     if(state.roster.empty())for(const char* name:{"PartyPanel/Portrait","PartyPanel/ReadySprite","PartyPanel/ActionSprite"})get_node<TextureRect>(name)->set_texture({});
@@ -153,20 +148,20 @@ void CharacterCreationView::party_action(int action)
         if(action==7||action==8){
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
-                if(!town){auto owned=scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid exploration scene");
-                    town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));add_child(owned.get());owned.release();}
+                if(!town){auto owned=presentation::instantiate_scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid exploration scene");
+                    town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));presentation::attach_child(*this,std::move(owned));}
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }else{
                 const auto participants=campaign_->participants();std::vector<CombatArt> images;
                 for(const auto& participant:participants)images.push_back({participant.id,art_->icon(campaign_->member(participant.id).character.appearance(),false)});
-                auto owned=scene("res://scenes/combat_demo.tscn");auto* combat=Object::cast_to<CombatView>(owned.get());if(!combat)throw std::runtime_error("Invalid combat scene");
-                combat->set_name("CampaignCombat");combat->campaign_party(campaign_,std::move(images));add_child(owned.get());owned.release();
+                auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");auto* combat=Object::cast_to<CombatView>(owned.get());if(!combat)throw std::runtime_error("Invalid combat scene");
+                combat->set_name("CampaignCombat");combat->campaign_party(campaign_,std::move(images));presentation::attach_child(*this,std::move(owned));
             }
             get_node<Control>("PartyPanel")->hide();auto* back=get_node<Button>("ReturnParty");move_child(back,get_child_count()-1);back->show();party_layout();return;
         }
         if(action==9){
             if(auto* combat=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"))){if(!combat->can_leave())throw std::runtime_error("Finish the fight before returning to the party");
-                remove_child(combat);std::unique_ptr<Node,DeleteNode> released(combat);}
+                remove_child(combat);presentation::NodeOwner<Node> released(combat);}
             if(auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"))){if(town->is_visible()&&!town->can_leave())throw std::runtime_error("Finish the dialogue or leave the shop first");
                 town->hide();town->set_process(false);town->set_process_input(false);}
             get_node<Button>("ReturnParty")->hide();
@@ -263,16 +258,16 @@ void CharacterCreationView::update_party_navigation()
     if(!fight&&town&&town->is_visible()&&town->pending_encounter()){
         std::vector<CombatArt> images;for(const auto& participant:campaign_->participants())
             images.push_back({participant.id,art_->icon(campaign_->member(participant.id).character.appearance(),false)});
-        auto owned=scene("res://scenes/combat_demo.tscn");fight=Object::cast_to<CombatView>(owned.get());
+        auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");fight=Object::cast_to<CombatView>(owned.get());
         if(!fight)throw std::runtime_error("Invalid combat scene");
         fight->set_name("CampaignCombat");fight->campaign_party(campaign_,std::move(images));fight->campaign_encounter(*town->pending_encounter());
-        add_child(owned.get());owned.release();town->hide();town->set_process(false);town->set_process_input(false);party_layout();
+        presentation::attach_child(*this,std::move(owned));town->hide();town->set_process(false);town->set_process_input(false);party_layout();
     }
     if(fight){
         if(fight->expedition()&&!campaign_defeated_)if(const auto outcome=fight->completed_outcome()){
             if(!town||!town->resolve_combat(*outcome))throw std::runtime_error("Exploration rejected the combat result");
             if(outcome->outcome==rules::Outcome::victory){
-                remove_child(fight);std::unique_ptr<Node,DeleteNode> released(fight);fight=nullptr;
+                remove_child(fight);presentation::NodeOwner<Node> released(fight);fight=nullptr;
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }
         }
@@ -316,18 +311,18 @@ void CharacterCreationView::expedition_check()
 }
 void CharacterCreationView::setup_defeat()
 {
-    std::unique_ptr<Window,DeleteNode> window(memnew(Window));window->set_name("Defeat");
+    auto window=presentation::make_node<Window>();window->set_name("Defeat");
     window->set_title(i18n::text(N_("Defeat")));window->set_size(Vector2i(520,240));window->set_min_size(Vector2i(520,240));
     window->set_flag(Window::FLAG_RESIZE_DISABLED,true);window->set_transient(true);window->set_exclusive(true);
-    window->hide();add_child(window.get());window.release();
+    window->hide();presentation::attach_child(*this,std::move(window));
     auto* dialog=get_node<Window>("Defeat");
-    std::unique_ptr<Label,DeleteNode> title(memnew(Label));title->set_name("Title");title->set_text(i18n::text(N_("Your party has been defeated.")));
-    title->set_position(Vector2(24,30));title->set_size(Vector2(472,44));title->add_theme_font_size_override("font_size",24);dialog->add_child(title.get());title.release();
-    std::unique_ptr<Label,DeleteNode> body(memnew(Label));body->set_text(i18n::text(N_("Load a saved game to continue.")));body->set_position(Vector2(24,90));body->set_size(Vector2(472,36));dialog->add_child(body.get());body.release();
+    auto title=presentation::make_node<Label>();title->set_name("Title");title->set_text(i18n::text(N_("Your party has been defeated.")));
+    title->set_position(Vector2(24,30));title->set_size(Vector2(472,44));title->add_theme_font_size_override("font_size",24);presentation::attach_child(*dialog,std::move(title));
+    auto body=presentation::make_node<Label>();body->set_text(i18n::text(N_("Load a saved game to continue.")));body->set_position(Vector2(24,90));body->set_size(Vector2(472,36));presentation::attach_child(*dialog,std::move(body));
     for(bool reload:{true,false}){
-        std::unique_ptr<Button,DeleteNode> button(memnew(Button));button->set_name(reload?"Reload":"Exit");button->set_text(i18n::text(reload?N_("Reload a Saved Game"):N_("Exit to OS")));
+        auto button=presentation::make_node<Button>();button->set_name(reload?"Reload":"Exit");button->set_text(i18n::text(reload?N_("Reload a Saved Game"):N_("Exit to OS")));
         button->set_position(Vector2(reload?24:308,170));button->set_size(Vector2(reload?268:188,44));
-        button->connect("pressed",reload?callable_mp(this,&CharacterCreationView::reload_after_defeat):callable_mp(this,&CharacterCreationView::exit_after_defeat));dialog->add_child(button.get());button.release();
+        button->connect("pressed",reload?callable_mp(this,&CharacterCreationView::reload_after_defeat):callable_mp(this,&CharacterCreationView::exit_after_defeat));presentation::attach_child(*dialog,std::move(button));
     }
     dialog->connect("close_requested",callable_mp(this,&CharacterCreationView::show_defeat));
     get_node<SaveSlots>("SaveSlots")->connect("visibility_changed",callable_mp(this,&CharacterCreationView::save_dialog_visibility_changed));
