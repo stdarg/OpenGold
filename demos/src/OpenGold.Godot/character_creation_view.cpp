@@ -1,4 +1,5 @@
 #include "character_creation_view.h"
+#include "character_colors.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/check_box.hpp>
@@ -42,10 +43,10 @@ CreationField choice_field(CreationStep step)
 }
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
 const std::array<const char*,6> full_abilities{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
-const std::array<const char*,16> colors{"Black","Blue","Green","Cyan","Red","Magenta","Brown","Light gray","Dark gray","Light blue","Light green","Light cyan","Light red","Pink","Yellow","White"};
-const std::array<const char*,6> parts{"Weapon","Body","Hair / Face","Shield","Arms","Legs"};
+const auto& colors=presentation::character_colors;
+const auto& parts=presentation::character_regions;
 std::string signed_number(int n){return (n>=0?"+":"")+std::to_string(n);}
-Color ega(unsigned index){const auto c=por::character_color(index);return Color(c[0]/255.f,c[1]/255.f,c[2]/255.f);}
+Color ega(unsigned index){return presentation::character_color(index);}
 Ref<StyleBoxFlat> box(Color color,Color border,int width=1)
 {
     Ref<StyleBoxFlat> result;result.instantiate();result->set_bg_color(color);

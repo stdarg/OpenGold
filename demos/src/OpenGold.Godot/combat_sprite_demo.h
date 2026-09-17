@@ -4,6 +4,7 @@
 #include "opengold/dungeon_battlefield.h"
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/input_event.hpp>
 #include <optional>
 
 // An isolated art review scene; owns no campaign or combat rules session.
@@ -13,6 +14,8 @@ public:
     void _ready() override;
     void _process(double delta) override;
     void _draw() override;
+    void _input(const godot::Ref<godot::InputEvent>& event) override;
+    void request_capture();
 protected:
     static void _bind_methods();
     void _notification(int what);
@@ -34,6 +37,7 @@ private:
     int zoom_{300};
     double elapsed_{};
     bool action_{},ready_{},loaded_{},center_pending_{};
+    bool capture_pending_{};
     godot::Vector2 center_cell_{26,14};
     void create_controls();
     void load_art();
@@ -46,5 +50,6 @@ private:
     void change_part(int part,int direction);
     void select_color(int bank,int part);
     void recolor(int index);
+    void capture_frame();
 };
 #endif

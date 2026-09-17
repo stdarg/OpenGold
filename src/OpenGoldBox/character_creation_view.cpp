@@ -1,5 +1,4 @@
 #include "godot_images.h"
-#include "character_colors.h"
 #include "application_settings.h"
 #include "character_creation_view.h"
 #include "character_text.h"
@@ -46,10 +45,10 @@ CreationField choice_field(CreationStep step)
 }
 const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
 const std::array<const char*,6> full_abilities{N_("Strength"),N_("Dexterity"),N_("Constitution"),N_("Intelligence"),N_("Wisdom"),N_("Charisma")};
-const auto& colors=presentation::character_colors;
-const auto& parts=presentation::character_regions;
+const std::array<const char*,16> colors{N_("Black"),N_("Blue"),N_("Green"),N_("Cyan"),N_("Red"),N_("Magenta"),N_("Brown"),N_("Light gray"),N_("Dark gray"),N_("Light blue"),N_("Light green"),N_("Light cyan"),N_("Light red"),N_("Pink"),N_("Yellow"),N_("White")};
+const std::array<const char*,6> parts{N_("Weapon"),N_("Body"),N_("Hair / Face"),N_("Shield"),N_("Arms"),N_("Legs")};
 std::string signed_number(int n){return (n>=0?"+":"")+std::to_string(n);}
-Color ega(unsigned index){return presentation::character_color(index);}
+Color ega(unsigned index){const auto c=por::character_color(index);return Color(c[0]/255.f,c[1]/255.f,c[2]/255.f);}
 Ref<StyleBoxFlat> box(Color color,Color border,int width=1)
 {
     Ref<StyleBoxFlat> result;result.instantiate();result->set_bg_color(color);

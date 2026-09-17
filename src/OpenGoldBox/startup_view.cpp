@@ -286,10 +286,8 @@ void StartupView::finish()
 
 void StartupView::open_character_creation()
 {
-    auto* os=OS::get_singleton();
-    const bool sprite_demo=os->get_cmdline_args().has("--sprite-demo")||os->get_cmdline_user_args().has("--sprite-demo");
-    if (get_tree()->change_scene_to_file(sprite_demo?"res://scenes/combat_sprite_demo.tscn":"res://scenes/character_creation.tscn") != OK) {
-        UtilityFunctions::push_error("Cannot open the requested game scene.");
+    if (get_tree()->change_scene_to_file("res://scenes/character_creation.tscn") != OK) {
+        UtilityFunctions::push_error("Cannot open character creation.");
         get_tree()->quit(1);
     }
 }

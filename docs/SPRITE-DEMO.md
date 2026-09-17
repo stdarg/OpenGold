@@ -1,23 +1,31 @@
 # Combat sprite scale demo
 
-The game includes an isolated sprite review scene using its native Godot
-renderer, original asset decoders, character customization, theme, and screenshot
-service. It does not create or modify a campaign.
+This standalone review scene belongs to the existing `demos/godot` project and
+its C++ `opengold_godot` extension. It uses the original asset decoders and
+character customization without launching or extending the game application.
 
 ## Launch
 
-Build the [game application](../src/OpenGoldBox/README.md#build), then launch it
-with `--sprite-demo`. From macOS bash at the repository root:
+Build the demo extension, then launch the demo. From macOS bash at the repository
+root (replace the asset path with your original game installation):
 
 ```bash
-open -n mac-package/OpenGoldBox.app --args --sprite-demo
+cmake -S . -B build/sprite-demo -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DOPENGOLD_BUILD_GODOT=ON -DOPENGOLD_BUILD_GAME=OFF
+cmake --build build/sprite-demo --target opengold_godot -j 8
+OPENGOLD_GAME_DIR=/path/to/POOLRAD bash demos/review-sprites.sh
 ```
 
-The usual language and original game folder settings apply. With a built
-GDExtension, the source project can also run directly:
+The launcher locates Godot on PATH or in its standard macOS application folder;
+`GODOT_BIN` can select another executable. On Windows, use the existing
+`demos\build-rolf.cmd`, then `demos\review-sprites.cmd`.
+
+The demo reads `OPENGOLD_GAME_DIR`, falling back to the demo project's
+`opengold/game_directory` setting. It has no game startup or settings flow.
+You can also launch the scene directly:
 
 ```bash
-godot --path src/OpenGoldBox/godot -- --sprite-demo
+godot --path demos/godot --resolution 1920x1080 res://scenes/combat_sprite_demo.tscn
 ```
 
 ## Controls and measurements
@@ -36,9 +44,10 @@ godot --path src/OpenGoldBox/godot -- --sprite-demo
   Player measurements also include the visible, nontransparent bounds for the
   current pose. At 300%, a normal 24 × 24 sprite occupies 72 × 72 pixels;
   the Large Form comparison occupies 144 × 144 pixels.
-- **Ctrl+S** saves a screenshot through the game's existing service.
-  `python3 tools/screenshot.py` requests a capture externally. See
-  [screenshot locations and options](../src/OpenGoldBox/README.md#screenshots).
+- **Ctrl+S** saves a timestamped PNG in `user://sprite-demo-screenshots`.
+  Set `OPENGOLD_SCREENSHOT_DIR` to an absolute folder to choose another location.
+  The demo exposes `request_capture()` and `capture_completed(path, error)` for
+  automated visual checks, without loading the game's screenshot autoload.
 
 ## Goliath size
 
@@ -66,13 +75,19 @@ are records 0, 2, 4, 26, and 31 (Kobold, Goblin, Orc, Basilisk, Troll), with 128
 added for action poses. These selections do not change gameplay monster bindings.
 Original artwork and screenshots are not included in the repository.
 
-CTest's `opengold_godot_sprite_demo` uses wholly synthetic archives and checks
+After building the demo extension, run:
+
+```bash
+ctest --test-dir build/sprite-demo -L demo --output-on-failure
+```
+
+The `opengold_godot_sprite_demo` check uses wholly synthetic archives. It checks
 customization, transparency, both zoom step sizes and limits, native proportions,
 size readouts, the minimum window layout, and synchronized one-second poses.
 To review those checks with installed art and capture both poses:
 
 ```bash
-OPENGOLD_GAME_DIR=/path/to/POOLRAD OPENGOLD_LANG=en godot \
-  --path src/OpenGoldBox/godot --script ../../../tests/combat_sprite_demo_tests.gd \
+OPENGOLD_GAME_DIR=/path/to/POOLRAD godot \
+  --path demos/godot --script ../../tests/combat_sprite_demo_tests.gd \
   -- --installed --capture
 ```

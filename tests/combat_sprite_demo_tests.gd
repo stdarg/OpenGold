@@ -63,7 +63,7 @@ func write_archive(name: String, records: Dictionary) -> void:
     file.close()
 
 func create_fixtures() -> void:
-    fixture_dir = ProjectSettings.globalize_path("res://../../../build/sprite-fixtures/%s" % OS.get_process_id())
+    fixture_dir = ProjectSettings.globalize_path("res://../../build/sprite-fixtures/%s" % OS.get_process_id())
     require(DirAccess.make_dir_recursive_absolute(fixture_dir) == OK, "Fixture directory created")
     for disk in range(1, 9):
         write_archive("HEAD%d.DAX" % disk, {1: picture(88, 40, 1, 0)})
@@ -103,10 +103,17 @@ func textures(canvas: Control) -> Array:
 
 func capture() -> void:
     if OS.get_cmdline_user_args().has("--capture"):
-        var screenshots := root.get_node("Screenshots")
-        screenshots.request_capture()
+        var screenshots := current_scene
+        var key := InputEventKey.new()
+        key.keycode = KEY_S
+        key.ctrl_pressed = true
+        key.pressed = true
+        Input.parse_input_event(key)
         var result: Array = await screenshots.capture_completed
         require(result[1].is_empty(), "Demo screenshot saved")
+        require(FileAccess.file_exists(result[0]), "Ctrl+S writes a PNG")
+        key.pressed = false
+        Input.parse_input_event(key)
 
 func run_checks() -> void:
     if not OS.get_cmdline_user_args().has("--installed"):
