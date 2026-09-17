@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <utility>
 
 namespace opengold {
@@ -133,7 +134,8 @@ ImageDecodeResult decode_ega_sprite(
         const auto width_bytes = read_u16(record, cursor + 6);
         const std::size_t packed_size = static_cast<std::size_t>(height) * width_bytes * 4;
         const std::size_t pixel_start = cursor + 21;
-        if (height == 0 || width_bytes == 0 || packed_size > record.size() - pixel_start)
+        if (height == 0 || width_bytes == 0 || width_bytes > std::numeric_limits<std::uint16_t>::max() / 8 ||
+            packed_size > record.size() - pixel_start)
             return {};
         if (frame != frame_index) {
             cursor = pixel_start + packed_size;

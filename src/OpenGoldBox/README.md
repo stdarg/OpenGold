@@ -133,6 +133,26 @@ Combat viewport checks:
 ```powershell
 godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
 ```
+
+## Tests
+
+Native CTest checks run in both Debug and release configurations. With
+`OPENGOLD_BUILD_GAME=ON` and `OPENGOLD_BUILD_TESTS=ON`, CTest also runs the combat
+canvas, native node ownership, and keyboard/window/dialog shutdown checks in
+headless Godot. The setup fixture builds and imports the extension automatically;
+these checks require neither export templates nor original game files.
+
+To run only these Godot checks from a macOS bash shell:
+
+```bash
+ctest --preset macos-universal -L godot
+```
+
+The shutdown cases force first-run setup and do not save configuration. Test
+processes have timeouts; script errors and missing completion markers fail the run.
+Original-data integration still requires `OPENGOLD_GAME_DIR` and runs separately
+from these synthetic checks.
+
 ## Language selection
 
 English and Spanish are available. Launch `win-package\opengoldbox.exe --reset-lang`

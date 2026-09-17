@@ -376,6 +376,18 @@ The project should maintain a compatibility-heavy test suite covering:
 
 Parameter-heavy rule verification is one reason a strongly typed C/C++ implementation was preferred. The project should select one consistent native testing framework early.
 
+Native checks must remain active when `NDEBUG` is defined; use explicit failures
+instead of C `assert` for test expectations. Synthetic fixtures exercise malformed
+sprite dimensions, in-memory SRD content parsing, campaign encounter placement,
+and checkpoint failure recovery without an installed original game.
+`srd5::parse_content` owns the parsed definitions and shares validation and content
+identity calculation with the filesystem loader.
+
+Game builds also register headless Godot checks with CTest. Their fixture builds
+the extension, copies the pinned rules, and imports the game project without an
+export or original game data. Each script must exit successfully and print its
+completion marker within a timeout. See the [game test commands](../src/OpenGoldBox/README.md#tests).
+
 ### Behavioral Oracle Testing
 
 The original game should be used as an observation oracle:

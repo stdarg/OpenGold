@@ -75,6 +75,35 @@ foreach(name OpenGoldBoxSplashBackground OpenGoldBoxEngineLettering OpenGoldBoxG
 endforeach()
 add_custom_target(opengoldbox_assets DEPENDS ${portrait_outputs} ${splash_outputs})
 
+if(OPENGOLD_BUILD_TESTS)
+    # These checks use synthetic combat and first-run setup, without original
+    # game files, export templates, or a packaged application.
+    add_custom_target(opengoldbox_test_project
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/opengold.gdextension" "${game_project}/bin/opengold.gdextension"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${game_project}/data/rules/srd-5.2.1"
+        COMMAND "${OPENGOLDBOX_GODOT}" --headless --editor --path "${game_project}" --import --quit
+        DEPENDS opengoldbox_game VERBATIM)
+    add_test(NAME opengold_godot_prepare COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}"
+        --target opengoldbox_test_project --config $<CONFIG>)
+    set_tests_properties(opengold_godot_prepare PROPERTIES FIXTURES_SETUP godot_project TIMEOUT 600 LABELS godot
+        RESOURCE_LOCK godot_project)
+    function(opengold_godot_test name script expected)
+        add_test(NAME "opengold_godot_${name}" COMMAND "${CMAKE_COMMAND}"
+            "-DGODOT=${OPENGOLDBOX_GODOT}" "-DPROJECT=${game_project}"
+            "-DSCRIPT=${PROJECT_SOURCE_DIR}/tests/${script}.gd" "-DEXPECTED=${expected}" "-DARGS=${ARGN}"
+            -P "${PROJECT_SOURCE_DIR}/tests/run_godot_test.cmake")
+        set_tests_properties("opengold_godot_${name}" PROPERTIES FIXTURES_REQUIRED godot_project
+            TIMEOUT 40 LABELS godot RESOURCE_LOCK godot_project
+            ENVIRONMENT "OPENGOLD_GAME_DIR=;OPENGOLD_LANG=en")
+    endfunction()
+    opengold_godot_test(combat_view combat_view_tests "Game combat view checks passed")
+    opengold_godot_test(node_ownership node_ownership_tests "Native node ownership checks passed")
+    opengold_godot_test(shutdown_key shutdown_tests "Shutdown check passed" --reset-game-path --shutdown-key)
+    opengold_godot_test(shutdown_close shutdown_tests "Shutdown check passed" --reset-game-path --shutdown-close)
+    opengold_godot_test(shutdown_dialog_paused shutdown_tests "Shutdown check passed"
+        --reset-game-path --shutdown-dialog --shutdown-paused)
+endif()
+
 # Godot exports the executable; the C++ game code is its GDExtension.
 # Rules remain loose files because the engine-independent loader uses filesystem I/O.
 if(WIN32)

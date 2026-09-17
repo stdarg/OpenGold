@@ -6,6 +6,8 @@
 namespace opengold::srd5 {
 // Reads a pinned, curated content pack. Unknown definitions/mechanics fail.
 [[nodiscard]] std::unique_ptr<rules::RulesModule> load(const std::filesystem::path& content_pack);
+// The returned module owns its parsed content; the input may be discarded.
+[[nodiscard]] std::unique_ptr<rules::RulesModule> parse_content(std::string_view content);
 [[nodiscard]] std::unique_ptr<rules::CharacterRules> character_rules();
 // Pure SRD arithmetic, also used by the deterministic combat resolver.
 [[nodiscard]] std::string equipment_note(const rules::CharacterSheet& sheet,std::string_view item);

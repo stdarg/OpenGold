@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <set>
 #include <stdexcept>
 using namespace opengold;
 using namespace opengold::rules;
@@ -116,6 +117,101 @@ void combat_handoff()
         const auto retained=party->member(pc).vitals;fight.training(80);
         check(party->member(pc).vitals==retained,"Next encounter does not refill resources");finish(fight);
     }
+}
+struct EncounterObservation {Encounter encounter;std::uint64_t seed{};};
+// Observe the adapter boundary while retaining real rules validation and combat.
+class ObservedModule final : public RulesModule {
+public:
+    explicit ObservedModule(std::shared_ptr<EncounterObservation> observation)
+        : observation_(std::move(observation)), rules_(module()) {}
+    Identity identity() const override {return rules_->identity();}
+    std::vector<std::string> supported_features() const override {return rules_->supported_features();}
+    std::unique_ptr<CombatSession> create(Encounter encounter,std::uint64_t seed) const override
+    {observation_->encounter=encounter;observation_->seed=seed;return rules_->create(std::move(encounter),seed);}
+    std::unique_ptr<CombatSession> restore(std::string_view bytes) const override {return rules_->restore(bytes);}
+private:
+    std::shared_ptr<EncounterObservation> observation_;
+    std::unique_ptr<RulesModule> rules_;
+};
+CampaignEncounter encounter_fixture()
+{
+    CampaignEncounter encounter;
+    encounter.field.geometry={40,26,std::vector<std::uint8_t>(40*26)};
+    for(int y=0;y<26;++y)encounter.field.geometry.terrain[y*40+10]=1;
+    encounter.field.geometry.terrain[13*40+25]=2;
+    encounter.field.tiles.resize(40*26,7);
+    encounter.enemies={{1000,"bandit","First enemy",1,{}},{1001,"bandit","Second enemy",1,{}}};
+    return encounter;
+}
+void campaign_encounters()
+{
+    auto party=std::make_shared<CampaignParty>(module());
+    const auto pc=party->add_pc(character("wizard","Wounded mage"));
+    party->add_pc(character("fighter","Companion"));
+    auto checkpoint=party->checkpoint();checkpoint.roster[0].vitals={1,false,"SRD1 0 0 0 0 0"};party->restore(checkpoint);
+    const auto wounded=party->member(pc).vitals;
+    const auto still_wounded=[&](const VitalState& state) {
+        return state.hit_points==wounded.hit_points&&state.dead==wounded.dead&&state.resources==wounded.resources;
+    };
+    const std::array<Cell,4> enemy_origins{{{20,8},{31,13},{30,18},{19,13}}};
+    for(unsigned facing=0;facing<4;++facing) {
+        auto observed=std::make_shared<EncounterObservation>();
+        {
+            CombatDemo fight(std::make_unique<ObservedModule>(observed));fight.campaign_party(party);
+            auto encounter=encounter_fixture();encounter.facing=facing;encounter.surprise=facing;
+            fight.encounter(encounter,1234);
+            check(observed->seed==1234,"Encounter forwards deterministic seed");
+            const auto& handed=observed->encounter;
+            check(handed.battlefield.terrain==encounter.field.geometry.terrain&&fight.battlefield_tiles()==encounter.field.tiles,
+                "Placement preserves original walls, difficult terrain and tiles");
+            check(handed.participants.size()==4,"Every party member and enemy reaches the rules module");
+            std::set<Cell> positions;
+            for(const auto& participant:handed.participants) {
+                check(participant.cell.x>10&&handed.battlefield.at(participant.cell)!=1,
+                    "All participants remain in the party's reachable component");
+                check(positions.insert(participant.cell).second,"Combatants occupy distinct cells");
+                check(participant.surprised==(participant.side==0?facing==1:facing==2),
+                    "Original surprise codes select the correct side");
+            }
+            check(handed.participants[0].cell==Cell{25,13}&&handed.participants[2].cell==enemy_origins[facing],
+                "Party origin and enemy formation follow encounter facing");
+            check(handed.participants[0].state&&still_wounded(*handed.participants[0].state)&&still_wounded(party->member(pc).vitals),
+                "Encounter setup preserves wounds and spent resources");
+            check(party->in_combat(),"Successful encounter owns the party edit lock");
+            rejects([&]{fight.encounter(encounter,1234);});
+            rejects([&]{(void)fight.save_combat();});
+            rejects([&]{fight.restore_combat({});});
+        }
+        check(!party->in_combat(),"Encounter teardown releases the party");
+    }
+    CombatDemo fight(module());fight.campaign_party(party);
+    const auto rejected=[&](CampaignEncounter encounter) {
+        rejects([&]{fight.encounter(std::move(encounter),1234);});
+        check(!fight.has_combat()&&!party->in_combat()&&still_wounded(party->member(pc).vitals),
+            "Failed encounter setup leaves party and combat ownership unchanged");
+    };
+    auto invalid=encounter_fixture();invalid.facing=4;rejected(invalid);
+    invalid=encounter_fixture();invalid.surprise=4;rejected(invalid);
+    invalid=encounter_fixture();invalid.field.geometry.terrain.pop_back();rejected(invalid);
+    invalid=encounter_fixture();invalid.field.geometry.width=65;rejected(invalid);
+    invalid=encounter_fixture();std::fill(invalid.field.geometry.terrain.begin(),invalid.field.geometry.terrain.end(),1);rejected(invalid);
+    // Enough floor cells in total, but diagonal corner contact is not a passage.
+    invalid=encounter_fixture();invalid.field.geometry={3,3,{0,1,0,1,0,1,0,1,0}};rejected(invalid);
+    invalid=encounter_fixture();invalid.enemies[0].definition="unsupported";rejected(invalid);
+    invalid=encounter_fixture();invalid.enemies[0].id=pc;rejected(invalid);
+    fight.encounter(encounter_fixture(),1234);
+    check(fight.has_combat()&&party->in_combat(),"Valid encounter can start after rejected attempts");
+}
+void standalone_checkpoints()
+{
+    CombatDemo fight(module());rejects([&]{(void)fight.save_combat();});fight.training(42);
+    const auto checkpoint=fight.save_combat();
+    rejects([&]{fight.restore_combat("malformed");});
+    check(fight.save_combat()==checkpoint,"Failed restore preserves the live combat session");
+    CombatDemo restored(module());restored.restore_combat(checkpoint);
+    const auto command=choose_demo_command(fight.combat());
+    check(fight.submit(command)&&restored.submit(command),"Restored adapter accepts the same command");
+    check(fight.save_combat()==restored.save_combat(),"Adapter checkpoint resumes deterministically");
 }
 // A replacement module can create a session whose initial snapshot is invalid.
 // Rejection must not strand a party in combat or install the rejected session.
@@ -360,6 +456,6 @@ void original_loot()
 }
 int main()
 {
-    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

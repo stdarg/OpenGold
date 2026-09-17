@@ -686,6 +686,12 @@ std::unique_ptr<RulesModule> load(const std::filesystem::path& file)
     std::ifstream input(file,std::ios::binary);if(!input)throw std::runtime_error("Cannot open rules content: "+file.string());
     std::string bytes{std::istreambuf_iterator<char>(input),{}};
     if(bytes.size()>65536||input.bad())throw std::runtime_error("Invalid rules content size/read");
+    return parse_content(bytes);
+}
+std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
+{
+    if(content_bytes.size()>65536)throw std::runtime_error("Rules content exceeds size limit");
+    std::string bytes(content_bytes);
     // Git may translate line endings; identical content must keep its identity.
     bytes.erase(std::remove(bytes.begin(),bytes.end(),'\r'),bytes.end());
     std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:bytes){hash^=c;hash*=1099511628211ULL;}

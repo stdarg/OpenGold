@@ -15,6 +15,8 @@ a 21-byte header: delay (4), height (2), byte-width (2), x and y offsets (2 each
 one metadata byte, and eight CGA mapping bytes. Pixel data follows at four bytes
 per byte-width per row. Each byte holds two 4-bit EGA palette indices, high
 nibble first. For `SPRIT` resources palette index zero is transparent.
+Zero dimensions, truncated frames, and byte-widths whose pixel width would
+overflow the image's 16-bit width are rejected before allocating the output.
 
 ## Combat images
 

@@ -9,6 +9,11 @@ func settle() -> void:
 	for frame in range(6):
 		await process_frame
 
+func splash_texture() -> Texture2D:
+	if current_scene.name != "Startup":
+		return null
+	return current_scene.get_node("Image").texture
+
 func run_check() -> void:
 	var args := OS.get_cmdline_user_args()
 	change_scene_to_file("res://scenes/startup.tscn")
@@ -24,9 +29,8 @@ func run_check() -> void:
 		Input.parse_input_event(advance)
 		await settle()
 	var original_scene := current_scene.name
-	var original_texture := ""
-	if original_scene == "Startup":
-		original_texture = current_scene.get_node("Image").texture.resource_path
+	# First-run setup has no splash texture yet.
+	var original_texture := splash_texture()
 	var window: Window = root
 	if args.has("--shutdown-dialog"):
 		window = Window.new()
@@ -51,7 +55,7 @@ func run_check() -> void:
 			window.window_input.emit(event)
 		else:
 			Input.parse_input_event(event)
-		if original_scene == "Startup" and current_scene.get_node("Image").texture.resource_path != original_texture:
+		if original_scene == "Startup" and splash_texture() != original_texture:
 			push_error("Ctrl+X advanced the splash")
 			quit(1)
 			return
