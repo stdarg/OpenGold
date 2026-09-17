@@ -38,6 +38,7 @@ else()
     set(export_preset "macOS")
     set(export_path "${game_output}/OpenGoldBox.app")
     set(export_config "export_presets.macos.cfg.in")
+    set(pre_export_commands COMMAND "${CMAKE_COMMAND}" -E rm -rf "${export_path}")
 endif()
 configure_file("${export_config}" "${game_project}/export_presets.cfg" @ONLY)
 
@@ -82,7 +83,7 @@ if(WIN32)
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} "${game_output}")
 else()
     set(package_commands
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${export_path}/Contents/MacOS/data/rules/srd-5.2.1"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${export_path}/Contents/Resources/data/rules/srd-5.2.1"
         COMMAND codesign --force --deep --sign - "${export_path}"
         COMMAND "${CMAKE_COMMAND}" "-DAPP_BUNDLE=${export_path}" -P "${CMAKE_CURRENT_SOURCE_DIR}/verify_macos_package.cmake")
 endif()
@@ -91,6 +92,7 @@ add_custom_target(OpenGoldBox ALL
     COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${game_project}/data/rules/srd-5.2.1"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${game_output}"
     COMMAND "${OPENGOLDBOX_GODOT}" --headless --editor --path "${game_project}" --import --quit
+    ${pre_export_commands}
     COMMAND "${OPENGOLDBOX_GODOT}" --headless --path "${game_project}" --export-debug "${export_preset}" "${export_path}"
     ${package_commands}
     DEPENDS opengoldbox_game opengoldbox_assets

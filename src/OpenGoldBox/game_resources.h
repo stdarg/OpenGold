@@ -13,7 +13,10 @@ inline godot::String game_rules_file()
         return godot::ProjectSettings::get_singleton()->globalize_path(
             godot::String("res://") + relative);
     }
-    return os->get_executable_path().get_base_dir().path_join(relative);
+    const auto executable_dir = os->get_executable_path().get_base_dir();
+    if (os->has_feature("macos"))
+        return executable_dir.get_base_dir().path_join("Resources").path_join(relative);
+    return executable_dir.path_join(relative);
 }
 
 #endif

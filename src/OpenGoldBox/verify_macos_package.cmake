@@ -1,7 +1,7 @@
 if(NOT EXISTS "${APP_BUNDLE}/Contents/MacOS/OpenGoldBox")
     message(FATAL_ERROR "macOS package is missing its game executable: ${APP_BUNDLE}")
 endif()
-if(NOT EXISTS "${APP_BUNDLE}/Contents/MacOS/data/rules/srd-5.2.1/combat.rules")
+if(NOT EXISTS "${APP_BUNDLE}/Contents/Resources/data/rules/srd-5.2.1/combat.rules")
     message(FATAL_ERROR "macOS package is missing its rules data: ${APP_BUNDLE}")
 endif()
 file(GLOB_RECURSE game_libraries "${APP_BUNDLE}/*opengoldbox_game.dylib")
