@@ -94,6 +94,8 @@ public:
     [[nodiscard]] std::uint16_t script_variable(std::uint16_t address) const { return machine_.variable(address); }
     [[nodiscard]] const std::optional<opengold::CampaignEncounter>& pending_encounter() const {return encounter_;}
     bool resolve_combat(const rules::Snapshot& outcome);
+    // Reject a pending handoff before combat starts, using the event rollback path.
+    bool reject_combat(std::string diagnostic);
 private:
     friend struct opengold::SaveCodec;
     GeoMap map_;

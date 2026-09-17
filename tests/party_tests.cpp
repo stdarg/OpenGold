@@ -345,6 +345,53 @@ std::shared_ptr<const por::EclProgram> program(Bytes body)
 }
 void settle(por::RolfTourSession& town)
 {for(unsigned n=0;n<100&&town.snapshot().phase==por::TourPhase::running;++n)town.advance(.5);check(town.snapshot().phase!=por::TourPhase::faulted,"Town script fault");}
+void rejected_combat_handoff()
+{
+    // Enter a synthetic Slums district, change HP, then request one actual orc.
+    // A rejected handoff must restore the entire event, not fabricate a victory.
+    auto gate=program({32,0,20,0});
+    auto encounter=program({33,0,20,0,2,0,255,9,0,3,1,0x19,0x6c,11,0,4,0,1,0,4,36,0});
+    auto resources=std::make_shared<por::PhlanResources>();resources->map=por::GeoMap{};
+    resources->programs[0]=gate;resources->programs[20]=encounter;
+    auto district=std::make_shared<por::PhlanResources>();district->map=por::GeoMap{};
+    district->encounter_creatures[4].stored.name="Test orc";
+    // One literal DAX record with an authored 16x1 combat icon, no original data.
+    district->combat_archive={9,0,4,0,0,0,0,25,0,26,0,24};
+    district->combat_archive.resize(37,0);
+    district->combat_archive[12]=1;district->combat_archive[14]=2;district->combat_archive[20]=1;
+    resources->districts[20]=district;
+    for(const auto* klass:{"rogue","fighter"}){
+        auto party=std::make_shared<CampaignParty>(module());const auto id=party->add_pc(character(klass));
+        const auto before=party->checkpoint();
+        por::RolfTourSession town({},gate,{},0x9914,{},resources);town.campaign_party(party);settle(town);
+        check(!town.reject_combat("Stale rejection"),"No combat rejection outside a pending handoff");
+        check(town.explore(por::ExplorationCommand::look),"Synthetic gate starts an encounter event");settle(town);
+        check(town.pending_encounter().has_value()&&town.snapshot().phase==por::TourPhase::combat,
+            "Script reaches the actual campaign combat boundary");
+        check(party->member(id).vitals.hit_points==3,"Event applies its pre-combat HP change");
+        {
+            CombatDemo combat(module());combat.campaign_party(party);
+            if(std::string_view(klass)=="rogue"){
+                rejects([&]{combat.encounter(*town.pending_encounter(),42);});
+                check(!party->in_combat(),"Rejected rules profile leaves no combat lock");
+            }else{
+                combat.encounter(*town.pending_encounter(),42);
+                check(!town.reject_combat("Cannot cancel active combat"),"Rejection cannot bypass an active combat owner");
+            }
+        }
+        check(town.reject_combat("Combat initialization failed"),"Failed handoff rolls back its event");
+        check(!town.pending_encounter()&&!party->in_combat(),"Rollback clears the encounter and edit lock");
+        check(party->member(id).vitals==before.roster[0].vitals&&party->state().claimed_rewards==before.claimed_rewards,
+            "Rollback restores party HP and resources without rewards");
+        check(town.snapshot().area_id==0&&town.script_variable(0x6C19)==before.roster[0].vitals.hit_points,
+            "Rollback restores the map and original script state");
+        check(town.snapshot().dialogue.find("Combat initialization failed")!=std::string::npos,
+            "The actual failure remains visible in the exploration notice");
+        check(!town.reject_combat("Duplicate"),"Rejection is applied once");
+        check(town.choose(town.snapshot().continue_ticket,0)&&town.can_leave(),"Acknowledging the notice restores navigation");
+        check(town.explore(por::ExplorationCommand::turn_right),"Exploration accepts commands after the failed encounter");
+    }
+}
 void recovery_hosts()
 {
     auto party=std::make_shared<CampaignParty>(module());const auto pc=party->add_pc(character());
@@ -456,6 +503,6 @@ void original_loot()
 }
 int main()
 {
-    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

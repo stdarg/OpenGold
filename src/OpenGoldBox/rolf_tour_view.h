@@ -23,6 +23,7 @@ public:
     [[nodiscard]] const opengold::por::RolfTourSession* saved_session() const {return session_?&*session_:nullptr;}
     [[nodiscard]] std::optional<opengold::CampaignEncounter> pending_encounter() const {return session_?session_->pending_encounter():std::nullopt;}
     bool resolve_combat(const opengold::rules::Snapshot& result){if(!session_||!session_->resolve_combat(result))return false;refresh();return true;}
+    bool reject_combat(std::string diagnostic){if(!session_||!session_->reject_combat(std::move(diagnostic)))return false;refresh();return true;}
     void restore_campaign(std::shared_ptr<opengold::CampaignParty> party,opengold::por::RolfTourSession session);
     void request_save(bool saving);
     std::function<void(const std::string&)> save_check;

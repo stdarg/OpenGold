@@ -41,6 +41,20 @@ Character preview_guard()
     for(auto& roll:draft.rolls)roll={{6,5,4,1},3};
     return Character(*rules,std::move(draft),{});
 }
+presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& party,
+    const por::CharacterArt& art,std::optional<CampaignEncounter> encounter={})
+{
+    std::vector<CombatArt> images;
+    for(const auto& participant:party->participants())
+        images.push_back({participant.id,art.icon(party->member(participant.id).character.appearance(),false)});
+    auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");
+    auto* combat=Object::cast_to<CombatView>(owned.get());
+    if(!combat)throw std::runtime_error("Invalid combat scene");
+    combat->set_name("CampaignCombat");combat->campaign_party(party,std::move(images));
+    if(encounter)combat->campaign_encounter(std::move(*encounter));
+    combat->prepare_combat();
+    return owned;
+}
 }
 void CharacterCreationView::setup_party()
 {
@@ -152,10 +166,7 @@ void CharacterCreationView::party_action(int action)
                     town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));presentation::attach_child(*this,std::move(owned));}
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }else{
-                const auto participants=campaign_->participants();std::vector<CombatArt> images;
-                for(const auto& participant:participants)images.push_back({participant.id,art_->icon(campaign_->member(participant.id).character.appearance(),false)});
-                auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");auto* combat=Object::cast_to<CombatView>(owned.get());if(!combat)throw std::runtime_error("Invalid combat scene");
-                combat->set_name("CampaignCombat");combat->campaign_party(campaign_,std::move(images));presentation::attach_child(*this,std::move(owned));
+                presentation::attach_child(*this,combat_scene(campaign_,*art_));
             }
             get_node<Control>("PartyPanel")->hide();auto* back=get_node<Button>("ReturnParty");move_child(back,get_child_count()-1);back->show();party_layout();return;
         }
@@ -256,11 +267,10 @@ void CharacterCreationView::update_party_navigation()
     auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
     auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"));
     if(!fight&&town&&town->is_visible()&&town->pending_encounter()){
-        std::vector<CombatArt> images;for(const auto& participant:campaign_->participants())
-            images.push_back({participant.id,art_->icon(campaign_->member(participant.id).character.appearance(),false)});
-        auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");fight=Object::cast_to<CombatView>(owned.get());
-        if(!fight)throw std::runtime_error("Invalid combat scene");
-        fight->set_name("CampaignCombat");fight->campaign_party(campaign_,std::move(images));fight->campaign_encounter(*town->pending_encounter());
+        presentation::NodeOwner<> owned;
+        try{owned=combat_scene(campaign_,*art_,town->pending_encounter());}
+        catch(const std::exception& e){if(!town->reject_combat(e.what()))throw;return;}
+        fight=Object::cast_to<CombatView>(owned.get());
         presentation::attach_child(*this,std::move(owned));town->hide();town->set_process(false);town->set_process_input(false);party_layout();
     }
     if(fight){

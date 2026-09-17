@@ -12,6 +12,8 @@ public:
     void _process(double delta) override;
     void _draw() override;
     void _input(const godot::Ref<godot::InputEvent>& event) override;
+    // Prepare while detached so the caller can keep its current screen on failure.
+    void prepare_combat();
     void campaign_party(std::shared_ptr<opengold::CampaignParty> party,std::vector<opengold::CombatArt> art) {campaign_=std::move(party);campaign_art_=std::move(art);}
     [[nodiscard]] bool defeated() const {return campaign_&&demo_&&demo_->has_combat()&&demo_->combat().snapshot().outcome==opengold::rules::Outcome::defeat;}
     [[nodiscard]] bool can_leave() const {return !defeated()&&(!demo_||!demo_->has_combat()||demo_->combat().snapshot().outcome!=opengold::rules::Outcome::ongoing);}

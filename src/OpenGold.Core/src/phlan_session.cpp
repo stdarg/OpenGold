@@ -148,6 +148,11 @@ void RolfTourSession::claim_loot()
         }else ++it;
     }
 }
+bool RolfTourSession::reject_combat(std::string diagnostic)
+{
+    if(snapshot_.phase!=TourPhase::combat||!encounter_||!combat_request_||!campaign_||campaign_->in_combat())return false;
+    fail(std::move(diagnostic));return true;
+}
 bool RolfTourSession::resolve_combat(const rules::Snapshot& result)
 {
     if(snapshot_.phase!=TourPhase::combat||!encounter_||!combat_request_||!campaign_||campaign_->in_combat()||result.outcome==rules::Outcome::ongoing||result.identity!=campaign_->identity())return false;

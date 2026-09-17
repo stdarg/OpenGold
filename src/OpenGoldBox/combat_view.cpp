@@ -36,6 +36,17 @@ const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee"
 std::string spell_verb(std::string verb,unsigned slot){if(slot==2&&(verb=="magic_missile"||verb=="cure_wounds"||verb=="healing_word"))verb+="_2";return verb;}
 }
 void CombatView::_bind_methods(){}
+void CombatView::prepare_combat()
+{
+    if(demo_)return;
+    auto next=std::make_unique<CombatDemo>(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())));
+    if(campaign_)next->campaign_party(campaign_);
+    if(encounter_)next->encounter(*encounter_,42);
+    else if(OS::get_singleton()->get_cmdline_user_args().has("--slums"))
+        next->slums(std::filesystem::u8path(settings::game_path().utf8().get_data()));
+    else next->training();
+    demo_=std::move(next);sync_art();
+}
 void CombatView::_notification(int what){if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();}}
 std::filesystem::path CombatView::local_path(const char* path) const
 {return std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(path).utf8().get_data());}
@@ -64,7 +75,7 @@ void CombatView::_ready()
     party_check_=campaign_&&args.has("--party-check");
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
-    try{demo_=std::make_unique<CombatDemo>(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
+    try{prepare_combat();layout();refresh();
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         if(encounter_){get_node<Label>("Title")->set_text(i18n::text(N_("SLUMS / Combat")));get_node<Label>("Subtitle")->set_text(i18n::text(N_("Choose an action, then click its target. Enter ends your turn.")));

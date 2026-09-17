@@ -15,7 +15,7 @@ msgstr "\n\n[table=3][cell][b]Característica     [/b][/cell][cell][b]Puntuació
 msgid "   Gold {gold}   XP {xp}"
 msgstr "   Oro {gold}   PX {xp}"
 
-#: src/OpenGoldBox/party_preview.cpp:111
+#: src/OpenGoldBox/party_preview.cpp:125
 msgid " (Reserve)"
 msgstr " (Reserva)"
 
@@ -161,11 +161,11 @@ msgstr "Acólito"
 msgid "Action"
 msgstr "Acción"
 
-#: src/OpenGoldBox/combat_view.cpp:223
+#: src/OpenGoldBox/combat_view.cpp:234
 msgid "Action ready"
 msgstr "Acción disponible"
 
-#: src/OpenGoldBox/combat_view.cpp:223
+#: src/OpenGoldBox/combat_view.cpp:234
 msgid "Action spent"
 msgstr "Acción gastada"
 
@@ -483,7 +483,7 @@ msgstr "Elige un nombre para tu personaje (hasta 40 caracteres)."
 msgid "Choose a swatch to recolor this part in the combat preview."
 msgstr "Elige una muestra para cambiar el color de esta parte en la vista de combate."
 
-#: src/OpenGoldBox/combat_view.cpp:70
+#: src/OpenGoldBox/combat_view.cpp:81
 msgid "Choose an action, then click its target. Enter ends your turn."
 msgstr "Elige una acción y haz clic en su objetivo. Enter termina tu turno."
 
@@ -592,7 +592,7 @@ msgstr "Continuar  [Enter]"
 msgid "Continue [Enter]"
 msgstr "Continuar [Enter]"
 
-#: src/OpenGoldBox/party_preview.cpp:114
+#: src/OpenGoldBox/party_preview.cpp:128
 msgid "Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster."
 msgstr "Crea un personaje, termina su hoja y pulsa Añadir al grupo.\n\nHay seis plazas para personajes jugadores y dos para PNJ. Los miembros retirados permanecen en la lista."
 
@@ -645,11 +645,11 @@ msgstr "Muerto"
 msgid "Decline reaction"
 msgstr "No reaccionar"
 
-#: src/OpenGoldBox/party_preview.cpp:315
+#: src/OpenGoldBox/party_preview.cpp:325
 msgid "Defeat"
 msgstr "Derrota"
 
-#: src/OpenGoldBox/party_preview.cpp:357
+#: src/OpenGoldBox/party_preview.cpp:367
 msgid "Defeat test"
 msgstr "Prueba de derrota"
 
@@ -717,7 +717,7 @@ msgstr "Enano"
 msgid "Each roll must be assigned exactly once"
 msgstr "Cada tirada debe asignarse una sola vez"
 
-#: src/OpenGoldBox/combat_view.cpp:71
+#: src/OpenGoldBox/combat_view.cpp:82
 msgid "Each square is 5 feet. Victory returns your party to exploration."
 msgstr "Cada casilla equivale a 5 pies. Tras la victoria, el grupo vuelve a explorar."
 
@@ -737,7 +737,7 @@ msgstr "Vacío"
 msgid "End turn"
 msgstr "Terminar turno"
 
-#: src/OpenGoldBox/combat_view.cpp:245
+#: src/OpenGoldBox/combat_view.cpp:256
 msgid "Enemy turn"
 msgstr "Turno enemigo"
 
@@ -765,15 +765,15 @@ msgstr "Equipar"
 msgid "Equip selected"
 msgstr "Equipar selección"
 
-#: src/OpenGoldBox/party_preview.cpp:119 src/OpenGoldBox/rolf_tour_view.cpp:219
+#: src/OpenGoldBox/party_preview.cpp:133 src/OpenGoldBox/rolf_tour_view.cpp:219
 msgid "Equipped / "
 msgstr "Equipado / "
 
-#: src/OpenGoldBox/party_preview.cpp:147 src/OpenGoldBox/rolf_tour_view.cpp:241
+#: src/OpenGoldBox/party_preview.cpp:161 src/OpenGoldBox/rolf_tour_view.cpp:241
 msgid "Equipped."
 msgstr "Equipado."
 
-#: src/OpenGoldBox/party_preview.cpp:323
+#: src/OpenGoldBox/party_preview.cpp:333
 msgid "Exit to OS"
 msgstr "Salir del juego"
 
@@ -816,7 +816,7 @@ msgstr "Completa las seis casillas para continuar.\nLas puntuaciones incluyen bo
 msgid "Final score: {score}"
 msgstr "Puntuación final: {score}"
 
-#: src/OpenGoldBox/party_preview.cpp:279
+#: src/OpenGoldBox/party_preview.cpp:289
 msgid "Finish combat, dialogue or shopping before returning to the party."
 msgstr "Termina el combate, el diálogo o las compras antes de volver al grupo."
 
@@ -930,7 +930,7 @@ msgstr "Humano"
 msgid "INT"
 msgstr "INT"
 
-#: src/OpenGoldBox/party_preview.cpp:279
+#: src/OpenGoldBox/party_preview.cpp:289
 msgid "Inspect your party and equipment."
 msgstr "Examina tu grupo y su equipo."
 
@@ -1033,7 +1033,7 @@ msgstr "Rojo claro"
 msgid "Load"
 msgstr "Cargar"
 
-#: src/OpenGoldBox/party_preview.cpp:321
+#: src/OpenGoldBox/party_preview.cpp:331
 msgid "Load a saved game to continue."
 msgstr "Carga una partida guardada para continuar."
 
@@ -1114,7 +1114,7 @@ msgstr "Modificadores"
 msgid "Monk"
 msgstr "Monje"
 
-#: src/OpenGoldBox/combat_view.cpp:241 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
+#: src/OpenGoldBox/combat_view.cpp:252 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
 msgid "Move"
 msgstr "Mover"
 
@@ -1138,7 +1138,7 @@ msgstr "Neutral malvado"
 msgid "Neutral Good"
 msgstr "Neutral bueno"
 
-#: src/OpenGoldBox/party_preview.cpp:128
+#: src/OpenGoldBox/party_preview.cpp:142
 msgid "New PCs receive 250 gp / Save game stores this campaign on disk."
 msgstr "Los nuevos personajes reciben 250 po / Guardar partida guarda esta campaña en disco."
 
@@ -1273,7 +1273,7 @@ msgstr "Combate del grupo"
 msgid "Party combat preview. HP and spent resources carry back to the party."
 msgstr "Combate de prueba del grupo. Los PG y los recursos gastados se conservan al volver."
 
-#: src/OpenGoldBox/combat_view.cpp:226
+#: src/OpenGoldBox/combat_view.cpp:237
 msgid "Party incapacitated / defeat"
 msgstr "Grupo incapacitado / derrota"
 
@@ -1368,7 +1368,7 @@ msgstr "Ataque a distancia"
 msgid "Ranger"
 msgstr "Explorador"
 
-#: src/OpenGoldBox/combat_view.cpp:243
+#: src/OpenGoldBox/combat_view.cpp:254
 msgid "Read the encounter text, then Continue."
 msgstr "Lee el texto del encuentro y pulsa Continuar."
 
@@ -1392,7 +1392,7 @@ msgstr "Rojo"
 msgid "Rejoin party"
 msgstr "Volver al grupo"
 
-#: src/OpenGoldBox/party_preview.cpp:323
+#: src/OpenGoldBox/party_preview.cpp:333
 msgid "Reload a Saved Game"
 msgstr "Cargar una partida"
 
@@ -1476,12 +1476,12 @@ msgstr "Saca {needed} o más"
 msgid "Rolled score: {score}"
 msgstr "Resultado de la tirada: {score}"
 
-#: src/OpenGoldBox/combat_view.cpp:222
+#: src/OpenGoldBox/combat_view.cpp:233
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round} / {name} reaction\nMove {feet} ft | {action}"
 msgstr "Asalto {round} / Reacción de {name}\nMovimiento {feet} pies | {action}"
 
-#: src/OpenGoldBox/combat_view.cpp:222
+#: src/OpenGoldBox/combat_view.cpp:233
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round} / {name} turn\nMove {feet} ft | {action}"
 msgstr "Asalto {round} / Turno de {name}\nMovimiento {feet} pies | {action}"
@@ -1495,7 +1495,7 @@ msgstr "Asalto {round}: actúa {name}."
 msgid "Run the area's pre-camp check and attempt an eight-hour long rest."
 msgstr "Comprueba si se puede acampar e intenta un descanso largo de ocho horas."
 
-#: src/OpenGoldBox/combat_view.cpp:70
+#: src/OpenGoldBox/combat_view.cpp:81
 msgid "SLUMS / Combat"
 msgstr "BARRIOS BAJOS / Combate"
 
@@ -1601,7 +1601,7 @@ msgstr "Elige primero un objeto del inventario"
 msgid "Select an option, then continue."
 msgstr "Elige una opción y continúa."
 
-#: src/OpenGoldBox/combat_view.cpp:245
+#: src/OpenGoldBox/combat_view.cpp:256
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Selected: {action}. Click a highlighted square."
 msgstr "Selección: {action}. Haz clic en una casilla resaltada."
@@ -1630,7 +1630,7 @@ msgstr "Tamaño: alto"
 msgid "Slot level 1"
 msgstr "Espacio de nivel 1"
 
-#: src/OpenGoldBox/combat_view.cpp:234
+#: src/OpenGoldBox/combat_view.cpp:245
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Slot level {level}"
 msgstr "Espacio de nivel {level}"
@@ -1772,7 +1772,7 @@ msgstr "Clases objetivo"
 msgid "Teal: party | Orange: enemies\nStone: obstacle | Brown: difficult terrain\nSaving is available in training combat."
 msgstr "Turquesa: grupo | Naranja: enemigos\nPiedra: obstáculo | Marrón: terreno difícil\nPuedes guardar en el combate de entrenamiento."
 
-#: src/OpenGoldBox/combat_view.cpp:68
+#: src/OpenGoldBox/combat_view.cpp:79
 msgid "Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate"
 msgstr "Turquesa: grupo | Naranja: enemigos\nRueda: desplazar | Mayús+rueda: lateral\nArrastrar botón central: mover vista | Barras: navegar"
 
@@ -1812,7 +1812,7 @@ msgstr "Entrenamiento"
 msgid "Training arena"
 msgstr "Arena de entrenamiento"
 
-#: src/OpenGoldBox/combat_view.cpp:129
+#: src/OpenGoldBox/combat_view.cpp:140
 msgid "Training combat saved."
 msgstr "Combate de entrenamiento guardado."
 
@@ -1828,7 +1828,7 @@ msgstr "Girar →"
 msgid "Unable to continue"
 msgstr "No se puede continuar"
 
-#: src/OpenGoldBox/combat_view.cpp:219
+#: src/OpenGoldBox/combat_view.cpp:230
 msgid "Unable to load rules"
 msgstr "No se pudieron cargar las reglas"
 
@@ -1880,7 +1880,7 @@ msgstr "Escudo sin entrenamiento: no otorga bonificación a la CA."
 msgid "Untrained weapon: no proficiency bonus on attack rolls (no +2 at level 1)."
 msgstr "Arma sin entrenamiento: no añades competencia al ataque (sin +2 en nivel 1)."
 
-#: src/OpenGoldBox/combat_view.cpp:244
+#: src/OpenGoldBox/combat_view.cpp:255
 msgid "Use or decline the opportunity attack."
 msgstr "Usa o rechaza el ataque de oportunidad."
 
@@ -1892,7 +1892,7 @@ msgstr "Valora la bondad y la libertad individual."
 msgid "Values personal freedom and independence."
 msgstr "Valora la libertad personal y la independencia."
 
-#: src/OpenGoldBox/combat_view.cpp:226
+#: src/OpenGoldBox/combat_view.cpp:237
 msgid "Victory"
 msgstr "Victoria"
 
@@ -1941,7 +1941,7 @@ msgstr "Mago"
 msgid "Yellow"
 msgstr "Amarillo"
 
-#: src/OpenGoldBox/party_preview.cpp:319
+#: src/OpenGoldBox/party_preview.cpp:329
 msgid "Your party has been defeated."
 msgstr "Tu grupo ha sido derrotado."
 
@@ -2082,7 +2082,7 @@ msgstr[1] "{count} retratos coincidentes."
 msgid "{die} (maximum d{die}) {modifier} (Constitution) + {racial} (racial bonus) = {hp} HP"
 msgstr "{die} (máximo de d{die}) {modifier} (Constitución) + {racial} (bonificación de raza) = {hp} PG"
 
-#: src/OpenGoldBox/combat_view.cpp:228
+#: src/OpenGoldBox/combat_view.cpp:239
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{id} {name}  {current}/{maximum} HP  AC {ac}\n"
 msgstr "{id} {name}  {current}/{maximum} PG  CA {ac}\n"
@@ -2092,7 +2092,7 @@ msgstr "{id} {name}  {current}/{maximum} PG  CA {ac}\n"
 msgid "{item} / {price} gp"
 msgstr "{item} / {price} po"
 
-#: src/OpenGoldBox/party_preview.cpp:119 src/OpenGoldBox/rolf_tour_view.cpp:219
+#: src/OpenGoldBox/party_preview.cpp:133 src/OpenGoldBox/rolf_tour_view.cpp:219
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{item} x{quantity}"
 msgstr "{item} x{quantity}"

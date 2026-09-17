@@ -196,6 +196,20 @@ processes have timeouts; script errors and missing completion markers fail the r
 Original-data integration still requires `OPENGOLD_GAME_DIR` and runs separately
 from these synthetic checks.
 
+Combat handoff regression checks require the installed original assets. From
+macOS bash (replace `/path/to/POOLRAD` with the installation folder):
+
+```bash
+OPENGOLD_GAME_DIR=/path/to/POOLRAD OPENGOLD_LANG=en godot --headless \
+  --path src/OpenGoldBox/godot --script ../../../tests/combat_handoff_tests.gd
+```
+
+This checks that rejected party profiles keep the party screen and diagnostic
+visible, release combat ownership, and permit a corrected party to start combat.
+Omit `--headless` and append `-- --capture` to save both screens as PNGs.
+Native party tests also cover failed encounter rollback of map, script, HP,
+resources and reward state, and navigation after acknowledging the error.
+
 To verify actual screenshot pixels, run `tests/screenshot_tests.gd` in graphical
 Godot with `OPENGOLD_SCREENSHOT_DIR` set to an isolated output folder. It checks
 saved PNG dimensions and colors, native dialog capture, unique filenames,
