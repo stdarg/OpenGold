@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <stdexcept>
 
 using namespace opengold;
@@ -176,6 +177,47 @@ void modifiers_and_effects()
     require(describe_effect(0x73).incoming_damage_multiplier == 0.5, "Physical resistance magnitude");
     require(describe_effect(0x41).target_save_adjustment == 4 && describe_effect(0x56).levels_drained == 2, "Attack effects");
     require(describe_effect(0xee).kind == EffectKind::unknown && describe_effect(0xee).code == 0xee, "Unknown code preserved");
+}
+
+void effect_contracts()
+{
+    // Exhaust the byte namespace: reserved codes must remain explicitly
+    // unknown, and optional magnitudes must never acquire invented defaults.
+    constexpr std::array<unsigned,9> reserved{0x39,0x3c,0x3f,0x4a,0x4b,0x4e,0x5c,0x66,0x69};
+    const std::map<unsigned,int> saves{{0x40,0},{0x41,4},{0x42,2},{0x43,0},{0x44,0},{0x45,-2},{0x46,-2}};
+    const std::map<unsigned,int> resistances{{0x6a,100},{0x6b,90},{0x7c,30}};
+    constexpr std::array<unsigned,6> halves{0x5d,0x5e,0x72,0x73,0x74,0x76};
+    for (unsigned code = 0; code < 256; ++code) {
+        const auto effect = describe_effect(static_cast<std::uint8_t>(code));
+        const bool unknown = code >= 128 || std::find(reserved.begin(),reserved.end(),code) != reserved.end();
+        require(effect.code == code && !effect.name.empty(),"Every effect preserves its code and display name");
+        require((effect.kind == EffectKind::unknown) == unknown && (effect.name == "Unknown effect") == unknown,
+                "Unrecognized Pool effect IDs retain explicit unknown metadata");
+        require((effect.kind == EffectKind::none) == (code == 0),"Only zero is the no-effect sentinel");
+        require(effect.target_save_adjustment == (saves.contains(code) ? std::optional(saves.at(code)) : std::nullopt),
+                "Save adjustments preserve sign, including explicit zero versus absent");
+        require(effect.resistance_percent == (resistances.contains(code) ? std::optional(resistances.at(code)) : std::nullopt),
+                "Only quantified resistances carry percentages");
+        const bool half = std::find(halves.begin(),halves.end(),code) != halves.end();
+        require(effect.incoming_damage_multiplier == (half ? std::optional(0.5) : std::nullopt),
+                "Half damage metadata is limited to documented effects");
+        if (half || resistances.contains(code))
+            require(effect.kind == EffectKind::resistance && !effect.subject.empty(),"Resistance identifies its damage or effect subject");
+        const auto drain = code == 0x55 ? std::optional(1) : code == 0x56 ? std::optional(2) : std::nullopt;
+        require(effect.levels_drained == drain,"Only level-drain attacks carry a drain count");
+        require(effect.regeneration.has_value() == (code == 0x62 || code == 0x65),"Generic regeneration does not invent a rate");
+        if (effect.regeneration) {
+            require(effect.kind == EffectKind::regeneration && effect.regeneration->hp_per_round == 3,"Quantified regeneration restores three HP");
+            const auto delay = effect.regeneration->revival_delay_rounds;
+            require(delay.has_value() == (code == 0x65),"Only troll regeneration has a revival delay");
+            if (delay) require(delay->count == 3 && delay->sides == 6 && delay->modifier == 0,"Troll revival takes 3d6 rounds");
+        }
+    }
+    for (const auto pair : {std::pair{0x19,0x47},std::pair{0x23,0x31},std::pair{0x3b,0x3e},std::pair{0x67,0x77}}) {
+        const auto first = describe_effect(pair.first), second = describe_effect(pair.second);
+        require(first.code != second.code && first.name == second.name && first.kind == second.kind && first.subject == second.subject,
+                "Effect aliases share meaning while retaining original identifiers");
+    }
 }
 
 void catalog()
@@ -355,6 +397,6 @@ void installed()
 
 int main()
 {
-    try { parsing(); modifiers_and_effects(); catalog(); instances(); maps(); installed(); }
+    try { parsing(); modifiers_and_effects(); effect_contracts(); catalog(); instances(); maps(); installed(); }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

@@ -348,7 +348,10 @@ void Session::begin_turn()
 void Session::end_turn()
 {
     for(std::size_t checked=0;checked<=actors_.size()*2;++checked) {
-        turn_=(turn_+1)%actors_.size();if(turn_==0)++round_;
+        turn_=(turn_+1)%actors_.size();
+        // The round is a display counter. Saturation avoids wrapping it to
+        // zero while keeping an extremely long (or edited) combat playable.
+        if(turn_==0 && round_<std::numeric_limits<unsigned>::max())++round_;
         auto& a=actors_[turn_];
         if(a.dead)continue;
         if(a.hp==0) {
@@ -413,7 +416,10 @@ bool Session::submit(const Command& command)
             spend();for(unsigned ray=0;ray<3&&actor(command.target).hp>0;++ray)attack(a,actor(command.target),true,true,{2,6,0});
         }else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
     }
-    ++revision_;update_outcome();
+    // Revisions are command tickets; zero is reserved for invalid commands.
+    // Unsigned wrap is defined, but must skip that reserved value.
+    if (++revision_ == 0) revision_ = 1;
+    update_outcome();
     if(outcome_==Outcome::ongoing&&!pending()&&actors_[turn_].hp==0)end_turn();
     return true;
 }
@@ -450,7 +456,10 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
     if (actor.hp < 0 || actor.hp > definition.hp || (actor.dead && actor.hp > 0) ||
-        actor.movement < 0 || actor.movement > definition.speed*2 ||
+        // Dash spends the action before adding a second movement allowance.
+        // Accepting both extra movement and an unused action lets a later Dash
+        // create a state outside the checkpoint's own movement bounds.
+        actor.movement < 0 || actor.movement > definition.speed*(actor.action ? 1 : 2) ||
         actor.winds < 0 || actor.winds > definition.winds ||
         actor.slots < 0 || actor.slots > definition.slots ||
         actor.slots2 < 0 || actor.slots2 > definition.slots2 ||
@@ -593,7 +602,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::uint64_t rng{}, revision{};
     unsigned turn{}, round{}, outcome{}, count{};
     input >> rng >> revision >> turn >> round >> outcome >> count;
-    if (!input || count < 2 || count > 64 || turn >= count || round == 0 || round > 100000 || outcome > 2 || !revision)
+    if (!input || count < 2 || count > 64 || turn >= count || round == 0 || outcome > 2 || !revision)
         throw std::runtime_error("Invalid checkpoint header");
     std::vector<Actor> actors;
     for (unsigned i = 0; i < count; ++i) {

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 using namespace opengold;using namespace opengold::rules;
@@ -187,6 +189,45 @@ void checkpoint_validation_tests()
     reject_changes({{path_header+3,"999"}});
     reject_changes({{path_header+3,"1"}}); // Mover cannot react against itself.
     reject_changes({{path_header+4,"81"}});
+    // Fuzz regression: extra movement requires an already spent action. An
+    // accepted 31-foot budget plus an unused Dash used to produce 61 feet,
+    // which the next restore rejected. Preserve the genuine 60-foot boundary.
+    auto actor_line = lines[4];
+    std::istringstream actor_input(actor_line);
+    EntityId id; std::string definition, name;
+    int side, x, y, hp, initiative, movement;
+    actor_input >> id >> std::quoted(definition) >> std::quoted(name)
+                >> side >> x >> y >> hp >> initiative >> std::ws;
+    const auto movement_start = static_cast<std::size_t>(actor_input.tellg());
+    actor_input >> movement;
+    const auto movement_end = static_cast<std::size_t>(actor_input.tellg());
+    check(movement == 30, "Regression fixture has its original movement allowance");
+    for (const auto extra : {31,60}) {
+        auto corrupt_actor = actor_line;
+        corrupt_actor.replace(movement_start,movement_end-movement_start,std::to_string(extra));
+        reject_changes({{4,corrupt_actor}});
+    }
+    auto dashed = hero_first(*module);
+    check(dashed->submit(command(*dashed,"dash")), "Dash is accepted from the normal movement boundary");
+    check(unit(*dashed,1).movement_feet == 60 && !offers(*dashed,"dash"), "Dash spends the action for extra movement");
+    check(module->restore(dashed->save())->save() == dashed->save(), "Legitimate doubled movement round trips");
+    // Tickets wrap past reserved zero; round numbers saturate. Both boundary
+    // states must remain playable and saveable after offered commands execute.
+    for (const auto round : {100000u,std::numeric_limits<unsigned>::max()}) {
+        auto boundary = lines;
+        std::istringstream counters(boundary[3]);
+        std::uint64_t rng; counters >> rng;
+        boundary[3] = std::to_string(rng)+" "+std::to_string(std::numeric_limits<std::uint64_t>::max())+
+                      " 0 "+std::to_string(round)+" 0 2";
+        auto continued = module->restore(encode(boundary));
+        const auto decline = command(*continued,"decline");
+        check(continued->submit(decline) && continued->snapshot().revision == 1,"Ticket rollover skips reserved zero");
+        check(!continued->submit(decline),"Pre-rollover ticket is stale");
+        continued->submit(command(*continued,"end"));
+        continued->submit(command(*continued,"end"));
+        check(continued->snapshot().round == (round == 100000 ? 100001 : round),"Round increments or saturates without wrapping");
+        check(module->restore(continued->save())->save() == continued->save(),"Counter boundary continuation round trips");
+    }
     for (std::size_t count = 0; count < lines.size(); ++count) {
         auto truncated = lines;
         truncated.resize(count);

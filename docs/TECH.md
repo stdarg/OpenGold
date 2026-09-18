@@ -419,6 +419,12 @@ and checkpoint failure recovery without an installed original game.
 `srd5::parse_content` owns the parsed definitions and shares validation and content
 identity calculation with the filesystem loader.
 
+The [native coverage and fuzzing guide](TESTING.md) documents synthetic art and
+effect contracts, deterministic mutation checks in CTest, and optional isolated
+Clang libFuzzer builds with ASan/UBSan. Accepted combat checkpoints must remain
+saveable after legal commands; mutation tests verify round trips, deterministic
+continuation, and rejected-command atomicity.
+
 Game builds also register headless Godot checks with CTest. Their fixture builds
 the extension, copies the pinned rules, and imports the game project without an
 export or original game data. Each script must exit successfully and print its
