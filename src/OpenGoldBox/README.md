@@ -134,6 +134,34 @@ Combat viewport checks:
 godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
 ```
 
+### Overhead map and fog
+
+The overhead map remembers where the party has walked and what it has seen in
+the 3D exploration view. Walls and opaque doors hide cells behind them;
+transparent openings reveal the visible areas beyond. Unknown areas are solid
+black. Revealed areas remain visible after moving away, changing districts, and
+saving/loading. The full-map toggle has been removed.
+
+Launch with `--no-fog` to inspect the entire overhead map. This override does
+not change saved exploration history. On macOS:
+
+```bash
+open -n mac-package/OpenGoldBox.app --args --no-fog
+```
+
+For an editor run, put custom arguments after Godot's separator:
+
+```bash
+/Applications/Godot_mono.app/Contents/MacOS/Godot --path src/OpenGoldBox/godot -- --no-fog
+```
+
+On Windows, run `.\win-package\opengoldbox.exe --no-fog`. Launch normally to
+restore fog. Existing saves remain readable; their visited history is retained.
+
+Graphical integration checks can run the tour with `--tour-check --capture`,
+once normally and once with `--no-fog`. Each captured pause verifies all overhead
+cell centers against the actual framebuffer, excluding the party arrow.
+
 ### Goliath combat rendering
 
 Goliaths occupy one logical square. Their visible sprite is stretched to one

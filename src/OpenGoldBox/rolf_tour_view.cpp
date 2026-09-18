@@ -4,7 +4,6 @@
 #include "localization.h"
 #include "game_resources.h"
 #include "rolf_tour_view.h"
-#include "opengold/exploration_view.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/audio_stream_player.hpp>
 #include <godot_cpp/classes/button.hpp>
@@ -59,7 +58,6 @@ void RolfTourView::_ready()
     get_node<Button>("Left")->connect("pressed",callable_mp(this,&RolfTourView::left));
     get_node<Button>("Right")->connect("pressed",callable_mp(this,&RolfTourView::right));
     get_node<Button>("Forward")->connect("pressed",callable_mp(this,&RolfTourView::forward));
-    get_node<Button>("MapMode")->connect("pressed",callable_mp(this,&RolfTourView::map_mode));
     get_node<Button>("Look")->connect("pressed",callable_mp(this,&RolfTourView::look));
     get_node<Button>("Camp")->connect("pressed",callable_mp(this,&RolfTourView::camp));
     get_node<Button>("Inventory")->connect("pressed",callable_mp(this,&RolfTourView::inventory));
@@ -79,6 +77,7 @@ void RolfTourView::_ready()
     layout();
     if (Engine::get_singleton()->is_editor_hint()) return;
     const auto args=OS::get_singleton()->get_cmdline_user_args();
+    no_fog_=settings::flag("--no-fog");
     town_check_=args.has("--town-check");checking_=args.has("--tour-check")||town_check_;capture_=args.has("--capture");
     if(campaign_&&args.has("--party-check"))town_check_=checking_=true;
     // An original OpenGoldBox footstep cue, not extracted SSI sound data.
@@ -116,8 +115,7 @@ void RolfTourView::layout()
     place("Title",Rect2(margin,20,main_width,34));
     place("PartyList",Rect2(scene_rect_.get_end().x+16,102,main_width-scene_rect_.size.x-16,view_height));
     place("Location",Rect2(margin,68,main_width,26));
-    place("MapTitle",Rect2(map_rect_.position.x,68,sidebar-130,26));
-    place("MapMode",Rect2(width-margin-122,64,122,30));
+    place("MapTitle",Rect2(map_rect_.position.x,68,sidebar,26));
     place("Coordinates",Rect2(map_rect_.position.x,map_rect_.get_end().y+12,sidebar,28));
     place("Legend",Rect2(map_rect_.position.x,map_rect_.get_end().y+48,sidebar,50));
     place("Speaker",Rect2(dialogue_rect_.position+Vector2(18,12),Vector2(main_width-36,26)));
@@ -265,7 +263,6 @@ void RolfTourView::movement(ExplorationCommand command)
     else if (session_->snapshot().phase==TourPhase::completed)
         get_node<Label>("Movement")->set_text(i18n::text(N_("The way is blocked")));
 }
-void RolfTourView::map_mode(){full_map_=!full_map_;refresh();}
 
 void RolfTourView::_input(const Ref<InputEvent>& event)
 {
@@ -310,10 +307,11 @@ void RolfTourView::refresh()
         }
         rendered_sprite_id_=session_->snapshot().sprite_id;
     }
-    if (session_ && (!rendered_pose_ || *rendered_pose_ != session_->snapshot().pose || rendered_picture_revision_!=session_->snapshot().picture_revision)) {
+    if (session_ && session_->snapshot().visited.any() &&
+        (!rendered_pose_ || *rendered_pose_ != session_->snapshot().pose || rendered_picture_revision_!=session_->snapshot().picture_revision)) {
         try {
             const auto pose = session_->snapshot().pose;
-            const auto source = session_->picture()?*session_->picture():compose_exploration_view(session_->map(), session_->wall_art(), pose.x, pose.y, pose.facing);
+            const auto source = session_->picture()?*session_->picture():session_->observe_view();
             const auto image = presentation::rgba_image(source);
             if (wall_view_.is_null()) wall_view_ = ImageTexture::create_from_image(image);
             else wall_view_->set_image(image);
@@ -385,7 +383,6 @@ void RolfTourView::refresh()
         auto* arrow=button->get_node<Button>("Advance");const auto width=Vector2(button->get_theme_font("font")->call("get_string_size",String::utf8(cs.name.c_str()),0,-1,button->get_theme_font_size("font_size"))).x;
         arrow->set_position(Vector2(std::min(width+16,button->get_size().x-36),2));arrow->set_visible(embedded_party_&&campaign_->can_advance(id)&&session_->can_leave());
     }
-    get_node<Button>("MapMode")->set_text(i18n::text(full_map_?N_("Map: full"):N_("Map: visited")));
     queue_redraw();
 }
 
@@ -395,7 +392,7 @@ void RolfTourView::_draw()
     draw_line(Vector2(24,57),Vector2(get_size().x-24,57),line);
     draw_rect(dialogue_rect_,panel);draw_rect(dialogue_rect_,line,false);
     draw_line(dialogue_rect_.position,dialogue_rect_.position+Vector2(dialogue_rect_.size.x,0),gold,2);
-    draw_rect(map_rect_,Color("162128"));
+    draw_rect(map_rect_,Color(0,0,0));
     draw_scene();draw_map();
     draw_rect(scene_rect_,line,false);draw_rect(map_rect_,line,false);
 }
@@ -403,7 +400,7 @@ void RolfTourView::_draw()
 void RolfTourView::draw_scene()
 {
     draw_rect(scene_rect_, panel);
-    if (!session_ || wall_view_.is_null()) return;
+    if (!session_ || session_->snapshot().visited.none() || wall_view_.is_null()) return;
     // Fit the complete original 88x88 view. DOS EGA pixels were displayed 6/5
     // as tall as wide; letterboxing preserves art and door framing on resize.
     const double scale = std::min(scene_rect_.size.x / 88.0, scene_rect_.size.y / 105.6);
@@ -423,10 +420,13 @@ void RolfTourView::draw_map()
 {
     if (!session_) return;
     const auto& s=session_->snapshot();
+    if (s.visited.none()) return; // The opening script has not placed the party yet.
     const double cell=map_rect_.size.x/16;
     for (unsigned y=0;y<16;++y) for (unsigned x=0;x<16;++x) {
         const auto origin=map_rect_.position+Vector2(x*cell,y*cell);
-        if (!full_map_&&!s.visited.test(y*16+x)) continue;
+        // The override affects drawing only. It must never discover cells or
+        // alter the history later written to a campaign save.
+        if (!no_fog_&&!s.seen.test(y*16+x)) continue;
         draw_rect(Rect2(origin,Vector2(cell,cell)),s.visited.test(y*16+x)?Color("304747"):Color("253038"));
         draw_rect(Rect2(origin,Vector2(cell,cell)),Color("1b252b"),false);
         const auto& c=session_->map().at(x,y);
@@ -453,6 +453,21 @@ void RolfTourView::capture_frame(const String& name)
     std::filesystem::create_directories(std::filesystem::u8path(directory.utf8().get_data()));
     const auto path=directory.path_join(name+String(".png"));
     const auto image=get_viewport()->get_texture()->get_image();
+    if(checking_&&!town_check_&&session_&&image.is_valid()) {
+        // The tour check waits a frame at each dialogue pause before capture.
+        // Check actual framebuffer pixels, including hidden cells, rather than
+        // merely checking the flag that the draw code was supposed to honor.
+        const auto& state=session_->snapshot();
+        const double cell=map_rect_.size.x/16;
+        for(unsigned y=0;y<16;++y)for(unsigned x=0;x<16;++x) {
+            if(x==state.pose.x&&y==state.pose.y)continue; // Party arrow covers its cell.
+            const auto center=get_global_transform_with_canvas().xform(map_rect_.position+Vector2((x+.5)*cell,(y+.5)*cell));
+            const auto expected=!no_fog_&&!state.seen.test(y*16+x)?Color(0,0,0):
+                state.visited.test(y*16+x)?Color("304747"):Color("253038");
+            if(!image->get_pixel(center.x,center.y).is_equal_approx(expected))
+                throw std::runtime_error("Overhead fog pixel mismatch at "+std::to_string(x)+","+std::to_string(y));
+        }
+    }
     if (image.is_null() || image->save_png(path)!=OK) throw std::runtime_error("Failed to capture tour scene");
     UtilityFunctions::print("Screenshot: ",path);
 }
@@ -480,7 +495,7 @@ void RolfTourView::check_run()
                 if (get_node<Button>("Continue")->is_disabled() || !get_node<Button>("Forward")->is_disabled())
                     throw std::runtime_error("Incorrect input lock at tour prompt");
                 UtilityFunctions::print("Tour pause ",check_prompts_," at ",s.pose.x,",",s.pose.y," facing ",s.pose.facing);
-                get_node<Button>("MapMode")->grab_focus();
+                get_node<Button>("Restart")->grab_focus();
                 const auto pose=s.pose;
                 press_key(Key::KEY_RIGHT);
                 if (session_->snapshot().pose!=pose) throw std::runtime_error("Keyboard bypassed tour movement lock");

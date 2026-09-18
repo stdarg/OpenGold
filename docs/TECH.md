@@ -262,6 +262,36 @@ This layer renders decoded game assets such as:
 - wall textures
 - scene illustrations
 
+### Exploration Map Knowledge
+
+Normal overhead maps show only cells the party has occupied or seen in the
+first-person exploration view. Unknown cells are solid black, with no grid,
+walls, or doors. Known cells stay revealed after moving or turning away. The
+full/visited map toggle is removed. `--no-fog` reveals the whole overhead map
+for inspection; it changes presentation only and is never saved as exploration.
+
+`TourSnapshot` keeps distinct 256-bit `visited` and `seen` sets. An occupied
+cell is always in both; merely seeing a cell does not mark it visited. The
+session retains each district's history when switching maps. Restarting the
+campaign clears both histories, and failed event rollback restores both.
+
+`render_exploration_view` produces the 88×88 image and visible-cell mask together.
+Each pixel records its source cell as walls are painted from far to near.
+Opaque foreground pixels replace the previous owner; transparent openings
+preserve the surface behind them. The featureless floor is assigned cells in
+the same far/middle/near projection bands, bounded to the renderer's two cells
+ahead. Sky and the horizon reveal no distant map cells; map edges do not wrap.
+This uses the artwork actually shown, including directional wall differences,
+rather than treating a traversable door as automatically transparent.
+
+`RolfTourSession::observe_view` merges that mask into persistent knowledge when
+the game composes its exploration image. Encounter pictures do not discover a
+new sightline. An opening script must publish its starting pose before discovery
+can occur. The core owns all history without depending on Godot. Campaign save
+version 5 stores per-district seen masks; versions 1–4 migrate their visited
+history and discover the current sightline when it is next displayed. See
+[campaign saves](SAVES.md).
+
 ### Goliath Combat Sprites and Draw Order
 
 Approved rendering decision, 2026-09-18: use the **stretched** Goliath treatment

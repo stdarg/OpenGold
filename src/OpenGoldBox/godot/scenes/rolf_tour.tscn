@@ -28,9 +28,6 @@ theme_override_font_sizes/font_size = 19
 theme_override_font_sizes/font_size = 19
 text = "New Phlan    N ↑"
 
-[node name="MapMode" type="Button" parent="."]
-text = "Map: full"
-
 [node name="Coordinates" type="Label" parent="."]
 theme_override_colors/font_color = Color(0.475, 0.839, 0.831, 1)
 theme_override_font_sizes/font_size = 18

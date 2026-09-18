@@ -30,6 +30,75 @@ auto prototype(){
     return por::RolfTourSession({},p,{},0x9914,{},resources);
 }
 void settle(por::RolfTourSession& town){for(int i=0;i<100&&town.snapshot().phase==por::TourPhase::running;++i)town.advance(1);check(town.can_leave(),"Fixture must finish");}
+std::string campaign_payload(unsigned version,const std::string& body)
+{
+    std::uint64_t hash=14695981039346656037ULL;
+    for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
+    return "OPENGOLD-CAMPAIGN "+std::to_string(version)+'\n'+std::to_string(hash)+'\n'+body;
+}
+void fog_saves(const std::filesystem::path& directory)
+{
+    // Two authored resource banks. CAMP is a test travel trigger; ordinary
+    // movement/search entries exit. Entry 4 selects the destination map.
+    const auto travel_program=[](unsigned area,unsigned destination){
+        std::vector<std::uint8_t> bytes{0,0};
+        for(unsigned slot=0;slot<5;++slot){const unsigned address=slot==2?0x9915:slot==4?0x9919:0x9914;
+            bytes.insert(bytes.end(),{1,1,static_cast<std::uint8_t>(address&255),static_cast<std::uint8_t>(address>>8)});}
+        bytes.insert(bytes.end(),{0,32,0,static_cast<std::uint8_t>(destination),0,
+            33,0,static_cast<std::uint8_t>(area),0,static_cast<std::uint8_t>(area?2:0),0,static_cast<std::uint8_t>(area?255:0),0});
+        return std::make_shared<const por::EclProgram>(por::EclProgram::decode(bytes,"fog travel fixture"));
+    };
+    auto resources=std::make_shared<por::PhlanResources>();resources->map=por::GeoMap{};
+    resources->programs[0]=travel_program(0,20);resources->programs[20]=travel_program(20,0);
+    auto district=std::make_shared<por::PhlanResources>();district->map=por::GeoMap{};resources->districts[20]=district;
+    auto party=std::make_shared<CampaignParty>(module());party->add_pc(character("fighter"));
+    por::RolfTourSession town({},resources->programs.at(0),{},0x9914,{},resources);
+    town.campaign_party(party);settle(town);
+    town.explore(por::ExplorationCommand::turn_right);
+    town.explore(por::ExplorationCommand::forward);settle(town);(void)town.observe_view();
+    const auto city=town.snapshot();
+    check(city.visited.count()==2&&city.seen.test(3),"City tracks both walked squares and forward sight");
+    town.explore(por::ExplorationCommand::camp);settle(town);
+    check(town.snapshot().area_id==20&&town.snapshot().seen.count()==1&&!town.snapshot().seen.test(3),
+          "A new district does not inherit knowledge from matching coordinates in the city");
+    town.explore(por::ExplorationCommand::turn_around);(void)town.observe_view();
+    const auto slums=town.snapshot();
+    check(slums.seen!=city.seen&&slums.visited.count()==1,"Districts retain independent seen and visited histories");
+
+    const auto saved=encode_campaign(*party,&town,"fog-fixture");
+    const auto path=directory/"fog.ogs";write_campaign_file(path,saved);
+    por::RolfTourSession base({},resources->programs.at(0),{},0x9914,{},resources);
+    auto rules=module();
+    auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fog-fixture",&base);
+    auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));
+    auto& restored=*loaded.town;restored.attach_restored_party(replacement);
+    check(restored.snapshot().seen==slums.seen&&restored.snapshot().visited==slums.visited,
+          "Disk reload restores the active district's exact knowledge");
+    check(encode_campaign(*replacement,&restored,"fog-fixture")==saved,"All district knowledge round trips canonically");
+    restored.explore(por::ExplorationCommand::camp);settle(restored);
+    check(restored.snapshot().area_id==0&&restored.snapshot().seen==city.seen&&restored.snapshot().visited==city.visited,
+          "Returning after reload recovers the inactive district's exact history");
+    restored.explore(por::ExplorationCommand::camp);settle(restored);
+    check(restored.snapshot().area_id==20&&restored.snapshot().seen==slums.seen,"Revisiting retains the other district's history too");
+
+    auto single=prototype();single.campaign_party(party);settle(single);
+    single.explore(por::ExplorationCommand::turn_right);(void)single.observe_view();
+    const auto current=encode_campaign(*party,&single,"fog-fixture");
+    auto body=current.substr(current.find('\n',current.find('\n')+1)+1);
+    const auto suffix="1 0 \""+single.snapshot().seen.to_string()+"\" ";
+    check(body.ends_with(suffix),"Knowledge is the version-five extension");
+    body.resize(body.size()-suffix.size());
+    auto old_base=prototype();
+    auto legacy=decode_campaign(campaign_payload(4,body),*srd5::character_rules(),*rules,"fog-fixture",&old_base);
+    check(legacy.town->snapshot().seen==single.snapshot().visited,
+          "Version-four migration preserves visits without inventing prior sightlines");
+    (void)legacy.town->observe_view();
+    check(legacy.town->snapshot().seen==single.snapshot().seen,"Displaying the restored view discovers its current sightline");
+    for(const auto& invalid:{std::string("0 "),"1 0 \""+std::string(256,'0')+"\" ",
+            "1 99 \""+std::string(256,'1')+"\" ","1 0 \""+std::string(255,'1')+"x\" "})
+        rejects([&]{(void)decode_campaign(campaign_payload(5,body+invalid),*srd5::character_rules(),*rules,"fog-fixture",&old_base);});
+    check(encode_campaign(*party,&single,"fog-fixture")==current,"Malformed fog saves leave the live campaign untouched");
+}
 void file_safety(const std::filesystem::path& directory)
 {
     const auto path=directory/"storage.save";
@@ -124,4 +193,4 @@ void roundtrip(const std::filesystem::path& directory){
     auto busy=prototype();rejects([&]{(void)encode_campaign(*party,&busy,"fixture-v1");});
 }
 }
-int main(){try{TestDirectory directory;roundtrip(directory.path);file_safety(directory.path);std::cout<<"Campaign file save tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{TestDirectory directory;roundtrip(directory.path);fog_saves(directory.path);file_safety(directory.path);std::cout<<"Campaign file save tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

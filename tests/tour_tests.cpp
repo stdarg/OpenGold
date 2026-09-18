@@ -83,6 +83,81 @@ void wall_art_tests()
     check(compose_exploration_view(empty, *art, 0, 0, 3).rgba == background.rgba,
         "Door interaction bits do not fabricate door artwork at map boundaries");
 }
+void fog_visibility_tests()
+{
+    WallTiles tiles(2); tiles[1].fill(8);
+    const auto decoded = decode_wall_art(Bytes(156,1),tiles);
+    check(decoded.has_value(),"Authored opaque wall fixture decodes");
+    auto art = *decoded;
+    GeoMap corridor;
+    for (auto& cell : corridor.cells) cell.walls.fill(1);
+    corridor.cells[8*16+8].walls[0] = 0;
+    corridor.cells[7*16+8].walls[0] = 0;
+    auto view = render_exploration_view(corridor,art,8,8,0);
+    check(view.visible.count() == 3 && view.visible.test(8*16+8) &&
+          view.visible.test(7*16+8) && view.visible.test(6*16+8),
+          "The three rendered corridor cells are visible, without rooms behind side walls");
+    corridor.cells[7*16+8].walls[0] = 1;
+    check(render_exploration_view(corridor,art,8,8,0).visible.count() == 2,
+          "Middle wall hides the far corridor cell");
+    corridor.cells[8*16+8].walls[0] = 1;
+    view = render_exploration_view(corridor,art,8,8,0);
+    check(view.visible.count() == 1 && view.visible.test(8*16+8),
+          "A closed room reveals only the occupied cell");
+    corridor.cells[8*16+8].doors[0] = 1;
+    check(render_exploration_view(corridor,art,8,8,0).visible == view.visible,
+          "A traversable but opaque door does not reveal what is behind it");
+
+    // Cut a window in the exact artwork being rendered. Its hole must expose
+    // both the floor and distant wall without a separate collision/FOV guess.
+    art.appearances.push_back(art.appearances.front());
+    auto& front = art.appearances.back()[static_cast<unsigned>(WallView::near_front)];
+    for (unsigned y = 32; y < 56; ++y) for (unsigned x = 24; x < 32; ++x)
+        front.rgba[(y*front.width+x)*4+3] = 0;
+    corridor.cells[8*16+8].walls[0] = 2;
+    corridor.cells[7*16+8].walls[0] = 0;
+    check(render_exploration_view(corridor,art,8,8,0).visible.count() == 3,
+          "A transparent opening reveals the cells actually drawn through it");
+
+    const auto open = render_exploration_view({}, {},8,8,0);
+    check(open.visible.test(7*16+8) && open.visible.test(6*16+8) &&
+          !open.visible.test(5*16+8) && !open.visible.test(9*16+8),
+          "Open floor reveals the forward view, not distant or rear cells");
+    for (unsigned facing = 0; facing < 4; ++facing) {
+        const auto rotated = render_exploration_view({}, {},8,8,facing);
+        std::bitset<256> expected;
+        for (unsigned y = 0; y < 16; ++y) for (unsigned x = 0; x < 16; ++x) if (open.visible.test(y*16+x)) {
+            int dx = int(x)-8, dy = int(y)-8;
+            for (unsigned turn = 0; turn < facing; ++turn) { const int old_x = dx; dx = -dy; dy = old_x; }
+            expected.set((8+dy)*16+8+dx);
+        }
+        check(rotated.visible == expected,"Visibility rotates with all four facings");
+    }
+    for (unsigned x : {0u,15u}) for (unsigned y : {0u,15u}) for (unsigned facing = 0; facing < 4; ++facing) {
+        const auto edge = render_exploration_view({}, {},x,y,facing);
+        check(edge.visible.test(y*16+x) && !edge.visible.test((15-y)*16+(15-x)),
+              "Viewport clipping never wraps visibility to the other map edge");
+    }
+
+    const auto start = program({9,0,8,1,0x4b,0xc0,9,0,8,1,0x4c,0xc0,0});
+    RolfTourSession tour({},start,{},0x9914);
+    (void)tour.observe_view();
+    check(tour.snapshot().seen.none(),"An uninitialized pose cannot reveal the default origin");
+    tour.advance(0);
+    check(tour.snapshot().seen == tour.snapshot().visited && tour.snapshot().visited.count() == 1,
+          "Spawning reveals the occupied cell before a view is shown");
+    (void)tour.observe_view();
+    const auto north = tour.snapshot().seen;
+    check(north == open.visible && tour.snapshot().visited.count() == 1,"Seeing forward does not count as visiting");
+    const auto revision = tour.snapshot().revision;
+    (void)tour.observe_view();
+    check(tour.snapshot().revision == revision,"Repainting the same view does not mutate history");
+    tour.explore(ExplorationCommand::turn_around); (void)tour.observe_view();
+    check((tour.snapshot().seen & north) == north && tour.snapshot().seen.test(10*16+8),
+          "Turning reveals new cells and remembers the previous view");
+    tour.restart(); tour.advance(0);
+    check(tour.snapshot().seen.count() == 1,"A new campaign clears previous map knowledge");
+}
 void shopping_tests()
 {
     // Tour exits at 9914; every normal entry invokes a generated shop event.
@@ -302,7 +377,7 @@ void installed(const char* directory)
 int main()
 {
     try {
-        wall_art_tests(); shopping_tests(); synthetic();
+        wall_art_tests(); fog_visibility_tests(); shopping_tests(); synthetic();
         if (const auto directory = std::getenv("OPENGOLD_GAME_DIR")) installed(directory);
         std::cout << "Tour tests passed.\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

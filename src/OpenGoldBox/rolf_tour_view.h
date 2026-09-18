@@ -48,7 +48,7 @@ private:
     unsigned rendered_sprite_id_{999};
     std::uint64_t displayed_ticket_{};
     std::uint64_t rendered_picture_revision_{};
-    bool full_map_{true}, ready_{}, checking_{}, capture_{}, capture_pending_{};
+    bool no_fog_{}, ready_{}, checking_{}, capture_{}, capture_pending_{};
     bool town_check_{},embedded_party_{};
     unsigned shop_check_stage_{};
     unsigned recovery_stage_{};
@@ -74,7 +74,6 @@ private:
     void level_up_requested(int slot);
     void close_sheet();
     void leave_shop();
-    void map_mode();
     void movement(opengold::por::ExplorationCommand command);
     void draw_scene();
     void draw_map();

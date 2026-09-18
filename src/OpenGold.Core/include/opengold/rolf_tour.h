@@ -59,6 +59,7 @@ struct TourSnapshot {
     bool number_input{};
     std::uint64_t picture_revision{};
     std::bitset<256> visited;
+    std::bitset<256> seen; // Persistent map knowledge: visited or visible in a shown 3D view.
 };
 enum class ExplorationCommand { turn_left, turn_right, turn_around, forward, look, camp };
 
@@ -87,6 +88,9 @@ public:
     [[nodiscard]] const GeoMap& map() const noexcept { return map_; }
     [[nodiscard]] const auto& sprites() const noexcept { return sprites_; }
     [[nodiscard]] const WallArtSet& wall_art() const noexcept { return wall_art_; }
+    // Compose the current 3D view and remember its visible cells. Call only
+    // when presenting exploration, not when an encounter picture replaces it.
+    [[nodiscard]] Image observe_view();
     [[nodiscard]] const TownParty& party() const noexcept { return party_; }
     [[nodiscard]] const std::vector<Equipment>& shop_stock() const noexcept { return treasure_; }
     [[nodiscard]] const std::vector<std::string>& script_diagnostics() const noexcept { return diagnostics_; }
@@ -123,6 +127,7 @@ private:
     unsigned current_area_{},saved_area_{};
     std::map<unsigned,std::bitset<256>> visited_areas_;
     std::map<unsigned,std::bitset<256>> saved_visited_areas_;
+    std::map<unsigned,std::bitset<256>> seen_areas_, saved_seen_areas_;
     std::optional<TourSnapshot> saved_snapshot_;
     std::vector<rules::Participant> staged_enemies_;
     std::vector<opengold::CombatArt> staged_art_;

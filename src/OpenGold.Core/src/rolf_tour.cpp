@@ -1,4 +1,5 @@
 #include "opengold/rolf_tour.h"
+#include "opengold/exploration_view.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -150,7 +151,7 @@ RolfTourSession::RolfTourSession(GeoMap map, std::shared_ptr<const EclProgram> p
 
 void RolfTourSession::restart()
 {
-    current_area_=0;visited_areas_.clear();if(town_&&town_->map){map_=*town_->map;wall_art_=town_->wall_art;}
+    current_area_=0;visited_areas_.clear();seen_areas_.clear();if(town_&&town_->map){map_=*town_->map;wall_art_=town_->wall_art;}
     const auto revision = snapshot_.revision + 1;
     machine_ = EclMachine(program_);
     snapshot_ = {}; snapshot_.revision = revision;
@@ -182,7 +183,7 @@ void RolfTourSession::fail(std::string diagnostic)
         diagnostics_.push_back(diagnostic);
         machine_ = std::move(*checkpoint_); checkpoint_.reset();
         party_ = saved_party_; current_script_ = saved_script_;change_area(saved_area_);
-        visited_areas_=saved_visited_areas_;if(saved_snapshot_){const auto revision=snapshot_.revision+1;snapshot_=*saved_snapshot_;snapshot_.revision=revision;}
+        visited_areas_=saved_visited_areas_;seen_areas_=saved_seen_areas_;if(saved_snapshot_){const auto revision=snapshot_.revision+1;snapshot_=*saved_snapshot_;snapshot_.revision=revision;}
         if(campaign_&&saved_campaign_)campaign_->restore(*saved_campaign_);
         who_request_=temple_request_=0;who_slots_.clear();temple_targets_.clear();
         selected_character_ = saved_selected_character_; pending_movement_.reset(); transition_ = false;
@@ -204,7 +205,20 @@ void RolfTourSession::publish_pose()
     if (next.x >= 16 || next.y >= 16 || next.facing >= 4) throw EclError("Tour wrote an invalid party pose");
     snapshot_.pose = next;
     snapshot_.visited.set(next.y * 16 + next.x);
+    snapshot_.seen.set(next.y * 16 + next.x);
     ++snapshot_.revision;
+}
+
+Image RolfTourSession::observe_view()
+{
+    const auto pose = snapshot_.pose;
+    auto view = render_exploration_view(map_,wall_art_,pose.x,pose.y,pose.facing);
+    // Before the opening script publishes a pose, (0,0) is only a default
+    // value. An early UI refresh must not record it as explored territory.
+    if (snapshot_.visited.none()) return std::move(view.image);
+    const auto known = snapshot_.seen | view.visible;
+    if (known != snapshot_.seen) { snapshot_.seen = known; ++snapshot_.revision; }
+    return std::move(view.image);
 }
 
 void RolfTourSession::handle_host(const EclRequest& request)

@@ -7,7 +7,8 @@ The `OPENGOLD-CAMPAIGN` format identifier is unchanged for compatibility.
 The shared character/party/New Phlan flow supports manual named campaign saves.
 The first Slums expedition also supports saving during idle exploration, including
 its district map, script continuation and deferred original loot. Format version
-three retains version-one/two loading and stores confirmed advancement choices.
+five retains version-one through version-four loading and adds persistent
+knowledge of cells seen in the exploration view, separately from visited cells.
 Adding the supported roaming creature
 profiles preserves compatibility with the preceding rules content pack; unrelated
 content changes still require a matching identity.
@@ -31,7 +32,7 @@ mid-combat campaign saves or original DOS saves are
 implemented. The standalone tour and combat research demos retain their existing
 behavior; these campaign controls belong to the shared party flow.
 
-Format **OPENGOLD-CAMPAIGN 3** stores:
+Format **OPENGOLD-CAMPAIGN 5** stores:
 
 - Finished character drafts, appearances, levels, advancement choices,
   stable member and inventory IDs,
@@ -43,6 +44,15 @@ Format **OPENGOLD-CAMPAIGN 3** stores:
   variables/flags, instruction spans, comparison flags, request counter and ECL
   RNG. The completed event is not replayed. Dialogue and visited cells persist;
   transient encounter pictures/sprites are cleared for the idle exploration view.
+- Separate visited and seen bitsets for each district. Looking ahead through the
+  first-person view reveals visible cells permanently; changing maps or loading
+  a save preserves that history. Older saves retain their visited cells and add
+  the current sightline when displayed. Invalid masks, unknown districts, or
+  missing knowledge for visited cells reject the load.
+
+The `--no-fog` launch flag only changes overhead rendering. It does not fill
+either bitset, and saving while it is enabled does not reveal unexplored areas
+when the save is later loaded during normal play.
 
 Character sheets are reconstructed through the rules module by replaying validated
 advancement choices. Levels 1–4 of the Fighter/Cleric/Wizard subset, selected
@@ -61,7 +71,7 @@ an ordered fingerprint manifest of installed DAX archives and ITEMS. A different
 asset installation, unknown definition, malformed resource state or incompatible
 version rejects explicitly. Reinstalling identical assets at a new path is valid.
 FNV-1a fingerprints/checksums detect accidental changes; they are not signatures
-or protection against deliberate tampering. Formats 1 and 2 and the supported
+or protection against deliberate tampering. Formats 1 through 4 and the supported
 rules 0.3.0 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
 
 Writes use a temporary file, flush it to disk and verify its bytes before replacing

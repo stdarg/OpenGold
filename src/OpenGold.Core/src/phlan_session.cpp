@@ -10,8 +10,10 @@ void RolfTourSession::change_area(unsigned id)
     if(id==current_area_)return;
     const auto& resource=id?*town_->districts.at(id):*town_;
     if(!resource.map)throw EclError("District map is missing");
-    visited_areas_[current_area_]=snapshot_.visited;current_area_=id;snapshot_.area_id=id;
+    visited_areas_[current_area_]=snapshot_.visited;seen_areas_[current_area_]=snapshot_.seen;
+    current_area_=id;snapshot_.area_id=id;
     map_=*resource.map;wall_art_=resource.wall_art;snapshot_.visited=visited_areas_[id];
+    snapshot_.seen=seen_areas_[id];
     picture_.reset();++snapshot_.picture_revision;snapshot_.sprite_frame=-1;++snapshot_.revision;
 }
 void RolfTourSession::campaign_party(std::shared_ptr<opengold::CampaignParty> party)
@@ -126,7 +128,7 @@ void RolfTourSession::begin_event(unsigned slot)
         saved_campaign_=campaign_->checkpoint();}
     checkpoint_=machine_; saved_party_=party_; saved_script_=current_script_;
     saved_area_=current_area_;
-    saved_visited_areas_=visited_areas_;saved_snapshot_=snapshot_;
+    saved_visited_areas_=visited_areas_;saved_seen_areas_=seen_areas_;saved_snapshot_=snapshot_;
     saved_selected_character_=selected_character_;
     event_stage_=slot==0?1:slot==2?4:2;
     machine_.bind_variable(0x6DC9,0);

@@ -388,11 +388,13 @@ void rejected_combat_handoff()
         auto party=std::make_shared<CampaignParty>(module());const auto id=party->add_pc(character(klass));
         const auto before=party->checkpoint();
         por::RolfTourSession town({},gate,{},0x9914,{},resources);town.campaign_party(party);settle(town);
+        (void)town.observe_view();const auto known_before=town.snapshot().seen;
         check(!town.reject_combat("Stale rejection"),"No combat rejection outside a pending handoff");
         check(town.explore(por::ExplorationCommand::look),"Synthetic gate starts an encounter event");settle(town);
         check(town.pending_encounter().has_value()&&town.snapshot().phase==por::TourPhase::combat,
             "Script reaches the actual campaign combat boundary");
         check(party->member(id).vitals.hit_points==3,"Event applies its pre-combat HP change");
+        (void)town.observe_view();
         {
             CombatDemo combat(module());combat.campaign_party(party);
             if(std::string_view(klass)=="rogue"){
@@ -409,6 +411,7 @@ void rejected_combat_handoff()
             "Rollback restores party HP and resources without rewards");
         check(town.snapshot().area_id==0&&town.script_variable(0x6C19)==before.roster[0].vitals.hit_points,
             "Rollback restores the map and original script state");
+        check(town.snapshot().seen==known_before,"Failed district event restores exploration knowledge atomically");
         check(town.snapshot().dialogue.find("Combat initialization failed")!=std::string::npos,
             "The actual failure remains visible in the exploration notice");
         check(!town.reject_combat("Duplicate"),"Rejection is applied once");

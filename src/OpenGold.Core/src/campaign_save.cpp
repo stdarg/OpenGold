@@ -14,7 +14,7 @@ std::uint64_t fingerprint(std::string_view data){std::uint64_t n=146959810393466
 // Explicit field encoding: no pointers, native object layouts or derived sheets.
 struct SaveCodec {
     bool reading{};
-    unsigned version{4};
+    unsigned version{5};
     std::stringstream stream;
     const rules::CharacterRules* creation{};
     const rules::RulesModule* module{};
@@ -97,12 +97,34 @@ struct SaveCodec {
         if(reading){v.combat_request_=0;v.staged_enemies_.clear();v.staged_art_.clear();v.encounter_.reset();}
         auto& s=v.snapshot_;fields(s.dialogue,s.prompts,s.redraws,s.footsteps,s.event_runs);
         std::string visited=s.visited.to_string();field(visited);
-        if(reading){require(visited.size()==256&&visited.find_first_not_of("01")==std::string::npos,"Invalid visited map");s.visited=std::bitset<256>(visited);s.phase=por::TourPhase::completed;s.tour_finished=true;s.script_id=v.current_script_;s.sprite_frame=-1;s.choices.clear();s.continue_ticket=0;s.diagnostic.clear();++s.picture_revision;v.picture_.reset();v.checkpoint_.reset();v.saved_campaign_.reset();v.pending_movement_.reset();v.treasure_.clear();v.who_slots_.clear();v.temple_targets_.clear();v.menu_request_=v.delayed_request_=v.who_request_=v.temple_request_=v.shop_request_=0;v.remaining_delay_=0;v.transition_=v.message_only_=false;v.event_stage_=0;v.publish_pose();v.campaign_.reset();}
+        if(reading){require(visited.size()==256&&visited.find_first_not_of("01")==std::string::npos,"Invalid visited map");s.visited=std::bitset<256>(visited);}
+        if(version>=5){
+            std::map<unsigned,std::string> known;
+            if(!reading){for(const auto& [id,cells]:v.seen_areas_)known[id]=cells.to_string();known[v.current_area_]=s.seen.to_string();}
+            field(known);
+            if(reading){
+                v.seen_areas_.clear();
+                for(const auto& [id,cells]:known){
+                    require((id==0||v.town_->districts.contains(id))&&cells.size()==256&&cells.find_first_not_of("01")==std::string::npos,"Invalid saved map knowledge");
+                    v.seen_areas_[id]=std::bitset<256>(cells);
+                }
+                require(v.seen_areas_.contains(v.current_area_),"Missing current map knowledge");
+                s.seen=v.seen_areas_.at(v.current_area_);
+                require((s.visited&~s.seen).none(),"Visited cells must be known");
+                for(const auto& [id,cells]:v.visited_areas_)
+                    require(v.seen_areas_.contains(id)&&(cells&~v.seen_areas_.at(id)).none(),"Missing visited district knowledge");
+            }
+        }else if(reading){
+            // Older saves remember visits only. Keep them, then discover the
+            // current sightline when the restored 3D view is actually shown.
+            v.seen_areas_=v.visited_areas_;s.seen=s.visited;
+        }
+        if(reading){s.phase=por::TourPhase::completed;s.tour_finished=true;s.script_id=v.current_script_;s.sprite_frame=-1;s.choices.clear();s.continue_ticket=0;s.diagnostic.clear();++s.picture_revision;v.picture_.reset();v.checkpoint_.reset();v.saved_campaign_.reset();v.pending_movement_.reset();v.treasure_.clear();v.who_slots_.clear();v.temple_targets_.clear();v.menu_request_=v.delayed_request_=v.who_request_=v.temple_request_=v.shop_request_=0;v.remaining_delay_=0;v.transition_=v.message_only_=false;v.event_stage_=0;v.publish_pose();v.campaign_.reset();}
     }
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 4\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 5\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -120,8 +142,8 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 }
 }
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
-    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 4\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");const bool third=bytes.starts_with("OPENGOLD-CAMPAIGN 3\n");require(old||second||third||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
-    SaveCodec in(body);in.version=old?1:second?2:third?3:4;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
+    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 5\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");const bool third=bytes.starts_with("OPENGOLD-CAMPAIGN 3\n"),fourth=bytes.starts_with("OPENGOLD-CAMPAIGN 4\n");require(old||second||third||fourth||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
+    SaveCodec in(body);in.version=old?1:second?2:third?3:fourth?4:5;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
 std::string read_campaign_file(const std::filesystem::path& path)
 {return read_save_file(path,limit);}
