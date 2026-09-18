@@ -56,6 +56,10 @@ tooltip_text = "Bonus action: heal a visible ally within 60 feet. Uses the selec
 text = "Scorching Ray"
 tooltip_text = "Action: three fire rays at one target within 120 feet. Uses a level 2 slot."
 
+[node name="Blindness" type="Button" parent="."]
+text = "Blindness"
+tooltip_text = "Action: a visible enemy within 120 feet makes a Constitution save. Blindness lasts up to 1 minute, with a new save at the end of each turn. Uses a level 2 slot."
+
 [node name="SpellSlot" type="Button" parent="."]
 text = "Slot level 1"
 tooltip_text = "Switch the slot level used by Magic Missile, Cure Wounds and Healing Word."

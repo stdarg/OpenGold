@@ -75,5 +75,11 @@
   "Half-Orc",
   "Non-binary",
   "Choose an existing folder containing the Pool of Radiance game files.",
-  "Cannot read the bundled game-file checksum manifest."
+  "Cannot read the bundled game-file checksum manifest.",
+  "Blinded",
+  " (advantage)",
+  "success",
+  "failure",
+  "blindness",
+  "Blindness training"
 ]

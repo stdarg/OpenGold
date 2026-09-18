@@ -29,7 +29,7 @@ still need integration and observation tests.
 - **Effect metadata:** all 256 byte identifiers, reserved codes, aliases, and
   the difference between absent and explicitly zero quantities. Quantified
   resistance, regeneration, level drain, and saving throw modifiers are checked.
-- **Deterministic mutations:** 3,520 mutations of 22 authored seeds, plus seed
+- **Deterministic mutations:** 3,840 mutations of 24 authored seeds, plus seed
   and empty-input checks. Bit flips, replacement, truncation, erasure, and
   insertion run in normal CTest, without a special compiler or original assets.
 - **Combat regressions:** malformed extra movement with an unspent action;
@@ -117,7 +117,7 @@ Minimize a failure, identify its violated contract, and add an ordinary focused
 regression test before fixing it. The same harness runs under CTest and
 libFuzzer, so replay does not require sanitizer tooling.
 
-### Verification performed
+### Verification performed (initial coverage review)
 
 - All 16 native tests passed without original assets, including under ASan/UBSan.
 - All 25 tests in the macOS game build passed, including Godot integration and
@@ -130,3 +130,17 @@ These short campaigns establish useful regression coverage, not an exhaustive
 proof over all possible inputs. The harness bounds input sizes, VM steps, sound
 ticks, and continuation length deliberately. Broader campaign-state and content
 parser fuzz targets remain future opportunities.
+
+### Saving throws and conditions verification
+
+- All 27 tests in the macOS build passed with the local original files.
+- Status effects, combat rules, party state, campaign saves and mutation smoke
+  tests passed under ASan/UBSan (five suites).
+- A bounded checkpoint campaign completed 329,718 inputs without a failure, using
+  fresh seeds that include active and overlapping blindness applications.
+- The native effect suite checks maximum-size effect collections, precise rest
+  eligibility, campaign encounter source identities and time-update equivalence.
+- The graphical condition check exercises the actual spell button, target click,
+  roster/log updates and save/load controls at the supported window sizes.
+
+See [status effects](STATUS-EFFECTS.md) for the implementation and review command.

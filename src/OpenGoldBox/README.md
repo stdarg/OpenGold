@@ -268,3 +268,12 @@ English and Spanish are available. Launch `win-package\opengoldbox.exe --reset-l
 from CMD to select **English** or **Español**. The selection is saved for later
 launches. Combine with `--splash` to show the translated splash lettering after
 selection. See [translation setup and coverage](../../docs/LOCALIZATION.md).
+
+## Saving throws and conditions
+
+Level 3–4 Clerics and Wizards can select **Blindness** during advancement. In
+combat, select its button and click a highlighted target. The spell uses a
+level-two slot; the roster and log show its condition and saving throws. Effects
+persist through combat checkpoints and campaign handoff. See
+[status effects](../../docs/STATUS-EFFECTS.md) for scope and the `--conditions`
+fixture in the existing combat scene.

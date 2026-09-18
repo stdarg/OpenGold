@@ -91,6 +91,9 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 - Dash; Second Wind; Fire Bolt; touch-range Cure Wounds; single-target Magic
   Missile. Two level-1 spell slots in the caster fixtures. Cure Wounds uses
   2d8 plus the casting ability modifier from this baseline.
+- Ordinary ability saving throws and Blinded through the blindness option of
+  Blindness/Deafness, including recovery saves, timed effects and persistence.
+  See [status effects](STATUS-EFFECTS.md).
 - HP, unconscious party members, automatic death saves, stabilization, healing,
   instant death from excess damage, enemy defeat, and party incapacitation.
 - Complete training checkpoints and a basic AI that uses the same public
@@ -110,8 +113,8 @@ character sheets. The orc conversion is authored for this demo; its AC/HP are
 not an automatic conversion of original AD&D values.
 
 Not yet implemented: full class features or equipment,
-weapon mastery, Extra Attack, regular ability saving-throw effects, general
-advantage/condition handling, partial cover, prone/grappling, damage
+weapon mastery, Extra Attack, additional saving-throw effects and conditions,
+partial cover, prone/grappling, damage
 types/resistance, multiple sizes, concentration, other spells, spell levels
 above two, split-target Magic Missile/Scorching Ray, retreat, morale, or complete
 campaign encounter coverage. The shared campaign now includes named saves,
@@ -174,8 +177,8 @@ godot --headless --path demos/godot res://scenes/combat_demo.tscn -- --combat-ch
 Add `--capture` to the user arguments in a graphical run (omit `--headless`) to
 save a local PNG in `user-data`. These checks exit automatically.
 
-Next increments should add regular saving throws, conditions and wider
-creature/spell coverage one tested encounter at a time. The [standalone character creator](CHARACTER-CREATION.md) now
+Next increments should extend [saving throws and conditions](STATUS-EFFECTS.md)
+and creature/spell coverage one tested encounter at a time. The [standalone character creator](CHARACTER-CREATION.md) now
 implements the requested identity, attribute, HP, and appearance flow through
 a separate optional native `CharacterRules` capability; it does not replace
 combat fixture definitions. Reverse engineering remains focused on campaign interfaces,

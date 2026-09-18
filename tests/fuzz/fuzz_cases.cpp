@@ -33,7 +33,10 @@ const rules::RulesModule& module()
     static const auto rules = srd5::parse_content(
         "OPENGOLD_SRD5 1 fuzz.synthetic.1\n"
         "creature hero 16 40 20 30 5 1 8 3 4 1 6 2 80 320 2 2 4 1 7\n"
-        "creature enemy 12 18 -10 30 3 1 6 1 3 1 6 1 80 320 0 0 0 1 0\n");
+        "creature enemy 12 18 -10 30 3 1 6 1 3 1 6 1 80 320 0 0 0 1 0\n"
+        "creature caster 16 40 20 30 5 1 8 3 4 1 6 2 80 320 2 2 4 3 7\n"
+        "saves enemy 0 1 1 0 0 0\n"
+        "spellcasting caster 2 39\n");
     return *rules;
 }
 FuzzSeed text_seed(std::string name, const std::string& bytes)
@@ -125,7 +128,7 @@ void exercise_formats(std::span<const std::uint8_t> bytes)
 
 void exercise_checkpoint(std::span<const std::uint8_t> bytes)
 {
-    if (bytes.size() > 65537) return;
+    if (bytes.size() > 4*1024*1024+1) return;
     const std::string text(bytes.begin(),bytes.end());
     std::unique_ptr<rules::CombatSession> session;
     try { session = module().restore(text); }
@@ -207,6 +210,22 @@ std::vector<FuzzSeed> checkpoint_seeds()
         session->submit(session->legal_commands().front());
         seeds.push_back(text_seed("continued-"+std::to_string(seed),session->save()));
     }
+    rules::Encounter effects{{8,8,std::vector<std::uint8_t>(64)},
+        {{1,"caster","Caster",0,{2,2}},{2,"enemy","Target",1,{3,2}}}};
+    auto session=module().create(effects,3);
+    auto commands=session->legal_commands();
+    auto cast=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="blindness";});
+    require(cast!=commands.end()&&session->submit(*cast),"Condition corpus casts Blindness");
+    require(!session->snapshot().combatants.back().conditions.empty(),"Condition corpus contains an active effect");
+    seeds.push_back(text_seed("active-blindness",session->save()));
+    for(unsigned turn=0;turn<2;++turn){
+        commands=session->legal_commands();
+        const auto end=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
+        require(end!=commands.end()&&session->submit(*end),"Condition corpus advances time");
+    }
+    commands=session->legal_commands();cast=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="blindness";});
+    require(cast!=commands.end()&&session->submit(*cast),"Condition corpus recasts Blindness");
+    seeds.push_back(text_seed("overlapping-effects",session->save()));
     return seeds;
 }
 }

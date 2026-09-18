@@ -158,19 +158,45 @@ bool CampaignParty::rest()
     if(next.time_minutes>std::numeric_limits<std::uint64_t>::max()-policy.duration_minutes)throw std::runtime_error("Campaign clock overflow");
     for(auto id:next.slots)if(id){
         auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});
-        if(member.last_rest_minutes&&next.time_minutes-*member.last_rest_minutes<policy.wait_after_rest_minutes)return false;
+        if(member.last_rest_minutes){
+            const auto elapsed=next.time_minutes-*member.last_rest_minutes;
+            if(elapsed<policy.wait_after_rest_minutes||(elapsed==policy.wait_after_rest_minutes&&next.subminute_milliseconds<member.last_rest_subminute_milliseconds))return false;
+        }
         // This bounded group rest requires everyone to be eligible at its start.
         if(member.vitals.dead||member.vitals.hit_points<1)return false;
-        rules_->recover(member.vitals,member.character.sheet());
-        member.last_rest_minutes=next.time_minutes+policy.duration_minutes;rested=true;
+        member.last_rest_minutes=next.time_minutes+policy.duration_minutes;
+        member.last_rest_subminute_milliseconds=next.subminute_milliseconds;rested=true;
     }
     if(!rested)return false;
-    next.time_minutes+=policy.duration_minutes;state_=std::move(next);return true;
+    elapse(next,std::uint64_t(policy.duration_minutes)*60000);
+    for(auto id:next.slots)if(id){auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});rules_->recover(member.vitals,member.character.sheet());}
+    state_=std::move(next);return true;
 }
 void CampaignParty::advance_time(unsigned minutes)
 {
-    editable();if(minutes>std::numeric_limits<std::uint64_t>::max()-state_.time_minutes)throw std::runtime_error("Campaign clock overflow");
-    state_.time_minutes+=minutes;
+    advance_time_milliseconds(std::uint64_t(minutes)*60000);
+}
+void CampaignParty::advance_time_milliseconds(std::uint64_t milliseconds)
+{
+    editable();auto next=state_;elapse(next,milliseconds);state_=std::move(next);
+}
+void CampaignParty::elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat) const
+{
+    const auto remainder=state.subminute_milliseconds+milliseconds%60000;
+    const auto minutes=milliseconds/60000+remainder/60000;
+    if(minutes>std::numeric_limits<std::uint64_t>::max()-state.time_minutes)throw std::runtime_error("Campaign clock overflow");
+    std::vector<rules::Participant> participants;
+    for(const auto& member:state.roster){
+        if(std::find(in_combat.begin(),in_combat.end(),member.id)!=in_combat.end())continue;
+        std::vector<std::string> gear;
+        for(auto id:member.equipped)gear.push_back(member.character.inventory().find(id)->get().definition_id);
+        const auto profile=rules_->character_profile(member.character.sheet(),gear);
+        participants.push_back({member.id,"campaign-character",member.character.sheet().name,0,{},profile.data,member.vitals});
+    }
+    rules_->elapse(participants,milliseconds,state.random_state);
+    for(const auto& participant:participants)
+        std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& m){return m.id==participant.id;})->vitals=*participant.state;
+    state.time_minutes+=minutes;state.subminute_milliseconds=static_cast<unsigned>(remainder%60000);
 }
 void CampaignParty::temple_heal(MemberId target)
 {
@@ -229,12 +255,14 @@ void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
 }
 void CampaignParty::validate(const PartyState& state)
 {
-    if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024)throw std::runtime_error("Invalid party checkpoint");
+    if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024||state.subminute_milliseconds>=60000||!state.next_combat_scope)throw std::runtime_error("Invalid party checkpoint");
     std::set<MemberId> ids,active;std::set<std::string> sources,creation_sources;
     for(const auto& m:state.roster){
         if(!m.creation_source.empty()&&(m.creation_source.size()>160||!creation_sources.insert(m.creation_source).second))throw std::runtime_error("Invalid creation source checkpoint");
         if(!m.id||m.id>=state.next_id||!ids.insert(m.id).second||m.vitals.hit_points<0||
-            (m.last_rest_minutes&&*m.last_rest_minutes>state.time_minutes)||
+            (m.last_rest_minutes&&(*m.last_rest_minutes>state.time_minutes||
+                (*m.last_rest_minutes==state.time_minutes&&m.last_rest_subminute_milliseconds>state.subminute_milliseconds)))||
+            m.last_rest_subminute_milliseconds>=60000||(!m.last_rest_minutes&&m.last_rest_subminute_milliseconds)||
             m.vitals.hit_points>m.character.sheet().hit_points||(m.vitals.dead&&m.vitals.hit_points)||m.morale>255||
             (!m.npc_source.empty()&&!sources.insert(m.npc_source).second))throw std::runtime_error("Invalid roster checkpoint");
         std::set<std::uint64_t> equipment;
@@ -260,16 +288,22 @@ std::vector<rules::Participant> CampaignParty::participants() const
     }
     if(result.empty())throw std::runtime_error("Add a living combat-ready character first");return result;
 }
-void CampaignParty::begin_combat(){editable();combat_=true;}
+void CampaignParty::begin_combat(){editable();if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;}
 void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
 {
     if(!combat_||snapshot.identity!=rules_->identity())throw std::runtime_error("Combat rules identity mismatch");
+    if(snapshot.elapsed_milliseconds<combat_elapsed_)throw std::runtime_error("Combat clock moved backward");
     auto next=state_;
+    std::vector<MemberId> active;for(const auto& actor:snapshot.combatants)if(actor.side==0)active.push_back(actor.id);
+    // Combat has already advanced active actors' effects. Only reserve members
+    // need campaign-side updates, preventing duplicate recovery rolls.
+    elapse(next,snapshot.elapsed_milliseconds-combat_elapsed_,active);
     for(const auto& actor:snapshot.combatants)if(actor.side==0){
         const auto it=std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==actor.id;});
         if(it==next.roster.end()||actor.max_hit_points!=it->character.sheet().hit_points)throw std::runtime_error("Combat party identity mismatch");
         it->vitals=actor.persistent;
     }
-    state_=std::move(next);
+    if(!combat_registered_)++next.next_combat_scope;
+    state_=std::move(next);combat_elapsed_=snapshot.elapsed_milliseconds;combat_registered_=true;
 }
 }

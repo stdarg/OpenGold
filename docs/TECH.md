@@ -84,6 +84,30 @@ Shared implementation boundaries:
   validation are documented in the [complexity review](COMPLEXITY-REVIEW.md),
   including correctness arguments and exhaustive small-grid checks.
 
+### Status Effects and Game Time
+
+The SRD module owns one value-based effect model for PCs, recruited NPCs and
+monsters. Base statistics remain authoritative; current effects contribute
+contextual modifiers through shared sight, attack and saving-throw queries.
+Each application records its own ID, scoped source, original save DC, duration
+and recovery schedule. Source references are identifiers, never actor pointers.
+
+`status_effects.h/.cpp` contains the testable lifecycle, save resolver and codec.
+Combat owns participating actors' mutable effects. The campaign receives their
+opaque rules continuation and updates reserve members separately. A snapshot's
+elapsed-time delta is applied once, preventing duplicate recovery rolls.
+Six-second rounds are partitioned across fixed initiative slots; exploration
+steps also advance six seconds. Rendering, menus and wall-clock waiting do not
+advance effects. Campaign time retains milliseconds within each minute, including
+rest-completion precision. Effect processing orders simultaneous events by entity
+and application ID so different time-update sizes preserve RNG continuation.
+
+Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
+Combat checkpoint version 4 stores all effect applications and timers; campaign
+version 6 stores the clock, encounter scopes and rules-owned effect state.
+Existing campaign formats 1–5 migrate. See [status effects](STATUS-EFFECTS.md)
+for mechanics, scope, persistence, tests and the existing-scene review fixture.
+
 ### Why This Stack
 
 `C/C++` fits the project because it supports a portable native engine with direct integration into Godot:

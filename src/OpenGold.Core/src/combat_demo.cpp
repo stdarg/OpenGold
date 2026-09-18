@@ -71,7 +71,7 @@ void CombatDemo::start_encounter(std::vector<Participant> enemies,std::string re
 {
     auto participants=campaign_?campaign_->participants():party();
     participants.insert(participants.end(),enemies.begin(),enemies.end());
-    auto next=module_->create({arena(),std::move(participants)},seed_);
+    auto next=module_->create({arena(),std::move(participants),campaign_?campaign_->state().next_combat_scope:1},seed_);
     install_combat(std::move(next),std::move(reward_id));
 }
 void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
@@ -102,22 +102,22 @@ void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
     constexpr std::array<Cell,4> forward{{{-5,-5},{6,0},{5,5},{-6,0}}};
     const auto offset=forward[encounter.facing];const Cell target{origin.x+offset.x,origin.y+offset.y};
     for(auto& enemy:encounter.enemies){place(enemy,target);enemy.surprised=encounter.surprise==2;participants.push_back(std::move(enemy));}
-    auto next=module_->create({encounter.field.geometry,std::move(participants)},seed);
+    auto next=module_->create({encounter.field.geometry,std::move(participants),campaign_->state().next_combat_scope},seed);
     install_combat(std::move(next),{});seed_=seed;
     battlefield_tiles_=std::move(encounter.field.tiles);terrain_art_=std::move(encounter.terrain_art);art_=std::move(encounter.art);
     status_="Slums encounter / original dungeon geometry";dialogue_="The original script has requested combat.";
 }
 const CombatSession& CombatDemo::combat() const
 {if(!combat_)throw std::runtime_error("No active combat");return *combat_;}
-void CombatDemo::training(std::uint64_t seed)
+void CombatDemo::training(std::uint64_t seed,bool conditions)
 {
     if(campaign_){seed_=seed;start_encounter({{1000,"bandit","Bandit",1,{9,4}}},"preview:bandit:v1");
         vm_.reset();art_.clear();dialogue_="Party combat preview. HP and spent resources carry back to the party.";status_="Party training";return;}
-    auto next=module_->create({arena(),{{1,"vanguard","Vanguard",0,{2,4}},{10,"bandit","Bandit",1,{9,4}}}},seed);
+    auto next=module_->create({arena(),{{1,conditions?"blindness-adept":"vanguard",conditions?"Adept":"Vanguard",0,{2,4}},{10,"bandit","Bandit",1,conditions?Cell{3,4}:Cell{9,4}}}},seed);
     combat_=std::move(next);vm_.reset();creatures_.reset();art_.clear();enemies_.clear();
     menu_ticket_=combat_ticket_=0;encounters_=0;seed_=seed;
     dialogue_="Training encounter: one martial test profile and one SRD Bandit.";
-    status_="Training arena";
+    status_=conditions?"Blindness training":"Training arena";
 }
 void CombatDemo::slums(const std::filesystem::path& directory,std::uint64_t seed)
 {
@@ -225,6 +225,10 @@ Command choose_demo_command(const CombatSession& session)
     for(const auto& command:offered)if(command.verb=="cure_wounds"||command.verb=="cure_wounds_2"||command.verb=="healing_word"||command.verb=="healing_word_2") {
         const auto& target=*std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==command.target;});
         if(target.hit_points*2<target.max_hit_points)return command;
+    }
+    for(const auto& command:offered)if(command.verb=="blindness"){
+        const auto target=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==command.target;});
+        if(target->conditions.empty())return command;
     }
     for(const auto verb:{"magic_missile","magic_missile_2","scorching_ray","melee","fire_bolt","ranged"}) {
         const Command* best=nullptr;int hp=100000; // Borrowed view into local offered commands.

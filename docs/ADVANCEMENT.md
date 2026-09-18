@@ -23,8 +23,9 @@ does not become conscious merely by leveling. No XP is deducted.
 - **Savage Attacker:** level-4 choice for a character who does not already have
   it from Soldier. The first successful weapon attack each turn uses the higher
   of two damage rolls. Soldier's existing background feat now uses this mechanic.
-- **Cleric:** Cure Wounds and Healing Word. At least one must be selected.
-- **Wizard:** Magic Missile, plus Scorching Ray from level 3. Fire Bolt remains
+- **Cleric:** Cure Wounds and Healing Word; Blindness from level 3. At least
+  one supported spell must be selected.
+- **Wizard:** Magic Missile, plus Scorching Ray and Blindness from level 3. Fire Bolt remains
   available without spending a slot. At least one leveled spell must be selected.
 
 The spell list is a curated subset, not the complete class preparation or
@@ -34,7 +35,9 @@ Initiate) are disabled and explain their missing mechanics in a tooltip.
 Level-one slots are 2/3/4/4 at character levels 1/2/3/4. Level-two slots are 2 at
 level 3 and 3 at level 4. **Slot level** in combat switches between level-one and
 level-two casts for Cure Wounds, Healing Word and Magic Missile. Scorching Ray
-always spends a level-two slot. Healing Word uses the bonus action and heals
+always spends a level-two slot. Blindness also always uses a level-two slot and
+implements only the blindness option of Blindness/Deafness; see
+[status effects](STATUS-EFFECTS.md). Healing Word uses the bonus action and heals
 2d4 plus the casting modifier; its level-two cast heals 4d4. Cure Wounds uses
 2d8/4d8. Magic Missile fires three/four darts. Scorching Ray makes three separate
 ranged spell attacks for 2d6 each. Only one spell slot may be spent per turn.
@@ -52,10 +55,10 @@ attribution applies; original game resources are loaded locally.
 
 Campaign format 3 records each confirmed choice and reconstructs the resulting
 sheet through the rules module. Formats 1 and 2 migrate their existing levels
-using the previous default choices. Rules module 0.4.0 accepts the precise
-supported 0.3.0 campaign identities; unrelated content identities still reject.
-Standalone combat checkpoints use version 3 to retain second-level slots and
-per-turn spell/feat usage. Old-module combat checkpoints are not migrated.
+using the previous default choices. Rules module 0.5.0 accepts the precise
+supported 0.3.0/0.4.0 campaign identities; unrelated content identities still reject.
+Standalone combat checkpoints use version 4 to retain second-level slots,
+per-turn spell/feat usage and timed effects. Old-module combat checkpoints are not migrated.
 
 From PowerShell:
 

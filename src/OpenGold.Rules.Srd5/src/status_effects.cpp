@@ -1,0 +1,133 @@
+#include "status_effects.h"
+#include "dice.h"
+#include <algorithm>
+#include <charconv>
+#include <iomanip>
+#include <istream>
+#include <limits>
+#include <ostream>
+#include <stdexcept>
+
+namespace opengold::srd5::detail {
+namespace {
+template<class T> void unsigned_field(std::istream& input,T& value)
+{
+    std::string token;input>>token;
+    const auto result=std::from_chars(token.data(),token.data()+token.size(),value);
+    if(!input||result.ec!=std::errc{}||result.ptr!=token.data()+token.size())
+        throw std::runtime_error("Invalid unsigned effect field");
+}
+}
+int d20(RollModifiers modifiers, std::uint64_t& rng)
+{
+    const int first = roll_die(rng,20), mode = modifiers.mode();
+    if (!mode) return first;
+    const int second = roll_die(rng,20);
+    return mode > 0 ? std::max(first,second) : std::min(first,second);
+}
+SaveResult saving_throw(Ability ability, int bonus, int dc, RollModifiers modifiers, std::uint64_t& rng)
+{
+    const int natural = d20(modifiers,rng);
+    // Ordinary saves compare totals. The special natural 1/20 death-save and
+    // attack rules do not apply here. Widen before adding user-supplied values.
+    return {ability,natural,bonus,dc,modifiers.mode(),std::int64_t(natural)+bonus >= dc};
+}
+std::array<unsigned,2> class_save_proficiencies(std::string_view name)
+{
+    constexpr std::array<std::string_view,12> names{"Barbarian","Bard","Cleric","Druid","Fighter","Monk","Paladin","Ranger","Rogue","Sorcerer","Warlock","Wizard"};
+    constexpr std::array<std::array<unsigned,2>,12> saves{{{0,2},{1,5},{4,5},{3,4},{0,2},{0,1},{4,5},{0,1},{1,3},{2,5},{4,5},{3,4}}};
+    const auto found = std::find(names.begin(),names.end(),name);
+    if (found == names.end()) throw std::runtime_error("Unknown saving throw class");
+    return saves[found-names.begin()];
+}
+bool blinded(const EffectState& effects)
+{
+    return std::any_of(effects.active.begin(),effects.active.end(),[](const auto& e){return e.kind==EffectKind::blindness;});
+}
+bool can_apply(const EffectState& effects)
+{
+    return effects.active.size()<effect_limit && effects.next_id<std::numeric_limits<std::uint64_t>::max();
+}
+void apply_blindness(EffectState& effects, std::uint64_t scope, rules::EntityId caster,
+                    std::string name, int dc, unsigned first_save_ms)
+{
+    if (!can_apply(effects) || !scope || !caster || name.empty() || name.size()>160 ||
+        dc < -2 || dc > 38 || !first_save_ms || first_save_ms>round_ms)
+        throw std::runtime_error("Invalid blindness application");
+    effects.active.push_back({effects.next_id++,scope,caster,std::move(name),EffectKind::blindness,dc,60000,first_save_ms});
+}
+RollModifiers saving_modifiers(Ability ability, bool armor, bool dodge)
+{
+    return {dodge && ability==Ability::dexterity,
+            armor && (ability==Ability::strength || ability==Ability::dexterity)};
+}
+RollModifiers attack_modifiers(bool attacker_blind, bool target_blind, bool dodging, bool other)
+{
+    return {target_blind,attacker_blind || (dodging && !target_blind) || other};
+}
+void elapse_effects(std::span<EffectSubject> subjects, std::uint64_t milliseconds,
+                    std::uint64_t& rng, const EffectObserver& observe)
+{
+    // Stable entity and application ordering makes simultaneous saves repeatable,
+    // independent of roster layout and initiative order.
+    std::vector<EffectSubject> ordered(subjects.begin(),subjects.end());
+    std::sort(ordered.begin(),ordered.end(),[](const auto& a,const auto& b){return a.id<b.id;});
+    while (milliseconds) {
+        std::uint64_t step=milliseconds;
+        bool any=false;
+        for (const auto& subject:ordered) for (const auto& e:subject.effects.get().active) {
+            any=true;step=std::min(step,std::uint64_t(e.remaining_ms));
+            step=std::min(step,std::uint64_t(e.save_in_ms));
+        }
+        if (!any) return;
+        milliseconds-=step;
+        for (auto& subject:ordered) {
+            auto& effects=subject.effects.get().active;
+            for (auto& e:effects) {
+                e.remaining_ms-=static_cast<unsigned>(step);
+                e.save_in_ms-=static_cast<unsigned>(step);
+                EffectEvent event{subject.id,e};
+                if (!e.remaining_ms) event.removed=true;
+                else if (!e.save_in_ms) {
+                    e.save_in_ms=round_ms;
+                    if (!subject.dead) {
+                        event.save=saving_throw(Ability::constitution,subject.saves[2],e.dc,saving_modifiers(Ability::constitution,subject.str_dex_disadvantage,subject.dodge),rng);
+                        event.removed=event.save->success;
+                    }
+                }
+                if (event.removed) e.remaining_ms=0;
+                if (observe && (event.save || event.removed)) observe(event);
+            }
+            std::erase_if(effects,[](const auto& e){return !e.remaining_ms;});
+        }
+    }
+}
+void write_effects(std::ostream& out, const EffectState& effects)
+{
+    out << "FX1 " << effects.next_id << ' ' << effects.active.size();
+    for (const auto& e:effects.active)
+        out << ' ' << e.id << ' ' << unsigned(e.kind) << ' ' << e.source_scope << ' ' << e.source_actor
+            << ' ' << std::quoted(e.source_name) << ' ' << e.dc << ' ' << e.remaining_ms << ' ' << e.save_in_ms;
+}
+EffectState read_effects(std::istream& in)
+{
+    std::string magic;std::size_t count{};EffectState result;
+    in >> magic;unsigned_field(in,result.next_id);unsigned_field(in,count);
+    if (!in || magic!="FX1" || !result.next_id || count>effect_limit)
+        throw std::runtime_error("Invalid effect state");
+    std::uint64_t previous{};
+    for (std::size_t n=0;n<count;++n) {
+        Effect e;unsigned kind{};
+        unsigned_field(in,e.id);unsigned_field(in,kind);unsigned_field(in,e.source_scope);unsigned_field(in,e.source_actor);
+        in >> std::quoted(e.source_name) >> e.dc;
+        unsigned_field(in,e.remaining_ms);unsigned_field(in,e.save_in_ms);
+        if (!in || kind!=unsigned(EffectKind::blindness) || e.id<=previous || e.id>=result.next_id ||
+            !e.source_scope || !e.source_actor || e.source_name.empty() || e.source_name.size()>160 ||
+            e.dc < -2 || e.dc > 38 || !e.remaining_ms || e.remaining_ms>60000 ||
+            !e.save_in_ms || e.save_in_ms>round_ms)
+            throw std::runtime_error("Invalid active effect");
+        previous=e.id;result.active.push_back(std::move(e));
+    }
+    return result;
+}
+}

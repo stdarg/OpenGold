@@ -30,9 +30,9 @@
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
-const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
+const std::array<std::pair<const char*,const char*>,11> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
     {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
-    {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
+    {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Blindness","blindness"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
 std::string spell_verb(std::string verb,unsigned slot){if(slot==2&&(verb=="magic_missile"||verb=="cure_wounds"||verb=="healing_word"))verb+="_2";return verb;}
 }
 void CombatView::_bind_methods(){}
@@ -44,7 +44,7 @@ void CombatView::prepare_combat()
     if(encounter_)next->encounter(*encounter_,42);
     else if(OS::get_singleton()->get_cmdline_user_args().has("--slums"))
         next->slums(std::filesystem::u8path(settings::game_path().utf8().get_data()));
-    else next->training();
+    else next->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));
     demo_=std::move(next);sync_art();
 }
 void CombatView::_notification(int what){if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();}}
@@ -104,16 +104,27 @@ void CombatView::layout()
     place("Turn",Rect2(right,70,sidebar,70));place("Roster",Rect2(right,148,sidebar,160));
     place("Prompt",Rect2(right,318,sidebar,46));
     unsigned index=0;
-    for(const char* name:{"Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","SpellSlot","SecondWind","Dash","Dodge","Disengage","End","Continue"}) {
+    for(const char* name:{"Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End"}) {
         const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,370+row*43,114,36));++index;
     }
+    place("Continue",Rect2(right+244,370+4*43,114,36));
     place("React",Rect2(right,590,174,36));place("Decline",Rect2(right+184,590,174,36));
     place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
     place("Help",Rect2(right,686,sidebar,height-732));
     place("Log",Rect2(24,board_rect_.get_end().y+16,left_width,height-board_rect_.get_end().y-64));
     place("Footer",Rect2(24,height-34,width-48,24));
+    layout_status();
 }
-void CombatView::training(){try{error_.clear();demo_->training();art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
+void CombatView::layout_status()
+{
+    // Let the translated status summary determine its height. The roster keeps
+    // the remaining space above the action prompt and scrolls when necessary.
+    auto* turn=get_node<Label>("Turn");turn->set_size(Vector2(358,0));
+    auto* roster=get_node<RichTextLabel>("Roster");
+    const double top=std::max(148.0,double(turn->get_position().y+turn->get_size().y+8));
+    roster->set_position(Vector2(turn->get_position().x,top));roster->set_size(Vector2(358,std::max(0.0,308-top)));
+}
+void CombatView::training(){try{error_.clear();demo_->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::slums()
 {
     try{error_.clear();const auto directory=settings::game_path();
@@ -143,13 +154,13 @@ void CombatView::sync_art()
 }
 void CombatView::save_game()
 {
-    try{write_save_file(local_path("user://checks/combat.save"),demo_->save_combat(),65536);
+    try{write_save_file(local_path("user://checks/combat.save"),demo_->save_combat(),4*1024*1024);
         error_.clear();get_node<Label>("Prompt")->set_text(i18n::text(N_("Training combat saved.")));
     }catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::load_game()
 {
-    try{const auto bytes=read_save_file(local_path("user://checks/combat.save"),65536);
+    try{const auto bytes=read_save_file(local_path("user://checks/combat.save"),4*1024*1024);
         demo_->restore_combat(bytes);error_.clear();refresh();
     }catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -239,13 +250,18 @@ void CombatView::refresh()
         player=a.side==0;
         turn=i18n::format(s.reaction_pending?N_("Round {round} / {name} reaction\nMove {feet} ft | {action}"):N_("Round {round} / {name} turn\nMove {feet} ft | {action}"),
             {{"round",s.round},{"name",gs(a.name)},{"feet",a.movement_feet},{"action",i18n::text(a.action?N_("Action ready"):N_("Action spent"))}});
-        turn+="\n"+(a.status_messages.empty()?i18n::text(a.status):i18n::render(a.status_messages));
+        turn+="\n"+(a.status_messages.empty()?i18n::text(a.status):i18n::render(a.status_messages).replace("\n"," | "));
     }
     if(loaded&&s.outcome!=Outcome::ongoing)turn=i18n::text(s.outcome==Outcome::victory?N_("Victory"):N_("Party incapacitated / defeat"));
-    get_node<Label>("Turn")->set_text(turn);
-    String roster;for(const auto& a:s.combatants)roster+=String(a.id==s.actor?"> ":"  ")+i18n::format("{id} {name}  {current}/{maximum} HP  AC {ac}\n",
-        {{"id",a.id},{"name",gs(a.name)},{"current",a.hit_points},{"maximum",a.max_hit_points},{"ac",a.armor_class}});
+    get_node<Label>("Turn")->set_text(turn);layout_status();
+    String roster;for(const auto& a:s.combatants){
+        roster+=String(a.id==s.actor?"> ":"  ")+i18n::format("{id} {name}  {current}/{maximum} HP  AC {ac}\n",
+            {{"id",a.id},{"name",gs(a.name)},{"current",a.hit_points},{"maximum",a.max_hit_points},{"ac",a.armor_class}});
+        if(!a.conditions.empty())roster+="    "+i18n::render(a.conditions)+"\n";
+    }
     get_node<RichTextLabel>("Roster")->set_text(roster);
+    get_node<Button>("Continue")->set_visible(demo_&&(demo_->waiting()||(loaded&&s.outcome!=Outcome::ongoing)));
+    get_node<Button>("End")->set_visible(!get_node<Button>("Continue")->is_visible());
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));

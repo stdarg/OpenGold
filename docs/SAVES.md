@@ -7,8 +7,9 @@ The `OPENGOLD-CAMPAIGN` format identifier is unchanged for compatibility.
 The shared character/party/New Phlan flow supports manual named campaign saves.
 The first Slums expedition also supports saving during idle exploration, including
 its district map, script continuation and deferred original loot. Format version
-five retains version-one through version-four loading and adds persistent
-knowledge of cells seen in the exploration view, separately from visited cells.
+six retains version-one through version-five loading. It preserves exploration
+knowledge and adds active rules effects, sub-minute game time, precise rest
+completion times and encounter identities. See [status effects](STATUS-EFFECTS.md).
 Adding the supported roaming creature
 profiles preserves compatibility with the preceding rules content pack; unrelated
 content changes still require a matching identity.
@@ -32,14 +33,17 @@ mid-combat campaign saves or original DOS saves are
 implemented. The standalone tour and combat research demos retain their existing
 behavior; these campaign controls belong to the shared party flow.
 
-Format **OPENGOLD-CAMPAIGN 5** stores:
+Format **OPENGOLD-CAMPAIGN 6** stores:
 
 - Finished character drafts, appearances, levels, advancement choices,
   stable member and inventory IDs,
   inventory and original item provenance, equipment, purses, NPC identities/morale,
   active/reserve membership, selected slot and character-pool candidate identities.
 - HP/death state, opaque rules-owned resources, XP, claimed reward IDs, recovery
-  timers, campaign minutes and service RNG state.
+  timers, campaign minutes/millisecond remainder and service RNG state.
+- Lasting effects in the rules-owned SRD3/FX1 continuation, including individual
+  applications, source provenance, fixed DCs, remaining duration and recovery
+  schedule. Encounter scope IDs distinguish reused monster IDs across fights.
 - Current New Phlan script/resource context, private mutable ECL image, bound
   variables/flags, instruction spans, comparison flags, request counter and ECL
   RNG. The completed event is not replayed. Dialogue and visited cells persist;
@@ -71,8 +75,8 @@ an ordered fingerprint manifest of installed DAX archives and ITEMS. A different
 asset installation, unknown definition, malformed resource state or incompatible
 version rejects explicitly. Reinstalling identical assets at a new path is valid.
 FNV-1a fingerprints/checksums detect accidental changes; they are not signatures
-or protection against deliberate tampering. Formats 1 through 4 and the supported
-rules 0.3.0 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
+or protection against deliberate tampering. Formats 1 through 5 and the supported
+rules 0.3.0/0.4.0 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
 
 Writes use a temporary file, flush it to disk and verify its bytes before replacing
 the destination. Windows uses `ReplaceFileW` with a retained backup, or

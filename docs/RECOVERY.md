@@ -60,15 +60,19 @@ entire event, including healing, payment and RNG.
 
 Campaign minutes are authoritative for recovery. ECL minute/hour/day fields are
 synchronized from a noon, day-one starting point, using a bounded 30-day-month,
-12-month calendar. Movement and combat do not yet advance this clock. General
+12-month calendar. Successful forward steps advance six seconds; a full combat
+round advances six seconds. Milliseconds within a minute and precise rest
+completion offsets survive saves, so timing is retained across encounters.
+Turning, looking, blocked steps and menus consume no time. Lasting effects
+advance during movement, combat, waits and rests; see [status effects](STATUS-EFFECTS.md). General
 campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 
 ## Persistence and verification
 
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
 purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
-Combat checkpoint format remains version 2, with level-bearing PC2 recipes.
-The combat module identity is **0.3.0**, so incompatible earlier saves reject.
+Combat checkpoint format is version 4 and the combat module identity is
+**0.5.0**. Supported older campaign saves migrate; incompatible combat saves reject.
 
 From PowerShell:
 

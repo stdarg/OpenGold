@@ -46,6 +46,7 @@ add_library(opengold_rules_srd5 STATIC
     src/OpenGold.Rules.Srd5/src/srd5.cpp
     src/OpenGold.Rules.Srd5/src/character_rules.cpp
     src/OpenGold.Rules.Srd5/src/combat_grid.cpp
+    src/OpenGold.Rules.Srd5/src/status_effects.cpp
 )
 target_include_directories(opengold_rules_srd5 PUBLIC src/OpenGold.Rules.Srd5/include)
 target_link_libraries(opengold_rules_srd5 PUBLIC opengold_rules)
@@ -119,6 +120,11 @@ if(OPENGOLD_BUILD_TESTS)
     enable_testing()
     add_test(NAME opengold_fuzz_smoke_tests COMMAND opengold_fuzz_smoke_tests)
     set_tests_properties(opengold_fuzz_smoke_tests PROPERTIES TIMEOUT 60 LABELS "fuzz;native")
+    add_executable(opengold_status_effect_tests tests/status_effect_tests.cpp)
+    target_include_directories(opengold_status_effect_tests PRIVATE src/OpenGold.Rules.Srd5/src)
+    target_link_libraries(opengold_status_effect_tests PRIVATE opengold_core opengold_rules_srd5)
+    target_compile_definitions(opengold_status_effect_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_status_effect_tests COMMAND opengold_status_effect_tests)
     add_executable(opengold_combat_grid_tests tests/combat_grid_tests.cpp)
     target_include_directories(opengold_combat_grid_tests PRIVATE src/OpenGold.Rules.Srd5/src)
     target_link_libraries(opengold_combat_grid_tests PRIVATE opengold_rules_srd5)

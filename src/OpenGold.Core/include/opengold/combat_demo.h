@@ -23,7 +23,7 @@ public:
     explicit CombatDemo(std::unique_ptr<rules::RulesModule> module);
     ~CombatDemo();
     void campaign_party(std::shared_ptr<CampaignParty> party);
-    void training(std::uint64_t seed=42);
+    void training(std::uint64_t seed=42, bool conditions=false);
     void slums(const std::filesystem::path& game_directory,std::uint64_t seed=42);
     void encounter(CampaignEncounter encounter,std::uint64_t seed);
     [[nodiscard]] const auto& battlefield_tiles() const {return battlefield_tiles_;}

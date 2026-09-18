@@ -1,5 +1,6 @@
 #include "dice.h"
 #include "opengold/srd5.h"
+#include "status_effects.h"
 #include <algorithm>
 #include <cstdlib>
 #include <set>
@@ -138,8 +139,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     const auto c=std::find_if(classes.begin(),classes.end(),[&](const auto& c){return c.id==d.character_class;});
     s.hit_die=c->die;const int racial_hp=d.race=="dwarf"?1:0;
     // Core class traits, SRD 5.2.1. Single-class level-one creation.
-    const std::array<std::array<unsigned,2>,12> saves{{{0,2},{1,5},{4,5},{3,4},{0,2},{0,1},{4,5},{0,1},{1,3},{2,5},{4,5},{3,4}}};
-    const auto trained=saves.at(c-classes.begin());
+    const auto trained=detail::class_save_proficiencies(s.character_class);
     for(unsigned i=0;i<6;++i){s.save_proficiencies[i]=i==trained[0]||i==trained[1];
         s.saving_throws[i]=s.modifiers[i]+(s.save_proficiencies[i]?2:0);}
     s.class_modifiers="Source: "+s.character_class+" class, level 1. Saving-throw training adds +2 proficiency to "+ability_names[trained[0]]+" and "+ability_names[trained[1]]+".\nSource: "+s.character_class+" Hit Die and Constitution score "+std::to_string(s.scores[2])+". Starting HP: maximum d"+std::to_string(s.hit_die)+" + Constitution modifier ("+std::to_string(s.modifiers[2])+").";

@@ -16,6 +16,7 @@ struct PartyMember {
     unsigned morale{100};
     unsigned experience{};
     std::optional<std::uint64_t> last_rest_minutes;
+    unsigned last_rest_subminute_milliseconds{};
     std::map<std::uint64_t,por::Equipment> item_sources;
     std::string creation_source; // Stable pool candidate identity, empty for authored PCs.
 };
@@ -26,6 +27,8 @@ struct PartyState {
     unsigned selected{};
     std::uint64_t time_minutes{}, random_state{42};
     std::vector<std::string> claimed_rewards;
+    unsigned subminute_milliseconds{};
+    std::uint64_t next_combat_scope{1};
 };
 // One shared campaign value store. Sessions share this owner, never separate PCs.
 // While combat owns mutable vitals, roster/equipment/script mutations are barred.
@@ -55,6 +58,7 @@ public:
     [[nodiscard]] bool rest();
     void temple_heal(MemberId target);
     void advance_time(unsigned minutes);
+    void advance_time_milliseconds(std::uint64_t milliseconds);
     [[nodiscard]] std::uint64_t time_hours() const noexcept {return state_.time_minutes/60;}
     [[nodiscard]] rules::CharacterProfile profile(MemberId id) const;
     [[nodiscard]] bool has_item(unsigned original_type) const;
@@ -75,6 +79,9 @@ private:
     std::unique_ptr<rules::RulesModule> rules_;
     PartyState state_;
     bool combat_{};
+    bool combat_registered_{};
+    std::uint64_t combat_elapsed_{};
+    void elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat={}) const;
     void editable() const;
     PartyMember& edit(MemberId id);
     void join(MemberId id,bool npc);

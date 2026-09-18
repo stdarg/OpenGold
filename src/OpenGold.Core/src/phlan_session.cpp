@@ -116,7 +116,8 @@ bool RolfTourSession::move_party(ExplorationCommand command)
         machine_.bind_variable(0x49F0,pose.x); machine_.bind_variable(0x49F1,pose.y);
         pose.x=wrapped_x;pose.y=wrapped_y;++snapshot_.footsteps;
     }
-    bind_pose(pose);return true;
+    if(campaign_&&command==ExplorationCommand::forward)campaign_->advance_time_milliseconds(6000);
+    bind_pose(pose);synchronize_clock();return true;
 }
 
 void RolfTourSession::begin_event(unsigned slot)

@@ -239,6 +239,7 @@ void checkpoint_validation_tests()
     for (const unsigned version : {1u,2u}) {
         auto legacy = lines;
         legacy[0].replace(9,1,std::to_string(version));
+        legacy.resize(legacy.size()-3); // v4 scope/clock and two effect collections.
         for (std::size_t actor = 4; actor < path_header; ++actor) {
             const auto profile = legacy[actor].rfind("\"\"");
             check(profile != std::string::npos, "Expected fixture with no character profile");

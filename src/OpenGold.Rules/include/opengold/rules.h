@@ -63,7 +63,7 @@ struct Participant {
     std::optional<VitalState> state;
     bool surprised{}; // The rules module determines the mechanical effect.
 };
-struct Encounter { Battlefield battlefield; std::vector<Participant> participants; };
+struct Encounter { Battlefield battlefield; std::vector<Participant> participants; std::uint64_t scope{1}; };
 struct Identity {
     std::string module, version, content;
     auto operator<=>(const Identity&) const = default;
@@ -79,6 +79,7 @@ struct CombatantView {
     std::string status;
     VitalState persistent;
     std::vector<Message> status_messages;
+    std::vector<Message> conditions; // Derived display state; mechanics stay in the module.
 };
 struct Snapshot {
     Identity identity;
@@ -91,6 +92,7 @@ struct Snapshot {
     std::vector<std::string> log;
     std::vector<Message> log_messages;
     bool reaction_pending{};
+    std::uint64_t elapsed_milliseconds{};
 };
 // Verbs are owned by a module, not an enumeration of edition-specific rules.
 // Presentation submits only currently offered commands. The module revalidates.
@@ -124,6 +126,8 @@ public:
     [[nodiscard]] virtual AdvancementChoice default_advancement(const CharacterSheet&) const {return {};}
     virtual bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const;
     virtual void recover(VitalState& state, const CharacterSheet& sheet) const;
+    // Advances module-owned lasting effects for a group in deterministic order.
+    virtual void elapse(std::span<Participant>, std::uint64_t, std::uint64_t&) const {}
     virtual void validate_character_state(const CharacterSheet&, const VitalState&) const;
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;

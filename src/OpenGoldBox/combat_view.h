@@ -49,7 +49,7 @@ private:
     void center_on(opengold::rules::Cell cell);
     std::optional<std::pair<opengold::rules::EntityId,opengold::rules::Cell>> followed_;
     bool panning_{},check_target_centered_{};
-    void layout();void refresh();void sync_art();void act(const opengold::rules::Command& command);
+    void layout();void layout_status();void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void spell_slot();
     unsigned spell_slot_{1};

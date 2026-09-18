@@ -3,6 +3,7 @@
 #include "opengold/srd5.h"
 #include "opengold/combat_demo.h"
 #include <iostream>
+#include <iomanip>
 #include <chrono>
 #include <fstream>
 #include <sstream>
@@ -35,6 +36,16 @@ std::string campaign_payload(unsigned version,const std::string& body)
     std::uint64_t hash=14695981039346656037ULL;
     for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
     return "OPENGOLD-CAMPAIGN "+std::to_string(version)+'\n'+std::to_string(hash)+'\n'+body;
+}
+// Versions 1-5 had no sub-minute clock or encounter-scope fields.
+void remove_v6_clock(std::string& body)
+{
+    std::istringstream in(body);std::string text;
+    for(unsigned i=0;i<4;++i)in>>std::quoted(text); // rules identity and assets
+    std::uint64_t n{};for(unsigned i=0;i<12;++i)in>>n; // slots, next ID, selected, minutes, RNG
+    in>>n;for(std::uint64_t i=0;i<n;++i)in>>std::quoted(text);
+    const auto begin=in.tellg();in>>n>>n;std::uint64_t count{};in>>count;for(std::uint64_t i=0;i<count;++i)in>>n>>n;const auto end=in.tellg();
+    check(bool(in),"Fixture clock fields exist");body.erase(static_cast<std::size_t>(begin),static_cast<std::size_t>(end-begin));
 }
 void fog_saves(const std::filesystem::path& directory)
 {
@@ -88,6 +99,7 @@ void fog_saves(const std::filesystem::path& directory)
     const auto suffix="1 0 \""+single.snapshot().seen.to_string()+"\" ";
     check(body.ends_with(suffix),"Knowledge is the version-five extension");
     body.resize(body.size()-suffix.size());
+    remove_v6_clock(body);
     auto old_base=prototype();
     auto legacy=decode_campaign(campaign_payload(4,body),*srd5::character_rules(),*rules,"fog-fixture",&old_base);
     check(legacy.town->snapshot().seen==single.snapshot().visited,
@@ -144,6 +156,7 @@ void roundtrip(const std::filesystem::path& directory){
     const auto old_pack=directory/"previous.rules";
     {std::ifstream input(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");std::ofstream output(old_pack,std::ios::binary);std::string line;
         while(std::getline(input,line)){if(!line.empty()&&line.back()=='\r')line.pop_back();
+            if(line.starts_with("saves ")||line.starts_with("spellcasting ")||line.starts_with("creature blindness-adept "))continue;
             if(line.starts_with("creature slums-")&&!line.starts_with("creature slums-orc "))continue;
             output<<line<<'\n';}}
     CampaignParty previous(srd5::load(old_pack));previous.add_pc(character("fighter"));
@@ -153,6 +166,7 @@ void roundtrip(const std::filesystem::path& directory){
     const std::string portrait_field="\"human-male-fighter-01.png\" ";
     const auto portrait_position=legacy_body.find(portrait_field);check(portrait_position!=legacy_body.npos,"Portrait filename is serialized");
     legacy_body.erase(portrait_position,portrait_field.size());
+    remove_v6_clock(legacy_body);
     std::uint64_t legacy_hash=14695981039346656037ULL;for(unsigned char c:legacy_body){legacy_hash^=c;legacy_hash*=1099511628211ULL;}
     const auto legacy_v3=decode_campaign("OPENGOLD-CAMPAIGN 3\n"+std::to_string(legacy_hash)+"\n"+legacy_body,*srd5::character_rules(),*module(),"fixture-v1",nullptr);
     check(legacy_v3.party.roster[0].character.appearance().portrait.empty(),"Version 3 loads without inventing a saved portrait");

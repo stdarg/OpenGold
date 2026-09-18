@@ -38,7 +38,14 @@ The first milestone does not include a general importer or database dependency.
 The header defines a format version and content revision. Each `creature` line
 has the fields listed in the pack comment. `casting_bonus` includes proficiency
 2 for these level-1–4 fixtures. Spell mask bits are Fire Bolt=1, Cure Wounds=2,
-Magic Missile=4. The module identity includes a fingerprint of the whole pack
+Magic Missile=4. Optional `saves <key> <STR> <DEX> <CON> <INT> <WIS> <CHA>`
+rows supply explicit saving throw bonuses. Optional `spellcasting <key>
+<level-two-slots> <spell-mask>` rows add level-two casting; the additional mask
+bits are Healing Word=8, Scorching Ray=16 and Blindness=32. Rows must follow the
+creature they extend and may occur only once per kind. `blindness-adept` is the
+authored existing-scene condition fixture. These supplemental rows preserve
+loading of legacy authored packs, whose omitted save bonuses default to zero.
+The module identity includes a fingerprint of the whole pack
 after CRLF normalization; changing definitions invalidates old checkpoints.
 
 See [NOTICE.md](NOTICE.md) for the required attribution. SRD-derived content is
