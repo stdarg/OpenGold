@@ -132,7 +132,7 @@ void CombatSpriteDemo::create_controls()
         control->set_text(String::num_int64(index+1));
     }
     label("AppearanceHelp","Head, weapon and colors update all three player figures. Short and tall use the original art banks.",14,true);
-    label("GoliathHelp","Goliath — Large Form\n2× artwork on 2×2 squares. Normally 7–8 ft tall; Large Form has no specified height.",14,true);
+    label("GoliathHelp","Goliath — Large Form\nArt fills 75% of a 2×2-square footprint. Normally 7–8 ft tall; Large Form has no specified height.",14,true);
     auto* scroll=presentation::add_control<ScrollContainer>(*this,"BattlefieldScroll",{});
     scroll->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_SHOW_ALWAYS);
     scroll->set_vertical_scroll_mode(ScrollContainer::SCROLL_MODE_SHOW_ALWAYS);
@@ -160,7 +160,7 @@ void CombatSpriteDemo::load_art()
     battlefield_=opengold::por::dungeon_battlefield(map,8,8);
     figures_={{"SmallPlayer","Short player",{23,13}},
         {"NormalPlayer","Normal player",{25,13}},
-        {"GoliathPlayer","Goliath — Large Form",{28,12},2}};
+        {"GoliathPlayer","Goliath — Large Form",{28,12},1.5,2}};
     // Deliberate art-review selections, not gameplay monster-to-art bindings.
     const auto monsters=archive(directory,"CPIC2.DAX");
     constexpr std::array<unsigned,5> records{0,2,4,26,31};
@@ -226,7 +226,8 @@ void CombatSpriteDemo::refresh_figures()
         const auto& figure=figures_[i];const auto& texture=figure.poses[action_];
         auto* sprite=get_node<TextureRect>(String("BattlefieldScroll/Canvas/")+figure.node);
         const Vector2 source(texture->get_width(),texture->get_height());
-        sprite->set_texture(texture);sprite->set_position(figure.cell*tile_pixels*scale);sprite->set_size(source*figure.scale*scale);
+        const Vector2 footprint_offset((figure.footprint-figure.scale)*.5,figure.footprint-figure.scale);
+        sprite->set_texture(texture);sprite->set_position((figure.cell+footprint_offset)*tile_pixels*scale);sprite->set_size(source*figure.scale*scale);
         const String color=i<3?(i==2?"e6c28a":"79d6d4"):"dd9874";
         sizes+="[color=#"+color+"]"+gs(figure.label)+"[/color]  "+dimensions(source)+gs(" → ")+dimensions(sprite->get_size())+" px";
         if(i<3)sizes+=gs("  · ")+gs("Visible figure: ")+dimensions(figure.visible_size[action_]*figure.scale*scale)+" px";
@@ -274,9 +275,8 @@ void CombatSpriteDemo::draw_map()
         canvas->draw_rect(cell,Color(.2,.3,.34,.5),false,1);
     }
     for(unsigned i=0;i<figures_.size();++i){
-        const auto& figure=figures_[i];const auto& texture=figure.poses[action_];
-        const Vector2 extent(texture->get_width()*figure.scale*zoom_/100.0,texture->get_height()*figure.scale*zoom_/100.0);
-        canvas->draw_rect(Rect2(figure.cell*tile,extent),Color(i<3?(i==2?"e6c28a":"79d6d4"):"dd9874"),false,2);
+        const auto& figure=figures_[i];
+        canvas->draw_rect(Rect2(figure.cell*tile,Vector2(tile,tile)*figure.footprint),Color(i<3?(i==2?"e6c28a":"79d6d4"):"dd9874"),false,2);
     }
 }
 void CombatSpriteDemo::zoom_by(int amount)

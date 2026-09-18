@@ -37,14 +37,14 @@ godot --path demos/godot --resolution 1920x1080 res://scenes/combat_sprite_demo.
   Regions absent from both player sizes are disabled. The numbered palette has
   color name tooltips; buttons support keyboard focus and activation.
 - **−100%, −10%, +10%, +100%** change zoom by percentage points, from 10% to
-  1000%. The initial zoom is 300%. At 100%, one source pixel is one rendered
+  1000%. The initial zoom is 250%. At 100%, one source pixel is one rendered
   viewport pixel. Map and sprites scale together; controls retain their size.
 - Scrollbars and the mouse wheel pan the map. Zoom retains the map location at
   the center where the scroll limits allow it.
 - The readout lists source and displayed pixel dimensions for every sprite.
   Player measurements also include the visible, nontransparent bounds for the
-  current pose. At 300%, a normal 24 × 24 sprite occupies 72 × 72 pixels;
-  the Large Form comparison occupies 144 × 144 pixels.
+  current pose. At 250%, a normal 24 × 24 sprite occupies 60 × 60 pixels;
+  the Large Form art occupies 90 × 90 pixels within a 120 × 120 pixel footprint.
 - **Ctrl+S** saves a timestamped PNG in `user://sprite-demo-screenshots`.
   Set `OPENGOLD_SCREENSHOT_DIR` to an absolute folder to choose another location.
   The demo exposes `request_capture()` and `capture_completed(path, error)` for
@@ -58,8 +58,9 @@ height. [Official Goliath species rules](https://www.dndbeyond.com/species/17514
 
 Medium creatures control one 5-foot square; Large creatures control a 10-foot
 square (2 × 2 grid squares). This space is not a measurement of bodily height.
-The demo therefore offers **2× artwork as a visual comparison for that footprint**,
-without claiming that Large Form is exactly 12 feet tall or adding an invented
+The demo draws a 2 × 2-square footprint and centers 1.5× artwork at its base,
+filling 75% of the footprint height without claiming that Large Form is exactly
+12 feet tall or adding an invented
 height rule to combat. See the creature size and Goliath sections of
 [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 

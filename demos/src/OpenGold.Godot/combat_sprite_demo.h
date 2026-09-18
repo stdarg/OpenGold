@@ -25,6 +25,7 @@ private:
         const char* label;
         godot::Vector2 cell;
         double scale{1};
+        double footprint{1};
         std::array<godot::Ref<godot::ImageTexture>,2> poses;
         std::array<godot::Vector2,2> visible_size;
     };
@@ -34,7 +35,7 @@ private:
     std::vector<godot::Ref<godot::ImageTexture>> terrain_;
     std::vector<Figure> figures_;
     unsigned color_bank_{},color_part_{};
-    int zoom_{300};
+    int zoom_{250};
     double elapsed_{};
     bool action_{},ready_{},loaded_{},center_pending_{};
     bool capture_pending_{};

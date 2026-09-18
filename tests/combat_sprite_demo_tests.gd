@@ -126,11 +126,12 @@ func run_checks() -> void:
     var canvas: Control = scroll.get_node("Canvas")
     require(not demo.get_node("Status").text.begins_with("Cannot load"), demo.get_node("Status").text)
     require(canvas.get_child_count() == 8, "Three player comparisons and exactly five monsters")
-    require(demo.get_node("Zoom").text == "Zoom 300%", "Start at 300%")
+    require(demo.get_node("Zoom").text == "Zoom 250%", "Start at 250%")
     var normal: TextureRect = canvas.get_node("NormalPlayer")
     var small: TextureRect = canvas.get_node("SmallPlayer")
     var large: TextureRect = canvas.get_node("GoliathPlayer")
-    require(normal.size == Vector2(72, 72) and large.size == Vector2(144, 144), "100% means source pixels; Large Form uses 2x artwork")
+    require(normal.size == Vector2(60, 60) and large.size == Vector2(90, 90), "Large Form art fills 75% of a 2-square footprint")
+    require(large.position.is_equal_approx(Vector2(28.25, 12.5) * 24 * 2.5), "Large Form art is centered and grounded in its footprint")
     require(small.texture.get_image().get_data() != normal.texture.get_image().get_data(), "Short player uses its own original art bank")
     require(normal.texture.get_image().get_data() == large.texture.get_image().get_data(), "Large Form preserves the customized tall artwork")
     demo.set_process(false)
@@ -157,12 +158,12 @@ func run_checks() -> void:
         event.pressed = down
         Input.parse_input_event(event)
         await process_frame
-    require(normal.size.is_equal_approx(Vector2(74.4, 74.4)), "10 percentage point zoom")
+    require(normal.size.is_equal_approx(Vector2(62.4, 62.4)), "10 percentage point zoom")
     press(demo, "Plus100")
-    require(normal.size.is_equal_approx(Vector2(98.4, 98.4)), "100 percentage point zoom")
+    require(normal.size.is_equal_approx(Vector2(86.4, 86.4)), "100 percentage point zoom")
     press(demo, "Minus100")
     press(demo, "Minus10")
-    require(normal.size == Vector2(72, 72), "Zoom steps reverse exactly")
+    require(normal.size == Vector2(60, 60), "Zoom steps reverse exactly")
     for i in range(3):
         press(demo, "Minus100")
     require(demo.get_node("Zoom").text == "Zoom 10%" and demo.get_node("Minus10").disabled, "Zoom clamps safely at 10%")
@@ -172,7 +173,7 @@ func run_checks() -> void:
     for i in range(7):
         press(demo, "Minus100")
     for sprite in canvas.get_children():
-        var ratio := 6.0 if sprite == large else 3.0
+        var ratio := 4.5 if sprite == large else 3.0
         require(sprite.size.is_equal_approx(sprite.texture.get_size() * ratio), "Every sprite keeps native proportions at the same zoom")
     require(demo.get_node("Sizes").text.contains("24.0 × 24.0 → 72.0 × 72.0"), "Readout reports source and rendered sizes")
     root.size = Vector2i(1120, 800)
