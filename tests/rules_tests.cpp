@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 using namespace opengold;using namespace opengold::rules;
 namespace {
@@ -153,6 +154,79 @@ void mechanics_tests() {
     }
     check(tested,"Exercised player unconscious/death-save flow");
 }
+void checkpoint_validation_tests()
+{
+    auto module = srd5::load(pack());
+    auto session = hero_first(*module);
+    session->submit(command(*session,"move",{1,2}));
+    const auto checkpoint = session->save();
+    std::vector<std::string> lines;
+    std::istringstream input(checkpoint);
+    for (std::string line; std::getline(input,line);) lines.push_back(line);
+    const auto path_header = 4 + session->snapshot().combatants.size();
+    const auto encode = [](const std::vector<std::string>& fields) {
+        std::string result;
+        for (const auto& line : fields) result += line + '\n';
+        return result;
+    };
+    const auto reject_changes = [&](std::initializer_list<std::pair<std::size_t,std::string>> changes) {
+        auto corrupt = lines;
+        for (const auto& [line,text] : changes) corrupt.at(line) = text;
+        rejects([&] { (void)module->restore(encode(corrupt)); }, "Malformed checkpoint accepted");
+        check(session->save() == checkpoint, "Rejected restore altered the live session");
+    };
+    reject_changes({{path_header,"1025 0"}});
+    reject_changes({{path_header,"1 2"}});
+    reject_changes({{path_header,"0 0"},{path_header+1,""}}); // Reaction with no next step.
+    reject_changes({{path_header+1,"99 99"}});
+    reject_changes({{path_header+1,"0 8"}}); // Nonadjacent step on an otherwise open cell.
+    reject_changes({{path_header+1,"3 2"}}); // Path enters the enemy's occupied cell.
+    reject_changes({{path_header+2,"0 0"},{path_header+3,""}}); // Path without a pause.
+    reject_changes({{path_header+2,"1 2"}});
+    reject_changes({{path_header+2,"2 0"},{path_header+3,"2 2"}}); // Duplicate reactor.
+    reject_changes({{path_header+3,"999"}});
+    reject_changes({{path_header+3,"1"}}); // Mover cannot react against itself.
+    reject_changes({{path_header+4,"81"}});
+    for (std::size_t count = 0; count < lines.size(); ++count) {
+        auto truncated = lines;
+        truncated.resize(count);
+        rejects([&] { (void)module->restore(encode(truncated)); }, "Truncated checkpoint section accepted");
+    }
+
+    // Earlier formats omitted the empty character profile (v1), and the
+    // second-level slot/feat flags (v1/v2). Their defaults must still round trip.
+    for (const unsigned version : {1u,2u}) {
+        auto legacy = lines;
+        legacy[0].replace(9,1,std::to_string(version));
+        for (std::size_t actor = 4; actor < path_header; ++actor) {
+            const auto profile = legacy[actor].rfind("\"\"");
+            check(profile != std::string::npos, "Expected fixture with no character profile");
+            legacy[actor].resize(profile + (version == 2 ? 2 : 0));
+        }
+        check(module->restore(encode(legacy))->save() == checkpoint, "Legacy checkpoint defaults changed");
+    }
+
+    // A route pauses after spending 15 feet, while crossing an ally's square.
+    // Only its remaining 10 feet may be charged when validating a restore.
+    Battlefield corridor{5,3,std::vector<std::uint8_t>(15,1)};
+    for (int x = 0; x < 5; ++x) corridor.terrain[5+x] = 0;
+    corridor.terrain[1] = corridor.terrain[2] = 0; // Clear sight from the reactor.
+    Encounter encounter{corridor,{{1,"vanguard","Mover",0,{0,1}},
+                                 {2,"bandit","Reactor",1,{1,0}},
+                                 {3,"vanguard","Ally",0,{2,1}}}};
+    session = hero_first(*module,encounter);
+    check(session->submit(command(*session,"move",{4,1})), "Allied transit move accepted");
+    check(session->snapshot().reaction_pending && unit(*session,1).cell == Cell{2,1},
+          "Route pauses on allied transit after its prefix");
+    check(unit(*session,1).movement_feet == 15, "Prefix spends normal and allied terrain costs");
+    auto restored = module->restore(session->save());
+    check(restored->save() == session->save(), "Paused allied transit checkpoint restores exactly");
+    const auto decline = command(*session,"decline");
+    check(session->submit(decline) && restored->submit(decline), "Both routes resume after the reaction");
+    check(restored->save() == session->save(), "Restored suffix preserves deterministic continuation");
+    check(unit(*session,1).cell == Cell{4,1} && unit(*session,1).movement_feet == 5,
+          "Only the remaining route suffix spends movement after restore");
+}
 void installed() {
     const auto directory=std::getenv("OPENGOLD_GAME_DIR");if(!directory)return;
     CombatDemo demo(srd5::load(pack()));demo.slums(directory,42);
@@ -174,4 +248,4 @@ void installed() {
     std::cout<<"Original Slums event completed with real rules combat: "<<(outcome==Outcome::victory?"victory":"defeat")<<".\n";
 }
 }
-int main(){try{boundary_tests();mechanics_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{boundary_tests();mechanics_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -18,7 +18,11 @@ option(OPENGOLD_BUILD_GAME "Build the OpenGoldBox Windows game" OFF)
 
 add_library(opengold_rules STATIC src/OpenGold.Rules/src/rules.cpp src/OpenGold.Rules/src/character_rules.cpp)
 target_include_directories(opengold_rules PUBLIC src/OpenGold.Rules/include)
-add_library(opengold_rules_srd5 STATIC src/OpenGold.Rules.Srd5/src/srd5.cpp src/OpenGold.Rules.Srd5/src/character_rules.cpp)
+add_library(opengold_rules_srd5 STATIC
+    src/OpenGold.Rules.Srd5/src/srd5.cpp
+    src/OpenGold.Rules.Srd5/src/character_rules.cpp
+    src/OpenGold.Rules.Srd5/src/combat_grid.cpp
+)
 target_include_directories(opengold_rules_srd5 PUBLIC src/OpenGold.Rules.Srd5/include)
 target_link_libraries(opengold_rules_srd5 PUBLIC opengold_rules)
 
@@ -74,6 +78,10 @@ target_link_libraries(opengold_core
 
 if(OPENGOLD_BUILD_TESTS)
     enable_testing()
+    add_executable(opengold_combat_grid_tests tests/combat_grid_tests.cpp)
+    target_include_directories(opengold_combat_grid_tests PRIVATE src/OpenGold.Rules.Srd5/src)
+    target_link_libraries(opengold_combat_grid_tests PRIVATE opengold_rules_srd5)
+    add_test(NAME opengold_combat_grid_tests COMMAND opengold_combat_grid_tests)
     add_executable(opengold_advancement_tests tests/advancement_tests.cpp)
     target_link_libraries(opengold_advancement_tests PRIVATE opengold_core opengold_rules_srd5)
     target_compile_definitions(opengold_advancement_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")

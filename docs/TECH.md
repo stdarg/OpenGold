@@ -78,6 +78,11 @@ Shared implementation boundaries:
   centralizes conversion from engine RGBA images to Godot resources.
 - The SRD module shares one deterministic dice implementation across character
   creation, combat, and temple healing, preserving saved random sequences.
+- The SRD module's private `MovementGrid` centralizes movement-step legality and
+  cost for planning, execution, and checkpoint validation. A single Dijkstra
+  search supplies all legal destinations. Pure grid helpers and staged checkpoint
+  validation are documented in the [complexity review](COMPLEXITY-REVIEW.md),
+  including correctness arguments and exhaustive small-grid checks.
 
 ### Why This Stack
 
