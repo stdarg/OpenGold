@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <algorithm>
 #include <optional>
 
 using namespace godot;
@@ -23,6 +24,7 @@ bool save(const char* section,const char* key,const String& value) {
     // Do not overwrite unreadable or malformed configuration and unrelated keys.
     if(loaded!=OK&&loaded!=ERR_FILE_NOT_FOUND)return false;
     config->set_value(section,key,value);
+    if(!config->has_section_key("combat","combat_zoom"))config->set_value("combat","combat_zoom",250);
     const String temporary=settings::path()+".tmp";
     if(config->save(temporary)!=OK)return false;
     if(DirAccess::rename_absolute(temporary,settings::path())==OK)return true;
@@ -46,6 +48,15 @@ String path() {
 }
 String saved_game_path(){return read("game","path");}
 String saved_language(){return read("interface","language");}
+int combat_zoom_percent(){
+    Ref<ConfigFile> config;config.instantiate();
+    if(config->load(path())==OK){
+        const Variant value=config->get_value("combat","combat_zoom",250);
+        if(value.get_type()==Variant::INT)return std::clamp(static_cast<int>(value),10,1000);
+    }
+    const Variant fallback=ProjectSettings::get_singleton()->get_setting("opengold/combat_zoom",250);
+    return fallback.get_type()==Variant::INT?std::clamp(static_cast<int>(fallback),10,1000):250;
+}
 bool valid_language(const String& locale){return locale=="en"||locale=="es";}
 String game_path() {
     if(confirmed_path)return *confirmed_path;

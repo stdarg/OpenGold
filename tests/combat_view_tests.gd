@@ -23,12 +23,18 @@ func mouse_button(position: Vector2, button: MouseButton, pressed: bool, shift :
     root.push_input(event)
 
 func run_checks() -> void:
+    var config_path := ProjectSettings.globalize_path("res://settings.cfg")
+    var had_config := FileAccess.file_exists(config_path)
+    var original_config := FileAccess.get_file_as_bytes(config_path) if had_config else PackedByteArray()
+    if had_config:
+        require(DirAccess.remove_absolute(config_path) == OK, "Isolate combat zoom test config")
     change_scene_to_file("res://scenes/combat_demo.tscn")
     await settle()
     var combat := current_scene
     var scroll: ScrollContainer = combat.get_node("BattlefieldScroll")
     var canvas: Control = scroll.get_node("Canvas")
-    require(canvas.size.is_equal_approx(scroll.size * 3), "Battlefield must be exactly 3x the original fit size")
+    require(ProjectSettings.get_setting("opengold/combat_zoom") == 250, "Combat zoom defaults to 250 in project config")
+    require(canvas.size.is_equal_approx(scroll.size * 2.5), "Battlefield uses configured 250% zoom")
     require(scroll.clip_contents, "Magnified battlefield must be clipped")
     require(scroll.scroll_horizontal > 0 or scroll.scroll_vertical > 0, "Initial actor must be centered")
     scroll.scroll_horizontal = 120
@@ -69,7 +75,7 @@ func run_checks() -> void:
     require(Vector2(scroll.scroll_horizontal, scroll.scroll_vertical) == before, "Wheel outside battlefield must not pan it")
     root.size = Vector2i(1120, 800)
     await settle()
-    require(canvas.size.is_equal_approx(scroll.size * 3), "Resize must preserve 3x magnification")
+    require(canvas.size.is_equal_approx(scroll.size * 2.5), "Resize preserves configured magnification")
     if OS.get_cmdline_user_args().has("--capture"):
         root.size = Vector2i(1920, 1080)
         await settle()
@@ -77,5 +83,20 @@ func run_checks() -> void:
         var path := ProjectSettings.globalize_path("res://../../../build/checks/combat-zoom.png")
         DirAccess.make_dir_recursive_absolute(path.get_base_dir())
         require(root.get_texture().get_image().save_png(path) == OK, "Capture failed")
-    print("Game combat view checks passed: 3x scale, centering, drag, wheel, bounds, resize")
+    var config := ConfigFile.new()
+    config.set_value("combat", "combat_zoom", 200)
+    require(config.save(config_path) == OK, "Prepare portable combat zoom setting")
+    change_scene_to_file("res://scenes/combat_demo.tscn")
+    await settle()
+    var alternate_scroll: ScrollContainer = current_scene.get_node("BattlefieldScroll")
+    var alternate_canvas: Control = alternate_scroll.get_node("Canvas")
+    require(alternate_canvas.size.is_equal_approx(alternate_scroll.size * 2), "Combat reads 200% from settings.cfg")
+    if had_config:
+        var file := FileAccess.open(config_path, FileAccess.WRITE)
+        require(file != null, "Restore original config")
+        file.store_buffer(original_config)
+        file.close()
+    else:
+        require(DirAccess.remove_absolute(config_path) == OK, "Remove temporary config")
+    print("Game combat view checks passed: configured zoom, centering, drag, wheel, bounds, resize")
     quit(0)

@@ -34,6 +34,7 @@ private:
     std::vector<godot::Ref<godot::ImageTexture>> terrain_art_;
     std::map<opengold::rules::EntityId,godot::Ref<godot::ImageTexture>> art_;
     godot::Rect2 board_rect_;
+    double combat_zoom_{2.5};
     std::string mode_{"move"},error_;
     double ai_delay_{};
     bool ready_{},checking_{},capture_{},captured_{},check_slums_{},checked_input_{};

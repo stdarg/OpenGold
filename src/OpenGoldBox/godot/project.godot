@@ -40,6 +40,10 @@ theme/custom="res://themes/opengold.tres"
 locale/translations=PackedStringArray("res://locale/en.po", "res://locale/es.po", "res://locale/campaign.es.po")
 locale/fallback="en"
 
+[opengold]
+
+combat_zoom=250
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

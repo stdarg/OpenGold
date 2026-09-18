@@ -28,7 +28,6 @@
 #include <cmath>
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
-constexpr double combat_zoom=3.0;
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
 const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
     {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
@@ -52,6 +51,7 @@ std::filesystem::path CombatView::local_path(const char* path) const
 {return std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(path).utf8().get_data());}
 void CombatView::_ready()
 {
+    combat_zoom_=settings::combat_zoom_percent()/100.0;
     i18n::prepare_ui(*this);
     get_node<Control>("BattlefieldScroll/Canvas")->connect("draw",callable_mp(this,&CombatView::draw_battlefield));
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
@@ -95,7 +95,7 @@ void CombatView::layout()
         if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))bar->set_focus_mode(FOCUS_ALL);
     }
     scroll->set_position(board_rect_.position);scroll->set_size(board_rect_.size);
-    get_node<Control>("BattlefieldScroll/Canvas")->set_custom_minimum_size(board_rect_.size*combat_zoom);
+    get_node<Control>("BattlefieldScroll/Canvas")->set_custom_minimum_size(board_rect_.size*combat_zoom_);
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
@@ -178,7 +178,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
             if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))focused|=bar->has_focus();
         }
         if(focused) {
-            const int step=std::max(1,static_cast<int>(combat_zoom*board_rect_.size.x/demo_->combat().snapshot().battlefield.width));
+            const int step=std::max(1,static_cast<int>(combat_zoom_*board_rect_.size.x/demo_->combat().snapshot().battlefield.width));
             switch(key->get_keycode()) {
             case Key::KEY_LEFT:scroll->set_h_scroll(scroll->get_h_scroll()-step);break;
             case Key::KEY_RIGHT:scroll->set_h_scroll(scroll->get_h_scroll()+step);break;
@@ -215,7 +215,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto s=demo_->combat().snapshot();const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0)return;
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
-    const auto relative=canvas/(combat_zoom*board_rect_.size.x/s.battlefield.width);
+    const auto relative=canvas/(combat_zoom_*board_rect_.size.x/s.battlefield.width);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
@@ -265,7 +265,7 @@ void CombatView::refresh()
 void CombatView::center_on(Cell cell)
 {
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
-    const double tile=combat_zoom*board_rect_.size.x/demo_->combat().snapshot().battlefield.width;
+    const double tile=combat_zoom_*board_rect_.size.x/demo_->combat().snapshot().battlefield.width;
     scroll->set_h_scroll(static_cast<int>((cell.x+.5)*tile-scroll->get_size().x*.5));
     scroll->set_v_scroll(static_cast<int>((cell.y+.5)*tile-scroll->get_size().y*.5));
 }
@@ -277,7 +277,7 @@ void CombatView::draw_battlefield()
 {
     if(!demo_||!demo_->has_combat())return;
     auto* canvas=get_node<Control>("BattlefieldScroll/Canvas");
-    canvas->draw_set_transform(Vector2(),0,Vector2(combat_zoom,combat_zoom));
+    canvas->draw_set_transform(Vector2(),0,Vector2(combat_zoom_,combat_zoom_));
     const auto s=demo_->combat().snapshot();const double tile=board_rect_.size.x/s.battlefield.width;const auto font=get_theme_default_font();
     for(int y=0;y<s.battlefield.height;++y)for(int x=0;x<s.battlefield.width;++x) {
         const Rect2 cell(Vector2(x*tile,y*tile),Vector2(tile,tile));
@@ -349,7 +349,7 @@ void CombatView::_process(double delta)
                     center_on(target->cell);check_target_centered_=true;
                     return; // ScrollContainer applies the canvas offset during its layout pass.
                 }
-                mouse->set_position(get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().xform(Vector2(target->cell.x+.5,target->cell.y+.5)*(combat_zoom*board_rect_.size.x/s.battlefield.width)));
+                mouse->set_position(get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().xform(Vector2(target->cell.x+.5,target->cell.y+.5)*(combat_zoom_*board_rect_.size.x/s.battlefield.width)));
                 get_viewport()->push_input(mouse,true);
                 if(demo_->combat().snapshot().revision!=s.revision+1)throw std::runtime_error("Action button/target click did not submit command");
                 checked_input_=true;++check_steps_;return;

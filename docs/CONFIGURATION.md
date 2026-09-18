@@ -10,11 +10,20 @@ path="D:/Games/POOLRAD/GAME/POOLRAD"
 
 [interface]
 language="es"
+
+[combat]
+combat_zoom=250
 ```
 
 Use the actual folder containing `START.EXE`, `ITEMS`, and the original `.DAX`
 archives, not the Steam launcher directory. Store an absolute folder path.
 The supported language codes are `en` and `es`.
+
+The combat screen reads `combat_zoom` from `[combat]` when it opens. The value
+is a percentage, clamped to 10–1000. The default is 250, also recorded in the
+Godot project config. New settings files receive this value automatically.
+It controls the battlefield canvas, input coordinates, and centering; menus and
+text retain their normal size.
 
 ## Startup and reset controls
 
