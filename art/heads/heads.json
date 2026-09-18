@@ -1,0 +1,504 @@
+{
+  "version": 1,
+  "format": "Indexed PNG with semantic combat color indices; head overlay at (0, 0) of a 24 x 24 body.",
+  "canvases": {
+    "tall": [
+      24,
+      8
+    ],
+    "short": [
+      24,
+      10
+    ]
+  },
+  "pixel_legend": {
+    ".": 0,
+    "f": 4,
+    "#": 8,
+    "s": 12
+  },
+  "color_regions": {
+    "4": "Color-1 hair/face (bank 0, region 2)",
+    "12": "Color-2 hair/face (bank 1, region 2)"
+  },
+  "palette_note": "Default color fields are indices into character_color(), not source pixel indices. PNG index 0 is transparent; index 8 is opaque black.",
+  "preparation": "Source crops reduced with nearest-neighbor sampling, quantized to semantic regions, then adjusted at native resolution for silhouettes, facial features, and a shared neck at x=11..12. Ready/action heads are identical; the body supplies the animation.",
+  "heads": [
+    {
+      "id": "tiefling-01",
+      "species": "tiefling",
+      "sizes": {
+        "tall": {
+          "offset": [
+            9,
+            0
+          ],
+          "rows": [
+            ".f...f.",
+            ".f..ff.",
+            ".fffff.",
+            "ffsss#.",
+            "fsfs#ss",
+            ".fssss#",
+            "..sss#.",
+            "..ss..."
+          ],
+          "ready": "tiefling-01-tall-ready.png",
+          "action": "tiefling-01-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            3
+          ],
+          "rows": [
+            ".f..ff.",
+            ".fffff.",
+            "ffsss#.",
+            "fsfs#ss",
+            ".fssss#",
+            "..sss#.",
+            "..ss..."
+          ],
+          "ready": "tiefling-01-short-ready.png",
+          "action": "tiefling-01-short-action.png"
+        }
+      },
+      "source": "sources/tiefling.png",
+      "source_bounds_xyxy": [
+        301,
+        220,
+        703,
+        706
+      ],
+      "default_feature_color": 4,
+      "default_skin_color": 12
+    },
+    {
+      "id": "tiefling-02",
+      "species": "tiefling",
+      "sizes": {
+        "tall": {
+          "offset": [
+            9,
+            0
+          ],
+          "rows": [
+            ".fff...",
+            "ff.ff..",
+            "f..fff.",
+            "..fss#.",
+            ".ffs#ss",
+            "..ssss#",
+            "..sss#.",
+            "..ss..."
+          ],
+          "ready": "tiefling-02-tall-ready.png",
+          "action": "tiefling-02-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            3
+          ],
+          "rows": [
+            ".fff...",
+            "ff.ff..",
+            "f..fff.",
+            ".ffs#ss",
+            "..ssss#",
+            "..sss#.",
+            "..ss..."
+          ],
+          "ready": "tiefling-02-short-ready.png",
+          "action": "tiefling-02-short-action.png"
+        }
+      },
+      "source": "sources/tiefling.png",
+      "source_bounds_xyxy": [
+        1008,
+        222,
+        1490,
+        706
+      ],
+      "default_feature_color": 4,
+      "default_skin_color": 12
+    },
+    {
+      "id": "goliath-01",
+      "species": "goliath",
+      "sizes": {
+        "tall": {
+          "offset": [
+            10,
+            2
+          ],
+          "rows": [
+            ".sss.",
+            "sfsss",
+            "sfs#s",
+            ".sfss",
+            ".sss#",
+            ".ss.."
+          ],
+          "ready": "goliath-01-tall-ready.png",
+          "action": "goliath-01-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            5
+          ],
+          "rows": [
+            ".ssss#.",
+            "ssffs#.",
+            "sfs#sss",
+            ".sffss.",
+            ".#ss#.."
+          ],
+          "ready": "goliath-01-short-ready.png",
+          "action": "goliath-01-short-action.png"
+        }
+      },
+      "source": "sources/goliath.png",
+      "source_bounds_xyxy": [
+        303,
+        283,
+        629,
+        727
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 9
+    },
+    {
+      "id": "goliath-02",
+      "species": "goliath",
+      "sizes": {
+        "tall": {
+          "offset": [
+            10,
+            2
+          ],
+          "rows": [
+            ".sss.",
+            "ssffs",
+            "sss#s",
+            ".sfss",
+            ".ss#.",
+            ".ss.."
+          ],
+          "ready": "goliath-02-tall-ready.png",
+          "action": "goliath-02-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            5
+          ],
+          "rows": [
+            ".ssss#.",
+            "ssffff.",
+            "sss#sss",
+            ".sfsss.",
+            ".#ss#.."
+          ],
+          "ready": "goliath-02-short-ready.png",
+          "action": "goliath-02-short-action.png"
+        }
+      },
+      "source": "sources/goliath.png",
+      "source_bounds_xyxy": [
+        990,
+        283,
+        1317,
+        727
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 9
+    },
+    {
+      "id": "gnome-01",
+      "species": "gnome",
+      "sizes": {
+        "tall": {
+          "offset": [
+            9,
+            2
+          ],
+          "rows": [
+            "...fff.",
+            ".fffff.",
+            "ffss#s.",
+            "fssssss",
+            ".fsss#.",
+            "..ss..."
+          ],
+          "ready": "gnome-01-tall-ready.png",
+          "action": "gnome-01-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            5
+          ],
+          "rows": [
+            ".fffff.",
+            "ffs#ss.",
+            "fssssss",
+            ".fsss#.",
+            "..ss..."
+          ],
+          "ready": "gnome-01-short-ready.png",
+          "action": "gnome-01-short-action.png"
+        }
+      },
+      "source": "sources/gnome.png",
+      "source_bounds_xyxy": [
+        365,
+        222,
+        775,
+        681
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 6
+    },
+    {
+      "id": "gnome-02",
+      "species": "gnome",
+      "sizes": {
+        "tall": {
+          "offset": [
+            9,
+            2
+          ],
+          "rows": [
+            "..fff..",
+            ".fffff.",
+            "ssfs#s.",
+            ".fsssss",
+            "..fff#.",
+            "..ss..."
+          ],
+          "ready": "gnome-02-tall-ready.png",
+          "action": "gnome-02-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            5
+          ],
+          "rows": [
+            "..fff..",
+            "ssfs#s.",
+            ".fsssss",
+            "..fff#.",
+            "..ss..."
+          ],
+          "ready": "gnome-02-short-ready.png",
+          "action": "gnome-02-short-action.png"
+        }
+      },
+      "source": "sources/gnome.png",
+      "source_bounds_xyxy": [
+        1185,
+        246,
+        1590,
+        681
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 6
+    },
+    {
+      "id": "dragonborn-01",
+      "species": "dragonborn",
+      "sizes": {
+        "tall": {
+          "offset": [
+            8,
+            1
+          ],
+          "rows": [
+            ".ff.....",
+            "..fff...",
+            "ffffss..",
+            "...ss#s.",
+            "..ssssss",
+            "..ss#ss#",
+            "...ss..."
+          ],
+          "ready": "dragonborn-01-tall-ready.png",
+          "action": "dragonborn-01-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            8,
+            4
+          ],
+          "rows": [
+            ".fff....",
+            "ffffss..",
+            "...ss#s.",
+            "..ssssss",
+            "..ss#ss#",
+            "...ss..."
+          ],
+          "ready": "dragonborn-01-short-ready.png",
+          "action": "dragonborn-01-short-action.png"
+        }
+      },
+      "source": "sources/dragonborn.png",
+      "source_bounds_xyxy": [
+        212,
+        231,
+        786,
+        682
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 2
+    },
+    {
+      "id": "dragonborn-02",
+      "species": "dragonborn",
+      "sizes": {
+        "tall": {
+          "offset": [
+            8,
+            1
+          ],
+          "rows": [
+            "..f.....",
+            "..ffs...",
+            "...sss..",
+            "..fss#s.",
+            "..ssssss",
+            "..ss#ss#",
+            "...ss..."
+          ],
+          "ready": "dragonborn-02-tall-ready.png",
+          "action": "dragonborn-02-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            8,
+            4
+          ],
+          "rows": [
+            "..f.....",
+            "..fss...",
+            "..fss#s.",
+            "..ssssss",
+            "..ss#ss#",
+            "...ss..."
+          ],
+          "ready": "dragonborn-02-short-ready.png",
+          "action": "dragonborn-02-short-action.png"
+        }
+      },
+      "source": "sources/dragonborn.png",
+      "source_bounds_xyxy": [
+        1039,
+        234,
+        1562,
+        682
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 2
+    },
+    {
+      "id": "orc-01",
+      "species": "orc",
+      "sizes": {
+        "tall": {
+          "offset": [
+            9,
+            1
+          ],
+          "rows": [
+            ".ff....",
+            ".ffff..",
+            ".fsss#.",
+            "ssfs#ss",
+            ".sssss.",
+            "..ssfs#",
+            "..ss..."
+          ],
+          "ready": "orc-01-tall-ready.png",
+          "action": "orc-01-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            4
+          ],
+          "rows": [
+            ".ff....",
+            ".ffff..",
+            "ssfs#ss",
+            ".sssss.",
+            "..ssfs#",
+            "..ss..."
+          ],
+          "ready": "orc-01-short-ready.png",
+          "action": "orc-01-short-action.png"
+        }
+      },
+      "source": "sources/orc.png",
+      "source_bounds_xyxy": [
+        290,
+        166,
+        760,
+        709
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 2
+    },
+    {
+      "id": "orc-02",
+      "species": "orc",
+      "sizes": {
+        "tall": {
+          "offset": [
+            9,
+            1
+          ],
+          "rows": [
+            "..sss..",
+            ".ssfs#.",
+            "ssfss#.",
+            "ssfs#ss",
+            ".sssss.",
+            "..ssfs#",
+            "..ss..."
+          ],
+          "ready": "orc-02-tall-ready.png",
+          "action": "orc-02-tall-action.png"
+        },
+        "short": {
+          "offset": [
+            9,
+            4
+          ],
+          "rows": [
+            "..sss..",
+            ".ssfs#.",
+            "ssfs#ss",
+            ".sssss.",
+            "..ssfs#",
+            "..ss..."
+          ],
+          "ready": "orc-02-short-ready.png",
+          "action": "orc-02-short-action.png"
+        }
+      },
+      "source": "sources/orc.png",
+      "source_bounds_xyxy": [
+        1191,
+        260,
+        1599,
+        709
+      ],
+      "default_feature_color": 8,
+      "default_skin_color": 2
+    }
+  ]
+}

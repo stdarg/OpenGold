@@ -25,6 +25,7 @@ demos/godot/bin/
 !/art/portraits/NPCs/*.png
 
 # Newly generated combat head artwork (not extracted game assets)
+!/art/heads/*.png
 !/art/heads/sources/*.png
 
 # Splash artwork used by the packaged game
