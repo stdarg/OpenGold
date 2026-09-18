@@ -101,6 +101,11 @@ func textures(canvas: Control) -> Array:
         result.append(sprite.texture.get_image().get_data())
     return result
 
+func visible_rect(sprite: TextureRect) -> Rect2:
+    var source := sprite.texture.get_image().get_used_rect()
+    var scale := sprite.size / sprite.texture.get_size()
+    return Rect2(sprite.position + Vector2(source.position) * scale, Vector2(source.size) * scale)
+
 func capture() -> void:
     if OS.get_cmdline_user_args().has("--capture"):
         var screenshots := current_scene
@@ -130,8 +135,11 @@ func run_checks() -> void:
     var normal: TextureRect = canvas.get_node("NormalPlayer")
     var small: TextureRect = canvas.get_node("SmallPlayer")
     var large: TextureRect = canvas.get_node("GoliathPlayer")
-    require(normal.size == Vector2(60, 60) and large.size == Vector2(90, 90), "Large Form art fills 75% of a 2-square footprint")
-    require(large.position.is_equal_approx(Vector2(28.25, 12.5) * 24 * 2.5), "Large Form art is centered and grounded in its footprint")
+    require(normal.size == Vector2(60, 60), "Normal player fills one source square")
+    var large_visible := visible_rect(large)
+    var footprint := Rect2(Vector2(28, 12) * 60, Vector2(60, 120))
+    require(is_equal_approx(large_visible.size.y, 80), "Ready art scales uniformly to fit one square wide")
+    require(footprint.encloses(large_visible) and large_visible.position.y < footprint.position.y + 60 and is_equal_approx(large_visible.end.y, footprint.end.y), "Visible Goliath fits one square wide and rests at the bottom of two vertical squares")
     require(small.texture.get_image().get_data() != normal.texture.get_image().get_data(), "Short player uses its own original art bank")
     require(normal.texture.get_image().get_data() == large.texture.get_image().get_data(), "Large Form preserves the customized tall artwork")
     demo.set_process(false)
@@ -173,8 +181,10 @@ func run_checks() -> void:
     for i in range(7):
         press(demo, "Minus100")
     for sprite in canvas.get_children():
-        var ratio := 4.5 if sprite == large else 3.0
-        require(sprite.size.is_equal_approx(sprite.texture.get_size() * ratio), "Every sprite keeps native proportions at the same zoom")
+        if sprite == large:
+            require(is_equal_approx(visible_rect(sprite).size.y, 32 * 3), "Ready Large Form keeps its fitted scale at every zoom")
+        else:
+            require(sprite.size.is_equal_approx(sprite.texture.get_size() * 3), "Other sprites keep native proportions at the same zoom")
     require(demo.get_node("Sizes").text.contains("24.0 × 24.0 → 72.0 × 72.0"), "Readout reports source and rendered sizes")
     root.size = Vector2i(1120, 800)
     await settle()
@@ -188,6 +198,9 @@ func run_checks() -> void:
     await capture()
 
     # Observe real time and all textures across complete, synchronized pose cycles.
+    var ready_sprite_size := large.size
+    var ready_visible_height := visible_rect(large).size.y
+    var ready_source_height := large.texture.get_image().get_used_rect().size.y
     var previous := textures(canvas)
     var transitions := 0
     var last_change := 0
@@ -202,6 +215,10 @@ func run_checks() -> void:
             require(absi(now - last_change - 1000) < 150, "Pose changes once per second")
         for i in range(8):
             require(current[i] != previous[i], "All eight figures switch poses on the same frame")
+        require(large.size.is_equal_approx(ready_sprite_size), "Ready and action poses use one sprite scale")
+        var current_source_height := large.texture.get_image().get_used_rect().size.y
+        require(is_equal_approx(visible_rect(large).size.y, ready_visible_height * current_source_height / ready_source_height), "Action art uses ready-pose scaling")
+        require(is_equal_approx(visible_rect(large).end.y, 14 * 24 * 3), "Both poses rest at the bottom of the footprint")
         previous = current
         transitions += 1
         last_change = now

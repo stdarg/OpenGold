@@ -132,7 +132,7 @@ void CombatSpriteDemo::create_controls()
         control->set_text(String::num_int64(index+1));
     }
     label("AppearanceHelp","Head, weapon and colors update all three player figures. Short and tall use the original art banks.",14,true);
-    label("GoliathHelp","Goliath — Large Form\nArt fills 75% of a 2×2-square footprint. Normally 7–8 ft tall; Large Form has no specified height.",14,true);
+    label("GoliathHelp","Goliath — Large Form\nVisible art fits one square wide and spans two vertically. Both poses share one scale.",14,true);
     auto* scroll=presentation::add_control<ScrollContainer>(*this,"BattlefieldScroll",{});
     scroll->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_SHOW_ALWAYS);
     scroll->set_vertical_scroll_mode(ScrollContainer::SCROLL_MODE_SHOW_ALWAYS);
@@ -160,7 +160,7 @@ void CombatSpriteDemo::load_art()
     battlefield_=opengold::por::dungeon_battlefield(map,8,8);
     figures_={{"SmallPlayer","Short player",{23,13}},
         {"NormalPlayer","Normal player",{25,13}},
-        {"GoliathPlayer","Goliath — Large Form",{28,12},1.5,2}};
+        {"GoliathPlayer","Goliath — Large Form",{28,12},1,{1,2},.75}};
     // Deliberate art-review selections, not gameplay monster-to-art bindings.
     const auto monsters=archive(directory,"CPIC2.DAX");
     constexpr std::array<unsigned,5> records{0,2,4,26,31};
@@ -171,7 +171,7 @@ void CombatSpriteDemo::load_art()
         Figure figure{nodes[i],names[i],cells[i]};
         for(unsigned pose=0;pose<2;++pose){
             figure.poses[pose]=icon(monsters,records[i]+pose*128);
-            figure.visible_size[pose]=figure.poses[pose]->get_image()->get_used_rect().size;
+            figure.visible_bounds[pose]=figure.poses[pose]->get_image()->get_used_rect();
         }
         figures_.push_back(std::move(figure));
     }
@@ -191,7 +191,7 @@ void CombatSpriteDemo::refresh_players()
         for(unsigned pose=0;pose<2;++pose){
             auto& figure=figures_[variant];
             figure.poses[pose]=presentation::image_texture(art_->icon(appearance,pose!=0));
-            figure.visible_size[pose]=figure.poses[pose]->get_image()->get_used_rect().size;
+            figure.visible_bounds[pose]=figure.poses[pose]->get_image()->get_used_rect();
         }
     }
     refresh_colors();refresh_figures();
@@ -226,11 +226,24 @@ void CombatSpriteDemo::refresh_figures()
         const auto& figure=figures_[i];const auto& texture=figure.poses[action_];
         auto* sprite=get_node<TextureRect>(String("BattlefieldScroll/Canvas/")+figure.node);
         const Vector2 source(texture->get_width(),texture->get_height());
-        const Vector2 footprint_offset((figure.footprint-figure.scale)*.5,figure.footprint-figure.scale);
-        sprite->set_texture(texture);sprite->set_position((figure.cell+footprint_offset)*tile_pixels*scale);sprite->set_size(source*figure.scale*scale);
+        const auto bounds=figure.visible_bounds[action_];
+        const auto ready_bounds=figure.visible_bounds[0].size;
+        const double art_scale=figure.visible_fill>0?
+            std::min(figure.footprint.x*tile_pixels/ready_bounds.x,
+                figure.footprint.y*figure.visible_fill*tile_pixels/ready_bounds.y):
+            figure.scale;
+        const Vector2 sprite_size=source*art_scale*scale;
+        Vector2 sprite_position=figure.cell*tile_pixels*scale;
+        if(figure.visible_fill>0){
+            const Vector2 visible_size=bounds.size*art_scale*scale;
+            const Vector2 visible_top((figure.footprint.x*tile_pixels*scale-visible_size.x)*.5,
+                figure.footprint.y*tile_pixels*scale-visible_size.y);
+            sprite_position+=visible_top-bounds.position*art_scale*scale;
+        }
+        sprite->set_texture(texture);sprite->set_position(sprite_position);sprite->set_size(sprite_size);
         const String color=i<3?(i==2?"e6c28a":"79d6d4"):"dd9874";
         sizes+="[color=#"+color+"]"+gs(figure.label)+"[/color]  "+dimensions(source)+gs(" → ")+dimensions(sprite->get_size())+" px";
-        if(i<3)sizes+=gs("  · ")+gs("Visible figure: ")+dimensions(figure.visible_size[action_]*figure.scale*scale)+" px";
+        if(i<3)sizes+=gs("  · ")+gs("Visible figure: ")+dimensions(bounds.size*art_scale*scale)+" px";
         sizes+="\n";
     }
     get_node<RichTextLabel>("Sizes")->set_text(sizes);

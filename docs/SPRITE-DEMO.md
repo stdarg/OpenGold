@@ -44,7 +44,8 @@ godot --path demos/godot --resolution 1920x1080 res://scenes/combat_sprite_demo.
 - The readout lists source and displayed pixel dimensions for every sprite.
   Player measurements also include the visible, nontransparent bounds for the
   current pose. At 250%, a normal 24 × 24 sprite occupies 60 × 60 pixels;
-  the Large Form art occupies 90 × 90 pixels within a 120 × 120 pixel footprint.
+  the synthetic Large Form's ready art is 60 × 80 pixels within a 60 × 120
+  pixel, one-square-wide and two-square-tall footprint, aligned at its bottom.
 - **Ctrl+S** saves a timestamped PNG in `user://sprite-demo-screenshots`.
   Set `OPENGOLD_SCREENSHOT_DIR` to an absolute folder to choose another location.
   The demo exposes `request_capture()` and `capture_completed(path, error)` for
@@ -58,8 +59,10 @@ height. [Official Goliath species rules](https://www.dndbeyond.com/species/17514
 
 Medium creatures control one 5-foot square; Large creatures control a 10-foot
 square (2 × 2 grid squares). This space is not a measurement of bodily height.
-The demo draws a 2 × 2-square footprint and centers 1.5× artwork at its base,
-filling 75% of the footprint height without claiming that Large Form is exactly
+The demo draws a one-square-wide, two-square-tall footprint. It scales the
+ready pose uniformly to fit the width and at most 75% of the height, then
+centers its visible art horizontally and anchors it at the bottom. The action pose uses
+the same scale. This does not claim that Large Form is exactly
 12 feet tall or adding an invented
 height rule to combat. See the creature size and Goliath sections of
 [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).

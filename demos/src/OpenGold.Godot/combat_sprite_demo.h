@@ -25,9 +25,10 @@ private:
         const char* label;
         godot::Vector2 cell;
         double scale{1};
-        double footprint{1};
+        godot::Vector2 footprint{1,1};
+        double visible_fill{};
         std::array<godot::Ref<godot::ImageTexture>,2> poses;
-        std::array<godot::Vector2,2> visible_size;
+        std::array<godot::Rect2,2> visible_bounds;
     };
     std::optional<opengold::por::CharacterArt> art_;
     opengold::por::CharacterAppearance appearance_;
