@@ -17,8 +17,9 @@ OPENGOLD_GAME_DIR=/path/to/POOLRAD bash demos/review-sprites.sh
 ```
 
 The launcher locates Godot on PATH or in its standard macOS application folder;
-`GODOT_BIN` can select another executable. On Windows, use the existing
-`demos\build-rolf.cmd`, then `demos\review-sprites.cmd`.
+`GODOT_BIN` can select another executable. On Windows, run
+`demos\review-sprites.cmd`; it builds and checks the demo extension before
+opening the scene so an older DLL cannot hide `CombatSpriteDemo`.
 
 The demo reads `OPENGOLD_GAME_DIR`, falling back to the demo project's
 `opengold/game_directory` setting. It has no game startup or settings flow.
