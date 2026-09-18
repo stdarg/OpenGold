@@ -2,6 +2,7 @@
 #include "character_colors.h"
 #include "../../../src/OpenGoldBox/godot_images.h"
 #include "../../../src/OpenGoldBox/godot_nodes.h"
+#include "../../../src/OpenGoldBox/combat_sprite_layout.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -238,15 +239,13 @@ void CombatSpriteDemo::refresh_figures()
             const double height_scale=goliath_height*tile_pixels/bounds.size.y;
             art_scale=Vector2(figure.sizing==Sizing::stretched?tile_pixels/bounds.size.x:height_scale,height_scale);
         }
-        const Vector2 sprite_size=source*art_scale*scale;
-        Vector2 sprite_position=figure.cell*tile_pixels*scale;
+        Rect2 sprite_rect(figure.cell*tile_pixels*scale,source*scale);
         if(figure.sizing!=Sizing::original){
-            const Vector2 visible_size=bounds.size*art_scale*scale;
-            const Vector2 visible_top((figure.footprint.x*tile_pixels*scale-visible_size.x)*.5,
-                figure.footprint.y*tile_pixels*scale-visible_size.y);
-            sprite_position+=visible_top-bounds.position*art_scale*scale;
+            const double tile=tile_pixels*scale;
+            const Rect2 occupied(figure.cell*tile+Vector2(0,tile),Vector2(tile,tile));
+            sprite_rect=presentation::bottom_aligned_sprite(source,bounds,occupied,bounds.size*art_scale/tile_pixels);
         }
-        sprite->set_texture(texture);sprite->set_position(sprite_position);sprite->set_size(sprite_size);
+        sprite->set_texture(texture);sprite->set_position(sprite_rect.position);sprite->set_size(sprite_rect.size);
         const String color=figure_color(i).to_html(false);
         sizes+="[color=#"+color+"]"+gs(figure.label)+"[/color]  "+dimensions(source)+gs(" → ")+dimensions(sprite->get_size())+" px";
         if(i<player_count)sizes+=gs("  · ")+gs("Visible figure: ")+dimensions(bounds.size*art_scale*scale)+" px";

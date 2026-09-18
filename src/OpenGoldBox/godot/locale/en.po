@@ -161,11 +161,11 @@ msgstr "Acolyte"
 msgid "Action"
 msgstr "Action"
 
-#: src/OpenGoldBox/combat_view.cpp:234
+#: src/OpenGoldBox/combat_view.cpp:241
 msgid "Action ready"
 msgstr "Action ready"
 
-#: src/OpenGoldBox/combat_view.cpp:234
+#: src/OpenGoldBox/combat_view.cpp:241
 msgid "Action spent"
 msgstr "Action spent"
 
@@ -483,7 +483,7 @@ msgstr "Choose a name for your character (up to 40 characters)."
 msgid "Choose a swatch to recolor this part in the combat preview."
 msgstr "Choose a swatch to recolor this part in the combat preview."
 
-#: src/OpenGoldBox/combat_view.cpp:81
+#: src/OpenGoldBox/combat_view.cpp:82
 msgid "Choose an action, then click its target. Enter ends your turn."
 msgstr "Choose an action, then click its target. Enter ends your turn."
 
@@ -717,7 +717,7 @@ msgstr "Dwarf"
 msgid "Each roll must be assigned exactly once"
 msgstr "Each roll must be assigned exactly once"
 
-#: src/OpenGoldBox/combat_view.cpp:82
+#: src/OpenGoldBox/combat_view.cpp:83
 msgid "Each square is 5 feet. Victory returns your party to exploration."
 msgstr "Each square is 5 feet. Victory returns your party to exploration."
 
@@ -737,7 +737,7 @@ msgstr "Empty"
 msgid "End turn"
 msgstr "End turn"
 
-#: src/OpenGoldBox/combat_view.cpp:256
+#: src/OpenGoldBox/combat_view.cpp:263
 msgid "Enemy turn"
 msgstr "Enemy turn"
 
@@ -1114,7 +1114,7 @@ msgstr "Modifiers"
 msgid "Monk"
 msgstr "Monk"
 
-#: src/OpenGoldBox/combat_view.cpp:252 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
+#: src/OpenGoldBox/combat_view.cpp:259 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
 msgid "Move"
 msgstr "Move"
 
@@ -1273,7 +1273,7 @@ msgstr "Party combat"
 msgid "Party combat preview. HP and spent resources carry back to the party."
 msgstr "Party combat preview. HP and spent resources carry back to the party."
 
-#: src/OpenGoldBox/combat_view.cpp:237
+#: src/OpenGoldBox/combat_view.cpp:244
 msgid "Party incapacitated / defeat"
 msgstr "Party incapacitated / defeat"
 
@@ -1368,7 +1368,7 @@ msgstr "Ranged attack"
 msgid "Ranger"
 msgstr "Ranger"
 
-#: src/OpenGoldBox/combat_view.cpp:254
+#: src/OpenGoldBox/combat_view.cpp:261
 msgid "Read the encounter text, then Continue."
 msgstr "Read the encounter text, then Continue."
 
@@ -1476,12 +1476,12 @@ msgstr "Roll {needed} or higher"
 msgid "Rolled score: {score}"
 msgstr "Rolled score: {score}"
 
-#: src/OpenGoldBox/combat_view.cpp:233
+#: src/OpenGoldBox/combat_view.cpp:240
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round} / {name} reaction\nMove {feet} ft | {action}"
 msgstr "Round {round} / {name} reaction\nMove {feet} ft | {action}"
 
-#: src/OpenGoldBox/combat_view.cpp:233
+#: src/OpenGoldBox/combat_view.cpp:240
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round} / {name} turn\nMove {feet} ft | {action}"
 msgstr "Round {round} / {name} turn\nMove {feet} ft | {action}"
@@ -1495,7 +1495,7 @@ msgstr "Round {round}: {name} acts."
 msgid "Run the area's pre-camp check and attempt an eight-hour long rest."
 msgstr "Run the area's pre-camp check and attempt an eight-hour long rest."
 
-#: src/OpenGoldBox/combat_view.cpp:81
+#: src/OpenGoldBox/combat_view.cpp:82
 msgid "SLUMS / Combat"
 msgstr "SLUMS / Combat"
 
@@ -1601,7 +1601,7 @@ msgstr "Select an inventory item first"
 msgid "Select an option, then continue."
 msgstr "Select an option, then continue."
 
-#: src/OpenGoldBox/combat_view.cpp:256
+#: src/OpenGoldBox/combat_view.cpp:263
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Selected: {action}. Click a highlighted square."
 msgstr "Selected: {action}. Click a highlighted square."
@@ -1630,7 +1630,7 @@ msgstr "Size: Tall"
 msgid "Slot level 1"
 msgstr "Slot level 1"
 
-#: src/OpenGoldBox/combat_view.cpp:245
+#: src/OpenGoldBox/combat_view.cpp:252
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Slot level {level}"
 msgstr "Slot level {level}"
@@ -1772,7 +1772,7 @@ msgstr "Target class(es)"
 msgid "Teal: party | Orange: enemies\nStone: obstacle | Brown: difficult terrain\nSaving is available in training combat."
 msgstr "Teal: party | Orange: enemies\nStone: obstacle | Brown: difficult terrain\nSaving is available in training combat."
 
-#: src/OpenGoldBox/combat_view.cpp:79
+#: src/OpenGoldBox/combat_view.cpp:80
 msgid "Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate"
 msgstr "Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate"
 
@@ -1812,7 +1812,7 @@ msgstr "Training"
 msgid "Training arena"
 msgstr "Training arena"
 
-#: src/OpenGoldBox/combat_view.cpp:140
+#: src/OpenGoldBox/combat_view.cpp:147
 msgid "Training combat saved."
 msgstr "Training combat saved."
 
@@ -1828,7 +1828,7 @@ msgstr "Turn →"
 msgid "Unable to continue"
 msgstr "Unable to continue"
 
-#: src/OpenGoldBox/combat_view.cpp:230
+#: src/OpenGoldBox/combat_view.cpp:237
 msgid "Unable to load rules"
 msgstr "Unable to load rules"
 
@@ -1880,7 +1880,7 @@ msgstr "Untrained shield: no AC bonus."
 msgid "Untrained weapon: no proficiency bonus on attack rolls (no +2 at level 1)."
 msgstr "Untrained weapon: no proficiency bonus on attack rolls (no +2 at level 1)."
 
-#: src/OpenGoldBox/combat_view.cpp:255
+#: src/OpenGoldBox/combat_view.cpp:262
 msgid "Use or decline the opportunity attack."
 msgstr "Use or decline the opportunity attack."
 
@@ -1892,7 +1892,7 @@ msgstr "Values kindness and individual freedom."
 msgid "Values personal freedom and independence."
 msgstr "Values personal freedom and independence."
 
-#: src/OpenGoldBox/combat_view.cpp:237
+#: src/OpenGoldBox/combat_view.cpp:244
 msgid "Victory"
 msgstr "Victory"
 
@@ -2082,7 +2082,7 @@ msgstr[1] "{count} matching portraits."
 msgid "{die} (maximum d{die}) {modifier} (Constitution) + {racial} (racial bonus) = {hp} HP"
 msgstr "{die} (maximum d{die}) {modifier} (Constitution) + {racial} (racial bonus) = {hp} HP"
 
-#: src/OpenGoldBox/combat_view.cpp:239
+#: src/OpenGoldBox/combat_view.cpp:246
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{id} {name}  {current}/{maximum} HP  AC {ac}\n"
 msgstr "{id} {name}  {current}/{maximum} HP  AC {ac}\n"

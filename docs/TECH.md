@@ -257,6 +257,37 @@ This layer renders decoded game assets such as:
 - wall textures
 - scene illustrations
 
+### Goliath Combat Sprites and Draw Order
+
+Approved rendering decision, 2026-09-18: use the **stretched** Goliath treatment
+selected in the [combat sprite demo](SPRITE-DEMO.md).
+
+- A Goliath occupies **one square**, the lower square under its feet. Its
+  position, movement, pathfinding, collision, targeting, and selection refer to
+  that square. Sprite dimensions never create additional occupied cells.
+- Its visible artwork is exactly **one square wide and 1.25 squares tall**.
+  Scale the axes independently using the nontransparent bounds, center it
+  horizontally, and align its visible feet to the bottom of the occupied square.
+  This makes it extend into the bottom 25% of the square above. Ignore transparent
+  source padding when fitting and anchoring each rendered pose.
+- **Monsters may occupy the square above the Goliath.** The overhanging pixels
+  do not reserve that square or redirect a click there to the Goliath.
+- Render combat sprites **from the bottom of the screen toward the top**:
+  descending battlefield Y, because Godot Y increases downward. This always
+  applies to monsters. Players share the same pass so a monster in the upper
+  square is drawn after the Goliath below and covers its overlapping pixels.
+  Break same-row ties by ascending X and then entity ID for deterministic output.
+  Sort a separate draw list; retain the rules snapshot's initiative order.
+- Terrain and cell markers render before sprites; health bars render afterward.
+  Panning and zooming preserve this ordering. Dead/unconscious figures retain the
+  same rendering order and existing tint treatment.
+
+The game identifies Goliaths using the character's stable `goliath` species ID.
+The game and demo share `combat_sprite_layout.h` for the visible-bounds fitting.
+Native layout tests verify size, padding, anchoring, zoom, and row order. Party
+tests verify a monster can move into the square above a Goliath and retain that
+position through save/restore. Combat input continues using logical cells.
+
 ### Modern UI Layer
 
 This layer replaces the original interface with native presentation:

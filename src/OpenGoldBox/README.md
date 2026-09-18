@@ -134,6 +134,24 @@ Combat viewport checks:
 godot_console --headless --path src/OpenGoldBox/godot --script ../../../tests/combat_view_tests.gd
 ```
 
+### Goliath combat rendering
+
+Goliaths occupy one logical square. Their visible sprite is stretched to one
+square wide and 1.25 squares tall, with feet aligned to the occupied square's
+bottom edge. Monsters may stand in the square above. Combat sprites draw from
+lower rows to upper rows, keeping occupancy and targeting independent of the
+artwork. See the [technical rendering rules](../../docs/TECH.md#goliath-combat-sprites-and-draw-order).
+
+The native `opengold_combat_sprite_layout_tests` checks sizing and ordering;
+`opengold_party_tests` checks movement into the square above a Goliath.
+For a graphical check using original assets and the real character pool:
+
+```bash
+OPENGOLD_GAME_DIR=/path/to/POOLRAD OPENGOLD_LANG=en godot \
+  --path src/OpenGoldBox/godot --script ../../../tests/goliath_render_tests.gd \
+  -- --capture
+```
+
 ## Screenshots
 
 Press **Ctrl+S** at any time to save timestamped PNGs in **user://screenshots**.

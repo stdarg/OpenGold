@@ -26,6 +26,30 @@ Character character(std::string klass="fighter",std::string name="Ada")
 }
 por::Equipment item(unsigned type,unsigned price=10)
 {por::Equipment e;e.stored.type=type;e.stored.value=price;e.stored.stack_size=1;return e;}
+void goliath_occupancy()
+{
+    const auto human=character();auto draft=human.creation_data();draft.race="goliath";
+    CampaignParty party(module());
+    const auto id=party.add_pc(Character(*srd5::character_rules(),draft,human.appearance()));
+    auto participants=party.participants();participants[0].cell={2,2};
+    participants.push_back({1000,"bandit","Above the Goliath",1,{2,0}});
+    auto rules=module();std::unique_ptr<CombatSession> combat;
+    for(unsigned seed=0;seed<100;++seed){
+        auto candidate=rules->create({{6,6,std::vector<std::uint8_t>(36)},participants},seed);
+        if(candidate->snapshot().actor==1000){combat=std::move(candidate);break;}
+    }
+    check(bool(combat),"Find deterministic monster turn");
+    const auto moves=combat->legal_commands();
+    const auto above=std::find_if(moves.begin(),moves.end(),[](const auto& c){return c.verb=="move"&&c.destination==Cell{2,1};});
+    check(above!=moves.end(),"Monster can enter the square above a Goliath");
+    check(std::none_of(moves.begin(),moves.end(),[](const auto& c){return c.verb=="move"&&c.destination==Cell{2,2};}),"Only the Goliath's lower square is occupied");
+    check(combat->submit(*above),"Move into the Goliath's visual overhang");
+    const auto snapshot=rules->restore(combat->save())->snapshot();
+    for(const auto& actor:snapshot.combatants){
+        if(actor.id==id)check(actor.cell==Cell{2,2},"Goliath remains in the lower square");
+        if(actor.id==1000)check(actor.cell==Cell{2,1},"Monster independently occupies the upper square after save/restore");
+    }
+}
 void roster_and_equipment()
 {
     CampaignParty party(module());auto original=character();const auto pc=party.add_pc(original);
@@ -503,6 +527,6 @@ void original_loot()
 }
 int main()
 {
-    try{original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

@@ -161,11 +161,11 @@ msgstr "Acólito"
 msgid "Action"
 msgstr "Acción"
 
-#: src/OpenGoldBox/combat_view.cpp:234
+#: src/OpenGoldBox/combat_view.cpp:241
 msgid "Action ready"
 msgstr "Acción disponible"
 
-#: src/OpenGoldBox/combat_view.cpp:234
+#: src/OpenGoldBox/combat_view.cpp:241
 msgid "Action spent"
 msgstr "Acción gastada"
 
@@ -483,7 +483,7 @@ msgstr "Elige un nombre para tu personaje (hasta 40 caracteres)."
 msgid "Choose a swatch to recolor this part in the combat preview."
 msgstr "Elige una muestra para cambiar el color de esta parte en la vista de combate."
 
-#: src/OpenGoldBox/combat_view.cpp:81
+#: src/OpenGoldBox/combat_view.cpp:82
 msgid "Choose an action, then click its target. Enter ends your turn."
 msgstr "Elige una acción y haz clic en su objetivo. Enter termina tu turno."
 
@@ -717,7 +717,7 @@ msgstr "Enano"
 msgid "Each roll must be assigned exactly once"
 msgstr "Cada tirada debe asignarse una sola vez"
 
-#: src/OpenGoldBox/combat_view.cpp:82
+#: src/OpenGoldBox/combat_view.cpp:83
 msgid "Each square is 5 feet. Victory returns your party to exploration."
 msgstr "Cada casilla equivale a 5 pies. Tras la victoria, el grupo vuelve a explorar."
 
@@ -737,7 +737,7 @@ msgstr "Vacío"
 msgid "End turn"
 msgstr "Terminar turno"
 
-#: src/OpenGoldBox/combat_view.cpp:256
+#: src/OpenGoldBox/combat_view.cpp:263
 msgid "Enemy turn"
 msgstr "Turno enemigo"
 
@@ -1114,7 +1114,7 @@ msgstr "Modificadores"
 msgid "Monk"
 msgstr "Monje"
 
-#: src/OpenGoldBox/combat_view.cpp:252 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
+#: src/OpenGoldBox/combat_view.cpp:259 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
 msgid "Move"
 msgstr "Mover"
 
@@ -1273,7 +1273,7 @@ msgstr "Combate del grupo"
 msgid "Party combat preview. HP and spent resources carry back to the party."
 msgstr "Combate de prueba del grupo. Los PG y los recursos gastados se conservan al volver."
 
-#: src/OpenGoldBox/combat_view.cpp:237
+#: src/OpenGoldBox/combat_view.cpp:244
 msgid "Party incapacitated / defeat"
 msgstr "Grupo incapacitado / derrota"
 
@@ -1368,7 +1368,7 @@ msgstr "Ataque a distancia"
 msgid "Ranger"
 msgstr "Explorador"
 
-#: src/OpenGoldBox/combat_view.cpp:254
+#: src/OpenGoldBox/combat_view.cpp:261
 msgid "Read the encounter text, then Continue."
 msgstr "Lee el texto del encuentro y pulsa Continuar."
 
@@ -1476,12 +1476,12 @@ msgstr "Saca {needed} o más"
 msgid "Rolled score: {score}"
 msgstr "Resultado de la tirada: {score}"
 
-#: src/OpenGoldBox/combat_view.cpp:233
+#: src/OpenGoldBox/combat_view.cpp:240
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round} / {name} reaction\nMove {feet} ft | {action}"
 msgstr "Asalto {round} / Reacción de {name}\nMovimiento {feet} pies | {action}"
 
-#: src/OpenGoldBox/combat_view.cpp:233
+#: src/OpenGoldBox/combat_view.cpp:240
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round} / {name} turn\nMove {feet} ft | {action}"
 msgstr "Asalto {round} / Turno de {name}\nMovimiento {feet} pies | {action}"
@@ -1495,7 +1495,7 @@ msgstr "Asalto {round}: actúa {name}."
 msgid "Run the area's pre-camp check and attempt an eight-hour long rest."
 msgstr "Comprueba si se puede acampar e intenta un descanso largo de ocho horas."
 
-#: src/OpenGoldBox/combat_view.cpp:81
+#: src/OpenGoldBox/combat_view.cpp:82
 msgid "SLUMS / Combat"
 msgstr "BARRIOS BAJOS / Combate"
 
@@ -1601,7 +1601,7 @@ msgstr "Elige primero un objeto del inventario"
 msgid "Select an option, then continue."
 msgstr "Elige una opción y continúa."
 
-#: src/OpenGoldBox/combat_view.cpp:256
+#: src/OpenGoldBox/combat_view.cpp:263
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Selected: {action}. Click a highlighted square."
 msgstr "Selección: {action}. Haz clic en una casilla resaltada."
@@ -1630,7 +1630,7 @@ msgstr "Tamaño: alto"
 msgid "Slot level 1"
 msgstr "Espacio de nivel 1"
 
-#: src/OpenGoldBox/combat_view.cpp:245
+#: src/OpenGoldBox/combat_view.cpp:252
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Slot level {level}"
 msgstr "Espacio de nivel {level}"
@@ -1772,7 +1772,7 @@ msgstr "Clases objetivo"
 msgid "Teal: party | Orange: enemies\nStone: obstacle | Brown: difficult terrain\nSaving is available in training combat."
 msgstr "Turquesa: grupo | Naranja: enemigos\nPiedra: obstáculo | Marrón: terreno difícil\nPuedes guardar en el combate de entrenamiento."
 
-#: src/OpenGoldBox/combat_view.cpp:79
+#: src/OpenGoldBox/combat_view.cpp:80
 msgid "Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate"
 msgstr "Turquesa: grupo | Naranja: enemigos\nRueda: desplazar | Mayús+rueda: lateral\nArrastrar botón central: mover vista | Barras: navegar"
 
@@ -1812,7 +1812,7 @@ msgstr "Entrenamiento"
 msgid "Training arena"
 msgstr "Arena de entrenamiento"
 
-#: src/OpenGoldBox/combat_view.cpp:140
+#: src/OpenGoldBox/combat_view.cpp:147
 msgid "Training combat saved."
 msgstr "Combate de entrenamiento guardado."
 
@@ -1828,7 +1828,7 @@ msgstr "Girar →"
 msgid "Unable to continue"
 msgstr "No se puede continuar"
 
-#: src/OpenGoldBox/combat_view.cpp:230
+#: src/OpenGoldBox/combat_view.cpp:237
 msgid "Unable to load rules"
 msgstr "No se pudieron cargar las reglas"
 
@@ -1880,7 +1880,7 @@ msgstr "Escudo sin entrenamiento: no otorga bonificación a la CA."
 msgid "Untrained weapon: no proficiency bonus on attack rolls (no +2 at level 1)."
 msgstr "Arma sin entrenamiento: no añades competencia al ataque (sin +2 en nivel 1)."
 
-#: src/OpenGoldBox/combat_view.cpp:255
+#: src/OpenGoldBox/combat_view.cpp:262
 msgid "Use or decline the opportunity attack."
 msgstr "Usa o rechaza el ataque de oportunidad."
 
@@ -1892,7 +1892,7 @@ msgstr "Valora la bondad y la libertad individual."
 msgid "Values personal freedom and independence."
 msgstr "Valora la libertad personal y la independencia."
 
-#: src/OpenGoldBox/combat_view.cpp:237
+#: src/OpenGoldBox/combat_view.cpp:244
 msgid "Victory"
 msgstr "Victoria"
 
@@ -2082,7 +2082,7 @@ msgstr[1] "{count} retratos coincidentes."
 msgid "{die} (maximum d{die}) {modifier} (Constitution) + {racial} (racial bonus) = {hp} HP"
 msgstr "{die} (máximo de d{die}) {modifier} (Constitución) + {racial} (bonificación de raza) = {hp} PG"
 
-#: src/OpenGoldBox/combat_view.cpp:239
+#: src/OpenGoldBox/combat_view.cpp:246
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{id} {name}  {current}/{maximum} HP  AC {ac}\n"
 msgstr "{id} {name}  {current}/{maximum} PG  CA {ac}\n"

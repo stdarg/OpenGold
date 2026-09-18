@@ -3,6 +3,7 @@
 #include "localization.h"
 #include "game_resources.h"
 #include "combat_view.h"
+#include "combat_sprite_layout.h"
 #include "opengold/srd5.h"
 #include "opengold/save_file.h"
 #include <godot_cpp/classes/button.hpp>
@@ -128,11 +129,17 @@ void CombatView::sync_art()
     for(const auto& source:demo_->terrain_art()){
         terrain_art_.push_back(presentation::image_texture(source));
     }
-    for(const auto& source:demo_->art()) {
-        art_[source.entity]=presentation::image_texture(source.image);
-    }
+    const auto install=[&](const CombatArt& source,bool goliath){
+        const auto image=presentation::rgba_image(source.image);
+        art_[source.entity]={ImageTexture::create_from_image(image),image->get_used_rect(),goliath};
+    };
+    for(const auto& source:demo_->art())install(source,false);
     for(const auto& source:campaign_art_){
-        art_[source.entity]=presentation::image_texture(source.image);}
+        bool goliath=false;
+        if(campaign_)for(const auto& member:campaign_->state().roster)
+            if(member.id==source.entity){goliath=member.character.creation_data().race=="goliath";break;}
+        install(source,goliath);
+    }
 }
 void CombatView::save_game()
 {
@@ -296,9 +303,15 @@ void CombatView::draw_battlefield()
         const auto color=a.side==0?Color("79d6d4"):Color("dd9874");
         canvas->draw_circle(center,tile*.34,a.conscious?color:Color("51595b"));
         if(a.id==s.actor&&s.outcome==Outcome::ongoing)canvas->draw_arc(center,tile*.42,0,6.283185,32,Color("e6c28a"),2);
+    }
+    for(const auto index:presentation::combat_sprite_draw_order(s.combatants)) {
+        const auto& a=s.combatants[index];
+        const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
         if(art_.contains(a.id)) {
-            const auto texture=art_.at(a.id);const double scale=tile*.9/std::max(texture->get_width(),texture->get_height());
-            const Vector2 size(texture->get_width()*scale,texture->get_height()*scale);canvas->draw_texture_rect(texture,Rect2(center-size*.5,size),false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
+            const auto& art=art_.at(a.id);
+            const auto rect=presentation::combat_sprite_rect(art.texture->get_size(),art.visible,
+                Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),art.goliath);
+            canvas->draw_texture_rect(art.texture,rect,false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
         } else {
             const auto number=std::to_string(a.id);
             auto cursor=center+Vector2(-5.5*number.size(),7);
@@ -307,6 +320,11 @@ void CombatView::draw_battlefield()
                 cursor.x+=11;
             }
         }
+    }
+    // Status bars remain legible above the complete sprite pass.
+    for(const auto& a:s.combatants) {
+        const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
+        const auto color=a.side==0?Color("79d6d4"):Color("dd9874");
         canvas->draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7,4)),Color("101719"));
         canvas->draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7*a.hit_points/a.max_hit_points,4)),color);
     }

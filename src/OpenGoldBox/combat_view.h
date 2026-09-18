@@ -32,7 +32,12 @@ private:
     std::vector<opengold::CombatArt> campaign_art_;
     std::optional<opengold::CampaignEncounter> encounter_;
     std::vector<godot::Ref<godot::ImageTexture>> terrain_art_;
-    std::map<opengold::rules::EntityId,godot::Ref<godot::ImageTexture>> art_;
+    struct SpriteArt {
+        godot::Ref<godot::ImageTexture> texture;
+        godot::Rect2 visible;
+        bool goliath{};
+    };
+    std::map<opengold::rules::EntityId,SpriteArt> art_;
     godot::Rect2 board_rect_;
     double combat_zoom_{2.5};
     std::string mode_{"move"},error_;

@@ -66,6 +66,11 @@ and readout colors identify each version.
    Center the figure horizontally and allow wider artwork to extend beyond the
    guide. There is no width cap or clipping at the guide edges.
 
+The **stretched** treatment was selected for the game. A Goliath occupies only
+its lower square; monsters may occupy the square above. The game's combat
+sprites render from lower rows to upper rows. See the approved
+[occupancy and drawing rules](TECH.md#goliath-combat-sprites-and-draw-order).
+
 Each pose is fitted from its own nontransparent bounds, so transparent padding
 does not affect foot alignment or height. Head, weapon, and color changes apply
 to both comparisons. These are visual sizing experiments within the demo.
