@@ -24,6 +24,9 @@ demos/godot/bin/
 !/art/portraits/*.png
 !/art/portraits/NPCs/*.png
 
+# Newly generated combat head artwork (not extracted game assets)
+!/art/heads/sources/*.png
+
 # Splash artwork used by the packaged game
 !/art/OpenGoldBoxSplashBackground.png
 !/art/OpenGoldBoxEngineLettering.png
