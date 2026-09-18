@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
+#include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/scroll_container.hpp>
@@ -28,7 +29,11 @@
 using namespace godot;
 namespace {
 constexpr double tile_pixels=24;
+constexpr unsigned player_count=4;
+constexpr double goliath_height=1.25;
 constexpr int min_zoom=10,max_zoom=1000;
+Color figure_color(unsigned index)
+{return Color(index<2?"79d6d4":index==2?"e6c28a":index==3?"bb9be8":"dd9874");}
 String gs(std::string_view value){return String::utf8(value.data(),value.size());}
 String dimensions(Vector2 size)
 {return String::num(size.x,1)+gs(" × ")+String::num(size.y,1);}
@@ -131,8 +136,8 @@ void CombatSpriteDemo::create_controls()
         // Text plus color keeps each swatch identifiable with keyboard focus.
         control->set_text(String::num_int64(index+1));
     }
-    label("AppearanceHelp","Head, weapon and colors update all three player figures. Short and tall use the original art banks.",14,true);
-    label("GoliathHelp","Goliath — Large Form\nVisible art fits one square wide and spans two vertically. Both poses share one scale.",14,true);
+    label("AppearanceHelp","Head, weapon and colors update all four player figures. Short and tall use the original art banks.",14,true);
+    label("GoliathHelp","Goliath: 1.25 squares tall, feet on the baseline.\n1 — Stretched: exactly one square wide.\n2 — Proportional: natural width, overflow allowed.",14,true);
     auto* scroll=presentation::add_control<ScrollContainer>(*this,"BattlefieldScroll",{});
     scroll->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_SHOW_ALWAYS);
     scroll->set_vertical_scroll_mode(ScrollContainer::SCROLL_MODE_SHOW_ALWAYS);
@@ -159,8 +164,9 @@ void CombatSpriteDemo::load_art()
     for(unsigned y=7;y<=10;++y){map.cells[y*16+7].walls[3]=1;map.cells[y*16+10].walls[1]=1;}
     battlefield_=opengold::por::dungeon_battlefield(map,8,8);
     figures_={{"SmallPlayer","Short player",{23,13}},
-        {"NormalPlayer","Normal player",{25,13}},
-        {"GoliathPlayer","Goliath — Large Form",{28,12},1,{1,2},.75}};
+        {"NormalPlayer","Human",{25,13}},
+        {"GoliathStretched","1 — Goliath, stretched",{28,12},{1,2},Sizing::stretched},
+        {"GoliathProportional","2 — Goliath, proportional",{31,12},{1,2},Sizing::proportional}};
     // Deliberate art-review selections, not gameplay monster-to-art bindings.
     const auto monsters=archive(directory,"CPIC2.DAX");
     constexpr std::array<unsigned,5> records{0,2,4,26,31};
@@ -186,7 +192,7 @@ void CombatSpriteDemo::load_art()
 }
 void CombatSpriteDemo::refresh_players()
 {
-    for(unsigned variant=0;variant<3;++variant){
+    for(unsigned variant=0;variant<player_count;++variant){
         auto appearance=appearance_;appearance.tall=variant!=0;
         for(unsigned pose=0;pose<2;++pose){
             auto& figure=figures_[variant];
@@ -227,23 +233,23 @@ void CombatSpriteDemo::refresh_figures()
         auto* sprite=get_node<TextureRect>(String("BattlefieldScroll/Canvas/")+figure.node);
         const Vector2 source(texture->get_width(),texture->get_height());
         const auto bounds=figure.visible_bounds[action_];
-        const auto ready_bounds=figure.visible_bounds[0].size;
-        const double art_scale=figure.visible_fill>0?
-            std::min(figure.footprint.x*tile_pixels/ready_bounds.x,
-                figure.footprint.y*figure.visible_fill*tile_pixels/ready_bounds.y):
-            figure.scale;
+        Vector2 art_scale(1,1);
+        if(figure.sizing!=Sizing::original&&bounds.size.x>0&&bounds.size.y>0){
+            const double height_scale=goliath_height*tile_pixels/bounds.size.y;
+            art_scale=Vector2(figure.sizing==Sizing::stretched?tile_pixels/bounds.size.x:height_scale,height_scale);
+        }
         const Vector2 sprite_size=source*art_scale*scale;
         Vector2 sprite_position=figure.cell*tile_pixels*scale;
-        if(figure.visible_fill>0){
+        if(figure.sizing!=Sizing::original){
             const Vector2 visible_size=bounds.size*art_scale*scale;
             const Vector2 visible_top((figure.footprint.x*tile_pixels*scale-visible_size.x)*.5,
                 figure.footprint.y*tile_pixels*scale-visible_size.y);
             sprite_position+=visible_top-bounds.position*art_scale*scale;
         }
         sprite->set_texture(texture);sprite->set_position(sprite_position);sprite->set_size(sprite_size);
-        const String color=i<3?(i==2?"e6c28a":"79d6d4"):"dd9874";
+        const String color=figure_color(i).to_html(false);
         sizes+="[color=#"+color+"]"+gs(figure.label)+"[/color]  "+dimensions(source)+gs(" → ")+dimensions(sprite->get_size())+" px";
-        if(i<3)sizes+=gs("  · ")+gs("Visible figure: ")+dimensions(bounds.size*art_scale*scale)+" px";
+        if(i<player_count)sizes+=gs("  · ")+gs("Visible figure: ")+dimensions(bounds.size*art_scale*scale)+" px";
         sizes+="\n";
     }
     get_node<RichTextLabel>("Sizes")->set_text(sizes);
@@ -258,7 +264,7 @@ void CombatSpriteDemo::layout()
     for(unsigned i=0;i<4;++i)place(std::array<const char*,4>{"Minus100","Minus10","Plus10","Plus100"}[i],{24+i*100.0f,98,92,38});
     place("Zoom",{436,100,160,34});place("Pose",{24,144,left,28});
     place("BattlefieldScroll",{24,182,left,size.y-460});
-    place("Sizes",{24,size.y-264,left,214});place("Status",{24,size.y-36,size.x-48,28});
+    place("Sizes",{24,size.y-272,left,230});place("Status",{24,size.y-36,size.x-48,28});
     place("AppearanceTitle",{right,100,sidebar,34});
     place("HeadPrevious",{right,144,48,38});place("Head",{right+62,144,sidebar-124,38});place("HeadNext",{right+sidebar-48,144,48,38});
     place("BodyPrevious",{right,188,48,38});place("Body",{right+62,188,sidebar-124,38});place("BodyNext",{right+sidebar-48,188,48,38});
@@ -289,7 +295,23 @@ void CombatSpriteDemo::draw_map()
     }
     for(unsigned i=0;i<figures_.size();++i){
         const auto& figure=figures_[i];
-        canvas->draw_rect(Rect2(figure.cell*tile,Vector2(tile,tile)*figure.footprint),Color(i<3?(i==2?"e6c28a":"79d6d4"):"dd9874"),false,2);
+        const auto color=figure_color(i);
+        const Rect2 guide(figure.cell*tile,Vector2(tile,tile)*figure.footprint);
+        canvas->draw_rect(guide,color,false,2);
+        if(figure.sizing!=Sizing::original){
+            // The lower quarter of the upper square is the target headroom.
+            const Vector2 top=guide.position+Vector2(0,tile*(2-goliath_height));
+            canvas->draw_rect(Rect2(top,Vector2(tile,tile*.25)),Color(color.r,color.g,color.b,.14));
+            canvas->draw_line(top,top+Vector2(tile,0),color,1);
+            canvas->draw_line(guide.position+Vector2(0,tile),guide.position+Vector2(tile,tile),color,1);
+            canvas->draw_line(guide.position+Vector2(0,2*tile),guide.position+Vector2(tile,2*tile),color,3);
+        }
+        if(i<player_count&&tile>=24){
+            constexpr std::array<const char*,player_count> captions{"Short","Human","1 — Stretched","2 — Proportional"};
+            // draw_string's optional TextServer enums are omitted from the demo's trimmed bindings.
+            canvas->call("draw_string",get_theme_default_font(),guide.position+Vector2(-tile*.75,guide.size.y+18),
+                gs(captions[i]),HORIZONTAL_ALIGNMENT_CENTER,tile*2.5,14,color);
+        }
     }
 }
 void CombatSpriteDemo::zoom_by(int amount)

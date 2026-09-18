@@ -20,13 +20,13 @@ protected:
     static void _bind_methods();
     void _notification(int what);
 private:
+    enum class Sizing { original, stretched, proportional };
     struct Figure {
         const char* node;
         const char* label;
         godot::Vector2 cell;
-        double scale{1};
         godot::Vector2 footprint{1,1};
-        double visible_fill{};
+        Sizing sizing{Sizing::original};
         std::array<godot::Ref<godot::ImageTexture>,2> poses;
         std::array<godot::Rect2,2> visible_bounds;
     };

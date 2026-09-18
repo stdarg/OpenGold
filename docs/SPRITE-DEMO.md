@@ -31,9 +31,9 @@ godot --path demos/godot --resolution 1920x1080 res://scenes/combat_sprite_demo.
 
 ## Controls and measurements
 
-- The map shows short and normal players side by side, a Large Form comparison,
-  and five nearby monsters. All eight figures alternate ready/action every second.
-- Head, weapon, and both banks of six region colors update all three players.
+- The map shows short and human players, two labeled Goliath comparisons,
+  and five nearby monsters. All nine figures alternate ready/action every second.
+- Head, weapon, and both banks of six region colors update all four players.
   Regions absent from both player sizes are disabled. The numbered palette has
   color name tooltips; buttons support keyboard focus and activation.
 - **−100%, −10%, +10%, +100%** change zoom by percentage points, from 10% to
@@ -44,35 +44,39 @@ godot --path demos/godot --resolution 1920x1080 res://scenes/combat_sprite_demo.
 - The readout lists source and displayed pixel dimensions for every sprite.
   Player measurements also include the visible, nontransparent bounds for the
   current pose. At 250%, a normal 24 × 24 sprite occupies 60 × 60 pixels;
-  the synthetic Large Form's ready art is 60 × 80 pixels within a 60 × 120
-  pixel, one-square-wide and two-square-tall footprint, aligned at its bottom.
+  both Goliaths have a visible height of 75 pixels. The stretched version is
+  exactly 60 pixels wide; the proportional version's width follows the art's
+  aspect ratio.
 - **Ctrl+S** saves a timestamped PNG in `user://sprite-demo-screenshots`.
   Set `OPENGOLD_SCREENSHOT_DIR` to an absolute folder to choose another location.
   The demo exposes `request_capture()` and `capture_completed(path, error)` for
   automated visual checks, without loading the game's screenshot autoload.
 
-## Goliath size
+## Goliath comparisons
 
-A normal Goliath is **Medium, about 7–8 feet tall**. Large Form changes its
-size to Large. The species rule does not give the transformed character an exact
-height. [Official Goliath species rules](https://www.dndbeyond.com/species/1751439-goliath).
+Both Goliaths have a guide one square wide and two squares tall. Their visible
+feet sit on the bottom edge, and their visible height is exactly **1.25 squares**:
+one full lower square plus the bottom 25% of the upper square. That occupied
+portion of the upper square is shaded, with a line at the intended top. Captions
+and readout colors identify each version.
 
-Medium creatures control one 5-foot square; Large creatures control a 10-foot
-square (2 × 2 grid squares). This space is not a measurement of bodily height.
-The demo draws a one-square-wide, two-square-tall footprint. It scales the
-ready pose uniformly to fit the width and at most 75% of the height, then
-centers its visible art horizontally and anchors it at the bottom. The action pose uses
-the same scale. This does not claim that Large Form is exactly
-12 feet tall or adding an invented
-height rule to combat. See the creature size and Goliath sections of
-[SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
+1. **Stretched:** scale width and height independently so the visible artwork
+   fills one square's width and reaches the target height.
+2. **Proportional:** use the same scale on both axes to reach the target height.
+   Center the figure horizontally and allow wider artwork to extend beyond the
+   guide. There is no width cap or clipping at the guide edges.
+
+Each pose is fitted from its own nontransparent bounds, so transparent padding
+does not affect foot alignment or height. Head, weapon, and color changes apply
+to both comparisons. These are visual sizing experiments within the demo.
 
 ## Assets and checks
 
 Players reuse the original short/tall `CHEAD.DAX` and `CBODY.DAX` banks and the
 same indexed recoloring as character creation. Both banks have a 24 × 24 canvas;
-the short figure's visible pixels occupy less of it. Large Form scales the tall
-artwork uniformly. Monster dimensions retain their original proportions.
+the short figure's visible pixels occupy less of it. Both Goliaths use the same
+tall artwork with the two scaling treatments above. Monster dimensions retain
+their original proportions.
 
 The authored room uses the normal dungeon battlefield generator and locally
 decoded `DUNGCOM.DAX` tiles. The five deliberate `CPIC2.DAX` art-review samples
@@ -87,8 +91,9 @@ ctest --test-dir build/sprite-demo -L demo --output-on-failure
 ```
 
 The `opengold_godot_sprite_demo` check uses wholly synthetic archives. It checks
-customization, transparency, both zoom step sizes and limits, native proportions,
-size readouts, the minimum window layout, and synchronized one-second poses.
+customization, transparency, both zoom step sizes and limits, Goliath heights,
+bottom alignment, proportional width overflow, size readouts, the minimum window
+layout, and synchronized one-second poses.
 To review those checks with installed art and capture both poses:
 
 ```bash

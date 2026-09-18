@@ -30,7 +30,7 @@ func picture(width: int, height: int, frames: int, seed: int, shape := 0) -> Pac
                 for dx in range(2):
                     var pixel := (x + dx + y + seed + frame) % 15 + 1
                     if shape > 0:
-                        var inset := 7 if shape == 1 else 3
+                        var inset := 7 if shape == 1 else 2
                         if x + dx < inset or x + dx >= width - inset or y < (3 if shape == 1 else 0):
                             pixel = 0
                     pair = (pair << 4) | pixel
@@ -106,6 +106,23 @@ func visible_rect(sprite: TextureRect) -> Rect2:
     var scale := sprite.size / sprite.texture.get_size()
     return Rect2(sprite.position + Vector2(source.position) * scale, Vector2(source.size) * scale)
 
+func check_goliaths(canvas: Control, tile: float) -> void:
+    for index in range(2):
+        var sprite: TextureRect = canvas.get_node("GoliathStretched" if index == 0 else "GoliathProportional")
+        var visible := visible_rect(sprite)
+        var source := sprite.texture.get_image().get_used_rect().size
+        require(is_equal_approx(visible.size.y, tile * 1.25), "Goliath visible height is 1.25 squares")
+        require(is_equal_approx(visible.position.y, tile * 12.75), "Top reaches exactly 25% into the upper square")
+        require(is_equal_approx(visible.end.y, tile * 14), "Visible feet rest on the bottom-square baseline")
+        require(is_equal_approx(visible.get_center().x, (28.5 + 3 * index) * tile), "Both Goliaths are horizontally centered")
+        if index == 0:
+            require(is_equal_approx(visible.size.x, tile), "Stretched Goliath fills exactly one square's width")
+        else:
+            require(is_equal_approx(visible.size.x / visible.size.y, float(source.x) / source.y), "Proportional Goliath preserves visible aspect ratio")
+            require(is_equal_approx(sprite.size.x / sprite.size.y, sprite.texture.get_size().x / sprite.texture.get_size().y), "Proportional artwork is uniformly scaled")
+            if float(source.x) / source.y > 0.8:
+                require(visible.size.x > tile, "Wide proportional artwork spills outside the column")
+
 func capture() -> void:
     if OS.get_cmdline_user_args().has("--capture"):
         var screenshots := current_scene
@@ -130,35 +147,36 @@ func run_checks() -> void:
     var scroll: ScrollContainer = demo.get_node("BattlefieldScroll")
     var canvas: Control = scroll.get_node("Canvas")
     require(not demo.get_node("Status").text.begins_with("Cannot load"), demo.get_node("Status").text)
-    require(canvas.get_child_count() == 8, "Three player comparisons and exactly five monsters")
+    require(canvas.get_child_count() == 9, "Four player comparisons and exactly five monsters")
     require(demo.get_node("Zoom").text == "Zoom 250%", "Start at 250%")
     var normal: TextureRect = canvas.get_node("NormalPlayer")
     var small: TextureRect = canvas.get_node("SmallPlayer")
-    var large: TextureRect = canvas.get_node("GoliathPlayer")
+    var stretched: TextureRect = canvas.get_node("GoliathStretched")
+    var proportional: TextureRect = canvas.get_node("GoliathProportional")
     require(normal.size == Vector2(60, 60), "Normal player fills one source square")
-    var large_visible := visible_rect(large)
-    var footprint := Rect2(Vector2(28, 12) * 60, Vector2(60, 120))
-    require(is_equal_approx(large_visible.size.y, 80), "Ready art scales uniformly to fit one square wide")
-    require(footprint.encloses(large_visible) and large_visible.position.y < footprint.position.y + 60 and is_equal_approx(large_visible.end.y, footprint.end.y), "Visible Goliath fits one square wide and rests at the bottom of two vertical squares")
+    check_goliaths(canvas, 60)
     require(small.texture.get_image().get_data() != normal.texture.get_image().get_data(), "Short player uses its own original art bank")
-    require(normal.texture.get_image().get_data() == large.texture.get_image().get_data(), "Large Form preserves the customized tall artwork")
+    for goliath in [stretched, proportional]:
+        require(normal.texture.get_image().get_data() == goliath.texture.get_image().get_data(), "Both Goliaths preserve the customized tall artwork")
     demo.set_process(false)
     var before := textures(canvas)
     press(demo, "Color0_1")
     press(demo, "Palette0")
     var after := textures(canvas)
-    for i in range(3):
+    for i in range(4):
         require(before[i] != after[i], "Recoloring updates every player comparison")
         for alpha in range(3, before[i].size(), 4):
             require(before[i][alpha] == after[i][alpha], "Black recoloring preserves transparency")
-    for i in range(3, 8):
+    for i in range(4, 9):
         require(before[i] == after[i], "Player customization preserves monster art")
     press(demo, "HeadPrevious")
     require(demo.get_node("Head").text == "Head 14 / 14", "Head selection wraps")
     press(demo, "HeadNext")
     press(demo, "BodyNext")
     require(demo.get_node("Body").text == "Weapon 6 / 32", "Weapon selection updates")
+    check_goliaths(canvas, 60)
     press(demo, "BodyPrevious")
+    check_goliaths(canvas, 60)
     demo.get_node("Plus10").grab_focus()
     for down in [true, false]:
         var event := InputEventKey.new()
@@ -169,21 +187,23 @@ func run_checks() -> void:
     require(normal.size.is_equal_approx(Vector2(62.4, 62.4)), "10 percentage point zoom")
     press(demo, "Plus100")
     require(normal.size.is_equal_approx(Vector2(86.4, 86.4)), "100 percentage point zoom")
+    check_goliaths(canvas, 86.4)
     press(demo, "Minus100")
     press(demo, "Minus10")
     require(normal.size == Vector2(60, 60), "Zoom steps reverse exactly")
     for i in range(3):
         press(demo, "Minus100")
     require(demo.get_node("Zoom").text == "Zoom 10%" and demo.get_node("Minus10").disabled, "Zoom clamps safely at 10%")
+    check_goliaths(canvas, 2.4)
     for i in range(10):
         press(demo, "Plus100")
     require(demo.get_node("Zoom").text == "Zoom 1000%" and demo.get_node("Plus100").disabled, "Zoom clamps at 1000%")
+    check_goliaths(canvas, 240)
     for i in range(7):
         press(demo, "Minus100")
+    check_goliaths(canvas, 72)
     for sprite in canvas.get_children():
-        if sprite == large:
-            require(is_equal_approx(visible_rect(sprite).size.y, 32 * 3), "Ready Large Form keeps its fitted scale at every zoom")
-        else:
+        if sprite != stretched and sprite != proportional:
             require(sprite.size.is_equal_approx(sprite.texture.get_size() * 3), "Other sprites keep native proportions at the same zoom")
     require(demo.get_node("Sizes").text.contains("24.0 × 24.0 → 72.0 × 72.0"), "Readout reports source and rendered sizes")
     root.size = Vector2i(1120, 800)
@@ -198,9 +218,6 @@ func run_checks() -> void:
     await capture()
 
     # Observe real time and all textures across complete, synchronized pose cycles.
-    var ready_sprite_size := large.size
-    var ready_visible_height := visible_rect(large).size.y
-    var ready_source_height := large.texture.get_image().get_used_rect().size.y
     var previous := textures(canvas)
     var transitions := 0
     var last_change := 0
@@ -213,12 +230,9 @@ func run_checks() -> void:
         var now := Time.get_ticks_msec()
         if last_change:
             require(absi(now - last_change - 1000) < 150, "Pose changes once per second")
-        for i in range(8):
-            require(current[i] != previous[i], "All eight figures switch poses on the same frame")
-        require(large.size.is_equal_approx(ready_sprite_size), "Ready and action poses use one sprite scale")
-        var current_source_height := large.texture.get_image().get_used_rect().size.y
-        require(is_equal_approx(visible_rect(large).size.y, ready_visible_height * current_source_height / ready_source_height), "Action art uses ready-pose scaling")
-        require(is_equal_approx(visible_rect(large).end.y, 14 * 24 * 3), "Both poses rest at the bottom of the footprint")
+        for i in range(9):
+            require(current[i] != previous[i], "All nine figures switch poses on the same frame")
+        check_goliaths(canvas, 72)
         previous = current
         transitions += 1
         last_change = now
@@ -237,5 +251,5 @@ func run_checks() -> void:
             if child is Button:
                 require(child.disabled, "Incomplete demo disables customization and zoom")
     cleanup()
-    print("Combat sprite demo checks passed: eight figures, customization, source sizes, zoom, resize and one-second poses")
+    print("Combat sprite demo checks passed: nine figures, both Goliath proportions and baselines, customization, source sizes, zoom, resize and one-second poses")
     quit(0)
