@@ -62,6 +62,12 @@ acceptance target.
 
 ## Review and validation
 
+The [normal level-one party audit](audits/issue13-first-adventure.md) records a
+successful four-orc outing, earned advancement, return travel and fresh-process
+reload at `0ab857d`. Inn recovery on that route is blocked by its platinum
+payment requirement despite the party's remaining gold and silver. The audit
+includes the party, tactics, resources and linked follow-up issues.
+
 From PowerShell, build with `.\demos\build-rolf.cmd`. Run
 `.\demos\review-character.cmd --expedition-check` for the visible automated trip and
 `user-data/slums-battlefield.png` capture. The fixture is six equipped level-four
