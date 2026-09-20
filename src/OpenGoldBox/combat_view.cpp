@@ -133,8 +133,11 @@ void CombatView::_ready()
                 std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("AttackAudio")));
             effect_sound_=std::make_unique<por::SoundPlayer>(por::SoundBank::load(directory),
                 std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("EffectAudio")));
+            death_sound_=std::make_unique<por::SoundPlayer>(por::SoundBank::load(directory),
+                std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("DeathAudio")));
             attack_sound_->set_volume(0.125);
             effect_sound_->set_volume(0.125);
+            death_sound_->set_volume(0.125);
         }
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
@@ -348,7 +351,8 @@ void CombatView::act(const Command& command)
                 moved=moved||actor.cell!=previous->cell;
                 dead=dead||(actor.dead&&!previous->dead);
             }
-            if(effect_sound_){if(dead)effect_sound_->play(5);else if(moved)effect_sound_->play(10);}
+            if(dead&&death_sound_)death_sound_->play(5);
+            if(moved&&effect_sound_)effect_sound_->play(10);
             mode_="move";ai_delay_=0;error_.clear();refresh();
         }
     }
@@ -515,6 +519,7 @@ void CombatView::_draw()
         const int hp=found==snapshot.combatants.end()?member.vitals.hit_points:found->hit_points;
         const int maximum=found==snapshot.combatants.end()?member.character.sheet().hit_points:found->max_hit_points;
         const int armor_class=found==snapshot.combatants.end()?campaign_->profile(id).armor_class:found->armor_class;
+        const bool deceased=found==snapshot.combatants.end()?member.vitals.dead:found->dead;
         const double size=std::min(64.0,row_height-18),portrait_y=top+4;
         const Rect2 image_rect(right+5,portrait_y,size,size);
         draw_rect(image_rect,Color("10171c"));
@@ -530,7 +535,8 @@ void CombatView::_draw()
         line(gs(member.character.sheet().name),top+27,17,Color("e2edf0"));
         const auto& sheet=member.character.sheet();
         line(gs(sheet.character_class).capitalize()+" / "+gs(sheet.race).capitalize()+" / "+gs(sheet.gender).capitalize(),top+49,13,Color("a8c1c7"));
-        line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP  AC "+String::num_int64(armor_class),top+68,15,Color("efb9bb"));
+        if(deceased)line("DECEASED  AC "+String::num_int64(armor_class),top+68,15,Color("ef515b"));
+        else line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP  AC "+String::num_int64(armor_class),top+68,15,Color("efb9bb"));
     }
 }
 void CombatView::draw_battlefield()

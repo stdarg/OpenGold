@@ -79,7 +79,9 @@ func check_demo() -> void:
     require(combat.get_node("EffectAudio").playing,
         "Moving to a new square plays the original footstep sound")
     require(is_equal_approx(combat.get_node("EffectAudio").volume_linear, 0.125),
-        "Movement and death effects use one-eighth volume")
+        "Movement effects use one-eighth volume")
+    require(is_equal_approx(combat.get_node("DeathAudio").volume_linear, 0.125),
+        "Death effects use one-eighth volume")
     root.push_input(active_key)
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key attacks the adjacent enemy without moving into its square")
