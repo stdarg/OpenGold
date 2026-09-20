@@ -16,6 +16,7 @@ public:
     void _input(const godot::Ref<godot::InputEvent>& event) override;
     [[nodiscard]] std::int64_t selected_character_id() const {return static_cast<std::int64_t>(selected_);}
     [[nodiscard]] godot::Vector2i selected_character_cell() const;
+    [[nodiscard]] bool sprite_facing_left(std::int64_t id) const {const auto found=facing_left_.find(static_cast<opengold::rules::EntityId>(id));return found!=facing_left_.end()&&found->second;}
     [[nodiscard]] bool attack_pose_active(std::int64_t id) const {return action_seconds_.contains(static_cast<opengold::rules::EntityId>(id));}
     // Prepare while detached so the caller can keep its current screen on failure.
     void prepare_combat();
@@ -40,10 +41,14 @@ private:
     struct SpriteArt {
         godot::Ref<godot::ImageTexture> texture;
         godot::Ref<godot::ImageTexture> action;
+        godot::Ref<godot::ImageTexture> left_texture;
+        godot::Ref<godot::ImageTexture> left_action;
         godot::Rect2 visible;
+        godot::Rect2 left_visible;
         bool goliath{};
     };
     std::map<opengold::rules::EntityId,SpriteArt> art_;
+    std::map<opengold::rules::EntityId,bool> facing_left_;
     godot::Ref<godot::ImageTexture> skull_art_;
     std::map<opengold::rules::EntityId,bool> known_dead_;
     std::map<opengold::rules::EntityId,double> skull_seconds_;

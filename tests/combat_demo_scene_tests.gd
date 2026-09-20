@@ -1,13 +1,14 @@
 extends SceneTree
 
+var failed := false
+
 func _initialize() -> void:
     call_deferred("check_demo")
 
 func require(ok: bool, message: String) -> void:
     if not ok:
         push_error(message)
-        quit(1)
-        assert(ok, message)
+        failed = true
 
 func check_demo() -> void:
     root.size = Vector2i(1920, 1080)
@@ -86,6 +87,7 @@ func check_demo() -> void:
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key attacks the adjacent enemy without moving into its square")
     require(combat.attack_pose_active(3), "Attack starts the hero action pose")
+    require(not combat.sprite_facing_left(3), "Hero faces right when attacking the Kobold to the right")
     require(combat.get_node("AttackAudio").playing, "Attack plays the original attack sound")
     require(is_equal_approx(combat.get_node("AttackAudio").volume_linear, 0.125),
         "Attack effects use one-eighth volume")
@@ -99,7 +101,24 @@ func check_demo() -> void:
         "Action pose screenshot saves")
     await create_timer(1.1).timeout
     require(not combat.attack_pose_active(3), "Action pose ends after one second")
+    for frame in range(240):
+        if combat.get_node("Log").text.contains("Kobold 8 -> Dorian Nightwind"):
+            break
+        var end_key := InputEventKey.new()
+        end_key.keycode = KEY_ENTER
+        end_key.pressed = true
+        root.push_input(end_key)
+        await process_frame
+    require(combat.get_node("Log").text.contains("Kobold 8 -> Dorian Nightwind"),
+        "Kobold on the right attacks the hero to its left")
+    require(combat.sprite_facing_left(1007), "Kobold faces left toward its attack target")
+    await RenderingServer.frame_post_draw
+    require(root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../../../build/checks/combat-left-facing.png")) == OK,
+        "Left-facing attack screenshot saves")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
-    print("Combat demo checks passed: ", output)
-    quit(0)
+    if failed:
+        quit(1)
+    else:
+        print("Combat demo checks passed: ", output)
+        quit(0)

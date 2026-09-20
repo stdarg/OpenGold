@@ -48,10 +48,13 @@ Melee, ranged, and damaging spell attacks end the attacker's turn and advance
 initiative. A dead combatant displays the original combat skull for one second.
 Attacks show the combatant's original action frame for one second and play the
 corresponding original melee, ranged, or spell sound from the local game files.
+Combat sprites face left or right toward targets in those directions when attacking.
 Combat movement plays the original footstep sound. A combatant who dies plays
 the original death sound, including when an attack sound plays.
 When a party member dies, their portrait row shows `DECEASED` in red. The skull
 occupies their battlefield square for one second; the square is then clear.
+At 0 HP, a party member is unconscious while death saves remain possible; the
+portrait row shows `UNCONSCIOUS` until their state changes.
 
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks

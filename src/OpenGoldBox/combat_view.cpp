@@ -66,6 +66,7 @@ void CombatView::_bind_methods()
     ClassDB::bind_method(D_METHOD("selected_character_id"),&CombatView::selected_character_id);
     ClassDB::bind_method(D_METHOD("selected_character_cell"),&CombatView::selected_character_cell);
     ClassDB::bind_method(D_METHOD("attack_pose_active","id"),&CombatView::attack_pose_active);
+    ClassDB::bind_method(D_METHOD("sprite_facing_left","id"),&CombatView::sprite_facing_left);
 }
 Vector2i CombatView::selected_character_cell() const
 {
@@ -207,7 +208,7 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
+    art_.clear();facing_left_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
     const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
     if(std::filesystem::is_directory(directory)){
         for(const auto& file:std::filesystem::directory_iterator(directory)){
@@ -230,9 +231,19 @@ void CombatView::sync_art()
     }
     const auto install=[&](const CombatArt& source,bool goliath){
         const auto image=presentation::rgba_image(source.image);
-        Ref<ImageTexture> action;
-        if(source.action)action=ImageTexture::create_from_image(presentation::rgba_image(*source.action));
-        art_[source.entity]={ImageTexture::create_from_image(image),action,image->get_used_rect(),goliath};
+        const auto visible=image->get_used_rect();
+        const auto mirrored=godot::Image::create_from_data(image->get_width(),image->get_height(),false,godot::Image::FORMAT_RGBA8,image->get_data());
+        mirrored->flip_x();
+        Ref<ImageTexture> action,left_action;
+        if(source.action){
+            const auto action_image=presentation::rgba_image(*source.action);
+            action=ImageTexture::create_from_image(action_image);
+            const auto mirrored_action=godot::Image::create_from_data(action_image->get_width(),action_image->get_height(),false,godot::Image::FORMAT_RGBA8,action_image->get_data());
+            mirrored_action->flip_x();
+            left_action=ImageTexture::create_from_image(mirrored_action);
+        }
+        art_[source.entity]={ImageTexture::create_from_image(image),action,ImageTexture::create_from_image(mirrored),left_action,
+            visible,Rect2(image->get_width()-visible.get_end().x,visible.position.y,visible.size.x,visible.size.y),goliath};
     };
     for(const auto& source:demo_->art())install(source,false);
     for(const auto& source:campaign_art_){
@@ -343,7 +354,13 @@ void CombatView::act(const Command& command)
                 sound=previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points?7:9;
             } else if(command.verb=="ranged")sound=6;
             else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
-            if(sound){action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);}
+            if(sound){
+                const auto attacker=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.actor;});
+                const auto target=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
+                if(attacker!=before.combatants.end()&&target!=before.combatants.end()&&target->cell.x!=attacker->cell.x)
+                    facing_left_[command.actor]=target->cell.x<attacker->cell.x;
+                action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);
+            }
             bool moved=false,dead=false;
             for(const auto& actor:after.combatants){
                 const auto previous=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& old){return old.id==actor.id;});
@@ -424,7 +441,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    for(const auto& a:s.combatants)if(a.side==0&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
@@ -536,6 +553,7 @@ void CombatView::_draw()
         const auto& sheet=member.character.sheet();
         line(gs(sheet.character_class).capitalize()+" / "+gs(sheet.race).capitalize()+" / "+gs(sheet.gender).capitalize(),top+49,13,Color("a8c1c7"));
         if(deceased)line("DECEASED  AC "+String::num_int64(armor_class),top+68,15,Color("ef515b"));
+        else if(hp==0)line("UNCONSCIOUS  AC "+String::num_int64(armor_class),top+68,15,Color("e7c484"));
         else line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP  AC "+String::num_int64(armor_class),top+68,15,Color("efb9bb"));
     }
 }
@@ -554,7 +572,7 @@ void CombatView::draw_battlefield()
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     const auto selected=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
-    if(selected!=s.combatants.end()){
+    if(selected!=s.combatants.end()&&!selected->dead){
         if(selected_==s.actor)for(const auto p:demo_->combat().movement_reach(selected_))
             canvas->draw_rect(Rect2(Vector2(p.x*tile+1,p.y*tile+1),Vector2(tile-2,tile-2)),Color(1,1,1,.18));
         canvas->draw_rect(Rect2(Vector2(selected->cell.x*tile+1,selected->cell.y*tile+1),Vector2(tile-2,tile-2)),Color("e7c484"),false,2.0);
@@ -573,8 +591,10 @@ void CombatView::draw_battlefield()
         }
         if(art_.contains(a.id)) {
             const auto& art=art_.at(a.id);
-            const auto texture=action_seconds_.contains(a.id)&&art.action.is_valid()?art.action:art.texture;
-            const auto rect=presentation::combat_sprite_rect(texture->get_size(),art.visible,
+            const bool left=facing_left_.contains(a.id)&&facing_left_.at(a.id);
+            const bool acting=action_seconds_.contains(a.id)&&art.action.is_valid();
+            const auto texture=left?(acting?art.left_action:art.left_texture):(acting?art.action:art.texture);
+            const auto rect=presentation::combat_sprite_rect(texture->get_size(),left?art.left_visible:art.visible,
                 Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),art.goliath);
             canvas->draw_texture_rect(texture,rect,false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
         } else {
