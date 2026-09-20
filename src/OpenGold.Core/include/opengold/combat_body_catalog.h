@@ -5,18 +5,25 @@
 #include <filesystem>
 #include <span>
 #include <string>
-#include <string_view>
+#include <vector>
 
 namespace opengold::por {
-// The review tool and game share stable look IDs, independent of translated labels.
-enum class CombatLook { unreviewed, unarmed, unarmed_shield, dagger, dagger_shield, mace, mace_shield,
-    sword, sword_shield, staff, staff_shield, bow, bow_shield };
-[[nodiscard]] std::string_view combat_look_id(CombatLook look);
-[[nodiscard]] CombatLook parse_combat_look(std::string_view id);
+struct CombatLookOption {
+    std::string id, label;
+    int original_type{};
+    bool silver{};
+};
+struct CombatEquipment {
+    int original_type{-1};
+    std::string name, definition_id;
+};
+// Body IDs and weapon labels are data, not compiled-in classifications of the art.
 struct CombatBodyCatalog {
-    std::array<CombatLook,32> bodies{};
-    [[nodiscard]] static CombatBodyCatalog load(const std::filesystem::path& file);
-    [[nodiscard]] unsigned choose(std::span<const std::string> equipped,unsigned fallback) const;
+    std::array<std::string,32> bodies{};
+    std::vector<CombatLookOption> options;
+    [[nodiscard]] static CombatBodyCatalog load(const std::filesystem::path& assignments,
+        const std::filesystem::path& options_file);
+    [[nodiscard]] unsigned choose(std::span<const CombatEquipment> equipped,unsigned fallback) const;
 };
 }
 #endif

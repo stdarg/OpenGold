@@ -1,0 +1,55 @@
+# Look ID, visible shop label, original item type, variant. Quarrels and arrows are ammunition.
+type_0	Unarmed	0	ordinary
+type_1	Battle Axe	1	ordinary
+type_2	Hand Axe	2	ordinary
+type_3	Bardiche	3	ordinary
+type_4	Bec De Corbin	4	ordinary
+type_5	Bill-Guisarme	5	ordinary
+type_6	Bo Stick	6	ordinary
+type_7	Club	7	ordinary
+type_8	Dagger	8	ordinary
+type_9	Dart	9	ordinary
+type_10	Fauchard	10	ordinary
+type_11	Fauchard-Fork	11	ordinary
+type_12	Flail	12	ordinary
+type_13	Military Fork	13	ordinary
+type_14	Glaive	14	ordinary
+type_15	Glaive-Guisarme	15	ordinary
+type_16	Guisarme	16	ordinary
+type_17	Guisarme-Voulge	17	ordinary
+type_18	Halberd	18	ordinary
+type_19	Lucern Hammer	19	ordinary
+type_20	Hammer	20	ordinary
+type_21	Javelin	21	ordinary
+type_22	Jo Stick	22	ordinary
+type_23	Mace	23	ordinary
+type_24	Morning Star	24	ordinary
+type_25	Partisan	25	ordinary
+type_26	Military Pick	26	ordinary
+type_27	Awl Pike	27	ordinary
+type_29	Ranseur	29	ordinary
+type_30	Scimitar	30	ordinary
+type_31	Spear	31	ordinary
+type_32	Spetum	32	ordinary
+type_33	Quarter Staff	33	ordinary
+type_34	Bastard Sword	34	ordinary
+type_35	Broad Sword	35	ordinary
+type_36	Long Sword	36	ordinary
+type_37	Short Sword	37	ordinary
+type_38	Two-Handed Sword	38	ordinary
+type_39	Trident	39	ordinary
+type_40	Voulge	40	ordinary
+type_41	Composite Long Bow	41	ordinary
+type_42	Composite Short Bow	42	ordinary
+type_43	Long Bow	43	ordinary
+type_44	Short Bow	44	ordinary
+type_45	Fine Composite Long Bow	45	ordinary
+type_46	Light Crossbow	46	ordinary
+type_47	Sling	47	ordinary
+silver_8	Silver Dagger	8	silver
+silver_23	Silver Mace	23	silver
+silver_34	Silver Bastard Sword	34	silver
+silver_35	Silver Broad Sword	35	silver
+silver_36	Silver Long Sword	36	silver
+silver_37	Silver Short Sword	37	silver
+silver_38	Silver Two-Handed Sword	38	silver

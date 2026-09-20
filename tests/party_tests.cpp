@@ -18,22 +18,34 @@ void check(bool value,const char* message){if(!value)throw std::runtime_error(me
 template<class F>void rejects(F f){bool rejected=false;try{f();}catch(const std::exception&){rejected=true;}check(rejected,"Operation should reject");}
 void combat_body_assignments()
 {
-    const auto file=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art/combat-body-looks.tsv";
-    const auto saved=por::CombatBodyCatalog::load(file);
-    for(auto look:saved.bodies)check(!por::combat_look_id(look).empty(),"Saved body assignment has a valid look");
-    por::CombatBodyCatalog catalog;
-    catalog.bodies[0]=por::CombatLook::unarmed;
-    catalog.bodies[1]=por::CombatLook::bow;
-    catalog.bodies[4]=por::CombatLook::mace_shield;
-    catalog.bodies[7]=por::CombatLook::mace;
-    catalog.bodies[20]=por::CombatLook::sword_shield;
-    const std::vector<std::string> mace_shield{"mace","shield"},mace{"mace"},bow{"longbow"},sword_shield{"longsword","shield"};
+    const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
+    const auto saved=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
+    check(saved.options.size()==54,"Reviewer offers unarmed, every shop weapon, and seven silver variants");
+    for(unsigned type=1;type<=47;++type)if(type!=28)
+        check(std::any_of(saved.options.begin(),saved.options.end(),[&](const auto& option){return option.original_type==static_cast<int>(type)&&!option.silver;}),
+            "Every shop weapon type has a look option");
+    for(int type:{8,23,34,35,36,37,38})
+        check(std::any_of(saved.options.begin(),saved.options.end(),[&](const auto& option){return option.original_type==type&&option.silver;}),
+            "Every named silver shop weapon has a look option");
+    por::CombatBodyCatalog catalog=saved;
+    catalog.bodies.fill("unreviewed");
+    catalog.bodies[0]="type_0";
+    catalog.bodies[1]="type_43";
+    catalog.bodies[4]="type_23_shield";
+    catalog.bodies[7]="type_23";
+    catalog.bodies[20]="type_36_shield";
+    const std::vector<por::CombatEquipment> mace_shield{{23,"Mace","mace"},{59,"Shield","shield"}},
+        mace{{23,"Mace","mace"}},bow{{43,"Long Bow","por:unsupported:43"}},
+        sword_shield{{36,"Long Sword","longsword"},{59,"Shield","shield"}},
+        silver_mace{{23,"Silver Mace","por:unsupported:23"}};
     check(catalog.choose(mace_shield,31)==4,"Mace and shield select the assigned body");
     check(catalog.choose(mace,31)==7,"Removing shield changes the body");
     check(catalog.choose(bow,31)==1,"Bow selects the bow body");
     check(catalog.choose(sword_shield,31)==20,"Sword and shield select the assigned body");
     check(catalog.choose({},31)==0,"Unequipped character uses the unarmed body");
-    rejects([]{(void)por::parse_combat_look("invented");});
+    check(catalog.choose(silver_mace,31)==7,"Silver weapon falls back to ordinary art when unassigned");
+    catalog.bodies[8]="silver_23";
+    check(catalog.choose(silver_mace,31)==8,"Silver weapon uses its own reviewed art when assigned");
 }
 std::unique_ptr<RulesModule> module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
 Character character(std::string klass="fighter",std::string name="Ada")

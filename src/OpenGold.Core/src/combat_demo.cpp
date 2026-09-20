@@ -132,7 +132,8 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
     auto art=CharacterArt::load(game_directory);
     auto pool=character_pool(characters,art);
     const auto body_catalog=body_catalog_file.empty()?std::optional<CombatBodyCatalog>{}:
-        std::optional<CombatBodyCatalog>{CombatBodyCatalog::load(body_catalog_file)};
+        std::optional<CombatBodyCatalog>{CombatBodyCatalog::load(body_catalog_file,
+            body_catalog_file.parent_path()/"combat-weapon-options.tsv")};
     auto party=std::make_shared<CampaignParty>(std::move(rules));
     CombatDemoSetup result{party,{}};
     result.encounter.field.geometry={12,12,std::vector<std::uint8_t>(144,0)};
@@ -156,9 +157,9 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
         auto appearance=found->appearance();
         if(body_catalog){
             const auto& member=party->member(id);
-            std::vector<std::string> equipped;
+            std::vector<CombatEquipment> equipped;
             for(const auto key:member.equipped)if(const auto item=member.character.inventory().find(key))
-                equipped.push_back(item->get().definition_id);
+                equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
             appearance.combat_body=body_catalog->choose(equipped,appearance.combat_body);
         }
         result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true)});

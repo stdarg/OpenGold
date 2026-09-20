@@ -1,17 +1,11 @@
 extends Control
 
 const CATALOG := "res://../../data/art/combat-body-looks.tsv"
-const LOOKS := [
-    ["unreviewed", "Unreviewed"], ["unarmed", "Unarmed"],
-    ["unarmed_shield", "Unarmed & Shield"], ["dagger", "Dagger"],
-    ["dagger_shield", "Dagger & Shield"], ["mace", "Mace"],
-    ["mace_shield", "Mace & Shield"], ["sword", "Sword"],
-    ["sword_shield", "Sword & Shield"], ["staff", "Staff"],
-    ["staff_shield", "Staff & Shield"], ["bow", "Bow"],
-    ["bow_shield", "Bow & Shield"]]
+const OPTIONS := "res://../../data/art/combat-weapon-options.tsv"
 
 var body_id := 0
 var assignments: Array[String] = []
+var looks := [["unreviewed", "Unreviewed"]]
 var filtered: Array[int] = []
 var body_data: PackedByteArray
 var head_data: PackedByteArray
@@ -123,6 +117,24 @@ func _build_ui() -> void:
     column.add_child(status)
 
 func _load_catalog() -> bool:
+    if not FileAccess.file_exists(OPTIONS):
+        _fail("Missing look options: " + ProjectSettings.globalize_path(OPTIONS))
+        return false
+    var ids := {"unreviewed": true}
+    for line in FileAccess.get_file_as_string(OPTIONS).split("\n"):
+        if line.is_empty() or line.begins_with("#"): continue
+        var fields := line.strip_edges().split("\t")
+        if fields.size() != 4 or not fields[2].is_valid_int() or fields[0].is_empty() or fields[1].is_empty() or (fields[3] != "ordinary" and fields[3] != "silver"):
+            _fail("Invalid look option: " + line)
+            return false
+        var id: String = fields[0]
+        if ids.has(id) or ids.has(id + "_shield"):
+            _fail("Duplicate look option: " + id)
+            return false
+        ids[id] = true
+        ids[id + "_shield"] = true
+        looks.append([id, fields[1]])
+        looks.append([id + "_shield", fields[1] + " & Shield"])
     if not FileAccess.file_exists(CATALOG):
         _fail("Missing catalog: " + ProjectSettings.globalize_path(CATALOG))
         return false
@@ -146,12 +158,12 @@ func _load_catalog() -> bool:
     return true
 
 func _known(key: String) -> bool:
-    for look in LOOKS:
+    for look in looks:
         if look[0] == key: return true
     return false
 
 func _name_for(key: String) -> String:
-    for look in LOOKS:
+    for look in looks:
         if look[0] == key: return look[1]
     return key
 
@@ -200,15 +212,15 @@ func _fill_list() -> void:
     list.clear()
     filtered.clear()
     var query := filter_box.text.strip_edges().to_lower()
-    for i in range(LOOKS.size()):
-        if not query.is_empty() and not str(LOOKS[i][1]).to_lower().contains(query): continue
+    for i in range(looks.size()):
+        if not query.is_empty() and not str(looks[i][1]).to_lower().contains(query): continue
         filtered.append(i)
-        list.add_item(LOOKS[i][1])
-        if LOOKS[i][0] == assignments[body_id]: list.select(list.item_count - 1)
+        list.add_item(looks[i][1])
+        if looks[i][0] == assignments[body_id]: list.select(list.item_count - 1)
 
 func _choose(row: int) -> void:
     var next: Array[String] = assignments.duplicate()
-    next[body_id] = LOOKS[filtered[row]][0]
+    next[body_id] = looks[filtered[row]][0]
     var content := "# CBODY.DAX base ID, then complete look ID. Edit with demos/godot/scenes/combat_body_review.tscn.\n"
     for id in range(32): content += "%d\t%s\n" % [id, next[id]]
     var temporary := CATALOG + ".tmp"

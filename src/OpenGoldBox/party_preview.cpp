@@ -46,13 +46,14 @@ presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& par
     const por::CharacterArt& art,std::optional<CampaignEncounter> encounter={})
 {
     std::vector<CombatArt> images;
-    const auto catalog=por::CombatBodyCatalog::load(std::filesystem::u8path(game_combat_body_file().utf8().get_data()));
+    const auto catalog=por::CombatBodyCatalog::load(std::filesystem::u8path(game_combat_body_file().utf8().get_data()),
+        std::filesystem::u8path(game_combat_weapon_file().utf8().get_data()));
     for(const auto& participant:party->participants()) {
         const auto& member=party->member(participant.id);
         auto appearance=member.character.appearance();
-        std::vector<std::string> equipped;
+        std::vector<por::CombatEquipment> equipped;
         for(const auto id:member.equipped)if(const auto item=member.character.inventory().find(id))
-            equipped.push_back(item->get().definition_id);
+            equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
         appearance.combat_body=catalog.choose(equipped,appearance.combat_body);
         images.push_back({participant.id,art.icon(appearance,false),art.icon(appearance,true)});
     }

@@ -7,7 +7,13 @@ but does not identify the kind of weapon. Review the complete figure visually.
 
 The editable catalog is `data/art/combat-body-looks.tsv`. Each of its 32 rows
 contains a base ID and one stable, complete look ID, separated by a tab. The
-`unreviewed` value excludes a body from equipment selection. Some initial
+available look IDs and labels are in `data/art/combat-weapon-options.tsv`,
+derived from the original arms and silver shop stock. The list includes the
+46 sellable weapon types (excluding arrow and quarrel ammunition), seven named
+silver variants, and Unarmed. Each offers a plain and shield look. The silver
+shop's "Fine Composite Long Bow" uses original item type 45, which the general
+item table calls Heavy Crossbow; the reviewer keeps the shop's displayed name.
+The `unreviewed` value excludes a body from equipment selection. Some initial
 assignments are visual judgments; inspect them in the review tool and correct
 any mismatch. The game uses the same file and copies it into the package when
 built. No original game art is stored in the catalog or repository.
@@ -31,7 +37,10 @@ an edit in its copied data file or package.
 
 For combat, the game reads equipped inventory IDs and chooses the first body
 with an exact weapon and shield match. If no exact match exists, it chooses a
-body with the same weapon, regardless of shield. If no reviewed body depicts
+body with the same weapon, regardless of shield. A silver weapon can use its
+ordinary counterpart when no silver assignment exists. If no reviewed body depicts
 that weapon, it keeps the character's saved combat body choice. The selected
 body is used for both ready and action poses; the character's head, colors and
 size remain theirs. Equipment is read when a combat scene is created.
+The current SRD rules module permits only its supported weapon types to be
+equipped; the reviewer lists the original shops' full stock for classification.
