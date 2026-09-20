@@ -35,8 +35,10 @@ demos\review-combat.cmd -- --slums
 Select a party sprite or portrait to see its movement squares when its turn is
 active. The combat log explains when another character has the turn. Arrow keys
 move the selected character one square when it is their turn; Shift rotates an
-arrow clockwise by 45 degrees, and numpad 1/3/7/9 move diagonally. **A** cycles
-actions, **Space** uses an immediate action, **Z** changes spell slot level, and
+arrow clockwise by 45 degrees. Numpad 1/3/7/9 move southwest/southeast/
+northwest/northeast. Delete/Page Down/Insert/Page Up do the same, including on
+the numpad with Num Lock off. **A** cycles actions, **Space** uses an immediate
+action, **Z** changes spell slot level, and
 **Enter** ends your turn or continues a dialogue pause. Click a highlighted
 destination or target for the selected action. Gray cells block movement and
 sight; brown cells cost extra movement. Occupied squares block movement.

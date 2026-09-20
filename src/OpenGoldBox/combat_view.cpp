@@ -52,13 +52,17 @@ std::optional<Cell> movement_direction(Key key,bool shift)
     case Key::KEY_RIGHT:return shift?Cell{1,1}:Cell{1,0};
     case Key::KEY_DOWN:return shift?Cell{-1,1}:Cell{0,1};
     case Key::KEY_LEFT:return shift?Cell{-1,-1}:Cell{-1,0};
+    case Key::KEY_INSERT:
     case Key::KEY_KP_7:return Cell{-1,-1};
     case Key::KEY_KP_8:return Cell{0,-1};
+    case Key::KEY_PAGEUP:
     case Key::KEY_KP_9:return Cell{1,-1};
     case Key::KEY_KP_4:return Cell{-1,0};
     case Key::KEY_KP_6:return Cell{1,0};
+    case Key::KEY_DELETE:
     case Key::KEY_KP_1:return Cell{-1,1};
     case Key::KEY_KP_2:return Cell{0,1};
+    case Key::KEY_PAGEDOWN:
     case Key::KEY_KP_3:return Cell{1,1};
     default:return std::nullopt;
     }
