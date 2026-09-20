@@ -234,6 +234,8 @@ void CombatView::sync_art()
         const auto visible=image->get_used_rect();
         const auto mirrored=godot::Image::create_from_data(image->get_width(),image->get_height(),false,godot::Image::FORMAT_RGBA8,image->get_data());
         mirrored->flip_x();
+        const auto lying=godot::Image::create_from_data(image->get_width(),image->get_height(),false,godot::Image::FORMAT_RGBA8,image->get_data());
+        lying->rotate_90(COUNTERCLOCKWISE);
         Ref<ImageTexture> action,left_action;
         if(source.action){
             const auto action_image=presentation::rgba_image(*source.action);
@@ -243,7 +245,9 @@ void CombatView::sync_art()
             left_action=ImageTexture::create_from_image(mirrored_action);
         }
         art_[source.entity]={ImageTexture::create_from_image(image),action,ImageTexture::create_from_image(mirrored),left_action,
-            visible,Rect2(image->get_width()-visible.get_end().x,visible.position.y,visible.size.x,visible.size.y),goliath};
+            ImageTexture::create_from_image(lying),visible,
+            Rect2(image->get_width()-visible.get_end().x,visible.position.y,visible.size.x,visible.size.y),
+            lying->get_used_rect(),goliath};
     };
     for(const auto& source:demo_->art())install(source,false);
     for(const auto& source:campaign_art_){
@@ -593,10 +597,11 @@ void CombatView::draw_battlefield()
             const auto& art=art_.at(a.id);
             const bool left=facing_left_.contains(a.id)&&facing_left_.at(a.id);
             const bool acting=action_seconds_.contains(a.id)&&art.action.is_valid();
-            const auto texture=left?(acting?art.left_action:art.left_texture):(acting?art.action:art.texture);
-            const auto rect=presentation::combat_sprite_rect(texture->get_size(),left?art.left_visible:art.visible,
-                Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),art.goliath);
-            canvas->draw_texture_rect(texture,rect,false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
+            const bool unconscious=a.hit_points==0;
+            const auto texture=unconscious?art.unconscious:left?(acting?art.left_action:art.left_texture):(acting?art.action:art.texture);
+            const auto rect=presentation::combat_sprite_rect(texture->get_size(),unconscious?art.unconscious_visible:left?art.left_visible:art.visible,
+                Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),art.goliath&&!unconscious);
+            canvas->draw_texture_rect(texture,rect,false,unconscious?Color(.65,.65,.65):Color(1,1,1));
         } else {
             const auto number=std::to_string(a.id);
             auto cursor=center+Vector2(-5.5*number.size(),7);

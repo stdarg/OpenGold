@@ -54,7 +54,9 @@ the original death sound, including when an attack sound plays.
 When a party member dies, their portrait row shows `DECEASED` in red. The skull
 occupies their battlefield square for one second; the square is then clear.
 At 0 HP, a party member is unconscious while death saves remain possible; the
-portrait row shows `UNCONSCIOUS` until their state changes.
+portrait row shows `UNCONSCIOUS` until their state changes. Their existing
+combat figure lies within one square. If no party member remains conscious,
+combat ends in defeat.
 
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks

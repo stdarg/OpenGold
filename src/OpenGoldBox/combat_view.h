@@ -43,8 +43,10 @@ private:
         godot::Ref<godot::ImageTexture> action;
         godot::Ref<godot::ImageTexture> left_texture;
         godot::Ref<godot::ImageTexture> left_action;
+        godot::Ref<godot::ImageTexture> unconscious;
         godot::Rect2 visible;
         godot::Rect2 left_visible;
+        godot::Rect2 unconscious_visible;
         bool goliath{};
     };
     std::map<opengold::rules::EntityId,SpriteArt> art_;

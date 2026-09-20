@@ -169,6 +169,19 @@ void mechanics_tests() {
         check(std::any_of(log.begin(),log.end(),[](const auto& line){return line.find("death save")!=std::string::npos;}),"Unconscious player makes death saves on its turn");tested=true;
     }
     check(tested,"Exercised player unconscious/death-save flow");
+
+    encounter=duel("bandit");encounter.participants[1]={2,"adept","Enemy caster",1,{8,2}};
+    tested=false;
+    for(unsigned seed=0;seed<500&&!tested;++seed){
+        session=module->create(encounter,seed);if(session->snapshot().actor!=2)continue;
+        auto missile=command(*session,"magic_missile");missile.target=1;
+        session->submit(missile);
+        if(unit(*session,1).hit_points>0)continue;
+        check(!unit(*session,1).dead&&session->snapshot().outcome==Outcome::defeat,
+            "Combat ends when the last party member is unconscious, without declaring them dead");
+        tested=true;
+    }
+    check(tested,"Exercised all-unconscious party defeat flow");
 }
 void checkpoint_validation_tests()
 {
