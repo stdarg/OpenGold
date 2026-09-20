@@ -1,5 +1,7 @@
 #include "opengold/combat_demo.h"
+#include "opengold/character_pool.h"
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <limits>
 #include <queue>
@@ -106,6 +108,54 @@ void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
     install_combat(std::move(next),{});seed_=seed;
     battlefield_tiles_=std::move(encounter.field.tiles);terrain_art_=std::move(encounter.terrain_art);art_=std::move(encounter.art);
     status_="Slums encounter / original dungeon geometry";dialogue_="The original script has requested combat.";
+}
+void CombatDemo::showcase(Encounter encounter,std::vector<CombatArt> art,std::uint64_t seed)
+{
+    if(!campaign_||combat_)throw std::runtime_error("A new showcase combat owner is required");
+    auto next=module_->create(std::move(encounter),seed);
+    install_combat(std::move(next),{});
+    art_=std::move(art);status_="Kobold encirclement";
+    dialogue_="Six level-one heroes are surrounded by Kobolds.";
+}
+KoboldShowcase make_kobold_showcase(std::unique_ptr<RulesModule> rules,
+    const CharacterRules& characters,
+    const std::filesystem::path& game_directory)
+{
+    if(!rules)throw std::runtime_error("Kobold showcase requires combat rules");
+    auto art=CharacterArt::load(game_directory);
+    auto pool=character_pool(characters,art);
+    auto party=std::make_shared<CampaignParty>(std::move(rules));
+    KoboldShowcase result{party,{{12,12,std::vector<std::uint8_t>(144,0)},{},1},{}};
+    const std::array<std::string_view,6> classes{"fighter","paladin","cleric","ranger","rogue","bard"};
+    const std::array<unsigned,6> weapons{36,36,23,36,8,33};
+    const std::array<Cell,6> positions{{{5,5},{6,5},{7,5},{5,6},{6,6},{7,6}}};
+    for(std::size_t i=0;i<classes.size();++i){
+        const auto found=std::find_if(pool.begin(),pool.end(),[&](const Character& candidate){
+            return candidate.creation_data().character_class==classes[i]&&
+                (i!=0||candidate.creation_data().race=="goliath");
+        });
+        if(found==pool.end())throw std::runtime_error("Missing showcase hero in character pool");
+        const auto id=party->add_pc(*found);
+        party->set_wealth(id,{0,0,0,10,0,0,0});
+        for(const unsigned type:{weapons[i],i<2?55u:50u}){
+            Equipment item;item.stored.type=type;item.stored.stack_size=1;item.stored.value=1;
+            party->purchase(id,item);
+            party->equip(id,party->member(id).character.inventory().items().back().id);
+        }
+        result.art.push_back({id,art.icon(found->appearance(),false)});
+    }
+    result.encounter.participants=party->participants();
+    for(std::size_t i=0;i<positions.size();++i)result.encounter.participants[i].cell=positions[i];
+    const auto kobold=original_icon(game_directory,0);
+    if(!kobold)throw std::runtime_error("Missing original Kobold combat icon");
+    unsigned number=0;
+    for(int y=4;y<=7;++y)for(int x=4;x<=8;++x){
+        if(x>=5&&x<=7&&y>=5&&y<=6)continue;
+        const auto id=static_cast<EntityId>(1000+number);
+        result.encounter.participants.push_back({id,"slums-kobold","Kobold "+std::to_string(++number),1,{x,y}});
+        result.art.push_back({id,*kobold});
+    }
+    return result;
 }
 const CombatSession& CombatDemo::combat() const
 {if(!combat_)throw std::runtime_error("No active combat");return *combat_;}

@@ -286,8 +286,9 @@ void StartupView::finish()
 
 void StartupView::open_character_creation()
 {
-    if (get_tree()->change_scene_to_file("res://scenes/character_creation.tscn") != OK) {
-        UtilityFunctions::push_error("Cannot open character creation.");
+    const bool showcase=settings::flag("--kobold-demo");
+    if (get_tree()->change_scene_to_file(showcase?"res://scenes/combat_demo.tscn":"res://scenes/character_creation.tscn") != OK) {
+        UtilityFunctions::push_error("Cannot open game scene.");
         get_tree()->quit(1);
     }
 }

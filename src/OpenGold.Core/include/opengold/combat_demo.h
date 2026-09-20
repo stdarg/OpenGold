@@ -26,6 +26,7 @@ public:
     void training(std::uint64_t seed=42, bool conditions=false);
     void slums(const std::filesystem::path& game_directory,std::uint64_t seed=42);
     void encounter(CampaignEncounter encounter,std::uint64_t seed);
+    void showcase(rules::Encounter encounter,std::vector<CombatArt> art,std::uint64_t seed=42);
     [[nodiscard]] const auto& battlefield_tiles() const {return battlefield_tiles_;}
     [[nodiscard]] const auto& terrain_art() const {return terrain_art_;}
     [[nodiscard]] const rules::CombatSession& combat() const;
@@ -76,6 +77,14 @@ private:
     void pump();
     void finish_combat();
 };
+struct KoboldShowcase {
+    std::shared_ptr<CampaignParty> party;
+    rules::Encounter encounter;
+    std::vector<CombatArt> art;
+};
+[[nodiscard]] KoboldShowcase make_kobold_showcase(std::unique_ptr<rules::RulesModule> rules,
+    const rules::CharacterRules& characters,
+    const std::filesystem::path& game_directory);
 // Demonstration AI consumes only public state/commands. No rolls or damage here.
 [[nodiscard]] rules::Command choose_demo_command(const rules::CombatSession& session);
 }

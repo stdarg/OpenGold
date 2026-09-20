@@ -40,11 +40,22 @@ void CombatView::prepare_combat()
 {
     if(demo_)return;
     auto next=std::make_unique<CombatDemo>(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())));
-    if(campaign_)next->campaign_party(campaign_);
-    if(encounter_)next->encounter(*encounter_,42);
-    else if(OS::get_singleton()->get_cmdline_user_args().has("--slums"))
-        next->slums(std::filesystem::u8path(settings::game_path().utf8().get_data()));
-    else next->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));
+    const bool showcase_mode=settings::flag("--kobold-demo");
+    if(showcase_mode){
+        const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
+        auto characters=srd5::character_rules();
+        auto showcase=make_kobold_showcase(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())),*characters,directory);
+        campaign_=std::move(showcase.party);
+        next->campaign_party(campaign_);
+        next->showcase(std::move(showcase.encounter),std::move(showcase.art));
+    }
+    else {
+        if(campaign_)next->campaign_party(campaign_);
+        if(encounter_)next->encounter(*encounter_,42);
+        else if(OS::get_singleton()->get_cmdline_user_args().has("--slums"))
+            next->slums(std::filesystem::u8path(settings::game_path().utf8().get_data()));
+        else next->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));
+    }
     demo_=std::move(next);sync_art();
 }
 void CombatView::_notification(int what){if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();}}
@@ -81,6 +92,11 @@ void CombatView::_ready()
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         if(encounter_){get_node<Label>("Title")->set_text(i18n::text(N_("SLUMS / Combat")));get_node<Label>("Subtitle")->set_text(i18n::text(N_("Choose an action, then click its target. Enter ends your turn.")));
             get_node<Label>("Footer")->set_text(i18n::text(N_("Each square is 5 feet. Victory returns your party to exploration.")));}
+        if(settings::flag("--kobold-demo")){
+            get_node<Label>("Title")->set_text("Kobold encirclement / Combat demo");
+            get_node<Label>("Subtitle")->set_text("Six equipped level-one heroes. Kobolds surround every side.");
+            get_node<Label>("Footer")->set_text("SRD 5.2.1 combat | Original Kobold and hero art decoded locally");
+        }
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }

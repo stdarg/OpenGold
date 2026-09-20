@@ -366,6 +366,43 @@ void dynamic_checkpoint()
     e.participants[0].state=VitalState{99999,false,{}};rejects([&]{(void)rules->create(e,42);});
     e.participants[0].state=VitalState{1,false,"SRD1 0 99 0 0 0"};rejects([&]{(void)rules->create(e,42);});
 }
+void kobold_showcase()
+{
+    const auto* directory=std::getenv("OPENGOLD_GAME_DIR");if(!directory||!*directory)return;
+    auto characters=srd5::character_rules();
+    auto scene=make_kobold_showcase(module(),*characters,directory);
+    check(scene.party->participants().size()==6&&scene.encounter.participants.size()==20&&scene.art.size()==20,
+        "Showcase contains six visible heroes and fourteen visible Kobolds");
+    std::set<std::string> classes;unsigned goliaths=0;
+    for(std::size_t i=0;i<6;++i){
+        const auto& hero=scene.party->member(scene.encounter.participants[i].id);
+        classes.insert(hero.character.creation_data().character_class);
+        goliaths+=hero.character.creation_data().race=="goliath";
+        check(hero.character.sheet().level==1&&hero.equipped.size()==2,
+            "Every showcase hero is level one and has a weapon and armor equipped");
+        const auto& inventory=hero.character.inventory();
+        const auto weapon=inventory.find(hero.equipped[0]),armor=inventory.find(hero.equipped[1]);
+        check(weapon&&armor&&(armor->get().definition_id=="chain_mail"||armor->get().definition_id=="leather")&&
+            (weapon->get().definition_id=="longsword"||weapon->get().definition_id=="mace"||
+             weapon->get().definition_id=="dagger"||weapon->get().definition_id=="quarterstaff"),
+            "Equipped items are a weapon and armor");
+        const auto profile=scene.party->profile(hero.id);
+        check(!profile.strength_dexterity_disadvantage,"Showcase armor is class trained");
+    }
+    check(classes.size()==6&&goliaths>=1,"Showcase has six distinct classes and a Goliath");
+    std::set<Cell> kobolds;
+    for(std::size_t i=6;i<scene.encounter.participants.size();++i){
+        const auto& actor=scene.encounter.participants[i];
+        check(actor.definition=="slums-kobold"&&actor.side==1,"Surrounding enemies use Kobold rules");
+        kobolds.insert(actor.cell);
+    }
+    for(int y=4;y<=7;++y)for(int x=4;x<=8;++x)
+        if(x<5||x>7||y<5||y>6)check(kobolds.contains({x,y}),"Every outer ring cell has a Kobold");
+    CombatDemo fight(module());fight.campaign_party(scene.party);
+    fight.showcase(std::move(scene.encounter),std::move(scene.art));
+    check(fight.has_combat()&&fight.combat().snapshot().combatants.size()==20,
+        "Game combat engine starts the complete Kobold showcase");
+}
 using Bytes=std::vector<std::uint8_t>;
 std::shared_ptr<const por::EclProgram> program(Bytes body)
 {
@@ -531,6 +568,6 @@ void original_loot()
 }
 int main()
 {
-    try{goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();kobold_showcase();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }
