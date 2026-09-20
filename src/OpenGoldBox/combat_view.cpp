@@ -161,7 +161,7 @@ void CombatView::_ready()
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
         for(const char* name:{"Turn","Roster","Prompt","Help"})get_node<Control>(name)->hide();
-        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End","Continue","React","Decline","Save","Load","Revisit"})get_node<Control>(name)->hide();
+        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -201,8 +201,31 @@ void CombatView::layout()
     get_node<Button>("ZoomIn100")->set_disabled(zoom_percent>=1000);
     place("Help",Rect2(right,700,sidebar,height-746));
     place("Log",Rect2(24,board_rect_.get_end().y+16,left_width,height-board_rect_.get_end().y-64));
+    bool party_controls=false;
+    if(campaign_&&demo_&&demo_->has_combat()){
+        const auto state=demo_->combat().snapshot();
+        party_controls=state.outcome==Outcome::ongoing&&std::any_of(state.combatants.begin(),state.combatants.end(),
+            [&](const auto& actor){return actor.id==state.actor&&actor.side==0;});
+    }
+    layout_reaction_controls(party_controls);
     place("Footer",Rect2(24,height-34,width-48,24));
     layout_status();
+}
+void CombatView::layout_reaction_controls(bool show_controls)
+{
+    if(!campaign_)return;
+    const double top=board_rect_.get_end().y+16;
+    const double inset=show_controls?44:0;
+    auto* log=get_node<RichTextLabel>("Log");
+    log->set_position(Vector2(24,top+inset));
+    log->set_size(Vector2(board_rect_.size.x,std::max(0.0,get_size().y-board_rect_.get_end().y-64-inset)));
+    const double button_width=174;
+    get_node<Button>("React")->set_position(Vector2(24,top));
+    get_node<Button>("React")->set_size(Vector2(button_width,36));
+    get_node<Button>("Decline")->set_position(Vector2(24+button_width+10,top));
+    get_node<Button>("Decline")->set_size(Vector2(button_width,36));
+    get_node<Button>("End")->set_position(Vector2(24,top));
+    get_node<Button>("End")->set_size(Vector2(button_width,36));
 }
 void CombatView::layout_status()
 {
@@ -316,7 +339,7 @@ void CombatView::load_game()
 }
 void CombatView::select_mode(String verb)
 {
-    mode_=spell_verb(verb.utf8().get_data(),spell_slot_);if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
+    error_.clear();mode_=spell_verb(verb.utf8().get_data(),spell_slot_);if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
 }
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::adjust_zoom(int percentage_points)
@@ -335,25 +358,34 @@ void CombatView::select_party(EntityId id)
     const auto state=demo_->combat().snapshot();
     const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==id&&a.side==0;});
     if(selected==state.combatants.end())return;
-    selected_=id;followed_.reset();center_on(selected->cell);refresh();
+    selected_=id;error_.clear();followed_.reset();center_on(selected->cell);refresh();
 }
 void CombatView::move_selected(Cell direction)
 {
     if(!demo_||!demo_->has_combat())return;
     const auto state=demo_->combat().snapshot();
-    if(state.outcome!=Outcome::ongoing||state.actor!=selected_||state.reaction_pending)return;
+    const auto explain=[&](const char* message){error_=message;refresh();};
+    if(state.outcome!=Outcome::ongoing)return;
+    if(state.reaction_pending){explain("Resolve the opportunity attack or decline the reaction before moving.");return;}
+    if(state.actor!=selected_){explain("It is not the selected character's turn.");return;}
     const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
     if(selected==state.combatants.end())return;
     const Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
     const auto offered=demo_->combat().legal_commands();
+    if(!state.battlefield.contains(destination)){explain("That square is outside the battlefield.");return;}
     const auto enemy=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.side!=selected->side&&!a.dead&&a.cell==destination;});
     if(enemy!=state.combatants.end()) {
         const auto attack=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="melee"&&c.actor==selected_&&c.target==enemy->id;});
         if(attack!=offered.end())act(*attack);
+        else explain(selected->action?"That enemy cannot be attacked from this square.":"This character has already used their action. End the turn to continue.");
         return;
     }
     const auto move=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="move"&&c.actor==selected_&&c.destination==destination;});
     if(move!=offered.end())act(*move);
+    else if(std::any_of(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return !a.dead&&a.cell==destination;}))
+        explain("That square is occupied.");
+    else if(state.battlefield.at(destination)==1)explain("That square is blocked by terrain.");
+    else explain("That square is out of movement range. End the turn or use Dash if available.");
 }
 void CombatView::immediate(String verb)
 {
@@ -361,6 +393,10 @@ void CombatView::immediate(String verb)
     const auto state=demo_->combat().snapshot();
     if(std::none_of(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;}))return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted){act(c);return;}
+    if(state.reaction_pending&&wanted=="end"){
+        error_="Resolve the opportunity attack or decline the reaction before ending the turn.";
+        refresh();
+    }
 }
 void CombatView::act(const Command& command)
 {
@@ -467,8 +503,14 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
-        if(c.verb=="move"&&c.destination==cell){act(c);break;}
-        if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
+        if(c.verb=="move"&&c.destination==cell){act(c);get_viewport()->set_input_as_handled();return;}
+        if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);get_viewport()->set_input_as_handled();return;}}
+    }
+    if(mode_=="move"&&std::max(std::abs(cell.x-current->cell.x),std::abs(cell.y-current->cell.y))==1)
+        move_selected({cell.x-current->cell.x,cell.y-current->cell.y});
+    else {
+        error_="That square is not a legal destination or target for the selected action.";
+        refresh();
     }
     get_viewport()->set_input_as_handled();
 }
@@ -564,6 +606,14 @@ void CombatView::refresh()
     get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,5>{{{"Move","move"},{"End","end"},{"SecondWind","second_wind"},{"React","opportunity"},{"Decline","decline"}}})
         get_node<Button>(node)->set_disabled(!enabled(verb));
+    if(campaign_){
+        const bool party_turn=loaded&&s.outcome==Outcome::ongoing&&player;
+        const bool reaction=loaded&&s.outcome==Outcome::ongoing&&s.reaction_pending&&player;
+        layout_reaction_controls(party_turn);
+        get_node<Button>("End")->set_visible(party_turn&&!reaction);
+        get_node<Button>("React")->set_visible(reaction);
+        get_node<Button>("Decline")->set_visible(reaction);
+    }
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());
     get_node<Button>("Save")->set_disabled(!loaded||demo_->is_slums());get_node<Button>("Load")->set_disabled(!loaded||demo_->is_slums());
     get_node<Button>("Revisit")->set_disabled(!loaded||!demo_->script_complete()||s.outcome!=Outcome::victory);
@@ -572,10 +622,15 @@ void CombatView::refresh()
     get_node<Label>("Prompt")->set_text(!error_.empty()?i18n::text(error_):demo_&&demo_->waiting()?i18n::text("Read the encounter text, then Continue."):
         loaded&&s.outcome!=Outcome::ongoing?i18n::text(demo_->status()):s.reaction_pending?i18n::text("Use or decline the opportunity attack."):
         player?i18n::format("Selected: {action}. Click a highlighted square.",{{"action",action}}):i18n::text("Enemy turn"));
-    if(loaded&&s.outcome==Outcome::ongoing&&!s.reaction_pending&&selected_&&selected_!=s.actor){
+    if(error_.empty()&&loaded&&s.outcome==Outcome::ongoing&&!s.reaction_pending&&selected_&&selected_!=s.actor){
         const auto selected=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
         if(selected!=s.combatants.end())get_node<Label>("Prompt")->set_text(i18n::format("It is not {name}'s turn.",{{"name",gs(selected->name)}}));
     }
+    if(error_.empty()&&player&&!s.reaction_pending&&selected_==s.actor&&mode_=="move"&&
+        std::none_of(offered.begin(),offered.end(),[](const auto& c){return c.verb=="move";}))
+        get_node<Label>("Prompt")->set_text(i18n::text(std::any_of(offered.begin(),offered.end(),[](const auto& c){return c.verb=="melee";})?
+            "No movement squares available. Attack an adjacent enemy or end the turn.":
+            "No move or melee attack available. End the turn or use another action."));
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
     if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
@@ -588,7 +643,7 @@ void CombatView::refresh()
     log_view->set_text(log);
     if(follow_bottom)log_view->scroll_to_line(std::max(0,log_view->get_line_count()-1));
     else log_scroll->set_value(previous_scroll);
-    get_node<Button>("Continue")->hide();get_node<Button>("End")->hide();
+    get_node<Button>("Continue")->hide();if(!campaign_)get_node<Button>("End")->hide();
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
     update_hover(get_viewport()->get_mouse_position());

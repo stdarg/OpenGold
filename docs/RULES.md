@@ -43,9 +43,13 @@ action, **Z** changes spell slot level, and
 destination or target for the selected action. Gray cells block movement and
 sight; brown cells cost extra movement. Occupied squares block movement.
 Each square is 5 feet, including diagonals.
-An arrow aimed at an adjacent enemy makes a melee attack when the selected
+An arrow or Move-mode click aimed at an adjacent enemy makes a melee attack when the selected
 character has an action available. The combat log follows new text until you
 scroll up to read earlier entries.
+If movement or an adjacent attack is unavailable, the combat log explains why.
+End turn appears above the combat log during a party turn.
+An opportunity reaction pauses combat until you choose Opportunity attack or
+Decline reaction above the log; movement and End turn wait for that choice.
 Hovering over a monster or NPC shows a tooltip beside the pointer with its
 type, current and maximum HP, AC, and the weapon it would use at its present
 distance from the party. When an encounter has no named weapon, it shows

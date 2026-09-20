@@ -31,6 +31,12 @@ func check_demo() -> void:
         "Turn text moved below the battlefield")
     require(combat.get_node("Log").text.contains("The original script has requested combat."),
         "Demo uses the campaign encounter log presentation")
+    require(combat.get_node("End").visible and not combat.get_node("End").disabled,
+        "Active party turn has a visible End turn button")
+    require(combat.get_node("End").position.y < combat.get_node("Log").position.y,
+        "Turn control sits above the combat log without covering portraits")
+    require(not combat.get_node("React").visible and not combat.get_node("Decline").visible,
+        "Reaction choices stay hidden until a reaction is pending")
     require(combat.get_node("ZoomLevel").text == "100%", "Showcase uses 100 percent zoom")
     await RenderingServer.frame_post_draw
     var screenshot := root.get_texture().get_image()
@@ -65,6 +71,12 @@ func check_demo() -> void:
         "Selecting the combat sprite selects the same active party character")
     require(screenshot.get_pixel(1015, 415).r > screenshot.get_pixel(1140, 415).r,
         "Sprite selection shows the active hero's legal movement squares")
+    var blocked_key := InputEventKey.new()
+    blocked_key.keycode = KEY_LEFT
+    blocked_key.pressed = true
+    root.push_input(blocked_key)
+    require(combat.get_node("Log").text.contains("That square is occupied."),
+        "Blocked movement explains why the hero cannot enter an ally's square")
     var active_key := InputEventKey.new()
     active_key.keycode = KEY_RIGHT
     active_key.pressed = true
