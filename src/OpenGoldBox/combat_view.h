@@ -49,6 +49,7 @@ private:
     std::map<opengold::rules::EntityId,double> skull_seconds_;
     std::map<opengold::rules::EntityId,double> action_seconds_;
     std::unique_ptr<opengold::por::SoundPlayer> attack_sound_;
+    std::unique_ptr<opengold::por::SoundPlayer> effect_sound_;
     std::map<opengold::rules::EntityId,godot::Ref<godot::Texture2D>> portraits_;
     opengold::rules::EntityId selected_{};
     opengold::rules::EntityId last_actor_{};

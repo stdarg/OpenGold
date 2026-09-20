@@ -108,6 +108,8 @@ text = "100%"
 
 [node name="AttackAudio" type="AudioStreamPlayer" parent="."]
 
+[node name="EffectAudio" type="AudioStreamPlayer" parent="."]
+
 [node name="ZoomOut100" type="Button" parent="."]
 text = "-100%"
 tooltip_text = "Decrease battlefield zoom by 100 percentage points"

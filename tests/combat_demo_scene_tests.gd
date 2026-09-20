@@ -70,9 +70,14 @@ func check_demo() -> void:
     root.push_input(active_key)
     require(combat.get_node("Log").text.contains("reaction"),
         "Arrow key starts the selected character's legal move and handles enemy reactions")
-    await create_timer(2.0).timeout
+    for frame in range(180):
+        if combat.selected_character_cell() == Vector2i(8, 5):
+            break
+        await process_frame
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key moves the selected character on their turn")
+    require(combat.get_node("EffectAudio").playing,
+        "Moving to a new square plays the original footstep sound")
     root.push_input(active_key)
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key attacks the adjacent enemy without moving into its square")

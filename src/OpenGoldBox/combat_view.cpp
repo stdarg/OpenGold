@@ -128,9 +128,12 @@ void CombatView::_ready()
     defeat_check_=campaign_&&args.has("--defeat-check");
     try{prepare_combat();layout();refresh();
         const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
-        if(std::filesystem::is_directory(directory))
+        if(std::filesystem::is_directory(directory)){
             attack_sound_=std::make_unique<por::SoundPlayer>(por::SoundBank::load(directory),
                 std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("AttackAudio")));
+            effect_sound_=std::make_unique<por::SoundPlayer>(por::SoundBank::load(directory),
+                std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("EffectAudio")));
+        }
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
@@ -324,14 +327,29 @@ void CombatView::immediate(String verb)
 }
 void CombatView::act(const Command& command)
 {
-    try{if(demo_->submit(command)){
-        unsigned sound=0;
-        if(command.verb=="melee"||command.verb=="opportunity")sound=7;
-        else if(command.verb=="ranged")sound=6;
-        else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
-        if(sound){action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);}
-        mode_="move";ai_delay_=0;error_.clear();refresh();
-    }}
+    try {
+        const auto before=demo_->combat().snapshot();
+        if(demo_->submit(command)){
+            const auto after=demo_->combat().snapshot();
+            unsigned sound=0;
+            if(command.verb=="melee"||command.verb=="opportunity"){
+                const auto previous=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
+                const auto current=std::find_if(after.combatants.begin(),after.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
+                sound=previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points?7:9;
+            } else if(command.verb=="ranged")sound=6;
+            else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
+            if(sound){action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);}
+            bool moved=false,dead=false;
+            for(const auto& actor:after.combatants){
+                const auto previous=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& old){return old.id==actor.id;});
+                if(previous==before.combatants.end())continue;
+                moved=moved||actor.cell!=previous->cell;
+                dead=dead||(actor.dead&&!previous->dead);
+            }
+            if(effect_sound_){if(dead)effect_sound_->play(5);else if(moved)effect_sound_->play(10);}
+            mode_="move";ai_delay_=0;error_.clear();refresh();
+        }
+    }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::_input(const Ref<InputEvent>& event)
