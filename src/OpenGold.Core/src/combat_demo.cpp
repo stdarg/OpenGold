@@ -5,6 +5,7 @@
 #include <fstream>
 #include <limits>
 #include <queue>
+#include <set>
 #include <stdexcept>
 namespace opengold {
 using namespace rules;using namespace por;
@@ -97,35 +98,41 @@ void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
             const auto index=next.y*board.width+next.x;if(seen[index])continue;seen[index]=true;frontier.push(next);}
     }
     auto participants=campaign_->participants();if(cells.size()<participants.size()+encounter.enemies.size())throw std::runtime_error("Original battlefield cannot fit the complete encounter");
+    if(!encounter.positions.empty()){
+        if(encounter.positions.size()!=participants.size()+encounter.enemies.size())
+            throw std::runtime_error("Invalid authored combat formation");
+        std::set<Cell> occupied;
+        for(std::size_t i=0;i<encounter.positions.size();++i){
+            const auto cell=encounter.positions[i];
+            if(board.at(cell)==1||!occupied.insert(cell).second)
+                throw std::runtime_error("Invalid authored combat position");
+            if(i<participants.size())participants[i].cell=cell;
+            else encounter.enemies[i-participants.size()].cell=cell;
+        }
+    }
     const auto place=[&](Participant& participant,Cell target){
         const auto cell=std::min_element(cells.begin(),cells.end(),[&](Cell a,Cell b){return distance(a,target)<distance(b,target);});participant.cell=*cell;cells.erase(cell);
     };
-    for(auto& participant:participants){place(participant,origin);participant.surprised=encounter.surprise==1;}
+    for(auto& participant:participants){if(encounter.positions.empty())place(participant,origin);participant.surprised=encounter.surprise==1;}
     constexpr std::array<Cell,4> forward{{{-5,-5},{6,0},{5,5},{-6,0}}};
     const auto offset=forward[encounter.facing];const Cell target{origin.x+offset.x,origin.y+offset.y};
-    for(auto& enemy:encounter.enemies){place(enemy,target);enemy.surprised=encounter.surprise==2;participants.push_back(std::move(enemy));}
+    for(auto& enemy:encounter.enemies){if(encounter.positions.empty())place(enemy,target);enemy.surprised=encounter.surprise==2;participants.push_back(std::move(enemy));}
     auto next=module_->create({encounter.field.geometry,std::move(participants),campaign_->state().next_combat_scope},seed);
     install_combat(std::move(next),{});seed_=seed;
     battlefield_tiles_=std::move(encounter.field.tiles);terrain_art_=std::move(encounter.terrain_art);art_=std::move(encounter.art);
     status_="Slums encounter / original dungeon geometry";dialogue_="The original script has requested combat.";
 }
-void CombatDemo::showcase(Encounter encounter,std::vector<CombatArt> art,std::uint64_t seed)
-{
-    if(!campaign_||combat_)throw std::runtime_error("A new showcase combat owner is required");
-    auto next=module_->create(std::move(encounter),seed);
-    install_combat(std::move(next),{});
-    art_=std::move(art);status_="Kobold encirclement";
-    dialogue_="Six level-one heroes are surrounded by Kobolds.";
-}
-KoboldShowcase make_kobold_showcase(std::unique_ptr<RulesModule> rules,
+CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
     const CharacterRules& characters,
     const std::filesystem::path& game_directory)
 {
-    if(!rules)throw std::runtime_error("Kobold showcase requires combat rules");
+    if(!rules)throw std::runtime_error("Combat demo requires combat rules");
     auto art=CharacterArt::load(game_directory);
     auto pool=character_pool(characters,art);
     auto party=std::make_shared<CampaignParty>(std::move(rules));
-    KoboldShowcase result{party,{{12,12,std::vector<std::uint8_t>(144,0)},{},1},{}};
+    CombatDemoSetup result{party,{}};
+    result.encounter.field.geometry={12,12,std::vector<std::uint8_t>(144,0)};
+    result.encounter.field.tiles=std::vector<std::uint8_t>(144,0);
     const std::array<std::string_view,6> classes{"fighter","paladin","cleric","ranger","rogue","bard"};
     const std::array<unsigned,6> weapons{36,36,23,36,8,33};
     const std::array<Cell,6> positions{{{5,5},{6,5},{7,5},{5,6},{6,6},{7,6}}};
@@ -142,18 +149,18 @@ KoboldShowcase make_kobold_showcase(std::unique_ptr<RulesModule> rules,
             party->purchase(id,item);
             party->equip(id,party->member(id).character.inventory().items().back().id);
         }
-        result.art.push_back({id,art.icon(found->appearance(),false)});
+        result.encounter.art.push_back({id,art.icon(found->appearance(),false)});
     }
-    result.encounter.participants=party->participants();
-    for(std::size_t i=0;i<positions.size();++i)result.encounter.participants[i].cell=positions[i];
+    result.encounter.positions.assign(positions.begin(),positions.end());
     const auto kobold=original_icon(game_directory,0);
     if(!kobold)throw std::runtime_error("Missing original Kobold combat icon");
     unsigned number=0;
     for(int y=4;y<=7;++y)for(int x=4;x<=8;++x){
         if(x>=5&&x<=7&&y>=5&&y<=6)continue;
         const auto id=static_cast<EntityId>(1000+number);
-        result.encounter.participants.push_back({id,"slums-kobold","Kobold "+std::to_string(++number),1,{x,y}});
-        result.art.push_back({id,*kobold});
+        result.encounter.enemies.push_back({id,"slums-kobold","Kobold "+std::to_string(++number),1,{x,y}});
+        result.encounter.positions.push_back({x,y});
+        result.encounter.art.push_back({id,*kobold});
     }
     return result;
 }

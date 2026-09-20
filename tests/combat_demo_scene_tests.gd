@@ -15,12 +15,18 @@ func check_demo() -> void:
     for frame in range(8):
         await process_frame
     var combat := current_scene
-    require(combat.get_node("Title").text.contains("Kobold encirclement"), "Showcase title loads")
+    require(combat.get_node("Title").text == "SLUMS / Combat", "Demo uses the campaign combat title")
+    require(combat.get_node("Subtitle").text == "Choose an action, then click its target. Enter ends your turn.",
+        "Demo uses the campaign combat instructions")
+    require(combat.get_node("Footer").text == "Each square is 5 feet. Victory returns your party to exploration.",
+        "Demo uses the campaign combat footer")
     require(combat.get_node("Roster").text.contains("Kobold"), "Kobolds appear in the combat roster")
+    require(combat.get_node("Log").text.contains("The original script has requested combat."),
+        "Demo uses the campaign encounter log presentation")
     require(combat.get_node("BattlefieldScroll/Canvas").size.x > combat.get_node("BattlefieldScroll").size.x,
         "Showcase battlefield uses the game's configured zoom")
     await RenderingServer.frame_post_draw
-    var output := ProjectSettings.globalize_path("res://../../../build/checks/kobold-demo.png")
+    var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(root.get_texture().get_image().save_png(output) == OK, "Showcase screenshot saves")
-    print("Kobold combat demo checks passed: ", output)
+    print("Combat demo checks passed: ", output)
     quit(0)

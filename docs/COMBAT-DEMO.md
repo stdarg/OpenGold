@@ -1,13 +1,14 @@
-# Kobold combat demo
+# Combat demo
 
 From PowerShell, after building the Windows package:
 
 ```powershell
-.\win-package\opengoldbox.exe -- --kobold-demo
+.\win-package\opengoldbox.exe -- --combat-demo
 ```
 
 The normal language and game-folder setup runs first. The demo then opens the
-game's combat screen with six level-one heroes: Fighter, Paladin, Cleric,
+same campaign combat screen and encounter handoff with six level-one heroes:
+Fighter, Paladin, Cleric,
 Ranger, Rogue, and Bard. The Fighter is a Goliath. Each hero has a class-trained
 weapon and armor equipped. Fourteen Kobolds occupy every square of the outer
 ring around the compact party formation. The demo uses the SRD 5.2.1 combat

@@ -15,6 +15,8 @@ struct CampaignEncounter {
     std::vector<Image> terrain_art;
     unsigned facing{};
     unsigned surprise{};
+    // Optional authored formation. Empty means the usual campaign placement.
+    std::vector<rules::Cell> positions;
 };
 // A bounded demonstration/campaign adapter. It depends on the rules interface,
 // never on a specific edition. The application supplies the selected module.
@@ -26,7 +28,6 @@ public:
     void training(std::uint64_t seed=42, bool conditions=false);
     void slums(const std::filesystem::path& game_directory,std::uint64_t seed=42);
     void encounter(CampaignEncounter encounter,std::uint64_t seed);
-    void showcase(rules::Encounter encounter,std::vector<CombatArt> art,std::uint64_t seed=42);
     [[nodiscard]] const auto& battlefield_tiles() const {return battlefield_tiles_;}
     [[nodiscard]] const auto& terrain_art() const {return terrain_art_;}
     [[nodiscard]] const rules::CombatSession& combat() const;
@@ -77,12 +78,11 @@ private:
     void pump();
     void finish_combat();
 };
-struct KoboldShowcase {
+struct CombatDemoSetup {
     std::shared_ptr<CampaignParty> party;
-    rules::Encounter encounter;
-    std::vector<CombatArt> art;
+    CampaignEncounter encounter;
 };
-[[nodiscard]] KoboldShowcase make_kobold_showcase(std::unique_ptr<rules::RulesModule> rules,
+[[nodiscard]] CombatDemoSetup make_combat_demo(std::unique_ptr<rules::RulesModule> rules,
     const rules::CharacterRules& characters,
     const std::filesystem::path& game_directory);
 // Demonstration AI consumes only public state/commands. No rolls or damage here.
