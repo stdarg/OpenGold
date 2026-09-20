@@ -7,7 +7,7 @@
 #include "opengold/campaign_party.h"
 #include "opengold/dungeon_battlefield.h"
 namespace opengold {
-struct CombatArt { rules::EntityId entity{}; Image image; std::optional<Image> action; };
+struct CombatArt { rules::EntityId entity{}; Image image; std::optional<Image> action; std::string missing_combination; };
 struct CampaignEncounter {
     por::DungeonBattlefield field;
     std::vector<rules::Participant> enemies;

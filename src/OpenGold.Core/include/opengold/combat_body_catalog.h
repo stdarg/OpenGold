@@ -4,6 +4,7 @@
 #include <array>
 #include <filesystem>
 #include <span>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -11,19 +12,23 @@ namespace opengold::por {
 struct CombatLookOption {
     std::string id, label;
     int original_type{};
-    bool silver{};
 };
 struct CombatEquipment {
     int original_type{-1};
     std::string name, definition_id;
 };
+struct CombatBodySelection {
+    unsigned body{};
+    bool matched{};
+    std::string combination, label;
+};
 // Body IDs and weapon labels are data, not compiled-in classifications of the art.
 struct CombatBodyCatalog {
-    std::array<std::string,32> bodies{};
+    std::array<std::set<std::string>,32> bodies{};
     std::vector<CombatLookOption> options;
     [[nodiscard]] static CombatBodyCatalog load(const std::filesystem::path& assignments,
         const std::filesystem::path& options_file);
-    [[nodiscard]] unsigned choose(std::span<const CombatEquipment> equipped,unsigned fallback) const;
+    [[nodiscard]] CombatBodySelection choose(std::span<const CombatEquipment> equipped,unsigned fallback) const;
 };
 }
 #endif

@@ -3,10 +3,12 @@ extends Control
 const CATALOG := "res://../../data/art/combat-body-looks.tsv"
 const OPTIONS := "res://../../data/art/combat-weapon-options.tsv"
 
+var catalog_path := CATALOG
+var options_path := OPTIONS
+var loaded := false
 var body_id := 0
-var assignments: Array[String] = []
-var looks := [["unreviewed", "Unreviewed"]]
-var filtered: Array[int] = []
+var assignments: Array = []
+var looks: Array = []
 var body_data: PackedByteArray
 var head_data: PackedByteArray
 var loader := DaxSpriteLoader.new()
@@ -14,7 +16,8 @@ var number: Label
 var assignment: Label
 var status: Label
 var filter_box: LineEdit
-var list: ItemList
+var list: VBoxContainer
+var summary: RichTextLabel
 var previews: Array[TextureRect] = []
 
 func _ready() -> void:
@@ -31,7 +34,7 @@ func _ready() -> void:
         _fail("Cannot read CBODY.DAX or CHEAD.DAX in " + folder)
         return
     _refresh()
-    status.text = "Changes save immediately to " + ProjectSettings.globalize_path(CATALOG)
+    status.text = "Changes save immediately to " + ProjectSettings.globalize_path(catalog_path)
 
 func _build_ui() -> void:
     var background := ColorRect.new()
@@ -53,7 +56,7 @@ func _build_ui() -> void:
     title.add_theme_font_size_override("font_size", 28)
     column.add_child(title)
     var help := Label.new()
-    help.text = "One original CBODY.DAX body at a time. Four previews show short/tall and ready/action poses. Select a complete look to save it."
+    help.text = "One original CBODY.DAX body at a time. Four previews show short/tall and ready/action poses. Check every combination this artwork can represent. Each change saves immediately."
     help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     column.add_child(help)
     var nav := HBoxContainer.new()
@@ -88,7 +91,7 @@ func _build_ui() -> void:
         label.text = label_text
         cell.add_child(label)
         var texture := TextureRect.new()
-        texture.custom_minimum_size = Vector2(220, 220)
+        texture.custom_minimum_size = Vector2(180, 180)
         texture.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         texture.size_flags_vertical = Control.SIZE_EXPAND_FILL
         texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -97,34 +100,41 @@ func _build_ui() -> void:
         cell.add_child(texture)
         previews.append(texture)
     var selection := VBoxContainer.new()
-    selection.custom_minimum_size.x = 290
+    selection.custom_minimum_size.x = 410
     selection.size_flags_vertical = Control.SIZE_EXPAND_FILL
     content.add_child(selection)
     var list_label := Label.new()
-    list_label.text = "Assign complete look"
+    list_label.text = "Equipment combinations"
     selection.add_child(list_label)
     filter_box = LineEdit.new()
     filter_box.placeholder_text = "Filter looks (e.g. mace or shield)"
     filter_box.text_changed.connect(func(_value): _fill_list())
     selection.add_child(filter_box)
-    list = ItemList.new()
-    list.select_mode = ItemList.SELECT_SINGLE
-    list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    list.item_selected.connect(_choose)
-    selection.add_child(list)
+    var scroll := ScrollContainer.new()
+    scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    selection.add_child(scroll)
+    list = VBoxContainer.new()
+    list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    scroll.add_child(list)
+    var summary_label := Label.new()
+    summary_label.text = "All assignments for this body (including filtered out)"
+    selection.add_child(summary_label)
+    summary = RichTextLabel.new()
+    summary.custom_minimum_size.y = 110
+    selection.add_child(summary)
     status = Label.new()
     status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     column.add_child(status)
 
 func _load_catalog() -> bool:
-    if not FileAccess.file_exists(OPTIONS):
-        _fail("Missing look options: " + ProjectSettings.globalize_path(OPTIONS))
+    if not FileAccess.file_exists(options_path):
+        _fail("Missing look options: " + ProjectSettings.globalize_path(options_path))
         return false
     var ids := {"unreviewed": true}
-    for line in FileAccess.get_file_as_string(OPTIONS).split("\n"):
+    for line in FileAccess.get_file_as_string(options_path).split("\n"):
         if line.is_empty() or line.begins_with("#"): continue
         var fields := line.strip_edges().split("\t")
-        if fields.size() != 4 or not fields[2].is_valid_int() or fields[0].is_empty() or fields[1].is_empty() or (fields[3] != "ordinary" and fields[3] != "silver"):
+        if fields.size() != 4 or not fields[2].is_valid_int() or fields[0].is_empty() or fields[1].is_empty() or fields[3] != "ordinary":
             _fail("Invalid look option: " + line)
             return false
         var id: String = fields[0]
@@ -135,26 +145,37 @@ func _load_catalog() -> bool:
         ids[id + "_shield"] = true
         looks.append([id, fields[1]])
         looks.append([id + "_shield", fields[1] + " & Shield"])
-    if not FileAccess.file_exists(CATALOG):
-        _fail("Missing catalog: " + ProjectSettings.globalize_path(CATALOG))
+    if not FileAccess.file_exists(catalog_path):
+        _fail("Missing catalog: " + ProjectSettings.globalize_path(catalog_path))
         return false
     assignments.resize(32)
     var seen := {}
-    for line in FileAccess.get_file_as_string(CATALOG).split("\n"):
+    for line in FileAccess.get_file_as_string(catalog_path).split("\n"):
         if line.is_empty() or line.begins_with("#"): continue
         var fields := line.strip_edges().split("\t")
         if fields.size() != 2 or not fields[0].is_valid_int():
             _fail("Invalid catalog row: " + line)
             return false
         var id := int(fields[0])
-        if id < 0 or id >= 32 or seen.has(id) or not _known(fields[1]):
+        if id < 0 or id >= 32 or seen.has(id):
             _fail("Invalid catalog assignment: " + line)
             return false
         seen[id] = true
-        assignments[id] = fields[1]
+        var values: Array[String] = []
+        if fields[1] != "unreviewed":
+            for value in fields[1].split(","):
+                var key: String = value
+                if key.begins_with("silver_"): key = "type_" + key.substr(7)
+                if not _known(key):
+                    _fail("Unknown assignment: " + key)
+                    return false
+                if not values.has(key): values.append(key)
+        values.sort()
+        assignments[id] = values
     if seen.size() != 32:
         _fail("Catalog must contain all 32 body IDs.")
         return false
+    loaded = true
     return true
 
 func _known(key: String) -> bool:
@@ -168,12 +189,13 @@ func _name_for(key: String) -> String:
     return key
 
 func _step(amount: int) -> void:
+    if not loaded: return
     body_id = posmod(body_id + amount, 32)
     _refresh()
 
 func _refresh() -> void:
     number.text = "Body %d / 31" % body_id
-    assignment.text = "Current assignment: " + _name_for(assignments[body_id])
+    _show_assignments()
     for variant in range(4):
         var size_offset: int = 0 if variant % 2 == 0 else 64
         var pose_offset: int = 0 if variant < 2 else 128
@@ -208,36 +230,60 @@ func _compose(head: PackedByteArray, body: PackedByteArray) -> Image:
         image.set_pixel(p % 24, p / 24, color)
     return image
 
+func _show_assignments() -> void:
+    var names := PackedStringArray()
+    for key in assignments[body_id]: names.append(_name_for(key))
+    assignment.text = "Unreviewed - no assignments" if names.is_empty() else "%d assigned combinations" % names.size()
+    summary.text = "Unreviewed" if names.is_empty() else "\n".join(names)
+
 func _fill_list() -> void:
-    list.clear()
-    filtered.clear()
+    for child in list.get_children():
+        list.remove_child(child)
+        child.queue_free()
+    if not loaded: return
     var query := filter_box.text.strip_edges().to_lower()
     for i in range(looks.size()):
         if not query.is_empty() and not str(looks[i][1]).to_lower().contains(query): continue
-        filtered.append(i)
-        list.add_item(looks[i][1])
-        if looks[i][0] == assignments[body_id]: list.select(list.item_count - 1)
+        var checkbox := CheckBox.new()
+        checkbox.text = looks[i][1]
+        checkbox.button_pressed = assignments[body_id].has(looks[i][0])
+        checkbox.toggled.connect(func(checked): _toggle(looks[i][0], checked))
+        list.add_child(checkbox)
 
-func _choose(row: int) -> void:
-    var next: Array[String] = assignments.duplicate()
-    next[body_id] = looks[filtered[row]][0]
-    var content := "# CBODY.DAX base ID, then complete look ID. Edit with demos/godot/scenes/combat_body_review.tscn.\n"
-    for id in range(32): content += "%d\t%s\n" % [id, next[id]]
-    var temporary := CATALOG + ".tmp"
+func _toggle(key: String, checked: bool) -> void:
+    if not loaded or not _known(key): return
+    var next: Array = assignments.duplicate(true)
+    if checked and not next[body_id].has(key): next[body_id].append(key)
+    if not checked: next[body_id].erase(key)
+    next[body_id].sort()
+    if not _save(next):
+        _fill_list()
+        return
+    assignments = next
+    _show_assignments()
+
+func _save(next: Array) -> bool:
+    var content := "# v2: CBODY.DAX base ID, then comma-separated combination IDs; unreviewed means no associations.\n"
+    for id in range(32):
+        content += "%d\t%s\n" % [id, "unreviewed" if next[id].is_empty() else ",".join(next[id])]
+    var temporary := catalog_path + ".tmp"
     var file := FileAccess.open(temporary, FileAccess.WRITE)
     if file == null:
         _fail("Save failed: " + error_string(FileAccess.get_open_error()))
-        return
+        return false
     file.store_string(content)
     file.flush()
-    file = null
-    var error := DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), ProjectSettings.globalize_path(CATALOG))
+    var write_error := file.get_error()
+    file.close()
+    if write_error != OK:
+        _fail("Save failed: " + error_string(write_error))
+        return false
+    var error := DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), ProjectSettings.globalize_path(catalog_path))
     if error != OK:
         _fail("Save failed: " + error_string(error))
-        return
-    assignments = next
-    assignment.text = "Current assignment: " + _name_for(assignments[body_id])
-    status.text = "Saved " + ProjectSettings.globalize_path(CATALOG) + ". Rebuild the game to package this edit."
+        return false
+    status.text = "Saved " + ProjectSettings.globalize_path(catalog_path) + ". Rebuild the game to package this edit."
+    return true
 
 func _fail(message: String) -> void:
     status.text = message

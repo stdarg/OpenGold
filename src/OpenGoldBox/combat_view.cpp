@@ -34,6 +34,7 @@
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <algorithm>
+#include <set>
 #include <array>
 #include <cmath>
 #include <fstream>
@@ -256,7 +257,7 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
+    missing_art_.clear();art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
     const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
     if(std::filesystem::is_directory(directory)){
         for(const auto& file:std::filesystem::directory_iterator(directory)){
@@ -278,6 +279,8 @@ void CombatView::sync_art()
         terrain_art_.push_back(presentation::image_texture(source));
     }
     const auto install=[&](const CombatArt& source,bool goliath){
+        missing_art_.erase(source.entity);
+        if(!source.missing_combination.empty())missing_art_[source.entity]=source.missing_combination;
         const auto image=presentation::rgba_image(source.image);
         const auto visible=image->get_used_rect();
         const auto mirrored=godot::Image::create_from_data(image->get_width(),image->get_height(),false,godot::Image::FORMAT_RGBA8,image->get_data());
@@ -637,6 +640,11 @@ void CombatView::refresh()
             "No move or melee attack available. End the turn or use another action."));
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
+    // Rebuild one startup notice per missing combination; refreshes never append duplicates.
+    std::set<std::string> missing_combinations;
+    for(const auto& [entity,combination]:missing_art_)missing_combinations.insert(combination);
+    for(const auto& combination:missing_combinations)
+        log+=i18n::text("No combat artwork assigned")+": "+gs(combination)+". "+i18n::text("Keeping saved appearance.")+"\n";
     if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
     else for(const auto& entry:s.log)log+=i18n::text(entry)+"\n";
     if(!error_.empty())log+="\n"+i18n::text(error_);

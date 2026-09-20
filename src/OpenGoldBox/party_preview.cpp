@@ -54,8 +54,9 @@ presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& par
         std::vector<por::CombatEquipment> equipped;
         for(const auto id:member.equipped)if(const auto item=member.character.inventory().find(id))
             equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
-        appearance.combat_body=catalog.choose(equipped,appearance.combat_body);
-        images.push_back({participant.id,art.icon(appearance,false),art.icon(appearance,true)});
+        const auto selection=catalog.choose(equipped,appearance.combat_body);
+        appearance.combat_body=selection.body;
+        images.push_back({participant.id,art.icon(appearance,false),art.icon(appearance,true),selection.matched?std::string{}:selection.label});
     }
     auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");
     auto* combat=Object::cast_to<CombatView>(owned.get());

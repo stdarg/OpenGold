@@ -1,6 +1,6 @@
-# CBODY.DAX base ID, then complete look ID. Edit with demos/godot/scenes/combat_body_review.tscn.
+# v2: body ID, then comma-separated combination IDs; unreviewed means no associations.
 0	type_0
-1	type_43
+1	type_41,type_42,type_43,type_44,type_45
 2	type_36
 3	unreviewed
 4	type_23_shield

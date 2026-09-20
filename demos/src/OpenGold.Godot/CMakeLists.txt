@@ -67,6 +67,11 @@ if(OPENGOLD_BUILD_TESTS)
         add_test(NAME opengold_demo_prepare COMMAND "${OPENGOLD_DEMO_GODOT}"
             --headless --editor --path "${demo_project}" --import --quit)
         set_tests_properties(opengold_demo_prepare PROPERTIES FIXTURES_SETUP demo_project TIMEOUT 120 LABELS demo)
+        add_test(NAME opengold_godot_body_review COMMAND "${CMAKE_COMMAND}"
+            "-DGODOT=${OPENGOLD_DEMO_GODOT}" "-DPROJECT=${demo_project}"
+            "-DSCRIPT=${PROJECT_SOURCE_DIR}/tests/combat_body_review_tests.gd"
+            "-DEXPECTED=Combat body reviewer checks passed" -P "${PROJECT_SOURCE_DIR}/tests/run_godot_test.cmake")
+        set_tests_properties(opengold_godot_body_review PROPERTIES FIXTURES_REQUIRED demo_project TIMEOUT 40 LABELS demo)
         add_test(NAME opengold_godot_sprite_demo COMMAND "${CMAKE_COMMAND}"
             "-DGODOT=${OPENGOLD_DEMO_GODOT}" "-DPROJECT=${demo_project}"
             "-DSCRIPT=${PROJECT_SOURCE_DIR}/tests/combat_sprite_demo_tests.gd"

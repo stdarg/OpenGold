@@ -155,14 +155,17 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
             party->equip(id,party->member(id).character.inventory().items().back().id);
         }
         auto appearance=found->appearance();
+        std::string missing;
         if(body_catalog){
             const auto& member=party->member(id);
             std::vector<CombatEquipment> equipped;
             for(const auto key:member.equipped)if(const auto item=member.character.inventory().find(key))
                 equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
-            appearance.combat_body=body_catalog->choose(equipped,appearance.combat_body);
+            const auto selection=body_catalog->choose(equipped,appearance.combat_body);
+            appearance.combat_body=selection.body;
+            if(!selection.matched)missing=selection.label;
         }
-        result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true)});
+        result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true),missing});
     }
     result.encounter.positions.assign(positions.begin(),positions.end());
     const auto kobold=original_icon(game_directory,0);

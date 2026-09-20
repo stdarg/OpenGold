@@ -36,6 +36,7 @@ private:
     std::unique_ptr<opengold::CombatDemo> demo_;
     std::shared_ptr<opengold::CampaignParty> campaign_;
     std::vector<opengold::CombatArt> campaign_art_;
+    std::map<opengold::rules::EntityId,std::string> missing_art_;
     std::optional<opengold::CampaignEncounter> encounter_;
     std::vector<godot::Ref<godot::ImageTexture>> terrain_art_;
     struct SpriteArt {

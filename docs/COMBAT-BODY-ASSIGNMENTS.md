@@ -1,46 +1,48 @@
-# Combat body assignments
+# Combat artwork assignments
 
-`CBODY.DAX` has 32 base body IDs. Each ID also has a short/tall version and a
-ready/action pose. The weapon and shield are drawn into each body; they are not
-separate layers. The source palette identifies weapon and shield color regions,
-but does not identify the kind of weapon. Review the complete figure visually.
-
-The editable catalog is `data/art/combat-body-looks.tsv`. Each of its 32 rows
-contains a base ID and one stable, complete look ID, separated by a tab. The
-available look IDs and labels are in `data/art/combat-weapon-options.tsv`,
-derived from the original arms and silver shop stock. The list includes the
-46 sellable weapon types (excluding arrow and quarrel ammunition), seven named
-silver variants, and Unarmed. Each offers a plain and shield look. The silver
-shop's "Fine Composite Long Bow" uses original item type 45, which the general
-item table calls Heavy Crossbow; the reviewer keeps the shop's displayed name.
-The `unreviewed` value excludes a body from equipment selection. Some initial
-assignments are visual judgments; inspect them in the review tool and correct
-any mismatch. The game uses the same file and copies it into the package when
-built. No original game art is stored in the catalog or repository.
-
-On Windows, launch the separate reviewer with:
+Run from PowerShell at the repository root:
 
 ```powershell
-$env:OPENGOLD_GAME_DIR = 'D:\path\to\POOLRAD\GAME\POOLRAD'
-demos\review-combat-bodies.cmd
+.\demos\review-combat-bodies.cmd
 ```
 
-The launcher builds and checks the existing demo extension before opening the
-review scene. The scene is also available directly at
-`res://scenes/combat_body_review.tscn` within `demos/godot`.
+The reviewer displays one original CBODY.DAX body in four previews: short/tall,
+ready/action. Previous/Next cycles through all 32 bodies. Check every complete
+combination that the artwork represents, such as Mace and Mace & Shield.
+Each checkbox change saves immediately. Filtering only changes the visible
+checklist; the summary always lists all assignments for the current body.
+An empty assignment is visibly Unreviewed. Original game files are decoded
+locally and are not distributed.
 
-The reviewer shows one body at a time, with short/tall and ready/action previews.
-Previous/Next cycles through all 32 bodies. Type in the filter to narrow the
-complete look list (for example, `mace` or `shield`). Selecting a row writes the
-catalog immediately and shows the result or an error. Rebuild the game to include
-an edit in its copied data file or package.
+## Shared catalog
 
-For combat, the game reads equipped inventory IDs and chooses the first body
-with an exact weapon and shield match. If no exact match exists, it chooses a
-body with the same weapon, regardless of shield. A silver weapon can use its
-ordinary counterpart when no silver assignment exists. If no reviewed body depicts
-that weapon, it keeps the character's saved combat body choice. The selected
-body is used for both ready and action poses; the character's head, colors and
-size remain theirs. Equipment is read when a combat scene is created.
-The current SRD rules module permits only its supported weapon types to be
-equipped; the reviewer lists the original shops' full stock for classification.
+`data/art/combat-body-looks.tsv` has 32 rows: body ID, a tab, then comma-separated
+combination IDs (or `unreviewed`). For example:
+
+```text
+1	type_41,type_42,type_43,type_44,type_45
+```
+
+The options in `data/art/combat-weapon-options.tsv` describe ordinary shop
+weapons and Unarmed, each with an optional `_shield` combination. Silver weapons
+share ordinary associations. Both the game and reviewer accept the old single
+ID format and normalize legacy `silver_N` IDs to `type_N`, preserving shield
+suffixes and deduplicating associations. The next checkbox edit writes the
+whole catalog in the new format. Saves use a temporary file and replacement;
+a failed save keeps the previous assignments.
+
+The original bow body 1 has been visually inspected in both poses and sizes
+and shared between the bow options. Other existing assignments are retained;
+unclassified bodies remain unreviewed. These are editable art classifications,
+not changes to equipment rules.
+
+## Game use
+
+Combat matches the exact equipped weapon and shield combination. If several
+bodies match, the character's saved body wins if it is among them; otherwise
+the lowest matching ID wins. An unmatched combination retains the saved body
+and is reported in the combat log. Only the body ID changes; the head, colors,
+size and both poses are preserved. Silver names do not select separate art.
+
+Rebuild the game after editing to refresh its packaged catalogs. The reviewer
+always edits the shared source catalog, not a packaged copy.

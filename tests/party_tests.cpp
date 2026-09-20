@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
+#include <fstream>
+#include <chrono>
 #include <iostream>
 #include <limits>
 #include <set>
@@ -20,32 +22,39 @@ void combat_body_assignments()
 {
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
     const auto saved=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
-    check(saved.options.size()==54,"Reviewer offers unarmed, every shop weapon, and seven silver variants");
-    for(unsigned type=1;type<=47;++type)if(type!=28)
-        check(std::any_of(saved.options.begin(),saved.options.end(),[&](const auto& option){return option.original_type==static_cast<int>(type)&&!option.silver;}),
-            "Every shop weapon type has a look option");
-    for(int type:{8,23,34,35,36,37,38})
-        check(std::any_of(saved.options.begin(),saved.options.end(),[&](const auto& option){return option.original_type==type&&option.silver;}),
-            "Every named silver shop weapon has a look option");
+    check(saved.options.size()==47,"Options contain ordinary shop weapons and unarmed only");
     por::CombatBodyCatalog catalog=saved;
-    catalog.bodies.fill("unreviewed");
-    catalog.bodies[0]="type_0";
-    catalog.bodies[1]="type_43";
-    catalog.bodies[4]="type_23_shield";
-    catalog.bodies[7]="type_23";
-    catalog.bodies[20]="type_36_shield";
+    for(auto& body:catalog.bodies)body.clear();
+    catalog.bodies[1]={"type_43","type_44"};
+    catalog.bodies[4]={"type_23_shield"};
+    catalog.bodies[7]={"type_23"};
+    catalog.bodies[9]={"type_43"};
     const std::vector<por::CombatEquipment> mace_shield{{23,"Mace","mace"},{59,"Shield","shield"}},
-        mace{{23,"Mace","mace"}},bow{{43,"Long Bow","por:unsupported:43"}},
-        sword_shield{{36,"Long Sword","longsword"},{59,"Shield","shield"}},
-        silver_mace{{23,"Silver Mace","por:unsupported:23"}};
-    check(catalog.choose(mace_shield,31)==4,"Mace and shield select the assigned body");
-    check(catalog.choose(mace,31)==7,"Removing shield changes the body");
-    check(catalog.choose(bow,31)==1,"Bow selects the bow body");
-    check(catalog.choose(sword_shield,31)==20,"Sword and shield select the assigned body");
-    check(catalog.choose({},31)==0,"Unequipped character uses the unarmed body");
-    check(catalog.choose(silver_mace,31)==7,"Silver weapon falls back to ordinary art when unassigned");
-    catalog.bodies[8]="silver_23";
-    check(catalog.choose(silver_mace,31)==8,"Silver weapon uses its own reviewed art when assigned");
+        mace{{23,"Mace","mace"}},bow{{43,"Long Bow","longbow"}},shortbow{{44,"Short Bow","shortbow"}},
+        silver_mace{{23,"Silver Mace","mace"}};
+    check(catalog.choose(mace_shield,31).body==4,"Exact shield match");
+    check(catalog.choose(mace,31).body==7,"Exact unshielded match");
+    check(catalog.choose(bow,31).body==1&&catalog.choose(shortbow,31).body==1,"Bows share one body");
+    check(catalog.choose(bow,9).body==9,"Prefer saved matching body");
+    check(catalog.choose(bow,31).body==1,"Otherwise choose lowest body ID");
+    check(catalog.choose(silver_mace,31).body==7,"Silver uses ordinary associations");
+    catalog.bodies[1].erase("type_44");
+    check(catalog.choose(bow,31).matched&&!catalog.choose(shortbow,31).matched,"Unchecking one association preserves the other");
+    catalog.bodies[4].clear();
+    const auto missing=catalog.choose(mace_shield,31);
+    check(!missing.matched&&missing.body==31&&missing.combination=="type_23_shield","No opposite shield substitution; saved appearance fallback is explicit");
+    check(!catalog.choose({},30).matched&&catalog.choose({},30).body==30,"Unmapped unarmed also retains appearance");
+    struct TemporaryCatalog {
+        std::filesystem::path path=std::filesystem::temp_directory_path()/("opengold-catalog-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())+".tsv");
+        ~TemporaryCatalog(){std::error_code error;std::filesystem::remove(path,error);}
+    } temporary;
+    const auto& path=temporary.path;
+    {
+        std::ofstream out(path);
+        for(unsigned id=0;id<32;++id)out<<id<<'\t'<<(id==1?"type_43,type_44":id==4?"silver_23_shield,type_23_shield":id==7?"silver_23":"unreviewed")<<'\n';
+    }
+    const auto migrated=por::CombatBodyCatalog::load(path,folder/"combat-weapon-options.tsv");
+    check(migrated.bodies[1].size()==2&&migrated.bodies[4]==std::set<std::string>{"type_23_shield"}&&migrated.bodies[7].contains("type_23"),"Load multiple, singleton and silver assignments without duplicates");
 }
 std::unique_ptr<RulesModule> module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
 Character character(std::string klass="fighter",std::string name="Ada")
