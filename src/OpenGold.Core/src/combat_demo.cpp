@@ -154,14 +154,21 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
     result.encounter.positions.assign(positions.begin(),positions.end());
     const auto kobold=original_icon(game_directory,0);
     const auto kobold_action=original_icon(game_directory,128);
-    if(!kobold)throw std::runtime_error("Missing original Kobold combat icon");
+    const auto leader=original_icon(game_directory,1);
+    const auto leader_action=original_icon(game_directory,129);
+    if(!kobold||!leader)throw std::runtime_error("Missing original Kobold combat icon");
+    constexpr std::array<Cell,6> removed{{{6,4},{9,4},{9,7},{7,8},{4,8},{4,5}}};
     unsigned number=0;
     for(int y=4;y<=8;++y)for(int x=4;x<=9;++x){
         if(x>4&&x<9&&y>4&&y<8)continue;
-        const auto id=static_cast<EntityId>(1000+number);
-        result.encounter.enemies.push_back({id,"slums-kobold","Kobold "+std::to_string(++number),1,{x,y}});
+        const Cell cell{x,y};
+        const bool is_leader=cell==Cell{6,4};
+        if(!is_leader&&std::find(removed.begin(),removed.end(),cell)!=removed.end())continue;
+        const auto id=static_cast<EntityId>(1000+result.encounter.enemies.size());
+        result.encounter.enemies.push_back({id,is_leader?"slums-kobold-leader":"slums-kobold",
+            is_leader?"Kobold Leader":"Kobold "+std::to_string(++number),1,cell});
         result.encounter.positions.push_back({x,y});
-        result.encounter.art.push_back({id,*kobold,kobold_action});
+        result.encounter.art.push_back({id,is_leader?*leader:*kobold,is_leader?leader_action:kobold_action});
     }
     return result;
 }

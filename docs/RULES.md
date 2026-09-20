@@ -58,6 +58,14 @@ portrait row shows `UNCONSCIOUS` until their state changes. Their existing
 combat figure lies within one square. If no party member remains conscious,
 combat ends in defeat.
 
+The shared combat demo uses twelve dagger-wielding Kobolds with melee attacks
+only, plus one Kobold leader with a short sword and a short bow. Five ring
+squares are open; the sixth removed Kobold is replaced by the leader at the
+top of the formation. The leader's bow uses +4 to hit, 1d6+2 damage and
+80/320-foot range. Original Slums creature record 1 contains a short bow and
+arrows. Record 11 has no bow and remains melee only. The dagger description
+follows the regular Kobold combat art.
+
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks
 the original event's persistent flag within this session. This scene is separate

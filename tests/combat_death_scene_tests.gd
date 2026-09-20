@@ -17,7 +17,22 @@ func check() -> void:
     click.pressed = true
     click.position = canvas.get_global_transform_with_canvas() * Vector2(7.5 * tile, 4.5 * tile)
     root.push_input(click)
-    if not combat.get_node("Log").text.contains("Kobold 4 is defeated."):
+    for frame in range(300):
+        if combat.get_node("Turn").text.contains("Merric Mistvale turn"):
+            break
+        var end_key := InputEventKey.new()
+        end_key.keycode = KEY_ENTER
+        end_key.pressed = true
+        root.push_input(end_key)
+        await process_frame
+    if not combat.get_node("Turn").text.contains("Merric Mistvale turn"):
+        push_error("Merric did not receive a turn to finish the wounded Kobold")
+        quit(1)
+        return
+    combat.get_node("Melee").emit_signal("pressed")
+    click.position = canvas.get_global_transform_with_canvas() * Vector2(7.5 * tile, 4.5 * tile)
+    root.push_input(click)
+    if not combat.get_node("Log").text.contains("Kobold 3 is defeated."):
         push_error("Expected a lethal attack in the shared combat scene")
         quit(1)
         return

@@ -416,7 +416,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
             throw EclError("Encounter needs an explicit supported creature conversion: record "+std::to_string(record)+", count "+std::to_string(count)+", icon "+std::to_string(arg(2)));
         const auto& creature=area_resources().encounter_creatures.at(record);auto icon=decode_ega_combat_icon(area_resources().combat_archive,arg(2),0);
         if(!icon)throw EclError("Invalid original Slums combat icon");
-        const auto definition=record==63?"slums-bugbear":record==0?"slums-kobold":record==1||record==11?"slums-kobold-leader":record==2?"slums-goblin":record==3||record==12?"slums-goblin-leader":record==4||record==13?"slums-orc":"slums-orc-leader";
+        const auto definition=record==63?"slums-bugbear":record==0?"slums-kobold":record==1?"slums-kobold-leader":record==11?"slums-kobold-leader-sword":record==2?"slums-goblin":record==3||record==12?"slums-goblin-leader":record==4||record==13?"slums-orc":"slums-orc-leader";
         for(unsigned i=0;i<count;++i){const auto id=static_cast<rules::EntityId>(1000+staged_enemies_.size());staged_enemies_.push_back({id,definition,creature.stored.name+" "+std::to_string(staged_enemies_.size()+1),1,{}});staged_art_.push_back({id,icon.image});staged_records_.push_back(record);}
         break;
     }

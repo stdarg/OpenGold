@@ -93,7 +93,7 @@ func check_demo() -> void:
         "Attack effects use one-eighth volume")
     require(combat.get_node("Log").text.contains("Dorian Nightwind -> Kobold"),
         "Arrow key submits a melee attack against the occupied enemy square")
-    require(combat.get_node("Log").text.contains("Kobold 7 turn"),
+    require(combat.get_node("Turn").text.contains("Kobold"),
         "Attack ends the hero's turn and advances initiative")
     await RenderingServer.frame_post_draw
     var attack_screenshot := root.get_texture().get_image()
@@ -101,15 +101,15 @@ func check_demo() -> void:
         "Action pose screenshot saves")
     await create_timer(1.1).timeout
     require(not combat.attack_pose_active(3), "Action pose ends after one second")
-    for frame in range(240):
-        if combat.get_node("Log").text.contains("Kobold 8 -> Dorian Nightwind"):
+    for frame in range(500):
+        if combat.get_node("Log").text.contains("Kobold 7 -> Dorian Nightwind"):
             break
         var end_key := InputEventKey.new()
         end_key.keycode = KEY_ENTER
         end_key.pressed = true
         root.push_input(end_key)
         await process_frame
-    require(combat.get_node("Log").text.contains("Kobold 8 -> Dorian Nightwind"),
+    require(combat.get_node("Log").text.contains("Kobold 7 -> Dorian Nightwind"),
         "Kobold on the right attacks the hero to its left")
     require(combat.sprite_facing_left(1007), "Kobold faces left toward its attack target")
     await RenderingServer.frame_post_draw

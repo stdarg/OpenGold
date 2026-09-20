@@ -297,8 +297,10 @@ std::vector<Command> Session::legal_commands() const
             if(other.dead || !line_of_sight(a.source.cell,other.source.cell))continue;
             const int feet=distance(a.source.cell,other.source.cell);
             if(other.source.side!=a.source.side && other.hp>0) {
-                if(feet<=5)add(id,"melee","Melee attack",other.source.id);
-                if(feet<=d.long_range)add(id,"ranged","Ranged attack",other.source.id);
+                if(feet<=5)add(id,"melee",a.source.definition=="slums-kobold"?"Dagger attack":
+                    a.source.definition=="slums-kobold-leader"||a.source.definition=="slums-kobold-leader-sword"?"Short sword attack":"Melee attack",other.source.id);
+                if(d.range>0&&feet<=d.long_range)add(id,"ranged",
+                    a.source.definition=="slums-kobold-leader"?"Short bow attack":"Ranged attack",other.source.id);
                 if((d.spells&1)&&feet<=120)add(id,"fire_bolt","Fire Bolt",other.source.id);
                 if((d.spells&4)&&feet<=120&&can_see(a,other))spell("magic_missile","Magic Missile",other.source.id);
                 if((d.spells&16)&&a.slots2>0&&!a.spent_slot&&feet<=120)add(id,"scorching_ray","Scorching Ray",other.source.id);
@@ -923,12 +925,16 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
     Content content;content.identity={"opengold.srd5","0.5.0",revision+"/"+std::to_string(hash)};
+    // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
+    if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
+        {"15286736505479635800","1436083463150607054","4820123901484423331"})
+        content.previous_campaign_identities.push_back({"opengold.srd5","0.5.0",revision+"/"+fingerprint});
     // These additive rows introduce saves and an isolated casting fixture. Old
     // campaign sheets can migrate; combat checkpoints still require exact rules.
     // Reconstruct both supported historical packs without guessing fingerprints.
     for(bool remove_roaming:{false,true}){
         std::istringstream previous_lines(bytes);std::string previous,line_before;
-        const std::array<std::string_view,6> additions{"slums-kobold","slums-goblin","slums-kobold-leader","slums-goblin-leader","slums-orc-leader","slums-bugbear"};
+        const std::array<std::string_view,7> additions{"slums-kobold","slums-goblin","slums-kobold-leader","slums-kobold-leader-sword","slums-goblin-leader","slums-orc-leader","slums-bugbear"};
         while(std::getline(previous_lines,line_before)){
             std::istringstream row(line_before);std::string tag,key;row>>tag>>key;
             if(tag=="saves"||tag=="spellcasting"||(tag=="creature"&&key=="blindness-adept"))continue;
@@ -960,12 +966,17 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
         }
         row>>d.ac>>d.hp>>d.initiative>>d.speed>>d.melee_bonus>>d.melee.count>>d.melee.sides>>d.melee.bonus
             >>d.ranged_bonus>>d.ranged.count>>d.ranged.sides>>d.ranged.bonus>>d.range>>d.long_range>>d.winds>>d.slots>>d.casting>>d.level>>d.spells;
+        const bool ranged_none=d.range==0&&d.long_range==0&&d.ranged_bonus==0&&
+            d.ranged.count==0&&d.ranged.sides==0&&d.ranged.bonus==0;
+        const bool ranged_weapon=d.range>=5&&d.long_range>=d.range&&d.long_range<=600&&
+            d.ranged_bonus>= -10&&d.ranged_bonus<=30&&d.ranged.count>=1&&d.ranged.count<=10&&
+            d.ranged.sides>=2&&d.ranged.sides<=20&&d.ranged.bonus>= -10&&d.ranged.bonus<=30;
         if(!row||tag!="creature"||key.size()>80||content.definitions.contains(key)||d.ac<1||d.ac>40||d.hp<1||d.hp>1000||
             d.initiative< -10||d.initiative>20||d.speed<5||d.speed>120||d.speed%5||d.melee.count<1||d.melee.count>10||d.melee.sides<2||d.melee.sides>20||
-            d.ranged.count<1||d.ranged.count>10||d.ranged.sides<2||d.ranged.sides>20||d.range<5||d.long_range<d.range||d.long_range>600||
+            (!ranged_none&&!ranged_weapon)||
             d.winds<0||d.winds>10||d.slots<0||d.slots>20||d.level<1||d.level>4||d.spells<0||d.spells>7||
-            d.melee_bonus< -10||d.melee_bonus>30||d.ranged_bonus< -10||d.ranged_bonus>30||d.casting< -10||d.casting>30||
-            d.melee.bonus< -10||d.melee.bonus>30||d.ranged.bonus< -10||d.ranged.bonus>30)
+            d.melee_bonus< -10||d.melee_bonus>30||d.casting< -10||d.casting>30||
+            d.melee.bonus< -10||d.melee.bonus>30)
             throw std::runtime_error("Invalid or unsupported creature definition: "+key);
         row>>std::ws;if(!row.eof())throw std::runtime_error("Unknown creature fields: "+key);
         content.definitions.emplace(std::move(key),d);

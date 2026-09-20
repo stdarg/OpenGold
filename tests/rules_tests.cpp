@@ -102,6 +102,40 @@ void boundary_tests() {
     module.reset();check(!session->snapshot().combatants.empty(),"Session owns shared immutable content lifetime");
 }
 void mechanics_tests() {
+    auto legacy_rules=srd5::load(pack());
+    check(legacy_rules->accepts_campaign_identity({"opengold.srd5","0.5.0","srd-5.2.1-demo.1/15286736505479635800"}),
+        "Saved campaigns from the previous Kobold rules remain loadable");
+    auto kobolds=duel();kobolds.participants[1].definition="slums-kobold";
+    auto leader=kobolds;leader.participants[1].definition="slums-kobold-leader";
+    auto kobold_rules=srd5::load(pack());bool checked_kobold=false,checked_leader=false;
+    for(unsigned seed=0;seed<100&&(!checked_kobold||!checked_leader);++seed){
+        if(!checked_kobold){auto fight=kobold_rules->create(kobolds,seed);if(fight->snapshot().actor==2){
+            check(offers(*fight,"melee")&&!offers(*fight,"ranged"),"Dagger Kobold has no ranged attack");
+            check(command(*fight,"melee").label=="Dagger attack","Kobold attack names its visible weapon");checked_kobold=true;}}
+        if(!checked_leader){auto fight=kobold_rules->create(leader,seed);if(fight->snapshot().actor==2){
+            check(offers(*fight,"melee")&&offers(*fight,"ranged"),"Kobold leader retains bow attack");
+            check(command(*fight,"ranged").label=="Short bow attack","Leader ranged attack names its bow");checked_leader=true;}}
+    }
+    check(checked_kobold&&checked_leader,"Exercised both Kobold attack profiles");
+    auto sword_leader=leader;sword_leader.participants[1].definition="slums-kobold-leader-sword";
+    bool checked_sword_leader=false;
+    for(unsigned seed=0;seed<100&&!checked_sword_leader;++seed){
+        auto fight=kobold_rules->create(sword_leader,seed);if(fight->snapshot().actor!=2)continue;
+        check(offers(*fight,"melee")&&!offers(*fight,"ranged")&&
+            command(*fight,"melee").label=="Short sword attack",
+            "Original record 11 leader cannot fire a bow it does not carry");checked_sword_leader=true;
+    }
+    check(checked_sword_leader,"Exercised sword-only Kobold leader");
+    kobolds.participants[1].cell={8,2};leader.participants[1].cell={8,2};
+    checked_kobold=checked_leader=false;
+    for(unsigned seed=0;seed<100&&(!checked_kobold||!checked_leader);++seed){
+        if(!checked_kobold){auto fight=kobold_rules->create(kobolds,seed);if(fight->snapshot().actor==2){
+            check(!offers(*fight,"ranged"),"Distant ordinary Kobold cannot attack without a bow");checked_kobold=true;}}
+        if(!checked_leader){auto fight=kobold_rules->create(leader,seed);if(fight->snapshot().actor==2){
+            check(!offers(*fight,"melee")&&fight->submit(command(*fight,"ranged")),
+                "Distant leader can fire its short bow");checked_leader=true;}}
+    }
+    check(checked_kobold&&checked_leader,"Exercised distant Kobold attacks");
     CombatDemo training(srd5::load(pack()));training.training();
     for(unsigned i=0;training.combat().snapshot().outcome==Outcome::ongoing;++i) {
         check(i<200,"Training encounter finishes");check(training.submit(choose_demo_command(training.combat())),"Training AI command accepted");

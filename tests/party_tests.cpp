@@ -4,6 +4,7 @@
 #include "opengold/rolf_tour.h"
 #include "opengold/srd5.h"
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -373,8 +374,8 @@ void combat_demo_fixture()
     auto characters=srd5::character_rules();
     auto scene=make_combat_demo(module(),*characters,directory);
     const auto heroes=scene.party->participants();
-    check(heroes.size()==6&&scene.encounter.enemies.size()==18&&scene.encounter.art.size()==24&&scene.encounter.positions.size()==24,
-        "Showcase contains six visible heroes and eighteen surrounding Kobolds");
+    check(heroes.size()==6&&scene.encounter.enemies.size()==13&&scene.encounter.art.size()==19&&scene.encounter.positions.size()==19,
+        "Showcase contains six visible heroes, twelve Kobolds and one leader");
     std::set<std::string> classes;unsigned goliaths=0;
     for(std::size_t i=0;i<6;++i){
         const auto& hero=scene.party->member(heroes[i].id);
@@ -392,21 +393,36 @@ void combat_demo_fixture()
         check(!profile.strength_dexterity_disadvantage,"Showcase armor is class trained");
     }
     check(classes.size()==6&&goliaths>=1,"Showcase has six distinct classes and a Goliath");
-    std::set<Cell> kobolds;
+    std::set<Cell> kobolds;unsigned leaders=0;
     for(std::size_t i=0;i<scene.encounter.enemies.size();++i){
         const auto& actor=scene.encounter.enemies[i];
-        check(actor.definition=="slums-kobold"&&actor.side==1,"Surrounding enemies use Kobold rules");
+        const bool leader=actor.definition=="slums-kobold-leader";
+        check((leader||actor.definition=="slums-kobold")&&actor.side==1,"Surrounding enemies use Kobold rules");
+        leaders+=leader;
         kobolds.insert(scene.encounter.positions[i+6]);
     }
-    for(int y=4;y<=8;++y)for(int x=4;x<=9;++x)
-        if(x==4||x==9||y==4||y==8)check(kobolds.contains({x,y}),"Every outer ring cell has a Kobold");
+    check(leaders==1&&kobolds.contains({6,4}),"One leader occupies the top of the ring");
+    const auto leader_index=std::find_if(scene.encounter.enemies.begin(),scene.encounter.enemies.end(),
+        [](const auto& actor){return actor.definition=="slums-kobold-leader";})-scene.encounter.enemies.begin();
+    check(scene.encounter.art[6+leader_index].image.rgba!=scene.encounter.art[6].image.rgba,
+        "Leader uses its own original combat icon");
+    const auto catalog=por::CreatureCatalog::load(directory);
+    const auto normal=catalog.find({2,0}),chief=catalog.find({2,1}),sword_chief=catalog.find({2,11});
+    check(normal&&chief&&sword_chief,"Original Slums Kobold records exist");
+    const auto has_gear=[](const auto& creature,std::string_view name){return std::any_of(creature.equipment.begin(),creature.equipment.end(),
+        [&](const auto& item){return item.label()==name;});};
+    check(!has_gear(normal->get(),"Short bow")&&has_gear(chief->get(),"Short bow")&&
+        has_gear(chief->get(),"Arrows")&&!has_gear(sword_chief->get(),"Short bow"),
+        "Only original Kobold leader record 1 carries a bow and arrows");
+    for(const auto& cell:std::array<Cell,5>{{{9,4},{9,7},{7,8},{4,8},{4,5}}})
+        check(!kobolds.contains(cell),"Removed Kobolds leave six openings in the ring");
     CombatDemo fight(module());fight.campaign_party(scene.party);
     auto invalid=scene.encounter;invalid.positions.pop_back();
     rejects([&]{fight.encounter(invalid,42);});
     check(!scene.party->in_combat(),"Invalid authored formation does not lock the party");
     const auto expected_positions=scene.encounter.positions;
     fight.encounter(std::move(scene.encounter),42);
-    check(fight.has_combat()&&fight.combat().snapshot().combatants.size()==24,
+    check(fight.has_combat()&&fight.combat().snapshot().combatants.size()==19,
         "Game campaign encounter handoff starts the complete Kobold fight");
     for(std::size_t i=0;i<expected_positions.size();++i){
         const auto id=i<6?heroes[i].id:static_cast<EntityId>(1000+i-6);
