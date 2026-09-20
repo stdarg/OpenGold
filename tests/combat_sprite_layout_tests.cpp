@@ -22,9 +22,13 @@ void sizing()
             check(near(rendered.position.x,occupied.position.x)&&near(rendered.get_end().y,occupied.get_end().y),"Visible feet align with the occupied square regardless of padding");
             check(near(rendered.position.y,occupied.position.y-.25*tile),"Only the lower quarter of the upper square receives Goliath art");
             const auto normal=presentation::combat_sprite_rect(source,visible,occupied,false);
-            check(normal.get_center().is_equal_approx(occupied.get_center())&&near(normal.size.x,.9*tile),"Other figures retain their existing scale and position");
+            const auto normal_scale=normal.size/source;
+            const Rect2 normal_visible(normal.position+visible.position*normal_scale,visible.size*normal_scale);
+            check(normal_visible.get_center().is_equal_approx(occupied.get_center()),"Visible figure stays centered regardless of transparent padding");
+            check(near(std::max(normal_visible.size.x,normal_visible.size.y),.9*tile),"Visible figure fills 90 percent of the zoomed cell");
         }
     check(presentation::combat_sprite_rect({24,24},{},{0,0,24,24},true).size==Vector2(),"Empty visible art does not divide by zero");
+    check(presentation::combat_sprite_rect({24,24},{},{0,0,24,24},false).size==Vector2(),"Empty normal art does not divide by zero");
 }
 void ordering()
 {
