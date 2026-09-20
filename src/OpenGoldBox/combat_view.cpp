@@ -514,6 +514,7 @@ void CombatView::_draw()
         const auto found=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& c){return c.id==id;});
         const int hp=found==snapshot.combatants.end()?member.vitals.hit_points:found->hit_points;
         const int maximum=found==snapshot.combatants.end()?member.character.sheet().hit_points:found->max_hit_points;
+        const int armor_class=found==snapshot.combatants.end()?campaign_->profile(id).armor_class:found->armor_class;
         const double size=std::min(64.0,row_height-18),portrait_y=top+4;
         const Rect2 image_rect(right+5,portrait_y,size,size);
         draw_rect(image_rect,Color("10171c"));
@@ -529,7 +530,7 @@ void CombatView::_draw()
         line(gs(member.character.sheet().name),top+27,17,Color("e2edf0"));
         const auto& sheet=member.character.sheet();
         line(gs(sheet.character_class).capitalize()+" / "+gs(sheet.race).capitalize()+" / "+gs(sheet.gender).capitalize(),top+49,13,Color("a8c1c7"));
-        line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP",top+68,15,Color("efb9bb"));
+        line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP  AC "+String::num_int64(armor_class),top+68,15,Color("efb9bb"));
     }
 }
 void CombatView::draw_battlefield()
