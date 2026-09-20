@@ -133,8 +133,8 @@ void CombatView::_ready()
                 std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("AttackAudio")));
             effect_sound_=std::make_unique<por::SoundPlayer>(por::SoundBank::load(directory),
                 std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("EffectAudio")));
-            attack_sound_->set_volume(0.5);
-            effect_sound_->set_volume(0.5);
+            attack_sound_->set_volume(0.25);
+            effect_sound_->set_volume(0.25);
         }
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
