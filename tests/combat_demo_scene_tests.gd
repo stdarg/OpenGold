@@ -76,10 +76,18 @@ func check_demo() -> void:
     root.push_input(active_key)
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key attacks the adjacent enemy without moving into its square")
+    require(combat.attack_pose_active(3), "Attack starts the hero action pose")
+    require(combat.get_node("AttackAudio").playing, "Attack plays the original attack sound")
     require(combat.get_node("Log").text.contains("Dorian Nightwind -> Kobold"),
         "Arrow key submits a melee attack against the occupied enemy square")
     require(combat.get_node("Log").text.contains("Kobold 7 turn"),
         "Attack ends the hero's turn and advances initiative")
+    await RenderingServer.frame_post_draw
+    var attack_screenshot := root.get_texture().get_image()
+    require(attack_screenshot.save_png(ProjectSettings.globalize_path("res://../../../build/checks/combat-attack.png")) == OK,
+        "Action pose screenshot saves")
+    await create_timer(1.1).timeout
+    require(not combat.attack_pose_active(3), "Action pose ends after one second")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
     print("Combat demo checks passed: ", output)

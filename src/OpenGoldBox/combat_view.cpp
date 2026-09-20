@@ -4,6 +4,7 @@
 #include "game_resources.h"
 #include "combat_view.h"
 #include "combat_sprite_layout.h"
+#include "godot_sound_output.h"
 #include "opengold/srd5.h"
 #include "opengold/character_art.h"
 #include "opengold/formats.h"
@@ -64,6 +65,7 @@ void CombatView::_bind_methods()
 {
     ClassDB::bind_method(D_METHOD("selected_character_id"),&CombatView::selected_character_id);
     ClassDB::bind_method(D_METHOD("selected_character_cell"),&CombatView::selected_character_cell);
+    ClassDB::bind_method(D_METHOD("attack_pose_active","id"),&CombatView::attack_pose_active);
 }
 Vector2i CombatView::selected_character_cell() const
 {
@@ -125,6 +127,10 @@ void CombatView::_ready()
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
     try{prepare_combat();layout();refresh();
+        const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
+        if(std::filesystem::is_directory(directory))
+            attack_sound_=std::make_unique<por::SoundPlayer>(por::SoundBank::load(directory),
+                std::make_unique<GodotSoundOutput>(*get_node<AudioStreamPlayer>("AttackAudio")));
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
@@ -193,7 +199,7 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();if(!demo_)return;
+    art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
     const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
     if(std::filesystem::is_directory(directory)){
         for(const auto& file:std::filesystem::directory_iterator(directory)){
@@ -216,7 +222,9 @@ void CombatView::sync_art()
     }
     const auto install=[&](const CombatArt& source,bool goliath){
         const auto image=presentation::rgba_image(source.image);
-        art_[source.entity]={ImageTexture::create_from_image(image),image->get_used_rect(),goliath};
+        Ref<ImageTexture> action;
+        if(source.action)action=ImageTexture::create_from_image(presentation::rgba_image(*source.action));
+        art_[source.entity]={ImageTexture::create_from_image(image),action,image->get_used_rect(),goliath};
     };
     for(const auto& source:demo_->art())install(source,false);
     for(const auto& source:campaign_art_){
@@ -316,7 +324,14 @@ void CombatView::immediate(String verb)
 }
 void CombatView::act(const Command& command)
 {
-    try{if(demo_->submit(command)){mode_="move";ai_delay_=0;error_.clear();refresh();}}
+    try{if(demo_->submit(command)){
+        unsigned sound=0;
+        if(command.verb=="melee"||command.verb=="opportunity")sound=7;
+        else if(command.verb=="ranged")sound=6;
+        else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
+        if(sound){action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);}
+        mode_="move";ai_delay_=0;error_.clear();refresh();
+    }}
     catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::_input(const Ref<InputEvent>& event)
@@ -531,9 +546,10 @@ void CombatView::draw_battlefield()
         }
         if(art_.contains(a.id)) {
             const auto& art=art_.at(a.id);
-            const auto rect=presentation::combat_sprite_rect(art.texture->get_size(),art.visible,
+            const auto texture=action_seconds_.contains(a.id)&&art.action.is_valid()?art.action:art.texture;
+            const auto rect=presentation::combat_sprite_rect(texture->get_size(),art.visible,
                 Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),art.goliath);
-            canvas->draw_texture_rect(art.texture,rect,false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
+            canvas->draw_texture_rect(texture,rect,false,a.conscious?Color(1,1,1):Color(.5,.5,.5));
         } else {
             const auto number=std::to_string(a.id);
             auto cursor=center+Vector2(-5.5*number.size(),7);
@@ -548,6 +564,11 @@ void CombatView::_process(double delta)
 {
     if(Engine::get_singleton()->is_editor_hint())return;
     try {
+        for(auto it=action_seconds_.begin();it!=action_seconds_.end();){
+            it->second-=delta;
+            if(it->second<=0)it=action_seconds_.erase(it);else ++it;
+            get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
+        }
         for(auto it=skull_seconds_.begin();it!=skull_seconds_.end();){
             it->second-=delta;
             if(it->second<=0)it=skull_seconds_.erase(it);else ++it;

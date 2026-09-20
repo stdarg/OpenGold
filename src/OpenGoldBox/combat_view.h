@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/texture2d.hpp>
 #include <map>
+#include "opengold/sound_player.h"
 class CombatView : public godot::Control {
     GDCLASS(CombatView,godot::Control)
 public:
@@ -15,6 +16,7 @@ public:
     void _input(const godot::Ref<godot::InputEvent>& event) override;
     [[nodiscard]] std::int64_t selected_character_id() const {return static_cast<std::int64_t>(selected_);}
     [[nodiscard]] godot::Vector2i selected_character_cell() const;
+    [[nodiscard]] bool attack_pose_active(std::int64_t id) const {return action_seconds_.contains(static_cast<opengold::rules::EntityId>(id));}
     // Prepare while detached so the caller can keep its current screen on failure.
     void prepare_combat();
     void campaign_party(std::shared_ptr<opengold::CampaignParty> party,std::vector<opengold::CombatArt> art) {campaign_=std::move(party);campaign_art_=std::move(art);}
@@ -37,6 +39,7 @@ private:
     std::vector<godot::Ref<godot::ImageTexture>> terrain_art_;
     struct SpriteArt {
         godot::Ref<godot::ImageTexture> texture;
+        godot::Ref<godot::ImageTexture> action;
         godot::Rect2 visible;
         bool goliath{};
     };
@@ -44,6 +47,8 @@ private:
     godot::Ref<godot::ImageTexture> skull_art_;
     std::map<opengold::rules::EntityId,bool> known_dead_;
     std::map<opengold::rules::EntityId,double> skull_seconds_;
+    std::map<opengold::rules::EntityId,double> action_seconds_;
+    std::unique_ptr<opengold::por::SoundPlayer> attack_sound_;
     std::map<opengold::rules::EntityId,godot::Ref<godot::Texture2D>> portraits_;
     opengold::rules::EntityId selected_{};
     opengold::rules::EntityId last_actor_{};

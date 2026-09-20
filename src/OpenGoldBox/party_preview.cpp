@@ -46,7 +46,8 @@ presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& par
 {
     std::vector<CombatArt> images;
     for(const auto& participant:party->participants())
-        images.push_back({participant.id,art.icon(party->member(participant.id).character.appearance(),false)});
+        images.push_back({participant.id,art.icon(party->member(participant.id).character.appearance(),false),
+            art.icon(party->member(participant.id).character.appearance(),true)});
     auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");
     auto* combat=Object::cast_to<CombatView>(owned.get());
     if(!combat)throw std::runtime_error("Invalid combat scene");

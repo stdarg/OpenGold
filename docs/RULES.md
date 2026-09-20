@@ -46,6 +46,8 @@ character has an action available. The combat log follows new text until you
 scroll up to read earlier entries.
 Melee, ranged, and damaging spell attacks end the attacker's turn and advance
 initiative. A dead combatant displays the original combat skull for one second.
+Attacks show the combatant's original action frame for one second and play the
+corresponding original melee, ranged, or spell sound from the local game files.
 
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks

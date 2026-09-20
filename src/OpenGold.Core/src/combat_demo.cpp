@@ -149,10 +149,11 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
             party->purchase(id,item);
             party->equip(id,party->member(id).character.inventory().items().back().id);
         }
-        result.encounter.art.push_back({id,art.icon(found->appearance(),false)});
+        result.encounter.art.push_back({id,art.icon(found->appearance(),false),art.icon(found->appearance(),true)});
     }
     result.encounter.positions.assign(positions.begin(),positions.end());
     const auto kobold=original_icon(game_directory,0);
+    const auto kobold_action=original_icon(game_directory,128);
     if(!kobold)throw std::runtime_error("Missing original Kobold combat icon");
     unsigned number=0;
     for(int y=4;y<=8;++y)for(int x=4;x<=9;++x){
@@ -160,7 +161,7 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
         const auto id=static_cast<EntityId>(1000+number);
         result.encounter.enemies.push_back({id,"slums-kobold","Kobold "+std::to_string(++number),1,{x,y}});
         result.encounter.positions.push_back({x,y});
-        result.encounter.art.push_back({id,*kobold});
+        result.encounter.art.push_back({id,*kobold,kobold_action});
     }
     return result;
 }
@@ -216,10 +217,11 @@ void CombatDemo::pump()
                     throw std::runtime_error("Unrecognized Slums creature/count/icon profile");
                 const auto& creature=creatures_->find({2,static_cast<std::uint8_t>(record)})->get();
                 const auto icon=original_icon(game_directory_,a[2].value);
+                const auto action=original_icon(game_directory_,a[2].value+128);
                 for(unsigned i=0;i<count;++i) {
                     const auto id=static_cast<EntityId>(1000+enemies_.size());
                     enemies_.push_back({id,"slums-orc",creature.stored.name+" "+std::to_string(enemies_.size()+1),1,{9,2+static_cast<int>(enemies_.size())}});
-                    if(icon)art_.push_back({id,*icon});
+                    if(icon)art_.push_back({id,*icon,action});
                 }
             } else if(opcode==36) {
                 if(enemies_.size()!=4||encounters_!=0||vm_->variable(0x6DC6)!=99||vm_->variable(0x6DCB)!=0)
