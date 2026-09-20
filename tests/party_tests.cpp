@@ -22,7 +22,7 @@ void combat_body_assignments()
 {
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
     const auto saved=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
-    check(saved.options.size()==47,"Options contain ordinary shop weapons and unarmed only");
+    check(saved.options.size()==48,"Options contain ordinary shop weapons, wand and unarmed");
     por::CombatBodyCatalog catalog=saved;
     for(auto& body:catalog.bodies)body.clear();
     catalog.bodies[1]={"type_43","type_44"};
