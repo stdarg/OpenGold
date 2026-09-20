@@ -78,11 +78,15 @@ func check_demo() -> void:
         "Arrow key moves the selected character on their turn")
     require(combat.get_node("EffectAudio").playing,
         "Moving to a new square plays the original footstep sound")
+    require(is_equal_approx(combat.get_node("EffectAudio").volume_linear, 0.5),
+        "Movement and death effects use half volume")
     root.push_input(active_key)
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key attacks the adjacent enemy without moving into its square")
     require(combat.attack_pose_active(3), "Attack starts the hero action pose")
     require(combat.get_node("AttackAudio").playing, "Attack plays the original attack sound")
+    require(is_equal_approx(combat.get_node("AttackAudio").volume_linear, 0.5),
+        "Attack effects use half volume")
     require(combat.get_node("Log").text.contains("Dorian Nightwind -> Kobold"),
         "Arrow key submits a melee attack against the occupied enemy square")
     require(combat.get_node("Log").text.contains("Kobold 7 turn"),
