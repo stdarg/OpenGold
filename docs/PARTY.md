@@ -69,9 +69,10 @@ Party combat remains the explicitly launched training fight.
 The rules module evaluates the created scores and equipment; these characters
 do not select the old Vanguard/Adept/Healer fixture statistics. This first shared
 party increment supports **level 1-4 Fighter, Cleric and Wizard combat subsets**.
-All twelve classes have exploration equipment profiles, including armor training,
-unarmored AC and HP. Other classes must still be put in
-reserve before combat. An unsupported active profile fails explicitly.
+All twelve classes can enter combat using their derived HP, AC, equipment,
+movement, and basic attacks. Fighter, Cleric, and Wizard have the documented
+additional combat abilities; the other classes' class-specific features remain
+unavailable. Only Fighter, Cleric, and Wizard can advance beyond level one.
 
 - Fighter: ordinary attacks and two Second Wind uses.
 - Cleric: ordinary attacks and Cure Wounds, with two level-one spell slots

@@ -52,8 +52,9 @@ supported. Unsupported paths retain explicit diagnostics and event rollback.
 Combat is prepared before switching screens. If the rules, encounter, or art
 cannot initialize, exploration keeps its view and rolls the event back with a
 diagnostic. Acknowledge the message to continue or return to the party. The current
-combat rules support Fighter, Cleric, and Wizard; other classes remain available
-for creation and exploration. A rejected training fight keeps the party screen
+combat rules accept all twelve created classes with basic combat actions.
+Additional class abilities are available only for Fighter, Cleric, and Wizard.
+A rejected training fight keeps the party screen
 open so the party can be edited and retried.
 
 Probabilistic Slums camping and other district transitions are outside this

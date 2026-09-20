@@ -351,12 +351,17 @@ void dynamic_checkpoint()
     check(restored->save()==bytes,"Dynamic character profile round-trips exactly");
     const auto command=choose_demo_command(*session);check(session->submit(command)&&restored->submit(command),"Restored command accepted");
     check(session->save()==restored->save(),"Dynamic checkpoint deterministic continuation");
-    auto unsupported=e;unsupported.participants[0].character_profile=rules->character_profile(character("bard").sheet(),{}).data;
-    rejects([&]{(void)rules->create(unsupported,42);}); // Profiles are broader than the combat implementation.
     for(const auto& c:srd5::character_rules()->choices(CreationField::character_class)){
         const auto pc=character(c.id);const auto p=rules->character_profile(pc.sheet(),{});
         const int expected=10+pc.sheet().modifiers[1]+(c.id=="monk"?pc.sheet().modifiers[4]:c.id=="barbarian"?pc.sheet().modifiers[2]:0);
         check(p.armor_class==std::max(expected,10+pc.sheet().modifiers[1])&&p.hit_points==pc.sheet().hit_points,"All twelve classes have correct unarmored AC and HP profiles");
+        CampaignParty party(module());const auto id=party.add_pc(pc);
+        auto participants=party.participants();participants[0].cell={0,0};
+        participants.push_back({1000,"bandit","Bandit",1,{3,3}});
+        auto fight=rules->create({{4,4,std::vector<std::uint8_t>(16)},participants},42);
+        const auto snapshot=fight->snapshot();
+        check(std::any_of(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& actor){return actor.id==id&&actor.hit_points==pc.sheet().hit_points;}),"Every created class enters campaign combat with its derived HP");
+        check(rules->restore(fight->save())->save()==fight->save(),"Every class combat checkpoint restores");
     }
     e.participants[0].state=VitalState{99999,false,{}};rejects([&]{(void)rules->create(e,42);});
     e.participants[0].state=VitalState{1,false,"SRD1 0 99 0 0 0"};rejects([&]{(void)rules->create(e,42);});
@@ -397,13 +402,9 @@ void rejected_combat_handoff()
         (void)town.observe_view();
         {
             CombatDemo combat(module());combat.campaign_party(party);
-            if(std::string_view(klass)=="rogue"){
-                rejects([&]{combat.encounter(*town.pending_encounter(),42);});
-                check(!party->in_combat(),"Rejected rules profile leaves no combat lock");
-            }else{
-                combat.encounter(*town.pending_encounter(),42);
-                check(!town.reject_combat("Cannot cancel active combat"),"Rejection cannot bypass an active combat owner");
-            }
+            combat.encounter(*town.pending_encounter(),42);
+            check(party->in_combat()&&combat.has_combat(),"Every supported class reaches campaign combat");
+            check(!town.reject_combat("Cannot cancel active combat"),"Rejection cannot bypass an active combat owner");
         }
         check(town.reject_combat("Combat initialization failed"),"Failed handoff rolls back its event");
         check(!town.pending_encounter()&&!party->in_combat(),"Rollback clears the encounter and edit lock");

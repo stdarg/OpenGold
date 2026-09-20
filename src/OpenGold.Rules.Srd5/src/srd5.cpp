@@ -62,7 +62,7 @@ struct Actor {
     detail::EffectState effects;
 };
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
-Definition character_definition(std::string_view bytes,bool combat=true)
+Definition character_definition(std::string_view bytes)
 {
     if(bytes.size()>1024)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
@@ -73,8 +73,6 @@ Definition character_definition(std::string_view bytes,bool combat=true)
     in>>count;
     if(!in||(magic!="PC1"&&magic!="PC2"&&magic!="PC3")||level<1||level>(magic=="PC3"?4u:2u)||features>3||selected_spells>63||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
-    if(combat&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")
-        throw std::runtime_error("Campaign combat supports Fighter, Cleric and Wizard subsets only");
     if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")throw std::runtime_error("Advancement is unsupported for this class");
     const auto races=character_rules()->choices(CreationField::race);
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
@@ -794,7 +792,7 @@ public:
     }
     void validate_character_state(const CharacterSheet& sheet,const VitalState& state) const override
     {
-        Actor actor;actor.definition=character_definition(character_profile(sheet,{}).data,false);
+        Actor actor;actor.definition=character_definition(character_profile(sheet,{}).data);
         actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
     }
     RestPolicy long_rest_policy() const override {return {480,960};}
@@ -805,7 +803,7 @@ public:
         std::vector<Actor> actors;actors.reserve(participants.size());
         for(const auto& p:participants){
             Actor a;a.source=p;
-            a.definition=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile,false);
+            a.definition=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
             a.hp=a.definition.hp;a.winds=a.definition.winds;a.slots=a.definition.slots;a.slots2=a.definition.slots2;
             if(p.state)restore_vitals(a,*p.state);
             actors.push_back(std::move(a));
@@ -821,7 +819,7 @@ public:
     }
     void recover(VitalState& state,const CharacterSheet& sheet) const override
     {
-        const auto d=character_definition(character_profile(sheet,{}).data,false);
+        const auto d=character_definition(character_profile(sheet,{}).data);
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
         actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.successes=actor.failures=0;actor.stable=false;
@@ -829,7 +827,7 @@ public:
     }
     void temple_heal(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
     {
-        const auto d=character_definition(character_profile(sheet,{}).data,false);
+        const auto d=character_definition(character_profile(sheet,{}).data);
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp>=d.hp)throw std::runtime_error("Cure Wounds requires a wounded living member");
         // Authored temple caster: Cure Wounds, Wisdom +3. Same SplitMix64 as combat.
@@ -861,7 +859,7 @@ public:
         std::ostringstream out;out<<"PC3 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
-        const auto data=out.str();const auto d=character_definition(data,false);
+        const auto data=out.str();const auto d=character_definition(data);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
         CharacterProfile result{data,d.hp,d.ac,"Level 1-4 subset: HP, selected feats, supported prepared spells and level-one/two slots. Additional class/subclass and species features remain unavailable.",d.speed,d.melee_bonus};
         result.strength_dexterity_disadvantage=d.str_dex_disadvantage;
