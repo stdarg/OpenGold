@@ -17,6 +17,7 @@
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/scroll_container.hpp>
 #include <godot_cpp/classes/scroll_bar.hpp>
+#include <godot_cpp/classes/v_scroll_bar.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -135,8 +136,9 @@ void CombatView::layout()
     followed_.reset();
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    base_tile_=std::max(left_width/board.width,(height-180)/board.height);
-    board_rect_=Rect2(24,16,left_width,height-180);const double right=width-sidebar-24;
+    const double battlefield_height=(height-180)*.85;
+    base_tile_=std::max(left_width/board.width,battlefield_height/board.height);
+    board_rect_=Rect2(24,16,left_width,battlefield_height);const double right=width-sidebar-24;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
     for(int i=0;i<scroll->get_child_count(true);++i) {
         if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))bar->set_focus_mode(FOCUS_ALL);
@@ -277,6 +279,12 @@ void CombatView::move_selected(Cell direction)
     if(selected==state.combatants.end())return;
     const Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
     const auto offered=demo_->combat().legal_commands();
+    const auto enemy=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.side!=selected->side&&!a.dead&&a.cell==destination;});
+    if(enemy!=state.combatants.end()) {
+        const auto attack=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="melee"&&c.actor==selected_&&c.target==enemy->id;});
+        if(attack!=offered.end())act(*attack);
+        return;
+    }
     const auto move=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="move"&&c.actor==selected_&&c.destination==destination;});
     if(move!=offered.end())act(*move);
 }
@@ -415,7 +423,13 @@ void CombatView::refresh()
     if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
     else for(const auto& entry:s.log)log+=i18n::text(entry)+"\n";
     if(!error_.empty())log+="\n"+i18n::text(error_);
-    get_node<RichTextLabel>("Log")->set_text(log);get_node<RichTextLabel>("Log")->scroll_to_line(0);
+    auto* log_view=get_node<RichTextLabel>("Log");
+    auto* log_scroll=log_view->get_v_scroll_bar();
+    const double previous_scroll=log_scroll->get_value();
+    const bool follow_bottom=previous_scroll>=log_scroll->get_max()-log_scroll->get_page()-2;
+    log_view->set_text(log);
+    if(follow_bottom)log_view->scroll_to_line(std::max(0,log_view->get_line_count()-1));
+    else log_scroll->set_value(previous_scroll);
     get_node<Button>("Continue")->hide();get_node<Button>("End")->hide();
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();

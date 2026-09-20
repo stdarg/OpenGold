@@ -44,6 +44,10 @@ func run_checks() -> void:
     require(ProjectSettings.get_setting("opengold/combat_zoom") == 100, "Combat zoom defaults to 100 in project config")
     require(scroll.size.x > combat.size.x * 0.7, "Battlefield viewport fills the left side")
     require(scroll.position.y == 16, "Battlefield begins at the top of the screen")
+    require(is_equal_approx(scroll.size.y, (combat.size.y - 180) * 0.85),
+        "Battlefield is 15 percent shorter to make room for the combat log")
+    require(combat.get_node("Log").position.y > scroll.position.y + scroll.size.y,
+        "Combat log occupies the space below the battlefield")
     require(not combat.has_node("Title") and not combat.has_node("Subtitle"),
         "Combat header and instruction text are removed from the shared scene")
     require(combat.get_node("ZoomLevel").text == "100%", "Zoom readout shows the initial level")
@@ -154,6 +158,21 @@ func run_checks() -> void:
     base_tile = maxf(alternate_scroll.size.x / 12.0, alternate_scroll.size.y / 9.0)
     require(alternate_canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 3),
         "Combat reads 300% from settings.cfg")
+    var log_view: RichTextLabel = current_scene.get_node("Log")
+    log_view.size.y = 60
+    current_scene.get_node("Move").pressed.emit()
+    await settle()
+    var log_scroll := log_view.get_v_scroll_bar()
+    require(log_scroll.max_value > log_scroll.page, "Combat log can scroll when text exceeds its window")
+    log_view.scroll_to_line(log_view.get_line_count() - 1)
+    current_scene.get_node("Move").pressed.emit()
+    await settle()
+    require(log_scroll.value >= log_scroll.max_value - log_scroll.page - 2,
+        "Combat log follows new text while the player is at the bottom")
+    log_scroll.value = 0
+    current_scene.get_node("Move").pressed.emit()
+    await settle()
+    require(log_scroll.value == 0, "Combat log stays in place after the player scrolls up")
     if had_config:
         var file := FileAccess.open(config_path, FileAccess.WRITE)
         require(file != null, "Restore original config")

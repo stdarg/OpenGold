@@ -41,6 +41,9 @@ actions, **Space** uses an immediate action, **Z** changes spell slot level, and
 destination or target for the selected action. Gray cells block movement and
 sight; brown cells cost extra movement. Occupied squares block movement.
 Each square is 5 feet, including diagonals.
+An arrow aimed at an adjacent enemy makes a melee attack when the selected
+character has an action available. The combat log follows new text until you
+scroll up to read earlier entries.
 
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks

@@ -19,6 +19,8 @@ func check_demo() -> void:
         "Demo uses the header-free campaign combat layout")
     require(combat.get_node("BattlefieldScroll").position.y == 16,
         "Demo battlefield reaches the top of the combat screen")
+    require(is_equal_approx(combat.get_node("BattlefieldScroll").size.y, (combat.size.y - 180) * 0.85),
+        "Demo uses the shorter shared battlefield layout")
     require(combat.get_node("ZoomLevel").text == "100%", "Demo shows the combat zoom level")
     require(combat.get_node("Footer").text.contains("Shift+arrow: diagonal"),
         "Demo explains the combat keyboard controls")
@@ -71,6 +73,11 @@ func check_demo() -> void:
     await create_timer(2.0).timeout
     require(combat.selected_character_cell() == Vector2i(8, 5),
         "Arrow key moves the selected character on their turn")
+    root.push_input(active_key)
+    require(combat.selected_character_cell() == Vector2i(8, 5),
+        "Arrow key attacks the adjacent enemy without moving into its square")
+    require(combat.get_node("Log").text.contains("Dorian Nightwind -> Kobold"),
+        "Arrow key submits a melee attack against the occupied enemy square")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
     print("Combat demo checks passed: ", output)
