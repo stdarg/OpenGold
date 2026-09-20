@@ -7,6 +7,7 @@
 #include "rolf_tour_view.h"
 #include "save_slots.h"
 #include "opengold/campaign_save.h"
+#include "opengold/combat_body_catalog.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -45,9 +46,16 @@ presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& par
     const por::CharacterArt& art,std::optional<CampaignEncounter> encounter={})
 {
     std::vector<CombatArt> images;
-    for(const auto& participant:party->participants())
-        images.push_back({participant.id,art.icon(party->member(participant.id).character.appearance(),false),
-            art.icon(party->member(participant.id).character.appearance(),true)});
+    const auto catalog=por::CombatBodyCatalog::load(std::filesystem::u8path(game_combat_body_file().utf8().get_data()));
+    for(const auto& participant:party->participants()) {
+        const auto& member=party->member(participant.id);
+        auto appearance=member.character.appearance();
+        std::vector<std::string> equipped;
+        for(const auto id:member.equipped)if(const auto item=member.character.inventory().find(id))
+            equipped.push_back(item->get().definition_id);
+        appearance.combat_body=catalog.choose(equipped,appearance.combat_body);
+        images.push_back({participant.id,art.icon(appearance,false),art.icon(appearance,true)});
+    }
     auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");
     auto* combat=Object::cast_to<CombatView>(owned.get());
     if(!combat)throw std::runtime_error("Invalid combat scene");

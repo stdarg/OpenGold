@@ -97,7 +97,8 @@ void CombatView::prepare_combat()
     if(demo_mode){
         const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
         auto characters=srd5::character_rules();
-        auto showcase=make_combat_demo(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())),*characters,directory);
+        auto showcase=make_combat_demo(srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data())),*characters,directory,
+            std::filesystem::u8path(game_combat_body_file().utf8().get_data()));
         campaign_=std::move(showcase.party);
         encounter_=std::move(showcase.encounter);
     }

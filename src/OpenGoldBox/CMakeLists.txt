@@ -73,7 +73,13 @@ foreach(name OpenGoldBoxSplashBackground OpenGoldBoxEngineLettering OpenGoldBoxG
         DEPENDS "${source}" VERBATIM)
     list(APPEND splash_outputs "${output}")
 endforeach()
-add_custom_target(opengoldbox_assets DEPENDS ${portrait_outputs} ${splash_outputs})
+set(combat_body_source "${PROJECT_SOURCE_DIR}/data/art/combat-body-looks.tsv")
+set(combat_body_output "${game_project}/data/art/combat-body-looks.tsv")
+add_custom_command(OUTPUT "${combat_body_output}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${game_project}/data/art"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${combat_body_source}" "${combat_body_output}"
+    DEPENDS "${combat_body_source}" VERBATIM)
+add_custom_target(opengoldbox_assets DEPENDS ${portrait_outputs} ${splash_outputs} "${combat_body_output}")
 
 if(OPENGOLD_BUILD_TESTS)
     add_executable(opengold_combat_sprite_layout_tests "${PROJECT_SOURCE_DIR}/tests/combat_sprite_layout_tests.cpp")
@@ -116,10 +122,14 @@ endif()
 if(WIN32)
     set(package_commands
         COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${game_output}/data/rules/srd-5.2.1"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${game_output}/data/art"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${combat_body_source}" "${game_output}/data/art/combat-body-looks.tsv"
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} "${game_output}")
 else()
     set(package_commands
         COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${export_path}/Contents/Resources/data/rules/srd-5.2.1"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${export_path}/Contents/Resources/data/art"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${combat_body_source}" "${export_path}/Contents/Resources/data/art/combat-body-looks.tsv"
         COMMAND codesign --force --deep --sign - "${export_path}"
         COMMAND "${CMAKE_COMMAND}" "-DAPP_BUNDLE=${export_path}" -P "${CMAKE_CURRENT_SOURCE_DIR}/verify_macos_package.cmake")
 endif()

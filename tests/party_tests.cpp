@@ -1,6 +1,7 @@
 #include "opengold/campaign_party.h"
 #include "opengold/character_creator.h"
 #include "opengold/combat_demo.h"
+#include "opengold/combat_body_catalog.h"
 #include "opengold/rolf_tour.h"
 #include "opengold/srd5.h"
 #include <algorithm>
@@ -15,6 +16,25 @@ using namespace opengold::rules;
 namespace {
 void check(bool value,const char* message){if(!value)throw std::runtime_error(message);}
 template<class F>void rejects(F f){bool rejected=false;try{f();}catch(const std::exception&){rejected=true;}check(rejected,"Operation should reject");}
+void combat_body_assignments()
+{
+    const auto file=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art/combat-body-looks.tsv";
+    const auto saved=por::CombatBodyCatalog::load(file);
+    for(auto look:saved.bodies)check(!por::combat_look_id(look).empty(),"Saved body assignment has a valid look");
+    por::CombatBodyCatalog catalog;
+    catalog.bodies[0]=por::CombatLook::unarmed;
+    catalog.bodies[1]=por::CombatLook::bow;
+    catalog.bodies[4]=por::CombatLook::mace_shield;
+    catalog.bodies[7]=por::CombatLook::mace;
+    catalog.bodies[20]=por::CombatLook::sword_shield;
+    const std::vector<std::string> mace_shield{"mace","shield"},mace{"mace"},bow{"longbow"},sword_shield{"longsword","shield"};
+    check(catalog.choose(mace_shield,31)==4,"Mace and shield select the assigned body");
+    check(catalog.choose(mace,31)==7,"Removing shield changes the body");
+    check(catalog.choose(bow,31)==1,"Bow selects the bow body");
+    check(catalog.choose(sword_shield,31)==20,"Sword and shield select the assigned body");
+    check(catalog.choose({},31)==0,"Unequipped character uses the unarmed body");
+    rejects([]{(void)por::parse_combat_look("invented");});
+}
 std::unique_ptr<RulesModule> module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
 Character character(std::string klass="fighter",std::string name="Ada")
 {
@@ -596,6 +616,6 @@ void original_loot()
 }
 int main()
 {
-    try{goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

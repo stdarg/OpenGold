@@ -19,4 +19,16 @@ inline godot::String game_rules_file()
     return executable_dir.path_join(relative);
 }
 
+inline godot::String game_combat_body_file()
+{
+    constexpr auto relative = "data/art/combat-body-looks.tsv";
+    auto* os = godot::OS::get_singleton();
+    if (os->has_feature("editor"))
+        return godot::ProjectSettings::get_singleton()->globalize_path(godot::String("res://") + relative);
+    const auto executable_dir = os->get_executable_path().get_base_dir();
+    if (os->has_feature("macos"))
+        return executable_dir.get_base_dir().path_join("Resources").path_join(relative);
+    return executable_dir.path_join(relative);
+}
+
 #endif

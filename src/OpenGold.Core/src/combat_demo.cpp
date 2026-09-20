@@ -1,4 +1,5 @@
 #include "opengold/combat_demo.h"
+#include "opengold/combat_body_catalog.h"
 #include "opengold/character_pool.h"
 #include <algorithm>
 #include <array>
@@ -124,11 +125,14 @@ void CombatDemo::encounter(CampaignEncounter encounter,std::uint64_t seed)
 }
 CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
     const CharacterRules& characters,
-    const std::filesystem::path& game_directory)
+    const std::filesystem::path& game_directory,
+    const std::filesystem::path& body_catalog_file)
 {
     if(!rules)throw std::runtime_error("Combat demo requires combat rules");
     auto art=CharacterArt::load(game_directory);
     auto pool=character_pool(characters,art);
+    const auto body_catalog=body_catalog_file.empty()?std::optional<CombatBodyCatalog>{}:
+        std::optional<CombatBodyCatalog>{CombatBodyCatalog::load(body_catalog_file)};
     auto party=std::make_shared<CampaignParty>(std::move(rules));
     CombatDemoSetup result{party,{}};
     result.encounter.field.geometry={12,12,std::vector<std::uint8_t>(144,0)};
@@ -149,7 +153,15 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
             party->purchase(id,item);
             party->equip(id,party->member(id).character.inventory().items().back().id);
         }
-        result.encounter.art.push_back({id,art.icon(found->appearance(),false),art.icon(found->appearance(),true)});
+        auto appearance=found->appearance();
+        if(body_catalog){
+            const auto& member=party->member(id);
+            std::vector<std::string> equipped;
+            for(const auto key:member.equipped)if(const auto item=member.character.inventory().find(key))
+                equipped.push_back(item->get().definition_id);
+            appearance.combat_body=body_catalog->choose(equipped,appearance.combat_body);
+        }
+        result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true)});
     }
     result.encounter.positions.assign(positions.begin(),positions.end());
     const auto kobold=original_icon(game_directory,0);
