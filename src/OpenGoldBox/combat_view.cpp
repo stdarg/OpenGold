@@ -38,8 +38,37 @@ const std::array<std::pair<const char*,const char*>,11> action_buttons{{{"Melee"
     {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
     {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Blindness","blindness"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
 std::string spell_verb(std::string verb,unsigned slot){if(slot==2&&(verb=="magic_missile"||verb=="cure_wounds"||verb=="healing_word"))verb+="_2";return verb;}
+std::optional<Cell> movement_direction(Key key,bool shift)
+{
+    switch(key){
+    case Key::KEY_UP:return shift?Cell{1,-1}:Cell{0,-1};
+    case Key::KEY_RIGHT:return shift?Cell{1,1}:Cell{1,0};
+    case Key::KEY_DOWN:return shift?Cell{-1,1}:Cell{0,1};
+    case Key::KEY_LEFT:return shift?Cell{-1,-1}:Cell{-1,0};
+    case Key::KEY_KP_7:return Cell{-1,-1};
+    case Key::KEY_KP_8:return Cell{0,-1};
+    case Key::KEY_KP_9:return Cell{1,-1};
+    case Key::KEY_KP_4:return Cell{-1,0};
+    case Key::KEY_KP_6:return Cell{1,0};
+    case Key::KEY_KP_1:return Cell{-1,1};
+    case Key::KEY_KP_2:return Cell{0,1};
+    case Key::KEY_KP_3:return Cell{1,1};
+    default:return std::nullopt;
+    }
 }
-void CombatView::_bind_methods(){}
+}
+void CombatView::_bind_methods()
+{
+    ClassDB::bind_method(D_METHOD("selected_character_id"),&CombatView::selected_character_id);
+    ClassDB::bind_method(D_METHOD("selected_character_cell"),&CombatView::selected_character_cell);
+}
+Vector2i CombatView::selected_character_cell() const
+{
+    if(!demo_||!demo_->has_combat())return {-1,-1};
+    const auto state=demo_->combat().snapshot();
+    const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==selected_;});
+    return selected==state.combatants.end()?Vector2i(-1,-1):Vector2i(selected->cell.x,selected->cell.y);
+}
 void CombatView::prepare_combat()
 {
     if(demo_)return;
@@ -95,7 +124,7 @@ void CombatView::_ready()
     try{prepare_combat();layout();refresh();
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
-        get_node<Label>("Footer")->set_text(i18n::text(N_("A: next action | Space: use | Z: spell slot | Enter: end turn | Click a highlighted square to move or target")));
+        get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
         for(const char* name:{"Turn","Roster","Prompt","Help"})get_node<Control>(name)->hide();
         for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End","Continue","React","Decline","Save","Load","Revisit"})get_node<Control>(name)->hide();
     }
@@ -231,6 +260,26 @@ void CombatView::adjust_zoom(int percentage_points)
     // ScrollContainer applies its new child bounds during the layout pass.
     zoom_center_frames_=2;
 }
+void CombatView::select_party(EntityId id)
+{
+    if(!demo_||!demo_->has_combat())return;
+    const auto state=demo_->combat().snapshot();
+    const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==id&&a.side==0;});
+    if(selected==state.combatants.end())return;
+    selected_=id;followed_.reset();center_on(selected->cell);refresh();
+}
+void CombatView::move_selected(Cell direction)
+{
+    if(!demo_||!demo_->has_combat())return;
+    const auto state=demo_->combat().snapshot();
+    if(state.outcome!=Outcome::ongoing||state.actor!=selected_||state.reaction_pending)return;
+    const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
+    if(selected==state.combatants.end())return;
+    const Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
+    const auto offered=demo_->combat().legal_commands();
+    const auto move=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="move"&&c.actor==selected_&&c.destination==destination;});
+    if(move!=offered.end())act(*move);
+}
 void CombatView::immediate(String verb)
 {
     if(!demo_||!demo_->has_combat())return;const auto wanted=std::string(verb.utf8().get_data());
@@ -248,6 +297,9 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
+        if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
+            move_selected(*direction);get_viewport()->set_input_as_handled();return;
+        }
         if(key->get_keycode()==Key::KEY_A){
             std::vector<std::string> actions;
             for(const auto& command:demo_->combat().legal_commands())if(command.verb!="end"&&std::find(actions.begin(),actions.end(),command.verb)==actions.end())actions.push_back(command.verb);
@@ -260,6 +312,9 @@ void CombatView::_input(const Ref<InputEvent>& event)
         if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
         if(key->get_keycode()==Key::KEY_SPACE){
             for(const char* verb:{"second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            const auto offered=demo_->combat().legal_commands();
+            const auto target=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==mode_&&c.target==selected_;});
+            if(target!=offered.end())act(*target);
             get_viewport()->set_input_as_handled();return;
         }
     }
@@ -268,23 +323,6 @@ void CombatView::_input(const Ref<InputEvent>& event)
     }
     if(!demo_->has_combat())return;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
-    if(key.is_valid()&&key->is_pressed()) {
-        bool focused=scroll->has_focus();
-        for(int i=0;i<scroll->get_child_count(true);++i) {
-            if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))focused|=bar->has_focus();
-        }
-        if(focused) {
-            const int step=std::max(1,static_cast<int>(combat_zoom_*base_tile_));
-            switch(key->get_keycode()) {
-            case Key::KEY_LEFT:scroll->set_h_scroll(scroll->get_h_scroll()-step);break;
-            case Key::KEY_RIGHT:scroll->set_h_scroll(scroll->get_h_scroll()+step);break;
-            case Key::KEY_UP:scroll->set_v_scroll(scroll->get_v_scroll()-step);break;
-            case Key::KEY_DOWN:scroll->set_v_scroll(scroll->get_v_scroll()+step);break;
-            default:return;
-            }
-            get_viewport()->set_input_as_handled();return;
-        }
-    }
     const Ref<InputEventMouseMotion> motion=event;
     if(motion.is_valid()&&panning_) {
         if(!motion->get_button_mask().has_flag(MouseButtonMask::MOUSE_BUTTON_MASK_MIDDLE)){panning_=false;return;}
@@ -302,7 +340,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         const double right=get_size().x-382,row_height=(get_size().y-120)/8.0;
         if(local.x>=right&&local.x<right+358&&local.y>=60&&local.y<60+8*row_height){
             const auto slot=static_cast<unsigned>((local.y-60)/row_height);
-            if(const auto id=campaign_->state().slots[slot]){selected_=id;get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();queue_redraw();}
+            if(const auto id=campaign_->state().slots[slot])select_party(id);
             get_viewport()->set_input_as_handled();return;
         }
     }
@@ -316,12 +354,13 @@ void CombatView::_input(const Ref<InputEvent>& event)
         panning_=true;scroll->grab_focus();get_viewport()->set_input_as_handled();return;
     }
     if(defeated()||!mouse->is_pressed()||mouse->get_button_index()!=MouseButton::MOUSE_BUTTON_LEFT)return;
-    const auto s=demo_->combat().snapshot();const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
-    if(current==s.combatants.end()||current->side!=0)return;
+    const auto s=demo_->combat().snapshot();
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    for(const auto& a:s.combatants)if(a.side==0&&a.cell==cell){selected_=a.id;get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();queue_redraw();get_viewport()->set_input_as_handled();return;}
+    for(const auto& a:s.combatants)if(a.side==0&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
+    if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
         if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
@@ -340,8 +379,9 @@ void CombatView::refresh()
         turn+="\n"+(a.status_messages.empty()?i18n::text(a.status):i18n::render(a.status_messages).replace("\n"," | "));
     }
     if(loaded&&s.outcome!=Outcome::ongoing)turn=i18n::text(s.outcome==Outcome::victory?N_("Victory"):N_("Party incapacitated / defeat"));
-    if(player&&followed_&&followed_->first!=s.actor)selected_=s.actor;
+    if(player&&last_actor_&&last_actor_!=s.actor)selected_=s.actor;
     if(!selected_&&player)selected_=s.actor;
+    if(loaded)last_actor_=s.actor;
     get_node<Label>("Turn")->set_text(turn);layout_status();
     String roster;for(const auto& a:s.combatants){
         roster+=String(a.id==s.actor?"> ":"  ")+i18n::format("{id} {name}  {current}/{maximum} HP  AC {ac}\n",
@@ -366,6 +406,10 @@ void CombatView::refresh()
     get_node<Label>("Prompt")->set_text(!error_.empty()?i18n::text(error_):demo_&&demo_->waiting()?i18n::text("Read the encounter text, then Continue."):
         loaded&&s.outcome!=Outcome::ongoing?i18n::text(demo_->status()):s.reaction_pending?i18n::text("Use or decline the opportunity attack."):
         player?i18n::format("Selected: {action}. Click a highlighted square.",{{"action",action}}):i18n::text("Enemy turn"));
+    if(loaded&&s.outcome==Outcome::ongoing&&selected_&&selected_!=s.actor){
+        const auto selected=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
+        if(selected!=s.combatants.end())get_node<Label>("Prompt")->set_text(i18n::format("Selected: {name}. Movement preview; wait for their turn.",{{"name",gs(selected->name)}}));
+    }
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
     if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
@@ -411,7 +455,8 @@ void CombatView::_draw()
             for(int i=0;i<value.length();++i)cursor.x+=font->draw_char(get_canvas_item(),cursor,value.unicode_at(i),size,color);
         };
         line(gs(member.character.sheet().name),top+27,17,Color("e2edf0"));
-        line(gs(member.character.sheet().character_class),top+49,15,Color("a8c1c7"));
+        const auto& sheet=member.character.sheet();
+        line(gs(sheet.character_class).capitalize()+" / "+gs(sheet.race).capitalize()+" / "+gs(sheet.gender).capitalize(),top+49,13,Color("a8c1c7"));
         line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP",top+68,15,Color("efb9bb"));
     }
 }
@@ -429,9 +474,11 @@ void CombatView::draw_battlefield()
         else canvas->draw_rect(cell,Color("172228"),false);
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
-    if(active!=s.combatants.end()&&active->side==0&&selected_==active->id)for(const auto& c:demo_->combat().legal_commands())if(c.verb=="move") {
-        auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
-        canvas->draw_rect(Rect2(Vector2(p.x*tile+1,p.y*tile+1),Vector2(tile-2,tile-2)),Color(1,1,1,.18));
+    const auto selected=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
+    if(selected!=s.combatants.end()){
+        for(const auto p:demo_->combat().movement_reach(selected_))
+            canvas->draw_rect(Rect2(Vector2(p.x*tile+1,p.y*tile+1),Vector2(tile-2,tile-2)),Color(1,1,1,.18));
+        canvas->draw_rect(Rect2(Vector2(selected->cell.x*tile+1,selected->cell.y*tile+1),Vector2(tile-2,tile-2)),Color("e7c484"),false,2.0);
     }
     if(active!=s.combatants.end()&&active->side==0&&mode_!="move")for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&c.target){
         const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});
@@ -464,7 +511,7 @@ void CombatView::_process(double delta)
         if(checking_&&demo_->waiting()){next();return;}
         if(!demo_->has_combat())return;const auto s=demo_->combat().snapshot();
         if(zoom_center_frames_)--zoom_center_frames_;
-        else for(const auto& a:s.combatants)if(a.id==s.actor) {
+        else for(const auto& a:s.combatants)if(a.id==(selected_?selected_:s.actor)) {
             const auto current=std::pair{a.id,a.cell};
             if(followed_!=current){center_on(a.cell);followed_=current;}
         }

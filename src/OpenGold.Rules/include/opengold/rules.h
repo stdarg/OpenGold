@@ -107,6 +107,9 @@ public:
     virtual ~CombatSession() = default;
     [[nodiscard]] virtual Snapshot snapshot() const = 0;
     [[nodiscard]] virtual std::vector<Command> legal_commands() const = 0;
+    // Preview the remaining movement range of a combatant, including one
+    // selected outside its turn. Only legal_commands() can authorize a move.
+    [[nodiscard]] virtual std::vector<Cell> movement_reach(EntityId actor) const = 0;
     virtual bool submit(const Command& command) = 0;
     [[nodiscard]] virtual std::string save() const = 0;
 };

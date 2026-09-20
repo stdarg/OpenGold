@@ -52,6 +52,14 @@ void boundary_tests() {
     check(!srd5::attack_hits(1,100,1)&&srd5::attack_hits(20,-100,40),"Natural attack extremes");
     check(srd5::attack_hits(12,3,15)&&!srd5::attack_hits(11,3,15),"Attack meets ascending AC");
     auto session=hero_first(*module);const auto before=session->save();
+    const auto preview=session->movement_reach(1);
+    const auto legal=session->legal_commands();
+    check(std::count_if(legal.begin(),legal.end(),[](const auto& c){return c.verb=="move";})==preview.size(),
+        "Active movement preview matches legal move count");
+    for(const auto& cell:preview)check(std::any_of(legal.begin(),legal.end(),
+        [&](const auto& c){return c.verb=="move"&&c.destination==cell;}),"Active movement preview uses legal destinations");
+    check(!session->movement_reach(2).empty()&&session->movement_reach(999).empty(),
+        "Off-turn combatants have rules-owned movement previews");
     auto invalid=command(*session,"melee");invalid.actor=999;
     check(!session->submit(invalid)&&session->save()==before,"Invalid actor cannot change state or spend randomness");
     invalid=command(*session,"move",{1,2});invalid.destination={4,4};

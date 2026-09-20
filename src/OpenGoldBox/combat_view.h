@@ -13,6 +13,8 @@ public:
     void _process(double delta) override;
     void _draw() override;
     void _input(const godot::Ref<godot::InputEvent>& event) override;
+    [[nodiscard]] std::int64_t selected_character_id() const {return static_cast<std::int64_t>(selected_);}
+    [[nodiscard]] godot::Vector2i selected_character_cell() const;
     // Prepare while detached so the caller can keep its current screen on failure.
     void prepare_combat();
     void campaign_party(std::shared_ptr<opengold::CampaignParty> party,std::vector<opengold::CombatArt> art) {campaign_=std::move(party);campaign_art_=std::move(art);}
@@ -41,6 +43,7 @@ private:
     std::map<opengold::rules::EntityId,SpriteArt> art_;
     std::map<opengold::rules::EntityId,godot::Ref<godot::Texture2D>> portraits_;
     opengold::rules::EntityId selected_{};
+    opengold::rules::EntityId last_actor_{};
     godot::Rect2 board_rect_;
     double base_tile_{};
     double combat_zoom_{1.0};
@@ -56,6 +59,8 @@ private:
     bool panning_{},check_target_centered_{};
     void layout();void layout_status();void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
+    void select_party(opengold::rules::EntityId id);
+    void move_selected(opengold::rules::Cell direction);
     void spell_slot();
     void adjust_zoom(int percentage_points);
     unsigned spell_slot_{1};

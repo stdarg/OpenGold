@@ -243,6 +243,7 @@ class InvalidInitialSession final : public CombatSession {
 public:
     Snapshot snapshot() const override {return {};}
     std::vector<Command> legal_commands() const override {return {};}
+    std::vector<Cell> movement_reach(EntityId) const override {return {};}
     bool submit(const Command&) override {return false;}
     std::string save() const override {return {};}
 };

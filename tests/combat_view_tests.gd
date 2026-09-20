@@ -22,6 +22,13 @@ func mouse_button(position: Vector2, button: MouseButton, pressed: bool, shift :
     event.shift_pressed = shift
     root.push_input(event)
 
+func movement_key(code: Key, shift := false) -> void:
+    var event := InputEventKey.new()
+    event.keycode = code
+    event.pressed = true
+    event.shift_pressed = shift
+    root.push_input(event)
+
 func run_checks() -> void:
     var config_path := ProjectSettings.globalize_path("res://settings.cfg")
     var had_config := FileAccess.file_exists(config_path)
@@ -53,6 +60,25 @@ func run_checks() -> void:
     require(combat.get_node("Prompt").text != action_before,
         "Keyboard action cycling remains available after removing the action panel")
     combat.get_node("Move").pressed.emit()
+    var origin: Vector2i = combat.selected_character_cell()
+    movement_key(KEY_RIGHT, true)
+    require(combat.selected_character_cell() == origin + Vector2i(1, 1), "Shift+Right rotates to southeast")
+    movement_key(KEY_DOWN, true)
+    require(combat.selected_character_cell() == origin + Vector2i(0, 2), "Shift+Down rotates to southwest")
+    movement_key(KEY_LEFT, true)
+    require(combat.selected_character_cell() == origin + Vector2i(-1, 1), "Shift+Left rotates to northwest")
+    movement_key(KEY_UP, true)
+    require(combat.selected_character_cell() == origin, "Shift+Up rotates to northeast")
+    combat.get_node("Training").pressed.emit()
+    origin = combat.selected_character_cell()
+    movement_key(KEY_KP_1)
+    require(combat.selected_character_cell() == origin + Vector2i(-1, 1), "Numpad 1 moves southwest")
+    movement_key(KEY_KP_3)
+    require(combat.selected_character_cell() == origin + Vector2i(0, 2), "Numpad 3 moves southeast")
+    movement_key(KEY_KP_7)
+    require(combat.selected_character_cell() == origin + Vector2i(-1, 1), "Numpad 7 moves northwest")
+    movement_key(KEY_KP_9)
+    require(combat.selected_character_cell() == origin, "Numpad 9 moves northeast")
     combat.get_node("ZoomIn100").pressed.emit()
     await settle()
     scroll.scroll_horizontal = 120
@@ -78,12 +104,10 @@ func run_checks() -> void:
     var hbar := scroll.get_h_scroll_bar()
     require(hbar.focus_mode == Control.FOCUS_ALL, "Horizontal scrollbar must support keyboard focus")
     hbar.grab_focus()
-    var horizontal_before := scroll.scroll_horizontal
-    var key := InputEventKey.new()
-    key.keycode = KEY_RIGHT
-    key.pressed = true
-    root.push_input(key)
-    require(scroll.scroll_horizontal > horizontal_before, "Focused scrollbar must support arrow keys")
+    var cell_before: Vector2i = combat.selected_character_cell()
+    movement_key(KEY_RIGHT)
+    require(combat.selected_character_cell() == cell_before + Vector2i(1, 0),
+        "Arrow key moves selected character even when a scrollbar has focus")
     scroll.scroll_horizontal = 100000
     scroll.scroll_vertical = 100000
     await settle()

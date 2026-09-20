@@ -180,6 +180,7 @@ public:
     }
     Snapshot snapshot() const override;
     std::vector<Command> legal_commands() const override;
+    std::vector<Cell> movement_reach(EntityId actor) const override;
     bool submit(const Command& command) override;
     std::string save() const override;
     static std::unique_ptr<Session> restore(std::shared_ptr<const Content> content,std::string_view bytes);
@@ -307,15 +308,19 @@ std::vector<Command> Session::legal_commands() const
                 spell("cure_wounds","Cure Wounds",other.source.id);
         }
     }
-    if (a.movement > 0) {
-        // One search yields every legal destination. Re-running Dijkstra for
-        // each cell made legal-command generation quadratic in board size.
-        const auto reachable = movement_grid(a).reachable(a.movement);
-        for (int y = 0; y < board_.height; ++y)
-            for (int x = 0; x < board_.width; ++x)
-                if (reachable.cost_to({x,y})) add(id,"move","Move",0,{x,y});
-    }
+    for(const auto cell:movement_reach(id))add(id,"move","Move",0,cell);
     return commands;
+}
+std::vector<Cell> Session::movement_reach(EntityId id) const
+{
+    std::vector<Cell> cells;
+    if(outcome_!=Outcome::ongoing||pending())return cells;
+    const auto actor=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;});
+    if(actor==actors_.end()||actor->hp<=0||actor->dead||actor->movement<=0)return cells;
+    const auto reachable=movement_grid(*actor).reachable(actor->movement);
+    for(int y=0;y<board_.height;++y)for(int x=0;x<board_.width;++x)
+        if(reachable.cost_to({x,y}))cells.push_back({x,y});
+    return cells;
 }
 void Session::damage(Actor& target,int amount)
 {

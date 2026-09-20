@@ -20,7 +20,7 @@ func check_demo() -> void:
     require(combat.get_node("BattlefieldScroll").position.y == 16,
         "Demo battlefield reaches the top of the combat screen")
     require(combat.get_node("ZoomLevel").text == "100%", "Demo shows the combat zoom level")
-    require(combat.get_node("Footer").text.contains("A: next action"),
+    require(combat.get_node("Footer").text.contains("Shift+arrow: diagonal"),
         "Demo explains the combat keyboard controls")
     require(not combat.get_node("Roster").visible and not combat.get_node("Turn").visible,
         "The upper-right text window is removed")
@@ -40,14 +40,28 @@ func check_demo() -> void:
     root.push_input(click)
     await RenderingServer.frame_post_draw
     var other_selected := root.get_texture().get_image()
-    require(other_selected.get_pixel(1015, 415).r < screenshot.get_pixel(1015, 415).r,
-        "Selecting a different party portrait changes the movement display")
-    click.position = Vector2(1550, 330)
+    require(combat.selected_character_id() == 1 and combat.selected_character_cell() == Vector2i(5, 5),
+        "Selecting the portrait row selects its party character")
+    require(other_selected.get_pixel(1540, 65).r > screenshot.get_pixel(1540, 65).r,
+        "Selected portrait row is visibly highlighted")
+    require(other_selected.get_pixel(1050, 415).r > other_selected.get_pixel(1160, 415).r,
+        "Off-turn portrait selection previews that character's movement range")
+    require(combat.get_node("Log").text.contains("Movement preview"),
+        "Off-turn selection explains why movement is unavailable")
+    var off_turn_key := InputEventKey.new()
+    off_turn_key.keycode = KEY_RIGHT
+    off_turn_key.pressed = true
+    root.push_input(off_turn_key)
+    require(combat.selected_character_cell() == Vector2i(5, 5),
+        "Arrow keys do not bypass the selected character's turn")
+    click.position = Vector2(940, 460)
     root.push_input(click)
     await RenderingServer.frame_post_draw
     screenshot = root.get_texture().get_image()
-    require(screenshot.get_pixel(1015, 415).r > other_selected.get_pixel(1015, 415).r,
-        "Selecting the active hero restores their legal movement squares")
+    require(combat.selected_character_id() == 3 and combat.selected_character_cell() == Vector2i(7, 5),
+        "Selecting the combat sprite selects the same active party character")
+    require(screenshot.get_pixel(1015, 415).r > screenshot.get_pixel(1140, 415).r,
+        "Sprite selection shows the active hero's legal movement squares")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
     print("Combat demo checks passed: ", output)
