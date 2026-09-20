@@ -82,7 +82,7 @@ are prepared in an owned candidate before replacing live campaign state.
 
 ## Persistence and boundaries
 
-- Rules module **0.5.0** writes **OGCOMBAT 4** checkpoints containing source scope,
+- Rules module **0.5.0** writes **OGCOMBAT 5** checkpoints containing source scope,
   elapsed time and each actor's effect collection. The checkpoint byte limit is
   4 MiB; each creature supports at most 128 simultaneous applications. A full
   collection offers no further Blindness command.

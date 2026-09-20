@@ -57,8 +57,9 @@ Campaign format 3 records each confirmed choice and reconstructs the resulting
 sheet through the rules module. Formats 1 and 2 migrate their existing levels
 using the previous default choices. Rules module 0.5.0 accepts the precise
 supported 0.3.0/0.4.0 campaign identities; unrelated content identities still reject.
-Standalone combat checkpoints use version 4 to retain second-level slots,
-per-turn spell/feat usage and timed effects. Old-module combat checkpoints are not migrated.
+Standalone combat checkpoints use version 5 to retain second-level slots,
+per-turn spell/feat usage, timed effects, facing, and pending turn reactions.
+Old-module combat checkpoints are not migrated.
 
 From PowerShell:
 

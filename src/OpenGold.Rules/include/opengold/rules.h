@@ -62,6 +62,7 @@ struct Participant {
     std::string character_profile;
     std::optional<VitalState> state;
     bool surprised{}; // The rules module determines the mechanical effect.
+    bool facing_left{};
 };
 struct Encounter { Battlefield battlefield; std::vector<Participant> participants; std::uint64_t scope{1}; };
 struct Identity {
@@ -75,7 +76,7 @@ struct CombatantView {
     unsigned side{};
     Cell cell;
     int hit_points{}, max_hit_points{}, armor_class{}, initiative{}, movement_feet{};
-    bool action{}, bonus_action{}, reaction{}, conscious{}, dead{};
+    bool action{}, bonus_action{}, reaction{}, conscious{}, dead{}, facing_left{};
     std::string status;
     VitalState persistent;
     std::vector<Message> status_messages;

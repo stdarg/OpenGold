@@ -82,6 +82,13 @@ Vector2i CombatView::selected_character_cell() const
     const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==selected_;});
     return selected==state.combatants.end()?Vector2i(-1,-1):Vector2i(selected->cell.x,selected->cell.y);
 }
+bool CombatView::sprite_facing_left(std::int64_t id) const
+{
+    if(!demo_||!demo_->has_combat())return false;
+    const auto state=demo_->combat().snapshot();
+    const auto actor=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==static_cast<EntityId>(id);});
+    return actor!=state.combatants.end()&&actor->facing_left;
+}
 void CombatView::prepare_combat()
 {
     if(demo_)return;
@@ -248,7 +255,7 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();facing_left_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
+    art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
     const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
     if(std::filesystem::is_directory(directory)){
         for(const auto& file:std::filesystem::directory_iterator(directory)){
@@ -412,10 +419,6 @@ void CombatView::act(const Command& command)
             } else if(command.verb=="ranged")sound=6;
             else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
             if(sound){
-                const auto attacker=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.actor;});
-                const auto target=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
-                if(attacker!=before.combatants.end()&&target!=before.combatants.end()&&target->cell.x!=attacker->cell.x)
-                    facing_left_[command.actor]=target->cell.x<attacker->cell.x;
                 action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);
             }
             bool moved=false,dead=false;
@@ -726,7 +729,7 @@ void CombatView::draw_battlefield()
         }
         if(art_.contains(a.id)) {
             const auto& art=art_.at(a.id);
-            const bool left=facing_left_.contains(a.id)&&facing_left_.at(a.id);
+            const bool left=a.facing_left;
             const bool acting=action_seconds_.contains(a.id)&&art.action.is_valid();
             const bool unconscious=a.hit_points==0;
             const auto texture=unconscious?art.unconscious:left?(acting?art.left_action:art.left_texture):(acting?art.action:art.texture);

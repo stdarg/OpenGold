@@ -72,7 +72,7 @@ struct Actor {
     Definition definition;
     int hp{}, initiative{}, movement{}, winds{}, slots{}, successes{}, failures{},slots2{};
     bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{}, stable{}, dead{};
-    bool spent_slot{},savage_used{};
+    bool spent_slot{},savage_used{},facing_left{};
     detail::EffectState effects;
 };
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
@@ -160,6 +160,11 @@ VitalState vitals(const Actor& a)
 int distance(Cell a,Cell b) { return std::max(std::abs(a.x-b.x),std::abs(a.y-b.y))*5; }
 bool same_command(const Command& a,const Command& b)
 { return a.revision==b.revision && a.actor==b.actor && a.target==b.target && a.verb==b.verb && a.destination==b.destination; }
+bool turns_to_attack(std::string_view verb)
+{
+    return verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="magic_missile"||
+        verb=="magic_missile_2"||verb=="scorching_ray"||verb=="blindness";
+}
 class Session final : public CombatSession {
 public:
     Session(std::shared_ptr<const Content> content,Encounter encounter,std::uint64_t seed,bool restoring=false)
@@ -176,6 +181,7 @@ public:
             sides.insert(p.side);
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
             Actor a; a.definition=d;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;
+            a.facing_left=a.source.facing_left;
             if(a.source.state)restore_vitals(a,*a.source.state);
             a.initiative=roll(20);if(d.str_dex_disadvantage||a.source.surprised)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
             actors_.push_back(std::move(a));
@@ -212,6 +218,9 @@ private:
     std::size_t path_index_{};
     std::vector<EntityId> reactors_;
     std::size_t reactor_index_{};
+    // A turn can provoke reactions after its attack, before the turn advances.
+    // 0 = none, 1 = resume turn, 2 = end turn after reactions.
+    unsigned turn_reaction_state_{};
     const Definition& def(const Actor& a) const {return a.definition;}
     Actor& actor(EntityId id) { return *std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;}); }
     int roll(int sides) {return roll_die(rng_,sides);}
@@ -240,6 +249,7 @@ private:
     void restore_movement(std::istream& input);
     void validate_restored_state() const;
     void validate_pending_movement() const;
+    void validate_pending_turn_reaction() const;
     void restore_log(std::istream& input);
 };
 
@@ -271,7 +281,7 @@ Snapshot Session::snapshot() const
         if(def(a).slots2)status+=" | L2 slots "+std::to_string(a.slots2);
         if(def(a).winds)status+=" | Second Wind "+std::to_string(a.winds);
         s.combatants.push_back({a.source.id,a.source.name,a.source.definition,a.source.side,a.source.cell,
-            a.hp,def(a).hp,def(a).ac,a.initiative,a.movement,a.action,a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,status,vitals(a)});
+            a.hp,def(a).hp,def(a).ac,a.initiative,a.movement,a.action,a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,a.facing_left,status,vitals(a)});
         const auto display=combat_display(a.source.definition);
         auto& view=s.combatants.back();
         if(display.type)view.type_name=display.type;
@@ -362,6 +372,7 @@ void Session::heal(Actor& target,int amount)
 }
 void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_dice)
 {
+    if(target.source.cell.x!=a.source.cell.x)a.facing_left=target.source.cell.x<a.source.cell.x;
     const auto& d=def(a);bool disadvantaged=!spell&&d.str_dex_disadvantage;
     if(ranged) {
         if(!spell&&distance(a.source.cell,target.source.cell)>d.range)disadvantaged=true;
@@ -390,7 +401,7 @@ void Session::update_outcome()
 {
     bool party=false,enemies=false;for(const auto& a:actors_)if(a.hp>0&&!a.dead)(a.source.side==0?party:enemies)=true;
     if(!party||!enemies) {
-        outcome_=!party?Outcome::defeat:Outcome::victory;path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;
+        outcome_=!party?Outcome::defeat:Outcome::victory;path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;turn_reaction_state_=0;
         log(outcome_==Outcome::victory?"Victory.":"The party is incapacitated. Defeat.");
     }
 }
@@ -483,11 +494,37 @@ bool Session::submit(const Command& command)
     auto& a=actor(command.actor);const auto& d=def(a);
     const bool attack_turn=command.verb=="melee"||command.verb=="ranged"||command.verb=="fire_bolt"||
         command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray";
+    std::vector<EntityId> turn_reactors;
+    if(turns_to_attack(command.verb)&&command.target){
+        const auto& target=actor(command.target);
+        if(target.source.cell.x!=a.source.cell.x){
+            const bool new_left=target.source.cell.x<a.source.cell.x;
+            if(new_left!=a.facing_left){
+                const bool old_left=a.facing_left;
+                a.facing_left=new_left;
+                log(a.source.name+(new_left?" turns left.":" turns right."));
+                for(const auto& other:actors_)
+                    if(other.source.side!=a.source.side&&other.hp>0&&other.reaction&&
+                        (old_left?other.source.cell.x<a.source.cell.x:other.source.cell.x>a.source.cell.x)&&
+                        distance(other.source.cell,a.source.cell)<=5&&can_see(other,a))
+                        turn_reactors.push_back(other.source.id);
+            }
+        }
+    }
     const bool second=command.verb.ends_with("_2");
     const auto spend=[&]{if(second||command.verb=="scorching_ray"||command.verb=="blindness")--a.slots2;else --a.slots;a.spent_slot=true;};
     if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
-        ++reactor_index_;update_outcome();if(outcome_==Outcome::ongoing)progress_movement();
+        ++reactor_index_;update_outcome();
+        if(outcome_==Outcome::ongoing&&turn_reaction_state_&&actors_[turn_].hp==0){
+            turn_reaction_state_=0;reactors_.clear();reactor_index_=0;end_turn();
+        }else if(outcome_==Outcome::ongoing&&!pending()){
+            if(turn_reaction_state_){
+                const bool end_after=turn_reaction_state_==2;
+                turn_reaction_state_=0;reactors_.clear();reactor_index_=0;
+                if(end_after)end_turn();
+            }else progress_movement();
+        }
     } else if(command.verb=="move") {
         path_=path_to(a,command.destination);path_index_=0;progress_movement();
     } else if(command.verb=="end")end_turn();
@@ -515,6 +552,10 @@ bool Session::submit(const Command& command)
             spend();for(unsigned ray=0;ray<3&&actor(command.target).hp>0;++ray)attack(a,actor(command.target),true,true,{2,6,0});
         }else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
     }
+    if(!turn_reactors.empty()&&outcome_==Outcome::ongoing){
+        reactors_=std::move(turn_reactors);reactor_index_=0;
+        turn_reaction_state_=attack_turn?2:1;
+    }
     // Revisions are command tickets; zero is reserved for invalid commands.
     // Unsigned wrap is defined, but must skip that reserved value.
     if (++revision_ == 0) revision_ = 1;
@@ -527,17 +568,18 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 4 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 5 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<'\n';
+        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<'\n';
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
     out<<scope_<<' '<<elapsed_ms_<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_){detail::write_effects(out,a.effects);out<<'\n';}
+    out<<turn_reaction_state_<<'\n';
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -553,6 +595,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
           >> actor.dodge >> actor.disengaged >> actor.stable >> actor.dead;
     if (version >= 2) input >> std::quoted(source.character_profile);
     if (version >= 3) input >> actor.slots2 >> actor.spent_slot >> actor.savage_used;
+    if (version >= 5) input >> actor.facing_left;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
@@ -617,7 +660,7 @@ void Session::restore_movement(std::istream& input)
 
 void Session::validate_restored_state() const
 {
-    if (pending() && path_index_ >= path_.size())
+    if (pending() && !turn_reaction_state_ && path_index_ >= path_.size())
         throw std::runtime_error("Reaction without movement");
     const auto& mover = actors_[turn_];
     bool party = false, enemies = false;
@@ -633,9 +676,25 @@ void Session::validate_restored_state() const
     const auto expected = !party ? Outcome::defeat : !enemies ? Outcome::victory : Outcome::ongoing;
     if (outcome_ != expected || (expected == Outcome::ongoing && mover.hp == 0))
         throw std::runtime_error("Invalid checkpoint outcome/turn");
-    if (!pending() && (!path_.empty() || !reactors_.empty()))
+    if (!pending() && (!path_.empty() || !reactors_.empty() || turn_reaction_state_))
         throw std::runtime_error("Unpaused checkpoint movement");
-    if (pending()) validate_pending_movement();
+    if (turn_reaction_state_) validate_pending_turn_reaction();
+    else if (pending()) validate_pending_movement();
+}
+
+void Session::validate_pending_turn_reaction() const
+{
+    const auto& attacker=actors_[turn_];
+    if(!pending()||!path_.empty()||path_index_||attacker.hp<=0||attacker.action)
+        throw std::runtime_error("Invalid pending turn reaction");
+    for(auto i=reactor_index_;i<reactors_.size();++i){
+        const auto found=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==reactors_[i];});
+        const auto& reactor=*found;
+        if(reactor.hp<=0||!reactor.reaction||reactor.source.side==attacker.source.side||
+            (attacker.facing_left?reactor.source.cell.x<=attacker.source.cell.x:reactor.source.cell.x>=attacker.source.cell.x)||
+            distance(reactor.source.cell,attacker.source.cell)>5||!can_see(reactor,attacker))
+            throw std::runtime_error("Invalid pending turn opportunity attack");
+    }
 }
 
 void Session::validate_pending_movement() const
@@ -694,7 +753,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     Identity identity;
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 4 || identity != content->identity)
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 5 || identity != content->identity)
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
     encounter.battlefield = read_checkpoint_board(input);
@@ -727,6 +786,10 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         if(!input||!session->scope_||effects_count!=session->actors_.size())throw std::runtime_error("Invalid checkpoint effect header");
         for(auto& a:session->actors_)a.effects=detail::read_effects(input);
     }
+    if(version>=5){
+        input>>session->turn_reaction_state_;
+        if(!input||session->turn_reaction_state_>2)throw std::runtime_error("Invalid checkpoint turn reaction");
+    }
     session->validate_restored_state();
     input >> std::ws;
     if (!input.eof()) throw std::runtime_error("Trailing checkpoint data");
@@ -741,7 +804,7 @@ public:
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override

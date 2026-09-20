@@ -122,6 +122,10 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 - Grid pathfinding, difficult terrain, blocked occupied cells,
   opaque obstacles and blocked diagonal wall corners. Movement can pause for an
   opportunity attack before leaving reach; Disengage prevents it.
+- The game's facing rule keeps left/right facing across turns and combat checkpoints.
+  Attacking across to the other side turns the sprite and offers an adjacent,
+  visible enemy on the side left behind an opportunity reaction before the
+  attacker's turn advances. The enemy must still have its reaction available.
 - One melee or ranged attack per Attack action, ascending AC, natural 1/20,
   doubled damage dice on critical hits, Dodge and ranged disadvantage from long
   range or an adjacent visible enemy. No hidden dice in the UI or AI.

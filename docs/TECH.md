@@ -103,7 +103,8 @@ rest-completion precision. Effect processing orders simultaneous events by entit
 and application ID so different time-update sizes preserve RNG continuation.
 
 Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
-Combat checkpoint version 4 stores all effect applications and timers; campaign
+Combat checkpoint version 5 stores all effect applications, timers, facing, and
+pending turn reactions; campaign
 version 6 stores the clock, encounter scopes and rules-owned effect state.
 Existing campaign formats 1–5 migrate. See [status effects](STATUS-EFFECTS.md)
 for mechanics, scope, persistence, tests and the existing-scene review fixture.

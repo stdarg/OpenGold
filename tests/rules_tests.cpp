@@ -25,6 +25,10 @@ std::unique_ptr<CombatSession> hero_first(const RulesModule& module,Encounter en
     for(unsigned seed=0;seed<100;++seed){auto session=module.create(encounter,seed);if(session->snapshot().actor==1)return session;}
     throw std::runtime_error("No hero-first seed");
 }
+std::unique_ptr<CombatSession> actor_first(const RulesModule& module,Encounter encounter,EntityId id) {
+    for(unsigned seed=0;seed<100;++seed){auto session=module.create(encounter,seed);if(session->snapshot().actor==id)return session;}
+    throw std::runtime_error("No matching first actor seed");
+}
 std::unique_ptr<CombatSession> hero_first(const RulesModule& module,std::string profile="vanguard") {return hero_first(module,duel(profile));}
 bool offers(const CombatSession& session,std::string_view verb) {
     const auto commands=session.legal_commands();return std::any_of(commands.begin(),commands.end(),[&](const auto& c){return c.verb==verb;});
@@ -90,6 +94,57 @@ void boundary_tests() {
     check(hero->cell==Cell{1,2}&&hero->movement_feet==20,"Difficult terrain costs ten feet");
     session=hero_first(*module);session->submit(command(*session,"disengage"));session->submit(command(*session,"move",{1,2}));
     check(!session->snapshot().reaction_pending,"Disengage prevents opportunity attacks");
+
+    auto flank=duel();
+    flank.participants[1].cell={1,2};
+    flank.participants.push_back({3,"bandit","Right Guard",1,{3,2}});
+    session=hero_first(*module,flank);
+    const auto left_attack=[&](const CombatSession& combat,EntityId target){
+        const auto commands=combat.legal_commands();
+        const auto found=std::find_if(commands.begin(),commands.end(),[&](const auto& c){return c.verb=="melee"&&c.target==target;});
+        check(found!=commands.end(),"Expected left-side melee target");
+        return *found;
+    };
+    check(!unit(*session,1).facing_left,"Combatants initially face right");
+    check(session->submit(left_attack(*session,2)),"Hero attacks to the left");
+    check(unit(*session,1).facing_left&&session->snapshot().reaction_pending&&session->snapshot().actor==3,
+        "Hero turns left and exposes the adjacent enemy on the right");
+    auto turning_checkpoint=session->save();
+    restored=module->restore(turning_checkpoint);
+    check(restored->save()==turning_checkpoint,"Facing and pending turn reaction survive save/load");
+    auto striking=module->restore(turning_checkpoint);
+    check(striking->submit(command(*striking,"opportunity")),"Turning opportunity command accepted");
+    const auto strike_log=striking->snapshot().log;
+    check(std::any_of(strike_log.begin(),strike_log.end(),
+            [](const auto& line){return line.find("Right Guard -> Hero")!=std::string::npos;}),
+        "Right-side enemy makes an opportunity attack on the turning attacker");
+    const auto decline_turn=command(*session,"decline");
+    check(session->submit(decline_turn)&&restored->submit(decline_turn)&&session->save()==restored->save(),
+        "Declining the turning reaction advances the turn deterministically");
+    check(!session->snapshot().reaction_pending&&unit(*session,1).facing_left,
+        "Resolved turn reaction keeps the hero facing the target");
+
+    auto reverse=duel();
+    reverse.participants[0].facing_left=true;
+    reverse.participants.push_back({3,"bandit","Left Guard",1,{1,2}});
+    session=hero_first(*module,reverse);
+    check(session->submit(left_attack(*session,2)),"Hero attacks to the right from a left-facing pose");
+    check(!unit(*session,1).facing_left&&session->snapshot().reaction_pending&&session->snapshot().actor==3,
+        "Turning right exposes the adjacent enemy on the left");
+
+    auto monster_flank=duel();
+    monster_flank.participants[0].cell={1,2};
+    monster_flank.participants[1].cell={2,2};
+    monster_flank.participants.push_back({3,"vanguard","Right Hero",0,{3,2}});
+    session=actor_first(*module,monster_flank,2);
+    check(session->submit(left_attack(*session,1)),"Monster attacks to the left");
+    check(unit(*session,2).facing_left&&session->snapshot().reaction_pending&&session->snapshot().actor==3,
+        "Monster turns left and exposes the adjacent hero on the right");
+    check(session->submit(command(*session,"opportunity")),"Hero opportunity attack on turning monster accepted");
+    const auto hero_reaction_log=session->snapshot().log;
+    check(std::any_of(hero_reaction_log.begin(),hero_reaction_log.end(),
+        [](const auto& line){return line.find("Right Hero -> Bandit")!=std::string::npos;}),
+        "A party character can strike the monster that turns away");
 
     auto a=module->create(duel(),77),b=module->create(duel(),77);
     for(unsigned turns=0;a->snapshot().outcome==Outcome::ongoing;++turns) {
@@ -299,12 +354,19 @@ void checkpoint_validation_tests()
         rejects([&] { (void)module->restore(encode(truncated)); }, "Truncated checkpoint section accepted");
     }
 
+    auto previous = lines;
+    previous[0].replace(9,1,"4");
+    previous.pop_back(); // Version 4 has no pending turn-reaction state.
+    for(std::size_t actor=4;actor<path_header;++actor)
+        previous[actor].resize(previous[actor].find_last_of(' ')); // Version 4 has no facing field.
+    check(module->restore(encode(previous))->save()==checkpoint,"Version 4 checkpoint migrates to facing right");
+
     // Earlier formats omitted the empty character profile (v1), and the
     // second-level slot/feat flags (v1/v2). Their defaults must still round trip.
     for (const unsigned version : {1u,2u}) {
         auto legacy = lines;
         legacy[0].replace(9,1,std::to_string(version));
-        legacy.resize(legacy.size()-3); // v4 scope/clock and two effect collections.
+        legacy.resize(legacy.size()-4); // v4 scope/clock, two effect collections, and v5 turn state.
         for (std::size_t actor = 4; actor < path_header; ++actor) {
             const auto profile = legacy[actor].rfind("\"\"");
             check(profile != std::string::npos, "Expected fixture with no character profile");
