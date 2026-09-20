@@ -23,10 +23,12 @@
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/panel_container.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/style_box_flat.hpp>
 #include <godot_cpp/classes/viewport_texture.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
@@ -35,6 +37,7 @@
 #include <array>
 #include <cmath>
 #include <fstream>
+#include <limits>
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
@@ -94,7 +97,11 @@ void CombatView::prepare_combat()
     else next->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));
     demo_=std::move(next);sync_art();
 }
-void CombatView::_notification(int what){if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();}}
+void CombatView::_notification(int what)
+{
+    if(what==NOTIFICATION_RESIZED&&ready_){layout();queue_redraw();update_hover(get_viewport()->get_mouse_position());}
+    if(what==NOTIFICATION_MOUSE_EXIT&&ready_)get_node<PanelContainer>("HoverInfo")->hide();
+}
 std::filesystem::path CombatView::local_path(const char* path) const
 {return std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(path).utf8().get_data());}
 void CombatView::_ready()
@@ -102,6 +109,12 @@ void CombatView::_ready()
     combat_zoom_=settings::combat_zoom_percent()/100.0;
     i18n::prepare_ui(*this);
     get_node<Control>("BattlefieldScroll/Canvas")->connect("draw",callable_mp(this,&CombatView::draw_battlefield));
+    auto* hover=get_node<PanelContainer>("HoverInfo");
+    hover->set_custom_minimum_size(Vector2(260,88));hover->set_size(Vector2(260,88));
+    Ref<StyleBoxFlat> hover_style;hover_style.instantiate();
+    hover_style->set_bg_color(Color(.06,.09,.12,.97));hover_style->set_border_color(Color(.48,.66,.68));
+    hover_style->set_border_width_all(1);hover_style->set_corner_radius_all(4);hover_style->set_content_margin_all(10);
+    hover->add_theme_stylebox_override("panel",hover_style);
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
@@ -411,6 +424,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(!demo_->has_combat())return;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
     const Ref<InputEventMouseMotion> motion=event;
+    if(motion.is_valid())update_hover(motion->get_position());
     if(motion.is_valid()&&panning_) {
         if(!motion->get_button_mask().has_flag(MouseButtonMask::MOUSE_BUTTON_MASK_MIDDLE)){panning_=false;return;}
         const auto inverse=get_global_transform_with_canvas().affine_inverse();
@@ -453,6 +467,63 @@ void CombatView::_input(const Ref<InputEvent>& event)
         if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
     }
     get_viewport()->set_input_as_handled();
+}
+void CombatView::update_hover(const Vector2& pointer)
+{
+    auto* panel=get_node<PanelContainer>("HoverInfo");
+    panel->hide();
+    if(!demo_||!demo_->has_combat()||panning_)return;
+    const auto local=get_global_transform_with_canvas().affine_inverse().xform(pointer);
+    if(!board_rect_.has_point(local))return;
+    const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(pointer);
+    const Cell cell{static_cast<int>(std::floor(canvas.x/(combat_zoom_*base_tile_))),
+        static_cast<int>(std::floor(canvas.y/(combat_zoom_*base_tile_)))};
+    const auto state=demo_->combat().snapshot();
+    if(!state.battlefield.contains(cell))return;
+    const auto npc=[&](EntityId id)->std::optional<std::reference_wrapper<const PartyMember>>{
+        if(!campaign_)return {};
+        const auto& roster=campaign_->state().roster;
+        const auto member=std::find_if(roster.begin(),roster.end(),[&](const auto& candidate){
+            return candidate.id==id&&!candidate.npc_source.empty();
+        });
+        return member==roster.end()?std::nullopt:std::optional{std::cref(*member)};
+    };
+    const auto found=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& actor){
+        return !actor.dead&&actor.cell==cell&&(actor.side==1||npc(actor.id).has_value());
+    });
+    if(found==state.combatants.end())return;
+    const auto npc_member=npc(found->id);
+    const auto closest=std::min_element(state.combatants.begin(),state.combatants.end(),[&](const auto& a,const auto& b){
+        const auto distance=[&](const CombatantView& target){
+            if(target.side!=0||!target.conscious)return std::numeric_limits<int>::max();
+            return std::max(std::abs(target.cell.x-cell.x),std::abs(target.cell.y-cell.y));
+        };
+        return distance(a)<distance(b);
+    });
+    const bool adjacent=closest!=state.combatants.end()&&closest->side==0&&closest->conscious&&
+        std::max(std::abs(closest->cell.x-cell.x),std::abs(closest->cell.y-cell.y))<=1;
+    const auto& weapon=adjacent||!found->ranged_attack_available?found->melee_weapon:found->ranged_weapon;
+    String type=found->type_name.empty()?gs(found->name):i18n::text(found->type_name);
+    String weapon_name=weapon.empty()?i18n::text("Unspecified"):i18n::text(weapon);
+    if(npc_member){
+        type=gs(found->name)+" ("+i18n::text("NPC")+")";
+        weapon_name=i18n::text("Unarmed");
+        for(const auto id:npc_member->get().equipped)if(const auto item=npc_member->get().character.inventory().find(id)){
+            const auto& key=item->get().definition_id;
+            if(key=="longsword"||key=="shortsword"||key=="short_sword"||key=="dagger"||
+                key=="mace"||key=="quarterstaff"||key=="scimitar"||key=="shortbow"||key=="longbow"){
+                weapon_name=gs(item->get().name);break;
+            }
+        }
+    }
+    get_node<Label>("HoverInfo/Details")->set_text(i18n::format(
+        "{type}\nAC {ac}  HP {hp}/{maximum}\nWeapon: {weapon}",
+        {{"type",type},{"ac",found->armor_class},{"hp",found->hit_points},
+         {"maximum",found->max_hit_points},{"weapon",weapon_name}}));
+    const auto size=panel->get_size();
+    panel->set_position(Vector2(std::clamp(local.x+18.0,0.0,std::max(0.0,static_cast<double>(get_size().x-size.x))),
+        std::clamp(local.y+18.0,0.0,std::max(0.0,static_cast<double>(get_size().y-size.y)))));
+    panel->show();
 }
 void CombatView::refresh()
 {
@@ -516,6 +587,7 @@ void CombatView::refresh()
     get_node<Button>("Continue")->hide();get_node<Button>("End")->hide();
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
+    update_hover(get_viewport()->get_mouse_position());
 }
 void CombatView::center_on(Cell cell)
 {

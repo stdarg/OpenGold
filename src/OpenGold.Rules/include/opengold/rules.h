@@ -80,6 +80,8 @@ struct CombatantView {
     VitalState persistent;
     std::vector<Message> status_messages;
     std::vector<Message> conditions; // Derived display state; mechanics stay in the module.
+    std::string type_name, melee_weapon, ranged_weapon; // Rules-owned combat display data.
+    bool ranged_attack_available{};
 };
 struct Snapshot {
     Identity identity;

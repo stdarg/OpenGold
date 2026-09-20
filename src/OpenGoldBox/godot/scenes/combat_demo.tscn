@@ -98,6 +98,15 @@ focus_mode = 2
 horizontal_scroll_mode = 2
 vertical_scroll_mode = 2
 
+[node name="HoverInfo" type="PanelContainer" parent="."]
+visible = false
+mouse_filter = 2
+z_index = 10
+
+[node name="Details" type="Label" parent="HoverInfo"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+
 [node name="Canvas" type="Control" parent="BattlefieldScroll"]
 mouse_filter = 2
 

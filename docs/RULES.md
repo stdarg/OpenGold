@@ -44,6 +44,10 @@ Each square is 5 feet, including diagonals.
 An arrow aimed at an adjacent enemy makes a melee attack when the selected
 character has an action available. The combat log follows new text until you
 scroll up to read earlier entries.
+Hovering over a monster or NPC shows a tooltip beside the pointer with its
+type, current and maximum HP, AC, and the weapon it would use at its present
+distance from the party. When an encounter has no named weapon, it shows
+`Unspecified` rather than inventing one.
 Melee, ranged, and damaging spell attacks end the attacker's turn and advance
 initiative. A dead combatant displays the original combat skull for one second.
 Attacks show the combatant's original action frame for one second and play the

@@ -71,6 +71,7 @@ private:
     unsigned check_steps_{},completion_frames_{};
     unsigned zoom_center_frames_{};
     void draw_battlefield();
+    void update_hover(const godot::Vector2& pointer);
     void center_on(opengold::rules::Cell cell);
     std::optional<std::pair<opengold::rules::EntityId,opengold::rules::Cell>> followed_;
     bool panning_{},check_target_centered_{};

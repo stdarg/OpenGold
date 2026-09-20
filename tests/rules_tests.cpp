@@ -111,9 +111,13 @@ void mechanics_tests() {
     for(unsigned seed=0;seed<100&&(!checked_kobold||!checked_leader);++seed){
         if(!checked_kobold){auto fight=kobold_rules->create(kobolds,seed);if(fight->snapshot().actor==2){
             check(offers(*fight,"melee")&&!offers(*fight,"ranged"),"Dagger Kobold has no ranged attack");
+            check(unit(*fight,2).type_name=="Kobold"&&unit(*fight,2).melee_weapon=="Dagger"&&
+                !unit(*fight,2).ranged_attack_available,"Kobold hover data follows its melee-only rules");
             check(command(*fight,"melee").label=="Dagger attack","Kobold attack names its visible weapon");checked_kobold=true;}}
         if(!checked_leader){auto fight=kobold_rules->create(leader,seed);if(fight->snapshot().actor==2){
             check(offers(*fight,"melee")&&offers(*fight,"ranged"),"Kobold leader retains bow attack");
+            check(unit(*fight,2).type_name=="Kobold Leader"&&unit(*fight,2).ranged_weapon=="Short bow"&&
+                unit(*fight,2).ranged_attack_available,"Leader hover data follows its short bow rules");
             check(command(*fight,"ranged").label=="Short bow attack","Leader ranged attack names its bow");checked_leader=true;}}
     }
     check(checked_kobold&&checked_leader,"Exercised both Kobold attack profiles");

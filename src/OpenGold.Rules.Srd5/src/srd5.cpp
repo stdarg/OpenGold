@@ -52,6 +52,20 @@ struct Definition {
     bool str_dex_disadvantage{},savage{};
     std::array<int,6> saves{};
 };
+struct CombatDisplay {const char* type;const char* melee;const char* ranged;};
+CombatDisplay combat_display(std::string_view definition)
+{
+    if(definition=="slums-kobold")return {"Kobold","Dagger",nullptr};
+    if(definition=="slums-kobold-leader")return {"Kobold Leader","Short sword","Short bow"};
+    if(definition=="slums-kobold-leader-sword")return {"Kobold Leader","Short sword",nullptr};
+    if(definition=="bandit")return {"Bandit","Scimitar","Light crossbow"};
+    if(definition=="slums-goblin")return {"Goblin Guard","Short sword",nullptr};
+    if(definition=="slums-goblin-leader")return {"Goblin Leader","Short sword",nullptr};
+    if(definition=="slums-orc")return {"Orc",nullptr,nullptr};
+    if(definition=="slums-orc-leader")return {"Orc Leader",nullptr,nullptr};
+    if(definition=="slums-bugbear")return {"Bugbear",nullptr,nullptr};
+    return {nullptr,nullptr,nullptr};
+}
 struct Content { Identity identity; std::vector<Identity> previous_campaign_identities;std::map<std::string,Definition> definitions; };
 struct Actor {
     Participant source;
@@ -258,6 +272,12 @@ Snapshot Session::snapshot() const
         if(def(a).winds)status+=" | Second Wind "+std::to_string(a.winds);
         s.combatants.push_back({a.source.id,a.source.name,a.source.definition,a.source.side,a.source.cell,
             a.hp,def(a).hp,def(a).ac,a.initiative,a.movement,a.action,a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,status,vitals(a)});
+        const auto display=combat_display(a.source.definition);
+        auto& view=s.combatants.back();
+        if(display.type)view.type_name=display.type;
+        if(display.melee)view.melee_weapon=display.melee;
+        if(display.ranged)view.ranged_weapon=display.ranged;
+        view.ranged_attack_available=def(a).range>0;
         auto& messages=s.combatants.back().status_messages;
         messages.push_back({a.dead?"Dead":a.hp==0?(a.stable?"Stable, unconscious":"Unconscious"):a.dodge?"Dodging":"Ready",{}});
         if(def(a).slots)messages.push_back({"Spell slots: {count}",{{"count",std::to_string(a.slots)}}});

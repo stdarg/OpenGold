@@ -1,0 +1,65 @@
+extends SceneTree
+
+func _initialize() -> void:
+    call_deferred("check")
+
+func hover_cell(canvas: Control, tile: float, cell: Vector2) -> void:
+    var motion := InputEventMouseMotion.new()
+    motion.position = canvas.get_global_transform_with_canvas() * ((cell + Vector2(0.5, 0.5)) * tile)
+    root.push_input(motion)
+
+func check() -> void:
+    root.size = Vector2i(1920, 1080)
+    change_scene_to_file("res://scenes/combat_demo.tscn")
+    for frame in range(8):
+        await process_frame
+    var combat := current_scene
+    var canvas: Control = combat.get_node("BattlefieldScroll/Canvas")
+    var tile: float = canvas.custom_minimum_size.x / 12.0
+    var tooltip: PanelContainer = combat.get_node("HoverInfo")
+    hover_cell(canvas, tile, Vector2(6, 4))
+    await process_frame
+    var details: String = combat.get_node("HoverInfo/Details").text
+    if not tooltip.visible or not details.contains("Kobold Leader") or not details.contains("AC 13") \
+            or not details.contains("HP 9/9") or not details.contains("Weapon: Short sword"):
+        push_error("Leader hover omitted its type, AC, HP, or current melee weapon: " + details)
+        quit(1)
+        return
+    await RenderingServer.frame_post_draw
+    var path := ProjectSettings.globalize_path("res://../../../build/checks/combat-hover.png")
+    if root.get_texture().get_image().save_png(path) != OK:
+        push_error("Could not capture combat hover")
+        quit(1)
+        return
+    hover_cell(canvas, tile, Vector2(7, 4))
+    await process_frame
+    details = combat.get_node("HoverInfo/Details").text
+    if not tooltip.visible or not details.contains("Kobold") or not details.contains("AC 12") \
+            or not details.contains("HP 5/5") or not details.contains("Weapon: Dagger"):
+        push_error("Ordinary Kobold hover did not show its dagger: " + details)
+        quit(1)
+        return
+    hover_cell(canvas, tile, Vector2(7, 5))
+    await process_frame
+    if tooltip.visible:
+        push_error("Party sprite incorrectly showed monster tooltip")
+        quit(1)
+        return
+    hover_cell(canvas, tile, Vector2(1, 1))
+    await process_frame
+    if tooltip.visible:
+        push_error("Empty square kept the monster tooltip")
+        quit(1)
+        return
+    combat.get_node("ZoomIn10").emit_signal("pressed")
+    for frame in range(4):
+        await process_frame
+    tile = canvas.custom_minimum_size.x / 12.0
+    hover_cell(canvas, tile, Vector2(6, 4))
+    await process_frame
+    if not tooltip.visible or not combat.get_node("HoverInfo/Details").text.contains("Kobold Leader"):
+        push_error("Hover mapping did not follow battlefield zoom")
+        quit(1)
+        return
+    print("Combat hover checks passed: ", path)
+    quit(0)
