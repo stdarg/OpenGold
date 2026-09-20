@@ -275,7 +275,14 @@ void CombatView::move_selected(Cell direction)
     if(state.outcome!=Outcome::ongoing||state.actor!=selected_||state.reaction_pending)return;
     const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
     if(selected==state.combatants.end())return;
-    const Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
+    Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
+    // An ally can be crossed, but cannot be the end of a move. Keep the
+    // requested direction until the first unoccupied square beyond allies.
+    while(state.battlefield.contains(destination)&&state.battlefield.at(destination)!=1) {
+        const auto occupant=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return !a.dead&&a.cell==destination;});
+        if(occupant==state.combatants.end()||occupant->side!=selected->side)break;
+        destination.x+=direction.x;destination.y+=direction.y;
+    }
     const auto offered=demo_->combat().legal_commands();
     const auto move=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="move"&&c.actor==selected_&&c.destination==destination;});
     if(move!=offered.end())act(*move);

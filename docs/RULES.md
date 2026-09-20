@@ -33,8 +33,9 @@ demos\review-combat.cmd -- --slums
 ```
 
 Select a party sprite or portrait to preview its remaining movement. Arrow keys
-move the selected character one square when it is their turn; Shift rotates an
-arrow clockwise by 45 degrees, and numpad 1/3/7/9 move diagonally. **A** cycles
+move the selected character one square when it is their turn, or to the first
+open square beyond adjacent allies; Shift rotates an arrow clockwise by 45
+degrees, and numpad 1/3/7/9 move diagonally. **A** cycles
 actions, **Space** uses an immediate action, **Z** changes spell slot level, and
 **Enter** ends your turn or continues a dialogue pause. Click a highlighted
 destination or target for the selected action. Gray cells block movement and
