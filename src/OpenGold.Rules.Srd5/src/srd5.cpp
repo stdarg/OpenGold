@@ -233,8 +233,8 @@ detail::MovementGrid Session::movement_grid(const Actor& mover) const
 {
     std::vector<detail::Occupant> occupants;
     for (const auto& other : actors_) {
-        // Unconscious actors still occupy space; corpses do not. Excluding the
-        // mover lets a paused route continue from a cell shared with an ally.
+        // Unconscious actors still occupy space; corpses do not. The mover's
+        // current cell is the path origin, not an obstacle.
         if (!other.dead && other.source.id != mover.source.id)
             occupants.push_back({other.source.cell, other.source.side != mover.source.side});
     }
@@ -603,11 +603,7 @@ void Session::validate_restored_state() const
         for (const auto& other : actors_) {
             if (other.source.id <= actor.source.id || other.hp <= 0 || actor.source.cell != other.source.cell)
                 continue;
-            // A reaction can pause allied transit while the mover shares a
-            // cell with its ally. Conscious actors cannot otherwise overlap.
-            const bool allied_transit = pending() && actor.source.side == other.source.side &&
-                (actor.source.id == mover.source.id || other.source.id == mover.source.id);
-            if (!allied_transit) throw std::runtime_error("Overlapping active checkpoint actors");
+            throw std::runtime_error("Overlapping active checkpoint actors");
         }
     }
     const auto expected = !party ? Outcome::defeat : !enemies ? Outcome::victory : Outcome::ongoing;

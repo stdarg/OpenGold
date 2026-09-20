@@ -32,14 +32,15 @@ set "OPENGOLD_GAME_DIR=C:\Games\POOLRAD"
 demos\review-combat.cmd -- --slums
 ```
 
-Select a party sprite or portrait to preview its remaining movement. Arrow keys
-move the selected character one square when it is their turn, or to the first
-open square beyond adjacent allies; Shift rotates an arrow clockwise by 45
-degrees, and numpad 1/3/7/9 move diagonally. **A** cycles
+Select a party sprite or portrait to see its movement squares when its turn is
+active. The combat log explains when another character has the turn. Arrow keys
+move the selected character one square when it is their turn; Shift rotates an
+arrow clockwise by 45 degrees, and numpad 1/3/7/9 move diagonally. **A** cycles
 actions, **Space** uses an immediate action, **Z** changes spell slot level, and
 **Enter** ends your turn or continues a dialogue pause. Click a highlighted
 destination or target for the selected action. Gray cells block movement and
-sight; brown cells cost extra movement. Each square is 5 feet, including diagonals.
+sight; brown cells cost extra movement. Occupied squares block movement.
+Each square is 5 feet, including diagonals.
 
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks
@@ -84,7 +85,7 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
 - Individual initiative; ties resolve by entity ID. Action, Bonus Action,
   Reaction, movement, and round/turn reset.
-- Grid pathfinding, difficult terrain, allied transit, blocked enemy cells,
+- Grid pathfinding, difficult terrain, blocked occupied cells,
   opaque obstacles and blocked diagonal wall corners. Movement can pause for an
   opportunity attack before leaving reach; Disengage prevents it.
 - One melee or ranged attack per Attack action, ascending AC, natural 1/20,

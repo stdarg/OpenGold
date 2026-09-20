@@ -19,7 +19,7 @@ struct Occupant {
 
 class ReachableCells {
 public:
-    // The origin and occupied cells are transit cells, never destinations.
+    // The origin is a transit cell. Occupied cells block movement.
     [[nodiscard]] std::optional<int> cost_to(rules::Cell destination) const;
     // Excludes the origin, includes the destination. Empty means no legal move.
     [[nodiscard]] std::vector<rules::Cell> path_to(rules::Cell destination) const;

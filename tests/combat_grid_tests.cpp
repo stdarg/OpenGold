@@ -30,8 +30,8 @@ int reference_step(const Battlefield& board, const std::vector<int>& occupants, 
     if (from.x != to.x && from.y != to.y &&
         (board.at({from.x,to.y}) == 1 || board.at({to.x,from.y}) == 1)) return -1;
     const int occupant = occupants[to.y*board.width+to.x];
-    if (occupant == 2) return -1;
-    return occupant == 1 || board.at(to) == 2 ? 10 : 5;
+    if (occupant) return -1;
+    return board.at(to) == 2 ? 10 : 5;
 }
 
 std::vector<int> reference_costs(const Battlefield& board, const std::vector<int>& occupants, Cell origin)
@@ -182,8 +182,13 @@ void boundaries_and_ties()
     board.terrain[4] = 2;
     const std::vector<Occupant> ally{{{1,1},false}};
     grid = MovementGrid(board,{0,1},ally);
-    check(grid.step_cost({0,1},{1,1}) == 10, "Difficult terrain and allied transit do not stack");
-    check(!grid.can_stop_at({1,1}), "Ally can be traversed but not a destination");
+    check(!grid.step_cost({0,1},{1,1}), "Allies block movement even on difficult terrain");
+    check(!grid.can_stop_at({1,1}), "Ally cannot be a destination");
+    const std::vector<Occupant> surrounded{{{0,0},false},{{1,0},false},{{2,0},false},
+        {{0,1},false},{{2,1},false},{{0,2},false},{{1,2},false},{{2,2},false}};
+    const MovementGrid trapped(Battlefield{3,3,std::vector<std::uint8_t>(9)}, {1,1}, surrounded);
+    for(int y=0;y<3;++y)for(int x=0;x<3;++x)
+        check(!trapped.reachable(30).cost_to({x,y}), "Surrounded character has no highlighted moves");
     // Search results and grids own their data; later caller mutations cannot
     // change either a previously computed path or a pending search's geometry.
     const auto reachable = grid.reachable(15);

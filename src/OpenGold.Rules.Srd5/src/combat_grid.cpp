@@ -86,10 +86,8 @@ std::optional<int> MovementGrid::step_cost(Cell from, Cell to) const
     if (dx && dy && (board_.at({from.x, to.y}) == 1 || board_.at({to.x, from.y}) == 1))
         return std::nullopt;
     const auto occupant = occupancy_[index(to)];
-    if (occupant == Occupancy::enemy) return std::nullopt;
-    // Allied transit and difficult terrain each make the step cost 10 feet.
-    // They do not stack. Orthogonal and diagonal steps use the same price.
-    return occupant == Occupancy::ally || board_.at(to) == 2 ? 10 : 5;
+    if (occupant != Occupancy::empty) return std::nullopt;
+    return board_.at(to) == 2 ? 10 : 5;
 }
 
 ReachableCells MovementGrid::reachable(int budget) const

@@ -256,25 +256,24 @@ void checkpoint_validation_tests()
         check(module->restore(encode(legacy))->save() == checkpoint, "Legacy checkpoint defaults changed");
     }
 
-    // A route pauses after spending 15 feet, while crossing an ally's square.
-    // Only its remaining 10 feet may be charged when validating a restore.
+    // A route pauses after spending 10 feet while leaving an enemy's reach.
+    // Only its remaining movement may be charged when validating a restore.
     Battlefield corridor{5,3,std::vector<std::uint8_t>(15,1)};
     for (int x = 0; x < 5; ++x) corridor.terrain[5+x] = 0;
     corridor.terrain[1] = corridor.terrain[2] = 0; // Clear sight from the reactor.
     Encounter encounter{corridor,{{1,"vanguard","Mover",0,{0,1}},
-                                 {2,"bandit","Reactor",1,{1,0}},
-                                 {3,"vanguard","Ally",0,{2,1}}}};
+                                 {2,"bandit","Reactor",1,{1,0}}}};
     session = hero_first(*module,encounter);
-    check(session->submit(command(*session,"move",{4,1})), "Allied transit move accepted");
+    check(session->submit(command(*session,"move",{4,1})), "Clear corridor move accepted");
     check(session->snapshot().reaction_pending && unit(*session,1).cell == Cell{2,1},
-          "Route pauses on allied transit after its prefix");
-    check(unit(*session,1).movement_feet == 15, "Prefix spends normal and allied terrain costs");
+          "Route pauses when leaving the reactor's reach");
+    check(unit(*session,1).movement_feet == 20, "Prefix spends its movement once");
     auto restored = module->restore(session->save());
-    check(restored->save() == session->save(), "Paused allied transit checkpoint restores exactly");
+    check(restored->save() == session->save(), "Paused movement checkpoint restores exactly");
     const auto decline = command(*session,"decline");
     check(session->submit(decline) && restored->submit(decline), "Both routes resume after the reaction");
     check(restored->save() == session->save(), "Restored suffix preserves deterministic continuation");
-    check(unit(*session,1).cell == Cell{4,1} && unit(*session,1).movement_feet == 5,
+    check(unit(*session,1).cell == Cell{4,1} && unit(*session,1).movement_feet == 10,
           "Only the remaining route suffix spends movement after restore");
 }
 void installed() {

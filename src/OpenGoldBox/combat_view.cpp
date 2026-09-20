@@ -275,14 +275,7 @@ void CombatView::move_selected(Cell direction)
     if(state.outcome!=Outcome::ongoing||state.actor!=selected_||state.reaction_pending)return;
     const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
     if(selected==state.combatants.end())return;
-    Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
-    // An ally can be crossed, but cannot be the end of a move. Keep the
-    // requested direction until the first unoccupied square beyond allies.
-    while(state.battlefield.contains(destination)&&state.battlefield.at(destination)!=1) {
-        const auto occupant=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return !a.dead&&a.cell==destination;});
-        if(occupant==state.combatants.end()||occupant->side!=selected->side)break;
-        destination.x+=direction.x;destination.y+=direction.y;
-    }
+    const Cell destination{selected->cell.x+direction.x,selected->cell.y+direction.y};
     const auto offered=demo_->combat().legal_commands();
     const auto move=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="move"&&c.actor==selected_&&c.destination==destination;});
     if(move!=offered.end())act(*move);
@@ -413,9 +406,9 @@ void CombatView::refresh()
     get_node<Label>("Prompt")->set_text(!error_.empty()?i18n::text(error_):demo_&&demo_->waiting()?i18n::text("Read the encounter text, then Continue."):
         loaded&&s.outcome!=Outcome::ongoing?i18n::text(demo_->status()):s.reaction_pending?i18n::text("Use or decline the opportunity attack."):
         player?i18n::format("Selected: {action}. Click a highlighted square.",{{"action",action}}):i18n::text("Enemy turn"));
-    if(loaded&&s.outcome==Outcome::ongoing&&selected_&&selected_!=s.actor){
+    if(loaded&&s.outcome==Outcome::ongoing&&!s.reaction_pending&&selected_&&selected_!=s.actor){
         const auto selected=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
-        if(selected!=s.combatants.end())get_node<Label>("Prompt")->set_text(i18n::format("Selected: {name}. Movement preview; wait for their turn.",{{"name",gs(selected->name)}}));
+        if(selected!=s.combatants.end())get_node<Label>("Prompt")->set_text(i18n::format("It is not {name}'s turn.",{{"name",gs(selected->name)}}));
     }
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
@@ -483,7 +476,7 @@ void CombatView::draw_battlefield()
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     const auto selected=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==selected_&&a.side==0;});
     if(selected!=s.combatants.end()){
-        for(const auto p:demo_->combat().movement_reach(selected_))
+        if(selected_==s.actor)for(const auto p:demo_->combat().movement_reach(selected_))
             canvas->draw_rect(Rect2(Vector2(p.x*tile+1,p.y*tile+1),Vector2(tile-2,tile-2)),Color(1,1,1,.18));
         canvas->draw_rect(Rect2(Vector2(selected->cell.x*tile+1,selected->cell.y*tile+1),Vector2(tile-2,tile-2)),Color("e7c484"),false,2.0);
     }

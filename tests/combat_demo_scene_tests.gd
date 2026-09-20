@@ -44,9 +44,9 @@ func check_demo() -> void:
         "Selecting the portrait row selects its party character")
     require(other_selected.get_pixel(1540, 65).r > screenshot.get_pixel(1540, 65).r,
         "Selected portrait row is visibly highlighted")
-    require(other_selected.get_pixel(1050, 415).r > other_selected.get_pixel(1160, 415).r,
-        "Off-turn portrait selection previews that character's movement range")
-    require(combat.get_node("Log").text.contains("Movement preview"),
+    require(other_selected.get_pixel(1050, 415).r < 0.25,
+        "Off-turn portrait selection shows no movement highlights")
+    require(combat.get_node("Log").text.contains("It is not Liora Hallowgrove's turn."),
         "Off-turn selection explains why movement is unavailable")
     var off_turn_key := InputEventKey.new()
     off_turn_key.keycode = KEY_RIGHT
@@ -62,6 +62,15 @@ func check_demo() -> void:
         "Selecting the combat sprite selects the same active party character")
     require(screenshot.get_pixel(1015, 415).r > screenshot.get_pixel(1140, 415).r,
         "Sprite selection shows the active hero's legal movement squares")
+    var active_key := InputEventKey.new()
+    active_key.keycode = KEY_RIGHT
+    active_key.pressed = true
+    root.push_input(active_key)
+    require(combat.get_node("Log").text.contains("reaction"),
+        "Arrow key starts the selected character's legal move and handles enemy reactions")
+    await create_timer(2.0).timeout
+    require(combat.selected_character_cell() == Vector2i(8, 5),
+        "Arrow key moves the selected character on their turn")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
     print("Combat demo checks passed: ", output)
