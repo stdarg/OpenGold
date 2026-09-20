@@ -15,9 +15,11 @@ func check_demo() -> void:
     for frame in range(8):
         await process_frame
     var combat := current_scene
-    require(combat.get_node("Title").text == "SLUMS / Combat", "Demo uses the campaign combat title")
-    require(combat.get_node("Subtitle").text == "Choose an action, then click its target. Enter ends your turn.",
-        "Demo uses the campaign combat instructions")
+    require(not combat.has_node("Title") and not combat.has_node("Subtitle"),
+        "Demo uses the header-free campaign combat layout")
+    require(combat.get_node("BattlefieldScroll").position.y == 16,
+        "Demo battlefield reaches the top of the combat screen")
+    require(combat.get_node("ZoomLevel").text == "200%", "Demo shows the combat zoom level")
     require(combat.get_node("Footer").text == "Each square is 5 feet. Victory returns your party to exploration.",
         "Demo uses the campaign combat footer")
     require(combat.get_node("Roster").text.contains("Kobold"), "Kobolds appear in the combat roster")

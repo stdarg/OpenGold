@@ -91,8 +91,7 @@ void CombatView::_ready()
     try{prepare_combat();layout();refresh();
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
-        if(encounter_){get_node<Label>("Title")->set_text(i18n::text(N_("SLUMS / Combat")));get_node<Label>("Subtitle")->set_text(i18n::text(N_("Choose an action, then click its target. Enter ends your turn.")));
-            get_node<Label>("Footer")->set_text(i18n::text(N_("Each square is 5 feet. Victory returns your party to exploration.")));}
+        if(encounter_)get_node<Label>("Footer")->set_text(i18n::text(N_("Each square is 5 feet. Victory returns your party to exploration.")));
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -101,8 +100,8 @@ void CombatView::layout()
     followed_.reset();
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    base_tile_=std::min(left_width/board.width,(height-280)/board.height);
-    board_rect_=Rect2(24,116,left_width,height-280);const double right=width-sidebar-24;
+    base_tile_=std::min(left_width/board.width,(height-180)/board.height);
+    board_rect_=Rect2(24,16,left_width,height-180);const double right=width-sidebar-24;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
     for(int i=0;i<scroll->get_child_count(true);++i) {
         if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))bar->set_focus_mode(FOCUS_ALL);
@@ -111,7 +110,6 @@ void CombatView::layout()
     get_node<Control>("BattlefieldScroll/Canvas")->set_custom_minimum_size(Vector2(base_tile_*board.width,base_tile_*board.height)*combat_zoom_);
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
-    place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
     place("Training",Rect2(right,20,112,34));place("Slums",Rect2(right+120,20,112,34));place("Replay",Rect2(right+240,20,118,34));
     place("Turn",Rect2(right,70,sidebar,70));place("Roster",Rect2(right,148,sidebar,160));
     place("Prompt",Rect2(right,318,sidebar,46));
@@ -122,8 +120,10 @@ void CombatView::layout()
     place("Continue",Rect2(right+244,526,114,36));
     place("React",Rect2(right,570,174,36));place("Decline",Rect2(right+184,570,174,36));
     place("Save",Rect2(right,614,112,34));place("Load",Rect2(right+122,614,112,34));place("Revisit",Rect2(right+244,614,114,34));
-    for(unsigned i=0;i<4;++i)place(std::array<const char*,4>{"ZoomOut100","ZoomOut10","ZoomIn10","ZoomIn100"}[i],Rect2(right+i*91,655,85,34));
+    place("ZoomLevel",Rect2(right,655,66,34));
+    for(unsigned i=0;i<4;++i)place(std::array<const char*,4>{"ZoomOut100","ZoomOut10","ZoomIn10","ZoomIn100"}[i],Rect2(right+70+i*72,655,68,34));
     const int zoom_percent=static_cast<int>(std::lround(combat_zoom_*100));
+    get_node<Label>("ZoomLevel")->set_text(String::num_int64(zoom_percent)+"%");
     get_node<Button>("ZoomOut100")->set_disabled(zoom_percent<=10);
     get_node<Button>("ZoomOut10")->set_disabled(zoom_percent<=10);
     get_node<Button>("ZoomIn10")->set_disabled(zoom_percent>=1000);

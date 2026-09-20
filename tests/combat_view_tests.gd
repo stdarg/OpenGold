@@ -36,6 +36,10 @@ func run_checks() -> void:
     var canvas: Control = scroll.get_node("Canvas")
     require(ProjectSettings.get_setting("opengold/combat_zoom") == 200, "Combat zoom defaults to 200 in project config")
     require(scroll.size.x > combat.size.x * 0.7, "Battlefield viewport fills the left side")
+    require(scroll.position.y == 16, "Battlefield begins at the top of the screen")
+    require(not combat.has_node("Title") and not combat.has_node("Subtitle"),
+        "Combat header and instruction text are removed from the shared scene")
+    require(combat.get_node("ZoomLevel").text == "200%", "Zoom readout shows the initial level")
     var base_tile := minf(scroll.size.x / 12.0, scroll.size.y / 9.0)
     require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2),
         "Battlefield uses configured 200% zoom")
@@ -75,7 +79,7 @@ func run_checks() -> void:
     await settle()
     require(scroll.scroll_horizontal <= canvas.size.x and scroll.scroll_vertical <= canvas.size.y, "Scrolling must clamp to battlefield bounds")
     var before := Vector2(scroll.scroll_horizontal, scroll.scroll_vertical)
-    mouse_button(combat.get_node("Title").global_position, MOUSE_BUTTON_WHEEL_UP, true)
+    mouse_button(combat.get_node("Turn").global_position, MOUSE_BUTTON_WHEEL_UP, true)
     require(Vector2(scroll.scroll_horizontal, scroll.scroll_vertical) == before, "Wheel outside battlefield must not pan it")
     root.size = Vector2i(1120, 800)
     await settle()
@@ -86,10 +90,12 @@ func run_checks() -> void:
     await settle()
     require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2.1),
         "+10% button scales the shared battlefield")
+    require(combat.get_node("ZoomLevel").text == "210%", "Zoom readout follows the +10% control")
     combat.get_node("ZoomIn100").pressed.emit()
     await settle()
     require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 3.1),
         "+100% button scales the shared battlefield")
+    require(combat.get_node("ZoomLevel").text == "310%", "Zoom readout follows the +100% control")
     combat.get_node("ZoomOut100").pressed.emit()
     combat.get_node("ZoomOut10").pressed.emit()
     await settle()

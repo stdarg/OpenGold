@@ -8,15 +8,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Title" type="Label" parent="."]
-theme_override_colors/font_color = Color(0.843, 0.706, 0.475, 1)
-theme_override_font_sizes/font_size = 27
-text = "OPENGOLDBOX / Turn-based combat"
-
-[node name="Subtitle" type="Label" parent="."]
-theme_override_font_sizes/font_size = 17
-text = "SRD 5.2.1 / Fixed combat profiles\nChoose an action, then click its target. Enter ends your turn."
-
 [node name="Training" type="Button" parent="."]
 text = "Training"
 [node name="Slums" type="Button" parent="."]
@@ -109,6 +100,11 @@ vertical_scroll_mode = 2
 
 [node name="Canvas" type="Control" parent="BattlefieldScroll"]
 mouse_filter = 2
+
+[node name="ZoomLevel" type="Label" parent="."]
+theme_override_font_sizes/font_size = 17
+vertical_alignment = 1
+text = "200%"
 
 [node name="ZoomOut100" type="Button" parent="."]
 text = "-100%"
