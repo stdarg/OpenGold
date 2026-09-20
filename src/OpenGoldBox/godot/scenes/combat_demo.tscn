@@ -109,3 +109,16 @@ vertical_scroll_mode = 2
 
 [node name="Canvas" type="Control" parent="BattlefieldScroll"]
 mouse_filter = 2
+
+[node name="ZoomOut100" type="Button" parent="."]
+text = "-100%"
+tooltip_text = "Decrease battlefield zoom by 100 percentage points"
+[node name="ZoomOut10" type="Button" parent="."]
+text = "-10%"
+tooltip_text = "Decrease battlefield zoom by 10 percentage points"
+[node name="ZoomIn10" type="Button" parent="."]
+text = "+10%"
+tooltip_text = "Increase battlefield zoom by 10 percentage points"
+[node name="ZoomIn100" type="Button" parent="."]
+text = "+100%"
+tooltip_text = "Increase battlefield zoom by 100 percentage points"

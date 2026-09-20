@@ -80,6 +80,10 @@ void CombatView::_ready()
     get_node<Button>("Revisit")->connect("pressed",callable_mp(this,&CombatView::revisit));
     get_node<Button>("Save")->connect("pressed",callable_mp(this,&CombatView::save_game));
     get_node<Button>("Load")->connect("pressed",callable_mp(this,&CombatView::load_game));
+    get_node<Button>("ZoomOut100")->connect("pressed",callable_mp(this,&CombatView::adjust_zoom).bind(-100));
+    get_node<Button>("ZoomOut10")->connect("pressed",callable_mp(this,&CombatView::adjust_zoom).bind(-10));
+    get_node<Button>("ZoomIn10")->connect("pressed",callable_mp(this,&CombatView::adjust_zoom).bind(10));
+    get_node<Button>("ZoomIn100")->connect("pressed",callable_mp(this,&CombatView::adjust_zoom).bind(100));
     const auto args=OS::get_singleton()->get_cmdline_user_args();checking_=args.has("--combat-check");capture_=args.has("--capture");check_slums_=args.has("--slums");
     party_check_=campaign_&&args.has("--party-check");
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
@@ -97,14 +101,14 @@ void CombatView::layout()
     followed_.reset();
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    const double tile=std::min(left_width/board.width,(height-280)/board.height);
-    board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
+    base_tile_=std::min(left_width/board.width,(height-280)/board.height);
+    board_rect_=Rect2(24,116,left_width,height-280);const double right=width-sidebar-24;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
     for(int i=0;i<scroll->get_child_count(true);++i) {
         if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))bar->set_focus_mode(FOCUS_ALL);
     }
     scroll->set_position(board_rect_.position);scroll->set_size(board_rect_.size);
-    get_node<Control>("BattlefieldScroll/Canvas")->set_custom_minimum_size(board_rect_.size*combat_zoom_);
+    get_node<Control>("BattlefieldScroll/Canvas")->set_custom_minimum_size(Vector2(base_tile_*board.width,base_tile_*board.height)*combat_zoom_);
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
@@ -113,12 +117,18 @@ void CombatView::layout()
     place("Prompt",Rect2(right,318,sidebar,46));
     unsigned index=0;
     for(const char* name:{"Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End"}) {
-        const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,370+row*43,114,36));++index;
+        const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,370+row*39,114,36));++index;
     }
-    place("Continue",Rect2(right+244,370+4*43,114,36));
-    place("React",Rect2(right,590,174,36));place("Decline",Rect2(right+184,590,174,36));
-    place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
-    place("Help",Rect2(right,686,sidebar,height-732));
+    place("Continue",Rect2(right+244,526,114,36));
+    place("React",Rect2(right,570,174,36));place("Decline",Rect2(right+184,570,174,36));
+    place("Save",Rect2(right,614,112,34));place("Load",Rect2(right+122,614,112,34));place("Revisit",Rect2(right+244,614,114,34));
+    for(unsigned i=0;i<4;++i)place(std::array<const char*,4>{"ZoomOut100","ZoomOut10","ZoomIn10","ZoomIn100"}[i],Rect2(right+i*91,655,85,34));
+    const int zoom_percent=static_cast<int>(std::lround(combat_zoom_*100));
+    get_node<Button>("ZoomOut100")->set_disabled(zoom_percent<=10);
+    get_node<Button>("ZoomOut10")->set_disabled(zoom_percent<=10);
+    get_node<Button>("ZoomIn10")->set_disabled(zoom_percent>=1000);
+    get_node<Button>("ZoomIn100")->set_disabled(zoom_percent>=1000);
+    place("Help",Rect2(right,700,sidebar,height-746));
     place("Log",Rect2(24,board_rect_.get_end().y+16,left_width,height-board_rect_.get_end().y-64));
     place("Footer",Rect2(24,height-34,width-48,24));
     layout_status();
@@ -177,6 +187,16 @@ void CombatView::select_mode(String verb)
     mode_=spell_verb(verb.utf8().get_data(),spell_slot_);if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
 }
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
+void CombatView::adjust_zoom(int percentage_points)
+{
+    const int current=static_cast<int>(std::lround(combat_zoom_*100));
+    const int next=std::clamp(current+percentage_points,10,1000);
+    if(next==current)return;
+    combat_zoom_=next/100.0;
+    layout();refresh();
+    // ScrollContainer applies its new child bounds during the layout pass.
+    zoom_center_frames_=2;
+}
 void CombatView::immediate(String verb)
 {
     if(!demo_||!demo_->has_combat())return;const auto wanted=std::string(verb.utf8().get_data());
@@ -204,7 +224,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
             if(auto* bar=Object::cast_to<ScrollBar>(scroll->get_child(i,true)))focused|=bar->has_focus();
         }
         if(focused) {
-            const int step=std::max(1,static_cast<int>(combat_zoom_*board_rect_.size.x/demo_->combat().snapshot().battlefield.width));
+            const int step=std::max(1,static_cast<int>(combat_zoom_*base_tile_));
             switch(key->get_keycode()) {
             case Key::KEY_LEFT:scroll->set_h_scroll(scroll->get_h_scroll()-step);break;
             case Key::KEY_RIGHT:scroll->set_h_scroll(scroll->get_h_scroll()+step);break;
@@ -241,7 +261,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto s=demo_->combat().snapshot();const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0)return;
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
-    const auto relative=canvas/(combat_zoom_*board_rect_.size.x/s.battlefield.width);
+    const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
@@ -296,7 +316,7 @@ void CombatView::refresh()
 void CombatView::center_on(Cell cell)
 {
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
-    const double tile=combat_zoom_*board_rect_.size.x/demo_->combat().snapshot().battlefield.width;
+    const double tile=combat_zoom_*base_tile_;
     scroll->set_h_scroll(static_cast<int>((cell.x+.5)*tile-scroll->get_size().x*.5));
     scroll->set_v_scroll(static_cast<int>((cell.y+.5)*tile-scroll->get_size().y*.5));
 }
@@ -309,7 +329,7 @@ void CombatView::draw_battlefield()
     if(!demo_||!demo_->has_combat())return;
     auto* canvas=get_node<Control>("BattlefieldScroll/Canvas");
     canvas->draw_set_transform(Vector2(),0,Vector2(combat_zoom_,combat_zoom_));
-    const auto s=demo_->combat().snapshot();const double tile=board_rect_.size.x/s.battlefield.width;const auto font=get_theme_default_font();
+    const auto s=demo_->combat().snapshot();const double tile=base_tile_;const auto font=get_theme_default_font();
     for(int y=0;y<s.battlefield.height;++y)for(int x=0;x<s.battlefield.width;++x) {
         const Rect2 cell(Vector2(x*tile,y*tile),Vector2(tile,tile));
         const auto terrain=s.battlefield.at({x,y});canvas->draw_rect(cell,terrain==1?Color("64716d"):terrain==2?Color("665238"):((x+y)%2?Color("29373c"):Color("253137")));
@@ -321,12 +341,6 @@ void CombatView::draw_battlefield()
     if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
         canvas->draw_rect(Rect2(Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,.17));
-    }
-    for(const auto& a:s.combatants) {
-        const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
-        const auto color=a.side==0?Color("79d6d4"):Color("dd9874");
-        canvas->draw_circle(center,tile*.34,a.conscious?color:Color("51595b"));
-        if(a.id==s.actor&&s.outcome==Outcome::ongoing)canvas->draw_arc(center,tile*.42,0,6.283185,32,Color("e6c28a"),2);
     }
     for(const auto index:presentation::combat_sprite_draw_order(s.combatants)) {
         const auto& a=s.combatants[index];
@@ -340,17 +354,10 @@ void CombatView::draw_battlefield()
             const auto number=std::to_string(a.id);
             auto cursor=center+Vector2(-5.5*number.size(),7);
             for(const char digit:number) {
-                canvas->draw_char(font,cursor,gs(std::string(1,digit)),20,Color("142027"));
+                canvas->draw_char(font,cursor,gs(std::string(1,digit)),20,a.side==0?Color("79d6d4"):Color("dd9874"));
                 cursor.x+=11;
             }
         }
-    }
-    // Status bars remain legible above the complete sprite pass.
-    for(const auto& a:s.combatants) {
-        const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
-        const auto color=a.side==0?Color("79d6d4"):Color("dd9874");
-        canvas->draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7,4)),Color("101719"));
-        canvas->draw_rect(Rect2(center+Vector2(-tile*.35,tile*.38),Vector2(tile*.7*a.hit_points/a.max_hit_points,4)),color);
     }
 }
 void CombatView::_process(double delta)
@@ -361,7 +368,8 @@ void CombatView::_process(double delta)
         if(!demo_)return;
         if(checking_&&demo_->waiting()){next();return;}
         if(!demo_->has_combat())return;const auto s=demo_->combat().snapshot();
-        for(const auto& a:s.combatants)if(a.id==s.actor) {
+        if(zoom_center_frames_)--zoom_center_frames_;
+        else for(const auto& a:s.combatants)if(a.id==s.actor) {
             const auto current=std::pair{a.id,a.cell};
             if(followed_!=current){center_on(a.cell);followed_=current;}
         }
@@ -391,7 +399,7 @@ void CombatView::_process(double delta)
                     center_on(target->cell);check_target_centered_=true;
                     return; // ScrollContainer applies the canvas offset during its layout pass.
                 }
-                mouse->set_position(get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().xform(Vector2(target->cell.x+.5,target->cell.y+.5)*(combat_zoom_*board_rect_.size.x/s.battlefield.width)));
+                mouse->set_position(get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().xform(Vector2(target->cell.x+.5,target->cell.y+.5)*(combat_zoom_*base_tile_)));
                 get_viewport()->push_input(mouse,true);
                 if(demo_->combat().snapshot().revision!=s.revision+1)throw std::runtime_error("Action button/target click did not submit command");
                 checked_input_=true;++check_steps_;return;

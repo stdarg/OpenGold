@@ -39,12 +39,14 @@ private:
     };
     std::map<opengold::rules::EntityId,SpriteArt> art_;
     godot::Rect2 board_rect_;
-    double combat_zoom_{2.5};
+    double base_tile_{};
+    double combat_zoom_{2.0};
     std::string mode_{"move"},error_;
     double ai_delay_{};
     bool ready_{},checking_{},capture_{},captured_{},check_slums_{},checked_input_{};
     bool party_check_{},defeat_check_{},expedition_check_{};
     unsigned check_steps_{},completion_frames_{};
+    unsigned zoom_center_frames_{};
     void draw_battlefield();
     void center_on(opengold::rules::Cell cell);
     std::optional<std::pair<opengold::rules::EntityId,opengold::rules::Cell>> followed_;
@@ -52,6 +54,7 @@ private:
     void layout();void layout_status();void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void spell_slot();
+    void adjust_zoom(int percentage_points);
     unsigned spell_slot_{1};
     void training();void slums();void replay();void next();void revisit();void save_game();void load_game();
     std::filesystem::path local_path(const char* path) const;
