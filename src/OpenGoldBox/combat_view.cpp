@@ -6,6 +6,7 @@
 #include "combat_sprite_layout.h"
 #include "opengold/srd5.h"
 #include "opengold/character_art.h"
+#include "opengold/formats.h"
 #include "opengold/save_file.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -32,6 +33,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <fstream>
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
@@ -179,7 +181,7 @@ void CombatView::layout_status()
     const double top=std::max(148.0,double(turn->get_position().y+turn->get_size().y+8));
     roster->set_position(Vector2(turn->get_position().x,top));roster->set_size(Vector2(358,std::max(0.0,308-top)));
 }
-void CombatView::training(){try{error_.clear();demo_->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
+void CombatView::training(){try{error_.clear();demo_->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));sync_art();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::slums()
 {
     try{error_.clear();const auto directory=settings::game_path();
@@ -191,7 +193,24 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();portraits_.clear();terrain_art_.clear();if(!demo_)return;
+    art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();if(!demo_)return;
+    const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
+    if(std::filesystem::is_directory(directory)){
+        for(const auto& file:std::filesystem::directory_iterator(directory)){
+            auto name=file.path().filename().string();
+            for(auto& c:name)if(c>='a'&&c<='z')c-=32;
+            if(name!="COMSPR.DAX")continue;
+            if(std::filesystem::file_size(file.path())>32*1024*1024)throw std::runtime_error("Combat effect archive exceeds limit");
+            std::ifstream input(file.path(),std::ios::binary);
+            std::vector<std::uint8_t> bytes{std::istreambuf_iterator<char>(input),{}};
+            if(input.bad())throw std::runtime_error("Cannot read combat effect art");
+            auto decoded=decode_ega_combat_icon(bytes,11,0);
+            if(!decoded)throw std::runtime_error("Cannot decode original skull combat effect");
+            skull_art_=ImageTexture::create_from_image(presentation::rgba_image(decoded.image));
+            break;
+        }
+        if(skull_art_.is_null())throw std::runtime_error("Original skull combat effect is missing");
+    }
     for(const auto& source:demo_->terrain_art()){
         terrain_art_.push_back(presentation::image_texture(source));
     }
@@ -244,7 +263,7 @@ void CombatView::save_game()
 void CombatView::load_game()
 {
     try{const auto bytes=read_save_file(local_path("user://checks/combat.save"),4*1024*1024);
-        demo_->restore_combat(bytes);error_.clear();refresh();
+        demo_->restore_combat(bytes);sync_art();error_.clear();refresh();
     }catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::select_mode(String verb)
@@ -379,6 +398,10 @@ void CombatView::refresh()
 {
     if(!ready_)return;
     const bool loaded=demo_&&demo_->has_combat();Snapshot s;if(loaded)s=demo_->combat().snapshot();
+    if(loaded)for(const auto& actor:s.combatants){
+        const auto [entry,first_seen]=known_dead_.emplace(actor.id,actor.dead);
+        if(!first_seen){if(actor.dead&&!entry->second)skull_seconds_[actor.id]=1.0;entry->second=actor.dead;}
+    }
     bool player=false;String turn=i18n::text(demo_?demo_->status():N_("Unable to load rules"));
     if(loaded&&s.outcome==Outcome::ongoing)for(const auto& a:s.combatants)if(a.id==s.actor) {
         player=a.side==0;
@@ -501,6 +524,11 @@ void CombatView::draw_battlefield()
     for(const auto index:presentation::combat_sprite_draw_order(s.combatants)) {
         const auto& a=s.combatants[index];
         const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
+        if(a.dead){
+            if(skull_art_.is_valid()&&skull_seconds_.contains(a.id))
+                canvas->draw_texture_rect(skull_art_,Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),false);
+            continue;
+        }
         if(art_.contains(a.id)) {
             const auto& art=art_.at(a.id);
             const auto rect=presentation::combat_sprite_rect(art.texture->get_size(),art.visible,
@@ -520,6 +548,11 @@ void CombatView::_process(double delta)
 {
     if(Engine::get_singleton()->is_editor_hint())return;
     try {
+        for(auto it=skull_seconds_.begin();it!=skull_seconds_.end();){
+            it->second-=delta;
+            if(it->second<=0)it=skull_seconds_.erase(it);else ++it;
+            get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
+        }
         if((checking_||expedition_check_)&&!error_.empty())throw std::runtime_error(error_);
         if(!demo_)return;
         if(checking_&&demo_->waiting()){next();return;}

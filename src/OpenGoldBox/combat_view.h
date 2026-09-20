@@ -41,6 +41,9 @@ private:
         bool goliath{};
     };
     std::map<opengold::rules::EntityId,SpriteArt> art_;
+    godot::Ref<godot::ImageTexture> skull_art_;
+    std::map<opengold::rules::EntityId,bool> known_dead_;
+    std::map<opengold::rules::EntityId,double> skull_seconds_;
     std::map<opengold::rules::EntityId,godot::Ref<godot::Texture2D>> portraits_;
     opengold::rules::EntityId selected_{};
     opengold::rules::EntityId last_actor_{};

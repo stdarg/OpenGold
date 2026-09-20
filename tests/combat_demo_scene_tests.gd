@@ -78,6 +78,8 @@ func check_demo() -> void:
         "Arrow key attacks the adjacent enemy without moving into its square")
     require(combat.get_node("Log").text.contains("Dorian Nightwind -> Kobold"),
         "Arrow key submits a melee attack against the occupied enemy square")
+    require(combat.get_node("Log").text.contains("Kobold 7 turn"),
+        "Attack ends the hero's turn and advances initiative")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
     print("Combat demo checks passed: ", output)

@@ -459,6 +459,8 @@ bool Session::submit(const Command& command)
     const auto offered=legal_commands();
     if(std::none_of(offered.begin(),offered.end(),[&](const auto& c){return same_command(c,command);}))return false;
     auto& a=actor(command.actor);const auto& d=def(a);
+    const bool attack_turn=command.verb=="melee"||command.verb=="ranged"||command.verb=="fire_bolt"||
+        command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray";
     const bool second=command.verb.ends_with("_2");
     const auto spend=[&]{if(second||command.verb=="scorching_ray"||command.verb=="blindness")--a.slots2;else --a.slots;a.spent_slot=true;};
     if(command.verb=="opportunity"||command.verb=="decline") {
@@ -495,7 +497,7 @@ bool Session::submit(const Command& command)
     // Unsigned wrap is defined, but must skip that reserved value.
     if (++revision_ == 0) revision_ = 1;
     update_outcome();
-    if(outcome_==Outcome::ongoing&&!pending()&&actors_[turn_].hp==0)end_turn();
+    if(outcome_==Outcome::ongoing&&!pending()&&(attack_turn||actors_[turn_].hp==0))end_turn();
     if(outcome_!=Outcome::ongoing)advance_turn_time();
     return true;
 }

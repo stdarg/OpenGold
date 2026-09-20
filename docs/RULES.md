@@ -44,6 +44,8 @@ Each square is 5 feet, including diagonals.
 An arrow aimed at an adjacent enemy makes a melee attack when the selected
 character has an action available. The combat log follows new text until you
 scroll up to read earlier entries.
+Melee, ranged, and damaging spell attacks end the attacker's turn and advance
+initiative. A dead combatant displays the original combat skull for one second.
 
 **Restart** resets the selected isolated encounter with seed 42. After Slums
 victory, **Continue** finishes any remaining dialogue, and **Revisit event** checks

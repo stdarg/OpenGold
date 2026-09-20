@@ -65,6 +65,8 @@ void boundary_tests() {
     invalid=command(*session,"move",{1,2});invalid.destination={4,4};
     check(!session->submit(invalid)&&session->save()==before,"Invalid path cannot change state");
     auto attack=command(*session,"melee");check(session->submit(attack),"Melee command");
+    check(session->snapshot().outcome!=Outcome::ongoing||session->snapshot().actor==2,
+        "Melee attack advances unless combat ends");
     const auto after=session->save();check(!session->submit(attack)&&session->save()==after,"Duplicate command rejected atomically");
     for(const auto& c:session->legal_commands())check(c.verb!="melee"&&c.verb!="ranged","Attack consumes the action");
     auto restored=module->restore(after);check(restored->save()==after,"Checkpoint preserves exact module state");
@@ -110,6 +112,8 @@ void mechanics_tests() {
     auto session=hero_first(*module,encounter);
     for(int cast=0;cast<2;++cast) {
         check(session->submit(command(*session,"magic_missile")),"Spell command accepted");
+        check(session->snapshot().outcome!=Outcome::ongoing||session->snapshot().actor!=1,
+            "Damaging spell advances initiative");
         check(!unit(*session,1).action&&unit(*session,1).movement_feet==30,"Spell consumes action, not movement");
         next_round(*session);
     }
@@ -131,8 +135,10 @@ void mechanics_tests() {
     for(unsigned seed=0;seed<500&&!tested;++seed) {
         session=module->create(encounter,seed);if(session->snapshot().actor!=1)continue;
         session->submit(command(*session,"melee"));if(!unit(*session,2).dead)continue;
+        check(session->snapshot().actor!=1,"Lethal attack advances past its actor while combat continues");
         const auto log=session->snapshot().log;
         if(std::none_of(log.begin(),log.end(),[](const auto& line){return line.find("CRITICAL")!=std::string::npos;}))continue;
+        while(session->snapshot().actor!=1)check(session->submit(command(*session,"end")),"Return to hero after the attack turn");
         check(session->submit(command(*session,"move",{3,2})),"Can move onto defeated enemy cell");
         restored=module->restore(session->save());check(restored->save()==session->save(),"Corpse overlap survives checkpoint restore");tested=true;
     }
@@ -142,7 +148,7 @@ void mechanics_tests() {
         encounter=duel(profile);encounter.participants[1]={2,"adept","Enemy caster",1,{8,2}};
         session=hero_first(*module,encounter);session->submit(command(*session,"end"));
         check(session->snapshot().actor==2,"Enemy caster turn");
-        session->submit(command(*session,"magic_missile"));session->submit(command(*session,"end"));
+        session->submit(command(*session,"magic_missile"));
         const auto before=unit(*session,1);check(before.hit_points<before.max_hit_points,"Damage before healing");
         const bool cleric=std::string_view(profile)=="healer";
         session->submit(command(*session,cleric?"cure_wounds":"second_wind"));
