@@ -4,6 +4,7 @@
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/texture2d.hpp>
 #include <map>
 class CombatView : public godot::Control {
     GDCLASS(CombatView,godot::Control)
@@ -38,9 +39,11 @@ private:
         bool goliath{};
     };
     std::map<opengold::rules::EntityId,SpriteArt> art_;
+    std::map<opengold::rules::EntityId,godot::Ref<godot::Texture2D>> portraits_;
+    opengold::rules::EntityId selected_{};
     godot::Rect2 board_rect_;
     double base_tile_{};
-    double combat_zoom_{2.0};
+    double combat_zoom_{1.0};
     std::string mode_{"move"},error_;
     double ai_delay_{};
     bool ready_{},checking_{},capture_{},captured_{},check_slums_{},checked_input_{};

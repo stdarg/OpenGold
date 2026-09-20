@@ -42,7 +42,7 @@ locale/fallback="en"
 
 [opengold]
 
-combat_zoom=200
+combat_zoom=100
 
 [rendering]
 

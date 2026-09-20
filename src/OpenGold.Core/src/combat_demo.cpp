@@ -155,8 +155,8 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
     const auto kobold=original_icon(game_directory,0);
     if(!kobold)throw std::runtime_error("Missing original Kobold combat icon");
     unsigned number=0;
-    for(int y=4;y<=7;++y)for(int x=4;x<=8;++x){
-        if(x>=5&&x<=7&&y>=5&&y<=6)continue;
+    for(int y=4;y<=8;++y)for(int x=4;x<=9;++x){
+        if(x>4&&x<9&&y>4&&y<8)continue;
         const auto id=static_cast<EntityId>(1000+number);
         result.encounter.enemies.push_back({id,"slums-kobold","Kobold "+std::to_string(++number),1,{x,y}});
         result.encounter.positions.push_back({x,y});

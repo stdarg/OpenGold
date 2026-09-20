@@ -54,7 +54,7 @@ void GameLifecycle::request_quit()
 {
     if (quitting_) return;
     quitting_ = true;
-    UtilityFunctions::print("OpenGoldBox: graceful shutdown requested");
+    UtilityFunctions::print("OpenGoldBox: graceful shutdown requested\r");
     // Finish this iteration, then let Godot free the tree and native RAII owners.
     get_tree()->quit(0);
 }

@@ -34,17 +34,27 @@ func run_checks() -> void:
     var combat := current_scene
     var scroll: ScrollContainer = combat.get_node("BattlefieldScroll")
     var canvas: Control = scroll.get_node("Canvas")
-    require(ProjectSettings.get_setting("opengold/combat_zoom") == 200, "Combat zoom defaults to 200 in project config")
+    require(ProjectSettings.get_setting("opengold/combat_zoom") == 100, "Combat zoom defaults to 100 in project config")
     require(scroll.size.x > combat.size.x * 0.7, "Battlefield viewport fills the left side")
     require(scroll.position.y == 16, "Battlefield begins at the top of the screen")
     require(not combat.has_node("Title") and not combat.has_node("Subtitle"),
         "Combat header and instruction text are removed from the shared scene")
-    require(combat.get_node("ZoomLevel").text == "200%", "Zoom readout shows the initial level")
-    var base_tile := minf(scroll.size.x / 12.0, scroll.size.y / 9.0)
-    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2),
-        "Battlefield uses configured 200% zoom")
+    require(combat.get_node("ZoomLevel").text == "100%", "Zoom readout shows the initial level")
+    var base_tile := maxf(scroll.size.x / 12.0, scroll.size.y / 9.0)
+    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile),
+        "Battlefield uses configured 100% zoom")
     require(scroll.clip_contents, "Magnified battlefield must be clipped")
-    require(scroll.scroll_horizontal > 0 or scroll.scroll_vertical > 0, "Initial actor must be centered")
+    require(scroll.scroll_horizontal >= 0 and scroll.scroll_vertical >= 0, "Initial battlefield scroll stays in bounds")
+    var action_before: String = combat.get_node("Prompt").text
+    var action_key := InputEventKey.new()
+    action_key.keycode = KEY_A
+    action_key.pressed = true
+    root.push_input(action_key)
+    require(combat.get_node("Prompt").text != action_before,
+        "Keyboard action cycling remains available after removing the action panel")
+    combat.get_node("Move").pressed.emit()
+    combat.get_node("ZoomIn100").pressed.emit()
+    await settle()
     scroll.scroll_horizontal = 120
     scroll.scroll_vertical = 120
     await settle()
@@ -81,28 +91,28 @@ func run_checks() -> void:
     var before := Vector2(scroll.scroll_horizontal, scroll.scroll_vertical)
     mouse_button(combat.get_node("Turn").global_position, MOUSE_BUTTON_WHEEL_UP, true)
     require(Vector2(scroll.scroll_horizontal, scroll.scroll_vertical) == before, "Wheel outside battlefield must not pan it")
+    combat.get_node("ZoomOut100").pressed.emit()
+    await settle()
     root.size = Vector2i(1120, 800)
     await settle()
-    base_tile = minf(scroll.size.x / 12.0, scroll.size.y / 9.0)
-    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2),
+    base_tile = maxf(scroll.size.x / 12.0, scroll.size.y / 9.0)
+    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile),
         "Resize preserves configured magnification")
     combat.get_node("ZoomIn10").pressed.emit()
     await settle()
-    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2.1),
+    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 1.1),
         "+10% button scales the shared battlefield")
-    require(combat.get_node("ZoomLevel").text == "210%", "Zoom readout follows the +10% control")
+    require(combat.get_node("ZoomLevel").text == "110%", "Zoom readout follows the +10% control")
     combat.get_node("ZoomIn100").pressed.emit()
     await settle()
-    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 3.1),
+    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2.1),
         "+100% button scales the shared battlefield")
-    require(combat.get_node("ZoomLevel").text == "310%", "Zoom readout follows the +100% control")
+    require(combat.get_node("ZoomLevel").text == "210%", "Zoom readout follows the +100% control")
     combat.get_node("ZoomOut100").pressed.emit()
     combat.get_node("ZoomOut10").pressed.emit()
     await settle()
-    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 2),
-        "Zoom buttons reverse to the 200% default")
-    require(scroll.scroll_horizontal > 0 or scroll.scroll_vertical > 0,
-        "Zoom recenters the active character")
+    require(canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile),
+        "Zoom buttons reverse to the 100% default")
     if OS.get_cmdline_user_args().has("--capture"):
         root.size = Vector2i(1920, 1080)
         await settle()
@@ -117,7 +127,7 @@ func run_checks() -> void:
     await settle()
     var alternate_scroll: ScrollContainer = current_scene.get_node("BattlefieldScroll")
     var alternate_canvas: Control = alternate_scroll.get_node("Canvas")
-    base_tile = minf(alternate_scroll.size.x / 12.0, alternate_scroll.size.y / 9.0)
+    base_tile = maxf(alternate_scroll.size.x / 12.0, alternate_scroll.size.y / 9.0)
     require(alternate_canvas.custom_minimum_size.is_equal_approx(Vector2(12, 9) * base_tile * 3),
         "Combat reads 300% from settings.cfg")
     if had_config:

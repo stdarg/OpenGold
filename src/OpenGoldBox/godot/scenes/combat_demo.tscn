@@ -104,7 +104,7 @@ mouse_filter = 2
 [node name="ZoomLevel" type="Label" parent="."]
 theme_override_font_sizes/font_size = 17
 vertical_alignment = 1
-text = "200%"
+text = "100%"
 
 [node name="ZoomOut100" type="Button" parent="."]
 text = "-100%"

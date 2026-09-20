@@ -5,11 +5,14 @@
 #include "combat_view.h"
 #include "combat_sprite_layout.h"
 #include "opengold/srd5.h"
+#include "opengold/character_art.h"
 #include "opengold/save_file.h"
 #include <godot_cpp/classes/button.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/image.hpp>
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/scroll_container.hpp>
@@ -19,6 +22,7 @@
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/viewport_texture.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -91,7 +95,9 @@ void CombatView::_ready()
     try{prepare_combat();layout();refresh();
         get_node<Label>("Help")->set_text(i18n::text(N_("Teal: party | Orange: enemies\nWheel: scroll | Shift+wheel: sideways\nMiddle-drag: pan | Scrollbars: navigate")));
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
-        if(encounter_)get_node<Label>("Footer")->set_text(i18n::text(N_("Each square is 5 feet. Victory returns your party to exploration.")));
+        get_node<Label>("Footer")->set_text(i18n::text(N_("A: next action | Space: use | Z: spell slot | Enter: end turn | Click a highlighted square to move or target")));
+        for(const char* name:{"Turn","Roster","Prompt","Help"})get_node<Control>(name)->hide();
+        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End","Continue","React","Decline","Save","Load","Revisit"})get_node<Control>(name)->hide();
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -100,7 +106,7 @@ void CombatView::layout()
     followed_.reset();
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    base_tile_=std::min(left_width/board.width,(height-180)/board.height);
+    base_tile_=std::max(left_width/board.width,(height-180)/board.height);
     board_rect_=Rect2(24,16,left_width,height-180);const double right=width-sidebar-24;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
     for(int i=0;i<scroll->get_child_count(true);++i) {
@@ -120,8 +126,8 @@ void CombatView::layout()
     place("Continue",Rect2(right+244,526,114,36));
     place("React",Rect2(right,570,174,36));place("Decline",Rect2(right+184,570,174,36));
     place("Save",Rect2(right,614,112,34));place("Load",Rect2(right+122,614,112,34));place("Revisit",Rect2(right+244,614,114,34));
-    place("ZoomLevel",Rect2(right,655,66,34));
-    for(unsigned i=0;i<4;++i)place(std::array<const char*,4>{"ZoomOut100","ZoomOut10","ZoomIn10","ZoomIn100"}[i],Rect2(right+70+i*72,655,68,34));
+    place("ZoomLevel",Rect2(right,16,66,34));
+    for(unsigned i=0;i<4;++i)place(std::array<const char*,4>{"ZoomOut100","ZoomOut10","ZoomIn10","ZoomIn100"}[i],Rect2(right+70+i*72,16,68,34));
     const int zoom_percent=static_cast<int>(std::lround(combat_zoom_*100));
     get_node<Label>("ZoomLevel")->set_text(String::num_int64(zoom_percent)+"%");
     get_node<Button>("ZoomOut100")->set_disabled(zoom_percent<=10);
@@ -154,7 +160,7 @@ void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refres
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::sync_art()
 {
-    art_.clear();terrain_art_.clear();if(!demo_)return;
+    art_.clear();portraits_.clear();terrain_art_.clear();if(!demo_)return;
     for(const auto& source:demo_->terrain_art()){
         terrain_art_.push_back(presentation::image_texture(source));
     }
@@ -168,6 +174,34 @@ void CombatView::sync_art()
         if(campaign_)for(const auto& member:campaign_->state().roster)
             if(member.id==source.entity){goliath=member.character.creation_data().race=="goliath";break;}
         install(source,goliath);
+    }
+    if(campaign_){
+    const auto legacy=por::CharacterArt::load(std::filesystem::u8path(settings::game_path().utf8().get_data()));
+    Ref<JSON> catalog_json;catalog_json.instantiate();
+    Dictionary catalog;
+    if(catalog_json->parse(FileAccess::get_file_as_string("res://bin/portraits/portraits.json"))==OK&&catalog_json->get_data().get_type()==Variant::DICTIONARY)
+        catalog=catalog_json->get_data();
+    for(const auto id:campaign_->state().slots)if(id){
+        const auto& member=campaign_->member(id);
+        std::string filename=member.character.appearance().portrait;
+        if(filename.empty()){
+            int best=-1;
+            for(const auto& key:catalog.keys()){
+                const Dictionary entry=catalog[key];
+                const auto& draft=member.character.creation_data();
+                const int score=4*(String(entry.get("Race","")).to_lower()==gs(draft.race).to_lower())+
+                    2*(String(entry.get("Gender","")).to_lower()==gs(draft.gender).to_lower())+
+                    (String(entry.get("Class","")).to_lower()==gs(draft.character_class).to_lower());
+                if(score>best){best=score;filename=String(key).utf8().get_data();}
+            }
+        }
+        if(!filename.empty()){
+            const Ref<Texture2D> portrait=ResourceLoader::get_singleton()->load(gs("res://bin/portraits/"+filename));
+            if(portrait.is_valid()){portraits_.emplace(id,portrait);continue;}
+        }
+        const auto image=presentation::rgba_image(legacy.portrait(campaign_->member(id).character.appearance()));
+        portraits_.emplace(id,ImageTexture::create_from_image(image));
+    }
     }
 }
 void CombatView::save_game()
@@ -213,6 +247,22 @@ void CombatView::_input(const Ref<InputEvent>& event)
 {
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
+        if(key->get_keycode()==Key::KEY_A){
+            std::vector<std::string> actions;
+            for(const auto& command:demo_->combat().legal_commands())if(command.verb!="end"&&std::find(actions.begin(),actions.end(),command.verb)==actions.end())actions.push_back(command.verb);
+            if(!actions.empty()){
+                const auto current=std::find(actions.begin(),actions.end(),mode_);
+                mode_=actions[current==actions.end()?0:(std::size_t(current-actions.begin())+1)%actions.size()];refresh();
+            }
+            get_viewport()->set_input_as_handled();return;
+        }
+        if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
+        if(key->get_keycode()==Key::KEY_SPACE){
+            for(const char* verb:{"second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            get_viewport()->set_input_as_handled();return;
+        }
+    }
     if(!defeated()&&key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
         if(demo_->waiting())next();else immediate("end");get_viewport()->set_input_as_handled();return;
     }
@@ -248,6 +298,14 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(mouse.is_null())return;
     if(mouse->get_button_index()==MouseButton::MOUSE_BUTTON_MIDDLE&&!mouse->is_pressed()){panning_=false;return;}
     const auto local=get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
+    if(mouse->is_pressed()&&mouse->get_button_index()==MouseButton::MOUSE_BUTTON_LEFT&&campaign_){
+        const double right=get_size().x-382,row_height=(get_size().y-120)/8.0;
+        if(local.x>=right&&local.x<right+358&&local.y>=60&&local.y<60+8*row_height){
+            const auto slot=static_cast<unsigned>((local.y-60)/row_height);
+            if(const auto id=campaign_->state().slots[slot]){selected_=id;get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();queue_redraw();}
+            get_viewport()->set_input_as_handled();return;
+        }
+    }
     // Keep clicks on the scrollbars out of combat targeting.
     if(!board_rect_.has_point(local))return;
     for(int i=0;i<scroll->get_child_count(true);++i) {
@@ -263,6 +321,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
+    for(const auto& a:s.combatants)if(a.side==0&&a.cell==cell){selected_=a.id;get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();queue_redraw();get_viewport()->set_input_as_handled();return;}
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
         if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
@@ -281,6 +340,8 @@ void CombatView::refresh()
         turn+="\n"+(a.status_messages.empty()?i18n::text(a.status):i18n::render(a.status_messages).replace("\n"," | "));
     }
     if(loaded&&s.outcome!=Outcome::ongoing)turn=i18n::text(s.outcome==Outcome::victory?N_("Victory"):N_("Party incapacitated / defeat"));
+    if(player&&followed_&&followed_->first!=s.actor)selected_=s.actor;
+    if(!selected_&&player)selected_=s.actor;
     get_node<Label>("Turn")->set_text(turn);layout_status();
     String roster;for(const auto& a:s.combatants){
         roster+=String(a.id==s.actor?"> ":"  ")+i18n::format("{id} {name}  {current}/{maximum} HP  AC {ac}\n",
@@ -305,11 +366,13 @@ void CombatView::refresh()
     get_node<Label>("Prompt")->set_text(!error_.empty()?i18n::text(error_):demo_&&demo_->waiting()?i18n::text("Read the encounter text, then Continue."):
         loaded&&s.outcome!=Outcome::ongoing?i18n::text(demo_->status()):s.reaction_pending?i18n::text("Use or decline the opportunity attack."):
         player?i18n::format("Selected: {action}. Click a highlighted square.",{{"action",action}}):i18n::text("Enemy turn"));
-    String log=demo_?i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n":String();
+    String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
+    if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
     if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
     else for(const auto& entry:s.log)log+=i18n::text(entry)+"\n";
     if(!error_.empty())log+="\n"+i18n::text(error_);
-    get_node<RichTextLabel>("Log")->set_text(log);get_node<RichTextLabel>("Log")->scroll_to_line(std::max(0,get_node<RichTextLabel>("Log")->get_line_count()-1));
+    get_node<RichTextLabel>("Log")->set_text(log);get_node<RichTextLabel>("Log")->scroll_to_line(0);
+    get_node<Button>("Continue")->hide();get_node<Button>("End")->hide();
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
 }
@@ -323,6 +386,34 @@ void CombatView::center_on(Cell cell)
 void CombatView::_draw()
 {
     draw_rect(Rect2(Vector2(),get_size()),Color("121a20"));draw_rect(board_rect_,Color("202d33"));
+    if(!campaign_||!demo_||!demo_->has_combat())return;
+    const auto snapshot=demo_->combat().snapshot();const auto font=get_theme_default_font();
+    const double right=get_size().x-382,row_height=(get_size().y-120)/8.0;
+    for(unsigned slot=0;slot<8;++slot){
+        const auto id=campaign_->state().slots[slot];const double top=60+slot*row_height;
+        const Rect2 row(right,top,358,row_height-4);
+        draw_rect(row,id&&id==selected_?Color("344950"):Color("1b282e"));
+        if(!id)continue;
+        const auto& member=campaign_->member(id);
+        const auto found=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& c){return c.id==id;});
+        const int hp=found==snapshot.combatants.end()?member.vitals.hit_points:found->hit_points;
+        const int maximum=found==snapshot.combatants.end()?member.character.sheet().hit_points:found->max_hit_points;
+        const double size=std::min(64.0,row_height-18),portrait_y=top+4;
+        const Rect2 image_rect(right+5,portrait_y,size,size);
+        draw_rect(image_rect,Color("10171c"));
+        if(const auto portrait=portraits_.find(id);portrait!=portraits_.end())draw_texture_rect(portrait->second,image_rect,false);
+        else if(const auto sprite=art_.find(id);sprite!=art_.end())draw_texture_rect(sprite->second.texture,image_rect,false);
+        draw_rect(Rect2(right+5,portrait_y+size+2,size,5),Color("37191d"));
+        draw_rect(Rect2(right+5,portrait_y+size+2,size*std::clamp(double(hp)/std::max(1,maximum),0.0,1.0),5),Color("d6444b"));
+        const double text_x=right+82;
+        const auto line=[&](String value,double y,int size,Color color){
+            auto cursor=Vector2(text_x,y);
+            for(int i=0;i<value.length();++i)cursor.x+=font->draw_char(get_canvas_item(),cursor,value.unicode_at(i),size,color);
+        };
+        line(gs(member.character.sheet().name),top+27,17,Color("e2edf0"));
+        line(gs(member.character.sheet().character_class),top+49,15,Color("a8c1c7"));
+        line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP",top+68,15,Color("efb9bb"));
+    }
 }
 void CombatView::draw_battlefield()
 {
@@ -338,9 +429,13 @@ void CombatView::draw_battlefield()
         else canvas->draw_rect(cell,Color("172228"),false);
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
-    if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
+    if(active!=s.combatants.end()&&active->side==0&&selected_==active->id)for(const auto& c:demo_->combat().legal_commands())if(c.verb=="move") {
         auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
-        canvas->draw_rect(Rect2(Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,.17));
+        canvas->draw_rect(Rect2(Vector2(p.x*tile+1,p.y*tile+1),Vector2(tile-2,tile-2)),Color(1,1,1,.18));
+    }
+    if(active!=s.combatants.end()&&active->side==0&&mode_!="move")for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&c.target){
+        const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});
+        if(target!=s.combatants.end())canvas->draw_rect(Rect2(Vector2(target->cell.x*tile+1,target->cell.y*tile+1),Vector2(tile-2,tile-2)),Color(.4,.8,.75,.23));
     }
     for(const auto index:presentation::combat_sprite_draw_order(s.combatants)) {
         const auto& a=s.combatants[index];
