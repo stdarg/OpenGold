@@ -26,6 +26,7 @@ struct CombatBodySelection {
 struct CombatBodyCatalog {
     std::array<std::set<std::string>,32> bodies{};
     std::vector<CombatLookOption> options;
+    std::set<std::string> deleted;
     [[nodiscard]] static CombatBodyCatalog load(const std::filesystem::path& assignments,
         const std::filesystem::path& options_file);
     [[nodiscard]] CombatBodySelection choose(std::span<const CombatEquipment> equipped,unsigned fallback) const;

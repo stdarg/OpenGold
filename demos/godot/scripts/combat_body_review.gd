@@ -5,6 +5,11 @@ const OPTIONS := "res://../../data/art/combat-weapon-options.tsv"
 
 var catalog_path := CATALOG
 var options_path := OPTIONS
+var deleted: Array[String] = []
+var tabs: TabContainer
+var report_lists: Array[VBoxContainer] = []
+var report_filters: Array[LineEdit] = []
+var report_counts: Array[Label] = []
 var loaded := false
 var body_id := 0
 var assignments: Array = []
@@ -55,10 +60,14 @@ func _build_ui() -> void:
     title.text = "Combat body assignments"
     title.add_theme_font_size_override("font_size", 28)
     column.add_child(title)
-    var help := Label.new()
-    help.text = "One original CBODY.DAX body at a time. Four previews show short/tall and ready/action poses. Check every combination this artwork can represent. Each change saves immediately."
-    help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    column.add_child(help)
+    var outer := column
+    tabs = TabContainer.new()
+    tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    outer.add_child(tabs)
+    column = VBoxContainer.new()
+    column.name = "Review & Assign"
+    column.add_theme_constant_override("separation", 8)
+    tabs.add_child(column)
     var nav := HBoxContainer.new()
     column.add_child(nav)
     var previous := Button.new()
@@ -122,9 +131,37 @@ func _build_ui() -> void:
     summary = RichTextLabel.new()
     summary.custom_minimum_size.y = 110
     selection.add_child(summary)
+    for tab_name in ["Unassigned", "Multiple Assignments", "Manage Combinations"]:
+        var page := VBoxContainer.new()
+        page.name = tab_name
+        page.add_theme_constant_override("separation", 10)
+        tabs.add_child(page)
+        var explanation := Label.new()
+        explanation.text = {
+            "Unassigned": "Combinations with no body assigned.",
+            "Multiple Assignments": "Combinations assigned to several bodies. Select a body to review it.",
+            "Manage Combinations": "Delete invalid combinations from every list and all bodies. Changes save immediately."
+        }[tab_name]
+        page.add_child(explanation)
+        var search := LineEdit.new()
+        search.placeholder_text = "Filter combinations"
+        search.text_changed.connect(func(_text): _refresh_reports())
+        page.add_child(search)
+        report_filters.append(search)
+        var count := Label.new()
+        page.add_child(count)
+        report_counts.append(count)
+        var report_scroll := ScrollContainer.new()
+        report_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        report_scroll.follow_focus = true
+        page.add_child(report_scroll)
+        var rows := VBoxContainer.new()
+        rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        report_scroll.add_child(rows)
+        report_lists.append(rows)
     status = Label.new()
     status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    column.add_child(status)
+    outer.add_child(status)
 
 func _load_catalog() -> bool:
     if not FileAccess.file_exists(options_path):
@@ -150,9 +187,16 @@ func _load_catalog() -> bool:
         return false
     assignments.resize(32)
     var seen := {}
+    deleted.clear()
     for line in FileAccess.get_file_as_string(catalog_path).split("\n"):
         if line.is_empty() or line.begins_with("#"): continue
         var fields := line.strip_edges().split("\t")
+        if fields.size() == 2 and fields[0] == "deleted":
+            if not _known(fields[1]) or deleted.has(fields[1]):
+                _fail("Invalid deleted combination: " + line)
+                return false
+            deleted.append(fields[1])
+            continue
         if fields.size() != 2 or not fields[0].is_valid_int():
             _fail("Invalid catalog row: " + line)
             return false
@@ -175,6 +219,8 @@ func _load_catalog() -> bool:
     if seen.size() != 32:
         _fail("Catalog must contain all 32 body IDs.")
         return false
+    for values in assignments:
+        for key in deleted: values.erase(key)
     loaded = true
     return true
 
@@ -207,6 +253,7 @@ func _refresh() -> void:
         var image := _compose(head, body)
         previews[variant].texture = ImageTexture.create_from_image(image)
     _fill_list()
+    _refresh_reports()
 
 func _compose(head: PackedByteArray, body: PackedByteArray) -> Image:
     var pixels := PackedByteArray()
@@ -243,6 +290,7 @@ func _fill_list() -> void:
     if not loaded: return
     var query := filter_box.text.strip_edges().to_lower()
     for i in range(looks.size()):
+        if deleted.has(looks[i][0]): continue
         if not query.is_empty() and not str(looks[i][1]).to_lower().contains(query): continue
         var checkbox := CheckBox.new()
         checkbox.text = looks[i][1]
@@ -251,19 +299,21 @@ func _fill_list() -> void:
         list.add_child(checkbox)
 
 func _toggle(key: String, checked: bool) -> void:
-    if not loaded or not _known(key): return
+    if not loaded or not _known(key) or deleted.has(key): return
     var next: Array = assignments.duplicate(true)
     if checked and not next[body_id].has(key): next[body_id].append(key)
     if not checked: next[body_id].erase(key)
     next[body_id].sort()
-    if not _save(next):
+    if not _save(next, deleted):
         _fill_list()
         return
     assignments = next
     _show_assignments()
+    _refresh_reports()
 
-func _save(next: Array) -> bool:
-    var content := "# v2: CBODY.DAX base ID, then comma-separated combination IDs; unreviewed means no associations.\n"
+func _save(next: Array, next_deleted: Array[String]) -> bool:
+    var content := "# v3: body ID and combination IDs; deleted rows remove invalid combinations.\n"
+    for key in next_deleted: content += "deleted\t%s\n" % key
     for id in range(32):
         content += "%d\t%s\n" % [id, "unreviewed" if next[id].is_empty() else ",".join(next[id])]
     var temporary := catalog_path + ".tmp"
@@ -284,6 +334,81 @@ func _save(next: Array) -> bool:
         return false
     status.text = "Saved " + ProjectSettings.globalize_path(catalog_path) + ". Rebuild the game to package this edit."
     return true
+
+func _bodies_for(key: String) -> Array[int]:
+    var bodies: Array[int] = []
+    for id in range(assignments.size()):
+        if assignments[id].has(key): bodies.append(id)
+    return bodies
+
+func _review_body(id: int) -> void:
+    body_id = id
+    tabs.current_tab = 0
+    _refresh()
+
+func _refresh_reports() -> void:
+    if not loaded: return
+    for report in range(3):
+        var rows := report_lists[report]
+        for child in rows.get_children():
+            rows.remove_child(child)
+            child.queue_free()
+        var query := report_filters[report].text.strip_edges().to_lower()
+        var total := 0
+        var visible := 0
+        for look in looks:
+            var key: String = look[0]
+            if deleted.has(key): continue
+            var bodies := _bodies_for(key)
+            if report == 0 and not bodies.is_empty(): continue
+            if report == 1 and bodies.size() < 2: continue
+            total += 1
+            if not query.is_empty() and not str(look[1]).to_lower().contains(query): continue
+            visible += 1
+            var row := HBoxContainer.new()
+            row.set_meta("combination", key)
+            rows.add_child(row)
+            var label := Label.new()
+            label.text = look[1]
+            label.custom_minimum_size.x = 310
+            row.add_child(label)
+            if report == 1:
+                var body_buttons := HFlowContainer.new()
+                body_buttons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                row.add_child(body_buttons)
+                for id in bodies:
+                    var button := Button.new()
+                    button.text = "Review body %d" % id
+                    button.pressed.connect(func(): _review_body(id))
+                    body_buttons.add_child(button)
+            elif report == 2:
+                var usage := Label.new()
+                usage.text = "1 body" if bodies.size() == 1 else "%d bodies" % bodies.size()
+                usage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+                row.add_child(usage)
+                var button := Button.new()
+                button.text = "Delete combination"
+                button.pressed.connect(func(): _delete_combination(key))
+                row.add_child(button)
+        report_counts[report].text = "%d of %d combinations" % [visible, total]
+        if visible == 0:
+            var empty := Label.new()
+            empty.text = "No matching combinations." if total > 0 else "No combinations in this list."
+            rows.add_child(empty)
+
+func _delete_combination(key: String) -> void:
+    if not loaded or not _known(key) or deleted.has(key): return
+    var next: Array = assignments.duplicate(true)
+    for values in next: values.erase(key)
+    var next_deleted: Array[String] = deleted.duplicate()
+    next_deleted.append(key)
+    next_deleted.sort()
+    if not _save(next, next_deleted): return
+    assignments = next
+    deleted = next_deleted
+    _show_assignments()
+    _fill_list()
+    _refresh_reports()
 
 func _fail(message: String) -> void:
     status.text = message

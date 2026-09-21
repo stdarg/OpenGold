@@ -14,9 +14,22 @@ checklist; the summary always lists all assignments for the current body.
 An empty assignment is visibly Unreviewed. Original game files are decoded
 locally and are not distributed.
 
+## Review tabs
+
+- **Review & Assign**: the body previews, navigation and assignment checklist.
+- **Unassigned**: combinations with no assigned body.
+- **Multiple Assignments**: combinations assigned to more than one body, with
+  a review button for each matching body.
+- **Manage Combinations**: delete invalid combinations, such as Two-Handed Sword
+  & Shield. Deleting removes that combination from all lists and every body;
+  it does not delete the plain Two-Handed Sword combination.
+
+Each list has its own filter. Counts and reports update after every edit.
+Deletion saves immediately, together with the updated body assignments.
+
 ## Shared catalog
 
-`data/art/combat-body-looks.tsv` has 32 rows: body ID, a tab, then comma-separated
+`data/art/combat-body-looks.tsv` has 32 body rows: body ID, a tab, then comma-separated
 combination IDs (or `unreviewed`). For example:
 
 ```text
@@ -35,6 +48,11 @@ The original bow body 1 has been visually inspected in both poses and sizes
 and shared between the bow options. Other existing assignments are retained;
 unclassified bodies remain unreviewed. These are editable art classifications,
 not changes to equipment rules.
+
+Version 3 also stores `deleted` rows, for example `deleted<TAB>type_38_shield`.
+These persist removal of individual combinations without changing the weapon
+options or equipment rules. The reviewer and native loader both exclude these
+combinations. Older catalogs without deleted rows still load unchanged.
 
 ## Game use
 

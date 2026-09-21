@@ -108,6 +108,11 @@ func run_checks() -> void:
             require(preview.get_global_rect().end.y <= root.size.y, "All previews fit launcher window")
         await RenderingServer.frame_post_draw
         require(root.get_texture().get_image().save_png("res://../../build/combat-body-checklist.png") == OK, "Visual capture saved")
+        for tab in range(1, 4):
+            view.tabs.current_tab = tab
+            await settle()
+            await RenderingServer.frame_post_draw
+            require(root.get_texture().get_image().save_png("res://../../build/combat-body-tab-%d.png" % tab) == OK, "Tab capture saved")
         view.queue_free()
         await settle()
         quit(0)
@@ -148,6 +153,47 @@ func run_checks() -> void:
     view._toggle("type_43", false)
     view._toggle("type_44", false)
     require(view.assignment.text.contains("Unreviewed"), "Empty body visibly unreviewed")
+    require(view.tabs.get_tab_count() == 4, "Four reviewer tabs")
+    view._toggle("type_38_shield", true)
+    view._toggle("type_38", true)
+    view._step(1)
+    view._toggle("type_38_shield", true)
+    view.report_filters[0].text = "Two-Handed"
+    view.report_filters[1].text = "Two-Handed"
+    view.report_filters[2].text = "Two-Handed"
+    view._refresh_reports()
+    require(view.report_counts[0].text == "0 of 93 combinations", "Assigned combinations disappear from unassigned list")
+    require(view.report_lists[1].get_child_count() == 1, "Only duplicate combination is listed")
+    var row: HBoxContainer = view.report_lists[1].get_child(0)
+    require(row.get_meta("combination") == "type_38_shield", "Duplicate report identifies complete combination")
+    require(row.get_child(1).get_child_count() == 2, "Both matching bodies have review buttons")
+    view.tabs.current_tab = 2
+    row.get_child(1).get_child(0).pressed.emit()
+    require(view.tabs.current_tab == 0 and view.body_id == 1, "Body link opens correct review previews")
+    view.tabs.current_tab = 3
+    view.report_lists[2].get_child(1).get_child(2).pressed.emit()
+    require(view.deleted.has("type_38_shield"), "Delete button removes combination")
+    require(view._bodies_for("type_38_shield").is_empty(), "Deletion removes every association")
+    require(view.assignments[1].has("type_38"), "Plain weapon survives shield combination deletion")
+    require(view.report_counts[1].text.begins_with("0 of 0"), "Duplicate report refreshes after deletion")
+    require(view.report_lists[2].get_child_count() == 1, "Deleted combination removed from management list")
+    view.filter_box.text = "Two-Handed"
+    view._fill_list()
+    require(view.list.get_child_count() == 1, "Deleted combination removed from assignment checklist")
+    view.queue_free()
+    await settle()
+    view = reviewer(path)
+    await settle()
+    require(view.deleted == ["type_38_shield"], "Deleted combination persists after reopening")
+    require(view._bodies_for("type_38_shield").is_empty() and view.assignments[1].has("type_38"), "Deletion and surviving assignments persist together")
+    view._toggle("type_38_shield", true)
+    require(view._bodies_for("type_38_shield").is_empty(), "Deleted combination cannot be reassigned")
+    var persisted := FileAccess.get_file_as_string(path)
+    view.catalog_path = fixture_dir.path_join("missing-directory/assignments.tsv")
+    view._delete_combination("type_38")
+    require(not view.deleted.has("type_38") and view.assignments[1].has("type_38"), "Failed deletion save preserves current assignments and options")
+    require(FileAccess.get_file_as_string(path) == persisted, "Failed deletion save preserves disk catalog")
+    view.catalog_path = path
     view.queue_free()
     await settle()
     cleanup()

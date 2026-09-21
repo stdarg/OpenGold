@@ -53,6 +53,12 @@ CombatBodyCatalog CombatBodyCatalog::load(const std::filesystem::path& assignmen
         const auto tab=line.find('\t');
         if(tab==std::string::npos||line.find('\t',tab+1)!=std::string::npos)
             throw std::runtime_error("Invalid combat body catalog row");
+        if(line.substr(0,tab)=="deleted") {
+            const auto key=strip_cr(line.substr(tab+1));
+            if(key=="unreviewed"||!keys.contains(key)||!result.deleted.insert(key).second)
+                throw std::runtime_error("Invalid deleted combat combination");
+            continue;
+        }
         const auto index=index_field(std::string_view(line).substr(0,tab),32);
         auto values=strip_cr(line.substr(tab+1));
         if(seen[index]||values.empty())throw std::runtime_error("Invalid or duplicate combat body assignment");
@@ -68,6 +74,7 @@ CombatBodyCatalog CombatBodyCatalog::load(const std::filesystem::path& assignmen
         seen[index]=true;++count;
     }
     if(!in.eof()||count!=32)throw std::runtime_error("Combat body catalog must contain all 32 bodies");
+    for(auto& body:result.bodies)for(const auto& key:result.deleted)body.erase(key);
     return result;
 }
 CombatBodySelection CombatBodyCatalog::choose(std::span<const CombatEquipment> equipped,unsigned fallback) const
@@ -95,6 +102,7 @@ CombatBodySelection CombatBodyCatalog::choose(std::span<const CombatEquipment> e
     const auto option=std::find_if(options.begin(),options.end(),[&](const auto& value){return value.original_type==type;});
     const auto key=(option==options.end()?"type_"+std::to_string(type):option->id)+(shield?"_shield":"");
     const auto label=(option==options.end()?"Unknown weapon":option->label)+(shield?" & Shield":"");
+    if(deleted.contains(key))return {fallback,false,key,label};
     if(fallback<bodies.size()&&bodies[fallback].contains(key))return {fallback,true,key,label};
     for(unsigned id=0;id<bodies.size();++id)if(bodies[id].contains(key))return {id,true,key,label};
     return {fallback,false,key,label};

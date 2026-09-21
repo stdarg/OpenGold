@@ -55,6 +55,15 @@ void combat_body_assignments()
     }
     const auto migrated=por::CombatBodyCatalog::load(path,folder/"combat-weapon-options.tsv");
     check(migrated.bodies[1].size()==2&&migrated.bodies[4]==std::set<std::string>{"type_23_shield"}&&migrated.bodies[7].contains("type_23"),"Load multiple, singleton and silver assignments without duplicates");
+    {
+        std::ofstream out(path,std::ios::app);
+        out<<"deleted\ttype_43\n";
+    }
+    const auto deleted=por::CombatBodyCatalog::load(path,folder/"combat-weapon-options.tsv");
+    check(deleted.deleted.contains("type_43")&&!deleted.bodies[1].contains("type_43"),"Deleted combination is removed from native associations");
+    check(!deleted.choose(bow,31).matched&&deleted.choose(bow,31).body==31,"Deleted combination retains saved appearance");
+    check(deleted.choose(shortbow,31).matched&&deleted.choose(shortbow,31).body==1,"Deleting one combination preserves other associations");
+
 }
 std::unique_ptr<RulesModule> module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
 Character character(std::string klass="fighter",std::string name="Ada")
