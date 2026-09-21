@@ -390,6 +390,8 @@ func _refresh_reports() -> void:
                 button.text = "Delete combination"
                 button.pressed.connect(func(): _delete_combination(key))
                 row.add_child(button)
+                row.move_child(button, 0)
+                row.add_theme_constant_override("separation", 12)
         report_counts[report].text = "%d of %d combinations" % [visible, total]
         if visible == 0:
             var empty := Label.new()

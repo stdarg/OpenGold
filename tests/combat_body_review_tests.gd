@@ -171,7 +171,7 @@ func run_checks() -> void:
     row.get_child(1).get_child(0).pressed.emit()
     require(view.tabs.current_tab == 0 and view.body_id == 1, "Body link opens correct review previews")
     view.tabs.current_tab = 3
-    view.report_lists[2].get_child(1).get_child(2).pressed.emit()
+    view.report_lists[2].get_child(1).get_child(0).pressed.emit()
     require(view.deleted.has("type_38_shield"), "Delete button removes combination")
     require(view._bodies_for("type_38_shield").is_empty(), "Deletion removes every association")
     require(view.assignments[1].has("type_38"), "Plain weapon survives shield combination deletion")
