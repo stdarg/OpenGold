@@ -85,7 +85,7 @@ CharacterArt archive_tests()
     fixture.populate();
     auto art = CharacterArt::load(fixture.path());
     check(art.heads.size() == 1 && art.bodies.size() == 1,"Identical portrait IDs across disks merge");
-    check(art.combat_heads.size() == 56 && art.combat_bodies.size() == 128,"All sizes and poses load");
+    check(art.combat_heads.size() == 56 && art.combat_bodies.size() == 132,"Original and derived bodies load in all sizes and poses");
     std::filesystem::rename(fixture.path()/"CHEAD.DAX",fixture.path()/"chead.dax");
     check(CharacterArt::load(fixture.path()).combat_heads.size() == 56,"DOS filenames are case independent");
     std::filesystem::rename(fixture.path()/"chead.dax",fixture.path()/"CHEAD.DAX");
@@ -117,7 +117,7 @@ void composition_tests(const CharacterArt& art)
     CharacterAppearance appearance;
     check(art.portrait(appearance).rgba.size() == 88*88*4,"Portrait survives fixture destruction");
     for (bool tall : {false,true}) for (unsigned head = 0; head < 14; ++head)
-        for (unsigned body = 0; body < 32; ++body) for (bool action : {false,true}) {
+        for (unsigned body = 0; body < 33; ++body) for (bool action : {false,true}) {
             appearance.tall = tall; appearance.combat_head = head; appearance.combat_body = body;
             const auto icon = art.icon(appearance,action);
             check(icon.width == 24 && icon.height == 24 && icon.rgba.size() == 576*4,
