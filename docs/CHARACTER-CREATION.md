@@ -152,7 +152,7 @@ archive IDs and indexed combat pixels. No extracted artwork is distributed.
 ### Combat parts
 
 - Combat heads come from `CHEAD.DAX`, base IDs 0..13. Body/weapon components come
-  from `CBODY.DAX`, base IDs 0..31. Add 64 for tall components and 128 for the
+  from `CBODY.DAX`, base IDs 0..31, plus a derived wand-free body 32. Add 64 for tall components and 128 for the
   action pose. Both head and body use the same size/pose bank. The head overlays
   the body's upper rows to produce a 24 x 24 icon.
 - Source pixel 0 is transparent; source pixel 8 is an opaque black outline.

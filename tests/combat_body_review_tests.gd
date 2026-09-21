@@ -108,6 +108,12 @@ func run_checks() -> void:
             require(preview.get_global_rect().end.y <= root.size.y, "All previews fit launcher window")
         await RenderingServer.frame_post_draw
         require(root.get_texture().get_image().save_png("res://../../build/combat-body-checklist.png") == OK, "Visual capture saved")
+        view._review_body(32)
+        view.filter_box.text = "unarmed"
+        view._fill_list()
+        await settle()
+        await RenderingServer.frame_post_draw
+        require(root.get_texture().get_image().save_png("res://../../build/combat-body-unarmed-shield.png") == OK, "Derived body visual capture saved")
         for tab in range(1, 4):
             view.tabs.current_tab = tab
             await settle()
@@ -120,12 +126,13 @@ func run_checks() -> void:
     create_fixtures()
     var path := fixture_dir.path_join("assignments.tsv")
     var file := FileAccess.open(path, FileAccess.WRITE)
-    for id in range(32):
+    for id in range(33):
         file.store_line("%d\t%s" % [id, "silver_23_shield,type_23_shield" if id == 4 else "type_43" if id == 1 else "unreviewed"])
     file.close()
     var view = reviewer(path)
     await settle()
     require(view.loaded, "Legacy catalog loads")
+    require(view.assignments.size() == 33, "Derived body is in the reviewer")
     require(view.assignments[4] == ["type_23_shield"], "Silver normalized and deduplicated")
     view._step(1)
     view.filter_box.text = "short bow"

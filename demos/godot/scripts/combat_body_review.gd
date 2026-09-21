@@ -185,7 +185,7 @@ func _load_catalog() -> bool:
     if not FileAccess.file_exists(catalog_path):
         _fail("Missing catalog: " + ProjectSettings.globalize_path(catalog_path))
         return false
-    assignments.resize(32)
+    assignments.resize(33)
     var seen := {}
     deleted.clear()
     for line in FileAccess.get_file_as_string(catalog_path).split("\n"):
@@ -201,7 +201,7 @@ func _load_catalog() -> bool:
             _fail("Invalid catalog row: " + line)
             return false
         var id := int(fields[0])
-        if id < 0 or id >= 32 or seen.has(id):
+        if id < 0 or id >= 33 or seen.has(id):
             _fail("Invalid catalog assignment: " + line)
             return false
         seen[id] = true
@@ -216,8 +216,8 @@ func _load_catalog() -> bool:
                 if not values.has(key): values.append(key)
         values.sort()
         assignments[id] = values
-    if seen.size() != 32:
-        _fail("Catalog must contain all 32 body IDs.")
+    if seen.size() != 33:
+        _fail("Catalog must contain all 33 body IDs.")
         return false
     for values in assignments:
         for key in deleted: values.erase(key)
@@ -236,24 +236,44 @@ func _name_for(key: String) -> String:
 
 func _step(amount: int) -> void:
     if not loaded: return
-    body_id = posmod(body_id + amount, 32)
+    body_id = posmod(body_id + amount, 33)
     _refresh()
 
 func _refresh() -> void:
-    number.text = "Body %d / 31" % body_id
+    number.text = "Body %d / 32" % body_id
     _show_assignments()
     for variant in range(4):
         var size_offset: int = 0 if variant % 2 == 0 else 64
         var pose_offset: int = 0 if variant < 2 else 128
-        var body := loader._extract_record(body_data, body_id + size_offset + pose_offset)
+        var bank: int = size_offset + pose_offset
+        var body := loader._extract_record(body_data, (21 if body_id == 32 else body_id) + bank)
         var head := loader._extract_record(head_data, size_offset + pose_offset)
         if body.size() < 305 or head.size() < 17:
             _fail("Cannot decode original body or head: " + loader.error_message)
             return
+        if body_id == 32: body = _without_wand(body, bank)
         var image := _compose(head, body)
         previews[variant].texture = ImageTexture.create_from_image(image)
     _fill_list()
     _refresh_reports()
+
+func _without_wand(source: PackedByteArray, bank: int) -> PackedByteArray:
+    var body := source.duplicate()
+    var spans := {
+        0: [[15, 14, 15], [16, 15, 17], [17, 17, 19], [18, 19, 20]],
+        64: [[13, 14, 15], [14, 15, 17], [15, 17, 19], [16, 19, 20]],
+        128: [[15, 15, 21]],
+        192: [[13, 15, 21]],
+    }
+    for span in spans[bank]:
+        for x in range(span[1], span[2] + 1):
+            var pixel: int = span[0] * 24 + x
+            var offset: int = 17 + (pixel >> 1)
+            var value: int = body[offset]
+            var index: int = value >> 4 if pixel % 2 == 0 else value & 15
+            if index == 8:
+                body[offset] = value & 15 if pixel % 2 == 0 else value & 240
+    return body
 
 func _compose(head: PackedByteArray, body: PackedByteArray) -> Image:
     var pixels := PackedByteArray()
@@ -314,7 +334,7 @@ func _toggle(key: String, checked: bool) -> void:
 func _save(next: Array, next_deleted: Array[String]) -> bool:
     var content := "# v3: body ID and combination IDs; deleted rows remove invalid combinations.\n"
     for key in next_deleted: content += "deleted\t%s\n" % key
-    for id in range(32):
+    for id in range(33):
         content += "%d\t%s\n" % [id, "unreviewed" if next[id].is_empty() else ",".join(next[id])]
     var temporary := catalog_path + ".tmp"
     var file := FileAccess.open(temporary, FileAccess.WRITE)

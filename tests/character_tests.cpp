@@ -306,13 +306,24 @@ void art_tests()
                 }
             }
         }
-        for(bool tall:{false,true})for(unsigned h=0;h<14;++h)for(unsigned b=0;b<32;++b) {
+        for(unsigned bank:{0u,64u,128u,192u}) {
+            const auto& original=art.combat_bodies.at(bank+21).pixels;
+            const auto& derived=art.combat_bodies.at(bank+32).pixels;
+            check(original.size()==derived.size(),"Derived shield body retains original dimensions");
+            unsigned removed=0;
+            for(std::size_t p=0;p<original.size();++p)if(original[p]!=derived[p]) {
+                check(original[p]==8&&derived[p]==0,"Derived shield body only removes gray wand pixels");
+                ++removed;
+            }
+            check(removed>0,"Derived shield body removes wand in each size and pose");
+        }
+        for(bool tall:{false,true})for(unsigned h=0;h<14;++h)for(unsigned b=0;b<33;++b) {
             a.tall=tall;a.combat_head=h;a.combat_body=b;
             check(art.icon(a,false).rgba.size()==576*4&&art.icon(a,true).rgba.size()==576*4,
                 "Every original head/body combination has both poses");
         }
         std::cout<<"Original character art: "<<art.heads.size()<<" portrait heads, "<<art.bodies.size()
-            <<" bodies; 14 combat heads, 32 bodies, both sizes and poses\n";
+            <<" bodies; 14 combat heads, 33 bodies, both sizes and poses\n";
     }
 }
 }

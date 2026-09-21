@@ -173,7 +173,7 @@ func run_checks() -> void:
     require(demo.get_node("Head").text == "Head 14 / 14", "Head selection wraps")
     press(demo, "HeadNext")
     press(demo, "BodyNext")
-    require(demo.get_node("Body").text == "Weapon 6 / 32", "Weapon selection updates")
+    require(demo.get_node("Body").text == "Weapon 6 / 33", "Weapon selection updates")
     check_goliaths(canvas, 60)
     press(demo, "BodyPrevious")
     check_goliaths(canvas, 60)

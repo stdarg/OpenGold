@@ -1943,8 +1943,8 @@ msgstr "Arma >"
 
 #: src/OpenGoldBox/character_creation_view.cpp:386
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
-msgid "Weapon {number} / 32"
-msgstr "Arma {number} / 32"
+msgid "Weapon {number} / 33"
+msgstr "Arma {number} / 33"
 
 #: src/OpenGoldBox/character_creation_view.cpp:48
 msgid "White"

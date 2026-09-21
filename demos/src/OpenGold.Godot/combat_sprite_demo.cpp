@@ -210,7 +210,7 @@ void CombatSpriteDemo::refresh_colors()
     const auto present=[&](unsigned bank,unsigned part){return tall_usage.contains(bank,part)||small_usage.contains(bank,part);};
     if(!present(color_bank_,color_part_))for(unsigned i=0;i<12;++i)if(present(i/6,i%6)){color_bank_=i/6;color_part_=i%6;break;}
     get_node<Label>("Head")->set_text(gs("Head ")+String::num_int64(appearance_.combat_head+1)+" / 14");
-    get_node<Label>("Body")->set_text(gs("Weapon ")+String::num_int64(appearance_.combat_body+1)+" / 32");
+    get_node<Label>("Body")->set_text(gs("Weapon ")+String::num_int64(appearance_.combat_body+1)+" / 33");
     get_node<Label>("PaletteHint")->set_text(gs(presentation::character_regions[color_part_])+" / Color-"+String::num_int64(color_bank_+1)+": choose a color");
     for(unsigned bank=0;bank<2;++bank)for(unsigned part=0;part<6;++part){
         auto* button=get_node<Button>(gs("Color"+std::to_string(bank)+"_"+std::to_string(part)));
@@ -323,7 +323,7 @@ void CombatSpriteDemo::zoom_by(int amount)
 void CombatSpriteDemo::change_part(int part,int direction)
 {
     if(!loaded_)return;
-    auto& index=part==0?appearance_.combat_head:appearance_.combat_body;const int count=part==0?14:32;
+    auto& index=part==0?appearance_.combat_head:appearance_.combat_body;const int count=part==0?14:33;
     index=(static_cast<int>(index)+direction+count)%count;refresh_players();
 }
 void CombatSpriteDemo::select_color(int bank,int part)

@@ -7,7 +7,7 @@ Run from PowerShell at the repository root:
 ```
 
 The reviewer displays one original CBODY.DAX body in four previews: short/tall,
-ready/action. Previous/Next cycles through all 32 bodies. Check every complete
+ready/action. Previous/Next cycles through all 33 bodies. Check every complete
 combination that the artwork represents, such as Mace and Mace & Shield.
 Each checkbox change saves immediately. Filtering only changes the visible
 checklist; the summary always lists all assignments for the current body.
@@ -29,7 +29,7 @@ Deletion saves immediately, together with the updated body assignments.
 
 ## Shared catalog
 
-`data/art/combat-body-looks.tsv` has 32 body rows: body ID, a tab, then comma-separated
+`data/art/combat-body-looks.tsv` has 33 body rows: body ID, a tab, then comma-separated
 combination IDs (or `unreviewed`). For example:
 
 ```text
@@ -48,6 +48,12 @@ The original bow body 1 has been visually inspected in both poses and sizes
 and shared between the bow options. Other existing assignments are retained;
 unclassified bodies remain unreviewed. These are editable art classifications,
 not changes to equipment rules.
+
+Body 32 is derived at runtime from original body 21. The gray wand projection is
+removed in the short and tall ready/action poses, leaving the shield and hand.
+The original archive and body 21 remain intact. Body 32 is assigned to Unarmed
+& Shield; body 21 remains available for Wand & Shield. No derived art is stored
+in the repository.
 
 Version 3 also stores `deleted` rows, for example `deleted<TAB>type_38_shield`.
 These persist removal of individual combinations without changing the weapon

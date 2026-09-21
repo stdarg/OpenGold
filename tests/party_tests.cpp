@@ -23,6 +23,9 @@ void combat_body_assignments()
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
     const auto saved=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
     check(saved.options.size()==48,"Options contain ordinary shop weapons, wand and unarmed");
+    const std::vector<por::CombatEquipment> shield_only{{59,"Shield","shield"}};
+    check(saved.choose(shield_only,21).matched&&saved.choose(shield_only,21).body==32,
+        "Unarmed with shield selects the derived wand-free body");
     por::CombatBodyCatalog catalog=saved;
     for(auto& body:catalog.bodies)body.clear();
     catalog.bodies[1]={"type_43","type_44"};
@@ -51,7 +54,7 @@ void combat_body_assignments()
     const auto& path=temporary.path;
     {
         std::ofstream out(path);
-        for(unsigned id=0;id<32;++id)out<<id<<'\t'<<(id==1?"type_43,type_44":id==4?"silver_23_shield,type_23_shield":id==7?"silver_23":"unreviewed")<<'\n';
+        for(unsigned id=0;id<33;++id)out<<id<<'\t'<<(id==1?"type_43,type_44":id==4?"silver_23_shield,type_23_shield":id==7?"silver_23":"unreviewed")<<'\n';
     }
     const auto migrated=por::CombatBodyCatalog::load(path,folder/"combat-weapon-options.tsv");
     check(migrated.bodies[1].size()==2&&migrated.bodies[4]==std::set<std::string>{"type_23_shield"}&&migrated.bodies[7].contains("type_23"),"Load multiple, singleton and silver assignments without duplicates");
