@@ -1,4 +1,5 @@
 #include "opengold/combat_body_catalog.h"
+#include "opengold/campaign_party.h"
 #include <algorithm>
 #include <array>
 #include <fstream>
@@ -76,6 +77,20 @@ CombatBodyCatalog CombatBodyCatalog::load(const std::filesystem::path& assignmen
     if(!in.eof()||count!=33)throw std::runtime_error("Combat body catalog must contain all 33 bodies");
     for(auto& body:result.bodies)for(const auto& key:result.deleted)body.erase(key);
     return result;
+}
+ResolvedCombatAppearance resolve_combat_appearance(const PartyMember& member,const CombatBodyCatalog& catalog)
+{
+    std::vector<CombatEquipment> equipped;
+    equipped.reserve(member.equipped.size());
+    for(const auto id:member.equipped) {
+        const auto item=member.character.inventory().find(id);
+        if(!item)throw std::runtime_error("Equipped item is missing");
+        equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
+    }
+    auto appearance=member.character.appearance();
+    auto selection=catalog.choose(equipped,appearance.combat_body);
+    appearance.combat_body=selection.body;
+    return {std::move(appearance),std::move(selection)};
 }
 CombatBodySelection CombatBodyCatalog::choose(std::span<const CombatEquipment> equipped,unsigned fallback) const
 {

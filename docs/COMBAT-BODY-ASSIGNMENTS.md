@@ -62,11 +62,42 @@ combinations. Older catalogs without deleted rows still load unchanged.
 
 ## Game use
 
+Player characters and recruited NPCs use the same native equipment resolver in
+the party screen, training combat, campaign encounters and combat showcase.
+Only equipped inventory items contribute: carried weapons, carried shields and
+armor do not affect the selected body. Encounter creatures keep their own art.
+
 Combat matches the exact equipped weapon and shield combination. If several
 bodies match, the character's saved body wins if it is among them; otherwise
 the lowest matching ID wins. An unmatched combination retains the saved body
 and is reported in the combat log. Only the body ID changes; the head, colors,
 size and both poses are preserved. Silver names do not select separate art.
 
+The party screen's Ready and Action previews refresh immediately after Equip or
+Unequip and when selecting a member or loading a campaign. Unarmed and shield-only
+members use their corresponding mappings. The resolved body is never written
+back to the character's saved appearance; loading recomputes it from equipment.
+Combat resolves the same appearance on entry; equipment remains locked during
+combat. Character-creation controls and equipment eligibility are unchanged.
+
 Rebuild the game after editing to refresh its packaged catalogs. The reviewer
 always edits the shared source catalog, not a packaged copy.
+
+## Validation
+
+Native party tests cover every enabled catalog combination, equipment changes
+for PCs and NPCs, fallback, saved-body preference and campaign save/load. With
+`OPENGOLD_GAME_DIR` set, they also compare both showcase poses and verify that
+original encounter-creature art remains unchanged.
+
+After building, run this original-data integration check from PowerShell:
+
+```powershell
+.\win-package\opengoldbox.exe -- --equipment-art-check --capture
+```
+
+It exercises the existing Equip/Unequip controls for a tall PC and short recruited
+NPC, compares both preview and combat texture pixels, checks campaign loading,
+and checks training and campaign encounters. Success prints
+`Equipment artwork checks passed`. Captures are written to `user://checks` as
+`equipment-art-*.png`; omit `--capture` when running with `--headless`.

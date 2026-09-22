@@ -43,20 +43,13 @@ Character preview_guard()
     return Character(*rules,std::move(draft),{});
 }
 presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& party,
-    const por::CharacterArt& art,std::optional<CampaignEncounter> encounter={})
+    const por::CharacterArt& art,const por::CombatBodyCatalog& catalog,std::optional<CampaignEncounter> encounter={})
 {
     std::vector<CombatArt> images;
-    const auto catalog=por::CombatBodyCatalog::load(std::filesystem::u8path(game_combat_body_file().utf8().get_data()),
-        std::filesystem::u8path(game_combat_weapon_file().utf8().get_data()));
     for(const auto& participant:party->participants()) {
-        const auto& member=party->member(participant.id);
-        auto appearance=member.character.appearance();
-        std::vector<por::CombatEquipment> equipped;
-        for(const auto id:member.equipped)if(const auto item=member.character.inventory().find(id))
-            equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
-        const auto selection=catalog.choose(equipped,appearance.combat_body);
-        appearance.combat_body=selection.body;
-        images.push_back({participant.id,art.icon(appearance,false),art.icon(appearance,true),selection.matched?std::string{}:selection.label});
+        const auto resolved=por::resolve_combat_appearance(party->member(participant.id),catalog);
+        images.push_back({participant.id,art.icon(resolved.appearance,false),art.icon(resolved.appearance,true),
+            resolved.selection.matched?std::string{}:resolved.selection.label});
     }
     auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");
     auto* combat=Object::cast_to<CombatView>(owned.get());
@@ -69,6 +62,8 @@ presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& par
 }
 void CharacterCreationView::setup_party()
 {
+    body_catalog_=por::CombatBodyCatalog::load(std::filesystem::u8path(game_combat_body_file().utf8().get_data()),
+        std::filesystem::u8path(game_combat_weapon_file().utf8().get_data()));
     const auto pack=std::filesystem::u8path(game_rules_file().utf8().get_data());
     campaign_=std::make_shared<CampaignParty>(srd5::load(pack));
     auto panel=presentation::instantiate_scene("res://scenes/party_panel.tscn");i18n::prepare_ui(*panel);presentation::attach_child(*this,std::move(panel));
@@ -92,6 +87,7 @@ void CharacterCreationView::setup_party()
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
     setup_saves();setup_defeat();setup_advancement();
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
+    equipment_art_check_=OS::get_singleton()->get_cmdline_user_args().has("--equipment-art-check");
     expedition_check_=OS::get_singleton()->get_cmdline_user_args().has("--expedition-check");
 }
 void CharacterCreationView::party_layout()
@@ -143,8 +139,9 @@ void CharacterCreationView::refresh_party()
         sheet=sheet_text(m.character,&m).utf8().get_data();
         for(const auto& item:m.character.inventory().items())items->add_item((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?i18n::text("Equipped / "):String())+i18n::format("{item} x{quantity}",{{"item",i18n::text(item.name)},{"quantity",item.quantity}}));
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
+        const auto resolved=por::resolve_combat_appearance(m,*body_catalog_);
         for(unsigned pose=0;pose<2;++pose){
-            const auto icon=art_->icon(m.character.appearance(),pose!=0);
+            const auto icon=art_->icon(resolved.appearance,pose!=0);
             get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(presentation::image_texture(icon));
         }
     }
@@ -152,6 +149,95 @@ void CharacterCreationView::refresh_party()
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_text(gs(sheet));
     get_node<Label>("PartyPanel/Status")->set_text(error_.is_empty()?i18n::text("New PCs receive 250 gp / Save game stores this campaign on disk."):error_);
     for(const char* name:{"Remove","Rejoin","Equip","Unequip","Explore","Combat","Modifiers","SavingThrows"})get_node<Button>(gs(std::string("PartyPanel/")+name))->set_disabled(state.roster.empty());
+}
+// Original-data integration check, also runnable in the packaged executable.
+// Equipment actions use the real controls and inspect uploaded texture pixels.
+void CharacterCreationView::equipment_art_check()
+{
+    const auto require=[](bool ok,const char* message){if(!ok)throw std::runtime_error(message);};
+    const auto press=[&](const char* path){get_node<Button>(path)->emit_signal("pressed");
+        if(!error_.is_empty())throw std::runtime_error(error_.utf8().get_data());};
+    const auto gear=[&](unsigned index,bool equip){get_node<ItemList>("PartyPanel/Inventory")->select(index);
+        press(equip?"PartyPanel/Equip":"PartyPanel/Unequip");};
+    const auto expected=[&](unsigned member,unsigned body,bool action){
+        auto a=campaign_->state().roster.at(member).character.appearance();a.combat_body=body;
+        return presentation::rgba_image(art_->icon(a,action))->get_data();};
+    const auto verify_preview=[&](unsigned member,unsigned body){
+        for(bool action:{false,true}){
+            const auto texture=get_node<TextureRect>(action?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->get_texture();
+            require(texture.is_valid()&&texture->get_image()->get_data()==expected(member,body,action),
+                "Party preview differs from equipped body in ready/action pose");
+        }
+        require(campaign_->state().roster.at(member).character.appearance().combat_body==24,
+            "Equipment display overwrote the saved base body");
+    };
+    const auto verify_combat=[&]{
+        auto* combat=get_node<CombatView>("CampaignCombat");
+        for(unsigned member=0;member<2;++member)for(bool action:{false,true}){
+            const auto texture=combat->sprite_texture(campaign_->state().roster.at(member).id,action);
+            require(texture.is_valid()&&texture->get_image()->get_data()==expected(member,24,action),
+                "Combat textures differ from the equipment shown in party previews");
+        }
+    };
+    if(check_stage_==0){
+        for(unsigned member=0;member<2;++member){
+            const auto guard=preview_guard();auto draft=guard.creation_data();
+            draft.name=member?"Equipment check NPC":"Equipment check PC";
+            auto a=guard.appearance();a.combat_body=24;a.tall=member==0;a.portrait=recommended_portrait(draft);
+            Character character(*srd5::character_rules(),draft,a);
+            const auto id=member?campaign_->recruit("check:equipment-guard",std::move(character)):campaign_->add_pc(std::move(character));
+            for(const unsigned type:{36u,8u,59u,55u}){por::Equipment item;item.stored.type=type;item.stored.stack_size=1;
+                campaign_->purchase(id,item);}
+        }
+        press("Party");party_selected(0);verify_preview(0,0);
+    }else if(check_stage_<=16){
+        const unsigned member=(check_stage_-1)/8,step=(check_stage_-1)%8;
+        static constexpr std::array<unsigned,8> bodies{0,2,24,32,22,6,0,24};
+        verify_preview(member,bodies[step]);
+        if(step<5){const auto name="equipment-art-"+std::string(member?"npc":"pc")+"-"+std::to_string(step)+".png";capture(name.c_str());}
+        switch(step){
+        case 0:gear(0,true);break;
+        case 1:gear(2,true);break;
+        case 2:gear(0,false);break;
+        case 3:gear(1,true);break;
+        case 4:gear(2,false);break;
+        case 5:gear(1,false);break;
+        case 6:gear(3,true);verify_preview(member,0);gear(3,false);gear(0,true);gear(2,true);break;
+        case 7:if(member==0){party_selected(1);verify_preview(1,0);}break;
+        }
+        if(step<7)verify_preview(member,bodies[step+1]); // Refresh is synchronous with each control action.
+    }else if(check_stage_==17){
+        party_selected(0);verify_preview(0,24);
+        struct CheckSave {
+            std::filesystem::path path;
+            ~CheckSave(){std::error_code ignored;std::filesystem::remove(path,ignored);}
+        } save{std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(
+            "user://checks/equipment-art-"+String::num_int64(OS::get_singleton()->get_process_id())+".ogs").utf8().get_data())};
+        std::filesystem::create_directories(save.path.parent_path());
+        save_campaign(save.path);gear(2,false);verify_preview(0,2);
+        load_campaign(save.path);verify_preview(0,24);party_selected(1);verify_preview(1,24);
+        press("PartyPanel/Combat");verify_combat();
+    }else if(check_stage_==18){
+        verify_combat();capture("equipment-art-combat.png");
+        auto* combat=get_node<CombatView>("CampaignCombat");remove_child(combat);
+        {presentation::NodeOwner<Node> removed(combat);} // Release the fixture's combat lock.
+        CampaignEncounter encounter;encounter.field.geometry={12,9,std::vector<std::uint8_t>(108)};
+        encounter.enemies.push_back({1000,"bandit","Artwork fixture",1,{9,4}});
+        // A distinguishable authored enemy texture must survive party-only resolution.
+        opengold::Image enemy;enemy.width=enemy.height=24;enemy.rgba.assign(24*24*4,255);
+        encounter.art.push_back({1000,enemy,enemy});
+        presentation::attach_child(*this,combat_scene(campaign_,*art_,*body_catalog_,std::move(encounter)));
+        verify_combat();
+        for(bool action:{false,true}){
+            const auto texture=get_node<CombatView>("CampaignCombat")->sprite_texture(1000,action);
+            require(texture.is_valid()&&texture->get_image()->get_data()==presentation::rgba_image(enemy)->get_data(),
+                "Party equipment changed an encounter creature's texture");
+        }
+    }else{
+        UtilityFunctions::print("Equipment artwork checks passed: PC, NPC, immediate previews, both poses, save/load, training, campaign and unchanged creature art");
+        equipment_art_check_=false;get_tree()->quit(0);
+    }
+    ++check_stage_;
 }
 void CharacterCreationView::party_action(int action)
 {
@@ -177,7 +263,7 @@ void CharacterCreationView::party_action(int action)
                     town->set_name("CampaignTown");town->campaign_party(campaign_);if(OS::get_singleton()->get_cmdline_user_args().has("--save-check-write"))town->save_check=[this](const auto& name){save_checkpoint_check(name);};town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));presentation::attach_child(*this,std::move(owned));}
                 town->show();town->set_process(true);town->set_process_input(true);town->resume_party();
             }else{
-                presentation::attach_child(*this,combat_scene(campaign_,*art_));
+                presentation::attach_child(*this,combat_scene(campaign_,*art_,*body_catalog_));
             }
             get_node<Control>("PartyPanel")->hide();auto* back=get_node<Button>("ReturnParty");move_child(back,get_child_count()-1);back->show();party_layout();return;
         }
@@ -279,7 +365,7 @@ void CharacterCreationView::update_party_navigation()
     auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"));
     if(!fight&&town&&town->is_visible()&&town->pending_encounter()){
         presentation::NodeOwner<> owned;
-        try{owned=combat_scene(campaign_,*art_,town->pending_encounter());}
+        try{owned=combat_scene(campaign_,*art_,*body_catalog_,town->pending_encounter());}
         catch(const std::exception& e){if(!town->reject_combat(e.what()))throw;return;}
         fight=Object::cast_to<CombatView>(owned.get());
         presentation::attach_child(*this,std::move(owned));town->hide();town->set_process(false);town->set_process_input(false);party_layout();

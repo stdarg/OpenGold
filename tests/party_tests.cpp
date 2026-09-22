@@ -2,6 +2,7 @@
 #include "opengold/character_creator.h"
 #include "opengold/combat_demo.h"
 #include "opengold/combat_body_catalog.h"
+#include "opengold/campaign_save.h"
 #include "opengold/rolf_tour.h"
 #include "opengold/srd5.h"
 #include <algorithm>
@@ -23,6 +24,15 @@ void combat_body_assignments()
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
     const auto saved=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
     check(saved.options.size()==48,"Options contain ordinary shop weapons, wand and unarmed");
+    for(const auto& option:saved.options)for(const bool shield:{false,true}) {
+        const auto combination=option.id+(shield?"_shield":"");
+        std::vector<por::CombatEquipment> gear;
+        if(option.original_type)gear.push_back({option.original_type,option.label,{}});
+        if(shield)gear.push_back({59,"Shield","shield"});
+        const auto selected=saved.choose(gear,10);
+        check(selected.combination==combination,"Every catalog option resolves its exact equipment key");
+        check(selected.matched!=saved.deleted.contains(combination),"All enabled reviewed combinations have artwork; deleted ones do not");
+    }
     const std::vector<por::CombatEquipment> shield_only{{59,"Shield","shield"}};
     check(saved.choose(shield_only,21).matched&&saved.choose(shield_only,21).body==32,
         "Unarmed with shield selects the derived wand-free body");
@@ -80,6 +90,66 @@ Character character(std::string klass="fighter",std::string name="Ada")
 }
 por::Equipment item(unsigned type,unsigned price=10)
 {por::Equipment e;e.stored.type=type;e.stored.value=price;e.stored.stack_size=1;return e;}
+void party_combat_appearance()
+{
+    const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
+    const auto catalog=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
+    CampaignParty party(module());
+    auto pc=character(),npc=character("fighter","Guard");
+    auto appearance=pc.appearance();appearance.combat_body=24;appearance.combat_head=2;
+    appearance.colors[0][0]=3;appearance.portrait="human-male-fighter-01.png";
+    pc.appearance(appearance);appearance.tall=false;npc.appearance(appearance);
+    const auto pc_id=party.add_pc(pc),npc_id=party.recruit("test:guard",npc);
+    for(const auto id:{pc_id,npc_id}) {
+        const auto original=party.member(id).character.appearance();
+        const auto expect=[&](unsigned body,std::string_view key) {
+            const auto& member=party.member(id);
+            const auto resolved=por::resolve_combat_appearance(member,catalog);
+            auto expected=original;expected.combat_body=body;
+            check(resolved.appearance==expected&&resolved.selection.matched&&resolved.selection.combination==key,
+                "PC and recruited NPC resolve only their equipped weapon and shield");
+            check(member.character.appearance()==original,"Resolution never overwrites saved appearance");
+        };
+        for(const auto type:{36u,8u,59u,55u})party.purchase(id,item(type,0));
+        const auto gear=party.member(id).character.inventory().items();
+        expect(0,"type_0"); // Carried weapons and shield have no visual effect.
+        party.equip(id,gear[3].id);expect(0,"type_0");
+        party.equip(id,gear[0].id);expect(2,"type_36");
+        party.equip(id,gear[2].id);expect(24,"type_36_shield"); // Saved matching body wins over 20.
+        party.unequip(id,gear[3].id);expect(24,"type_36_shield");
+        party.unequip(id,gear[0].id);expect(32,"type_0_shield");
+        party.equip(id,gear[1].id);expect(22,"type_8_shield");
+        party.unequip(id,gear[2].id);expect(6,"type_8");
+        party.unequip(id,gear[1].id);expect(0,"type_0");
+        party.equip(id,gear[0].id);party.equip(id,gear[2].id);
+        auto missing=catalog;
+        for(auto& body:missing.bodies)body.erase("type_36_shield");
+        const auto fallback=por::resolve_combat_appearance(party.member(id),missing);
+        check(!fallback.selection.matched&&fallback.appearance==original&&fallback.selection.label=="Long Sword & Shield",
+            "An unmapped combination preserves the complete saved appearance and diagnostic");
+        auto deleted=catalog;deleted.deleted.insert("type_36_shield");
+        check(!por::resolve_combat_appearance(party.member(id),deleted).selection.matched,
+            "Deleted combinations cannot select assigned artwork");
+        auto invalid=party.member(id);invalid.equipped.push_back(999999);
+        rejects([&]{(void)por::resolve_combat_appearance(invalid,catalog);});
+    }
+    const auto saved=encode_campaign(party,nullptr,"equipment-art-fixture");
+    const auto decoded=decode_campaign(saved,*srd5::character_rules(),*module(),"equipment-art-fixture",nullptr);
+    CampaignParty restored(module());restored.restore(decoded.party);
+    for(const auto id:{pc_id,npc_id}) {
+        const auto before=por::resolve_combat_appearance(party.member(id),catalog);
+        const auto after=por::resolve_combat_appearance(restored.member(id),catalog);
+        check(after.appearance==before.appearance&&after.selection.combination==before.selection.combination,
+            "Campaign save/load reconstructs identical PC and NPC equipment artwork");
+        check(restored.member(id).character.appearance()==party.member(id).character.appearance(),
+            "Saved base appearance survives the campaign codec");
+    }
+    // Native definitions without original provenance still use the same mapping.
+    auto native=party.member(pc_id);native.equipped.clear();
+    native.equipped.push_back(native.character.inventory().add("mace","Authored mace",1));
+    check(por::resolve_combat_appearance(native,catalog).selection.combination=="type_23",
+        "Native weapon definition resolves without original item type");
+}
 void goliath_occupancy()
 {
     const auto human=character();auto draft=human.creation_data();draft.race="goliath";
@@ -426,6 +496,24 @@ void combat_demo_fixture()
     const auto* directory=std::getenv("OPENGOLD_GAME_DIR");if(!directory||!*directory)return;
     auto characters=srd5::character_rules();
     auto scene=make_combat_demo(module(),*characters,directory);
+    auto mapped=make_combat_demo(module(),*characters,directory,
+        std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art/combat-body-looks.tsv");
+    const auto character_art=por::CharacterArt::load(directory);
+    const auto looks=por::CombatBodyCatalog::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art/combat-body-looks.tsv",
+        std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art/combat-weapon-options.tsv");
+    for(std::size_t i=0;i<mapped.encounter.art.size();++i) {
+        const auto& image=mapped.encounter.art[i];
+        if(i<6) {
+            const auto resolved=por::resolve_combat_appearance(mapped.party->member(image.entity),looks);
+            check(image.image.rgba==character_art.icon(resolved.appearance,false).rgba&&image.action&&
+                image.action->rgba==character_art.icon(resolved.appearance,true).rgba,
+                "Showcase uses the shared equipment appearance in both poses");
+        } else {
+            check(image.image.rgba==scene.encounter.art[i].image.rgba&&image.action&&scene.encounter.art[i].action&&
+                image.action->rgba==scene.encounter.art[i].action->rgba,
+                "Equipment mapping never changes encounter creature artwork");
+        }
+    }
     const auto heroes=scene.party->participants();
     check(heroes.size()==6&&scene.encounter.enemies.size()==13&&scene.encounter.art.size()==19&&scene.encounter.positions.size()==19,
         "Showcase contains six visible heroes, twelve Kobolds and one leader");
@@ -649,6 +737,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

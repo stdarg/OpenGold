@@ -99,7 +99,7 @@ if(OPENGOLD_BUILD_TESTS)
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/opengold.gdextension" "${game_project}/bin/opengold.gdextension"
         COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/data/rules/srd-5.2.1" "${game_project}/data/rules/srd-5.2.1"
         COMMAND "${OPENGOLDBOX_GODOT}" --headless --editor --path "${game_project}" --import --quit
-        DEPENDS opengoldbox_game VERBATIM)
+        DEPENDS opengoldbox_game opengoldbox_assets VERBATIM)
     add_test(NAME opengold_godot_prepare COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}"
         --target opengoldbox_test_project --config $<CONFIG>)
     set_tests_properties(opengold_godot_prepare PROPERTIES FIXTURES_SETUP godot_project TIMEOUT 600 LABELS godot

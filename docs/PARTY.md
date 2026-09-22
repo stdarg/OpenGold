@@ -55,7 +55,9 @@ travel, automatic combat, original tactical geometry and persistent rewards.
    with the training penalty visible when selecting and equipping it. The party
    screen also offers **Equip selected**. Unequip an existing weapon or
    armor before equipping its replacement. Invalid combinations leave equipment
-   unchanged. **Party combat** opens the existing tactical UI against a Bandit.
+   unchanged. Ready/Action previews immediately reflect the equipped weapon and
+   shield for PCs and recruited NPCs, using the same [artwork mappings](COMBAT-BODY-ASSIGNMENTS.md)
+   as combat. **Party combat** opens the existing tactical UI against a Bandit.
 8. Finish the fight and return. HP, death state and spent resources persist.
    Reopening exploration resumes the town session at its previous position.
 

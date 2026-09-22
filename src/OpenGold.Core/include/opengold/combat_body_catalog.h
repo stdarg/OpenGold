@@ -1,6 +1,7 @@
 #ifndef OPENGOLD_COMBAT_BODY_CATALOG_H
 #define OPENGOLD_COMBAT_BODY_CATALOG_H
 
+#include "opengold/character_art.h"
 #include <array>
 #include <filesystem>
 #include <span>
@@ -8,6 +9,7 @@
 #include <string>
 #include <vector>
 
+namespace opengold { struct PartyMember; }
 namespace opengold::por {
 struct CombatLookOption {
     std::string id, label;
@@ -31,5 +33,13 @@ struct CombatBodyCatalog {
         const std::filesystem::path& options_file);
     [[nodiscard]] CombatBodySelection choose(std::span<const CombatEquipment> equipped,unsigned fallback) const;
 };
+struct ResolvedCombatAppearance {
+    CharacterAppearance appearance;
+    CombatBodySelection selection;
+};
+// Only a party member's readied gear affects the copied body. Saved appearance
+// remains the stable preference/fallback; encounter creatures do not use this API.
+[[nodiscard]] ResolvedCombatAppearance resolve_combat_appearance(
+    const PartyMember& member, const CombatBodyCatalog& catalog);
 }
 #endif

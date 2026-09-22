@@ -2,6 +2,7 @@
 #define OPENGOLD_CHARACTER_CREATION_VIEW_H
 #include "opengold/character_creator.h"
 #include "opengold/campaign_party.h"
+#include "opengold/combat_body_catalog.h"
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <optional>
@@ -20,6 +21,7 @@ private:
     std::unique_ptr<opengold::CharacterCreator> creator_;
     std::optional<opengold::Character> completed_;
     std::optional<opengold::por::CharacterArt> art_;
+    std::optional<opengold::por::CombatBodyCatalog> body_catalog_;
     std::optional<opengold::por::CharacterAppearance> rendered_;
     std::array<godot::Ref<godot::ImageTexture>,3> images_;
     godot::Rect2 page_rect_,preview_rect_,portrait_rect_,ready_rect_,action_rect_;
@@ -74,6 +76,8 @@ private:
     std::shared_ptr<opengold::CampaignParty> campaign_;
     std::size_t roster_index_{};
     bool party_open_{},added_to_party_{},party_check_{};
+    bool equipment_art_check_{};
+    void equipment_art_check();
     unsigned party_check_stage_{};
     std::vector<opengold::Character> pool_;
     std::vector<unsigned> pool_added_;

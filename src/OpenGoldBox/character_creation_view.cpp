@@ -471,6 +471,10 @@ void CharacterCreationView::capture(const char* name)
 }
 void CharacterCreationView::_process(double)
 {
+    if(equipment_art_check_){
+        try{if(++check_frames_%4==0)equipment_art_check();if(check_frames_>160)throw std::runtime_error("Equipment artwork check timed out");}
+        catch(const std::exception& e){UtilityFunctions::printerr("Equipment artwork check failed: ",gs(e.what()));equipment_art_check_=false;get_tree()->quit(1);}return;
+    }
     if(advancement_check_||advancement_review_){try{advancement_check();}catch(const std::exception& e){UtilityFunctions::printerr("Advancement check failed: ",gs(e.what()));advancement_check_=advancement_review_=false;get_tree()->quit(1);}return;}
     if(save_capture_frames_){try{capture_save_ui();}catch(const std::exception& e){UtilityFunctions::printerr(gs(e.what()));get_tree()->quit(1);}return;}
     if(save_read_check_){try{load_checkpoint_check();}catch(const std::exception& e){UtilityFunctions::printerr("Save restart check failed: ",gs(e.what()));get_tree()->quit(1);}save_read_check_=false;return;}

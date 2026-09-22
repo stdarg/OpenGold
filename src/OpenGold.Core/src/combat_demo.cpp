@@ -157,13 +157,9 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
         auto appearance=found->appearance();
         std::string missing;
         if(body_catalog){
-            const auto& member=party->member(id);
-            std::vector<CombatEquipment> equipped;
-            for(const auto key:member.equipped)if(const auto item=member.character.inventory().find(key))
-                equipped.push_back({item->get().original_type,item->get().name,item->get().definition_id});
-            const auto selection=body_catalog->choose(equipped,appearance.combat_body);
-            appearance.combat_body=selection.body;
-            if(!selection.matched)missing=selection.label;
+            const auto resolved=resolve_combat_appearance(party->member(id),*body_catalog);
+            appearance=resolved.appearance;
+            if(!resolved.selection.matched)missing=resolved.selection.label;
         }
         result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true),missing});
     }

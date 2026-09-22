@@ -17,6 +17,7 @@ public:
     [[nodiscard]] std::int64_t selected_character_id() const {return static_cast<std::int64_t>(selected_);}
     [[nodiscard]] godot::Vector2i selected_character_cell() const;
     [[nodiscard]] bool sprite_facing_left(std::int64_t id) const;
+    [[nodiscard]] godot::Ref<godot::Texture2D> sprite_texture(opengold::rules::EntityId id,bool action) const;
     [[nodiscard]] bool attack_pose_active(std::int64_t id) const {return action_seconds_.contains(static_cast<opengold::rules::EntityId>(id));}
     // Prepare while detached so the caller can keep its current screen on failure.
     void prepare_combat();

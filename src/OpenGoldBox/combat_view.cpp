@@ -90,6 +90,12 @@ bool CombatView::sprite_facing_left(std::int64_t id) const
     const auto actor=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==static_cast<EntityId>(id);});
     return actor!=state.combatants.end()&&actor->facing_left;
 }
+Ref<Texture2D> CombatView::sprite_texture(EntityId id,bool action) const
+{
+    const auto found=art_.find(id);
+    if(found==art_.end())return {};
+    return action?found->second.action:found->second.texture;
+}
 void CombatView::prepare_combat()
 {
     if(demo_)return;
