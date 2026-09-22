@@ -1,0 +1,107 @@
+extends "combat_sprite_demo_tests.gd"
+
+var demo: Control
+var items: ItemList
+
+func choose(index: int) -> void:
+    items.select(index)
+    items.item_selected.emit(index)
+
+func pixels() -> Array:
+    return [demo.get_node("Ready").texture.get_image().get_data(), demo.get_node("Action").texture.get_image().get_data()]
+
+func snapshot(name: String) -> void:
+    if OS.get_cmdline_user_args().has("--capture"):
+        await process_frame
+        await RenderingServer.frame_post_draw
+        var directory := ProjectSettings.globalize_path("res://../../build/equipment-demo-screenshots")
+        DirAccess.make_dir_recursive_absolute(directory)
+        require(root.get_texture().get_image().save_png(directory.path_join(name + ".png")) == OK, "Capture saved")
+
+func run_checks() -> void:
+    if not OS.get_cmdline_user_args().has("--original"):
+        create_fixtures()
+        var data := PackedByteArray()
+        data.resize(2 + 80 * 16)
+        for type in range(80):
+            data[3 + type * 16] = 2 if type in [3, 33, 38, 43] else 1
+        var file := FileAccess.open(fixture_dir.path_join("ITEMS"), FileAccess.WRITE)
+        file.store_buffer(data)
+        file.close()
+    root.size = Vector2i(1280, 800)
+    demo = load("res://scenes/equipment_sprite_demo.tscn").instantiate()
+    root.add_child(demo)
+    await settle()
+    items = demo.get_node("Items")
+    require(items.item_count == 48, "Every catalog weapon plus shield loads: " + demo.get_node("Status").text)
+    var shield := items.item_count - 1
+    require(items.get_item_metadata(shield).type == 59, "Shield is included")
+    var unarmed := pixels()
+    await snapshot("unarmed")
+    # Independently read the shared classifications to verify the resolved body.
+    var mappings := {}
+    var deleted := []
+    for line in FileAccess.get_file_as_string("res://../../data/art/combat-body-looks.tsv").split("\n"):
+        var fields := line.strip_edges().split("\t")
+        if fields.size() != 2 or fields[0].begins_with("#"):
+            continue
+        if fields[0] == "deleted":
+            deleted.append(fields[1])
+        else:
+            for key in fields[1].split(","):
+                if not mappings.has(key) or fields[0] == "24":
+                    mappings[key] = int(fields[0])
+    var changed := 0
+    for index in range(shield):
+        choose(index)
+        var info: Dictionary = items.get_item_metadata(index)
+        press(demo, "Equip")
+        require(items.get_item_metadata(index).equipped, "Weapon equips")
+        var weapon_pixels := pixels()
+        if weapon_pixels != unarmed:
+            changed += 1
+        var key := "type_%d" % info.type
+        var expected: int = mappings.get(key, 24) if not key in deleted else 24
+        require(demo.get_node("Equipment").text.contains("Body %d\n" % expected) or demo.get_node("Equipment").text.contains("Body %d -" % expected), "Correct body for " + key)
+        # Another weapon is rejected and both previews remain unchanged.
+        choose((index + 1) % shield)
+        press(demo, "Equip")
+        require(pixels() == weapon_pixels, "Second weapon cannot change artwork")
+        require(not items.get_item_metadata((index + 1) % shield).equipped, "Second weapon rejected")
+        choose(shield)
+        press(demo, "Equip")
+        require(items.get_item_metadata(shield).equipped == (info.hands == 1), "Shield enforces hand limit")
+        if info.hands == 1:
+            key += "_shield"
+            expected = mappings.get(key, 24) if not key in deleted else 24
+            require(demo.get_node("Equipment").text.contains("Body %d\n" % expected) or demo.get_node("Equipment").text.contains("Body %d -" % expected), "Correct shield body")
+            if info.type == 36:
+                await snapshot("long-sword-and-shield")
+            press(demo, "Unequip")
+            require(pixels() == weapon_pixels, "Removing shield restores both poses")
+        else:
+            require(pixels() == weapon_pixels, "Rejected shield preserves both poses")
+        choose(index)
+        press(demo, "Unequip")
+        require(pixels() == unarmed, "Removing weapon restores both unarmed poses")
+        # Reverse order: shield first must also block two-handed weapons.
+        choose(shield)
+        press(demo, "Equip")
+        var shield_pixels := pixels()
+        choose(index)
+        press(demo, "Equip")
+        require(items.get_item_metadata(index).equipped == (info.hands == 1), "Weapon respects an equipped shield")
+        if info.hands == 1:
+            press(demo, "Unequip")
+        else:
+            require(pixels() == shield_pixels, "Rejected weapon preserves shield artwork")
+        choose(shield)
+        press(demo, "Unequip")
+    require(changed > 30, "Many weapon previews visibly differ from unarmed")
+    choose(0)
+    require(not demo.get_node("Equip").disabled and demo.get_node("Unequip").disabled, "Button availability follows selection")
+    demo.queue_free()
+    await settle()
+    cleanup()
+    print("Equipment sprite demo checks passed: all 47 weapons, shield, both equip orders, both poses and unarmed")
+    quit(0)

@@ -40,7 +40,7 @@ foreach(source IN LISTS complete_portraits)
     list(APPEND portrait_outputs "${output}")
 endforeach()
 add_custom_target(opengold_portrait_assets DEPENDS ${portrait_outputs})
-add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp combat_sprite_demo.cpp character_creation_view.cpp
+add_library(opengold_godot SHARED rolf_tour_view.cpp combat_view.cpp combat_sprite_demo.cpp equipment_sprite_demo.cpp character_creation_view.cpp
     portrait_picker.cpp party_preview.cpp level_up_view.cpp campaign_save_view.cpp save_slots.cpp character_pool_view.cpp character_sheet_view.cpp sound_board_view.cpp godot_sound_output.cpp register_types.cpp)
 add_dependencies(opengold_godot opengold_portrait_assets)
 target_link_libraries(opengold_godot PRIVATE opengold_core opengold_rules_srd5 godot-cpp)
@@ -78,5 +78,10 @@ if(OPENGOLD_BUILD_TESTS)
             "-DEXPECTED=Combat sprite demo checks passed" -P "${PROJECT_SOURCE_DIR}/tests/run_godot_test.cmake")
         set_tests_properties(opengold_godot_sprite_demo PROPERTIES FIXTURES_REQUIRED demo_project TIMEOUT 40 LABELS demo
             ENVIRONMENT "OPENGOLD_GAME_DIR=;OPENGOLD_SCREENSHOT_DIR=${CMAKE_BINARY_DIR}/sprite-demo-screenshots")
+        add_test(NAME opengold_godot_equipment_demo COMMAND "${CMAKE_COMMAND}"
+            "-DGODOT=${OPENGOLD_DEMO_GODOT}" "-DPROJECT=${demo_project}"
+            "-DSCRIPT=${PROJECT_SOURCE_DIR}/tests/equipment_sprite_demo_tests.gd"
+            "-DEXPECTED=Equipment sprite demo checks passed" -P "${PROJECT_SOURCE_DIR}/tests/run_godot_test.cmake")
+        set_tests_properties(opengold_godot_equipment_demo PROPERTIES FIXTURES_REQUIRED demo_project TIMEOUT 40 LABELS demo)
     endif()
 endif()

@@ -34,6 +34,37 @@ The [combat sprite scale demo](../docs/SPRITE-DEMO.md) runs in this demo project
 Launch it with `bash demos/review-sprites.sh` on macOS/Linux or
 `demos\review-sprites.cmd` on Windows after building the demo extension.
 
+### Equipment sprite demo
+
+Run `.\demos\review-equipment.cmd` from PowerShell after building the demo
+extension. Select an item in the left list and use **Equip** / **Unequip**;
+the enlarged **Ready** and **Action** previews update immediately. Arrow keys
+select items, and Tab/Enter reach and activate the buttons.
+
+The temporary inventory contains one of all 47 weapon types in the artwork
+catalog (including Wand) and one Shield. Unequip the weapon for Unarmed or
+shield-only previews. Unequip the current weapon before selecting another;
+two-handed weapons and shields cannot be equipped together, in either order.
+Hand requirements come from the user's original `ITEMS` file. This is an art
+fixture using the game's native equipment-to-body resolver, not a combat
+statistics demo: the SRD adapter currently supports only a subset of weapons.
+The fixture bypasses the shop's 16-item inventory limit, but enforces one weapon
+and two available hands. No campaign, save, or artwork assignment is changed.
+
+The original game path uses `OPENGOLD_GAME_DIR` or the existing demo project
+setting. Missing artwork mappings visibly report the fallback body. Different
+weapons may legitimately share an assigned body. Close with Windows X or Ctrl+X.
+
+`opengold_godot_equipment_demo` tests all weapons and shield combinations with
+authored fixtures. To check the real local artwork and capture the screen:
+
+```powershell
+godot --path demos/godot --script "$PWD/tests/equipment_sprite_demo_tests.gd" -- --original --capture
+```
+
+Use an absolute script path if launching outside the repository root. Captures
+are written to `build/equipment-demo-screenshots/` and remain untracked.
+
 ## Relocation validation
 
 The demo build and all 12 native tests pass. Headless character, training combat,

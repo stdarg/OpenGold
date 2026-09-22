@@ -1,6 +1,7 @@
 #include "rolf_tour_view.h"
 #include "combat_view.h"
 #include "combat_sprite_demo.h"
+#include "equipment_sprite_demo.h"
 #include "character_creation_view.h"
 #include "sound_board_view.h"
 #include "save_slots.h"
@@ -13,6 +14,7 @@ void initialize(godot::ModuleInitializationLevel level)
         godot::ClassDB::register_class<RolfTourView>();
         godot::ClassDB::register_class<CombatView>();
         godot::ClassDB::register_class<CombatSpriteDemo>();
+        godot::ClassDB::register_class<EquipmentSpriteDemo>();
         godot::ClassDB::register_class<CharacterCreationView>();
         godot::ClassDB::register_class<SoundBoardView>();
         godot::ClassDB::register_class<SaveSlots>();
