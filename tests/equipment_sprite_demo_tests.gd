@@ -3,6 +3,39 @@ extends "combat_sprite_demo_tests.gd"
 var demo: Control
 var items: ItemList
 
+func click_at(position: Vector2) -> void:
+    var motion := InputEventMouseMotion.new()
+    motion.position = position
+    root.push_input(motion, true)
+    for down in [true, false]:
+        var event := InputEventMouseButton.new()
+        event.position = position
+        event.button_index = MOUSE_BUTTON_LEFT
+        event.pressed = down
+        root.push_input(event, true)
+        await process_frame
+    await settle()
+
+func click_row(index: int) -> void:
+    await click_at(items.global_position + items.get_item_rect(index).get_center())
+
+func click_button(name: String) -> void:
+    await click_at(demo.get_node(name).get_global_rect().get_center())
+
+func check_pointer_equipment() -> void:
+    await click_row(0)
+    await click_button("Equip")
+    require(items.get_item_metadata(0).equipped, "Pointer equips first weapon")
+    await click_row(1)
+    require(items.is_selected(1), "Pointer selects another weapon after equip")
+    require(not demo.get_node("Equip").disabled, "Equip re-enables for another selected item")
+    await click_button("Equip")
+    require(items.get_item_metadata(1).equipped, "Pointer replaces first weapon with next weapon")
+    require(not items.get_item_metadata(0).equipped, "Weapon replacement frees the previous weapon")
+    await snapshot("weapon-swapped")
+    await click_button("Unequip")
+    require(not items.get_item_metadata(1).equipped, "Pointer unequips next weapon")
+
 func choose(index: int) -> void:
     items.select(index)
     items.item_selected.emit(index)
@@ -37,6 +70,7 @@ func run_checks() -> void:
     var shield := items.item_count - 1
     require(items.get_item_metadata(shield).type == 59, "Shield is included")
     var unarmed := pixels()
+    await check_pointer_equipment()
     await snapshot("unarmed")
     # Independently read the shared classifications to verify the resolved body.
     var mappings := {}
@@ -63,11 +97,14 @@ func run_checks() -> void:
         var key := "type_%d" % info.type
         var expected: int = mappings.get(key, 24) if not key in deleted else 24
         require(demo.get_node("Equipment").text.contains("Body %d\n" % expected) or demo.get_node("Equipment").text.contains("Body %d -" % expected), "Correct body for " + key)
-        # Another weapon is rejected and both previews remain unchanged.
+        # Equipping another weapon replaces the occupied weapon slot.
         choose((index + 1) % shield)
         press(demo, "Equip")
-        require(pixels() == weapon_pixels, "Second weapon cannot change artwork")
-        require(not items.get_item_metadata((index + 1) % shield).equipped, "Second weapon rejected")
+        require(not items.get_item_metadata(index).equipped, "Previous weapon is released")
+        require(items.get_item_metadata((index + 1) % shield).equipped, "Next weapon replaces previous weapon")
+        choose(index)
+        press(demo, "Equip")
+        require(pixels() == weapon_pixels, "Swapping back restores both poses")
         choose(shield)
         press(demo, "Equip")
         require(items.get_item_metadata(shield).equipped == (info.hands == 1), "Shield enforces hand limit")
@@ -77,6 +114,27 @@ func run_checks() -> void:
             require(demo.get_node("Equipment").text.contains("Body %d\n" % expected) or demo.get_node("Equipment").text.contains("Body %d -" % expected), "Correct shield body")
             if info.type == 36:
                 await snapshot("long-sword-and-shield")
+            # Swap with an occupied weapon slot AND shield. Rejection is atomic.
+            var with_shield := pixels()
+            var alternate := 1 if index == 0 else 0
+            choose(alternate)
+            press(demo, "Equip")
+            require(items.get_item_metadata(shield).equipped, "Compatible shield survives weapon swap")
+            require(items.get_item_metadata(alternate).equipped and not items.get_item_metadata(index).equipped, "Weapon swaps with shield equipped")
+            choose(index)
+            press(demo, "Equip")
+            require(pixels() == with_shield, "Weapon and shield poses restored after swap")
+            var two_handed := -1
+            for candidate in range(shield):
+                if items.get_item_metadata(candidate).hands == 2:
+                    two_handed = candidate
+                    break
+            require(two_handed >= 0, "Two-handed test weapon exists")
+            choose(two_handed)
+            press(demo, "Equip")
+            require(items.get_item_metadata(index).equipped and items.get_item_metadata(shield).equipped, "Rejected swap retains previous weapon and shield")
+            require(not items.get_item_metadata(two_handed).equipped and pixels() == with_shield, "Rejected swap preserves both previews")
+            choose(shield)
             press(demo, "Unequip")
             require(pixels() == weapon_pixels, "Removing shield restores both poses")
         else:
@@ -103,5 +161,5 @@ func run_checks() -> void:
     demo.queue_free()
     await settle()
     cleanup()
-    print("Equipment sprite demo checks passed: all 47 weapons, shield, both equip orders, both poses and unarmed")
+    print("Equipment sprite demo checks passed: pointer weapon swaps, all 47 weapons, shield, atomic rejection, both poses and unarmed")
     quit(0)

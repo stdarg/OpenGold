@@ -43,8 +43,10 @@ select items, and Tab/Enter reach and activate the buttons.
 
 The temporary inventory contains one of all 47 weapon types in the artwork
 catalog (including Wand) and one Shield. Unequip the weapon for Unarmed or
-shield-only previews. Unequip the current weapon before selecting another;
+shield-only previews. Equipping another weapon replaces the current weapon;
 two-handed weapons and shields cannot be equipped together, in either order.
+Compatible shields stay equipped during weapon swaps. A rejected swap leaves
+the previous weapon, shield, and both previews unchanged.
 Hand requirements come from the user's original `ITEMS` file. This is an art
 fixture using the game's native equipment-to-body resolver, not a combat
 statistics demo: the SRD adapter currently supports only a subset of weapons.

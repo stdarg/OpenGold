@@ -31,7 +31,7 @@ void EquipmentSpriteDemo::_ready()
         presentation::add_control<Label>(*this,name,{});
     get_node<Label>("Title")->set_text("Equipment sprite demo");
     get_node<Label>("Title")->add_theme_font_size_override("font_size",28);
-    get_node<Label>("Help")->set_text("Select a weapon or shield, then Equip or Unequip. Unequip your weapon to preview Unarmed.");
+    get_node<Label>("Help")->set_text("Select a weapon and Equip to replace the current weapon. Unequip to preview Unarmed.");
     get_node<Label>("ReadyLabel")->set_text("Ready");
     get_node<Label>("ActionLabel")->set_text("Action");
     for(const char* name:{"Equipment","Status"})get_node<Label>(name)->set("autowrap_mode",3);
@@ -127,16 +127,19 @@ void EquipmentSpriteDemo::change_equipment(bool equip)
     const auto items=member_->character.inventory().items();
     const auto& item=items[selected_];
     if(equip) {
-        unsigned hands=hands_[selected_];bool weapon=item.original_type!=59;
+        // Validate a prospective loadout before changing the current one. A
+        // weapon replaces the weapon slot; a shield retains that slot.
+        auto next=member_->equipped;
+        unsigned hands=hands_[selected_];const bool weapon=item.original_type!=59;
         for(unsigned i=0;i<items.size();++i)if(std::ranges::find(member_->equipped,items[i].id)!=member_->equipped.end()) {
             if(items[i].id==item.id)return;
             if(weapon&&items[i].original_type!=59) {
-                get_node<Label>("Status")->set_text("Unequip the current weapon first. Only one weapon may be equipped.");return;
+                std::erase(next,items[i].id);continue;
             }
             hands+=hands_[i];
         }
         if(hands>2) {get_node<Label>("Status")->set_text("Not enough free hands. Unequip the shield or two-handed weapon first.");return;}
-        member_->equipped.push_back(item.id);
+        next.push_back(item.id);member_->equipped=std::move(next);
     } else std::erase(member_->equipped,item.id);
     get_node<Label>("Status")->set_text(gs(item.name+(equip?" equipped.":" unequipped.")));
     refresh();
