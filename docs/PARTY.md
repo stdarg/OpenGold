@@ -53,7 +53,7 @@ travel, automatic combat, original tactical geometry and persistent rewards.
    Down turns 180 degrees in place; Up steps forward and Left/Right turn 90 degrees.
 7. In town, **Inventory** offers **Equip** and **Unequip** for the selected item,
    with the training penalty visible when selecting and equipping it. The party
-   screen also offers **Equip selected**. Unequip an existing weapon or
+   screen also offers **Equip selected**. Equipping a weapon replaces the previous weapon atomically. Unequip existing
    armor before equipping its replacement. Invalid combinations leave equipment
    unchanged. Ready/Action previews immediately reflect the equipped weapon and
    shield for PCs and recruited NPCs, using the same [artwork mappings](COMBAT-BODY-ASSIGNMENTS.md)
@@ -81,25 +81,52 @@ unavailable. Only Fighter, Cleric, and Wizard can advance beyond level one.
   (three at character level 2).
 - Wizard: ordinary attacks, Fire Bolt and single-target Magic Missile, with two
   level-one spell slots (three at character level 2).
-- Unarmed attacks, one equipped melee weapon, one armor and one shield are
+- Unarmed attacks, one equipped weapon, one armor and one shield are
   modeled. Ability modifiers, proficiency, AC, maximum HP and movement come from
   SRD calculations. Dwarven starting HP and Goliath speed are included.
 - Other class/species/background features, skills, origin feats, lineage and
-  spell selection, components, weapon mastery, thrown weapons, versatile attacks,
+  spell selection, components, weapon mastery, versatile two-handed attacks,
   size-specific movement and expanded spells remain unimplemented. The displayed
   combat subset is not a complete SRD character implementation.
 
-Original merchandise maps by item type, not its display name:
+Original merchandise maps by item type, not its display name. Every one of the
+47 weapon types in the artwork reviewer is accepted by the game equipment path.
+Legacy names absent from SRD 5.2.1 use these explicit SRD equivalents:
 
-| Original type | Rules key | Supported use |
-| --- | --- | --- |
-| 8 | dagger | Simple weapon; all classes trained; finesse melee |
-| 23 | mace | Simple weapon; all classes trained |
-| 33 | quarterstaff | Simple weapon; all classes trained; one-handed melee |
-| 36 | longsword | Barbarian/Fighter/Paladin/Ranger trained; one-handed melee |
-| 50 | leather | All except Monk/Sorcerer/Wizard trained; AC 11 + Dexterity |
-| 55 | chain_mail | Fighter/Paladin trained; AC 16, speed penalty below Strength 13 |
-| 59 | shield | Barbarian/Cleric/Druid/Fighter/Paladin/Ranger trained; +2 AC |
+| Original types | SRD rules key |
+| --- | --- |
+| 1 / 2 | battleaxe / handaxe |
+| 3, 5, 10, 11, 14, 15, 16, 17, 40 | glaive |
+| 4, 18, 19 | halberd |
+| 6, 22, 33 | quarterstaff |
+| 7 / 8 / 9 / 12 | club / dagger / dart / flail |
+| 13, 25, 27, 29, 32 | pike |
+| 20 / 21 / 23 / 24 / 26 | warhammer / javelin / mace / morningstar / war_pick |
+| 30 / 31 | scimitar / spear |
+| 34, 35, 36 | longsword |
+| 37 / 38 / 39 | shortsword / greatsword / trident |
+| 41, 43, 45 | longbow |
+| 42, 44 | shortbow |
+| 46 / 47 | light_crossbow / sling |
+| 79 | wand (held focus; no charged spell is granted) |
+| 50 / 55 / 59 | leather / chain_mail / shield |
+
+Damage dice, finesse, thrown/ranged distances, reach and mandatory two-hand
+requirements follow the SRD weapon table. Versatile weapons use their one-handed
+damage profile. The module's existing proficiency subset remains in use:
+simple weapons are trained for all classes; martial weapons for Barbarian,
+Fighter, Paladin and Ranger. Weapon mastery, ammunition consumption/recovery,
+versatile two-handed selection and charged magical wand effects are not added
+by this change. Bows and a plain focus retain unarmed melee; ranged weapons
+provide actual ranged combat commands. Enchanted/effect-bearing original items
+still require a supported conversion rather than silently receiving plain stats.
+
+Equipment metadata comes from the rules module, not from the original edition's
+`ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
+two-handed weapon/shield combination leaves the previous loadout untouched.
+Rules version 0.6.0 accepts earlier campaign saves and upgrades previously
+unsupported ordinary weapons with verified original provenance. Standalone
+combat checkpoints still require the exact rules version.
 
 Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):
 - Weapons omit the +2 level-one proficiency bonus on attacks.
@@ -113,7 +140,7 @@ Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendiu
 Training uses the base level-one class traits; optional Cleric/Druid orders that
 add training are not selected by this creator. Equipping or removing gear rebuilds
 these effects from the current loadout. Duplicate weapon/armor/shield slots remain
-invalid, and heavy armor's low-Strength speed penalty is shown separately.
+invalid in raw profiles; the campaign equip operation replaces the weapon slot, and heavy armor's low-Strength speed penalty is shown separately.
 
 Enchanted, cursed, effect-bearing and other types remain purchasable inventory
 but reject equipping until explicitly converted. The decoded original item and

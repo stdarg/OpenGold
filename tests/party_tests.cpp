@@ -105,8 +105,7 @@ void party_combat_appearance()
         const auto expect=[&](unsigned body,std::string_view key) {
             const auto& member=party.member(id);
             const auto resolved=por::resolve_combat_appearance(member,catalog);
-            auto expected=original;expected.combat_body=body;
-            check(resolved.appearance==expected&&resolved.selection.matched&&resolved.selection.combination==key,
+            check(resolved.appearance==original&&resolved.selection.body==body&&resolved.selection.matched&&resolved.selection.combination==key,
                 "PC and recruited NPC resolve only their equipped weapon and shield");
             check(member.character.appearance()==original,"Resolution never overwrites saved appearance");
         };
@@ -149,6 +148,60 @@ void party_combat_appearance()
     native.equipped.push_back(native.character.inventory().add("mace","Authored mace",1));
     check(por::resolve_combat_appearance(native,catalog).selection.combination=="type_23",
         "Native weapon definition resolves without original item type");
+}
+void all_weapon_equipment()
+{
+    const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
+    const auto catalog=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
+    auto hero=character();
+    for(const auto& option:catalog.options)if(option.original_type)
+        hero.inventory().add(equipment_conversion(item(option.original_type)),option.label,1,option.original_type);
+    const auto shield=hero.inventory().add("shield","Shield",1,59);
+    CampaignParty party(module());const auto id=party.add_pc(std::move(hero));
+    const auto inventory=party.member(id).character.inventory().items();
+    check(inventory.size()==48,"Every reviewer weapon plus shield uses a real campaign inventory");
+    const auto original=party.member(id).character.appearance();
+    for(const auto& weapon:inventory)if(weapon.id!=shield) {
+        party.equip(id,weapon.id);
+        check(party.member(id).equipped==std::vector<std::uint64_t>{weapon.id},"Every weapon replaces the previous weapon through CampaignParty");
+        const auto info=party.equipment_info(id,weapon.id);
+        check(info.slot==EquipmentSlot::weapon&&info.hands>=1&&info.hands<=2,"Every reviewer weapon has shared rules metadata");
+        check(party.profile(id).hit_points>0,"Every weapon produces an actual rules profile");
+        check(por::resolve_combat_appearance(party.member(id),catalog).appearance==original,"Every weapon retains saved anatomy");
+        if(info.hands==2) {
+            rejects([&]{party.equip(id,shield);});
+            check(party.member(id).equipped==std::vector<std::uint64_t>{weapon.id},"Rejected shield is atomic");
+        } else {
+            party.equip(id,shield);
+            const auto equipped=party.member(id).equipped;
+            const auto two=std::find_if(inventory.begin(),inventory.end(),[&](const auto& i){return party.equipment_info(id,i.id).hands==2;});
+            rejects([&]{party.equip(id,two->id);});
+            check(party.member(id).equipped==equipped,"Rejected two-handed replacement preserves weapon and shield");
+            party.unequip(id,shield);
+        }
+        auto participants=party.participants();participants[0].cell={1,1};
+        participants.push_back({1000,"bandit","Target",1,{3,1}});
+        auto rules=module();std::unique_ptr<CombatSession> combat;
+        for(unsigned seed=0;seed<100;++seed){auto attempt=rules->create({{8,5,std::vector<std::uint8_t>(40)},participants},seed);
+            if(attempt->snapshot().actor==id){combat=std::move(attempt);break;}}
+        check(bool(combat),"Find player initiative for each equipped weapon");
+        const auto commands=combat->legal_commands();
+        const auto type=weapon.original_type;
+        const bool ranged=type==2||type==8||type==9||type==21||type==31||type==39||(type>=41&&type<=47);
+        check(std::any_of(commands.begin(),commands.end(),[](const auto& c){return c.verb=="ranged";})==ranged,"Thrown and ranged weapons offer real ranged attacks");
+        const bool reach=type==3||type==4||type==5||(type>=10&&type<=19&&type!=12)||type==25||type==27||type==29||type==32||type==40;
+        check(std::any_of(commands.begin(),commands.end(),[](const auto& c){return c.verb=="melee";})==reach,"Polearms use their reach in actual combat");
+        check(rules->restore(combat->save())->save()==combat->save(),"Every equipped weapon survives a combat checkpoint");
+        const auto saved=encode_campaign(party,nullptr,"all-weapons");
+        const auto decoded=decode_campaign(saved,*srd5::character_rules(),*module(),"all-weapons",nullptr);
+        check(decoded.party.roster[0].equipped==party.member(id).equipped,"Every equipped weapon survives campaign save/load");
+    }
+    auto old=character();const auto old_item=old.inventory().add("por:unsupported:1","Battle Axe",1,1);
+    CampaignParty legacy(module());const auto old_id=legacy.add_pc(std::move(old));auto state=legacy.checkpoint();
+    state.roster[0].item_sources.emplace(old_item,item(1));legacy.restore(std::move(state));
+    const auto migrated=decode_campaign(encode_campaign(legacy,nullptr,"legacy-weapons"),*srd5::character_rules(),*module(),"legacy-weapons",nullptr);
+    legacy.restore(migrated.party);legacy.equip(old_id,old_item);
+    check(legacy.member(old_id).character.inventory().find(old_item)->get().definition_id=="battleaxe","Previously purchased unsupported weapons migrate without losing inventory");
 }
 void goliath_occupancy()
 {
@@ -193,7 +246,7 @@ void roster_and_equipment()
     check(party.profile(pc).armor_class==18,"Armor and shield combine in rules module");
     check(party.profile(pc).item_modifiers.find("Shield: +2 AC")!=std::string::npos&&party.profile(pc).item_modifiers.find("Chain mail")!=std::string::npos,"Modifier report includes every equipped effect");
     rejects([&]{party.purchase(pc,item(50,500));});check(party.member(pc).wealth[3]==70,"Unaffordable buy is atomic");
-    party.purchase(pc,item(1));rejects([&]{party.equip(pc,party.member(pc).character.inventory().items().back().id);});
+    party.purchase(pc,item(49));rejects([&]{party.equip(pc,party.member(pc).character.inventory().items().back().id);});
     check(party.member(pc).equipped.size()==3,"Unsupported item does not change equipment");
     party.unequip(pc,shield);check(party.profile(pc).armor_class==16,"Unequipping updates AC");
     party.begin_combat();rejects([&]{party.remove(pc);});rejects([&]{party.purchase(pc,item(8));});party.end_combat();
@@ -505,8 +558,8 @@ void combat_demo_fixture()
         const auto& image=mapped.encounter.art[i];
         if(i<6) {
             const auto resolved=por::resolve_combat_appearance(mapped.party->member(image.entity),looks);
-            check(image.image.rgba==character_art.icon(resolved.appearance,false).rgba&&image.action&&
-                image.action->rgba==character_art.icon(resolved.appearance,true).rgba,
+            check(image.image.rgba==resolved.icon(character_art,false).rgba&&image.action&&
+                image.action->rgba==resolved.icon(character_art,true).rgba,
                 "Showcase uses the shared equipment appearance in both poses");
         } else {
             check(image.image.rgba==scene.encounter.art[i].image.rgba&&image.action&&scene.encounter.art[i].action&&
@@ -737,6 +790,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

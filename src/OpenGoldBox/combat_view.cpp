@@ -650,7 +650,7 @@ void CombatView::refresh()
     std::set<std::string> missing_combinations;
     for(const auto& [entity,combination]:missing_art_)missing_combinations.insert(combination);
     for(const auto& combination:missing_combinations)
-        log+=i18n::text("No combat artwork assigned")+": "+gs(combination)+". "+i18n::text("Keeping saved appearance.")+"\n";
+        log+=i18n::text("No combat artwork assigned")+": "+gs(combination)+". "+i18n::text("Showing unarmed with the saved body.")+"\n";
     if(s.log_messages.size()==s.log.size())for(const auto& entry:s.log_messages)log+=i18n::render(entry)+"\n";
     else for(const auto& entry:s.log)log+=i18n::text(entry)+"\n";
     if(!error_.empty())log+="\n"+i18n::text(error_);

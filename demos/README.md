@@ -47,15 +47,21 @@ shield-only previews. Equipping another weapon replaces the current weapon;
 two-handed weapons and shields cannot be equipped together, in either order.
 Compatible shields stay equipped during weapon swaps. A rejected swap leaves
 the previous weapon, shield, and both previews unchanged.
-Hand requirements come from the user's original `ITEMS` file. This is an art
-fixture using the game's native equipment-to-body resolver, not a combat
-statistics demo: the SRD adapter currently supports only a subset of weapons.
-The fixture bypasses the shop's 16-item inventory limit, but enforces one weapon
-and two available hands. No campaign, save, or artwork assignment is changed.
+The demo creates a temporary real `CampaignParty`. Its buttons call the same
+`CampaignParty::equip` / `unequip` operations as the game, including SRD weapon
+metadata, transactional swaps, hand limits, and profile validation. All 47
+reviewer weapon types have rules conversions. The initial fixture inventory is
+populated before joining the party, so the shop's 16-item purchase limit does
+not restrict this review. No player saves or artwork assignments are changed.
+
+Equipment rendering preserves the saved head, torso, clothing, legs, colors,
+and size. The catalog supplies weapon-appropriate arms and equipment, not a
+replacement character body. The game party preview, campaign/training combat,
+combat showcase and this demo all call `ResolvedCombatAppearance::icon`.
 
 The original game path uses `OPENGOLD_GAME_DIR` or the existing demo project
-setting. Missing artwork mappings visibly report the fallback body. Different
-weapons may legitimately share an assigned body. Close with Windows X or Ctrl+X.
+setting. Missing/deleted artwork mappings visibly report an unarmed fallback on the
+saved body. Different weapons may share equipment artwork. Close with Windows X or Ctrl+X.
 
 `opengold_godot_equipment_demo` tests all weapons and shield combinations with
 authored fixtures. To check the real local artwork and capture the screen:

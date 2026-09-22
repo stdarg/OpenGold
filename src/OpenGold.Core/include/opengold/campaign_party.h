@@ -45,6 +45,7 @@ public:
     void remove(MemberId id);
     void equip(MemberId id,std::uint64_t item);
     void unequip(MemberId id,std::uint64_t item);
+    [[nodiscard]] rules::EquipmentInfo equipment_info(MemberId id,std::uint64_t item) const;
     void purchase(MemberId id,const por::Equipment& item);
     void set_wealth(MemberId id,std::array<std::uint16_t,7> wealth);
     void award_experience(unsigned amount,std::string reward_id);

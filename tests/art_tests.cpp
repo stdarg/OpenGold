@@ -170,7 +170,32 @@ void composition_tests(const CharacterArt& art)
 int main()
 {
     try {
-        composition_tests(archive_tests());
+        auto art=archive_tests();composition_tests(art);
+        // Distinct authored anatomy makes whole-body substitution observable.
+        // Equipment/body colors deliberately differ even where silhouettes overlap.
+        for(unsigned bank:{0u,64u,128u,192u}) {
+            for(unsigned id=0;id<33;++id)art.combat_bodies.at(bank+id).pixels.assign(576,0);
+            art.combat_heads.at(bank).pixels.assign(art.combat_heads.at(bank).pixels.size(),0);
+            art.combat_heads.at(bank).pixels[0]=12;
+            auto& base=art.combat_bodies.at(bank+24).pixels;
+            base[10*24+10]=1;base[20*24+10]=3;base[22*24+10]=8;
+            for(unsigned donor:{6u,28u}) {
+                auto& pixels=art.combat_bodies.at(bank+donor).pixels;
+                pixels[10*24+10]=9;pixels[20*24+10]=11; // Must never replace saved clothing.
+                pixels[10*24+5]=donor==6?2:10;pixels[4*24+5]=donor==6?7:15;
+            }
+        }
+        for(bool tall:{false,true})for(bool action:{false,true}) {
+            CharacterAppearance a;a.tall=tall;a.combat_body=24;
+            const auto before=art.icon(a,action);
+            const auto axe=art.equipped_icon(a,6,action),staff=art.equipped_icon(a,28,action);
+            const auto pixel_equal=[](const Image& first,const Image& second,unsigned p){
+                return std::equal(first.rgba.begin()+4*p,first.rgba.begin()+4*p+4,second.rgba.begin()+4*p);};
+            for(const auto p:{0u,250u,490u,538u})
+                check(pixel_equal(before,axe,p)&&pixel_equal(before,staff,p),"Equipment preserves saved head, torso, legs and boots in both sizes and poses");
+            check(!pixel_equal(axe,staff,245)&&!pixel_equal(axe,staff,101),"Only wielding arms and equipment change with the donor");
+            check(art.icon(a,action).rgba==before.rgba,"Layered rendering never mutates original decoded art");
+        }
         std::cout << "Synthetic art loading and recolor properties passed\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }

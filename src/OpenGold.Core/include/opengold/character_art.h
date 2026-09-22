@@ -61,6 +61,10 @@ public:
     void add_portrait_head(unsigned id,Image image);
     [[nodiscard]] Image portrait(const CharacterAppearance&) const;
     [[nodiscard]] Image icon(const CharacterAppearance&, bool action) const;
+    // Stable anatomy from the saved body; only the wielding arms and equipment
+    // come from the catalog pose. Original archives are decoded in memory.
+    [[nodiscard]] IndexedIcon combat_anatomy(const CharacterAppearance&, bool action) const;
+    [[nodiscard]] Image equipped_icon(const CharacterAppearance&, unsigned equipment_body, bool action) const;
     [[nodiscard]] CharacterColorUsage color_usage(const CharacterAppearance&) const;
     void validate(const CharacterAppearance&) const;
 };

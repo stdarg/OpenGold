@@ -48,7 +48,7 @@ presentation::NodeOwner<> combat_scene(const std::shared_ptr<CampaignParty>& par
     std::vector<CombatArt> images;
     for(const auto& participant:party->participants()) {
         const auto resolved=por::resolve_combat_appearance(party->member(participant.id),catalog);
-        images.push_back({participant.id,art.icon(resolved.appearance,false),art.icon(resolved.appearance,true),
+        images.push_back({participant.id,resolved.icon(art,false),resolved.icon(art,true),
             resolved.selection.matched?std::string{}:resolved.selection.label});
     }
     auto owned=presentation::instantiate_scene("res://scenes/combat_demo.tscn");
@@ -141,7 +141,7 @@ void CharacterCreationView::refresh_party()
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         const auto resolved=por::resolve_combat_appearance(m,*body_catalog_);
         for(unsigned pose=0;pose<2;++pose){
-            const auto icon=art_->icon(resolved.appearance,pose!=0);
+            const auto icon=resolved.icon(*art_,pose!=0);
             get_node<TextureRect>(pose?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->set_texture(presentation::image_texture(icon));
         }
     }
@@ -160,8 +160,8 @@ void CharacterCreationView::equipment_art_check()
     const auto gear=[&](unsigned index,bool equip){get_node<ItemList>("PartyPanel/Inventory")->select(index);
         press(equip?"PartyPanel/Equip":"PartyPanel/Unequip");};
     const auto expected=[&](unsigned member,unsigned body,bool action){
-        auto a=campaign_->state().roster.at(member).character.appearance();a.combat_body=body;
-        return presentation::rgba_image(art_->icon(a,action))->get_data();};
+        const auto a=campaign_->state().roster.at(member).character.appearance();
+        return presentation::rgba_image(art_->equipped_icon(a,body,action))->get_data();};
     const auto verify_preview=[&](unsigned member,unsigned body){
         for(bool action:{false,true}){
             const auto texture=get_node<TextureRect>(action?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->get_texture();
@@ -233,8 +233,34 @@ void CharacterCreationView::equipment_art_check()
             require(texture.is_valid()&&texture->get_image()->get_data()==presentation::rgba_image(enemy)->get_data(),
                 "Party equipment changed an encounter creature's texture");
         }
+    }else if(check_stage_==19){
+        auto* combat=get_node<CombatView>("CampaignCombat");remove_child(combat);
+        {presentation::NodeOwner<Node> removed(combat);}
+        auto character=preview_guard();auto appearance=character.appearance();appearance.combat_body=24;
+        character.appearance(appearance);
+        for(const auto& option:body_catalog_->options)if(option.original_type){
+            por::Equipment item;item.stored.type=option.original_type;item.stored.stack_size=1;
+            character.inventory().add(equipment_conversion(item),option.label,1,option.original_type);
+        }
+        character.inventory().add("shield","Shield",1,59);
+        const auto id=campaign_->add_pc(std::move(character));
+        party_selected(campaign_->state().roster.size()-1);
+        // Exercise the shipped party's buttons, not the separate review UI.
+        const auto inventory=campaign_->member(id).character.inventory().items();
+        for(unsigned index=0;index+1<inventory.size();++index){
+            gear(index,true);
+            require(campaign_->member(id).equipped==std::vector<std::uint64_t>{inventory[index].id},
+                "Game Equip did not replace the weapon");
+            const auto resolved=por::resolve_combat_appearance(campaign_->member(id),*body_catalog_);
+            require(resolved.appearance==appearance,"Game equipment changed character anatomy");
+            for(bool action:{false,true})require(
+                get_node<TextureRect>(action?"PartyPanel/ActionSprite":"PartyPanel/ReadySprite")->get_texture()->get_image()->get_data()==
+                    presentation::rgba_image(resolved.icon(*art_,action))->get_data(),
+                "Game preview differs from shared compositor");
+        }
+        require(inventory.size()==48,"Game integration fixture missed reviewer weapons");
     }else{
-        UtilityFunctions::print("Equipment artwork checks passed: PC, NPC, immediate previews, both poses, save/load, training, campaign and unchanged creature art");
+        UtilityFunctions::print("Equipment artwork checks passed: all 47 weapons through game controls, PC, NPC, both poses, save/load, training, campaign and unchanged creature art");
         equipment_art_check_=false;get_tree()->quit(0);
     }
     ++check_stage_;

@@ -68,6 +68,7 @@ target_include_directories(opengold_formats
 add_library(opengold_core STATIC
     src/OpenGold.Core/src/core.cpp
     src/OpenGold.Core/src/character_art.cpp
+    src/OpenGold.Core/src/combat_sprite_layers.cpp
     src/OpenGold.Core/src/combat_body_catalog.cpp
     src/OpenGold.Core/src/character_creator.cpp
     src/OpenGold.Core/src/character_pool.cpp

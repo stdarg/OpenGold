@@ -64,21 +64,34 @@ combinations. Older catalogs without deleted rows still load unchanged.
 
 Player characters and recruited NPCs use the same native equipment resolver in
 the party screen, training combat, campaign encounters and combat showcase.
-Only equipped inventory items contribute: carried weapons, carried shields and
-armor do not affect the selected body. Encounter creatures keep their own art.
+Only equipped inventory items contribute. Encounter creatures keep their own art.
 
-Combat matches the exact equipped weapon and shield combination. If several
-bodies match, the character's saved body wins if it is among them; otherwise
-the lowest matching ID wins. An unmatched combination retains the saved body
-and is reported in the combat log. Only the body ID changes; the head, colors,
-size and both poses are preserved. Silver names do not select separate art.
+The catalog chooses an equipment pose for the exact weapon/shield combination.
+A matching saved body is preferred, otherwise the lowest matching ID wins.
+`ResolvedCombatAppearance` retains the complete saved appearance. Its `icon`
+method combines the saved anatomy with the selected wielding arms and equipment
+through `CharacterArt::equipped_icon`; it never replaces the saved torso or legs
+with a robed or trousered donor. The head, colors, size and pose scale remain
+stable. Silver names do not select separate artwork.
 
-The party screen's Ready and Action previews refresh immediately after Equip or
-Unequip and when selecting a member or loading a campaign. Unarmed and shield-only
-members use their corresponding mappings. The resolved body is never written
-back to the character's saved appearance; loading recomputes it from equipment.
-Combat resolves the same appearance on entry; equipment remains locked during
-combat. Character-creation controls and equipment eligibility are unchanged.
+Original CBODY records contain complete poses, not independent layers. The
+runtime separates semantic color regions plus coordinate masks for gray weapon
+outlines, which share a palette entry with boots and body outlines. Visible
+saved garment pixels take priority; anatomy hidden by the original arm or
+weapon is restored from homologous decoded bodies of the same clothing family.
+This is done in memory; no original or derived artwork is distributed. Arms
+and hands may change pose and naturally cover parts of the torso.
+
+Missing/deleted combinations are reported and rendered unarmed on the saved
+body, rather than displaying an unrelated weapon baked into that body. The
+reviewer's assignments and deletion rows remain authoritative and unchanged.
+
+The party screen's Ready and Action previews refresh immediately after Equip
+or Unequip. Combat uses the same compositor on entry, and equipment remains
+locked during combat. All 47 reviewer weapon types now have equipment/rules
+conversions; the demo uses a temporary real campaign and the same equip/unequip
+operations. See [party equipment](PARTY.md) for the SRD equivalents and current
+combat limitations.
 
 Rebuild the game after editing to refresh its packaged catalogs. The reviewer
 always edits the shared source catalog, not a packaged copy.

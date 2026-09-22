@@ -34,6 +34,8 @@ struct CharacterProfile {
     bool strength_dexterity_disadvantage{};
     std::vector<Message> item_messages, spell_messages;
 };
+enum class EquipmentSlot { unsupported, weapon, armor, shield };
+struct EquipmentInfo { EquipmentSlot slot{EquipmentSlot::unsupported}; unsigned hands{}; };
 // Module-owned continuation, separate from encounter turn budgets.
 struct VitalState {
     int hit_points{};
@@ -125,6 +127,7 @@ public:
     [[nodiscard]] virtual std::unique_ptr<CombatSession> create(Encounter encounter, std::uint64_t seed) const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const = 0;
     [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>) const;
+    [[nodiscard]] virtual EquipmentInfo equipment_info(std::string_view) const {return {};}
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
     // False means this module's supported advancement ceiling was reached.
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;

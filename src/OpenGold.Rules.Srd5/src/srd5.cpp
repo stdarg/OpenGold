@@ -1,6 +1,7 @@
 #include "dice.h"
 #include "combat_grid.h"
 #include "status_effects.h"
+#include "weapons.h"
 #include "opengold/srd5.h"
 #include <algorithm>
 #include <array>
@@ -21,10 +22,14 @@ int minimum_save_roll(int dc, int bonus) noexcept
 bool attack_hits(int natural, int bonus, int ac) noexcept
 { return natural==20 || (natural!=1 && static_cast<std::int64_t>(natural)+bonus>=ac); }
 namespace {
+std::string attack_ability(std::string_view key)
+{
+    const auto* item=detail::weapon(key);
+    return item&&item->finesse?"higher of Strength or Dexterity":item&&item->ranged?"Dexterity":"Strength";
+}
 bool trained(std::string_view klass,std::string_view key)
 {
-    if(key=="dagger"||key=="mace"||key=="quarterstaff")return true;
-    if(key=="longsword")return klass=="Barbarian"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
+    if(const auto* weapon=detail::weapon(key))return !weapon->martial||klass=="Barbarian"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
     if(key=="chain_mail")return klass=="Fighter"||klass=="Paladin";
     if(key=="leather")return klass!="Monk"&&klass!="Sorcerer"&&klass!="Wizard";
     if(key=="shield")return klass=="Barbarian"||klass=="Cleric"||klass=="Druid"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
@@ -39,6 +44,7 @@ std::string equipment_note(const CharacterSheet& sheet,std::string_view item)
     else if(item=="leather"||item=="chain_mail")text="Untrained armor: disadvantage on Strength/Dexterity attacks, checks (including initiative), and saves; cannot cast spells.";
     else text="Untrained weapon: no proficiency bonus on attack rolls (no +2 at level 1).";
     if(item=="chain_mail"&&sheet.scores[0]<13)text+=" Chain mail requires Strength 13: speed reduced by 10 feet.";
+    if(item=="wand")text+=" Plain focus only; no charged wand spell is granted.";
     return text;
 }
 namespace {
@@ -47,6 +53,7 @@ struct Definition {
     int ac{}, hp{}, initiative{}, speed{}, melee_bonus{};
     Dice melee;
     int ranged_bonus{};
+    int reach{5};
     Dice ranged;
     int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{},slots2{};
     bool str_dex_disadvantage{},savage{};
@@ -107,21 +114,25 @@ Definition character_definition(std::string_view bytes)
         if(selected_spells&~allowed||(features&1)&&klass!="Fighter")throw std::runtime_error("Invalid prepared spells or feat prerequisites");
         d.spells=selected_spells;d.savage=(features&2)!=0;
     }
-    bool weapon=false,armor=false,shield=false;
+    bool weapon=false,armor=false,shield=false;unsigned hands=0;
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
-        if(key=="dagger"||key=="mace"||key=="longsword"||key=="quarterstaff"){
+        if(const auto* item=detail::weapon(key)){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
-            const int modifier=key=="dagger"?std::max(str,dex):str;
-            d.melee_bonus=(trained(klass,key)?2:0)+modifier;d.melee={1,key=="dagger"?4:key=="longsword"?8:6,modifier};
+            hands+=item->hands;
+            const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
+            const int bonus=(trained(klass,key)?2:0)+modifier;
+            if(item->dice&&!item->ranged){d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.reach=item->reach;}
+            if(item->range){d.ranged_bonus=bonus;d.ranged={item->dice,item->sides,modifier};d.range=item->range;d.long_range=item->long_range;}
         }else if(key=="leather"||key=="chain_mail"){
             if(armor)throw std::runtime_error("Only one armor may be equipped");
             if(!trained(klass,key)){d.str_dex_disadvantage=true;d.spells=0;}
             armor=true;d.ac=key=="leather"?11+dex:16;
             if(key=="chain_mail"&&scores[0]<13)d.speed-=10;
         }else if(key=="shield"){
-            if(shield)throw std::runtime_error("Only one shield may be equipped");shield=true;
+            if(shield)throw std::runtime_error("Only one shield may be equipped");shield=true;++hands;
         }else throw std::runtime_error("Unsupported equipment conversion: "+key);
     }
+    if(hands>2)throw std::runtime_error("Not enough free hands. Unequip the shield or two-handed weapon first.");
     if(!armor&&klass=="Barbarian")d.ac=std::max(d.ac,10+dex+con);
     if(!armor&&!shield&&klass=="Monk")d.ac=std::max(d.ac,10+dex+ability_modifier(scores[4]));
     if(shield&&trained(klass,"shield"))d.ac+=2;
@@ -327,7 +338,7 @@ std::vector<Command> Session::legal_commands() const
             if(other.dead || !line_of_sight(a.source.cell,other.source.cell))continue;
             const int feet=distance(a.source.cell,other.source.cell);
             if(other.source.side!=a.source.side && other.hp>0) {
-                if(feet<=5)add(id,"melee",a.source.definition=="slums-kobold"?"Dagger attack":
+                if(feet<=d.reach)add(id,"melee",a.source.definition=="slums-kobold"?"Dagger attack":
                     a.source.definition=="slums-kobold-leader"||a.source.definition=="slums-kobold-leader-sword"?"Short sword attack":"Melee attack",other.source.id);
                 if(d.range>0&&feet<=d.long_range)add(id,"ranged",
                     a.source.definition=="slums-kobold-leader"?"Short bow attack":"Ranged attack",other.source.id);
@@ -475,7 +486,7 @@ void Session::progress_movement()
         const auto destination=path_[path_index_];
         if(reactors_.empty()&&!a.disengaged)for(const auto& other:actors_)
             if(other.source.side!=a.source.side&&other.hp>0&&other.reaction&&
-                distance(a.source.cell,other.source.cell)<=5&&distance(destination,other.source.cell)>5&&
+                distance(a.source.cell,other.source.cell)<=def(other).reach&&distance(destination,other.source.cell)>def(other).reach&&
                 can_see(other,a))reactors_.push_back(other.source.id);
         if(pending())return;
         const auto cost = grid.step_cost(a.source.cell, destination);
@@ -506,7 +517,7 @@ bool Session::submit(const Command& command)
                 for(const auto& other:actors_)
                     if(other.source.side!=a.source.side&&other.hp>0&&other.reaction&&
                         (old_left?other.source.cell.x<a.source.cell.x:other.source.cell.x>a.source.cell.x)&&
-                        distance(other.source.cell,a.source.cell)<=5&&can_see(other,a))
+                        distance(other.source.cell,a.source.cell)<=def(other).reach&&can_see(other,a))
                         turn_reactors.push_back(other.source.id);
             }
         }
@@ -692,7 +703,7 @@ void Session::validate_pending_turn_reaction() const
         const auto& reactor=*found;
         if(reactor.hp<=0||!reactor.reaction||reactor.source.side==attacker.source.side||
             (attacker.facing_left?reactor.source.cell.x<=attacker.source.cell.x:reactor.source.cell.x>=attacker.source.cell.x)||
-            distance(reactor.source.cell,attacker.source.cell)>5||!can_see(reactor,attacker))
+            distance(reactor.source.cell,attacker.source.cell)>def(reactor).reach||!can_see(reactor,attacker))
             throw std::runtime_error("Invalid pending turn opportunity attack");
     }
 }
@@ -721,8 +732,8 @@ void Session::validate_pending_movement() const
         // restore_movement already established that every reactor ID exists.
         const auto& actor = *reactor;
         if (actor.hp == 0 || !actor.reaction || actor.source.side == mover.source.side ||
-            distance(actor.source.cell, mover.source.cell) > 5 ||
-            distance(actor.source.cell, path_[path_index_]) <= 5 ||
+            distance(actor.source.cell, mover.source.cell) > def(actor).reach ||
+            distance(actor.source.cell, path_[path_index_]) <= def(actor).reach ||
             !can_see(actor,mover))
             throw std::runtime_error("Invalid checkpoint opportunity attack");
     }
@@ -800,7 +811,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -924,6 +935,12 @@ public:
         actor.hp=std::min(d.hp,actor.hp+amount);actor.successes=actor.failures=0;actor.stable=false;
         auto next=vitals(actor);state=std::move(next);random_state=rng;
     }
+    EquipmentInfo equipment_info(std::string_view key) const override {
+        if(const auto* item=detail::weapon(key))return {EquipmentSlot::weapon,item->hands};
+        if(key=="shield")return {EquipmentSlot::shield,1};
+        if(key=="leather"||key=="chain_mail")return {EquipmentSlot::armor,0};
+        return {};
+    }
     CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear) const override {
         if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>4)throw std::runtime_error("Unsupported character rules identity or level");
         unsigned features=sheet.background=="Soldier"?2:0;
@@ -955,7 +972,8 @@ public:
             if(key=="shield")result.item_modifiers+=trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.\n":"Source: equipped Shield: +0 AC (untrained).\n";
             else if(key=="leather")result.item_modifiers+="Source: equipped Leather armor and Dexterity score "+std::to_string(sheet.scores[1])+". AC becomes 11 + Dexterity modifier ("+std::to_string(sheet.modifiers[1])+").\n";
             else if(key=="chain_mail")result.item_modifiers+="Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength "+std::to_string(sheet.scores[0])+").\n";
-            else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Melee attack uses "+(key=="dagger"?std::string("higher of Strength or Dexterity"):std::string("Strength"))+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage adds that ability modifier.\n";
+            else if(key=="wand")result.item_modifiers+="Source: equipped Wand. Held focus; melee uses unarmed strike.\n";
+            else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Weapon attack uses "+attack_ability(key)+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage adds that ability modifier.\n";
         }
         for(const auto& key:gear)result.item_modifiers+="Source: equipped "+key+". "+equipment_note(sheet,key)+"\n";
         if(features&1)result.item_modifiers+="Defense feat: +1 AC while wearing armor.\n";
@@ -970,8 +988,9 @@ public:
             if(key=="shield")result.item_messages.push_back({trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.":"Source: equipped Shield: +0 AC (untrained).",{}});
             else if(key=="leather")result.item_messages.push_back({"Source: equipped Leather armor and Dexterity score {score}. AC becomes 11 + Dexterity modifier ({modifier}).",{{"score",std::to_string(sheet.scores[1])},{"modifier",std::to_string(sheet.modifiers[1])}}});
             else if(key=="chain_mail")result.item_messages.push_back({"Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength {score}).",{{"score",std::to_string(sheet.scores[0])}}});
-            else result.item_messages.push_back({"Source: equipped {item} and {class} weapon proficiency. Melee attack uses {ability} modifier {proficiency}; damage adds that ability modifier.",
-                {{"item",key,true},{"class",sheet.character_class,true},{"ability",key=="dagger"?"higher of Strength or Dexterity":"Strength",true},
+            else if(key=="wand")result.item_messages.push_back({"Source: equipped Wand. Held focus; melee uses unarmed strike.",{}});
+            else result.item_messages.push_back({"Source: equipped {item} and {class} weapon proficiency. Weapon attack uses {ability} modifier {proficiency}; damage adds that ability modifier.",
+                {{"item",key,true},{"class",sheet.character_class,true},{"ability",attack_ability(key),true},
                  {"proficiency",trained(sheet.character_class,key)?"+2 class proficiency":"without proficiency",true}}});
             result.item_messages.push_back({equipment_note(sheet,key),{}});
         }
@@ -1007,11 +1026,11 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.5.0",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.0",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
-        content.previous_campaign_identities.push_back({"opengold.srd5","0.5.0",revision+"/"+fingerprint});
+        content.previous_campaign_identities.push_back({"opengold.srd5","0.6.0",revision+"/"+fingerprint});
     // These additive rows introduce saves and an isolated casting fixture. Old
     // campaign sheets can migrate; combat checkpoints still require exact rules.
     // Reconstruct both supported historical packs without guessing fingerprints.
@@ -1025,7 +1044,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
             previous+=line_before+'\n';
         }
         std::uint64_t previous_hash=14695981039346656037ULL;for(unsigned char c:previous){previous_hash^=c;previous_hash*=1099511628211ULL;}
-        if(previous_hash!=hash)content.previous_campaign_identities.push_back({"opengold.srd5","0.5.0",revision+"/"+std::to_string(previous_hash)});
+        if(previous_hash!=hash)content.previous_campaign_identities.push_back({"opengold.srd5","0.6.0",revision+"/"+std::to_string(previous_hash)});
     }
     std::set<std::string> save_rows,casting_rows;
     while(std::getline(lines,line)) {

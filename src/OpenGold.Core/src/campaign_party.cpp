@@ -13,8 +13,20 @@ std::string equipment_conversion(const por::Equipment& item)
     const auto& raw=item.stored;
     if(raw.magic_bonus||raw.cursed_raw||std::any_of(raw.effect_codes.begin(),raw.effect_codes.end(),[](auto n){return n!=0;}))
         return "por:unsupported:"+std::to_string(raw.type);
-    switch(raw.type){case 8:return "dagger";case 23:return "mace";case 33:return "quarterstaff";
-    case 36:return "longsword";case 50:return "leather";case 55:return "chain_mail";case 59:return "shield";
+    switch(raw.type){
+    case 1:return "battleaxe";case 2:return "handaxe";
+    case 3:case 5:case 10:case 11:case 14:case 15:case 16:case 17:case 40:return "glaive";
+    case 4:case 18:case 19:return "halberd";
+    case 6:case 22:case 33:return "quarterstaff";
+    case 7:return "club";case 8:return "dagger";case 9:return "dart";case 12:return "flail";
+    case 13:case 25:case 27:case 29:case 32:return "pike";
+    case 20:return "warhammer";case 21:return "javelin";case 23:return "mace";
+    case 24:return "morningstar";case 26:return "war_pick";case 30:return "scimitar";
+    case 31:return "spear";case 34:case 35:case 36:return "longsword";
+    case 37:return "shortsword";case 38:return "greatsword";case 39:return "trident";
+    case 41:case 43:case 45:return "longbow";case 42:case 44:return "shortbow";
+    case 46:return "light_crossbow";case 47:return "sling";case 79:return "wand";
+    case 50:return "leather";case 55:return "chain_mail";case 59:return "shield";
     default:return "por:unsupported:"+std::to_string(raw.type);}
 }
 CampaignParty::CampaignParty(std::unique_ptr<rules::RulesModule> rules):rules_(std::move(rules))
@@ -73,12 +85,21 @@ void CampaignParty::equip(MemberId id,std::uint64_t item)
     editable();auto next=member(id).equipped;
     if(std::find(next.begin(),next.end(),item)!=next.end())return;
     auto& m=edit(id);const auto found=m.character.inventory().find(item);if(!found)throw std::runtime_error("Unknown item");
+    const auto info=rules_->equipment_info(found->get().definition_id);
+    if(info.slot==rules::EquipmentSlot::weapon)
+        std::erase_if(next,[&](auto key){return rules_->equipment_info(m.character.inventory().find(key)->get().definition_id).slot==rules::EquipmentSlot::weapon;});
     std::vector<std::string> keys;for(auto key:next)keys.push_back(m.character.inventory().find(key)->get().definition_id);
     keys.push_back(found->get().definition_id);(void)rules_->character_profile(m.character.sheet(),keys);
     next.push_back(item);m.equipped=std::move(next);
 }
 void CampaignParty::unequip(MemberId id,std::uint64_t item)
 {editable();auto& items=edit(id).equipped;std::erase(items,item);}
+rules::EquipmentInfo CampaignParty::equipment_info(MemberId id,std::uint64_t item) const
+{
+    const auto found=member(id).character.inventory().find(item);
+    if(!found)throw std::runtime_error("Unknown item");
+    return rules_->equipment_info(found->get().definition_id);
+}
 void CampaignParty::purchase(MemberId id,const por::Equipment& item)
 {
     editable();auto& m=edit(id);

@@ -47,7 +47,17 @@ struct SaveCodec {
     void field(por::EquipmentBonuses& v){fields(v.weapon_to_hit,v.weapon_damage,v.armor_base_ac,v.ac_adjustment,v.save_bonus);}
     void field(por::Equipment& v){fields(v.index,v.stored,v.base,v.bonuses);}
     void field(rules::VitalState& v){fields(v.hit_points,v.dead,v.resources,v.description);}
-    void member(PartyMember& v){fields(v.id,v.npc_source,v.vitals,v.wealth,v.equipped,v.morale,v.experience,v.last_rest_minutes,v.item_sources,v.creation_source);}
+    void member(PartyMember& v){
+        fields(v.id,v.npc_source,v.vitals,v.wealth,v.equipped,v.morale,v.experience,v.last_rest_minutes,v.item_sources,v.creation_source);
+        // Older releases stored ordinary weapons as unsupported. Migrate only
+        // the exact old key backed by matching original item provenance.
+        if(reading)for(auto& item:v.character.inventory().items_) {
+            const auto source=v.item_sources.find(item.id);
+            if(source!=v.item_sources.end()&&item.original_type==source->second.stored.type&&
+                item.definition_id=="por:unsupported:"+std::to_string(item.original_type))
+                item.definition_id=equipment_conversion(source->second);
+        }
+    }
     void field(PartyState& v){
         fields(v.slots,v.next_id,v.selected,v.time_minutes,v.random_state,v.claimed_rewards);
         std::map<MemberId,unsigned> rest_offsets;

@@ -2,6 +2,7 @@ extends "combat_sprite_demo_tests.gd"
 
 var demo: Control
 var items: ItemList
+var previews: Array = []
 
 func click_at(position: Vector2) -> void:
     var motion := InputEventMouseMotion.new()
@@ -54,13 +55,6 @@ func snapshot(name: String) -> void:
 func run_checks() -> void:
     if not OS.get_cmdline_user_args().has("--original"):
         create_fixtures()
-        var data := PackedByteArray()
-        data.resize(2 + 80 * 16)
-        for type in range(80):
-            data[3 + type * 16] = 2 if type in [3, 33, 38, 43] else 1
-        var file := FileAccess.open(fixture_dir.path_join("ITEMS"), FileAccess.WRITE)
-        file.store_buffer(data)
-        file.close()
     root.size = Vector2i(1280, 800)
     demo = load("res://scenes/equipment_sprite_demo.tscn").instantiate()
     root.add_child(demo)
@@ -92,11 +86,15 @@ func run_checks() -> void:
         press(demo, "Equip")
         require(items.get_item_metadata(index).equipped, "Weapon equips")
         var weapon_pixels := pixels()
+        require(demo.get_meta("body") == 24, "Every weapon retains the character body")
+        previews.append([items.get_item_text(index).replace("[Equipped] ", ""), demo.get_node("Ready").texture, demo.get_node("Action").texture])
+        if info.type in [1, 6]:
+            await snapshot("battle-axe" if info.type == 1 else "bo-stick")
         if weapon_pixels != unarmed:
             changed += 1
         var key := "type_%d" % info.type
         var expected: int = mappings.get(key, 24) if not key in deleted else 24
-        require(demo.get_node("Equipment").text.contains("Body %d\n" % expected) or demo.get_node("Equipment").text.contains("Body %d -" % expected), "Correct body for " + key)
+        require(demo.get_meta("equipment_body") == expected, "Correct body for " + key)
         # Equipping another weapon replaces the occupied weapon slot.
         choose((index + 1) % shield)
         press(demo, "Equip")
@@ -111,7 +109,7 @@ func run_checks() -> void:
         if info.hands == 1:
             key += "_shield"
             expected = mappings.get(key, 24) if not key in deleted else 24
-            require(demo.get_node("Equipment").text.contains("Body %d\n" % expected) or demo.get_node("Equipment").text.contains("Body %d -" % expected), "Correct shield body")
+            require(demo.get_meta("equipment_body") == expected, "Correct shield body")
             if info.type == 36:
                 await snapshot("long-sword-and-shield")
             # Swap with an occupied weapon slot AND shield. Rejection is atomic.
@@ -158,6 +156,30 @@ func run_checks() -> void:
     require(changed > 30, "Many weapon previews visibly differ from unarmed")
     choose(0)
     require(not demo.get_node("Equip").disabled and demo.get_node("Unequip").disabled, "Button availability follows selection")
+    if OS.get_cmdline_user_args().has("--capture"):
+        demo.hide()
+        root.size = Vector2i(1440, 900)
+        var gallery := Control.new()
+        root.add_child(gallery)
+        for index in range(previews.size()):
+            var origin := Vector2((index % 8) * 180, (index / 8) * 145)
+            var label := Label.new()
+            label.text = previews[index][0].split("  (")[0]
+            label.position = origin + Vector2(4, 4)
+            label.add_theme_font_size_override("font_size", 13)
+            gallery.add_child(label)
+            for pose in range(2):
+                var sprite := TextureRect.new()
+                sprite.texture = previews[index][pose + 1]
+                sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+                sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                sprite.position = origin + Vector2(4 + pose * 86, 26)
+                sprite.size = Vector2(84, 108)
+                gallery.add_child(sprite)
+        await settle()
+        await snapshot("all-weapons")
+        gallery.queue_free()
     demo.queue_free()
     await settle()
     cleanup()

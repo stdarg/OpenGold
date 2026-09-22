@@ -5,7 +5,7 @@
 #include <godot_cpp/classes/control.hpp>
 #include <optional>
 
-// Isolated artwork fixture: no campaign, saves, or catalog writes.
+// Temporary real campaign: shared game equipment/rules/rendering, no disk writes.
 class EquipmentSpriteDemo : public godot::Control {
     GDCLASS(EquipmentSpriteDemo, godot::Control)
 public:
@@ -15,7 +15,8 @@ protected:
     static void _bind_methods() {}
     void _notification(int what);
 private:
-    std::optional<opengold::PartyMember> member_;
+    std::unique_ptr<opengold::CampaignParty> campaign_;
+    opengold::MemberId member_{};
     std::optional<opengold::por::CharacterArt> art_;
     opengold::por::CombatBodyCatalog catalog_;
     std::vector<unsigned> hands_;

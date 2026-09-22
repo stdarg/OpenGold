@@ -36,9 +36,10 @@ struct CombatBodyCatalog {
 struct ResolvedCombatAppearance {
     CharacterAppearance appearance;
     CombatBodySelection selection;
+    [[nodiscard]] Image icon(const CharacterArt& art,bool action) const;
 };
-// Only a party member's readied gear affects the copied body. Saved appearance
-// remains the stable preference/fallback; encounter creatures do not use this API.
+// Saved anatomy remains unchanged. The selection supplies wielding arms and
+// equipment layers only; encounter creatures do not use this API.
 [[nodiscard]] ResolvedCombatAppearance resolve_combat_appearance(
     const PartyMember& member, const CombatBodyCatalog& catalog);
 }

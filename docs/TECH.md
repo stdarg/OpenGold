@@ -676,3 +676,18 @@ The current technical recommendation is:
 - test-driven compatibility work from the start
 
 This gives OpenGoldBox the best balance of faithfulness, maintainability, legal caution, and room to grow into a reusable Gold Box engine.
+
+### Equipment sprite composition and shared equipment operations
+
+The equipment demo uses a temporary `CampaignParty` with the same `equip`,
+`unequip`, rules metadata, profile validation and atomic replacement as the
+main game. SRD 0.6.0 supports every ordinary reviewer weapon through explicit
+original-to-SRD conversions (see `docs/PARTY.md`). Saved ordinary items that
+used the old unsupported key migrate only when original provenance matches.
+
+The equipment resolver retains the character's saved anatomy. Its shared
+`icon` method composes stable torso/clothing/legs with wielding arms and gear
+from the reviewed equipment pose; head composition and palette selection follow.
+Runtime masks and restoration use locally decoded original records. The catalog
+continues to describe complete reference poses and is never rewritten by the
+demo or compositor. Missing/deleted mappings visibly fall back to unarmed.

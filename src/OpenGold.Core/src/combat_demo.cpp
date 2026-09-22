@@ -158,10 +158,9 @@ CombatDemoSetup make_combat_demo(std::unique_ptr<RulesModule> rules,
         std::string missing;
         if(body_catalog){
             const auto resolved=resolve_combat_appearance(party->member(id),*body_catalog);
-            appearance=resolved.appearance;
             if(!resolved.selection.matched)missing=resolved.selection.label;
-        }
-        result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true),missing});
+            result.encounter.art.push_back({id,resolved.icon(art,false),resolved.icon(art,true),missing});
+        } else result.encounter.art.push_back({id,art.icon(appearance,false),art.icon(appearance,true),missing});
     }
     result.encounter.positions.assign(positions.begin(),positions.end());
     const auto kobold=original_icon(game_directory,0);
