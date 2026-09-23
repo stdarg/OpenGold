@@ -61,10 +61,10 @@ reduction in repeated work; it still enumerates the same supported actions.
 - **Budget safety:** a step is accepted only when its cost fits the remaining
   budget. Subtraction precedes addition in that check, avoiding overflow even
   with a large caller-supplied budget.
-- **Destination rules:** allies can be crossed at difficult-terrain cost, but
+- **Destination rules:** allies can be crossed at the ground's ordinary cost, but
   no occupied cell or origin is offered as a destination. Enemies cannot be
   crossed. Corpses are omitted from occupancy; unconscious actors are retained.
-  Allied transit and difficult terrain do not add two separate surcharges.
+  Allied occupancy adds no surcharge, including on difficult ground.
 - **Deterministic ties:** equal-cost queue entries use the row-major cell
   index, and equal-cost alternatives never replace a predecessor. This retains
   the original chosen route, which matters for opportunity attacks.
@@ -76,7 +76,10 @@ reduction in repeated work; it still enumerates the same supported actions.
   allocations. Actor IDs and path/reaction indices are validated before use.
   A paused path validates only its untravelled suffix; the prefix has already
   spent movement. The owned candidate is returned only after parsing and all
-  relational checks succeed. Failure destroys the candidate.
+  relational checks succeed. A paused mover may share an allied transit cell;
+  a saved involuntary-overlap marker admits a knockdown/recovery at that cell
+  until the actors separate. Other living overlap and occupied destinations
+  reject. Failure destroys the candidate.
 
 These arguments concern the extracted algorithms and their stated contracts;
 they are not a formal proof of the entire game or every possible combat state.

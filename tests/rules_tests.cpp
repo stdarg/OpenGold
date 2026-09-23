@@ -2,6 +2,7 @@
 #include "opengold/combat_demo.h"
 #include "opengold/character_rules.h"
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -443,6 +444,84 @@ void death_save_turn_entry_tests()
     check(death_rolls(*migrated).empty()&&unit(*migrated,1).persistent.resources=="SRD1 1 0 0 0 1",
         "Older stable resource state is normalized without rolling or refilling resources");
 }
+void allied_transit_tests()
+{
+    auto module=srd5::load(pack());
+    Battlefield corridor{7,3,std::vector<std::uint8_t>(21,1)};
+    for(int x=0;x<7;++x)corridor.terrain[7+x]=0;
+    for(const unsigned side:{0u,1u})for(const bool difficult:{false,true}){
+        Encounter e{corridor,{{1,"vanguard","Mover",side,{0,1}},{2,"bandit","Enemy",1-side,{6,1}},
+            {3,"vanguard","Ally",side,{1,1}},{4,"vanguard","Second ally",side,{2,1}}}};
+        if(difficult)e.battlefield.terrain[8]=2;
+        auto session=hero_first(*module,e);const auto saved=session->save();
+        const auto moves=session->movement_reach(1);
+        check(std::find(moves.begin(),moves.end(),Cell{4,1})!=moves.end(),"Movement highlights include free cells beyond successive allies");
+        for(const Cell occupied:std::array<Cell,3>{{{1,1},{2,1},{6,1}}}){
+            Command blocked{session->snapshot().revision,1,0,"move","Move",occupied};
+            check(!session->submit(blocked)&&session->save()==saved,"Voluntary stops on allies or enemies reject atomically");
+        }
+        check(session->submit(command(*session,"move",{4,1}))&&unit(*session,1).cell==Cell{4,1},"Both sides can cross their own allies");
+        check(unit(*session,1).movement_feet==(difficult?5:10),"Allied occupancy adds no cost; terrain retains its surcharge");
+        check(unit(*session,1).action&&unit(*session,1).bonus_action,"Transit spends movement, not an action or Bonus Action");
+        check(module->restore(session->save())->save()==session->save(),"Completed allied transit round trips");
+    }
+    // Pause on an allied space after a travelled prefix, before leaving reach.
+    Battlefield board{5,3,std::vector<std::uint8_t>(15,1)};
+    for(int x=0;x<5;++x)board.terrain[5+x]=0;board.terrain[1]=board.terrain[2]=0;
+    Encounter e{board,{{1,"vanguard","Mover",0,{0,1}},{2,"bandit","Reactor",1,{1,0}},
+        {3,"healer","Ally",0,{2,1}}}};
+    for(const auto response:{"decline","opportunity"}){
+        auto session=hero_first(*module,e);session->submit(command(*session,"move",{4,1}));
+        check(session->snapshot().reaction_pending&&unit(*session,1).cell==unit(*session,3).cell&&unit(*session,1).movement_feet==20,
+            "The reaction pauses on an allied transit cell after spending the prefix once");
+        std::vector<std::string> rows;std::istringstream saved(session->save());
+        for(std::string line;std::getline(saved,line);)rows.push_back(line);
+        const auto path_header=4+session->snapshot().combatants.size();
+        const auto reject_rows=[&](const auto& invalid){
+            std::string bytes;for(const auto& row:invalid)bytes+=row+'\n';
+            rejects([&]{(void)module->restore(bytes);},"Malformed allied transit checkpoint accepted");
+        };
+        auto invalid=rows;invalid[path_header+1]="1 1 2 1 3 1 2 1 ";
+        reject_rows(invalid); // A valid sequence of steps may not end on the ally.
+        invalid=rows;invalid[path_header]="0 0";invalid[path_header+1]="";
+        invalid[path_header+2]="0 0";invalid[path_header+3]="";
+        reject_rows(invalid); // Unpaused, voluntary living overlap remains invalid.
+        auto restored=module->restore(session->save());const auto react=command(*session,response);
+        check(session->submit(react)&&restored->submit(react)&&session->save()==restored->save(),"Shared-cell reaction resumes deterministically after reload");
+        check(unit(*session,1).cell==Cell{4,1}&&unit(*session,1).movement_feet==10,"Resumed route spends only its remaining suffix");
+    }
+    // Knockdown during transit is involuntary: persist the shared position
+    // through healing, and clear the exceptional state when either ally leaves.
+    e.participants[0].state=VitalState{1,false,"SRD1 1 0 0 0 0"};
+    bool recovered=false,died=false,natural_recovery=false;
+    for(unsigned seed=0;seed<500&&!(recovered&&died&&natural_recovery);++seed){
+        auto session=module->create(e,seed);if(session->snapshot().actor!=1)continue;
+        session->submit(command(*session,"move",{4,1}));session->submit(command(*session,"opportunity"));
+        if(unit(*session,1).hit_points>0)continue;
+        check(!session->snapshot().reaction_pending&&unit(*session,1).cell==Cell{2,1},"Incapacitated mover remains where the interrupt hit, on the ally");
+        auto waiting=module->restore(session->save());
+        for(unsigned turns=0;turns<20&&!unit(*waiting,1).dead&&unit(*waiting,1).hit_points==0;++turns){
+            check(waiting->submit(command(*waiting,"end")),"Advance automatic recovery while sharing an allied space");
+            check(module->restore(waiting->save())->save()==waiting->save(),"Death saves, stabilization and recovery preserve a valid shared-space checkpoint");
+        }
+        died|=unit(*waiting,1).dead;natural_recovery|=unit(*waiting,1).hit_points>0;
+        if(recovered)continue;
+        auto restored=module->restore(session->save());
+        for(unsigned turns=0;session->snapshot().actor!=3;++turns){
+            check(turns<3,"Ally gets a healing turn");const auto end=command(*session,"end");
+            check(session->submit(end)&&restored->submit(end),"Advance both copies to healer");
+        }
+        auto heal=command(*session,"cure_wounds");heal.target=1;
+        check(session->submit(heal)&&restored->submit(heal)&&session->save()==restored->save(),"Healing an interrupted ally preserves deterministic overlapping state");
+        check(unit(*session,1).hit_points>0&&unit(*session,1).cell==unit(*session,3).cell,"Revived ally has not been silently teleported");
+        restored=module->restore(session->save());
+        const auto move=command(*session,"move",{3,1});
+        check(session->submit(move)&&restored->submit(move)&&session->save()==restored->save(),"Either ally can leave an involuntarily shared cell");
+        check(unit(*session,1).cell!=unit(*session,3).cell,"Recovery resolves overlap without duplicating a movement budget");
+        check(module->restore(session->save())->save()==session->save(),"Separated actors retain a valid checkpoint");recovered=true;
+    }
+    check(recovered&&died&&natural_recovery,"Exercise healing, death and natural-20 recovery after interruption on an ally");
+}
 void opportunity_migration_tests()
 {
     auto module=srd5::load(pack());
@@ -460,7 +539,8 @@ void opportunity_migration_tests()
         std::string bytes;for(const auto& row:rows)bytes+=row+'\n';return bytes;
     };
     const auto upgraded=[&](const std::string& bytes){
-        auto rows=lines(bytes);rows[0].replace(9,1,"6");
+        auto rows=lines(bytes);rows[0].replace(9,1,"7");
+        for(std::size_t i=4;i<8;++i)rows[i]+=" 0";
         rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);rows.pop_back();return rows;
     };
     const auto facing=fixture("combat-v5-facing.save");
@@ -589,7 +669,15 @@ void checkpoint_validation_tests()
     }
 
     auto previous = lines;
+    previous[0].replace(9,1,"6");
+    previous[0].replace(previous[0].find(module->identity().version),module->identity().version.size(),"0.6.5");
+    for(std::size_t actor=4;actor<path_header;++actor)previous[actor].resize(previous[actor].find_last_of(' '));
+    check(module->restore(encode(previous))->save()==checkpoint,"Pre-transit 0.6.5 movement checkpoint upgrades without changing its continuation");
+    auto invalid_overlap=lines[4];invalid_overlap.back()='1';reject_changes({{4,invalid_overlap}});
+
+    previous = lines;
     previous[0].replace(9,1,"4");
+    for(std::size_t actor=4;actor<path_header;++actor)previous[actor].resize(previous[actor].find_last_of(' ')); // No overlap marker before v7.
     for(std::size_t actor=4;actor<path_header;++actor)
         previous[actor].resize(previous[actor].find_last_of(' ')); // Version 4 has no facing field.
     check(module->restore(encode(previous))->save()==checkpoint,"Version 4 checkpoint migrates to facing right");
@@ -614,7 +702,7 @@ void checkpoint_validation_tests()
     for (int x = 0; x < 5; ++x) corridor.terrain[5+x] = 0;
     corridor.terrain[1] = corridor.terrain[2] = 0; // Clear sight from the reactor.
     Encounter encounter{corridor,{{1,"vanguard","Mover",0,{0,1}},
-                                 {2,"bandit","Reactor",1,{1,0}}}};
+                                 {2,"bandit","Reactor",1,{1,0}},{3,"vanguard","Ally",0,{2,1}}}};
     session = hero_first(*module,encounter);
     check(session->submit(command(*session,"move",{4,1})), "Clear corridor move accepted");
     check(session->snapshot().reaction_pending && unit(*session,1).cell == Cell{2,1},
@@ -649,4 +737,4 @@ void installed() {
     std::cout<<"Original Slums event completed with real rules combat: "<<(outcome==Outcome::victory?"victory":"defeat")<<".\n";
 }
 }
-int main(){try{turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();opportunity_migration_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();opportunity_migration_tests();allied_transit_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

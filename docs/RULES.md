@@ -41,11 +41,15 @@ the numpad with Num Lock off. **A** cycles actions, **Space** uses an immediate
 action, **Z** changes spell slot level, and
 **Enter** ends your turn or continues a dialogue pause. Click a highlighted
 destination or target for the selected action. Gray cells block movement and
-sight; brown cells cost extra movement. Occupied squares block movement.
+sight; brown cells cost extra movement. Allied squares can be crossed at the
+normal terrain cost, but cannot be selected as stopping points. Hostile squares
+still block movement in this increment.
 Each square is 5 feet, including diagonals.
 An arrow or Move-mode click aimed at an adjacent enemy makes a melee attack when the selected
 character has an action available. The combat log follows new text until you
 scroll up to read earlier entries.
+To cross allies, click a highlighted free square beyond them. Arrow keys still
+request a one-square move and cannot stop on an ally.
 If movement or an adjacent attack is unavailable, the combat log explains why.
 End turn appears above the combat log during a party turn.
 An opportunity reaction pauses combat until you choose Opportunity attack or
@@ -90,7 +94,7 @@ from Rolf's exploration scene; walking into combat from exploration is future wo
 
 Training **Save combat** / **Load combat** use `user-data/combat.save`, retaining
 the previous save as `.bak`. Saves include pending reactions and RNG state and
-accept the preceding 0.6.4 module through the migration below. Other module or
+accept supported preceding modules through the migrations below. Other module or
 content mismatches reject. Slums campaign saving remains
 disabled until ECL, party, and combat can be persisted together.
 
@@ -123,8 +127,9 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
-Rules module **0.6.5** writes **OGCOMBAT 6**. The only preceding module accepted
-for combat migration is **0.6.4**, format 5, with identical module/content IDs.
+Rules module **0.6.6** writes **OGCOMBAT 7**, including an involuntary shared-space
+marker. Combat migration accepts **0.6.4**, format 5, and **0.6.5**, format 6,
+with identical module/content IDs.
 A valid saved facing-only queue is canceled; the attacker resumes with the same
 HP, movement, spent resources, RNG and clock. The command revision changes to
 invalidate the canceled choices. A saved leave-reach queue retains its order,
@@ -132,11 +137,19 @@ partially resolved position and deterministic continuation. Invalid old state is
 rejected before migration. Campaign saves continue to accept the documented
 older versions; they do not contain paused combat queues.
 
+A reaction may pause an accepted route while the mover shares an allied space.
+The remaining path must still lead to a free cell within the movement budget.
+An incapacitated mover stays at the interruption point; an involuntary overlap
+marker keeps save/reload valid through healing or natural-20 recovery. The
+marker clears when the actors separate or die; it permits no voluntary move
+onto an occupied endpoint. Prone and size-dependent effects of involuntary
+co-occupancy remain in the condition/creature-state increments (#35/#44).
+
 ## Implemented scope
 
 - Individual initiative; ties resolve by entity ID. Action, Bonus Action,
   Reaction, movement, and round/turn reset.
-- Grid pathfinding, difficult terrain, blocked occupied cells,
+- Grid pathfinding, difficult terrain, allied transit and blocked hostile cells,
   opaque obstacles and blocked diagonal wall corners. Movement can pause for an
   opportunity attack before leaving reach; Disengage prevents it.
 - Left/right facing persists across turns and combat checkpoints as presentation

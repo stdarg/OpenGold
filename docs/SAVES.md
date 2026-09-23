@@ -65,10 +65,12 @@ Equipment and roster state are validated before replacement.
 Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
 HP calculation while preserving wounds, zero-HP/dead state and spent resources.
 Rules 0.6.4 also accepts 0.6.3 campaigns without reapplying HP repairs.
-Rules 0.6.5 additionally accepts 0.6.4 campaigns. Standalone combat checkpoints
+Rules 0.6.6 additionally accepts 0.6.4/0.6.5 campaigns. Standalone combat checkpoints
 retain the post-attack action, Bonus Action, movement and spell usage; the
-[0.6.4 combat migration](RULES.md#library-boundary) cancels facing-only queues
-and preserves genuine movement reactions. Other combat module versions reject.
+[0.6.4/0.6.5 combat migrations](RULES.md#library-boundary) cancel facing-only queues
+and preserve genuine movement reactions. Format 7 also records involuntary
+shared spaces after an allied-transit interruption; healing and recovery retain
+valid checkpoints without moving actors or replenishing resources. Other combat module versions reject.
 The campaign format remains 6; see the migration examples in
 [advancement](ADVANCEMENT.md).
 
@@ -85,7 +87,7 @@ asset installation, unknown definition, malformed resource state or incompatible
 version rejects explicitly. Reinstalling identical assets at a new path is valid.
 FNV-1a fingerprints/checksums detect accidental changes; they are not signatures
 or protection against deliberate tampering. Formats 1 through 5 and the supported
-rules 0.3.0–0.6.4 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
+rules 0.3.0–0.6.5 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
 
 Writes use a temporary file, flush it to disk and verify its bytes before replacing
 the destination. Windows uses `ReplaceFileW` with a retained backup, or

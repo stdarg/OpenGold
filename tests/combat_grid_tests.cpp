@@ -30,7 +30,7 @@ int reference_step(const Battlefield& board, const std::vector<int>& occupants, 
     if (from.x != to.x && from.y != to.y &&
         (board.at({from.x,to.y}) == 1 || board.at({to.x,from.y}) == 1)) return -1;
     const int occupant = occupants[to.y*board.width+to.x];
-    if (occupant) return -1;
+    if (occupant == 2) return -1;
     return board.at(to) == 2 ? 10 : 5;
 }
 
@@ -156,6 +156,27 @@ void exhaustive_sight()
     }
 }
 
+void allied_transit()
+{
+    Battlefield corridor{7,2,std::vector<std::uint8_t>(14,1)};
+    for(int x=0;x<7;++x)corridor.terrain[x]=0;
+    const std::vector<Occupant> allies{{{1,0},false},{{2,0},false}};
+    MovementGrid grid(corridor,{0,0},allies);
+    check(grid.reachable(15).path_to({3,0})==std::vector<Cell>{{1,0},{2,0},{3,0}},
+        "A corridor route crosses successive allies at normal movement cost");
+    check(grid.reachable(15).cost_to({3,0})==15&&!grid.reachable(10).cost_to({3,0}),
+        "Only a fully affordable route to a free stopping point is offered");
+    check(!grid.reachable(30).cost_to({1,0})&&!grid.reachable(30).cost_to({2,0}),
+        "Allies remain transit cells, never destinations");
+    corridor.terrain[1]=2;grid=MovementGrid(corridor,{0,0},allies);
+    check(grid.reachable(20).cost_to({3,0})==20&&!grid.reachable(19).cost_to({3,0}),
+        "Difficult ground under an ally adds its normal five-foot surcharge once");
+    auto hostile=allies;hostile[1].hostile=true;grid=MovementGrid(corridor,{0,0},hostile);
+    check(!grid.reachable(60).cost_to({3,0}),"A hostile creature still blocks the corridor");
+    corridor.terrain[1]=1;grid=MovementGrid(corridor,{0,0},allies);
+    check(!grid.reachable(60).cost_to({3,0}),"Allied occupancy cannot bypass a wall");
+}
+
 void boundaries_and_ties()
 {
     Battlefield board{3,3,std::vector<std::uint8_t>(9)};
@@ -182,7 +203,7 @@ void boundaries_and_ties()
     board.terrain[4] = 2;
     const std::vector<Occupant> ally{{{1,1},false}};
     grid = MovementGrid(board,{0,1},ally);
-    check(!grid.step_cost({0,1},{1,1}), "Allies block movement even on difficult terrain");
+    check(grid.step_cost({0,1},{1,1}) == 10, "Allied space retains difficult terrain cost without an occupancy surcharge");
     check(!grid.can_stop_at({1,1}), "Ally cannot be a destination");
     const std::vector<Occupant> surrounded{{{0,0},false},{{1,0},false},{{2,0},false},
         {{0,1},false},{{2,1},false},{{0,2},false},{{1,2},false},{{2,2},false}};
@@ -201,6 +222,7 @@ void boundaries_and_ties()
 int main()
 {
     try {
+        allied_transit();
         boundaries_and_ties();
         exhaustive_movement();
         exhaustive_sight();

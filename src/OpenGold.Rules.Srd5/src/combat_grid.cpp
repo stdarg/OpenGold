@@ -86,7 +86,7 @@ std::optional<int> MovementGrid::step_cost(Cell from, Cell to) const
     if (dx && dy && (board_.at({from.x, to.y}) == 1 || board_.at({to.x, from.y}) == 1))
         return std::nullopt;
     const auto occupant = occupancy_[index(to)];
-    if (occupant != Occupancy::empty) return std::nullopt;
+    if (occupant == Occupancy::enemy) return std::nullopt;
     return board_.at(to) == 2 ? 10 : 5;
 }
 

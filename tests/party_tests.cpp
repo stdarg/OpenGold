@@ -570,6 +570,32 @@ void campaign_encounters()
     fight.encounter(encounter_fixture(),1234);
     check(fight.has_combat()&&party->in_combat(),"Valid encounter can start after rejected attempts");
 }
+void allied_campaign_movement()
+{
+    auto party=std::make_shared<CampaignParty>(module());const auto mover=party->add_pc(character());
+    party->add_pc(character("cleric","Ally"));party->add_pc(character("wizard","Second ally"));
+    CampaignEncounter encounter;encounter.field.geometry={7,3,std::vector<std::uint8_t>(21,1)};
+    for(int x=0;x<7;++x)encounter.field.geometry.terrain[7+x]=0;
+    encounter.enemies={{1000,"bandit","Enemy",1,{6,1}}};
+    encounter.positions={{0,1},{1,1},{2,1},{6,1}};
+    std::unique_ptr<CombatDemo> fight;
+    for(unsigned seed=0;seed<100&&!fight;++seed){
+        auto candidate=std::make_unique<CombatDemo>(module());candidate->campaign_party(party);candidate->encounter(encounter,seed);
+        if(candidate->combat().snapshot().actor==mover)fight=std::move(candidate);
+    }
+    check(bool(fight),"Find an initial turn for a normally created campaign member");
+    const auto before=party->member(mover).vitals;
+    const auto commands=fight->combat().legal_commands();
+    const auto move=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="move"&&c.destination==Cell{4,1};});
+    check(move!=commands.end()&&fight->submit(*move),"Campaign member can move through two created allies");
+    check(party->member(mover).vitals==before&&party->state().time_minutes==0&&party->state().subminute_milliseconds==0,
+        "Allied transit preserves campaign vitals/resources and does not end the turn");
+    finish(*fight);check(!party->in_combat(),"Campaign combat with allied transit finishes and unlocks the party");
+    const auto saved=encode_campaign(*party,nullptr,"allied-transit");auto rules=module();
+    auto loaded=decode_campaign(saved,*srd5::character_rules(),*rules,"allied-transit",nullptr);
+    CampaignParty restored(module());restored.restore(std::move(loaded.party));
+    check(encode_campaign(restored,nullptr,"allied-transit")==saved,"Campaign handoff and reload retain exact post-transit vitals, resources and time");
+}
 void standalone_checkpoints()
 {
     CombatDemo fight(module());rejects([&]{(void)fight.save_combat();});fight.training(42);
@@ -957,6 +983,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

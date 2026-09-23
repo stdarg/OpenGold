@@ -129,6 +129,35 @@ func check_demo() -> void:
         "Left-facing attack screenshot saves")
     var output := ProjectSettings.globalize_path("res://../../../build/checks/combat-demo.png")
     require(screenshot.save_png(output) == OK, "Showcase screenshot saves")
+    # Use the normal campaign formation to cross two allies via a free target.
+    change_scene_to_file("res://scenes/combat_demo.tscn")
+    for frame in range(8):
+        await process_frame
+    combat = current_scene
+    require(combat.selected_character_id() == 3, "Reset demo begins with the Cleric's normal turn")
+    var movement_pattern := RegEx.new()
+    movement_pattern.compile("Move ([0-9]+) ft")
+    var initial_movement := int(movement_pattern.search(combat.get_node("Turn").text).get_string(1))
+    combat.get_node("Disengage").pressed.emit()
+    combat.get_node("Move").pressed.emit()
+    var canvas: Control = combat.get_node("BattlefieldScroll/Canvas")
+    var transit_scroll: ScrollContainer = combat.get_node("BattlefieldScroll")
+    var destination := Vector2(4.5, 5.5) * (canvas.size.x / 12.0)
+    transit_scroll.scroll_horizontal = int(destination.x - transit_scroll.size.x / 2)
+    transit_scroll.scroll_vertical = int(destination.y - transit_scroll.size.y / 2)
+    for frame in range(4):
+        await process_frame
+    click.position = canvas.get_global_transform_with_canvas() * destination
+    root.push_input(click)
+    require(combat.selected_character_cell() == Vector2i(4, 5),
+        "Clicking a free square moves the active character through two allied spaces")
+    require(combat.get_node("Turn").text.contains("Move %d ft" % (initial_movement - 15)) and combat.get_node("Turn").text.contains("Action spent"),
+        "Transit costs fifteen feet and preserves the spent Disengage action")
+    root.push_input(active_key)
+    require(combat.selected_character_cell() == Vector2i(4, 5) and combat.get_node("Log").text.contains("That square is occupied."),
+        "A one-square arrow cannot voluntarily end movement on an ally")
+    require(combat.get_node("End").visible and not combat.get_node("End").disabled,
+        "Allied transit keeps the existing End Turn control available")
     if failed:
         quit(1)
     else:

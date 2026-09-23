@@ -85,6 +85,7 @@ struct Actor {
     int hp{}, initiative{}, movement{}, winds{}, slots{}, successes{}, failures{},slots2{};
     bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{}, stable{}, dead{};
     bool spent_slot{},savage_used{},facing_left{};
+    bool involuntary_overlap{}; // Interrupted on an ally; retained through recovery until separated.
     detail::EffectState effects;
 };
 int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
@@ -268,6 +269,14 @@ private:
     bool line_of_sight(Cell a,Cell b) const { return detail::has_line_of_sight(board_,a,b); }
     bool can_see(const Actor& a,const Actor& b) const {return !detail::blinded(a.effects)&&line_of_sight(a.source.cell,b.source.cell);}
     unsigned turn_end_ms(std::size_t index) const {return unsigned((index+1)*detail::round_ms/actors_.size());}
+    bool shares_ally_space(const Actor& who) const {
+        return std::any_of(actors_.begin(),actors_.end(),[&](const auto& other){
+            return other.source.id!=who.source.id&&!other.dead&&other.source.side==who.source.side&&other.source.cell==who.source.cell;
+        });
+    }
+    void clear_departed_overlaps() {
+        for(auto& a:actors_)if(a.dead||!shares_ally_space(a))a.involuntary_overlap=false;
+    }
     unsigned next_save_ms(EntityId target) const;
     void advance_turn_time();
     void log_save(const Actor& target,const detail::SaveResult& result);
@@ -394,13 +403,16 @@ void Session::damage(Actor& target,int amount)
     const int remaining=amount-target.hp;target.hp=std::max(0,target.hp-amount);
     if(target.hp==0) {
         target.dodge=false;
+        if(!target.dead&&shares_ally_space(target))target.involuntary_overlap=true;
         if(target.source.side==1 || remaining>=def(target).hp)target.dead=true;
         log(target.source.name+(target.dead?" is defeated.":" falls unconscious."),
             {target.dead?"{name} is defeated.":"{name} falls unconscious.",{{"name",target.source.name}}});
     }
+    clear_departed_overlaps();
 }
 void Session::heal(Actor& target,int amount)
 {
+    if(target.hp==0&&shares_ally_space(target))target.involuntary_overlap=true;
     const int restored=std::min(amount,def(target).hp-target.hp);target.hp+=restored;
     target.successes=target.failures=0;target.stable=false;log(target.source.name+" recovers "+std::to_string(restored)+" HP.",
         {"{name} recovers {hp} HP.",{{"name",target.source.name},{"hp",std::to_string(restored)}}});
@@ -449,10 +461,10 @@ bool Session::begin_turn()
             const int result=roll(20);
             log(a.source.name+" death save: "+std::to_string(result),
                 {"{name} death save: {roll}",{{"name",a.source.name},{"roll",std::to_string(result)}}});
-            if(result==20){a.hp=1;a.successes=a.failures=0;}
+            if(result==20){a.hp=1;a.successes=a.failures=0;if(shares_ally_space(a))a.involuntary_overlap=true;}
             else if(result>=10)++a.successes;
             else a.failures+=result==1?2:1;
-            if(a.failures>=3)a.dead=true;
+            if(a.failures>=3){a.dead=true;clear_departed_overlaps();}
             else if(a.successes>=3){a.stable=true;a.successes=a.failures=0;}
         }
         if(a.hp==0)return false;
@@ -522,6 +534,7 @@ void Session::progress_movement()
         if (!cost || *cost > a.movement) throw std::logic_error("Invalid accepted movement path");
         a.movement -= *cost;
         a.source.cell = destination;
+        clear_departed_overlaps();
         ++path_index_;
         reactors_.clear();reactor_index_=0;
     }
@@ -591,12 +604,12 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 6 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 7 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<'\n';
+        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<'\n';
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
@@ -618,6 +631,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if (version >= 2) input >> std::quoted(source.character_profile);
     if (version >= 3) input >> actor.slots2 >> actor.spent_slot >> actor.savage_used;
     if (version >= 5) input >> actor.facing_left;
+    if (version >= 7) input >> actor.involuntary_overlap;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
@@ -687,12 +701,18 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
     const auto& mover = actors_[turn_];
     bool party = false, enemies = false;
     for (const auto& actor : actors_) {
-        if (actor.hp <= 0 || actor.dead) continue;
-        (actor.source.side == 0 ? party : enemies) = true;
+        if(actor.involuntary_overlap&&(actor.dead||!shares_ally_space(actor)))
+            throw std::runtime_error("Invalid involuntary checkpoint overlap");
+        if(actor.hp>0&&!actor.dead)(actor.source.side==0?party:enemies)=true;
+        if(actor.dead)continue;
         for (const auto& other : actors_) {
-            if (other.source.id <= actor.source.id || other.hp <= 0 || actor.source.cell != other.source.cell)
-                continue;
-            throw std::runtime_error("Overlapping active checkpoint actors");
+            if(other.source.id<=actor.source.id||other.dead||actor.source.cell!=other.source.cell)continue;
+            const bool in_transit=pending()&&!legacy_facing_reaction&&path_index_>0&&
+                path_[path_index_-1]==mover.source.cell&&
+                (actor.source.id==mover.source.id||other.source.id==mover.source.id);
+            if(actor.source.side==other.source.side&&
+                (in_transit||actor.involuntary_overlap||other.involuntary_overlap))continue;
+            throw std::runtime_error("Invalid overlapping checkpoint actors");
         }
     }
     const auto expected = !party ? Outcome::defeat : !enemies ? Outcome::victory : Outcome::ongoing;
@@ -776,8 +796,9 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=version==5&&identity.version=="0.6.4"&&compatible_identity==content->identity;
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 6 ||
+    const bool previous_module=((version==5&&identity.version=="0.6.4")||
+        (version==6&&identity.version=="0.6.5"))&&compatible_identity==content->identity;
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 7 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -816,6 +837,8 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         input>>legacy_facing_reaction;
         if(!input||legacy_facing_reaction>2)throw std::runtime_error("Invalid checkpoint turn reaction");
     }
+    if(version<7)for(auto& a:session->actors_)
+        if(a.hp==0&&!a.dead&&session->shares_ally_space(a))a.involuntary_overlap=true;
     // Validate the old queue before removing it. Migration must not conceal a
     // malformed checkpoint or change damage, spent resources, time or dice.
     session->validate_restored_state(legacy_facing_reaction!=0);
@@ -833,7 +856,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1079,7 +1102,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.5",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.6",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
