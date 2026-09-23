@@ -22,7 +22,8 @@ inline constexpr std::array weapons{
     Weapon{"light_crossbow",1,8,2,false,false,true,80,320},
     Weapon{"shortbow",1,6,2,false,false,true,80,320},
     Weapon{"sling",1,4,1,false,false,true,30,120},
-    Weapon{"battleaxe",1,8,1,true}, Weapon{"flail",1,8,1,true},
+    // OpenGoldBox battle axes require both hands.
+    Weapon{"battleaxe",1,8,2,true}, Weapon{"flail",1,8,1,true},
     Weapon{"glaive",1,10,2,true,false,false,0,0,10},
     Weapon{"greatsword",2,6,2,true},
     Weapon{"halberd",1,10,2,true,false,false,0,0,10},

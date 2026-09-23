@@ -183,6 +183,8 @@ void all_weapon_equipment()
         check(party.member(id).equipped==std::vector<std::uint64_t>{weapon.id},"Every weapon replaces the previous weapon through CampaignParty");
         const auto info=party.equipment_info(id,weapon.id);
         check(info.slot==EquipmentSlot::weapon&&info.hands>=1&&info.hands<=2,"Every reviewer weapon has shared rules metadata");
+        if(weapon.original_type==1)
+            check(info.hands==2,"Battle axe requires two hands and rejects a shield");
         check(party.profile(id).hit_points>0,"Every weapon produces an actual rules profile");
         check(por::resolve_combat_appearance(party.member(id),catalog).appearance==original,"Every weapon retains saved anatomy");
         if(info.hands==2) {
