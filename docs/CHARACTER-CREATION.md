@@ -70,6 +70,10 @@ launcher opens `demos/godot/scenes/character_creation.tscn`. Art loads from the
     Unadjusted abilities are omitted. Each adjusted ability starts with its rolled
     score, followed by each source with its signed adjustment in parentheses,
     then the final score on a separate line. The dialog scrolls for longer content.
+    Background and advancement points retain separate sources. For example,
+    `Soldier background (+2)` and `Level 4 Ability Score Improvement (+2)` appear
+    on separate lines, including after saving and loading. A feat applied to an
+    ability outside the background's list is attributed only to that feat.
     **Saving Throws**, beside Modifiers on both sheets, opens a separate dialog
     with an editable target DC (initially 15), the required d20 roll for each save,
     and ability-score and class-proficiency sources. Invalid DC input shows a

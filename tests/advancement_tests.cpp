@@ -103,12 +103,42 @@ void hp_history(){
             check(rules->restore(combat->save())->save()==combat->save(),"HP history survives a combat checkpoint");}
     }
 }
+void ability_sources(){
+    for(const unsigned ability:{0u,4u}){
+        auto draft=character("fighter").creation_data();draft.background="soldier";
+        CampaignParty party(module());const auto id=party.add_pc(Character(*srd5::character_rules(),draft,{}));
+        const auto verify=[&](const CharacterSheet& sheet,unsigned count){
+            check(sheet.ability_adjustments.size()==count,"Only acquired ability grants appear as sources");
+            const auto& background=sheet.ability_adjustments.front();
+            check(background.source_id=="background:soldier"&&background.level==1&&background.label=="Soldier background", "Background source has its own stable identity and acquisition level");
+            check(background.bonuses==std::array<int,6>{2,1,0,0,0,0},"Soldier bonuses remain the original +2 Strength and +1 Dexterity");
+            if(count==2){const auto& feat=sheet.ability_adjustments.back();
+                std::array<int,6> expected{};expected[ability]=2;
+                check(feat.source_id=="feat:ability_score_improvement"&&feat.level==4&&feat.bonuses==expected,"Level-four feat points retain their source, including abilities outside the background");
+                check(feat.label=="Level 4 Ability Score Improvement"&&feat.label_message.source=="Level {level} Ability Score Improvement","The feat explanation identifies its acquisition level");}
+            for(unsigned i=0;i<6;++i){int total=0;for(const auto& source:sheet.ability_adjustments)total+=source.bonuses[i];
+                check(total==sheet.bonuses[i]&&sheet.base[i]+total==sheet.scores[i],"Separate sources sum exactly to the displayed final scores");}
+        };
+        verify(party.member(id).character.sheet(),1);party.award_experience(2700,"ability-sources");
+        for(unsigned level=2;level<=3;++level){party.advance(id,party.default_advancement(id));verify(party.member(id).character.sheet(),1);}
+        auto choice=party.default_advancement(id);choice.abilities={};choice.abilities[ability]=2;
+        auto invalid=choice;invalid.abilities[ability]=1;rejects([&]{party.advance(id,invalid);});
+        verify(party.member(id).character.sheet(),1);
+        const auto before=saved(party);const auto preview=party.preview_advancement(id,choice);
+        verify(preview.character.sheet(),2);check(saved(party)==before,"Preview leaves saved source choices untouched");
+        party.advance(id,choice);verify(party.member(id).character.sheet(),2);
+        const auto bytes=saved(party);auto loaded=decode_campaign(bytes,*srd5::character_rules(),*module(),"advancement-fixture",nullptr);
+        CampaignParty restored(module());restored.restore(std::move(loaded.party));verify(restored.member(id).character.sheet(),2);
+        check(saved(restored)==bytes,"Source records reconstruct from saved choices without changing campaign bytes");
+    }
+}
 void feats(){
     for(const char* feat:{"defense","savage_attacker"}){
         CampaignParty party(module());const auto id=party.add_pc(character("fighter"));party.award_experience(2700,"xp");
         for(unsigned level=2;level<=3;++level)party.advance(id,party.default_advancement(id));
         party.set_wealth(id,{0,0,0,100,0,0,0});for(unsigned type:{36,55}){por::Equipment e;e.stored.type=type;e.stored.stack_size=1;e.stored.value=1;party.purchase(id,e);party.equip(id,party.member(id).character.inventory().items().back().id);}
         const auto ac=party.profile(id).armor_class;auto choice=party.default_advancement(id);choice.feat=feat;choice.abilities={};party.advance(id,choice);
+        check(party.member(id).character.sheet().ability_adjustments.size()==1,"A feat without ability points does not invent an ability adjustment");
         if(std::string_view(feat)=="defense"){check(party.profile(id).armor_class==ac+1,"Defense adds AC in armor");party.unequip(id,2);check(party.profile(id).armor_class==10+party.member(id).character.sheet().modifiers[1],"Defense does not grant unarmored AC");}
         else {auto rules=module();auto participants=party.participants();participants[0].cell={1,1};participants.push_back({99,"vanguard","Target",1,{2,1}});Encounter e{{12,9,std::vector<std::uint8_t>(108)},participants};bool hit=false;
             for(unsigned seed=0;seed<100&&!hit;++seed){auto combat=rules->create(e,seed);if(combat->snapshot().actor!=id)continue;combat->submit(command(*combat,"melee"));for(const auto& log:combat->snapshot().log)hit|=log.find("Savage Attacker")!=std::string::npos;
@@ -139,4 +169,4 @@ void spells(){
     }
 }
 }
-int main(){try{progression();hp_history();feats();spells();std::cout<<"Manual advancement tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{progression();hp_history();ability_sources();feats();spells();std::cout<<"Manual advancement tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

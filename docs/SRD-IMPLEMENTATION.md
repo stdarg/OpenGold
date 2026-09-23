@@ -4,11 +4,12 @@ Date: 2026-09-23. Status: issue backlog created; incremental implementation star
 
 The [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186) links all
 steps, labeled `SRD_improvements`. The [coverage ledger](SRD-COVERAGE.md) records
-completed work and verification. I01–I03 are delivered in
+completed work and verification. I01–I04 are delivered in
 [#20](https://github.com/stdarg/OpenGold/issues/20),
-[#21](https://github.com/stdarg/OpenGold/issues/21) and
-[#22](https://github.com/stdarg/OpenGold/issues/22); the next increment is
-[I04, background and advancement bonus provenance](https://github.com/stdarg/OpenGold/issues/23).
+[#21](https://github.com/stdarg/OpenGold/issues/21),
+[#22](https://github.com/stdarg/OpenGold/issues/22) and
+[#23](https://github.com/stdarg/OpenGold/issues/23); the next increment is
+[I05, preserving remaining turn resources after attacks](https://github.com/stdarg/OpenGold/issues/24).
 
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,
@@ -232,7 +233,7 @@ multiclass interactions; targeted checks remain attached to their rules.
 
 ## Recommended next execution
 
-I01–I03 are complete. Continue with **I04: background and advancement bonus provenance**,
+I01–I04 are complete. Continue with **I05: preserve remaining turn resources after attacks**,
 then proceed through I08. The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

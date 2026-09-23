@@ -130,6 +130,8 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     const auto options=adjustments(d.background);
     if(d.adjustment>=options.size())throw std::runtime_error("Invalid background bonuses");
     s.bonuses=options[d.adjustment].bonuses;
+    s.ability_adjustments.push_back({"background:"+d.background,s.background+" background",1,s.bonuses,
+        {"{background} background",{{"background",s.background,true}}}});
     std::set<unsigned> used;
     for(unsigned i=0;i<6;++i) {
         if(d.assignment[i]>=6||!used.insert(d.assignment[i]).second)throw std::runtime_error("Each roll must be assigned exactly once");

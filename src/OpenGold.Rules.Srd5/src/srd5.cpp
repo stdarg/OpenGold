@@ -907,6 +907,12 @@ public:
         for(unsigned n=0;n<6;++n){next.scores[n]+=choice.abilities[n];next.bonuses[n]+=choice.abilities[n];
             if(next.scores[n]>20)throw std::runtime_error("Ability scores cannot exceed 20");
             next.modifiers[n]=ability_modifier(next.scores[n]);next.saving_throws[n]=next.modifiers[n]+(next.save_proficiencies[n]?2:0);}
+        if(points){
+            AbilityAdjustment adjustment{"feat:"+choice.feat,"Level "+std::to_string(next.level)+" Ability Score Improvement",unsigned(next.level)};
+            for(unsigned n=0;n<6;++n)adjustment.bonuses[n]=int(choice.abilities[n]);
+            adjustment.label_message={"Level {level} Ability Score Improvement",{{"level",std::to_string(next.level)}}};
+            next.ability_adjustments.push_back(std::move(adjustment));
+        }
         if(!choice.feat.empty())next.feats.push_back(choice.feat);next.prepared_spells=choice.spells;
         next.hit_point_modifiers.push_back(next.modifiers[2]);
         next.hit_points=maximum_hit_points(next.hit_die,next.race=="Dwarf",next.hit_point_modifiers);

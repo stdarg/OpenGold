@@ -17,6 +17,14 @@ struct ScoreAdjustment {
     std::string label;
     std::array<int,6> bonuses{};
 };
+// Derived from creation and advancement choices, with stable source identity.
+// Labels are presentation only; acquisition level distinguishes repeated grants.
+struct AbilityAdjustment {
+    std::string source_id, label;
+    unsigned level{};
+    std::array<int,6> bonuses{};
+    Message label_message;
+};
 struct ClassRequirements {
     std::vector<unsigned> abilities;
     bool any{};
@@ -35,7 +43,7 @@ struct CharacterDraft {
 struct CharacterSheet {
     Identity identity;
     std::string name, race, gender, character_class, alignment, background;
-    std::array<int,6> base{}, bonuses{}, scores{}, modifiers{};
+    std::array<int,6> base{}, bonuses{}, scores{}, modifiers{}; // bonuses is the sum of all sources.
     int level{1}, hit_die{}, hit_points{};
     std::string hp_explanation;
     std::array<int,6> saving_throws{};
@@ -47,6 +55,7 @@ struct CharacterSheet {
     // Constitution modifier after each attained level, rebuilt from choices.
     // Keeps minimum-one HP gains separate from retroactive modifier changes.
     std::vector<int> hit_point_modifiers;
+    std::vector<AbilityAdjustment> ability_adjustments;
 };
 // Creation is a separate optional capability: campaign and Godot code do not
 // embed edition-specific tables, rolling policies, or HP arithmetic.

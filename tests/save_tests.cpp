@@ -223,6 +223,10 @@ void hp_migration()
         check(party.state().roster.size()==maximum.size(),"All frozen fixture members migrate");
         for(unsigned i=0;i<maximum.size();++i){
             const auto& member=party.member(i+1);
+            const auto& sources=member.character.sheet().ability_adjustments;
+            check(sources.size()==2&&sources[0].source_id=="background:sage"&&sources[0].level==1&&sources[0].bonuses[2]==0&&
+                sources[1].source_id=="feat:ability_score_improvement"&&sources[1].level==4&&sources[1].bonuses[2]==2,
+                "Frozen prior-module saves reconstruct separate background and feat sources");
             check(member.character.sheet().hit_points==maximum[i]&&party.profile(i+1).hit_points==maximum[i],"Legacy advancement reconstructs corrected HP, including Dwarf and normal Constitution");
             check(member.vitals.hit_points==current[i]&&member.vitals.dead==(i==3),"Migration preserves health deficits, unconsciousness and death");
             const std::string expected=i==2?"SRD2 0 1 1 1 2 0":i==3?"SRD2 0 1 1 1 3 0":"SRD2 0 1 1 0 0 0";

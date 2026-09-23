@@ -90,7 +90,8 @@ void CharacterCreationView::show_modifiers()
     for(unsigned i=0;i<6;++i){
         if(s.bonuses[i]==0)continue;
         text+="[b]"+std::string(names[i])+"[/b]\nRolled score: "+std::to_string(s.base[i])+"\n";
-        text+=s.background+" background ("+number(s.bonuses[i])+")\n";
+        for(const auto& source:s.ability_adjustments)if(source.bonuses[i])
+            text+=source.label+" ("+number(source.bonuses[i])+")\n";
         text+="Final score: "+std::to_string(s.scores[i])+"\n\n";
     }
     text+="\n[b]Race / "+s.race+"[/b]\n"+s.racial_modifiers;

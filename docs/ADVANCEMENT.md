@@ -24,6 +24,8 @@ does not become conscious merely by leveling. No XP is deducted.
 - **Ability points:** at level 4, add two points to one ability or one point to
   two abilities, with a maximum score of 20. Scores, modifiers, saves and derived
   combat values are rebuilt together.
+  The modifier dialog attributes these points to the level at which Ability
+  Score Improvement was acquired, separately from the original background bonus.
 - **Defense:** level-4 Fighter choice; +1 AC while wearing armor.
 - **Savage Attacker:** level-4 choice for a character who does not already have
   it from Soldier. The first successful weapon attack each turn uses the higher
@@ -66,6 +68,10 @@ still reject. Loading an affected older campaign corrects maximum HP and preserv
 the living character's HP deficit. Unconscious/dead characters stay at zero, and
 spent resources and death-save counters persist. The correction applies once;
 the campaign format remains 6. New combat profiles use PC4 to carry HP history.
+Ability-adjustment sources are also reconstructed from creation and advancement
+choices, including older saves. Each records its source ID, acquisition level
+and ability amounts. This presentation correction leaves module 0.6.3, PC4 and
+campaign format 6 unchanged.
 Standalone combat checkpoints use version 5 to retain second-level slots,
 per-turn spell/feat usage, timed effects, facing, and pending turn reactions.
 Old-module combat checkpoints are not migrated.
@@ -84,6 +90,8 @@ the level cap. It writes local captures under `user-data/level-up-*.png` and exi
 The review command opens an isolated three-character level-3 fixture with enough
 XP for level 4, then leaves the controls available for manual inspection. Its
 saves use a separate profile under `user-data/level-up-review-profile`.
+Both game and demo advancement checks verify separate background/feat lines in
+the existing modifier dialog and identical text after campaign reconstruction.
 
 Native advancement tests cover all three classes, transactional rejection,
 Constitution HP history (including low scores and odd/even modifier boundaries),

@@ -54,6 +54,9 @@ void creation_tests()
         d.background=bg.id;const auto adjustments=module->adjustments(bg.id);check(adjustments.size()==7,"Every background offers six +2/+1 allocations and +1 each");
         for(unsigned n=0;n<adjustments.size();++n) {d.adjustment=n;const auto evaluated=module->evaluate(d,true);
             int bonus=0;for(unsigned k=0;k<6;++k){bonus+=evaluated.bonuses[k];check(evaluated.scores[k]<=20,"Background bonuses cap at twenty");}
+            check(evaluated.ability_adjustments.size()==1&&evaluated.ability_adjustments[0].source_id=="background:"+bg.id&&
+                evaluated.ability_adjustments[0].level==1&&evaluated.ability_adjustments[0].bonuses==adjustments[n].bonuses,
+                "Every background allocation retains its original source and level");
             check(bonus==3,"Background grants exactly three points");}
     }
     d.background="soldier";d.adjustment=0;

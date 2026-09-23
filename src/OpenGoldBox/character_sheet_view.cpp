@@ -95,7 +95,8 @@ void CharacterCreationView::show_modifiers()
     for(unsigned i=0;i<6;++i){
         if(s.bonuses[i]==0)continue;
         text+="[b]"+i18n::utf8(names[i])+"[/b]\n"+i18n::formatted("Rolled score: {score}",{{"score",s.base[i]}})+"\n";
-        text+=i18n::formatted("{background} background ({bonus})",{{"background",i18n::text(s.background)},{"bonus",gs(number(s.bonuses[i]))}})+"\n";
+        for(const auto& source:s.ability_adjustments)if(source.bonuses[i])
+            text+=i18n::formatted("{source} ({bonus})",{{"source",i18n::render(source.label_message)},{"bonus",gs(number(source.bonuses[i]))}})+"\n";
         text+=i18n::formatted("Final score: {score}",{{"score",s.scores[i]}})+"\n\n";
     }
     text+="\n[b]"+i18n::formatted("Race / {race}",{{"race",i18n::text(s.race)}})+"[/b]\n"+i18n::render(s.racial_messages).utf8().get_data();

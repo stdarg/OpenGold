@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/item_list.hpp>
 #include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/option_button.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -142,7 +143,16 @@ void CharacterCreationView::advancement_check(){
         select("LevelUp/Ability2",2);get_node<CheckBox>("LevelUp/Spell1")->set_pressed(true);break;}
     case 3:capture_dialog("level-up-choices.png");press("LevelUp/Confirm");
         if(campaign_->member(id).character.sheet().level!=4||campaign_->member(id).character.sheet().prepared_spells.size()!=2||get_node<Button>(arrow(id))->is_visible())throw std::runtime_error("Wizard confirmation did not apply choices and hide arrow");
-        party_action(7);break;
+        show_modifiers();
+        {const auto text=get_node<RichTextLabel>("ModifiersModal/Text")->get_text();
+            if(!text.contains("Sage background (+2)\nLevel 4 Ability Score Improvement (+2)\nFinal score: 19")||text.contains("Sage background (+4)"))
+                throw std::runtime_error("Modifier dialog must separate background and level-four feat sources");
+            const auto saved=opengold::encode_campaign(*campaign_,nullptr,"bonus-ui-check");
+            const auto module=opengold::srd5::load(std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules").utf8().get_data()));
+            auto restored=opengold::decode_campaign(saved,*opengold::srd5::character_rules(),*module,"bonus-ui-check",nullptr);
+            campaign_->restore(std::move(restored.party));show_modifiers();
+            if(get_node<RichTextLabel>("ModifiersModal/Text")->get_text()!=text)throw std::runtime_error("Saved bonus sources must reconstruct the same modifier dialog");}
+        close_modifiers();party_action(7);break;
     case 4:{auto* town=get_node<RolfTourView>("CampaignTown");if(!town->can_leave()){auto* next=town->get_node<Button>("Continue");if(next->is_visible()&&!next->is_disabled())next->emit_signal("pressed");return;}town->resume_party();auto* button=town->get_node<Button>("PartyList/Rows/Member1/Advance");if(!button->is_visible())throw std::runtime_error("Town level-up arrow is missing");button->emit_signal("pressed");if(!get_node<Window>("LevelUp")->is_visible())throw std::runtime_error("Town arrow did not open advancement");select("LevelUp/Feat",1);break;}
     case 5:capture_dialog("level-up-fighter.png");press("LevelUp/Confirm");if(campaign_->member(campaign_->state().slots[1]).character.sheet().feats!=std::vector<std::string>{"defense"})throw std::runtime_error("Fighter feat was not applied");
         get_node<RolfTourView>("CampaignTown")->get_node<Button>("PartyList/Rows/Member2/Advance")->emit_signal("pressed");get_node<CheckBox>("LevelUp/Spell1")->set_pressed(true);break;
