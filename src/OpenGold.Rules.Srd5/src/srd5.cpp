@@ -87,26 +87,46 @@ struct Actor {
     bool spent_slot{},savage_used{},facing_left{};
     detail::EffectState effects;
 };
+int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
+{
+    if(modifiers.empty()||modifiers.size()>4||
+        std::any_of(modifiers.begin(),modifiers.end(),[](int n){return n<-4||n>5;}))
+        throw std::runtime_error("Invalid HP advancement history");
+    int hp=die+modifiers.front()+(dwarf?int(modifiers.size()):0);
+    for(std::size_t i=1;i<modifiers.size();++i){
+        const int increase=modifiers[i]-modifiers[i-1];
+        if(increase<0||increase>1||(i!=3&&increase))throw std::runtime_error("Invalid Constitution advancement history");
+        // SRD p. 23: gain HP first, then apply a new modifier per attained level.
+        hp+=std::max(1,die/2+1+modifiers[i-1])+increase*int(i+1);
+    }
+    return hp;
+}
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
 Definition character_definition(std::string_view bytes)
 {
     if(bytes.size()>1024)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
-    unsigned level=1,features=0,selected_spells=0;in>>magic;if(magic=="PC2"||magic=="PC3")in>>level;
-    if(magic=="PC3")in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
+    unsigned level=1,features=0,selected_spells=0;in>>magic;
+    const bool selected=magic=="PC3"||magic=="PC4";
+    if(magic=="PC2"||selected)in>>level;
+    if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
-    in>>count;
-    if(!in||(magic!="PC1"&&magic!="PC2"&&magic!="PC3")||level<1||level>(magic=="PC3"?4u:2u)||features>3||selected_spells>63||count>3||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
+    if(!in||(magic!="PC1"&&magic!="PC2"&&!selected)||level<1||level>(selected?4u:2u)||features>3||selected_spells>63||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
     if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")throw std::runtime_error("Advancement is unsupported for this class");
     const auto races=character_rules()->choices(CreationField::race);
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
+    std::vector<int> hp_modifiers(level,con);
+    if(magic=="PC4")for(auto& modifier:hp_modifiers)in>>modifier;
+    in>>count;
+    if(!in||count>3||hp_modifiers.back()!=con||((features&1)&&hp_modifiers.front()!=con))
+        throw std::runtime_error("Invalid character HP history or equipment count");
     const auto classes=character_rules()->choices(CreationField::character_class);
     if(std::none_of(classes.begin(),classes.end(),[&](const auto& c){return c.label==klass;}))throw std::runtime_error("Unknown class");
     const int die=klass=="Barbarian"?12:(klass=="Fighter"||klass=="Paladin"||klass=="Ranger")?10:(klass=="Wizard"||klass=="Sorcerer")?6:8;
-    Definition d;d.hp=die+con+(race=="Dwarf"?int(level):0)+(level-1)*std::max(1,die/2+1+con);
+    Definition d;d.hp=maximum_hit_points(die,race=="Dwarf",hp_modifiers);
     const auto trained_saves=detail::class_save_proficiencies(klass);
     for(unsigned i=0;i<6;++i)d.saves[i]=ability_modifier(scores[i])+((i==trained_saves[0]||i==trained_saves[1])?2:0);
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
@@ -114,7 +134,7 @@ Definition character_definition(std::string_view bytes)
     d.winds=klass=="Fighter"?(level==4?3:2):0;d.slots=(klass=="Cleric"||klass=="Wizard")?(level==1?2:level==2?3:4):0;
     d.slots2=(klass=="Cleric"||klass=="Wizard")&&level>=3?(level==3?2:3):0;
     d.casting=2+ability_modifier(scores[klass=="Cleric"?4:3]);d.spells=klass=="Cleric"?2:klass=="Wizard"?5:0;
-    if(magic=="PC3"){
+    if(selected){
         const unsigned allowed=klass=="Cleric"?(level>=3?42:10):klass=="Wizard"?(level>=3?53:5):0;
         if(selected_spells&~allowed||(features&1)&&klass!="Fighter")throw std::runtime_error("Invalid prepared spells or feat prerequisites");
         d.spells=selected_spells;d.savage=(features&2)!=0;
@@ -823,7 +843,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -888,7 +908,8 @@ public:
             if(next.scores[n]>20)throw std::runtime_error("Ability scores cannot exceed 20");
             next.modifiers[n]=ability_modifier(next.scores[n]);next.saving_throws[n]=next.modifiers[n]+(next.save_proficiencies[n]?2:0);}
         if(!choice.feat.empty())next.feats.push_back(choice.feat);next.prepared_spells=choice.spells;
-        const int con=next.modifiers[2];next.hit_points=next.hit_die+con+(next.race=="Dwarf"?next.level:0)+(next.level-1)*std::max(1,next.hit_die/2+1+con);
+        next.hit_point_modifiers.push_back(next.modifiers[2]);
+        next.hit_points=maximum_hit_points(next.hit_die,next.race=="Dwarf",next.hit_point_modifiers);
         const int growth=next.hit_points-sheet.hit_points;
         next.hp_explanation="Level "+std::to_string(next.level)+": "+std::to_string(next.hit_points)+" maximum HP; gain "+std::to_string(growth)+". Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.";
         next.hp_messages={{"Level {level}: {hp} maximum HP; gain {growth}. Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.",
@@ -905,6 +926,25 @@ public:
     {
         Actor actor;actor.definition=character_definition(character_profile(sheet,{}).data);
         actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
+    }
+    void migrate_character_state(const Identity& saved,const CharacterSheet& sheet,VitalState& state) const override
+    {
+        if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported campaign migration");
+        auto definition=character_definition(character_profile(sheet,{}).data);
+        const bool old_hp=saved.version=="0.3.0"||saved.version=="0.4.0"||saved.version=="0.5.0"||
+            saved.version=="0.6.0"||saved.version=="0.6.1"||saved.version=="0.6.2";
+        if(old_hp){
+            // Prior modules rebuilt every gain with the final modifier. Validate
+            // against that old maximum before restoring the missing HP to a
+            // conscious member; zero HP/death and all resources remain intact.
+            const int con=ability_modifier(sheet.scores[2]);
+            definition.hp=sheet.hit_die+con+(sheet.race=="Dwarf"?sheet.level:0)+
+                (sheet.level-1)*std::max(1,sheet.hit_die/2+1+con);
+        }
+        Actor actor;actor.definition=definition;actor.winds=definition.winds;
+        actor.slots=definition.slots;actor.slots2=definition.slots2;restore_vitals(actor,state);
+        auto next=state;if(next.hit_points>0)next.hit_points+=sheet.hit_points-definition.hp;
+        validate_character_state(sheet,next);state=std::move(next);
     }
     RestPolicy long_rest_policy() const override {return {480,960};}
     void elapse(std::span<Participant> participants,std::uint64_t milliseconds,std::uint64_t& random_state) const override
@@ -957,6 +997,10 @@ public:
         if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>4)throw std::runtime_error("Unsupported character rules identity or level");
         unsigned features=sheet.background=="Soldier"?2:0;
         if(sheet.feats.size()!=(sheet.level==4?1u:0u))throw std::runtime_error("Invalid advancement feat count");
+        if(sheet.hit_point_modifiers.size()!=sheet.level||
+            (sheet.level==4&&sheet.feats.front()!="ability_score_improvement"&&
+                sheet.hit_point_modifiers.front()!=sheet.hit_point_modifiers.back()))
+            throw std::runtime_error("HP history does not match character advancement");
         for(const auto& feat:sheet.feats){
             if(feat=="defense"&&sheet.character_class=="Fighter")features|=1;
             else if(feat=="savage_attacker"&&sheet.background!="Soldier")features|=2;
@@ -973,8 +1017,9 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC3 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC4 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
+        for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
         const auto data=out.str();const auto d=character_definition(data);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
@@ -1038,7 +1083,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.2",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.3",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

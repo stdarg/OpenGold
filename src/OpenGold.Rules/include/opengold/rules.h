@@ -138,6 +138,10 @@ public:
     // Advances module-owned lasting effects for a group in deterministic order.
     virtual void elapse(std::span<Participant>, std::uint64_t, std::uint64_t&) const {}
     virtual void validate_character_state(const CharacterSheet&, const VitalState&) const;
+    // Called after replaying saved creation/advancement under the current rules.
+    // Edition-specific migration preserves wounds and opaque resource state.
+    virtual void migrate_character_state(const Identity&, const CharacterSheet& sheet, VitalState& state) const
+    {validate_character_state(sheet,state);}
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };

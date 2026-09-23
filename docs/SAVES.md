@@ -62,6 +62,10 @@ Character sheets are reconstructed through the rules module by replaying validat
 advancement choices. Levels 1–4 of the Fighter/Cleric/Wizard subset, selected
 feats/spells and spent level-one/two resources persist; see [advancement](ADVANCEMENT.md).
 Equipment and roster state are validated before replacement.
+Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
+HP calculation while preserving wounds, zero-HP/dead state and spent resources.
+The campaign format remains 6; see the migration examples in
+[advancement](ADVANCEMENT.md).
 
 ## File safety and compatibility
 
@@ -76,7 +80,7 @@ asset installation, unknown definition, malformed resource state or incompatible
 version rejects explicitly. Reinstalling identical assets at a new path is valid.
 FNV-1a fingerprints/checksums detect accidental changes; they are not signatures
 or protection against deliberate tampering. Formats 1 through 5 and the supported
-rules 0.3.0/0.4.0 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
+rules 0.3.0–0.6.2 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
 
 Writes use a temporary file, flush it to disk and verify its bytes before replacing
 the destination. Windows uses `ReplaceFileW` with a retained backup, or

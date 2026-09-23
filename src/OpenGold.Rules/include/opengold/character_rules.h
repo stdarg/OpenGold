@@ -44,6 +44,9 @@ struct CharacterSheet {
     // Derived presentation messages; not character identity or save-file keys.
     std::vector<Message> hp_messages, racial_messages, class_messages, background_messages;
     std::vector<std::string> feats,prepared_spells;
+    // Constitution modifier after each attained level, rebuilt from choices.
+    // Keeps minimum-one HP gains separate from retroactive modifier changes.
+    std::vector<int> hit_point_modifiers;
 };
 // Creation is a separate optional capability: campaign and Godot code do not
 // embed edition-specific tables, rolling policies, or HP arithmetic.

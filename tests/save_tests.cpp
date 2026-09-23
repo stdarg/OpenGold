@@ -186,7 +186,7 @@ void roundtrip(const std::filesystem::path& directory){
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);
     auto base=prototype();auto rules=module();auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fixture-v1",&base);auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));loaded.town->attach_restored_party(replacement);
     check(encode_campaign(*replacement,&*loaded.town,"fixture-v1")==saved,"Complete serialized state round trips");
-    for(const std::string prior_version:{"0.6.0","0.6.1"}){
+    for(const std::string prior_version:{"0.6.0","0.6.1","0.6.2"}){
         auto previous_save=decode_campaign(changed_identity(saved,rules->identity().version,prior_version),*srd5::character_rules(),*rules,"fixture-v1",&base);
         CampaignParty migrated(module());migrated.restore(std::move(previous_save.party));
         check(encode_campaign(migrated,&*previous_save.town,"fixture-v1")==saved,"Earlier 0.6.x campaigns upgrade without changing saved state");
@@ -211,5 +211,32 @@ void roundtrip(const std::filesystem::path& directory){
     party->begin_combat();rejects([&]{(void)encode_campaign(*party,nullptr,"fixture-v1");});party->end_combat();
     auto busy=prototype();rejects([&]{(void)encode_campaign(*party,&busy,"fixture-v1");});
 }
+void hp_migration()
+{
+    const auto fixture=read_campaign_file(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures/campaign-v6-low-con.ogs");
+    auto rules=module();const auto creation=srd5::character_rules();
+    for(const std::string version:{"0.4.0","0.5.0","0.6.0","0.6.1","0.6.2"}){
+        const auto bytes=version=="0.6.2"?fixture:changed_identity(fixture,"0.6.2",version);
+        auto loaded=decode_campaign(bytes,*creation,*rules,"hp-history-fixture",nullptr);
+        CampaignParty party(module());party.restore(std::move(loaded.party));
+        const std::array<int,6> maximum{9,9,9,9,13,30},current{9,7,0,0,11,28};
+        check(party.state().roster.size()==maximum.size(),"All frozen fixture members migrate");
+        for(unsigned i=0;i<maximum.size();++i){
+            const auto& member=party.member(i+1);
+            check(member.character.sheet().hit_points==maximum[i]&&party.profile(i+1).hit_points==maximum[i],"Legacy advancement reconstructs corrected HP, including Dwarf and normal Constitution");
+            check(member.vitals.hit_points==current[i]&&member.vitals.dead==(i==3),"Migration preserves health deficits, unconsciousness and death");
+            const std::string expected=i==2?"SRD2 0 1 1 1 2 0":i==3?"SRD2 0 1 1 1 3 0":"SRD2 0 1 1 0 0 0";
+            check(member.vitals.resources==expected,"Migration leaves spell expenditure and death-save counters intact");
+        }
+        const auto saved=encode_campaign(party,nullptr,"hp-history-fixture");
+        auto reloaded=decode_campaign(saved,*creation,*rules,"hp-history-fixture",nullptr);
+        CampaignParty restored(module());restored.restore(std::move(reloaded.party));
+        check(encode_campaign(restored,nullptr,"hp-history-fixture")==saved,"New-version reload does not apply the HP migration twice");
+        const auto original=party.member(1).vitals;auto invalid=original; // 9 HP exceeds the legacy maximum of 6.
+        auto old_identity=rules->identity();old_identity.version=version;
+        rejects([&]{rules->migrate_character_state(old_identity,party.member(1).character.sheet(),invalid);});
+        check(invalid==original,"Rejected legacy state migration is atomic");
+    }
 }
-int main(){try{TestDirectory directory;roundtrip(directory.path);fog_saves(directory.path);file_safety(directory.path);std::cout<<"Campaign file save tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+}
+int main(){try{TestDirectory directory;roundtrip(directory.path);fog_saves(directory.path);file_safety(directory.path);hp_migration();std::cout<<"Campaign file save tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

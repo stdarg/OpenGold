@@ -10,7 +10,12 @@ combat and unfinished exploration events.
 
 This increment supports single-class levels 2–4, with thresholds of 300, 900 and
 2,700 total XP. HP uses the fixed average after first level, includes retroactive
-Constitution changes and preserves the existing HP deficit. Existing resource
+Constitution changes and preserves the existing HP deficit. Each new level adds
+its HP using the previous Constitution modifier (minimum one), then applies any
+new modifier increase once per attained level. Earlier minimum-one gains are
+retained. For example, a Human Wizard starting with Constitution 3 has 2, 3 and
+4 maximum HP at levels 1–3; a level-four +2 Constitution increase yields 9 HP.
+Dwarven Toughness adds one HP per level. Existing resource
 expenditure is preserved; only new capacity is added. An unconscious character
 does not become conscious merely by leveling. No XP is deducted.
 
@@ -53,10 +58,14 @@ attribution applies; original game resources are loaded locally.
 
 ## Saves and verification
 
-Campaign format 3 records each confirmed choice and reconstructs the resulting
-sheet through the rules module. Formats 1 and 2 migrate their existing levels
-using the previous default choices. Rules module 0.5.0 accepts the precise
-supported 0.3.0/0.4.0 campaign identities; unrelated content identities still reject.
+Campaign formats 3–6 record each confirmed choice and reconstruct the resulting
+sheet and Constitution history through the rules module. Formats 1 and 2 migrate
+their existing levels using the previous default choices. Rules module 0.6.3
+accepts the supported 0.3.0–0.6.2 campaign identities; unrelated content identities
+still reject. Loading an affected older campaign corrects maximum HP and preserves
+the living character's HP deficit. Unconscious/dead characters stay at zero, and
+spent resources and death-save counters persist. The correction applies once;
+the campaign format remains 6. New combat profiles use PC4 to carry HP history.
 Standalone combat checkpoints use version 5 to retain second-level slots,
 per-turn spell/feat usage, timed effects, facing, and pending turn reactions.
 Old-module combat checkpoints are not migrated.
@@ -77,6 +86,9 @@ XP for level 4, then leaves the controls available for manual inspection. Its
 saves use a separate profile under `user-data/level-up-review-profile`.
 
 Native advancement tests cover all three classes, transactional rejection,
-Constitution HP recalculation, Defense AC, Savage Attacker damage, spell action
+Constitution HP history (including low scores and odd/even modifier boundaries),
+Defense AC, Savage Attacker damage, spell action
 budgets, second-level resources and campaign/combat save reconstruction. Frozen
-authored format-1/2 fixtures verify migration independently of the current writer.
+authored format-1/2 fixtures and a format-6 fixture written by module 0.6.2 verify
+migration independently of the current writer. The latter includes wounded,
+unconscious, dead, Dwarf and unaffected normal-Constitution characters.

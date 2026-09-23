@@ -147,6 +147,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     s.racial_modifiers+="\nOther racial traits and conditional effects are not implemented.";
     s.background_modifiers="Source: "+s.background+" background, selected ability increases. "+options[d.adjustment].label+". Other background features are not implemented.";
     s.hit_points=s.hit_die+s.modifiers[2]+racial_hp;
+    s.hit_point_modifiers={s.modifiers[2]};
     s.class_messages = {{"Source: {class} class, level 1. Saving-throw training adds +2 proficiency to {first} and {second}.",
         {{"class",s.character_class,true},{"first",ability_names[trained[0]],true},{"second",ability_names[trained[1]],true}}},
         {"Source: {class} Hit Die and Constitution score {score}. Starting HP: maximum d{die} + Constitution modifier ({modifier}).",

@@ -13,6 +13,7 @@ The all-twelve-class level-four milestone is
 | --- | --- | --- | --- |
 | [I01 / E5](https://github.com/stdarg/OpenGold/issues/20): starting-class weapon proficiency | SRD 5.2.1 pp. 49, 61, 91. Rogue gains martial Finesse or Light; Monk gains martial Light. Applies to the implemented catalog, including Shortsword/Scimitar. Other starting-class grants remain intact. | [weapons.h](../src/OpenGold.Rules.Srd5/src/weapons.h) records Light; [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) uses the same training query for profiles, equipment notes and combat. [party_tests.cpp](../tests/party_tests.cpp), `class_weapon_proficiency`, verifies all twelve classes, actual +5 attacks for Dexterity-16 Rogue/Monk, equipment explanations and deterministic campaign/combat reload. The regression failed before the fix. | Module 0.6.1; campaign schema unchanged. Existing 0.6.0 and earlier supported campaigns reconstruct the corrected bonuses without losing equipment or wounds. [save_tests.cpp](../tests/save_tests.cpp) verifies 0.6.0 campaign upgrade. Standalone combat checkpoints require exact module identity. |
 | [I02 / E2–E3](https://github.com/stdarg/OpenGold/issues/21): death-save turn entry and stabilization | SRD 5.2.1 pp. 17–18. An unstable actor at 0 HP rolls once on turn entry, including the initial initiative slot. A natural 20 permits the recovered actor's turn. Stabilization clears both counters. | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) shares one turn-entry path. [rules_tests.cpp](../tests/rules_tests.cpp), `death_save_turn_entry_tests`, covers initial/later entry, all four outcomes, stable/dead skipping and deterministic checkpoint continuation. The regression failed before the fix. [party_tests.cpp](../tests/party_tests.cpp), `stabilization_handoff`, verifies campaign handoff and reload with spent resources preserved. | Module 0.6.2; campaign schema unchanged. Supports 0.6.1 and earlier supported campaigns. Legacy stable counters normalize when rules hydrate vitals. [save_tests.cpp](../tests/save_tests.cpp) verifies 0.6.0/0.6.1 campaign upgrades. Checkpoint restoration performs no turn-entry roll; standalone combat checkpoints still require exact module identity. |
+| [I03 / E1](https://github.com/stdarg/OpenGold/issues/22): Constitution and HP history | SRD 5.2.1 p. 23. Gain fixed HP with the previous modifier before applying the Constitution increase per attained level. Prior minimum-one gains persist; Dwarven Toughness remains additive. | [character_rules.cpp](../src/OpenGold.Rules.Srd5/src/character_rules.cpp) initializes modifier history; [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) replays and validates it for advancement and combat profiles. [advancement_tests.cpp](../tests/advancement_tests.cpp), `hp_history`, verifies the 9-HP Wizard, odd/even modifier boundaries, Dwarves, wounds, unconsciousness, resource expenditure and campaign/combat reconstruction. The regression failed before the fix. | Module 0.6.3 and PC4 combat profiles; campaign format remains 6. Existing saved choices reconstruct history. A rules-owned migration preserves living HP deficits and zero-HP/dead state. [save_tests.cpp](../tests/save_tests.cpp), `hp_migration`, uses a [frozen 0.6.2 save](../tests/fixtures/README.md) to verify correction and reload without double application. Prior-module standalone combat saves still reject. |
 
 Light extra attacks, Monk Martial Arts, optional feature-granted proficiency,
 multiclass-entry proficiency and missing catalog weapons remain their own
@@ -28,6 +29,11 @@ advancement native suites. No Godot layout or control code changed. Death saves
 and natural recovery outside combat remain [F04 #31](https://github.com/stdarg/OpenGold/issues/31);
 this increment preserves the existing all-unconscious-party defeat policy.
 
+Validation for I03: the rules, party, save, status-effect, advancement, character
+and content native suites pass. The Godot GDExtension is rebuilt against the
+updated shared character data. No UI layout or controls changed. Higher levels
+and additional classes retain their separate advancement issues.
+
 ## Audit finding status
 
 Status refers to the current implementation. The audit retains its original
@@ -35,7 +41,7 @@ commit-specific findings as historical evidence.
 
 | Finding | Status | Primary work |
 | --- | --- | --- |
-| E1: Constitution/HP history | Open | [I03 #22](https://github.com/stdarg/OpenGold/issues/22) |
+| E1: Constitution/HP history | Fixed | [I03 #22](https://github.com/stdarg/OpenGold/issues/22) |
 | E2: initial death save | Fixed | [I02 #21](https://github.com/stdarg/OpenGold/issues/21) |
 | E3: stabilization counters | Fixed | [I02 #21](https://github.com/stdarg/OpenGold/issues/21) |
 | E4: bonus provenance | Open | [I04 #23](https://github.com/stdarg/OpenGold/issues/23) |

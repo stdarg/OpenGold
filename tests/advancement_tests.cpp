@@ -53,6 +53,56 @@ void progression(){
     rejects([&]{capped.advance(cap,invalid);});check(saved(capped)==unchanged,"Ability cap rejects without partially applying level or HP");
     CampaignParty unsupported(module());const auto id=unsupported.add_pc(character("bard"));unsupported.award_experience(2700,"xp");check(!unsupported.can_advance(id),"Unsupported classes cannot select partial advancement");
 }
+void hp_history(){
+    struct Example {int constitution;unsigned increase;std::array<int,4> hp;};
+    // SRD p. 23: gain HP using the old modifier, then apply the feat's
+    // Constitution modifier increase once per attained level.
+    for(const auto example:{Example{3,2,{2,3,4,9}},Example{3,1,{2,3,4,9}},
+            Example{4,1,{3,4,5,6}},Example{4,2,{3,4,5,10}},
+            Example{5,2,{3,4,5,10}},Example{14,2,{8,14,20,30}}})
+    for(const bool dwarf:{false,true})for(const bool unconscious:{false,true}){
+        auto draft=character("wizard").creation_data();draft.race=dwarf?"dwarf":"human";
+        // Authored legal dice, with the fourth (lowest) die discarded.
+        draft.rolls[2]=example.constitution==14?AbilityRoll{{6,4,4,1},3}:
+            AbilityRoll{{example.constitution-2,1,1,1},3};
+        const auto adjustments=srd5::character_rules()->adjustments("sage");
+        for(unsigned i=0;i<adjustments.size();++i)if(adjustments[i].bonuses[2]==0){draft.adjustment=i;break;}
+        CampaignParty party(module());const auto id=party.add_pc(Character(*srd5::character_rules(),draft,{}));
+        party.award_experience(2700,"hp-history");
+        for(unsigned level=1;level<=4;++level){
+            if(level>1){
+                auto choice=party.default_advancement(id);
+                if(level==4){
+                    auto state=party.checkpoint();auto& vital=state.roster[0].vitals;
+                    vital.hit_points=unconscious?0:party.member(id).character.sheet().hit_points-2;
+                    vital.resources=unconscious?"SRD2 0 1 1 1 2 0":"SRD2 0 1 1 0 0 0";
+                    party.restore(std::move(state));
+                    choice.abilities={};choice.abilities[2]=example.increase;choice.abilities[3]=2-example.increase;
+                }
+                party.advance(id,choice);
+            }
+            const auto expected=example.hp[level-1]+(dwarf?int(level):0);
+            check(party.member(id).character.sheet().hit_points==expected,"HP history follows the SRD sequence even when earlier gains were clamped");
+            check(party.profile(id).hit_points==expected,"Combat profile independently reconstructs the HP history");
+            const auto bytes=saved(party);auto loaded=decode_campaign(bytes,*srd5::character_rules(),*module(),"advancement-fixture",nullptr);
+            CampaignParty restored(module());restored.restore(std::move(loaded.party));check(saved(restored)==bytes,"Each level reconstructs exactly from saved advancement choices");
+        }
+        const auto& member=party.member(id);const int maximum=example.hp[3]+(dwarf?4:0);
+        check(member.vitals.hit_points==(unconscious?0:maximum-2),"Constitution advancement preserves wounds and does not wake an unconscious character");
+        check(member.vitals.resources==(unconscious?"SRD2 0 1 2 1 2 0":"SRD2 0 1 2 0 0 0"),"HP growth preserves death saves and existing spell expenditure");
+        auto malformed=member.character.sheet();++malformed.hit_points;
+        rejects([&]{(void)module()->character_profile(malformed,{});});
+        malformed=member.character.sheet();malformed.hit_point_modifiers.pop_back();
+        rejects([&]{(void)module()->character_profile(malformed,{});});
+        malformed=member.character.sheet();malformed.hit_point_modifiers[1]=6;
+        rejects([&]{(void)module()->character_profile(malformed,{});});
+        malformed=member.character.sheet();--malformed.hit_point_modifiers.back();
+        rejects([&]{(void)module()->character_profile(malformed,{});});
+        if(!unconscious){auto rules=module();auto combat=duel(*rules,party);
+            check(unit(*combat,id).max_hit_points==maximum&&unit(*combat,id).hit_points==maximum-2,"Combat uses corrected maximum and wounded current HP");
+            check(rules->restore(combat->save())->save()==combat->save(),"HP history survives a combat checkpoint");}
+    }
+}
 void feats(){
     for(const char* feat:{"defense","savage_attacker"}){
         CampaignParty party(module());const auto id=party.add_pc(character("fighter"));party.award_experience(2700,"xp");
@@ -89,4 +139,4 @@ void spells(){
     }
 }
 }
-int main(){try{progression();feats();spells();std::cout<<"Manual advancement tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{progression();hp_history();feats();spells();std::cout<<"Manual advancement tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
