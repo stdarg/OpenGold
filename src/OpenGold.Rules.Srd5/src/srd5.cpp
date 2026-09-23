@@ -29,7 +29,12 @@ std::string attack_ability(std::string_view key)
 }
 bool trained(std::string_view klass,std::string_view key)
 {
-    if(const auto* weapon=detail::weapon(key))return !weapon->martial||klass=="Barbarian"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
+    // Starting-class grants, SRD 5.2.1 pp. 49 and 61. Multiclass entry and
+    // optional feature grants are separate, not yet implemented capabilities.
+    if(const auto* weapon=detail::weapon(key))
+        return !weapon->martial||klass=="Barbarian"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger"||
+            (klass=="Rogue"&&(weapon->finesse||weapon->light))||
+            (klass=="Monk"&&weapon->light);
     if(key=="chain_mail")return klass=="Fighter"||klass=="Paladin";
     if(key=="leather")return klass!="Monk"&&klass!="Sorcerer"&&klass!="Wizard";
     if(key=="shield")return klass=="Barbarian"||klass=="Cleric"||klass=="Druid"||klass=="Fighter"||klass=="Paladin"||klass=="Ranger";
@@ -811,7 +816,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1026,11 +1031,11 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.0",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.1",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
-        content.previous_campaign_identities.push_back({"opengold.srd5","0.6.0",revision+"/"+fingerprint});
+        content.previous_campaign_identities.push_back({"opengold.srd5",content.identity.version,revision+"/"+fingerprint});
     // These additive rows introduce saves and an isolated casting fixture. Old
     // campaign sheets can migrate; combat checkpoints still require exact rules.
     // Reconstruct both supported historical packs without guessing fingerprints.
@@ -1044,7 +1049,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
             previous+=line_before+'\n';
         }
         std::uint64_t previous_hash=14695981039346656037ULL;for(unsigned char c:previous){previous_hash^=c;previous_hash*=1099511628211ULL;}
-        if(previous_hash!=hash)content.previous_campaign_identities.push_back({"opengold.srd5","0.6.0",revision+"/"+std::to_string(previous_hash)});
+        if(previous_hash!=hash)content.previous_campaign_identities.push_back({"opengold.srd5",content.identity.version,revision+"/"+std::to_string(previous_hash)});
     }
     std::set<std::string> save_rows,casting_rows;
     while(std::getline(lines,line)) {

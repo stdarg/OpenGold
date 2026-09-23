@@ -19,7 +19,7 @@ struct TestDirectory {
 };
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
 template<class F>void rejects(F f){bool caught=false;try{f();}catch(const std::exception&){caught=true;}check(caught,"Invalid save must reject");}
-std::string changed_identity(const std::string& saved,const std::string& identity){auto start=saved.find('\n',saved.find('\n')+1)+1;auto body=saved.substr(start);auto position=body.find('"'+identity+'"');check(position!=body.npos,"Identity must be present");body.replace(position,identity.size()+2,"\"incompatible\"");std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}return saved.substr(0,saved.find('\n')+1)+std::to_string(hash)+'\n'+body;}
+std::string changed_identity(const std::string& saved,const std::string& identity,const std::string& replacement="incompatible"){auto start=saved.find('\n',saved.find('\n')+1)+1;auto body=saved.substr(start);auto position=body.find('"'+identity+'"');check(position!=body.npos,"Identity must be present");body.replace(position,identity.size()+2,'"'+replacement+'"');std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}return saved.substr(0,saved.find('\n')+1)+std::to_string(hash)+'\n'+body;}
 auto module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
 Character character(std::string klass){rules::CharacterDraft d;d.race="human";d.gender="female";d.character_class=klass;d.alignment="neutral_good";d.background="soldier";d.name="Save test "+klass;d.rolled=true;for(auto& r:d.rolls)r={{6,5,4,1},3};por::CharacterAppearance a;a.portrait="human-male-fighter-01.png";return Character(*srd5::character_rules(),d,a);}
 auto prototype(){
@@ -186,6 +186,9 @@ void roundtrip(const std::filesystem::path& directory){
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);
     auto base=prototype();auto rules=module();auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fixture-v1",&base);auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));loaded.town->attach_restored_party(replacement);
     check(encode_campaign(*replacement,&*loaded.town,"fixture-v1")==saved,"Complete serialized state round trips");
+    auto v060=decode_campaign(changed_identity(saved,rules->identity().version,"0.6.0"),*srd5::character_rules(),*rules,"fixture-v1",&base);
+    CampaignParty migrated(module());migrated.restore(std::move(v060.party));
+    check(encode_campaign(migrated,&*v060.town,"fixture-v1")==saved,"Rules 0.6.0 campaign data upgrades without changing saved state");
     const auto encounter=[](const CampaignParty& p){rules::Encounter e{{8,8,std::vector<std::uint8_t>(64)},p.participants()};e.participants.push_back({99,"bandit","Bandit",1,{6,6}});return e;};
     auto combat_a=rules->create(encounter(*party),42),combat_b=rules->create(encounter(*replacement),42);
     for(int i=0;i<30&&combat_a->snapshot().outcome==rules::Outcome::ongoing;++i){auto command=choose_demo_command(*combat_a);check(combat_a->submit(command)&&combat_b->submit(command)&&combat_a->save()==combat_b->save(),"Next combat continues deterministically after disk reload");}

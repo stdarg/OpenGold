@@ -115,9 +115,14 @@ Damage dice, finesse, thrown/ranged distances, reach and mandatory two-hand
 requirements follow the SRD weapon table, except that OpenGoldBox battle axes,
 spears, quarterstaffs (including Bo Stick and Jo Stick), and tridents require
 two hands. Versatile weapons use their one-handed
-damage profile. The module's existing proficiency subset remains in use:
-simple weapons are trained for all classes; martial weapons for Barbarian,
-Fighter, Paladin and Ranger. Weapon mastery, ammunition consumption/recovery,
+damage profile. All starting classes are proficient with simple weapons;
+Barbarian, Fighter, Paladin and Ranger are proficient with all martial weapons.
+Rogue is proficient with martial weapons that have Finesse or Light; Monk is
+proficient with martial weapons that have Light. Shortsword and Scimitar therefore
+include their proficiency bonus for both classes. The catalog records Light
+for proficiency; its extra-attack mechanics remain unimplemented. Optional
+feature-granted and multiclass-entry training remain separate work.
+Weapon mastery, ammunition consumption/recovery,
 versatile two-handed selection and charged magical wand effects are not added
 by this change. Bows and a plain focus retain unarmed melee; ranged weapons
 provide actual ranged combat commands. Enchanted/effect-bearing original items
@@ -126,9 +131,12 @@ still require a supported conversion rather than silently receiving plain stats.
 Equipment metadata comes from the rules module, not from the original edition's
 `ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
 two-handed weapon/shield combination leaves the previous loadout untouched.
-Rules version 0.6.0 accepts earlier campaign saves and upgrades previously
-unsupported ordinary weapons with verified original provenance. Standalone
-combat checkpoints still require the exact rules version.
+Rules version 0.6.1 corrects Rogue/Monk weapon proficiency and accepts 0.6.0 and
+earlier supported campaign saves. It recomputes weapon bonuses from saved
+class/equipment choices and retains the conversion of previously unsupported
+ordinary weapons with verified original provenance. Standalone combat
+checkpoints still require the exact rules version, so finish a 0.6.0 combat
+and save the campaign before upgrading.
 
 Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):
 - Weapons omit the +2 level-one proficiency bonus on attacks.

@@ -10,12 +10,14 @@ struct Weapon {
     unsigned hands{1};
     bool martial{},finesse{},ranged{};
     int range{},long_range{},reach{5};
+    bool light{};
 };
 inline constexpr std::array weapons{
-    Weapon{"club",1,4}, Weapon{"dagger",1,4,1,false,true,false,20,60},
-    Weapon{"handaxe",1,6,1,false,false,false,20,60},
+    Weapon{.key="club",.dice=1,.sides=4,.light=true},
+    Weapon{.key="dagger",.dice=1,.sides=4,.finesse=true,.range=20,.long_range=60,.light=true},
+    Weapon{.key="handaxe",.dice=1,.sides=6,.range=20,.long_range=60,.light=true},
     Weapon{"javelin",1,6,1,false,false,false,30,120},
-    Weapon{"light_hammer",1,4,1,false,false,false,20,60},
+    Weapon{.key="light_hammer",.dice=1,.sides=4,.range=20,.long_range=60,.light=true},
     Weapon{"mace",1,6},
     // OpenGoldBox quarterstaffs require both hands.
     Weapon{"quarterstaff",1,6,2},
@@ -32,7 +34,8 @@ inline constexpr std::array weapons{
     Weapon{"halberd",1,10,2,true,false,false,0,0,10},
     Weapon{"longsword",1,8,1,true}, Weapon{"morningstar",1,8,1,true},
     Weapon{"pike",1,10,2,true,false,false,0,0,10},
-    Weapon{"scimitar",1,6,1,true,true}, Weapon{"shortsword",1,6,1,true,true},
+    Weapon{.key="scimitar",.dice=1,.sides=6,.martial=true,.finesse=true,.light=true},
+    Weapon{.key="shortsword",.dice=1,.sides=6,.martial=true,.finesse=true,.light=true},
     // OpenGoldBox tridents require both hands.
     Weapon{"trident",1,8,2,true,false,false,20,60},
     Weapon{"warhammer",1,8,1,true}, Weapon{"war_pick",1,8,1,true},

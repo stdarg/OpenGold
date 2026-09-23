@@ -285,6 +285,73 @@ void roster_and_equipment()
     wizard.purchase(mage,item(59));const int naked_ac=wizard.profile(mage).armor_class;wizard.equip(mage,1);check(wizard.profile(mage).armor_class==naked_ac,"Untrained shield is allowed but adds no AC");
     auto bard=wizard.add_pc(character("bard"));check(wizard.profile(bard).armor_class>0,"All classes can display an equipment profile outside combat");
 }
+void class_weapon_proficiency()
+{
+    auto rules=module();
+    const auto make_character=[](std::string klass){
+        CharacterDraft draft;draft.race="human";draft.gender="female";
+        draft.character_class=klass;draft.alignment="neutral_good";
+        draft.background="soldier";draft.name=klass;draft.rolled=true;
+        for(auto& roll:draft.rolls)roll={{6,5,4,1},3};
+        draft.rolls[0]={{4,4,4,1},3}; // Soldier produces STR 14, DEX 16.
+        return Character(*srd5::character_rules(),draft,{});
+    };
+    // Independent expectations from SRD 5.2.1's starting-class traits.
+    struct Training {const char* klass;bool light_martial,other_martial;};
+    const std::array expectations{
+        Training{"barbarian",true,true},Training{"bard",false,false},
+        Training{"cleric",false,false},Training{"druid",false,false},
+        Training{"fighter",true,true},Training{"monk",true,false},
+        Training{"paladin",true,true},Training{"ranger",true,true},
+        Training{"rogue",true,false},Training{"sorcerer",false,false},
+        Training{"warlock",false,false},Training{"wizard",false,false}
+    };
+    for(const auto& expected:expectations){
+        const auto pc=make_character(expected.klass);
+        check(pc.sheet().scores[0]==14&&pc.sheet().scores[1]==16,"Weapon fixture has independent Strength and Dexterity modifiers");
+        for(const std::string weapon:{"shortsword","scimitar"}){
+            const std::array gear{weapon};const auto profile=rules->character_profile(pc.sheet(),gear);
+            check(profile.melee_attack_bonus==(expected.light_martial?5:3),"Light Finesse martial weapons apply the starting class proficiency");
+            check(profile.item_modifiers.find(expected.light_martial?"+2 class proficiency":"without proficiency")!=std::string::npos,
+                "Equipment explanation agrees with the attack bonus");
+            check(srd5::equipment_note(pc.sheet(),weapon).starts_with(expected.light_martial?"Class training:":"Untrained weapon:"),
+                "Equipment notes agree with class weapon training");
+        }
+        const std::array<std::string,1> longsword{"longsword"},mace{"mace"};
+        check(rules->character_profile(pc.sheet(),longsword).melee_attack_bonus==(expected.other_martial?4:2),
+            "Rogue and Monk do not gain all martial weapons");
+        check(rules->character_profile(pc.sheet(),mace).melee_attack_bonus==4,"Every starting class retains simple weapon proficiency");
+    }
+    for(const std::string klass:{"rogue","monk"})for(const std::string weapon:{"shortsword","scimitar"}){
+        auto pc=make_character(klass);const auto item_id=pc.inventory().add(weapon,weapon);
+        CampaignParty party(module());const auto id=party.add_pc(std::move(pc));party.equip(id,item_id);
+        auto wounded=party.checkpoint();wounded.roster[0].vitals.hit_points=3;party.restore(std::move(wounded));
+        const auto saved=encode_campaign(party,nullptr,"weapon-proficiency");
+        auto decoded=decode_campaign(saved,*srd5::character_rules(),*rules,"weapon-proficiency",nullptr);
+        CampaignParty loaded(module());loaded.restore(std::move(decoded.party));
+        check(loaded.profile(id).melee_attack_bonus==5,"Campaign reload recomputes the correct Rogue/Monk attack bonus");
+        check(loaded.member(id).vitals==party.member(id).vitals&&loaded.member(id).equipped==party.member(id).equipped,
+            "Campaign reload preserves wounds, resources and equipment");
+        check(encode_campaign(loaded,nullptr,"weapon-proficiency")==saved,"Proficient equipment round trips canonically");
+        auto participants=loaded.participants();participants[0].cell={1,1};
+        participants.push_back({1000,"bandit","Target",1,{2,1}});
+        std::unique_ptr<CombatSession> combat;
+        for(unsigned seed=0;seed<100;++seed){
+            auto attempt=rules->create({{4,4,std::vector<std::uint8_t>(16)},participants},seed);
+            if(attempt->snapshot().actor==id){combat=std::move(attempt);break;}
+        }
+        check(bool(combat),"Find player initiative for proficiency regression");
+        auto restored=rules->restore(combat->save());const auto commands=combat->legal_commands();
+        const auto attack=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="melee";});
+        check(attack!=commands.end()&&combat->submit(*attack)&&restored->submit(*attack),"Original and restored actors can attack");
+        check(combat->save()==restored->save(),"Proficient attacks resume deterministically from checkpoints");
+        const auto snapshot=combat->snapshot();
+        check(std::any_of(snapshot.log_messages.begin(),snapshot.log_messages.end(),[](const auto& message){
+            return message.source.starts_with("{actor} -> {target}: d20")&&
+                std::any_of(message.arguments.begin(),message.arguments.end(),[](const auto& arg){return arg.name=="bonus"&&arg.value=="5";});
+        }),"Actual combat uses +5 for the Dexterity-16 Rogue/Monk weapon attack");
+    }
+}
 void untrained_equipment()
 {
     auto rules=module();const auto mage=character("wizard");const auto& s=mage.sheet();
@@ -821,6 +888,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

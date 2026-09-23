@@ -1,6 +1,12 @@
 # Incremental SRD implementation plan
 
-Date: 2026-09-23. Status: proposed execution sequence for review.
+Date: 2026-09-23. Status: issue backlog created; incremental implementation started.
+
+The [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186) links all
+steps, labeled `SRD_improvements`. The [coverage ledger](SRD-COVERAGE.md) records
+completed work and verification. I01 is delivered in
+[#20](https://github.com/stdarg/OpenGold/issues/20); the next increment is
+[I02, initial death saves and stabilization](https://github.com/stdarg/OpenGold/issues/21).
 
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,
@@ -224,11 +230,10 @@ multiclass interactions; targeted checks remain attached to their rules.
 
 ## Recommended next execution
 
-Start with **I01: Rogue and Monk weapon proficiency**, then proceed through I08.
-That provides a small first implementation, a clear regression, and useful
-infrastructure for subsequent equipment work. The later queues are refined
+I01 is complete. Continue with **I02: initial death saves and stabilization**,
+then proceed through I08. The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.
 
-This planning change records decisions and work boundaries only. No gameplay,
-tests or UI implementation is included.
+This document records decisions and work boundaries. Implementation status and
+evidence are maintained in the coverage ledger and linked issues.

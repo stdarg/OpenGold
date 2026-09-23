@@ -27,6 +27,10 @@ are no longer pending. The [incremental implementation plan](../SRD-IMPLEMENTATI
 records them and breaks the work below into bounded deliveries. Findings and
 policy tables here continue to describe the audited commit.
 
+Implementation progress is tracked in the [coverage ledger](../SRD-COVERAGE.md)
+and [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186). E5 is
+corrected by I01; the remaining findings retain their open status in the ledger.
+
 ## Authority, scope, and evidence
 
 - The baseline is **SRD 5.2.1**, selected by [PRD](../PRD.md) and
