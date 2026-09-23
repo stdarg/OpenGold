@@ -5,7 +5,6 @@ deleted	type_13_shield
 deleted	type_14_shield
 deleted	type_15_shield
 deleted	type_16_shield
-deleted	type_17
 deleted	type_17_shield
 deleted	type_18_shield
 deleted	type_19_shield
@@ -49,7 +48,7 @@ deleted	type_6_shield
 16	type_46
 17	type_30,type_38
 18	type_1
-19	type_10,type_11,type_13,type_14,type_15,type_16,type_18,type_19,type_25,type_26,type_27,type_29,type_3,type_31,type_32,type_39,type_4,type_40,type_5
+19	type_10,type_11,type_13,type_14,type_15,type_16,type_17,type_18,type_19,type_25,type_26,type_27,type_29,type_3,type_31,type_32,type_39,type_4,type_40,type_5
 20	type_20_shield,type_36_shield
 21	type_21_shield,type_79_shield
 22	type_2_shield,type_8_shield
