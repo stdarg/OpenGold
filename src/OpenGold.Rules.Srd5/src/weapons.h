@@ -17,7 +17,8 @@ inline constexpr std::array weapons{
     Weapon{"javelin",1,6,1,false,false,false,30,120},
     Weapon{"light_hammer",1,4,1,false,false,false,20,60},
     Weapon{"mace",1,6}, Weapon{"quarterstaff",1,6},
-    Weapon{"spear",1,6,1,false,false,false,20,60},
+    // OpenGoldBox spears require both hands.
+    Weapon{"spear",1,6,2,false,false,false,20,60},
     Weapon{"dart",1,4,1,false,true,true,20,60},
     Weapon{"light_crossbow",1,8,2,false,false,true,80,320},
     Weapon{"shortbow",1,6,2,false,false,true,80,320},
