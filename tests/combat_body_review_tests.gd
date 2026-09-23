@@ -114,6 +114,11 @@ func run_checks() -> void:
         await settle()
         await RenderingServer.frame_post_draw
         require(root.get_texture().get_image().save_png("res://../../build/combat-body-unarmed-shield.png") == OK, "Derived body visual capture saved")
+        for id in [7, 24, 33, 34]:
+            view._review_body(id)
+            await settle()
+            await RenderingServer.frame_post_draw
+            require(root.get_texture().get_image().save_png("res://../../build/combat-body-%d.png" % id) == OK, "Dagger comparison capture saved")
         for tab in range(1, 4):
             view.tabs.current_tab = tab
             await settle()
@@ -133,6 +138,30 @@ func run_checks() -> void:
     await settle()
     require(view.loaded, "Legacy catalog loads")
     require(view.assignments.size() == 33, "Derived body is in the reviewer")
+    var catalog_before := FileAccess.get_file_as_string(path)
+    for id in [33, 34]:
+        view._review_body(id)
+        require(view.assignment.text.contains("preview only"), "Dagger bodies are explicitly preview-only")
+        require(view.list.get_child_count() == 0, "Preview cannot edit game assignments")
+        view._toggle("type_8", true)
+        require(FileAccess.get_file_as_string(path) == catalog_before, "Preview leaves catalog unchanged")
+        for bank in [0, 64, 128, 192]:
+            var source: PackedByteArray = view.loader._extract_record(view.body_data, (7 if id == 33 else 24) + bank)
+            var saved := source.duplicate()
+            var dagger: PackedByteArray = view._with_dagger(source, bank)
+            require(source == saved, "Original sword data stays intact")
+            var changed := 0
+            for pixel in range(576):
+                var offset := 17 + (pixel >> 1)
+                var before := source[offset] >> 4 if pixel % 2 == 0 else source[offset] & 15
+                var after := dagger[offset] >> 4 if pixel % 2 == 0 else dagger[offset] & 15
+                if before != after:
+                    changed += 1
+                    require(before in [7, 15] and after in [0, 15], "Only blade pixels change")
+            require(changed > 0, "Blade is shortened in every size and pose")
+    view._step(1)
+    require(view.body_id == 0, "Navigation wraps after both dagger previews")
+
     require(view.assignments[4] == ["type_23_shield"], "Silver normalized and deduplicated")
     view._step(1)
     view.filter_box.text = "short bow"

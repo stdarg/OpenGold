@@ -1,6 +1,9 @@
 extends Control
 
 const CATALOG := "res://../../data/art/combat-body-looks.tsv"
+const REVIEW_BODY_COUNT := 35
+const DAGGER_SOURCES := {33: 7, 34: 24}
+
 const OPTIONS := "res://../../data/art/combat-weapon-options.tsv"
 
 var catalog_path := CATALOG
@@ -236,26 +239,51 @@ func _name_for(key: String) -> String:
 
 func _step(amount: int) -> void:
     if not loaded: return
-    body_id = posmod(body_id + amount, 33)
+    body_id = posmod(body_id + amount, REVIEW_BODY_COUNT)
     _refresh()
 
 func _refresh() -> void:
-    number.text = "Body %d / 32" % body_id
+    number.text = "Body %d / 34" % body_id
+    filter_box.editable = not DAGGER_SOURCES.has(body_id)
+    status.text = "Preview only - no artwork or assignments are saved." if DAGGER_SOURCES.has(body_id) else "Changes save immediately to " + ProjectSettings.globalize_path(catalog_path)
     _show_assignments()
     for variant in range(4):
         var size_offset: int = 0 if variant % 2 == 0 else 64
         var pose_offset: int = 0 if variant < 2 else 128
         var bank: int = size_offset + pose_offset
-        var body := loader._extract_record(body_data, (21 if body_id == 32 else body_id) + bank)
+        var source_id: int = DAGGER_SOURCES.get(body_id, 21 if body_id == 32 else body_id)
+        var body := loader._extract_record(body_data, source_id + bank)
         var head := loader._extract_record(head_data, size_offset + pose_offset)
         if body.size() < 305 or head.size() < 17:
             _fail("Cannot decode original body or head: " + loader.error_message)
             return
         if body_id == 32: body = _without_wand(body, bank)
+        if DAGGER_SOURCES.has(body_id): body = _with_dagger(body, bank)
         var image := _compose(head, body)
         previews[variant].texture = ImageTexture.create_from_image(image)
     _fill_list()
     _refresh_reports()
+
+# Preview-only: edit a copy of the locally decoded sword body. No pixels are saved.
+func _with_dagger(source: PackedByteArray, bank: int) -> PackedByteArray:
+    var body := source.duplicate()
+    var action := bank >= 128
+    var tall := bank % 128 == 64
+    var tip_y := (17 if tall else 18) if action else (4 if tall else 6)
+    for y in range(24):
+        for x in range(24):
+            var p := y * 24 + x
+            var offset := 17 + (p >> 1)
+            var value := int(body[offset])
+            var color := value >> 4 if p % 2 == 0 else value & 15
+            if color != 7 and color != 15: continue
+            # Keep the half nearest the grip, tapering its last row to one pixel.
+            if (action and y > tip_y) or (not action and y < tip_y):
+                color = 0
+            elif y == tip_y:
+                color = 15 if x == (19 if action else 4) else 0
+            body[offset] = (value & 15) | (color << 4) if p % 2 == 0 else (value & 240) | color
+    return body
 
 func _without_wand(source: PackedByteArray, bank: int) -> PackedByteArray:
     var body := source.duplicate()
@@ -298,6 +326,10 @@ func _compose(head: PackedByteArray, body: PackedByteArray) -> Image:
     return image
 
 func _show_assignments() -> void:
+    if DAGGER_SOURCES.has(body_id):
+        assignment.text = ("Dagger" if body_id == 33 else "Dagger & Shield") + " - preview only (from Body %d)" % DAGGER_SOURCES[body_id]
+        summary.text = "Half-length blade, created in memory. No game catalog assignments are saved for this preview."
+        return
     var names := PackedStringArray()
     for key in assignments[body_id]: names.append(_name_for(key))
     assignment.text = "Unreviewed - no assignments" if names.is_empty() else "%d assigned combinations" % names.size()
@@ -307,7 +339,7 @@ func _fill_list() -> void:
     for child in list.get_children():
         list.remove_child(child)
         child.queue_free()
-    if not loaded: return
+    if not loaded or DAGGER_SOURCES.has(body_id): return
     var query := filter_box.text.strip_edges().to_lower()
     for i in range(looks.size()):
         if deleted.has(looks[i][0]): continue
@@ -319,7 +351,7 @@ func _fill_list() -> void:
         list.add_child(checkbox)
 
 func _toggle(key: String, checked: bool) -> void:
-    if not loaded or not _known(key) or deleted.has(key): return
+    if not loaded or DAGGER_SOURCES.has(body_id) or not _known(key) or deleted.has(key): return
     var next: Array = assignments.duplicate(true)
     if checked and not next[body_id].has(key): next[body_id].append(key)
     if not checked: next[body_id].erase(key)
