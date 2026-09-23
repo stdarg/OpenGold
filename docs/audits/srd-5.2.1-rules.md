@@ -19,6 +19,14 @@ are identified below, separately from missing coverage.
 This document proposes work for review. It changes no gameplay, rules, tests,
 UI layout, or existing campaign data.
 
+**Decision update, 2026-09-23:** after reviewing this audit, the user approved
+preserving remaining turn resources after attacks, removing facing-based
+opportunity triggers, permitting SRD movement through allies, and restoring
+one-/two-handed Versatile use with the appropriate damage. These four decisions
+are no longer pending. The [incremental implementation plan](../SRD-IMPLEMENTATION.md)
+records them and breaks the work below into bounded deliveries. Findings and
+policy tables here continue to describe the audited commit.
+
 ## Authority, scope, and evidence
 
 - The baseline is **SRD 5.2.1**, selected by [PRD](../PRD.md) and
