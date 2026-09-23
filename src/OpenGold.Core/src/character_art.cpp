@@ -63,6 +63,18 @@ std::vector<std::uint8_t> composed_pixels(const IndexedIcon& head,const IndexedI
         throw std::runtime_error("Invalid character icon pixel");
     return pixels;
 }
+IndexedIcon with_dagger(IndexedIcon body,unsigned bank)
+{
+    const bool action=bank>=128,tall=bank%128==64;
+    const unsigned tip_y=action?(tall?17u:18u):(tall?4u:6u);
+    for(unsigned y=0;y<24;++y)for(unsigned x=0;x<24;++x) {
+        auto& color=body.pixels[y*24+x];
+        if(color!=7&&color!=15)continue;
+        if((action&&y>tip_y)||(!action&&y<tip_y))color=0;
+        else if(y==tip_y)color=x==(action?19u:4u)?15:0;
+    }
+    return body;
+}
 IndexedIcon without_wand(IndexedIcon body,unsigned bank)
 {
     // Body 21's wand is the gray projection from the hand. Keep the shield,
@@ -123,7 +135,7 @@ bool CharacterColorUsage::contains(unsigned bank,unsigned part) const
 void validate_character_appearance(const CharacterAppearance& a)
 {
     if((a.portrait_head>255&&std::none_of(additional_heads.begin(),additional_heads.end(),[&](const auto& h){return h.id==a.portrait_head;}))||
-        a.portrait_body>255||a.combat_head>=14||a.combat_body>=33)
+        a.portrait_body>255||a.combat_head>=14||a.combat_body>=35)
         throw std::runtime_error("Invalid appearance reference");
     if(!a.portrait.empty() && (a.portrait.size()>160 || !a.portrait.ends_with(".png") || a.portrait.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789-_.")!=std::string::npos || a.portrait.find("..")!=std::string::npos))
         throw std::runtime_error("Invalid portrait filename");
@@ -201,8 +213,11 @@ CharacterArt CharacterArt::load(const std::filesystem::path& directory)
     }
     for(const auto& r:read("CHEAD.DAX"))art.combat_heads.emplace(r.id,decode_character_icon(r.bytes));
     for(const auto& r:read("CBODY.DAX"))art.combat_bodies.emplace(r.id,decode_character_icon(r.bytes));
-    for(unsigned bank:{0u,64u,128u,192u})
+    for(unsigned bank:{0u,64u,128u,192u}) {
         art.combat_bodies.emplace(bank+32,without_wand(art.combat_bodies.at(bank+21),bank));
+        art.combat_bodies.emplace(bank+33,with_dagger(art.combat_bodies.at(bank+7),bank));
+        art.combat_bodies.emplace(bank+34,with_dagger(art.combat_bodies.at(bank+24),bank));
+    }
     if(art.heads.empty() || art.bodies.empty())throw std::runtime_error("Missing portraits");
     for(unsigned size:{0u,64u})for(unsigned pose:{0u,128u}) {
         for(unsigned id=0;id<14;++id)if(!art.combat_heads.contains(size+pose+id))throw std::runtime_error("Missing combat head pose");

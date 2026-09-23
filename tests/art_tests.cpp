@@ -85,7 +85,20 @@ CharacterArt archive_tests()
     fixture.populate();
     auto art = CharacterArt::load(fixture.path());
     check(art.heads.size() == 1 && art.bodies.size() == 1,"Identical portrait IDs across disks merge");
-    check(art.combat_heads.size() == 56 && art.combat_bodies.size() == 132,"Original and derived bodies load in all sizes and poses");
+    check(art.combat_heads.size() == 56 && art.combat_bodies.size() == 140,"Original and derived bodies load in all sizes and poses");
+    for(unsigned bank:{0u,64u,128u,192u})for(unsigned id:{33u,34u}) {
+        const auto source_id=id==33?7u:24u;
+        const auto original=decode_character_icon(picture(24,24,source_id+(bank%128)/64+(bank/128)*4));
+        check(art.combat_bodies.at(bank+source_id).pixels==original.pixels,"Dagger derivation leaves source sword intact");
+        const auto& dagger=art.combat_bodies.at(bank+id).pixels;
+        unsigned changes=0;
+        for(unsigned p=0;p<576;++p)if(dagger[p]!=original.pixels[p]) {
+            check((original.pixels[p]==7||original.pixels[p]==15)&&(dagger[p]==0||dagger[p]==15),
+                "Dagger derivation only changes blade pixels, preserving hands, shield and body");
+            ++changes;
+        }
+        check(changes>0,"Both dagger bodies shorten the blade in every size and pose");
+    }
     std::filesystem::rename(fixture.path()/"CHEAD.DAX",fixture.path()/"chead.dax");
     check(CharacterArt::load(fixture.path()).combat_heads.size() == 56,"DOS filenames are case independent");
     std::filesystem::rename(fixture.path()/"chead.dax",fixture.path()/"CHEAD.DAX");
@@ -117,7 +130,7 @@ void composition_tests(const CharacterArt& art)
     CharacterAppearance appearance;
     check(art.portrait(appearance).rgba.size() == 88*88*4,"Portrait survives fixture destruction");
     for (bool tall : {false,true}) for (unsigned head = 0; head < 14; ++head)
-        for (unsigned body = 0; body < 33; ++body) for (bool action : {false,true}) {
+        for (unsigned body = 0; body < 35; ++body) for (bool action : {false,true}) {
             appearance.tall = tall; appearance.combat_head = head; appearance.combat_body = body;
             const auto icon = art.icon(appearance,action);
             check(icon.width == 24 && icon.height == 24 && icon.rgba.size() == 576*4,
@@ -174,7 +187,7 @@ int main()
         // Distinct authored anatomy makes whole-body substitution observable.
         // Equipment/body colors deliberately differ even where silhouettes overlap.
         for(unsigned bank:{0u,64u,128u,192u}) {
-            for(unsigned id=0;id<33;++id)art.combat_bodies.at(bank+id).pixels.assign(576,0);
+            for(unsigned id=0;id<35;++id)art.combat_bodies.at(bank+id).pixels.assign(576,0);
             art.combat_heads.at(bank).pixels.assign(art.combat_heads.at(bank).pixels.size(),0);
             art.combat_heads.at(bank).pixels[0]=12;
             auto& base=art.combat_bodies.at(bank+24).pixels;

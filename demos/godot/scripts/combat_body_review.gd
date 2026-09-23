@@ -188,7 +188,8 @@ func _load_catalog() -> bool:
     if not FileAccess.file_exists(catalog_path):
         _fail("Missing catalog: " + ProjectSettings.globalize_path(catalog_path))
         return false
-    assignments.resize(33)
+    assignments.resize(REVIEW_BODY_COUNT)
+    for id in range(REVIEW_BODY_COUNT): assignments[id] = []
     var seen := {}
     deleted.clear()
     for line in FileAccess.get_file_as_string(catalog_path).split("\n"):
@@ -204,7 +205,7 @@ func _load_catalog() -> bool:
             _fail("Invalid catalog row: " + line)
             return false
         var id := int(fields[0])
-        if id < 0 or id >= 33 or seen.has(id):
+        if id < 0 or id >= REVIEW_BODY_COUNT or seen.has(id):
             _fail("Invalid catalog assignment: " + line)
             return false
         seen[id] = true
@@ -219,7 +220,7 @@ func _load_catalog() -> bool:
                 if not values.has(key): values.append(key)
         values.sort()
         assignments[id] = values
-    if seen.size() != 33:
+    if not range(33).all(func(id): return seen.has(id)):
         _fail("Catalog must contain all 33 body IDs.")
         return false
     for values in assignments:
@@ -244,8 +245,7 @@ func _step(amount: int) -> void:
 
 func _refresh() -> void:
     number.text = "Body %d / 34" % body_id
-    filter_box.editable = not DAGGER_SOURCES.has(body_id)
-    status.text = "Preview only - no artwork or assignments are saved." if DAGGER_SOURCES.has(body_id) else "Changes save immediately to " + ProjectSettings.globalize_path(catalog_path)
+    status.text = "Changes save immediately to " + ProjectSettings.globalize_path(catalog_path)
     _show_assignments()
     for variant in range(4):
         var size_offset: int = 0 if variant % 2 == 0 else 64
@@ -264,7 +264,7 @@ func _refresh() -> void:
     _fill_list()
     _refresh_reports()
 
-# Preview-only: edit a copy of the locally decoded sword body. No pixels are saved.
+# Edit a copy of the locally decoded sword body. No pixels are saved.
 func _with_dagger(source: PackedByteArray, bank: int) -> PackedByteArray:
     var body := source.duplicate()
     var action := bank >= 128
@@ -326,10 +326,6 @@ func _compose(head: PackedByteArray, body: PackedByteArray) -> Image:
     return image
 
 func _show_assignments() -> void:
-    if DAGGER_SOURCES.has(body_id):
-        assignment.text = ("Dagger" if body_id == 33 else "Dagger & Shield") + " - preview only (from Body %d)" % DAGGER_SOURCES[body_id]
-        summary.text = "Half-length blade, created in memory. No game catalog assignments are saved for this preview."
-        return
     var names := PackedStringArray()
     for key in assignments[body_id]: names.append(_name_for(key))
     assignment.text = "Unreviewed - no assignments" if names.is_empty() else "%d assigned combinations" % names.size()
@@ -339,7 +335,7 @@ func _fill_list() -> void:
     for child in list.get_children():
         list.remove_child(child)
         child.queue_free()
-    if not loaded or DAGGER_SOURCES.has(body_id): return
+    if not loaded: return
     var query := filter_box.text.strip_edges().to_lower()
     for i in range(looks.size()):
         if deleted.has(looks[i][0]): continue
@@ -351,7 +347,7 @@ func _fill_list() -> void:
         list.add_child(checkbox)
 
 func _toggle(key: String, checked: bool) -> void:
-    if not loaded or DAGGER_SOURCES.has(body_id) or not _known(key) or deleted.has(key): return
+    if not loaded or not _known(key) or deleted.has(key): return
     var next: Array = assignments.duplicate(true)
     if checked and not next[body_id].has(key): next[body_id].append(key)
     if not checked: next[body_id].erase(key)
@@ -366,7 +362,7 @@ func _toggle(key: String, checked: bool) -> void:
 func _save(next: Array, next_deleted: Array[String]) -> bool:
     var content := "# v3: body ID and combination IDs; deleted rows remove invalid combinations.\n"
     for key in next_deleted: content += "deleted\t%s\n" % key
-    for id in range(33):
+    for id in range(REVIEW_BODY_COUNT):
         content += "%d\t%s\n" % [id, "unreviewed" if next[id].is_empty() else ",".join(next[id])]
     var temporary := catalog_path + ".tmp"
     var file := FileAccess.open(temporary, FileAccess.WRITE)

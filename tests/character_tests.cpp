@@ -317,13 +317,13 @@ void art_tests()
             }
             check(removed>0,"Derived shield body removes wand in each size and pose");
         }
-        for(bool tall:{false,true})for(unsigned h=0;h<14;++h)for(unsigned b=0;b<33;++b) {
+        for(bool tall:{false,true})for(unsigned h=0;h<14;++h)for(unsigned b=0;b<35;++b) {
             a.tall=tall;a.combat_head=h;a.combat_body=b;
             check(art.icon(a,false).rgba.size()==576*4&&art.icon(a,true).rgba.size()==576*4,
                 "Every original head/body combination has both poses");
         }
         std::cout<<"Original character art: "<<art.heads.size()<<" portrait heads, "<<art.bodies.size()
-            <<" bodies; 14 combat heads, 33 bodies, both sizes and poses\n";
+            <<" bodies; 14 combat heads, 35 bodies, both sizes and poses\n";
     }
 }
 }

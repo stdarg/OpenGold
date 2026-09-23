@@ -47,7 +47,7 @@ CombatBodyCatalog CombatBodyCatalog::load(const std::filesystem::path& assignmen
     if(!options.eof()||result.options.empty())throw std::runtime_error("Invalid combat look options file");
     std::ifstream in(assignments);
     if(!in)throw std::runtime_error("Cannot open combat body catalog: "+assignments.string());
-    std::array<bool,33> seen{};
+    std::array<bool,35> seen{};
     unsigned count=0;
     while(std::getline(in,line)) {
         if(line.empty()||line[0]=='#')continue;
@@ -60,7 +60,7 @@ CombatBodyCatalog CombatBodyCatalog::load(const std::filesystem::path& assignmen
                 throw std::runtime_error("Invalid deleted combat combination");
             continue;
         }
-        const auto index=index_field(std::string_view(line).substr(0,tab),33);
+        const auto index=index_field(std::string_view(line).substr(0,tab),35);
         auto values=strip_cr(line.substr(tab+1));
         if(seen[index]||values.empty())throw std::runtime_error("Invalid or duplicate combat body assignment");
         if(values!="unreviewed")for(std::size_t begin=0;;) {
@@ -74,7 +74,7 @@ CombatBodyCatalog CombatBodyCatalog::load(const std::filesystem::path& assignmen
         }
         seen[index]=true;++count;
     }
-    if(!in.eof()||count!=33)throw std::runtime_error("Combat body catalog must contain all 33 bodies");
+    if(!in.eof()||count<33||!std::all_of(seen.begin(),seen.begin()+33,[](bool present){return present;}))throw std::runtime_error("Combat body catalog must contain all original 33 bodies");
     for(auto& body:result.bodies)for(const auto& key:result.deleted)body.erase(key);
     return result;
 }

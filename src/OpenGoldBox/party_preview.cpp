@@ -175,7 +175,7 @@ void CharacterCreationView::equipment_art_check()
         auto* combat=get_node<CombatView>("CampaignCombat");
         for(unsigned member=0;member<2;++member)for(bool action:{false,true}){
             const auto texture=combat->sprite_texture(campaign_->state().roster.at(member).id,action);
-            require(texture.is_valid()&&texture->get_image()->get_data()==expected(member,24,action),
+            require(texture.is_valid()&&texture->get_image()->get_data()==expected(member,34,action),
                 "Combat textures differ from the equipment shown in party previews");
         }
     };
@@ -192,7 +192,8 @@ void CharacterCreationView::equipment_art_check()
         press("Party");party_selected(0);verify_preview(0,0);
     }else if(check_stage_<=16){
         const unsigned member=(check_stage_-1)/8,step=(check_stage_-1)%8;
-        static constexpr std::array<unsigned,8> bodies{0,2,24,32,22,6,0,24};
+        const std::array<por::CombatEquipment,1> sword{{{36,"Long Sword","longsword"}}};
+        const std::array<unsigned,8> bodies{0,body_catalog_->choose(sword,24).body,24,32,34,33,0,34};
         verify_preview(member,bodies[step]);
         if(step<5){const auto name="equipment-art-"+std::string(member?"npc":"pc")+"-"+std::to_string(step)+".png";capture(name.c_str());}
         switch(step){
@@ -202,20 +203,20 @@ void CharacterCreationView::equipment_art_check()
         case 3:gear(1,true);break;
         case 4:gear(2,false);break;
         case 5:gear(1,false);break;
-        case 6:gear(3,true);verify_preview(member,0);gear(3,false);gear(0,true);gear(2,true);break;
+        case 6:gear(3,true);verify_preview(member,0);gear(3,false);gear(1,true);gear(2,true);break;
         case 7:if(member==0){party_selected(1);verify_preview(1,0);}break;
         }
         if(step<7)verify_preview(member,bodies[step+1]); // Refresh is synchronous with each control action.
     }else if(check_stage_==17){
-        party_selected(0);verify_preview(0,24);
+        party_selected(0);verify_preview(0,34);
         struct CheckSave {
             std::filesystem::path path;
             ~CheckSave(){std::error_code ignored;std::filesystem::remove(path,ignored);}
         } save{std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(
             "user://checks/equipment-art-"+String::num_int64(OS::get_singleton()->get_process_id())+".ogs").utf8().get_data())};
         std::filesystem::create_directories(save.path.parent_path());
-        save_campaign(save.path);gear(2,false);verify_preview(0,2);
-        load_campaign(save.path);verify_preview(0,24);party_selected(1);verify_preview(1,24);
+        save_campaign(save.path);gear(2,false);verify_preview(0,33);
+        load_campaign(save.path);verify_preview(0,34);party_selected(1);verify_preview(1,34);
         press("PartyPanel/Combat");verify_combat();
     }else if(check_stage_==18){
         verify_combat();capture("equipment-art-combat.png");

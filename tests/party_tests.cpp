@@ -106,9 +106,9 @@ void party_combat_appearance()
     catalog.deleted.clear();
     catalog.bodies[0]={"type_0"};
     catalog.bodies[2]={"type_36"};
-    catalog.bodies[6]={"type_8"};
+    catalog.bodies[33]={"type_8"};
     catalog.bodies[20]={"type_36_shield"};
-    catalog.bodies[22]={"type_8_shield"};
+    catalog.bodies[34]={"type_8_shield"};
     catalog.bodies[24]={"type_36_shield"};
     catalog.bodies[32]={"type_0_shield"};
     CampaignParty party(module());
@@ -134,8 +134,8 @@ void party_combat_appearance()
         party.equip(id,gear[2].id);expect(24,"type_36_shield"); // Saved matching body wins over 20.
         party.unequip(id,gear[3].id);expect(24,"type_36_shield");
         party.unequip(id,gear[0].id);expect(32,"type_0_shield");
-        party.equip(id,gear[1].id);expect(22,"type_8_shield");
-        party.unequip(id,gear[2].id);expect(6,"type_8");
+        party.equip(id,gear[1].id);expect(34,"type_8_shield");
+        party.unequip(id,gear[2].id);expect(33,"type_8");
         party.unequip(id,gear[1].id);expect(0,"type_0");
         party.equip(id,gear[0].id);party.equip(id,gear[2].id);
         auto missing=catalog;

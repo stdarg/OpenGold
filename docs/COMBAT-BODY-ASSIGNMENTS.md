@@ -7,8 +7,8 @@ Run from PowerShell at the repository root:
 ```
 
 The reviewer displays one original CBODY.DAX body in four previews: short/tall,
-ready/action. Previous/Next cycles through the 33 catalog bodies plus two
-preview-only dagger variants (33 and 34). Check every complete
+ready/action. Previous/Next cycles through the 35 assignable bodies, including the dagger
+variants (33 and 34). Check every complete
 combination that the artwork represents, such as Mace and Mace & Shield.
 Each checkbox change saves immediately. Filtering only changes the visible
 checklist; the summary always lists all assignments for the current body.
@@ -30,7 +30,7 @@ Deletion saves immediately, together with the updated body assignments.
 
 ## Shared catalog
 
-`data/art/combat-body-looks.tsv` has 33 body rows: body ID, a tab, then comma-separated
+`data/art/combat-body-looks.tsv` has 35 body rows: body ID, a tab, then comma-separated
 combination IDs (or `unreviewed`). For example:
 
 ```text
@@ -56,11 +56,12 @@ The original archive and body 21 remain intact. Body 32 is assigned to Unarmed
 & Shield; body 21 remains available for Wand & Shield. No derived art is stored
 in the repository.
 
-The reviewer alone offers Body 33 (Dagger, from Body 7) and Body 34 (Dagger &
+The reviewer and game offer Body 33 (Dagger, from Body 7) and Body 34 (Dagger &
 Shield, from Body 24). These shorten the blade to approximately half length in
 memory for all four size/pose variants, preserving the original sword bodies.
-They have no assignment controls, are never written to the shared catalog, and
-are not available in the game yet. No generated image assets are stored.
+They use the normal assignment controls and shared catalog: Body 33 is assigned
+to Dagger and Body 34 to Dagger & Shield. Older 33-body catalogs still load with
+the new bodies unassigned. No generated image assets are stored.
 
 Version 3 also stores `deleted` rows, for example `deleted<TAB>type_38_shield`.
 These persist removal of individual combinations without changing the weapon

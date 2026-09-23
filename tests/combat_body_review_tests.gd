@@ -137,14 +137,14 @@ func run_checks() -> void:
     var view = reviewer(path)
     await settle()
     require(view.loaded, "Legacy catalog loads")
-    require(view.assignments.size() == 33, "Derived body is in the reviewer")
-    var catalog_before := FileAccess.get_file_as_string(path)
+    require(view.assignments.size() == 35, "Derived body is in the reviewer")
     for id in [33, 34]:
         view._review_body(id)
-        require(view.assignment.text.contains("preview only"), "Dagger bodies are explicitly preview-only")
-        require(view.list.get_child_count() == 0, "Preview cannot edit game assignments")
-        view._toggle("type_8", true)
-        require(FileAccess.get_file_as_string(path) == catalog_before, "Preview leaves catalog unchanged")
+        var key := "type_8" if id == 33 else "type_8_shield"
+        view._toggle(key, true)
+        require(view.assignments[id].has(key), "Dagger bodies accept assignments")
+        require(FileAccess.get_file_as_string(path).contains("%d\t%s" % [id, key]), "Dagger assignment is saved")
+        view._toggle(key, false)
         for bank in [0, 64, 128, 192]:
             var source: PackedByteArray = view.loader._extract_record(view.body_data, (7 if id == 33 else 24) + bank)
             var saved := source.duplicate()
@@ -160,7 +160,7 @@ func run_checks() -> void:
                     require(before in [7, 15] and after in [0, 15], "Only blade pixels change")
             require(changed > 0, "Blade is shortened in every size and pose")
     view._step(1)
-    require(view.body_id == 0, "Navigation wraps after both dagger previews")
+    require(view.body_id == 0, "Navigation wraps after both dagger bodies")
 
     require(view.assignments[4] == ["type_23_shield"], "Silver normalized and deduplicated")
     view._step(1)

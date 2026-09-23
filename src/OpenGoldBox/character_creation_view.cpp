@@ -383,7 +383,7 @@ void CharacterCreationView::refresh()
     if(icon)instructions=N_("Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.");
     refresh_portraits();
     get_node<Label>("CombatHeadLabel")->set_text(i18n::format("Head {number} / 14", {{"number",a.combat_head+1}}));
-    get_node<Label>("WeaponLabel")->set_text(i18n::format("Weapon {number} / 33", {{"number",a.combat_body+1}}));
+    get_node<Label>("WeaponLabel")->set_text(i18n::format("Weapon {number} / 35", {{"number",a.combat_body+1}}));
     get_node<Button>("Size")->set_text(i18n::text(a.tall?N_("Size: Tall"):N_("Size: Short")));
     if(icon) {
         const auto usage=art_->color_usage(a);
@@ -458,7 +458,7 @@ void CharacterCreationView::score_selected(int index)
 {perform([&]{if(selected_score_<0)selected_score_=index;else{creator_->swap_scores(selected_score_,index);selected_score_=-1;}});}
 void CharacterCreationView::name_changed(String value){perform([&]{creator_->name(value.utf8().get_data());});}
 void CharacterCreationView::combat_part(int part,int direction)
-{perform([&]{auto a=creator_->appearance();auto& id=part==0?a.combat_head:a.combat_body;const int count=part==0?14:33;id=(static_cast<int>(id)+direction+count)%count;creator_->appearance(a);});}
+{perform([&]{auto a=creator_->appearance();auto& id=part==0?a.combat_head:a.combat_body;const int count=part==0?14:35;id=(static_cast<int>(id)+direction+count)%count;creator_->appearance(a);});}
 void CharacterCreationView::toggle_size(){perform([&]{auto a=creator_->appearance();a.tall=!a.tall;creator_->appearance(a);});}
 void CharacterCreationView::color_selected(int bank,int part){perform([&]{color_bank_=bank;color_part_=part;});}
 void CharacterCreationView::palette_selected(int index){perform([&]{auto a=creator_->appearance();a.colors[color_bank_][color_part_]=index;creator_->appearance(a);});}

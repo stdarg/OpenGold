@@ -26,7 +26,7 @@ struct CombatBodySelection {
 };
 // Body IDs and weapon labels are data, not compiled-in classifications of the art.
 struct CombatBodyCatalog {
-    std::array<std::set<std::string>,33> bodies{};
+    std::array<std::set<std::string>,35> bodies{};
     std::vector<CombatLookOption> options;
     std::set<std::string> deleted;
     [[nodiscard]] static CombatBodyCatalog load(const std::filesystem::path& assignments,
