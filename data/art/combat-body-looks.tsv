@@ -9,7 +9,6 @@ deleted	type_17_shield
 deleted	type_18_shield
 deleted	type_19_shield
 deleted	type_1_shield
-deleted	type_22_shield
 deleted	type_25_shield
 deleted	type_26_shield
 deleted	type_27_shield
@@ -55,7 +54,7 @@ deleted	type_6_shield
 23	type_23_shield
 24	type_30_shield,type_34_shield,type_35_shield,type_36_shield,type_37_shield
 25	type_47_shield,type_7_shield
-26	type_23_shield,type_33_shield
+26	type_22_shield,type_23_shield,type_33_shield
 27	type_0
 28	type_22,type_33,type_6
 29	type_0

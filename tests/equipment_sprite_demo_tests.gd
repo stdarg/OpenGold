@@ -118,6 +118,8 @@ func run_checks() -> void:
             require(demo.get_meta("equipment_body") == expected, "Correct shield body")
             if info.type == 36:
                 await snapshot("long-sword-and-shield")
+            if info.type == 22:
+                await snapshot("jo-stick-and-shield")
             # Swap with an occupied weapon slot AND shield. Rejection is atomic.
             var with_shield := pixels()
             var alternate := 1 if index == 0 else 0
