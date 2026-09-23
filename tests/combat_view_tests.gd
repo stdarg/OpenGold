@@ -158,6 +158,38 @@ func run_checks() -> void:
         var path := ProjectSettings.globalize_path("res://../../../build/checks/combat-zoom.png")
         DirAccess.make_dir_recursive_absolute(path.get_base_dir())
         require(root.get_texture().get_image().save_png(path) == OK, "Capture failed")
+    # Keep the real enemy controller from racing turn/resource assertions.
+    combat.set_process(false)
+    combat.get_node("Training").pressed.emit()
+    await settle()
+    origin = combat.selected_character_cell()
+    var attacker: int = combat.selected_character_id()
+    combat.get_node("Ranged").pressed.emit()
+    var target := Vector2(9.5, 4.5) * (canvas.size.x / 12.0)
+    scroll.scroll_horizontal = int(target.x - scroll.size.x / 2)
+    scroll.scroll_vertical = int(target.y - scroll.size.y / 2)
+    await settle()
+    var target_point := canvas.get_global_transform_with_canvas() * target
+    mouse_button(target_point, MOUSE_BUTTON_LEFT, true)
+    mouse_button(target_point, MOUSE_BUTTON_LEFT, false)
+    require(combat.attack_pose_active(attacker), "Ranged input actually performs the attack")
+    require(combat.get_node("Ranged").disabled, "Attack spends the action in the real scene")
+    require(not combat.get_node("End").disabled,
+        "Player retains an explicit End Turn command after attacking")
+    movement_key(KEY_RIGHT)
+    require(combat.selected_character_cell() == origin + Vector2i(1, 0),
+        "Keyboard movement works after attacking in the same turn")
+    movement_key(KEY_ENTER)
+    require(combat.get_node("End").disabled, "Enter explicitly hands control to the enemy")
+    # Resume the production AI: a ranged attack must now be followed by its
+    # own End Turn command, returning control to the player without a stall.
+    combat.set_process(true)
+    for frame in range(600):
+        await process_frame
+        if not combat.get_node("End").disabled:
+            break
+    require(not combat.get_node("End").disabled,
+        "Enemy AI finishes its retained turn and returns control to the player")
     var config := ConfigFile.new()
     config.set_value("combat", "combat_zoom", 300)
     require(config.save(config_path) == OK, "Prepare portable combat zoom setting")
@@ -190,5 +222,5 @@ func run_checks() -> void:
         file.close()
     else:
         require(DirAccess.remove_absolute(config_path) == OK, "Remove temporary config")
-    print("Game combat view checks passed: shared zoom buttons, centering, viewport, drag, wheel, bounds, resize")
+    print("Game combat view checks passed: zoom, input, attack then move, explicit End Turn, enemy completion")
     quit(0)

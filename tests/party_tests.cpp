@@ -382,6 +382,45 @@ void stabilization_handoff()
     CampaignParty restored(module());restored.restore(std::move(loaded.party));
     check(restored.member(hero).vitals==party.member(hero).vitals,"Stable state and cleared counters survive campaign save/reload");
 }
+void remaining_turn_handoff()
+{
+    CampaignParty party(module());const auto hero=party.add_pc(character());
+    auto state=party.checkpoint();state.roster[0].vitals={3,false,"SRD1 1 0 0 0 0"};
+    party.restore(std::move(state));
+    auto participants=party.participants();participants[0].cell={1,1};
+    participants.push_back({1000,"vanguard","Enemy",1,{2,1}});
+    auto rules=module();std::unique_ptr<CombatSession> combat;
+    for(unsigned seed=0;seed<100&&!combat;++seed){
+        auto candidate=rules->create({{8,5,std::vector<std::uint8_t>(40)},participants},seed);
+        if(candidate->snapshot().actor==hero)combat=std::move(candidate);
+    }
+    check(bool(combat),"Find a campaign character's initial turn");
+    party.begin_combat();party.apply_combat(combat->snapshot());
+    const auto use=[&](std::string_view verb){
+        const auto commands=combat->legal_commands();
+        const auto found=std::find_if(commands.begin(),commands.end(),[&](const auto& c){return c.verb==verb;});
+        check(found!=commands.end()&&combat->submit(*found),"Use remaining campaign turn resource");
+        party.apply_combat(combat->snapshot());
+    };
+    use("melee");
+    check(combat->snapshot().actor==hero&&party.state().time_minutes==0&&party.state().subminute_milliseconds==0,
+        "An attack keeps the campaign turn and clock at the same initiative slot");
+    use("second_wind");
+    check(party.member(hero).vitals.hit_points>3&&party.member(hero).vitals.resources=="SRD1 0 0 0 0 0",
+        "Post-attack Second Wind updates campaign HP and spends its last use");
+    use("end");
+    check(party.state().subminute_milliseconds==3000,"Explicit End Turn advances the campaign clock once");
+    for(unsigned commands=0;commands<300&&combat->snapshot().outcome==Outcome::ongoing;++commands){
+        check(combat->submit(choose_demo_command(*combat)),"Complete campaign combat with explicit AI turn endings");
+        party.apply_combat(combat->snapshot());
+    }
+    check(combat->snapshot().outcome!=Outcome::ongoing,"Campaign combat finishes after attacks retain remaining turns");
+    party.end_combat();
+    const auto saved=encode_campaign(party,nullptr,"remaining-turn");
+    auto loaded=decode_campaign(saved,*srd5::character_rules(),*rules,"remaining-turn",nullptr);
+    CampaignParty restored(module());restored.restore(std::move(loaded.party));
+    check(encode_campaign(restored,nullptr,"remaining-turn")==saved,"Campaign reload preserves post-combat HP, spent recovery and exact clock");
+}
 void untrained_equipment()
 {
     auto rules=module();const auto mage=character("wizard");const auto& s=mage.sheet();
@@ -918,6 +957,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

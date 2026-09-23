@@ -394,7 +394,7 @@ void CombatView::move_selected(Cell direction)
     if(enemy!=state.combatants.end()) {
         const auto attack=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="melee"&&c.actor==selected_&&c.target==enemy->id;});
         if(attack!=offered.end())act(*attack);
-        else explain(selected->action?"That enemy cannot be attacked from this square.":"This character has already used their action. End the turn to continue.");
+        else explain(selected->action?"That enemy cannot be attacked from this square.":"This character has already used their action.");
         return;
     }
     const auto move=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="move"&&c.actor==selected_&&c.destination==destination;});

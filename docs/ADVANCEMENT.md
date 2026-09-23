@@ -62,16 +62,15 @@ attribution applies; original game resources are loaded locally.
 
 Campaign formats 3–6 record each confirmed choice and reconstruct the resulting
 sheet and Constitution history through the rules module. Formats 1 and 2 migrate
-their existing levels using the previous default choices. Rules module 0.6.3
-accepts the supported 0.3.0–0.6.2 campaign identities; unrelated content identities
+their existing levels using the previous default choices. Rules module 0.6.4
+accepts the supported 0.3.0–0.6.3 campaign identities; unrelated content identities
 still reject. Loading an affected older campaign corrects maximum HP and preserves
 the living character's HP deficit. Unconscious/dead characters stay at zero, and
 spent resources and death-save counters persist. The correction applies once;
 the campaign format remains 6. New combat profiles use PC4 to carry HP history.
 Ability-adjustment sources are also reconstructed from creation and advancement
 choices, including older saves. Each records its source ID, acquisition level
-and ability amounts. This presentation correction leaves module 0.6.3, PC4 and
-campaign format 6 unchanged.
+and ability amounts. This presentation correction introduced no profile or campaign format change.
 Standalone combat checkpoints use version 5 to retain second-level slots,
 per-turn spell/feat usage, timed effects, facing, and pending turn reactions.
 Old-module combat checkpoints are not migrated.

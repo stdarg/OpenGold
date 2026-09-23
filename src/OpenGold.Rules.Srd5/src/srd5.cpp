@@ -256,8 +256,8 @@ private:
     std::size_t path_index_{};
     std::vector<EntityId> reactors_;
     std::size_t reactor_index_{};
-    // A turn can provoke reactions after its attack, before the turn advances.
-    // 0 = none, 1 = resume turn, 2 = end turn after reactions.
+    // Facing reactions pause an attacker's remaining turn (removed by I06).
+    // 0 = none, 1 = resume turn; legacy value 2 also resumes the turn.
     unsigned turn_reaction_state_{};
     const Definition& def(const Actor& a) const {return a.definition;}
     Actor& actor(EntityId id) { return *std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;}); }
@@ -535,8 +535,6 @@ bool Session::submit(const Command& command)
     const auto offered=legal_commands();
     if(std::none_of(offered.begin(),offered.end(),[&](const auto& c){return same_command(c,command);}))return false;
     auto& a=actor(command.actor);const auto& d=def(a);
-    const bool attack_turn=command.verb=="melee"||command.verb=="ranged"||command.verb=="fire_bolt"||
-        command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray";
     std::vector<EntityId> turn_reactors;
     if(turns_to_attack(command.verb)&&command.target){
         const auto& target=actor(command.target);
@@ -563,9 +561,7 @@ bool Session::submit(const Command& command)
             turn_reaction_state_=0;reactors_.clear();reactor_index_=0;end_turn();
         }else if(outcome_==Outcome::ongoing&&!pending()){
             if(turn_reaction_state_){
-                const bool end_after=turn_reaction_state_==2;
                 turn_reaction_state_=0;reactors_.clear();reactor_index_=0;
-                if(end_after)end_turn();
             }else progress_movement();
         }
     } else if(command.verb=="move") {
@@ -597,13 +593,13 @@ bool Session::submit(const Command& command)
     }
     if(!turn_reactors.empty()&&outcome_==Outcome::ongoing){
         reactors_=std::move(turn_reactors);reactor_index_=0;
-        turn_reaction_state_=attack_turn?2:1;
+        turn_reaction_state_=1;
     }
     // Revisions are command tickets; zero is reserved for invalid commands.
     // Unsigned wrap is defined, but must skip that reserved value.
     if (++revision_ == 0) revision_ = 1;
     update_outcome();
-    if(outcome_==Outcome::ongoing&&!pending()&&(attack_turn||actors_[turn_].hp==0))end_turn();
+    if(outcome_==Outcome::ongoing&&!pending()&&actors_[turn_].hp==0)end_turn();
     if(outcome_!=Outcome::ongoing)advance_turn_time();
     return true;
 }
@@ -843,7 +839,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1089,7 +1085,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.3",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.4",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

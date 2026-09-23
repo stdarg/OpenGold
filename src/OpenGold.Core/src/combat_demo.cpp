@@ -315,6 +315,9 @@ Command choose_demo_command(const CombatSession& session)
         }
         if(best)return *best;
     }
+    // With no action left, approaching for another attack cannot help this
+    // turn. The bonus-action recovery choices above still get their chance.
+    if(!active.action)for(const auto& command:offered)if(command.verb=="end")return command;
     const Command* move=nullptr;int closest=nearest(active.cell);
     for(const auto& command:offered)if(command.verb=="move"&&nearest(command.destination)<closest){move=&command;closest=nearest(command.destination);}
     if(move)return *move;

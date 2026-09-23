@@ -1,5 +1,6 @@
 #include "opengold/srd5.h"
 #include "opengold/combat_demo.h"
+#include "opengold/character_rules.h"
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
@@ -40,6 +41,88 @@ void next_round(CombatSession& session) {
     const auto round=session.snapshot().round;
     do{check(session.submit(command(session,"end")),"End turn accepted");}while(session.snapshot().round==round||session.snapshot().actor!=1);
 }
+void turn_budget_tests()
+{
+    auto module=srd5::load(pack());
+    CharacterDraft draft;draft.race="human";draft.gender="female";draft.character_class="wizard";
+    draft.background="sage";draft.alignment="neutral_good";draft.name="Mage";draft.rolled=true;
+    for(auto& roll:draft.rolls)roll={{6,5,4,1},3};
+    auto sheet=srd5::character_rules()->evaluate(draft,true);VitalState unused;
+    for(unsigned level=2;level<=3;++level){auto choice=module->default_advancement(sheet);
+        if(level==3)choice.spells={"magic_missile","scorching_ray"};
+        check(module->advance_character(sheet,unused,choice),"Create a caster with level-two spells");}
+    for(const auto verb:{"melee","ranged","fire_bolt","magic_missile","magic_missile_2","scorching_ray"})
+    for(const bool move_first:{false,true}){
+        auto e=duel();e.participants[1].definition="vanguard";
+        e.participants.push_back({3,"vanguard","Reserve enemy",1,{10,7}});
+        const bool weapon=std::string_view(verb)=="melee"||std::string_view(verb)=="ranged";
+        if(weapon)e.participants[0].state=VitalState{10,false,"SRD1 2 0 0 0 0"};
+        else e.participants[0].character_profile=module->character_profile(sheet,{}).data;
+        auto session=hero_first(*module,e);
+        if(move_first)check(session->submit(command(*session,"move",{2,3})),"Move before attacking");
+        const auto before=unit(*session,1);const auto attack=command(*session,verb);
+        check(session->submit(attack),"Offensive action accepted");
+        check(session->snapshot().actor==1&&!session->snapshot().reaction_pending&&session->snapshot().elapsed_milliseconds==0,
+            "Attacks and damaging spells retain the active turn without advancing time");
+        const auto after=unit(*session,1);
+        check(!after.action&&after.bonus_action==before.bonus_action&&after.reaction==before.reaction&&after.movement_feet==before.movement_feet,
+            "Only the action and applicable spell slot are spent by the attack");
+        const std::string resources=weapon?"SRD1 2 0 0 0 0":std::string_view(verb)=="fire_bolt"?"SRD2 0 4 2 0 0 0":
+            std::string_view(verb)=="magic_missile"?"SRD2 0 3 2 0 0 0":"SRD2 0 4 1 0 0 0";
+        check(after.persistent.resources==resources,"Cantrips preserve slots; leveled spells spend exactly the selected slot");
+        const auto saved=session->save();auto restored=module->restore(saved);
+        check(restored->save()==saved,"A post-attack checkpoint retains unused turn resources");
+        auto repeated=attack;repeated.revision=session->snapshot().revision;
+        check(!session->submit(repeated)&&!session->submit(attack)&&session->save()==saved,"Spent actions and stale tickets reject without consuming state or randomness");
+        const auto move=command(*session,"move",{3,3});
+        check(session->submit(move)&&restored->submit(move)&&session->save()==restored->save(),"Movement after an attack continues identically after reload");
+        check(unit(*session,1).movement_feet==before.movement_feet-5&&!unit(*session,1).action,"Movement neither refreshes the action nor the movement budget");
+        if(weapon){const auto wind=command(*session,"second_wind");
+            check(session->submit(wind)&&restored->submit(wind)&&session->save()==restored->save(),"Second Wind remains usable after attacking and moving");
+            check(!unit(*session,1).bonus_action&&!unit(*session,1).action&&unit(*session,1).persistent.resources=="SRD1 1 0 0 0 0", "Bonus healing does not refund the action or Second Wind");}
+        const auto end=command(*session,"end");
+        check(session->submit(end)&&restored->submit(end)&&session->save()==restored->save(),"Explicit End Turn continues deterministically");
+        check(session->snapshot().actor!=1&&session->snapshot().elapsed_milliseconds>0,"End Turn advances initiative and time");
+    }
+    // A used Bonus Action must stay used when the action is taken afterward.
+    auto e=duel();e.participants[1].definition="vanguard";e.participants[0].state=VitalState{10,false,"SRD1 2 0 0 0 0"};
+    auto session=hero_first(*module,e);session->submit(command(*session,"second_wind"));session->submit(command(*session,"melee"));
+    check(session->snapshot().actor==1&&!unit(*session,1).bonus_action&&!offers(*session,"second_wind"),"Attacking does not refresh a previously used Bonus Action");
+    // Movement reactions still interrupt before the step and resume this turn.
+    e.participants[0].state.reset();
+    for(const auto resolution:{"decline","opportunity"}){
+        session=hero_first(*module,e);session->submit(command(*session,"melee"));
+        check(session->submit(command(*session,"move",{1,2}))&&session->snapshot().reaction_pending,"Moving after an attack can provoke an opportunity reaction");
+        auto restored=module->restore(session->save());const auto response=command(*session,resolution);
+        check(session->submit(response)&&restored->submit(response)&&session->save()==restored->save(),"Post-attack movement reaction restores and resolves in order");
+        check(session->snapshot().actor==1&&unit(*session,1).cell==Cell{1,2}&&unit(*session,1).movement_feet==20&&!unit(*session,1).action,
+            "Resolved reaction resumes remaining movement without another action");
+    }
+    // The existing facing reaction is removed by I06; until then, resolving it
+    // must resume the attacker's remaining turn, including multiple reactors.
+    e=duel();e.participants[1].definition="vanguard";e.participants[1].cell={1,2};
+    e.participants.push_back({3,"bandit","Right guard",1,{3,2}});
+    e.participants.push_back({4,"bandit","Other guard",1,{3,1}});
+    session=hero_first(*module,e);auto left=command(*session,"melee");left.target=2;session->submit(left);
+    unsigned reactions=0;
+    while(session->snapshot().reaction_pending){
+        check(++reactions<=2&&!offers(*session,"end")&&!offers(*session,"move"),"Pending reactions prevent advancing or moving early");
+        auto restored=module->restore(session->save());const auto decline=command(*session,"decline");
+        check(session->submit(decline)&&restored->submit(decline)&&session->save()==restored->save(),"Every queued reaction preserves checkpoint continuation");
+    }
+    check(reactions==2&&session->snapshot().actor==1&&!unit(*session,1).action&&unit(*session,1).movement_feet==30,"All reactions resolve before the attacker resumes");
+    // The enemy controller explicitly ends a spent turn instead of moving
+    // toward another attack it cannot make. Available bonus recovery runs first.
+    for(const bool injured:{false,true}){
+        e=duel();e.participants[1].definition="vanguard";e.participants[1].cell={8,2};e.participants[1].facing_left=true;
+        if(injured)e.participants[1].state=VitalState{5,false,"SRD1 2 0 0 0 0"};
+        session=actor_first(*module,e,2);session->submit(command(*session,"ranged"));
+        check(session->snapshot().actor==2,"Enemy attacks also retain their turn");
+        if(injured){auto choice=choose_demo_command(*session);check(choice.verb=="second_wind"&&session->submit(choice),"Enemy uses remaining bonus recovery after attacking");}
+        const auto choice=choose_demo_command(*session);check(choice.verb=="end"&&session->submit(choice),"Enemy explicitly completes its spent turn");
+        check(session->snapshot().actor!=2,"Enemy turn cannot stall after its attack");
+    }
+}
 void boundary_tests() {
     auto module=srd5::load(pack());
     bool reduced=false;
@@ -69,8 +152,8 @@ void boundary_tests() {
     invalid=command(*session,"move",{1,2});invalid.destination={4,4};
     check(!session->submit(invalid)&&session->save()==before,"Invalid path cannot change state");
     auto attack=command(*session,"melee");check(session->submit(attack),"Melee command");
-    check(session->snapshot().outcome!=Outcome::ongoing||session->snapshot().actor==2,
-        "Melee attack advances unless combat ends");
+    check(session->snapshot().outcome!=Outcome::ongoing||session->snapshot().actor==1,
+        "Melee attack preserves the actor's remaining turn");
     const auto after=session->save();check(!session->submit(attack)&&session->save()==after,"Duplicate command rejected atomically");
     for(const auto& c:session->legal_commands())check(c.verb!="melee"&&c.verb!="ranged","Attack consumes the action");
     auto restored=module->restore(after);check(restored->save()==after,"Checkpoint preserves exact module state");
@@ -120,9 +203,9 @@ void boundary_tests() {
         "Right-side enemy makes an opportunity attack on the turning attacker");
     const auto decline_turn=command(*session,"decline");
     check(session->submit(decline_turn)&&restored->submit(decline_turn)&&session->save()==restored->save(),
-        "Declining the turning reaction advances the turn deterministically");
-    check(!session->snapshot().reaction_pending&&unit(*session,1).facing_left,
-        "Resolved turn reaction keeps the hero facing the target");
+        "Declining the turning reaction resumes the turn deterministically");
+    check(!session->snapshot().reaction_pending&&session->snapshot().actor==1&&unit(*session,1).facing_left,
+        "Resolved turn reaction keeps the hero's remaining turn and facing");
 
     auto reverse=duel();
     reverse.participants[0].facing_left=true;
@@ -205,8 +288,8 @@ void mechanics_tests() {
     auto session=hero_first(*module,encounter);
     for(int cast=0;cast<2;++cast) {
         check(session->submit(command(*session,"magic_missile")),"Spell command accepted");
-        check(session->snapshot().outcome!=Outcome::ongoing||session->snapshot().actor!=1,
-            "Damaging spell advances initiative");
+        check(session->snapshot().outcome!=Outcome::ongoing||session->snapshot().actor==1,
+            "Damaging spell preserves remaining turn resources");
         check(!unit(*session,1).action&&unit(*session,1).movement_feet==30,"Spell consumes action, not movement");
         next_round(*session);
     }
@@ -228,10 +311,9 @@ void mechanics_tests() {
     for(unsigned seed=0;seed<500&&!tested;++seed) {
         session=module->create(encounter,seed);if(session->snapshot().actor!=1)continue;
         session->submit(command(*session,"melee"));if(!unit(*session,2).dead)continue;
-        check(session->snapshot().actor!=1,"Lethal attack advances past its actor while combat continues");
+        check(session->snapshot().actor==1,"Lethal attack preserves the actor's turn while other enemies remain");
         const auto log=session->snapshot().log;
         if(std::none_of(log.begin(),log.end(),[](const auto& line){return line.find("CRITICAL")!=std::string::npos;}))continue;
-        while(session->snapshot().actor!=1)check(session->submit(command(*session,"end")),"Return to hero after the attack turn");
         check(session->submit(command(*session,"move",{3,2})),"Can move onto defeated enemy cell");
         restored=module->restore(session->save());check(restored->save()==session->save(),"Corpse overlap survives checkpoint restore");tested=true;
     }
@@ -243,6 +325,7 @@ void mechanics_tests() {
         check(session->snapshot().actor==2,"Enemy caster turn");
         session->submit(command(*session,"magic_missile"));
         const auto before=unit(*session,1);check(before.hit_points<before.max_hit_points,"Damage before healing");
+        check(session->submit(command(*session,"end")),"Enemy caster explicitly finishes its turn");
         const bool cleric=std::string_view(profile)=="healer";
         session->submit(command(*session,cleric?"cure_wounds":"second_wind"));
         const auto healed=unit(*session,1);
@@ -483,4 +566,4 @@ void installed() {
     std::cout<<"Original Slums event completed with real rules combat: "<<(outcome==Outcome::victory?"victory":"defeat")<<".\n";
 }
 }
-int main(){try{boundary_tests();mechanics_tests();death_save_turn_entry_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

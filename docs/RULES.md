@@ -54,8 +54,12 @@ Hovering over a monster or NPC shows a tooltip beside the pointer with its
 type, current and maximum HP, AC, and the weapon it would use at its present
 distance from the party. When an encounter has no named weapon, it shows
 `Unspecified` rather than inventing one.
-Melee, ranged, and damaging spell attacks end the attacker's turn and advance
-initiative. A dead combatant displays the original combat skull for one second.
+Melee, ranged, and damaging spell attacks spend the action and any required
+spell slot while preserving remaining movement and Bonus Actions. Move before
+or after attacking, use Second Wind if available, then choose **End turn** or
+press **Enter** to advance initiative. Pending reactions resolve before the
+active character continues; enemies explicitly finish their own turns.
+A dead combatant displays the original combat skull for one second.
 Attacks show the combatant's original action frame for one second and play the
 corresponding original melee, ranged, or spell sound from the local game files.
 Combat sprites face left or right toward targets in those directions when attacking.
@@ -128,7 +132,7 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 - The game's facing rule keeps left/right facing across turns and combat checkpoints.
   Attacking across to the other side turns the sprite and offers an adjacent,
   visible enemy on the side left behind an opportunity reaction before the
-  attacker's turn advances. The enemy must still have its reaction available.
+  attacker's remaining turn resumes. The enemy must still have its reaction available.
 - One melee or ranged attack per Attack action, ascending AC, natural 1/20,
   doubled damage dice on critical hits, Dodge and ranged disadvantage from long
   range or an adjacent visible enemy. No hidden dice in the UI or AI.
