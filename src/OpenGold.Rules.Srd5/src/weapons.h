@@ -16,7 +16,9 @@ inline constexpr std::array weapons{
     Weapon{"handaxe",1,6,1,false,false,false,20,60},
     Weapon{"javelin",1,6,1,false,false,false,30,120},
     Weapon{"light_hammer",1,4,1,false,false,false,20,60},
-    Weapon{"mace",1,6}, Weapon{"quarterstaff",1,6},
+    Weapon{"mace",1,6},
+    // OpenGoldBox quarterstaffs require both hands.
+    Weapon{"quarterstaff",1,6,2},
     // OpenGoldBox spears require both hands.
     Weapon{"spear",1,6,2,false,false,false,20,60},
     Weapon{"dart",1,4,1,false,true,true,20,60},
@@ -31,7 +33,8 @@ inline constexpr std::array weapons{
     Weapon{"longsword",1,8,1,true}, Weapon{"morningstar",1,8,1,true},
     Weapon{"pike",1,10,2,true,false,false,0,0,10},
     Weapon{"scimitar",1,6,1,true,true}, Weapon{"shortsword",1,6,1,true,true},
-    Weapon{"trident",1,8,1,true,false,false,20,60},
+    // OpenGoldBox tridents require both hands.
+    Weapon{"trident",1,8,2,true,false,false,20,60},
     Weapon{"warhammer",1,8,1,true}, Weapon{"war_pick",1,8,1,true},
     Weapon{"longbow",1,8,2,true,false,true,150,600},
     // A plain wand is a held focus, not a free spell or invented damage profile.

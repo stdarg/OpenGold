@@ -187,11 +187,21 @@ void all_weapon_equipment()
             check(info.hands==2,"Battle axe requires two hands and rejects a shield");
         if(weapon.original_type==31)
             check(info.hands==2,"Spear requires two hands and rejects a shield");
+        if(weapon.original_type==6||weapon.original_type==22||weapon.original_type==33)
+            check(info.hands==2,"Quarterstaff and its original weapon aliases require two hands");
+        if(weapon.original_type==39)
+            check(info.hands==2,"Trident requires two hands and rejects a shield");
         check(party.profile(id).hit_points>0,"Every weapon produces an actual rules profile");
         check(por::resolve_combat_appearance(party.member(id),catalog).appearance==original,"Every weapon retains saved anatomy");
         if(info.hands==2) {
             rejects([&]{party.equip(id,shield);});
             check(party.member(id).equipped==std::vector<std::uint64_t>{weapon.id},"Rejected shield is atomic");
+            party.unequip(id,weapon.id);
+            party.equip(id,shield);
+            rejects([&]{party.equip(id,weapon.id);});
+            check(party.member(id).equipped==std::vector<std::uint64_t>{shield},"Rejected two-handed weapon preserves the shield");
+            party.unequip(id,shield);
+            party.equip(id,weapon.id);
         } else {
             party.equip(id,shield);
             const auto equipped=party.member(id).equipped;

@@ -112,8 +112,9 @@ Legacy names absent from SRD 5.2.1 use these explicit SRD equivalents:
 | 50 / 55 / 59 | leather / chain_mail / shield |
 
 Damage dice, finesse, thrown/ranged distances, reach and mandatory two-hand
-requirements follow the SRD weapon table, except that OpenGoldBox battle axes and spears
-require two hands. Versatile weapons use their one-handed
+requirements follow the SRD weapon table, except that OpenGoldBox battle axes,
+spears, quarterstaffs (including Bo Stick and Jo Stick), and tridents require
+two hands. Versatile weapons use their one-handed
 damage profile. The module's existing proficiency subset remains in use:
 simple weapons are trained for all classes; martial weapons for Barbarian,
 Fighter, Paladin and Ranger. Weapon mastery, ammunition consumption/recovery,
