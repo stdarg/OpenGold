@@ -31,13 +31,19 @@ void combat_body_assignments()
         if(shield)gear.push_back({59,"Shield","shield"});
         const auto selected=saved.choose(gear,10);
         check(selected.combination==combination,"Every catalog option resolves its exact equipment key");
-        check(selected.matched!=saved.deleted.contains(combination),"All enabled reviewed combinations have artwork; deleted ones do not");
+        const auto assigned=std::find_if(saved.bodies.begin(),saved.bodies.end(),[&](const auto& body){return body.contains(combination);});
+        const bool has_art=!saved.deleted.contains(combination)&&assigned!=saved.bodies.end();
+        check(selected.matched==has_art,"Only assigned, non-deleted combinations have artwork");
+        check(selected.body==(has_art?(saved.bodies[10].contains(combination)?10u:static_cast<unsigned>(assigned-saved.bodies.begin())):10u),
+            "Catalog selection prefers the saved body, then first assignment, otherwise fallback");
     }
     const std::vector<por::CombatEquipment> shield_only{{59,"Shield","shield"}};
-    check(saved.choose(shield_only,21).matched&&saved.choose(shield_only,21).body==32,
-        "Unarmed with shield selects the derived wand-free body");
     por::CombatBodyCatalog catalog=saved;
     for(auto& body:catalog.bodies)body.clear();
+    catalog.deleted.clear();
+    catalog.bodies[32]={"type_0_shield"};
+    check(catalog.choose(shield_only,21).matched&&catalog.choose(shield_only,21).body==32,
+        "Unarmed with shield selects the assigned derived wand-free body");
     catalog.bodies[1]={"type_43","type_44"};
     catalog.bodies[4]={"type_23_shield"};
     catalog.bodies[7]={"type_23"};
@@ -93,7 +99,18 @@ por::Equipment item(unsigned type,unsigned price=10)
 void party_combat_appearance()
 {
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
-    const auto catalog=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
+    auto catalog=por::CombatBodyCatalog::load(folder/"combat-body-looks.tsv",folder/"combat-weapon-options.tsv");
+    // Exercise equipment resolution against authored assignments, independently
+    // of ongoing art review and intentionally unassigned production combinations.
+    for(auto& body:catalog.bodies)body.clear();
+    catalog.deleted.clear();
+    catalog.bodies[0]={"type_0"};
+    catalog.bodies[2]={"type_36"};
+    catalog.bodies[6]={"type_8"};
+    catalog.bodies[20]={"type_36_shield"};
+    catalog.bodies[22]={"type_8_shield"};
+    catalog.bodies[24]={"type_36_shield"};
+    catalog.bodies[32]={"type_0_shield"};
     CampaignParty party(module());
     auto pc=character(),npc=character("fighter","Guard");
     auto appearance=pc.appearance();appearance.combat_body=24;appearance.combat_head=2;
