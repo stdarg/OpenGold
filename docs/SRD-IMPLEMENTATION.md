@@ -4,9 +4,10 @@ Date: 2026-09-23. Status: issue backlog created; incremental implementation star
 
 The [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186) links all
 steps, labeled `SRD_improvements`. The [coverage ledger](SRD-COVERAGE.md) records
-completed work and verification. I01 is delivered in
-[#20](https://github.com/stdarg/OpenGold/issues/20); the next increment is
-[I02, initial death saves and stabilization](https://github.com/stdarg/OpenGold/issues/21).
+completed work and verification. I01 and I02 are delivered in
+[#20](https://github.com/stdarg/OpenGold/issues/20) and
+[#21](https://github.com/stdarg/OpenGold/issues/21); the next increment is
+[I03, HP history and Constitution increases](https://github.com/stdarg/OpenGold/issues/22).
 
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,
@@ -230,7 +231,7 @@ multiclass interactions; targeted checks remain attached to their rules.
 
 ## Recommended next execution
 
-I01 is complete. Continue with **I02: initial death saves and stabilization**,
+I01 and I02 are complete. Continue with **I03: HP history and Constitution increases**,
 then proceed through I08. The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

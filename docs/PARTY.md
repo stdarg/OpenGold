@@ -131,11 +131,12 @@ still require a supported conversion rather than silently receiving plain stats.
 Equipment metadata comes from the rules module, not from the original edition's
 `ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
 two-handed weapon/shield combination leaves the previous loadout untouched.
-Rules version 0.6.1 corrects Rogue/Monk weapon proficiency and accepts 0.6.0 and
-earlier supported campaign saves. It recomputes weapon bonuses from saved
+Rules version 0.6.2 includes the Rogue/Monk weapon proficiency and death-save
+corrections, and accepts 0.6.1, 0.6.0 and earlier supported campaign saves.
+It recomputes weapon bonuses from saved
 class/equipment choices and retains the conversion of previously unsupported
 ordinary weapons with verified original provenance. Standalone combat
-checkpoints still require the exact rules version, so finish a 0.6.0 combat
+checkpoints still require the exact rules version, so finish an older-version combat
 and save the campaign before upgrading.
 
 Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):

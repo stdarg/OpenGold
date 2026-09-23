@@ -65,7 +65,10 @@ When a party member dies, their portrait row shows `DECEASED` in red. The skull
 occupies their battlefield square for one second; the square is then clear.
 At 0 HP, a party member is unconscious while death saves remain possible; the
 portrait row shows `UNCONSCIOUS` until their state changes. Their existing
-combat figure lies within one square. If no party member remains conscious,
+combat figure lies within one square. An unstable member rolls once on each
+turn entry, including the initial initiative slot. A natural 20 restores 1 HP
+and permits that turn; stabilization clears both death-save counters.
+Restoring a combat checkpoint adds no roll. If no party member remains conscious,
 combat ends in defeat.
 
 The shared combat demo uses twelve dagger-wielding Kobolds with melee attacks

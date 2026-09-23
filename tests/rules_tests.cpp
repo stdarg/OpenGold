@@ -276,6 +276,73 @@ void mechanics_tests() {
     }
     check(tested,"Exercised all-unconscious party defeat flow");
 }
+void death_save_turn_entry_tests()
+{
+    auto module=srd5::load(pack());auto encounter=duel();
+    encounter.participants.push_back({3,"vanguard","Ally",0,{1,5}});
+    const auto death_rolls=[](const CombatSession& session){
+        std::vector<int> rolls;
+        for(const auto& line:session.snapshot().log)
+            if(line.starts_with("Hero death save: "))rolls.push_back(std::stoi(line.substr(17)));
+        return rolls;
+    };
+    // Exercise all four outcomes both in the first initiative slot and later.
+    for(const bool first:{true,false}){
+        bool natural_one=false,natural_twenty=false,success=false,failure=false;
+        for(unsigned seed=0;seed<1000&&!(natural_one&&natural_twenty&&success&&failure);++seed){
+            const auto healthy=module->create(encounter,seed);
+            if((healthy->snapshot().actor==1)!=first)continue;
+            auto wounded=encounter;wounded.participants[0].state=VitalState{0,false,"SRD1 1 0 2 1 0"};
+            auto combat=module->create(wounded,seed);
+            if(!first){
+                check(death_rolls(*combat).empty(),"Death saves wait for the wounded actor's initiative slot");
+                for(unsigned turns=0;turns<3&&death_rolls(*combat).empty();++turns)
+                    check(combat->submit(command(*combat,"end")),"Advance to the wounded actor's turn");
+            }
+            const auto rolls=death_rolls(*combat);
+            check(rolls.size()==1,"Every unstable turn entry makes exactly one death save, including the first slot");
+            const auto hero=unit(*combat,1);const int roll=rolls.front();
+            if(roll==20){
+                natural_twenty=true;
+                check(hero.hit_points==1&&!hero.dead&&hero.persistent.resources=="SRD1 1 0 0 0 0","Natural 20 restores 1 HP and clears both counters without restoring spent resources");
+                check(combat->snapshot().actor==1&&hero.action&&hero.bonus_action&&hero.reaction,"Natural-20 recovery permits the current turn");
+                if(first)check(combat->snapshot().elapsed_milliseconds==0,"Natural-20 recovery does not skip the first initiative slot");
+            }else if(roll>=10){
+                success=true;
+                check(hero.hit_points==0&&!hero.dead&&hero.persistent.resources=="SRD1 1 0 0 0 1","Third success stabilizes and resets successes and failures");
+                check(combat->snapshot().actor!=1,"Stable unconscious actors cannot act");
+            }else if(roll==1){
+                natural_one=true;
+                check(hero.dead&&hero.persistent.resources=="SRD1 1 0 2 3 0","Natural 1 adds two failures and reaches death at three");
+            }else{
+                failure=true;
+                check(!hero.dead&&hero.persistent.resources=="SRD1 1 0 2 2 0","Ordinary failure adds one and retains prior successes");
+            }
+            const auto saved=combat->save();auto restored=module->restore(saved);
+            check(restored->save()==saved&&death_rolls(*restored)==rolls,"Checkpoint restore does not replay a turn-entry save");
+            for(unsigned turns=0;turns<3;++turns){
+                const auto end=command(*combat,"end");
+                check(combat->submit(end)&&restored->submit(end)&&combat->save()==restored->save(),"Death-save continuation retains exact RNG and state after restore");
+            }
+        }
+        check(natural_one&&natural_twenty&&success&&failure,"Exercise all death-save outcomes at each turn-entry position");
+    }
+    // Find the same first-slot seed without relying on the private dice stream.
+    unsigned first_seed=0;
+    while(module->create(encounter,first_seed)->snapshot().actor!=1){check(++first_seed<100,"Find first-slot seed");}
+    for(const bool dead:{false,true}){
+        auto skipped=encounter;
+        skipped.participants[0].state=VitalState{0,dead,dead?"SRD1 1 0 0 3 0":"SRD1 1 0 0 0 1"};
+        auto combat=module->create(skipped,first_seed);
+        check(combat->snapshot().actor!=1&&death_rolls(*combat).empty(),"Stable and dead initial actors do not make death saves");
+        auto restored=module->restore(combat->save());
+        check(restored->save()==combat->save(),"Skipped initial actor preserves exact checkpoint state");
+    }
+    auto legacy=encounter;legacy.participants[0].state=VitalState{0,false,"SRD1 1 0 3 2 1"};
+    auto migrated=module->create(legacy,first_seed);
+    check(death_rolls(*migrated).empty()&&unit(*migrated,1).persistent.resources=="SRD1 1 0 0 0 1",
+        "Older stable resource state is normalized without rolling or refilling resources");
+}
 void checkpoint_validation_tests()
 {
     auto module = srd5::load(pack());
@@ -416,4 +483,4 @@ void installed() {
     std::cout<<"Original Slums event completed with real rules combat: "<<(outcome==Outcome::victory?"victory":"defeat")<<".\n";
 }
 }
-int main(){try{boundary_tests();mechanics_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{boundary_tests();mechanics_tests();death_save_turn_entry_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

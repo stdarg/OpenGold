@@ -352,6 +352,36 @@ void class_weapon_proficiency()
         }),"Actual combat uses +5 for the Dexterity-16 Rogue/Monk weapon attack");
     }
 }
+void stabilization_handoff()
+{
+    CampaignParty party(module());const auto hero=party.add_pc(character());
+    party.add_pc(character("fighter","Conscious ally"));
+    auto state=party.checkpoint();state.roster[0].vitals={0,false,"SRD1 1 0 2 1 0"};
+    party.restore(std::move(state));
+    auto participants=party.participants();participants[0].cell={1,1};participants[1].cell={1,3};
+    participants.push_back({1000,"bandit","Enemy",1,{5,3}});
+    auto rules=module();std::unique_ptr<CombatSession> stable;
+    for(unsigned seed=0;seed<200&&!stable;++seed){
+        auto candidate=rules->create({{8,5,std::vector<std::uint8_t>(40)},participants},seed);
+        for(unsigned turns=0;turns<4;++turns){
+            const auto snapshot=candidate->snapshot();
+            const auto actor=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==hero;});
+            check(actor!=snapshot.combatants.end(),"Campaign actor remains in combat");
+            if(actor->hit_points>0||actor->dead)break;
+            if(actor->persistent.resources=="SRD1 1 0 0 0 1"){stable=std::move(candidate);break;}
+            const auto commands=candidate->legal_commands();
+            const auto end=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
+            check(end!=commands.end()&&candidate->submit(*end),"Advance a conscious actor while waiting for stabilization");
+        }
+    }
+    check(bool(stable),"Third death-save success stabilizes the campaign character");
+    party.begin_combat();party.apply_combat(stable->snapshot());party.end_combat();
+    check(party.member(hero).vitals.resources=="SRD1 1 0 0 0 1","Combat handoff preserves Stable with zero counters and one spent Second Wind");
+    const auto saved=encode_campaign(party,nullptr,"stabilization");
+    auto loaded=decode_campaign(saved,*srd5::character_rules(),*rules,"stabilization",nullptr);
+    CampaignParty restored(module());restored.restore(std::move(loaded.party));
+    check(restored.member(hero).vitals==party.member(hero).vitals,"Stable state and cleared counters survive campaign save/reload");
+}
 void untrained_equipment()
 {
     auto rules=module();const auto mage=character("wizard");const auto& s=mage.sheet();
@@ -888,6 +918,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();untrained_equipment();combat_handoff();campaign_encounters();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

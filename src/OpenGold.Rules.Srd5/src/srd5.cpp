@@ -158,6 +158,8 @@ void restore_vitals(Actor& a,const VitalState& state)
     const auto& d=a.definition;
     if(a.hp<0||a.hp>d.hp||(a.dead&&a.hp!=0)||a.winds<0||a.winds>d.winds||a.slots<0||a.slots>d.slots||
         a.slots2<0||a.slots2>d.slots2||a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
+    // Earlier campaigns could retain completed counters after stabilization.
+    if(a.stable)a.successes=a.failures=0;
 }
 VitalState vitals(const Actor& a)
 {
@@ -212,7 +214,7 @@ public:
         for(std::size_t i=0;i<actors_.size();++i)
             for(auto& effect:actors_[i].effects.active)effect.save_in_ms=turn_end_ms(i);
         log("Combat begins. Each square is 5 feet.");update_outcome();
-        if(outcome_==Outcome::ongoing){if(actors_[turn_].hp<=0)end_turn();else begin_turn();}
+        if(!restoring&&outcome_==Outcome::ongoing&&!begin_turn())end_turn();
     }
     Snapshot snapshot() const override;
     std::vector<Command> legal_commands() const override;
@@ -259,7 +261,7 @@ private:
     void damage(Actor& target,int amount);
     void heal(Actor& target,int amount);
     void update_outcome();
-    void begin_turn();
+    bool begin_turn();
     void end_turn();
     void progress_movement();
     void restore_movement(std::istream& input);
@@ -421,12 +423,28 @@ void Session::update_outcome()
         log(outcome_==Outcome::victory?"Victory.":"The party is incapacitated. Defeat.");
     }
 }
-void Session::begin_turn()
+bool Session::begin_turn()
 {
+    auto& a=actors_[turn_];
+    if(a.dead)return false;
+    if(a.hp==0){
+        if(!a.stable){
+            const int result=roll(20);
+            log(a.source.name+" death save: "+std::to_string(result),
+                {"{name} death save: {roll}",{{"name",a.source.name},{"roll",std::to_string(result)}}});
+            if(result==20){a.hp=1;a.successes=a.failures=0;}
+            else if(result>=10)++a.successes;
+            else a.failures+=result==1?2:1;
+            if(a.failures>=3)a.dead=true;
+            else if(a.successes>=3){a.stable=true;a.successes=a.failures=0;}
+        }
+        if(a.hp==0)return false;
+    }
     for(auto& actor:actors_)actor.savage_used=false;
-    auto& a=actors_[turn_];a.action=a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;
+    a.action=a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;
     a.spent_slot=false;
     log("Round "+std::to_string(round_)+": "+a.source.name+" acts.",{"Round {round}: {name} acts.",{{"round",std::to_string(round_)},{"name",a.source.name}}});
+    return true;
 }
 unsigned Session::next_save_ms(EntityId target) const
 {
@@ -468,18 +486,7 @@ void Session::end_turn()
         // The round is a display counter. Saturation avoids wrapping it to
         // zero while keeping an extremely long (or edited) combat playable.
         if(turn_==0 && round_<std::numeric_limits<unsigned>::max())++round_;
-        auto& a=actors_[turn_];
-        if(a.dead)continue;
-        if(a.hp==0) {
-            if(!a.stable) {
-                const int result=roll(20);log(a.source.name+" death save: "+std::to_string(result),{"{name} death save: {roll}",{{"name",a.source.name},{"roll",std::to_string(result)}}});
-                if(result==20){a.hp=1;a.successes=a.failures=0;}
-                else if(result>=10)++a.successes;else a.failures+=result==1?2:1;
-                if(a.failures>=3)a.dead=true;if(a.successes>=3)a.stable=true;
-            }
-            if(a.hp==0)continue;
-        }
-        begin_turn();return;
+        if(begin_turn())return;
     }
     update_outcome();
 }
@@ -816,7 +823,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1031,7 +1038,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.1",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.2",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

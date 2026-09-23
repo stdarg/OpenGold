@@ -29,7 +29,8 @@ policy tables here continue to describe the audited commit.
 
 Implementation progress is tracked in the [coverage ledger](../SRD-COVERAGE.md)
 and [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186). E5 is
-corrected by I01; the remaining findings retain their open status in the ledger.
+corrected by I01; E2 and E3 are corrected by I02. The remaining findings retain
+their open status in the ledger.
 
 ## Authority, scope, and evidence
 

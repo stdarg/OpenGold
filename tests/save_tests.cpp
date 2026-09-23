@@ -186,9 +186,11 @@ void roundtrip(const std::filesystem::path& directory){
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);
     auto base=prototype();auto rules=module();auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fixture-v1",&base);auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));loaded.town->attach_restored_party(replacement);
     check(encode_campaign(*replacement,&*loaded.town,"fixture-v1")==saved,"Complete serialized state round trips");
-    auto v060=decode_campaign(changed_identity(saved,rules->identity().version,"0.6.0"),*srd5::character_rules(),*rules,"fixture-v1",&base);
-    CampaignParty migrated(module());migrated.restore(std::move(v060.party));
-    check(encode_campaign(migrated,&*v060.town,"fixture-v1")==saved,"Rules 0.6.0 campaign data upgrades without changing saved state");
+    for(const std::string prior_version:{"0.6.0","0.6.1"}){
+        auto previous_save=decode_campaign(changed_identity(saved,rules->identity().version,prior_version),*srd5::character_rules(),*rules,"fixture-v1",&base);
+        CampaignParty migrated(module());migrated.restore(std::move(previous_save.party));
+        check(encode_campaign(migrated,&*previous_save.town,"fixture-v1")==saved,"Earlier 0.6.x campaigns upgrade without changing saved state");
+    }
     const auto encounter=[](const CampaignParty& p){rules::Encounter e{{8,8,std::vector<std::uint8_t>(64)},p.participants()};e.participants.push_back({99,"bandit","Bandit",1,{6,6}});return e;};
     auto combat_a=rules->create(encounter(*party),42),combat_b=rules->create(encounter(*replacement),42);
     for(int i=0;i<30&&combat_a->snapshot().outcome==rules::Outcome::ongoing;++i){auto command=choose_demo_command(*combat_a);check(combat_a->submit(command)&&combat_b->submit(command)&&combat_a->save()==combat_b->save(),"Next combat continues deterministically after disk reload");}

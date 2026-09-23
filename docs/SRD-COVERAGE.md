@@ -12,6 +12,7 @@ The all-twelve-class level-four milestone is
 | Increment / feature | Authority and supported scope | Implementation and verification | Persistence |
 | --- | --- | --- | --- |
 | [I01 / E5](https://github.com/stdarg/OpenGold/issues/20): starting-class weapon proficiency | SRD 5.2.1 pp. 49, 61, 91. Rogue gains martial Finesse or Light; Monk gains martial Light. Applies to the implemented catalog, including Shortsword/Scimitar. Other starting-class grants remain intact. | [weapons.h](../src/OpenGold.Rules.Srd5/src/weapons.h) records Light; [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) uses the same training query for profiles, equipment notes and combat. [party_tests.cpp](../tests/party_tests.cpp), `class_weapon_proficiency`, verifies all twelve classes, actual +5 attacks for Dexterity-16 Rogue/Monk, equipment explanations and deterministic campaign/combat reload. The regression failed before the fix. | Module 0.6.1; campaign schema unchanged. Existing 0.6.0 and earlier supported campaigns reconstruct the corrected bonuses without losing equipment or wounds. [save_tests.cpp](../tests/save_tests.cpp) verifies 0.6.0 campaign upgrade. Standalone combat checkpoints require exact module identity. |
+| [I02 / E2–E3](https://github.com/stdarg/OpenGold/issues/21): death-save turn entry and stabilization | SRD 5.2.1 pp. 17–18. An unstable actor at 0 HP rolls once on turn entry, including the initial initiative slot. A natural 20 permits the recovered actor's turn. Stabilization clears both counters. | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) shares one turn-entry path. [rules_tests.cpp](../tests/rules_tests.cpp), `death_save_turn_entry_tests`, covers initial/later entry, all four outcomes, stable/dead skipping and deterministic checkpoint continuation. The regression failed before the fix. [party_tests.cpp](../tests/party_tests.cpp), `stabilization_handoff`, verifies campaign handoff and reload with spent resources preserved. | Module 0.6.2; campaign schema unchanged. Supports 0.6.1 and earlier supported campaigns. Legacy stable counters normalize when rules hydrate vitals. [save_tests.cpp](../tests/save_tests.cpp) verifies 0.6.0/0.6.1 campaign upgrades. Checkpoint restoration performs no turn-entry roll; standalone combat checkpoints still require exact module identity. |
 
 Light extra attacks, Monk Martial Arts, optional feature-granted proficiency,
 multiclass-entry proficiency and missing catalog weapons remain their own
@@ -22,6 +23,11 @@ Validation for I01: rebuilt and passed the five native suites for party, save,
 rules, character and content behavior. No Godot layout or control code changed;
 equipment explanation checks exercise the shared rules output.
 
+Validation for I02: rebuilt and passed the rules, party, save, status-effect and
+advancement native suites. No Godot layout or control code changed. Death saves
+and natural recovery outside combat remain [F04 #31](https://github.com/stdarg/OpenGold/issues/31);
+this increment preserves the existing all-unconscious-party defeat policy.
+
 ## Audit finding status
 
 Status refers to the current implementation. The audit retains its original
@@ -30,8 +36,8 @@ commit-specific findings as historical evidence.
 | Finding | Status | Primary work |
 | --- | --- | --- |
 | E1: Constitution/HP history | Open | [I03 #22](https://github.com/stdarg/OpenGold/issues/22) |
-| E2: initial death save | Open | [I02 #21](https://github.com/stdarg/OpenGold/issues/21) |
-| E3: stabilization counters | Open | [I02 #21](https://github.com/stdarg/OpenGold/issues/21) |
+| E2: initial death save | Fixed | [I02 #21](https://github.com/stdarg/OpenGold/issues/21) |
+| E3: stabilization counters | Fixed | [I02 #21](https://github.com/stdarg/OpenGold/issues/21) |
 | E4: bonus provenance | Open | [I04 #23](https://github.com/stdarg/OpenGold/issues/23) |
 | E5: Rogue/Monk weapon proficiency | Fixed for implemented weapons | [I01 #20](https://github.com/stdarg/OpenGold/issues/20) |
 | G1: complete class features/advancement | Open; all twelve required | [Level-four milestone #8](https://github.com/stdarg/OpenGold/issues/8) and its class issues |
