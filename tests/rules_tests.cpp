@@ -3,6 +3,7 @@
 #include "opengold/character_rules.h"
 #include <algorithm>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <limits>
@@ -84,6 +85,21 @@ void turn_budget_tests()
         check(session->submit(end)&&restored->submit(end)&&session->save()==restored->save(),"Explicit End Turn continues deterministically");
         check(session->snapshot().actor!=1&&session->snapshot().elapsed_milliseconds>0,"End Turn advances initiative and time");
     }
+    // Every targeted offensive action may turn the sprite without provoking.
+    for(const auto verb:{"melee","ranged","fire_bolt","magic_missile","magic_missile_2","scorching_ray","blindness"}){
+        auto e=duel(std::string_view(verb)=="blindness"?"blindness-adept":"vanguard");
+        e.participants[0].facing_left=true;e.participants[1].definition="vanguard";
+        e.participants.push_back({3,"vanguard","Behind attacker",1,{1,2}});
+        if(std::string_view(verb)!="melee"&&std::string_view(verb)!="ranged"&&std::string_view(verb)!="blindness")
+            e.participants[0].character_profile=module->character_profile(sheet,{}).data;
+        auto session=hero_first(*module,e);auto attack=command(*session,verb);attack.target=2;
+        check(session->submit(attack),"Turning attack or spell accepted");
+        check(!unit(*session,1).facing_left&&!session->snapshot().reaction_pending&&session->snapshot().actor==1,
+            "An offensive spell or weapon attack turns only the presentation state");
+        check(!unit(*session,1).action&&unit(*session,3).reaction&&session->snapshot().elapsed_milliseconds==0,
+            "Turning preserves turn budgets and the unprovoked enemy reaction");
+        check(module->restore(session->save())->save()==session->save(),"Turned attacks and spell expenditure survive reload");
+    }
     // A used Bonus Action must stay used when the action is taken afterward.
     auto e=duel();e.participants[1].definition="vanguard";e.participants[0].state=VitalState{10,false,"SRD1 2 0 0 0 0"};
     auto session=hero_first(*module,e);session->submit(command(*session,"second_wind"));session->submit(command(*session,"melee"));
@@ -98,19 +114,18 @@ void turn_budget_tests()
         check(session->snapshot().actor==1&&unit(*session,1).cell==Cell{1,2}&&unit(*session,1).movement_feet==20&&!unit(*session,1).action,
             "Resolved reaction resumes remaining movement without another action");
     }
-    // The existing facing reaction is removed by I06; until then, resolving it
-    // must resume the attacker's remaining turn, including multiple reactors.
-    e=duel();e.participants[1].definition="vanguard";e.participants[1].cell={1,2};
-    e.participants.push_back({3,"bandit","Right guard",1,{3,2}});
-    e.participants.push_back({4,"bandit","Other guard",1,{3,1}});
-    session=hero_first(*module,e);auto left=command(*session,"melee");left.target=2;session->submit(left);
+    // Multiple leave-reach reactions resolve in order before the move resumes.
+    e=duel();e.participants[1].definition="vanguard";
+    e.participants.push_back({3,"bandit","Other guard",1,{3,1}});
+    session=hero_first(*module,e);session->submit(command(*session,"melee"));
+    check(session->submit(command(*session,"move",{1,2})),"Post-attack move leaves both enemies' reach");
     unsigned reactions=0;
     while(session->snapshot().reaction_pending){
         check(++reactions<=2&&!offers(*session,"end")&&!offers(*session,"move"),"Pending reactions prevent advancing or moving early");
         auto restored=module->restore(session->save());const auto decline=command(*session,"decline");
         check(session->submit(decline)&&restored->submit(decline)&&session->save()==restored->save(),"Every queued reaction preserves checkpoint continuation");
     }
-    check(reactions==2&&session->snapshot().actor==1&&!unit(*session,1).action&&unit(*session,1).movement_feet==30,"All reactions resolve before the attacker resumes");
+    check(reactions==2&&session->snapshot().actor==1&&!unit(*session,1).action&&unit(*session,1).movement_feet==20,"All reactions resolve before movement resumes");
     // The enemy controller explicitly ends a spent turn instead of moving
     // toward another attack it cannot make. Available bonus recovery runs first.
     for(const bool injured:{false,true}){
@@ -178,6 +193,22 @@ void boundary_tests() {
     session=hero_first(*module);session->submit(command(*session,"disengage"));session->submit(command(*session,"move",{1,2}));
     check(!session->snapshot().reaction_pending,"Disengage prevents opportunity attacks");
 
+    auto vulnerable=duel();vulnerable.participants[0].state=VitalState{1,false,"SRD1 1 0 0 0 0"};
+    vulnerable.participants.push_back({3,"vanguard","Second reactor",1,{3,1}});
+    vulnerable.participants.push_back({4,"vanguard","Conscious ally",0,{8,6}});
+    bool interrupted=false;
+    for(unsigned seed=0;seed<100&&!interrupted;++seed){
+        auto candidate=module->create(vulnerable,seed);if(candidate->snapshot().actor!=1)continue;
+        candidate->submit(command(*candidate,"move",{1,2}));
+        candidate->submit(command(*candidate,"opportunity"));
+        if(unit(*candidate,1).hit_points>0)continue;
+        check(!candidate->snapshot().reaction_pending&&unit(*candidate,1).cell==Cell{2,2}&&candidate->snapshot().actor!=1,
+            "An opportunity attack that incapacitates the mover cancels the step and remaining reactions");
+        check(module->restore(candidate->save())->save()==candidate->save(),"Interrupted movement leaves a valid deterministic checkpoint");
+        interrupted=true;
+    }
+    check(interrupted,"Exercise a movement interruption with another queued reactor");
+
     auto flank=duel();
     flank.participants[1].cell={1,2};
     flank.participants.push_back({3,"bandit","Right Guard",1,{3,2}});
@@ -190,30 +221,21 @@ void boundary_tests() {
     };
     check(!unit(*session,1).facing_left,"Combatants initially face right");
     check(session->submit(left_attack(*session,2)),"Hero attacks to the left");
-    check(unit(*session,1).facing_left&&session->snapshot().reaction_pending&&session->snapshot().actor==3,
-        "Hero turns left and exposes the adjacent enemy on the right");
-    auto turning_checkpoint=session->save();
-    restored=module->restore(turning_checkpoint);
-    check(restored->save()==turning_checkpoint,"Facing and pending turn reaction survive save/load");
-    auto striking=module->restore(turning_checkpoint);
-    check(striking->submit(command(*striking,"opportunity")),"Turning opportunity command accepted");
-    const auto strike_log=striking->snapshot().log;
-    check(std::any_of(strike_log.begin(),strike_log.end(),
-            [](const auto& line){return line.find("Right Guard -> Hero")!=std::string::npos;}),
-        "Right-side enemy makes an opportunity attack on the turning attacker");
-    const auto decline_turn=command(*session,"decline");
-    check(session->submit(decline_turn)&&restored->submit(decline_turn)&&session->save()==restored->save(),
-        "Declining the turning reaction resumes the turn deterministically");
-    check(!session->snapshot().reaction_pending&&session->snapshot().actor==1&&unit(*session,1).facing_left,
-        "Resolved turn reaction keeps the hero's remaining turn and facing");
+    check(unit(*session,1).facing_left&&!session->snapshot().reaction_pending&&session->snapshot().actor==1,
+        "Turning left toward an attack target does not provoke a reaction");
+    const auto turning_checkpoint=session->save();restored=module->restore(turning_checkpoint);
+    check(restored->save()==turning_checkpoint&&unit(*restored,1).facing_left,"Facing remains saved presentation state");
+    check(unit(*session,3).reaction&&!offers(*session,"opportunity"),"Turning does not spend an adjacent enemy's reaction");
+    Command forbidden{session->snapshot().revision,3,1,"opportunity","Opportunity attack",{}};
+    check(!session->submit(forbidden)&&session->save()==turning_checkpoint,"Unprovoked reaction rejects atomically");
 
     auto reverse=duel();
     reverse.participants[0].facing_left=true;
     reverse.participants.push_back({3,"bandit","Left Guard",1,{1,2}});
     session=hero_first(*module,reverse);
     check(session->submit(left_attack(*session,2)),"Hero attacks to the right from a left-facing pose");
-    check(!unit(*session,1).facing_left&&session->snapshot().reaction_pending&&session->snapshot().actor==3,
-        "Turning right exposes the adjacent enemy on the left");
+    check(!unit(*session,1).facing_left&&!session->snapshot().reaction_pending&&session->snapshot().actor==1,
+        "Turning right toward an attack target does not provoke a reaction");
 
     auto monster_flank=duel();
     monster_flank.participants[0].cell={1,2};
@@ -221,13 +243,8 @@ void boundary_tests() {
     monster_flank.participants.push_back({3,"vanguard","Right Hero",0,{3,2}});
     session=actor_first(*module,monster_flank,2);
     check(session->submit(left_attack(*session,1)),"Monster attacks to the left");
-    check(unit(*session,2).facing_left&&session->snapshot().reaction_pending&&session->snapshot().actor==3,
-        "Monster turns left and exposes the adjacent hero on the right");
-    check(session->submit(command(*session,"opportunity")),"Hero opportunity attack on turning monster accepted");
-    const auto hero_reaction_log=session->snapshot().log;
-    check(std::any_of(hero_reaction_log.begin(),hero_reaction_log.end(),
-        [](const auto& line){return line.find("Right Hero -> Bandit")!=std::string::npos;}),
-        "A party character can strike the monster that turns away");
+    check(unit(*session,2).facing_left&&!session->snapshot().reaction_pending&&session->snapshot().actor==2,
+        "A monster's change of facing does not provoke a party reaction");
 
     auto a=module->create(duel(),77),b=module->create(duel(),77);
     for(unsigned turns=0;a->snapshot().outcome==Outcome::ongoing;++turns) {
@@ -426,6 +443,73 @@ void death_save_turn_entry_tests()
     check(death_rolls(*migrated).empty()&&unit(*migrated,1).persistent.resources=="SRD1 1 0 0 0 1",
         "Older stable resource state is normalized without rolling or refilling resources");
 }
+void opportunity_migration_tests()
+{
+    auto module=srd5::load(pack());
+    const auto fixture=[](const char* name){
+        std::ifstream file(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name);
+        check(bool(file),"Frozen previous-module combat fixture exists");
+        return std::string(std::istreambuf_iterator<char>(file),{});
+    };
+    const auto lines=[](const std::string& bytes){
+        std::vector<std::string> result;std::istringstream input(bytes);
+        for(std::string line;std::getline(input,line);)result.push_back(line);
+        return result;
+    };
+    const auto encode=[](const std::vector<std::string>& rows){
+        std::string bytes;for(const auto& row:rows)bytes+=row+'\n';return bytes;
+    };
+    const auto upgraded=[&](const std::string& bytes){
+        auto rows=lines(bytes);rows[0].replace(9,1,"6");
+        rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);rows.pop_back();return rows;
+    };
+    const auto facing=fixture("combat-v5-facing.save");
+    auto session=module->restore(facing);
+    auto expected=upgraded(facing);
+    // The frozen old writer recorded ticket 4, two facing reactors and no path.
+    expected[3]="6018027440424182934 5 0 1 0 4";expected[10]="0 0";expected[11]="";
+    check(session->save()==encode(expected),"Facing migration changes only identity/format, obsolete queue and command ticket");
+    const auto hero=unit(*session,1);
+    check(session->snapshot().actor==1&&!session->snapshot().reaction_pending&&hero.facing_left&&hero.cell==Cell{2,3}&&
+        hero.hit_points==20&&!hero.action&&!hero.bonus_action&&hero.movement_feet==25&&hero.persistent.resources=="SRD1 0 0 0 0 0",
+        "Obsolete reaction cancellation preserves wounds, spent action/recovery and remaining movement");
+    auto restored=module->restore(session->save());
+    const auto move=command(*session,"move",{1,2});
+    check(session->submit(move)&&restored->submit(move)&&session->save()==restored->save(),"Migrated facing turn can begin a genuine leave-reach reaction deterministically");
+    while(session->snapshot().reaction_pending){const auto decline=command(*session,"decline");
+        check(session->submit(decline)&&restored->submit(decline)&&session->save()==restored->save(),"Migrated movement resumes identically after each declined reaction");}
+    check(unit(*session,1).cell==Cell{1,2}&&!unit(*session,1).action,"Cancellation neither ends the turn nor refunds the action");
+    auto old_end=lines(facing);old_end.back()="2";
+    check(module->restore(encode(old_end))->save()==encode(expected),"Legacy end-after-facing state also resumes the remaining turn");
+    const auto movement=fixture("combat-v5-movement.save");session=module->restore(movement);
+    check(session->save()==encode(upgraded(movement)),"Movement migration retains every queue position, resource, ticket, RNG and clock value");
+    check(session->snapshot().actor==4&&session->snapshot().reaction_pending&&unit(*session,1).cell==Cell{2,2},
+        "Already-declined reactor stays declined and movement still waits before leaving reach");
+    for(const auto reactor:{4u,2u}){
+        check(session->snapshot().actor==reactor,"Pending movement reactors preserve initiative order");
+        restored=module->restore(session->save());const auto attack=command(*session,"opportunity");
+        check(session->submit(attack)&&restored->submit(attack)&&session->save()==restored->save(),"Each migrated opportunity attack retains deterministic rolls and continuation");
+    }
+    check(session->save()==encode(upgraded(fixture("combat-v5-movement-resolved.save"))),"Resolved movement matches the frozen old writer's RNG, log, HP and movement");
+    check(unit(*session,3).reaction&&!unit(*session,4).reaction&&!unit(*session,2).reaction,"Declining keeps a reaction; attacking spends exactly one");
+    session->submit(command(*session,"move",{2,2}));session->submit(command(*session,"move",{1,2}));
+    check(session->snapshot().actor==3&&session->snapshot().reaction_pending,"Only the previously declining enemy can react to a second departure");
+    session->submit(command(*session,"decline"));check(!session->snapshot().reaction_pending,"Spent reactions cannot be reused");
+    for(const auto& bytes:{facing,movement}){
+        for(const auto version:{"0.6.3","0.7.0"}){auto wrong=bytes;wrong.replace(wrong.find("0.6.4"),5,version);
+            rejects([&]{(void)module->restore(wrong);},"Only the explicitly supported old module may migrate combat");}
+        auto wrong=bytes;wrong.replace(wrong.find("15052881321234871607"),20,"00000000000000000000");
+        rejects([&]{(void)module->restore(wrong);},"Combat migration rejects unrelated content");
+    }
+    for(const auto state:{"3","0"}){auto malformed=lines(facing);malformed.back()=state;
+        rejects([&]{(void)module->restore(encode(malformed));},"Malformed legacy facing state must not be silently discarded");}
+    auto malformed=lines(facing);malformed[11]="1 4";
+    rejects([&]{(void)module->restore(encode(malformed));},"Invalid legacy reactor is validated before queue cancellation");
+    // The application wrapper must replace only a fully validated candidate.
+    CombatDemo demo(srd5::load(pack()));demo.training();demo.restore_combat(facing);
+    const auto valid=demo.save_combat();rejects([&]{demo.restore_combat(encode(malformed));},"Invalid training restore rejects");
+    check(demo.save_combat()==valid,"Failed migrated restore preserves the live combat");
+}
 void checkpoint_validation_tests()
 {
     auto module = srd5::load(pack());
@@ -506,7 +590,6 @@ void checkpoint_validation_tests()
 
     auto previous = lines;
     previous[0].replace(9,1,"4");
-    previous.pop_back(); // Version 4 has no pending turn-reaction state.
     for(std::size_t actor=4;actor<path_header;++actor)
         previous[actor].resize(previous[actor].find_last_of(' ')); // Version 4 has no facing field.
     check(module->restore(encode(previous))->save()==checkpoint,"Version 4 checkpoint migrates to facing right");
@@ -516,7 +599,7 @@ void checkpoint_validation_tests()
     for (const unsigned version : {1u,2u}) {
         auto legacy = lines;
         legacy[0].replace(9,1,std::to_string(version));
-        legacy.resize(legacy.size()-4); // v4 scope/clock, two effect collections, and v5 turn state.
+        legacy.resize(legacy.size()-3); // v4 scope/clock and two effect collections.
         for (std::size_t actor = 4; actor < path_header; ++actor) {
             const auto profile = legacy[actor].rfind("\"\"");
             check(profile != std::string::npos, "Expected fixture with no character profile");
@@ -566,4 +649,4 @@ void installed() {
     std::cout<<"Original Slums event completed with real rules combat: "<<(outcome==Outcome::victory?"victory":"defeat")<<".\n";
 }
 }
-int main(){try{turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();opportunity_migration_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

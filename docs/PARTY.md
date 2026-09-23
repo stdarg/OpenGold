@@ -131,15 +131,16 @@ still require a supported conversion rather than silently receiving plain stats.
 Equipment metadata comes from the rules module, not from the original edition's
 `ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
 two-handed weapon/shield combination leaves the previous loadout untouched.
-Rules version 0.6.4 includes the Rogue/Monk weapon proficiency, death-save,
-Constitution/HP-history and remaining-turn-resource corrections, and accepts
-0.6.3 and earlier supported
+Rules version 0.6.5 includes the Rogue/Monk weapon proficiency, death-save,
+Constitution/HP-history, remaining-turn-resource and opportunity-trigger corrections,
+and accepts 0.6.4 and earlier supported
 campaign saves. HP migration preserves living deficits and unconscious/dead state.
 It recomputes weapon bonuses from saved
 class/equipment choices and retains the conversion of previously unsupported
 ordinary weapons with verified original provenance. Standalone combat
-checkpoints still require the exact rules version, so finish an older-version combat
-and save the campaign before upgrading.
+checkpoints from module 0.6.4 migrate with identical content, canceling only obsolete
+facing reactions; see [combat persistence](RULES.md#library-boundary). Other older
+combat versions require finishing the combat and saving the campaign before upgrading.
 
 Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):
 - Weapons omit the +2 level-one proficiency bonus on attacks.

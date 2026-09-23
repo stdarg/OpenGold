@@ -256,9 +256,6 @@ private:
     std::size_t path_index_{};
     std::vector<EntityId> reactors_;
     std::size_t reactor_index_{};
-    // Facing reactions pause an attacker's remaining turn (removed by I06).
-    // 0 = none, 1 = resume turn; legacy value 2 also resumes the turn.
-    unsigned turn_reaction_state_{};
     const Definition& def(const Actor& a) const {return a.definition;}
     Actor& actor(EntityId id) { return *std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;}); }
     int roll(int sides) {return roll_die(rng_,sides);}
@@ -285,9 +282,9 @@ private:
     void end_turn();
     void progress_movement();
     void restore_movement(std::istream& input);
-    void validate_restored_state() const;
+    void validate_restored_state(bool legacy_facing_reaction=false) const;
     void validate_pending_movement() const;
-    void validate_pending_turn_reaction() const;
+    void validate_legacy_facing_reaction() const;
     void restore_log(std::istream& input);
 };
 
@@ -439,7 +436,7 @@ void Session::update_outcome()
 {
     bool party=false,enemies=false;for(const auto& a:actors_)if(a.hp>0&&!a.dead)(a.source.side==0?party:enemies)=true;
     if(!party||!enemies) {
-        outcome_=!party?Outcome::defeat:Outcome::victory;path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;turn_reaction_state_=0;
+        outcome_=!party?Outcome::defeat:Outcome::victory;path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;
         log(outcome_==Outcome::victory?"Victory.":"The party is incapacitated. Defeat.");
     }
 }
@@ -535,20 +532,13 @@ bool Session::submit(const Command& command)
     const auto offered=legal_commands();
     if(std::none_of(offered.begin(),offered.end(),[&](const auto& c){return same_command(c,command);}))return false;
     auto& a=actor(command.actor);const auto& d=def(a);
-    std::vector<EntityId> turn_reactors;
     if(turns_to_attack(command.verb)&&command.target){
         const auto& target=actor(command.target);
         if(target.source.cell.x!=a.source.cell.x){
             const bool new_left=target.source.cell.x<a.source.cell.x;
             if(new_left!=a.facing_left){
-                const bool old_left=a.facing_left;
                 a.facing_left=new_left;
                 log(a.source.name+(new_left?" turns left.":" turns right."));
-                for(const auto& other:actors_)
-                    if(other.source.side!=a.source.side&&other.hp>0&&other.reaction&&
-                        (old_left?other.source.cell.x<a.source.cell.x:other.source.cell.x>a.source.cell.x)&&
-                        distance(other.source.cell,a.source.cell)<=def(other).reach&&can_see(other,a))
-                        turn_reactors.push_back(other.source.id);
             }
         }
     }
@@ -557,12 +547,10 @@ bool Session::submit(const Command& command)
     if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
         ++reactor_index_;update_outcome();
-        if(outcome_==Outcome::ongoing&&turn_reaction_state_&&actors_[turn_].hp==0){
-            turn_reaction_state_=0;reactors_.clear();reactor_index_=0;end_turn();
-        }else if(outcome_==Outcome::ongoing&&!pending()){
-            if(turn_reaction_state_){
-                turn_reaction_state_=0;reactors_.clear();reactor_index_=0;
-            }else progress_movement();
+        if(outcome_==Outcome::ongoing){
+            if(actors_[turn_].hp==0){
+                path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;
+            }else if(!pending())progress_movement();
         }
     } else if(command.verb=="move") {
         path_=path_to(a,command.destination);path_index_=0;progress_movement();
@@ -591,10 +579,6 @@ bool Session::submit(const Command& command)
             spend();for(unsigned ray=0;ray<3&&actor(command.target).hp>0;++ray)attack(a,actor(command.target),true,true,{2,6,0});
         }else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
     }
-    if(!turn_reactors.empty()&&outcome_==Outcome::ongoing){
-        reactors_=std::move(turn_reactors);reactor_index_=0;
-        turn_reaction_state_=1;
-    }
     // Revisions are command tickets; zero is reserved for invalid commands.
     // Unsigned wrap is defined, but must skip that reserved value.
     if (++revision_ == 0) revision_ = 1;
@@ -607,7 +591,7 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 5 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 6 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
@@ -618,7 +602,6 @@ std::string Session::save() const
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
     out<<scope_<<' '<<elapsed_ms_<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_){detail::write_effects(out,a.effects);out<<'\n';}
-    out<<turn_reaction_state_<<'\n';
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -697,9 +680,9 @@ void Session::restore_movement(std::istream& input)
     }
 }
 
-void Session::validate_restored_state() const
+void Session::validate_restored_state(bool legacy_facing_reaction) const
 {
-    if (pending() && !turn_reaction_state_ && path_index_ >= path_.size())
+    if (pending() && !legacy_facing_reaction && path_index_ >= path_.size())
         throw std::runtime_error("Reaction without movement");
     const auto& mover = actors_[turn_];
     bool party = false, enemies = false;
@@ -715,13 +698,13 @@ void Session::validate_restored_state() const
     const auto expected = !party ? Outcome::defeat : !enemies ? Outcome::victory : Outcome::ongoing;
     if (outcome_ != expected || (expected == Outcome::ongoing && mover.hp == 0))
         throw std::runtime_error("Invalid checkpoint outcome/turn");
-    if (!pending() && (!path_.empty() || !reactors_.empty() || turn_reaction_state_))
+    if (!pending() && (!path_.empty() || !reactors_.empty() || legacy_facing_reaction))
         throw std::runtime_error("Unpaused checkpoint movement");
-    if (turn_reaction_state_) validate_pending_turn_reaction();
+    if (legacy_facing_reaction) validate_legacy_facing_reaction();
     else if (pending()) validate_pending_movement();
 }
 
-void Session::validate_pending_turn_reaction() const
+void Session::validate_legacy_facing_reaction() const
 {
     const auto& attacker=actors_[turn_];
     if(!pending()||!path_.empty()||path_index_||attacker.hp<=0||attacker.action)
@@ -792,7 +775,10 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     Identity identity;
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 5 || identity != content->identity)
+    auto compatible_identity=identity;compatible_identity.version=content->identity.version;
+    const bool previous_module=version==5&&identity.version=="0.6.4"&&compatible_identity==content->identity;
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 6 ||
+        (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
     encounter.battlefield = read_checkpoint_board(input);
@@ -825,13 +811,21 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         if(!input||!session->scope_||effects_count!=session->actors_.size())throw std::runtime_error("Invalid checkpoint effect header");
         for(auto& a:session->actors_)a.effects=detail::read_effects(input);
     }
-    if(version>=5){
-        input>>session->turn_reaction_state_;
-        if(!input||session->turn_reaction_state_>2)throw std::runtime_error("Invalid checkpoint turn reaction");
+    unsigned legacy_facing_reaction{};
+    if(version==5){
+        input>>legacy_facing_reaction;
+        if(!input||legacy_facing_reaction>2)throw std::runtime_error("Invalid checkpoint turn reaction");
     }
-    session->validate_restored_state();
+    // Validate the old queue before removing it. Migration must not conceal a
+    // malformed checkpoint or change damage, spent resources, time or dice.
+    session->validate_restored_state(legacy_facing_reaction!=0);
     input >> std::ws;
     if (!input.eof()) throw std::runtime_error("Trailing checkpoint data");
+    if(legacy_facing_reaction){
+        session->reactors_.clear();session->reactor_index_=0;
+        if(++session->revision_==0)session->revision_=1;
+        session->validate_restored_state();
+    }
     return session;
 }
 class Module final : public RulesModule {
@@ -839,7 +833,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1085,7 +1079,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.4",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.5",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

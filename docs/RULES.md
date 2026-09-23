@@ -90,7 +90,8 @@ from Rolf's exploration scene; walking into combat from exploration is future wo
 
 Training **Save combat** / **Load combat** use `user-data/combat.save`, retaining
 the previous save as `.bak`. Saves include pending reactions and RNG state and
-reject a different module or content fingerprint. Slums campaign saving remains
+accept the preceding 0.6.4 module through the migration below. Other module or
+content mismatches reject. Slums campaign saving remains
 disabled until ECL, party, and combat can be persisted together.
 
 ## Library boundary
@@ -122,6 +123,15 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
+Rules module **0.6.5** writes **OGCOMBAT 6**. The only preceding module accepted
+for combat migration is **0.6.4**, format 5, with identical module/content IDs.
+A valid saved facing-only queue is canceled; the attacker resumes with the same
+HP, movement, spent resources, RNG and clock. The command revision changes to
+invalidate the canceled choices. A saved leave-reach queue retains its order,
+partially resolved position and deterministic continuation. Invalid old state is
+rejected before migration. Campaign saves continue to accept the documented
+older versions; they do not contain paused combat queues.
+
 ## Implemented scope
 
 - Individual initiative; ties resolve by entity ID. Action, Bonus Action,
@@ -129,10 +139,12 @@ turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 - Grid pathfinding, difficult terrain, blocked occupied cells,
   opaque obstacles and blocked diagonal wall corners. Movement can pause for an
   opportunity attack before leaving reach; Disengage prevents it.
-- The game's facing rule keeps left/right facing across turns and combat checkpoints.
-  Attacking across to the other side turns the sprite and offers an adjacent,
-  visible enemy on the side left behind an opportunity reaction before the
-  attacker's remaining turn resumes. The enemy must still have its reaction available.
+- Left/right facing persists across turns and combat checkpoints as presentation
+  state. Turning toward an attack or spell target provokes no reaction. A visible
+  creature leaving an enemy's reach triggers an opportunity attack immediately
+  before that step, provided the enemy has its Reaction. Disengage prevents it;
+  a Blinded enemy cannot see the departure. If a reaction incapacitates the mover,
+  the movement and remaining reaction queue stop.
 - One melee or ranged attack per Attack action, ascending AC, natural 1/20,
   doubled damage dice on critical hits, Dodge and ranged disadvantage from long
   range or an adjacent visible enemy. No hidden dice in the UI or AI.

@@ -1,2 +1,3 @@
-# Frozen saves retain checksum-covered bytes, including trailing spaces.
+# Frozen saves retain original writer bytes, including trailing spaces.
 tests/fixtures/*.ogs binary
+tests/fixtures/*.save binary

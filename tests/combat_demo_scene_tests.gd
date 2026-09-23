@@ -105,8 +105,8 @@ func check_demo() -> void:
         "Attack effects use one-eighth volume")
     require(combat.get_node("Log").text.contains("Dorian Nightwind -> Kobold"),
         "Arrow key submits a melee attack against the occupied enemy square")
-    require(combat.get_node("Turn").text.contains("Kobold"),
-        "Attack ends the hero's turn and advances initiative")
+    require(combat.get_node("Turn").text.contains("Dorian Nightwind turn") and not combat.get_node("End").disabled,
+        "Attack preserves the hero's remaining turn and explicit End control")
     await RenderingServer.frame_post_draw
     var attack_screenshot := root.get_texture().get_image()
     require(attack_screenshot.save_png(ProjectSettings.globalize_path("res://../../../build/checks/combat-attack.png")) == OK,

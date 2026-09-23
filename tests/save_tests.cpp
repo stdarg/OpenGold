@@ -186,7 +186,7 @@ void roundtrip(const std::filesystem::path& directory){
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);
     auto base=prototype();auto rules=module();auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fixture-v1",&base);auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));loaded.town->attach_restored_party(replacement);
     check(encode_campaign(*replacement,&*loaded.town,"fixture-v1")==saved,"Complete serialized state round trips");
-    for(const std::string prior_version:{"0.6.0","0.6.1","0.6.2","0.6.3"}){
+    for(const std::string prior_version:{"0.6.0","0.6.1","0.6.2","0.6.3","0.6.4"}){
         auto previous_save=decode_campaign(changed_identity(saved,rules->identity().version,prior_version),*srd5::character_rules(),*rules,"fixture-v1",&base);
         CampaignParty migrated(module());migrated.restore(std::move(previous_save.party));
         check(encode_campaign(migrated,&*previous_save.town,"fixture-v1")==saved,"Earlier 0.6.x campaigns upgrade without changing saved state");

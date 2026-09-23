@@ -4,13 +4,14 @@ Date: 2026-09-23. Status: issue backlog created; incremental implementation star
 
 The [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186) links all
 steps, labeled `SRD_improvements`. The [coverage ledger](SRD-COVERAGE.md) records
-completed work and verification. I01–I05 are delivered in
+completed work and verification. I01–I06 are delivered in
 [#20](https://github.com/stdarg/OpenGold/issues/20),
 [#21](https://github.com/stdarg/OpenGold/issues/21),
 [#22](https://github.com/stdarg/OpenGold/issues/22),
-[#23](https://github.com/stdarg/OpenGold/issues/23) and
-[#24](https://github.com/stdarg/OpenGold/issues/24); the next increment is
-[I06, removing facing-based opportunity triggers](https://github.com/stdarg/OpenGold/issues/25).
+[#23](https://github.com/stdarg/OpenGold/issues/23),
+[#24](https://github.com/stdarg/OpenGold/issues/24) and
+[#25](https://github.com/stdarg/OpenGold/issues/25); the next increment is
+[I07, permitting SRD movement through allies](https://github.com/stdarg/OpenGold/issues/26).
 
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,

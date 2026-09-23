@@ -82,7 +82,7 @@ are prepared in an owned candidate before replacing live campaign state.
 
 ## Persistence and boundaries
 
-- Rules module **0.5.0** writes **OGCOMBAT 5** checkpoints containing source scope,
+- Rules module **0.6.5** writes **OGCOMBAT 6** checkpoints containing source scope,
   elapsed time and each actor's effect collection. The checkpoint byte limit is
   4 MiB; each creature supports at most 128 simultaneous applications. A full
   collection offers no further Blindness command.
@@ -92,7 +92,8 @@ are prepared in an owned candidate before replacing live campaign state.
 - **OPENGOLD-CAMPAIGN 6** adds sub-minute time, precise rest-completion offsets and
   the next encounter scope. Versions 1–5 migrate with zero sub-minute offsets
   and no effects. Supported preceding content packs migrate; unrelated identities
-  still reject. Old-module combat checkpoints require their original module.
+  still reject. The [combat migration](RULES.md#library-boundary) accepts module
+  0.6.4 with matching content; other old combat identities require their original module.
 - PCs and recruited NPCs carry effects through campaign handoff, reserve status,
   healing, advancement, saves and subsequent encounters. Current encounter-only
   monsters retain effects for their encounter and its checkpoints.
