@@ -30,12 +30,18 @@ void EquipmentSpriteDemo::_ready()
         presentation::add_control<Label>(*this,name,{});
     get_node<Label>("Title")->set_text("Equipment sprite demo");
     get_node<Label>("Title")->add_theme_font_size_override("font_size",28);
-    get_node<Label>("Help")->set_text("Select a weapon and Equip to replace the current weapon. Unequip to preview Unarmed.");
+    get_node<Label>("Help")->set_text("Double-click a weapon (or press Enter) to equip. Toggle the shield separately.");
     get_node<Label>("ReadyLabel")->set_text("Ready");
     get_node<Label>("ActionLabel")->set_text("Action");
     for(const char* name:{"Equipment","Status"})get_node<Label>(name)->set("autowrap_mode",3);
     auto* list=presentation::add_control<ItemList>(*this,"Items",{});
     list->connect("item_selected",callable_mp(this,&EquipmentSpriteDemo::select));
+    list->connect("item_activated",callable_mp(this,&EquipmentSpriteDemo::activate));
+    auto* shield=presentation::add_control<Button>(*this,"Shield",{});
+    shield->set_toggle_mode(true);
+    shield->set_text("Shield: Off");
+    shield->set_disabled(true);
+    shield->connect("pressed",callable_mp(this,&EquipmentSpriteDemo::toggle_shield));
     for(bool equip:{true,false}) {
         auto* button=presentation::add_control<Button>(*this,equip?"Equip":"Unequip",{});
         button->set_text(equip?"Equip":"Unequip");
@@ -84,7 +90,8 @@ void EquipmentSpriteDemo::layout()
     const auto w=get_size().x,h=get_size().y;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",{24,18,w-48,42});place("Help",{24,66,w-48,32});
-    place("Items",{24,116,380,h-244});
+    place("Items",{24,116,380,h-300});
+    place("Shield",{24,h-168,380,44});
     place("Equip",{24,h-112,182,44});place("Unequip",{222,h-112,182,44});
     const float half=(w-464)/2;
     place("ReadyLabel",{440,116,half,32});place("ActionLabel",{456+half,116,half,32});
@@ -100,7 +107,32 @@ void EquipmentSpriteDemo::_input(const Ref<InputEvent>& event)
         get_tree()->quit();
 }
 void EquipmentSpriteDemo::select(std::int64_t index)
-{selected_=static_cast<int>(index);refresh();}
+{
+    selected_=static_cast<int>(index);
+    if(!member_)return;
+    const auto& member=campaign_->member(member_);
+    const auto item=member.character.inventory().items()[selected_];
+    const bool equipped=std::ranges::find(member.equipped,item.id)!=member.equipped.end();
+    get_node<Button>("Equip")->set_disabled(equipped);
+    get_node<Button>("Unequip")->set_disabled(!equipped);
+}
+void EquipmentSpriteDemo::activate(std::int64_t index)
+{select(index);change_equipment(true);}
+void EquipmentSpriteDemo::toggle_shield()
+{
+    if(!member_)return;
+    try {
+        const auto& member=campaign_->member(member_);
+        const auto shield=member.character.inventory().items().back();
+        const bool equipped=std::ranges::find(member.equipped,shield.id)!=member.equipped.end();
+        if(equipped)campaign_->unequip(member_,shield.id);
+        else campaign_->equip(member_,shield.id);
+        get_node<Label>("Status")->set_text(equipped?"Shield unequipped.":"Shield equipped.");
+    } catch(const std::exception& error) {
+        get_node<Label>("Status")->set_text(gs(error.what()));
+    }
+    refresh();
+}
 void EquipmentSpriteDemo::refresh()
 {
     if(!member_)return;
@@ -109,6 +141,13 @@ void EquipmentSpriteDemo::refresh()
     const auto items=member.character.inventory().items();
     for(unsigned i=0;i<items.size();++i) {
         const auto& item=items[i];const bool equipped=std::ranges::find(member.equipped,item.id)!=member.equipped.end();
+        if(item.original_type==59) {
+            auto* shield=get_node<Button>("Shield");
+            shield->set_disabled(false);
+            shield->set_pressed_no_signal(equipped);
+            shield->set_text(equipped?"Shield: On":"Shield: Off");
+            continue;
+        }
         list->add_item(gs((equipped?"[Equipped] ":"")+item.name+"  ("+std::to_string(hands_[i])+" hand"+(hands_[i]==1?")":"s)")));
         Dictionary info;info["type"]=item.original_type;info["hands"]=hands_[i];info["equipped"]=equipped;
         list->set_item_metadata(i,info);

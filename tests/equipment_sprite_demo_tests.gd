@@ -4,7 +4,7 @@ var demo: Control
 var items: ItemList
 var previews: Array = []
 
-func click_at(position: Vector2) -> void:
+func click_at(position: Vector2, double_click := false) -> void:
     var motion := InputEventMouseMotion.new()
     motion.position = position
     root.push_input(motion, true)
@@ -13,6 +13,7 @@ func click_at(position: Vector2) -> void:
         event.position = position
         event.button_index = MOUSE_BUTTON_LEFT
         event.pressed = down
+        event.double_click = double_click and down
         root.push_input(event, true)
         await process_frame
     await settle()
@@ -30,7 +31,7 @@ func check_pointer_equipment() -> void:
     await click_row(1)
     require(items.is_selected(1), "Pointer selects another weapon after equip")
     require(not demo.get_node("Equip").disabled, "Equip re-enables for another selected item")
-    await click_button("Equip")
+    await click_at(items.global_position + items.get_item_rect(1).get_center(), true)
     require(items.get_item_metadata(1).equipped, "Pointer replaces first weapon with next weapon")
     require(not items.get_item_metadata(0).equipped, "Weapon replacement frees the previous weapon")
     await snapshot("weapon-swapped")
@@ -60,11 +61,17 @@ func run_checks() -> void:
     root.add_child(demo)
     await settle()
     items = demo.get_node("Items")
-    require(items.item_count == 48, "Every catalog weapon plus shield loads: " + demo.get_node("Status").text)
-    var shield := items.item_count - 1
-    require(items.get_item_metadata(shield).type == 59, "Shield is included")
+    require(items.item_count == 47, "Every catalog weapon loads: " + demo.get_node("Status").text)
+    var shield := items.item_count
+    require(not demo.get_node("Shield").button_pressed, "Separate shield toggle starts off")
+    for index in range(items.item_count):
+        require(items.get_item_metadata(index).type != 59, "Only weapons appear in the list")
     var unarmed := pixels()
     await check_pointer_equipment()
+    await click_button("Shield")
+    require(demo.get_node("Shield").button_pressed, "Pointer toggles shield on")
+    await click_button("Shield")
+    require(not demo.get_node("Shield").button_pressed, "Pointer toggles shield off")
     await snapshot("unarmed")
     # Independently read the shared classifications to verify the resolved body.
     var mappings := {}
@@ -103,9 +110,8 @@ func run_checks() -> void:
         choose(index)
         press(demo, "Equip")
         require(pixels() == weapon_pixels, "Swapping back restores both poses")
-        choose(shield)
-        press(demo, "Equip")
-        require(items.get_item_metadata(shield).equipped == (info.hands == 1), "Shield enforces hand limit")
+        press(demo, "Shield")
+        require(demo.get_node("Shield").button_pressed == (info.hands == 1), "Shield enforces hand limit")
         if info.hands == 1:
             key += "_shield"
             expected = mappings.get(key, 24) if not key in deleted else 24
@@ -117,7 +123,7 @@ func run_checks() -> void:
             var alternate := 1 if index == 0 else 0
             choose(alternate)
             press(demo, "Equip")
-            require(items.get_item_metadata(shield).equipped, "Compatible shield survives weapon swap")
+            require(demo.get_node("Shield").button_pressed, "Compatible shield survives weapon swap")
             require(items.get_item_metadata(alternate).equipped and not items.get_item_metadata(index).equipped, "Weapon swaps with shield equipped")
             choose(index)
             press(demo, "Equip")
@@ -130,10 +136,9 @@ func run_checks() -> void:
             require(two_handed >= 0, "Two-handed test weapon exists")
             choose(two_handed)
             press(demo, "Equip")
-            require(items.get_item_metadata(index).equipped and items.get_item_metadata(shield).equipped, "Rejected swap retains previous weapon and shield")
+            require(items.get_item_metadata(index).equipped and demo.get_node("Shield").button_pressed, "Rejected swap retains previous weapon and shield")
             require(not items.get_item_metadata(two_handed).equipped and pixels() == with_shield, "Rejected swap preserves both previews")
-            choose(shield)
-            press(demo, "Unequip")
+            press(demo, "Shield")
             require(pixels() == weapon_pixels, "Removing shield restores both poses")
         else:
             require(pixels() == weapon_pixels, "Rejected shield preserves both poses")
@@ -141,8 +146,7 @@ func run_checks() -> void:
         press(demo, "Unequip")
         require(pixels() == unarmed, "Removing weapon restores both unarmed poses")
         # Reverse order: shield first must also block two-handed weapons.
-        choose(shield)
-        press(demo, "Equip")
+        press(demo, "Shield")
         var shield_pixels := pixels()
         choose(index)
         press(demo, "Equip")
@@ -151,8 +155,7 @@ func run_checks() -> void:
             press(demo, "Unequip")
         else:
             require(pixels() == shield_pixels, "Rejected weapon preserves shield artwork")
-        choose(shield)
-        press(demo, "Unequip")
+        press(demo, "Shield")
     require(changed > 30, "Many weapon previews visibly differ from unarmed")
     choose(0)
     require(not demo.get_node("Equip").disabled and demo.get_node("Unequip").disabled, "Button availability follows selection")

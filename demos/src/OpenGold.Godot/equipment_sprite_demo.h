@@ -25,6 +25,8 @@ private:
     void layout();
     void refresh();
     void select(std::int64_t index);
+    void activate(std::int64_t index);
+    void toggle_shield();
     void change_equipment(bool equip);
 };
 #endif

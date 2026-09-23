@@ -37,7 +37,9 @@ Launch it with `bash demos/review-sprites.sh` on macOS/Linux or
 ### Equipment sprite demo
 
 Run `.\demos\review-equipment.cmd` from PowerShell after building the demo
-extension. Select an item in the left list and use **Equip** / **Unequip**;
+extension. Double-click a weapon in the left list (or press Enter) to equip it.
+Use the separate **Shield: On/Off** button to toggle the shield.
+The **Equip** / **Unequip** buttons also remain available;
 the enlarged **Ready** and **Action** previews update immediately. Arrow keys
 select items, and Tab/Enter reach and activate the buttons.
 
