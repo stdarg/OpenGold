@@ -83,6 +83,7 @@ struct Definition {
     Dice ranged;
     int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{},slots2{};
     bool str_dex_disadvantage{},savage{},stealth_disadvantage{};
+    std::string weapon_label;
     bool melee_heavy_disadvantage{},ranged_heavy_disadvantage{};
     std::array<int,6> saves{};
     unsigned weapon_hands{};
@@ -132,6 +133,11 @@ struct Actor : detail::LifeState {
     unsigned weapon_hands{};
     bool involuntary_overlap{}; // Interrupted on an ally; retained through recovery until separated.
     detail::EffectState effects;
+};
+struct PendingWeaponHit {
+    EntityId attacker{},target{};
+    bool ranged{};
+    int natural{},mode{},first{},second{-1};
 };
 int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
 {
@@ -190,7 +196,7 @@ Definition character_definition(std::string_view bytes)
     bool weapon=false,armor=false,shield=false;unsigned hands=0;
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(const auto* item=detail::weapon(key)){
-            if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
+            if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;d.weapon_label=item->label;
             d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&magic!="PC8"&&magic!="PC9"&&!with_spells&&legacy_two_hands(key)?2:item->hands;
             d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
@@ -351,6 +357,7 @@ private:
     unsigned turn_{}, round_{1};
     Outcome outcome_{Outcome::ongoing};
     std::optional<TemporaryHitPoints> temporary_offer_;
+    std::optional<PendingWeaponHit> weapon_hit_;
     std::vector<std::string> log_;
     std::vector<Message> log_messages_;
     std::vector<Cell> path_;
@@ -385,6 +392,12 @@ private:
     std::vector<Cell> path_to(const Actor& a,Cell destination) const;
     EntityId pending() const {return reactor_index_<reactors_.size()?reactors_[reactor_index_]:0;}
     void attack(Actor& a,Actor& target,bool ranged,bool spell=false,Dice spell_dice={1,10,0});
+    detail::RollModifiers attack_modifiers(const Actor& a,const Actor& target,bool ranged,bool spell) const;
+    Dice weapon_dice(const Actor& a,bool ranged) const;
+    void apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type);
+    void resolve_weapon_hit(int amount);
+    void finish_reaction();
+    void validate_weapon_hit() const;
     int resolved_damage(const Actor& target,detail::DamageType type,int amount);
     void damage(Actor& target,int amount,bool critical=false);
     void heal(Actor& target,int amount);
@@ -421,6 +434,8 @@ Snapshot Session::snapshot() const
     Snapshot s;s.identity=content_->identity;s.revision=revision_;s.round=round_;s.outcome=outcome_;
     s.elapsed_milliseconds=elapsed_ms_;
     s.actor=pending()?pending():actors_[turn_].source.id;s.reaction_pending=pending()!=0;s.battlefield=board_;s.log=log_;s.log_messages=log_messages_;
+    if(weapon_hit_){const auto& h=*weapon_hit_;const auto& a=*std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.attacker;});const auto dice=weapon_dice(a,h.ranged);
+        s.savage_attack_choice=SavageAttackChoice{h.attacker,h.target,def(a).weapon_label,dice.count*(h.natural==20?2:1),dice.sides,dice.bonus,h.first,h.second<0?std::nullopt:std::optional{h.second},h.natural==20};}
     if(temporary_offer_)s.temporary_hp_offer=TemporaryHpOffer{actors_[turn_].source.id,actors_[turn_].temporary_hp,*temporary_offer_};
     for(const auto& a:actors_) {
         std::string status=a.dead?"Dead":a.hp==0?(a.stable?"Stable, unconscious":"Unconscious"):a.dodge?"Dodging":"Ready";
@@ -463,6 +478,12 @@ std::vector<Command> Session::legal_commands() const
         for(const auto& option:grip_options(def(a)))if(option.available&&option.hands!=a.weapon_hands)
             add(a.source.id,option.hands==1?"grip_one":"grip_two",option.hands==1?"One hand":"Two hands");
     };
+    if(weapon_hit_){
+        const auto& h=*weapon_hit_;
+        if(h.second<0){add(h.attacker,"savage_use","Use Savage Attacker",h.target);add(h.attacker,"savage_skip","Keep damage; save feat",h.target);}
+        else {add(h.attacker,"savage_first","Keep first roll",h.target);add(h.attacker,"savage_second","Keep second roll",h.target);}
+        return commands;
+    }
     if(temporary_offer_){
         add(actors_[turn_].source.id,"temp_hp_keep","Keep current");
         add(actors_[turn_].source.id,"temp_hp_use","Use new");return commands;
@@ -510,7 +531,7 @@ std::vector<Command> Session::legal_commands() const
 std::vector<Cell> Session::movement_reach(EntityId id) const
 {
     std::vector<Cell> cells;
-    if(outcome_!=Outcome::ongoing||pending()||temporary_offer_)return cells;
+    if(outcome_!=Outcome::ongoing||pending()||temporary_offer_||weapon_hit_)return cells;
     const auto actor=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;});
     if(actor==actors_.end()||actor->hp<=0||actor->dead||actor->movement<=0)return cells;
     const auto reachable=movement_grid(*actor).reachable(actor->movement);
@@ -549,35 +570,63 @@ void Session::heal(Actor& target,int amount)
     log(target.source.name+" recovers "+std::to_string(restored)+" HP.",
         {"{name} recovers {hp} HP.",{{"name",target.source.name},{"hp",std::to_string(restored)}}});
 }
-void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_dice)
+detail::RollModifiers Session::attack_modifiers(const Actor& a,const Actor& target,bool ranged,bool spell) const
 {
-    if(target.source.cell.x!=a.source.cell.x)a.facing_left=target.source.cell.x<a.source.cell.x;
     const auto& d=def(a);bool disadvantaged=!spell&&(d.str_dex_disadvantage||
         (ranged?d.ranged_heavy_disadvantage:d.melee_heavy_disadvantage));
-    if(ranged) {
+    if(ranged){
         if(!spell&&distance(a.source.cell,target.source.cell)>d.range)disadvantaged=true;
         for(const auto& other:actors_)if(other.source.side!=a.source.side&&other.hp>0&&distance(a.source.cell,other.source.cell)<=5&&can_see(other,a))disadvantaged=true;
     }
-    const auto modifiers=detail::attack_modifiers(detail::blinded(a.effects),detail::blinded(target.effects),target.dodge,disadvantaged);
-    const int natural=detail::d20(modifiers,rng_);
-    const std::string modifier_label=modifiers.mode()<0?" (disadvantage)":modifiers.mode()>0?" (advantage)":"";
-    const int bonus=spell?d.casting:ranged?d.ranged_bonus:d.melee_bonus;
-    const bool hit=attack_hits(natural,bonus,def(target).ac);
+    return detail::attack_modifiers(detail::blinded(a.effects),detail::blinded(target.effects),target.dodge,disadvantaged);
+}
+Dice Session::weapon_dice(const Actor& a,bool ranged) const
+{
+    const auto& d=def(a);auto result=ranged?d.ranged:d.melee;
+    if(!ranged&&d.versatile_sides&&a.weapon_hands==2)result.sides=d.versatile_sides;
+    return result;
+}
+void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type)
+{
+    const std::string modifier_label=mode<0?" (disadvantage)":mode>0?" (advantage)":"";
     std::string message=a.source.name+" -> "+target.source.name+": d20 "+std::to_string(natural)+
         " + "+std::to_string(bonus)+" vs AC "+std::to_string(def(target).ac)+modifier_label;
     std::vector<MessageArgument> arguments{{"actor",a.source.name},{"target",target.source.name},{"roll",std::to_string(natural)},
         {"bonus",std::to_string(bonus)},{"ac",std::to_string(def(target).ac)},{"disadvantage",modifier_label,true}};
-    if(!hit){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});return;}
-    Dice damage_dice=spell?spell_dice:ranged?d.ranged:d.melee;
-    if(!spell&&!ranged&&d.versatile_sides&&a.weapon_hands==2)damage_dice.sides=d.versatile_sides;
-    int amount=dice(damage_dice,natural==20);
-    bool savage=false;
-    if(!spell&&damage_dice.count&&d.savage&&!a.savage_used){amount=std::max(amount,dice(damage_dice,natural==20));a.savage_used=true;savage=true;message+=" (Savage Attacker)";}
-    amount=resolved_damage(target,spell?detail::DamageType::fire:ranged?d.ranged_type:d.melee_type,amount);
+    if(!attack_hits(natural,bonus,def(target).ac)){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});return;}
+    if(savage)message+=" (Savage Attacker)";
+    amount=resolved_damage(target,type,amount);
     arguments.push_back({"savage",savage?" (Savage Attacker)":"",true});
     arguments.push_back({"hit",natural==20?"CRITICAL":"hits",true});arguments.push_back({"damage",std::to_string(amount)});
     log(message+(natural==20?" CRITICAL":" hits")+" for "+std::to_string(amount)+" damage.",
         {"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage}{savage} {hit} for {damage} damage.",arguments});damage(target,amount,natural==20);
+}
+void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_dice)
+{
+    if(target.source.cell.x!=a.source.cell.x)a.facing_left=target.source.cell.x<a.source.cell.x;
+    const auto& d=def(a);const auto modifiers=attack_modifiers(a,target,ranged,spell);
+    const int natural=detail::d20(modifiers,rng_),bonus=spell?d.casting:ranged?d.ranged_bonus:d.melee_bonus;
+    const auto damage_dice=spell?spell_dice:weapon_dice(a,ranged);
+    const bool hit=attack_hits(natural,bonus,def(target).ac);
+    const int amount=hit?dice(damage_dice,natural==20):0;
+    if(hit&&!spell&&damage_dice.count&&d.savage&&!a.savage_used){
+        weapon_hit_=PendingWeaponHit{a.source.id,target.source.id,ranged,natural,modifiers.mode(),amount};return;
+    }
+    apply_hit(a,target,natural,bonus,modifiers.mode(),amount,false,spell?detail::DamageType::fire:ranged?d.ranged_type:d.melee_type);
+}
+void Session::resolve_weapon_hit(int amount)
+{
+    const auto h=*weapon_hit_;weapon_hit_.reset();auto& a=actor(h.attacker);const auto& d=def(a);
+    apply_hit(a,actor(h.target),h.natural,h.ranged?d.ranged_bonus:d.melee_bonus,h.mode,amount,h.second>=0,h.ranged?d.ranged_type:d.melee_type);
+    if(pending())finish_reaction();
+}
+void Session::finish_reaction()
+{
+    ++reactor_index_;update_outcome();
+    if(outcome_==Outcome::ongoing){
+        if(actors_[turn_].hp==0){path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;}
+        else if(!pending())progress_movement();
+    }
 }
 void Session::update_outcome()
 {
@@ -700,7 +749,11 @@ bool Session::submit(const Command& command)
     }
     const bool second=command.verb.ends_with("_2");
     const auto spend=[&]{if(second||command.verb=="scorching_ray"||command.verb=="blindness")--a.slots2;else --a.slots;a.spent_slot=true;};
-    if(command.verb=="temp_hp_keep"||command.verb=="temp_hp_use") {
+    if(command.verb=="savage_use"){
+        a.savage_used=true;weapon_hit_->second=dice(weapon_dice(a,weapon_hit_->ranged),weapon_hit_->natural==20);
+    }else if(command.verb=="savage_skip"||command.verb=="savage_first"||command.verb=="savage_second"){
+        resolve_weapon_hit(command.verb=="savage_second"?weapon_hit_->second:weapon_hit_->first);
+    }else if(command.verb=="temp_hp_keep"||command.verb=="temp_hp_use") {
         detail::grant_temporary_hp(a,*temporary_offer_,command.verb=="temp_hp_keep"?TemporaryHpChoice::keep_current:TemporaryHpChoice::use_new);
         temporary_offer_.reset();
     } else if(command.verb=="adrenaline_rush") {
@@ -713,12 +766,7 @@ bool Session::submit(const Command& command)
         a.weapon_hands=command.verb=="grip_one"?1:2;
     } else if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
-        ++reactor_index_;update_outcome();
-        if(outcome_==Outcome::ongoing){
-            if(actors_[turn_].hp==0){
-                path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;
-            }else if(!pending())progress_movement();
-        }
+        if(!weapon_hit_)finish_reaction();
     } else if(command.verb=="move") {
         path_=path_to(a,command.destination);path_index_=0;progress_movement();
     } else if(command.verb=="end")end_turn();
@@ -760,7 +808,7 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 12 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 13 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
@@ -773,6 +821,8 @@ std::string Session::save() const
     for(const auto& a:actors_){detail::write_effects(out,a.effects);out<<'\n';}
     out<<bool(temporary_offer_)<<'\n';
     if(temporary_offer_)out<<temporary_offer_->amount<<' '<<std::quoted(temporary_offer_->source_id)<<'\n';
+    out<<bool(weapon_hit_)<<'\n';
+    if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second<<'\n';}
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -866,8 +916,26 @@ void Session::restore_movement(std::istream& input)
     }
 }
 
+void Session::validate_weapon_hit() const
+{
+    if(!weapon_hit_)return;
+    const auto& h=*weapon_hit_;
+    const auto a=std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.attacker;});
+    const auto t=std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.target;});
+    if(a==actors_.end()||t==actors_.end()||temporary_offer_||outcome_!=Outcome::ongoing||a->hp<=0||t->hp<=0||a->dead||t->dead||a->source.side==t->source.side||!def(*a).savage||
+        h.natural<2||h.natural>20||h.second< -1||a->savage_used!=(h.second>=0)||
+        !attack_hits(h.natural,h.ranged?def(*a).ranged_bonus:def(*a).melee_bonus,def(*t).ac)||
+        h.mode!=attack_modifiers(*a,*t,h.ranged,false).mode()||!line_of_sight(a->source.cell,t->source.cell)||
+        distance(a->source.cell,t->source.cell)>(h.ranged?def(*a).long_range:def(*a).reach)||
+        (pending()?(pending()!=h.attacker||h.target!=actors_[turn_].source.id||a->reaction||h.ranged):(h.attacker!=actors_[turn_].source.id||a->action)))
+        throw std::runtime_error("Invalid pending Savage Attacker hit");
+    const auto d=weapon_dice(*a,h.ranged);const int count=d.count*(h.natural==20?2:1);
+    const auto valid=[&](int n){return n>=std::max(0,count+d.bonus)&&n<=std::max(0,count*d.sides+d.bonus);};
+    if(!count||!valid(h.first)||(h.second>=0&&!valid(h.second)))throw std::runtime_error("Invalid Savage Attacker damage roll");
+}
 void Session::validate_restored_state(bool legacy_facing_reaction) const
 {
+    validate_weapon_hit();
     if (pending() && !legacy_facing_reaction && path_index_ >= path_.size())
         throw std::runtime_error("Reaction without movement");
     const auto& mover = actors_[turn_];
@@ -937,7 +1005,7 @@ void Session::validate_pending_movement() const
             [&](const auto& actor) { return actor.source.id == reactors_[i]; });
         // restore_movement already established that every reactor ID exists.
         const auto& actor = *reactor;
-        if (actor.hp == 0 || !actor.reaction || actor.source.side == mover.source.side ||
+        if (actor.hp == 0 || (!actor.reaction&&!(weapon_hit_&&weapon_hit_->attacker==actor.source.id&&i==reactor_index_)) || actor.source.side == mover.source.side ||
             distance(actor.source.cell, mover.source.cell) > def(actor).reach ||
             distance(actor.source.cell, path_[path_index_]) <= def(actor).reach ||
             !can_see(actor,mover))
@@ -972,10 +1040,10 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 12 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 13 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -1016,6 +1084,11 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         if(pending_offer){TemporaryHitPoints offer;input>>offer.amount>>std::quoted(offer.source_id);detail::validate_temporary_hp(offer);session->temporary_offer_=std::move(offer);}
         if(!input)throw std::runtime_error("Invalid Temporary HP choice checkpoint");
     }
+    if(version>=13){
+        bool pending_hit{};input>>pending_hit;
+        if(pending_hit){PendingWeaponHit h;input>>h.attacker>>h.target>>h.ranged>>h.natural>>h.mode>>h.first>>h.second;session->weapon_hit_=h;}
+        if(!input)throw std::runtime_error("Invalid Savage Attacker choice checkpoint");
+    }
     unsigned legacy_facing_reaction{};
     if(version==5){
         input>>legacy_facing_reaction;
@@ -1040,7 +1113,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1059,7 +1132,7 @@ public:
         if(result.level==4)result.feats={
             {"ability_score_improvement","Ability points","Add 2 to one ability or 1 to two abilities; maximum 20."},
             {"defense","Defense","+1 AC while wearing armor. Requires the Fighter's Fighting Style feature.",detail::has_grant(sheet.grants,"feature:fighting_style")&&!detail::has_grant(sheet.grants,"feat:defense")},
-            {"savage_attacker","Savage Attacker","Roll weapon damage twice on the first weapon hit each turn; use the higher result.",!detail::has_grant(sheet.grants,"feat:savage_attacker")},
+            {"savage_attacker","Savage Attacker","Once per turn on a weapon hit, choose whether to roll weapon damage twice and keep either roll.",!detail::has_grant(sheet.grants,"feat:savage_attacker")},
             {"grappler","Grappler","Unavailable: grappling is not implemented.",false},
             {"magic_initiate","Magic Initiate","Unavailable: its complete spell-selection feature is not implemented.",false}};
         if(sheet.character_class=="Cleric")result.spells={
@@ -1329,7 +1402,7 @@ public:
         }
         for(const auto& key:gear)result.item_modifiers+="Source: equipped "+weapon_label(key)+". "+equipment_note(sheet,key)+"\n";
         if(features&1)result.item_modifiers+="Defense feat: +1 AC while wearing armor.\n";
-        if(features&2)result.item_modifiers+="Savage Attacker: higher of two weapon-damage rolls on the first weapon hit each turn.\n";
+        if(features&2)result.item_modifiers+="Savage Attacker: once per turn on a weapon hit, choose whether to roll damage twice and keep either result.\n";
         if(gear.empty())result.item_modifiers="No equipment modifiers. Source: unarmed strike rules and Strength score "+std::to_string(sheet.scores[0])+". Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).";
         result.spell_modifiers="Active conditions are shown in the character status.";
         if(sheet.character_class=="Wizard")result.spell_modifiers="Source: Fire Bolt and Wizard spellcasting, Intelligence score "+std::to_string(sheet.scores[3])+". Attack: Intelligence modifier +2 level-one proficiency = "+std::to_string(d.casting)+". Magic Missile has no ability modifier to damage.\n"+result.spell_modifiers;
@@ -1379,7 +1452,7 @@ public:
             }
         }
         if(features&1)result.item_messages.push_back({"Defense feat: +1 AC while wearing armor.",{}});
-        if(features&2)result.item_messages.push_back({"Savage Attacker: higher of two weapon-damage rolls on the first weapon hit each turn.",{}});
+        if(features&2)result.item_messages.push_back({"Savage Attacker: once per turn on a weapon hit, choose whether to roll damage twice and keep either result.",{}});
         if(gear.empty())result.item_messages.push_back({"No equipment modifiers. Source: unarmed strike rules and Strength score {score}. Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).",{{"score",std::to_string(sheet.scores[0])}}});
         if(d.str_dex_disadvantage)result.spell_messages.push_back({"Cannot cast spells while wearing untrained armor.",{}});
         if(sheet.character_class=="Wizard")result.spell_messages.push_back({"Source: Fire Bolt and Wizard spellcasting, Intelligence score {score}. Attack: Intelligence modifier +2 level-one proficiency = {attack}. Magic Missile has no ability modifier to damage.",{{"score",std::to_string(sheet.scores[3])},{"attack",std::to_string(d.casting)}}});
@@ -1423,7 +1496,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.19",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.20",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

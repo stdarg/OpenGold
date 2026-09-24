@@ -1,3 +1,4 @@
+#include "combat_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include <algorithm>
@@ -76,7 +77,7 @@ void legacy(){auto rules=module();CampaignParty party(module());party.restore(de
     }
     check(party.state().time_minutes==123&&party.state().subminute_milliseconds==456,"Legacy campaign time retained");
     const auto bytes=encode_campaign(party,nullptr,"spells-fixture");CampaignParty again(module());again.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"spells-fixture",nullptr).party);check(encode_campaign(again,nullptr,"spells-fixture")==bytes,"Migration is canonical and does not re-learn spells on reload");
-    const auto old=read(root/"tests/fixtures/combat-v12-spells.save");auto c=rules->restore(old);auto expected=old;expected.replace(expected.find("0.6.18"),6,rules->identity().version);check(c->save()==expected,"Old combat preserves its recipe without inventing absent book history");
+    const auto old=read(root/"tests/fixtures/combat-v12-spells.save");auto c=rules->restore(old);auto expected=old;expected.replace(expected.find("0.6.18"),6,rules->identity().version);check(c->save()==test::with_savage_choice(expected),"Old combat preserves its recipe without inventing absent book history");
     check(c->submit(command(*c,"scorching_ray")),"Legacy prepared spell still casts");check(c->save()==rules->restore(read(root/"tests/fixtures/combat-v12-spells-continued.save"))->save(),"Prior-writer spell damage, slots, action state, RNG and clock continue exactly");
 }
 }

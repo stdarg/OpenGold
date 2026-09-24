@@ -1,3 +1,4 @@
+#include "combat_fixture.h"
 #include "opengold/campaign_save.h"
 #include "campaign_fixture.h"
 #include "opengold/srd5.h"
@@ -119,7 +120,7 @@ void legacy(){
     auto rules=module();const auto path=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures";
     const auto old=read(path/"combat-v12-heavy.save");auto c=rules->restore(old);
     auto expected=old;expected.replace(expected.find("0.6.15"),6,rules->identity().version);
-    check(c->save()==expected&&c->snapshot().reaction_pending,"Migration changes only identity, preserving pending movement, RNG, HP, resource expenditure and recipes");
+    check(c->save()==test::with_savage_choice(expected)&&c->snapshot().reaction_pending,"Migration changes only identity, preserving pending movement, RNG, HP, resource expenditure and recipes");
     auto restored=rules->restore(c->save());const auto reaction=command(*c,"opportunity");const auto before=unit(*c);
     check(c->submit(reaction)&&restored->submit(reaction)&&c->save()==restored->save(),"Heavy opportunity attack resumes identically");
     check(argument(attack(*c),"roll")=="11"&&argument(attack(*c),"disadvantage")==" (disadvantage)"&&!unit(*c).reaction&&unit(*c).action==before.action,"Old weak reactor now uses corrected Heavy rule; seed 1 chooses 11 over 16 and spends only Reaction");

@@ -215,3 +215,15 @@ pending. PC1–9 combat recipes retain their recorded access because those recor
 lack acquisition history. The frozen 0.6.18 writer proves exact continuation;
 no load-time slot/use refund is allowed. Full selection controls and free casts
 remain open. See [spell access](SPELL-ACCESS.md).
+
+## Savage Attacker decisions
+
+Rules 0.6.20 writes combat format 13 with an optional pending weapon hit. The
+first-stage hit or second-stage pair of results survives internal save/reload
+without applying damage, rerolling, refunding the Action/Reaction or advancing
+the interrupted movement. Validation checks the feat, weapon, roll bounds,
+participants and continuation together. PC10, campaign 10 and SRD1–7 remain.
+Older combat formats gain no invented pending choice; existing damage remains,
+and subsequent qualifying hits offer the two decisions. Frozen 0.6.19 saves
+verify campaign state preservation and deterministic continuation. See
+[Savage Attacker](SAVAGE-ATTACKER.md). This adds no player combat saving.

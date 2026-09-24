@@ -1,3 +1,4 @@
+#include "combat_fixture.h"
 #include "opengold/campaign_party.h"
 #include "opengold/character_creator.h"
 #include "opengold/combat_demo.h"
@@ -338,6 +339,7 @@ void class_weapon_proficiency()
         auto restored=rules->restore(combat->save());const auto commands=combat->legal_commands();
         const auto attack=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="melee";});
         check(attack!=commands.end()&&combat->submit(*attack)&&restored->submit(*attack),"Original and restored actors can attack");
+        test::choose_savage_damage(*combat);test::choose_savage_damage(*restored);
         check(combat->save()==restored->save(),"Proficient attacks resume deterministically from checkpoints");
         const auto snapshot=combat->snapshot();
         check(std::any_of(snapshot.log_messages.begin(),snapshot.log_messages.end(),[](const auto& message){

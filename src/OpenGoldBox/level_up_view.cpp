@@ -159,9 +159,19 @@ void CharacterCreationView::advancement_check(){
             !has({"feat:savage_attacker","background:soldier",1,{}}))throw std::runtime_error("Fighter must retain separate creation and advancement grants");
         const auto text=sheet_text(fighter);
         if(!text.contains("savage attacker")||!text.contains("defense"))throw std::runtime_error("Sheet must display both acquired feats");}
-        get_node<RolfTourView>("CampaignTown")->get_node<Button>("PartyList/Rows/Member2/Advance")->emit_signal("pressed");get_node<CheckBox>("LevelUp/Spell1")->set_pressed(true);break;
-    case 6:capture_dialog("level-up-cleric.png");press("LevelUp/Confirm");party_action(9);capture("level-up-complete.png");
+        get_node<RolfTourView>("CampaignTown")->get_node<Button>("PartyList/Rows/Member2/Advance")->emit_signal("pressed");select("LevelUp/Feat",2);get_node<CheckBox>("LevelUp/Spell1")->set_pressed(true);break;
+    case 6:{capture_dialog("level-up-cleric.png");press("LevelUp/Confirm");
+        const auto cleric_id=campaign_->state().slots[2];
+        const auto has_feat=[&]{const auto& grants=campaign_->member(cleric_id).character.sheet().grants;
+            return std::find(grants.begin(),grants.end(),opengold::rules::FeatureGrant{"feat:savage_attacker","class:cleric:ability_score_improvement",4,{}})!=grants.end();};
+        if(!has_feat()||campaign_->member(cleric_id).character.sheet().prepared_spells.size()!=2)throw std::runtime_error("Cleric selection must grant Savage Attacker with its source and chosen spells");
+        const auto saved=opengold::encode_campaign(*campaign_,nullptr,"feat-ui-check");
+        const auto module=opengold::srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));
+        auto restored=opengold::decode_campaign(saved,*opengold::srd5::character_rules(),*module,"feat-ui-check",nullptr);campaign_->restore(std::move(restored.party));
+        if(!has_feat()||opengold::encode_campaign(*campaign_,nullptr,"feat-ui-check")!=saved)throw std::runtime_error("UI-acquired feat must survive campaign reload");
+        party_action(9);capture("level-up-complete.png");
         UtilityFunctions::print("Godot advancement passed: roster and town arrows, HP preview, Cancel rollback, invalid-point prevention, level-four feat and spell confirmations.");advancement_check_=false;get_tree()->quit(0);break;
+    }
     }
     ++advancement_stage_;
 }

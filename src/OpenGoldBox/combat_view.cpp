@@ -142,6 +142,8 @@ void CombatView::_ready()
     for(const auto& [node,verb]:action_buttons)
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
     get_node<Button>("AdrenalineRush")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("adrenaline_rush")));
+    for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
+        get_node<Button>(String("SavageAttacker/")+node)->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String(verb)));
     get_node<Button>("TemporaryHP/Keep")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("temp_hp_keep")));
     get_node<Button>("TemporaryHP/Use")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("temp_hp_use")));
     get_node<Button>("Move")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String("move")));
@@ -452,7 +454,7 @@ void CombatView::act(const Command& command)
             if(command.verb=="melee"||command.verb=="opportunity"){
                 const auto previous=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
                 const auto current=std::find_if(after.combatants.begin(),after.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
-                sound=previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points?7:9;
+                sound=after.savage_attack_choice||(previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points)?7:9;
             } else if(command.verb=="ranged")sound=6;
             else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
             if(sound){
@@ -474,7 +476,7 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
-    if(get_node<Window>("TemporaryHP")->is_visible())return;
+    if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
     if(key.is_valid()&&(get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus())&&
@@ -664,6 +666,21 @@ void CombatView::refresh()
              {"offered",offer.offered.amount},{"offered_source",presentation::temporary_hp_source(offer.offered)}}));
         if(!modal->is_visible()){modal->popup_centered();get_node<Button>("TemporaryHP/Keep")->grab_focus();}
     }else if(modal->is_visible()){modal->hide();if(show_rush)get_node<Button>("AdrenalineRush")->grab_focus();}
+    auto* savage=get_node<Window>("SavageAttacker");
+    if(player&&s.savage_attack_choice){
+        const auto& hit=*s.savage_attack_choice;const bool second=hit.second_damage.has_value();
+        const bool changed=!savage->is_visible()||get_node<Button>("SavageAttacker/First")->is_visible()!=second;
+        get_node<Button>("SavageAttacker/Use")->set_visible(!second);get_node<Button>("SavageAttacker/Skip")->set_visible(!second);
+        get_node<Button>("SavageAttacker/First")->set_visible(second);get_node<Button>("SavageAttacker/Second")->set_visible(second);
+        const auto critical=hit.critical?i18n::text(N_("Critical hit")):i18n::text(N_("Weapon hit"));
+        const auto formula=i18n::format("{weapon}: {count}d{sides} + ({modifier})",{{"weapon",i18n::text(hit.weapon)},{"count",hit.dice_count},{"sides",hit.dice_sides},{"modifier",hit.modifier}});
+        get_node<Label>("SavageAttacker/Text")->set_text(second?
+            i18n::format("{hit}\n{formula}\nFirst damage: {first}\nSecond damage: {second}\n\nKeep either roll. Defenses apply afterward.\nSavage Attacker is spent for this turn.",{{"hit",critical},{"formula",formula},{"first",hit.first_damage},{"second",*hit.second_damage}}):
+            i18n::format("{hit}\n{formula}\nFirst damage: {first}\n\nUse Savage Attacker to roll again, or keep this damage and save the feat for another hit this turn.\nThe attack's Action or Reaction is already spent.",{{"hit",critical},{"formula",formula},{"first",hit.first_damage}}));
+        if(second){get_node<Button>("SavageAttacker/First")->set_text(i18n::format("First roll: {damage}",{{"damage",hit.first_damage}}));get_node<Button>("SavageAttacker/Second")->set_text(i18n::format("Second roll: {damage}",{{"damage",*hit.second_damage}}));}
+        if(!savage->is_visible())savage->popup_centered();
+        if(changed)get_node<Button>(second?"SavageAttacker/First":"SavageAttacker/Use")->grab_focus();
+    }else if(savage->is_visible()){savage->hide();if(player)get_node<Button>("End")->grab_focus();}
     get_node<Button>("Continue")->set_visible(demo_&&(demo_->waiting()||(loaded&&s.outcome!=Outcome::ongoing)));
     get_node<Button>("End")->set_visible(!get_node<Button>("Continue")->is_visible());
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
@@ -685,6 +702,7 @@ void CombatView::refresh()
     const auto grip_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     const bool show_grip=player&&grip_actor!=s.combatants.end()&&!grip_actor->grips.empty();
     get_node<Label>("GripLabel")->set_visible(show_grip);get_node<OptionButton>("Grip")->set_visible(show_grip);
+    get_node<OptionButton>("Grip")->set_disabled(s.savage_attack_choice.has_value()||s.temporary_hp_offer.has_value());
     if(show_grip)presentation::refresh_grip(*get_node<OptionButton>("Grip"),grip_actor->equipment,grip_actor->grips);
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());
     get_node<Button>("Save")->set_disabled(!loaded||demo_->is_slums());get_node<Button>("Load")->set_disabled(!loaded||demo_->is_slums());
@@ -870,6 +888,10 @@ void CombatView::_process(double delta)
                 if(demo_->combat().snapshot().revision!=s.revision+1)throw std::runtime_error("Action button/target click did not submit command");
                 checked_input_=true;++check_steps_;return;
             }
+        }
+        if((checking_||party_check_)&&active->side==0&&s.savage_attack_choice){
+            const auto& hit=*s.savage_attack_choice;
+            get_node<Button>(!hit.second_damage?"SavageAttacker/Use":hit.first_damage>=*hit.second_damage?"SavageAttacker/First":"SavageAttacker/Second")->emit_signal("pressed");return;
         }
         if(party_check_&&settings::flag("--adrenaline-check")&&active->side==0){
             if(s.temporary_hp_offer){get_node<Button>("TemporaryHP/Keep")->emit_signal("pressed");return;}

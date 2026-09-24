@@ -120,7 +120,7 @@ void persistence_and_advancement(){
     check(rules->recovery_info(party.member(id).character.sheet(),healed).hit_dice==1,"Spell healing preserves Hit Dice");
     auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{5,1}});
     auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);const auto checkpoint=combat->save();
-    check(checkpoint.starts_with("OGCOMBAT 12 ")&&rules->restore(checkpoint)->save()==checkpoint,"Combat checkpoint stores remaining dice exactly");
+    check(checkpoint.starts_with("OGCOMBAT 13 ")&&rules->restore(checkpoint)->save()==checkpoint,"Combat checkpoint stores remaining dice exactly");
     auto copy=rules->restore(checkpoint);
     for(unsigned turn=0;turn<6;++turn){const auto end=command(*combat,"end");check(combat->submit(end)&&copy->submit(end)&&combat->save()==copy->save(),"Spent dice and effects continue deterministically through combat turns");}
     party.begin_combat();party.apply_combat(combat->snapshot());party.end_combat();

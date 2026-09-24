@@ -324,11 +324,13 @@ cannot be expressed consistently. See
 - Preserve feat category, prerequisite, source, selections and repeatability.
   Magic Initiate can repeat for different class spell lists; Skilled and Ability
   Score Improvement can repeat. Savage Attacker and Defense cannot simply stack.
-- Savage Attacker currently automatically chooses the better roll on the first
-  weapon hit each turn. Its basic effect exists, but the SRD allows choosing
-  when to use it and either roll. Add that decision to the rules command model
-  before Extra Attack and other multi-attack features make the distinction
-  significant; record any deliberate automation policy.
+- Savage Attacker's decisions are delivered in
+  [FT03 #76](https://github.com/stdarg/OpenGold/issues/76): an eligible hit pauses
+  for use/skip, then the player can retain either damage result. Opportunity
+  attacks preserve their spent Reaction and pending movement across both
+  decisions. AI uses the higher result; player choice remains explicit. See
+  [scope, grants and persistence](../SAVAGE-ATTACKER.md). Human feat selection,
+  unfinished class entitlements and the other feats remain separate gaps.
 
 Authority: [SRD pp. 47–48, 87–88](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=87).
 

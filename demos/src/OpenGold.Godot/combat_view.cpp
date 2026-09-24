@@ -40,6 +40,8 @@ void CombatView::_ready()
     get_node<Button>("Move")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String("move")));
     get_node<Button>("SpellSlot")->connect("pressed",callable_mp(this,&CombatView::spell_slot));
     get_node<Button>("SecondWind")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("second_wind")));
+    for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
+        get_node<Button>(String("SavageAttacker/")+node)->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String(verb)));
     get_node<Button>("End")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("end")));
     get_node<Button>("React")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("opportunity")));
     get_node<Button>("Decline")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("decline")));
@@ -55,6 +57,7 @@ void CombatView::_ready()
     expedition_check_=campaign_&&args.has("--expedition-check");party_check_|=expedition_check_;
     defeat_check_=campaign_&&args.has("--defeat-check");
     try{demo_=std::make_unique<CombatDemo>(srd5::load(local_path("res://../../data/rules/srd-5.2.1/combat.rules")));if(campaign_)demo_->campaign_party(campaign_);if(encounter_)demo_->encounter(*encounter_,42);else if(check_slums_)slums();else training();sync_art();layout();refresh();
+        get_node<Button>("Save")->hide();get_node<Button>("Load")->hide();
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         if(encounter_){get_node<Label>("Title")->set_text("SLUMS / Combat");get_node<Label>("Subtitle")->set_text("Choose an action, then click its target. Enter ends your turn.");
             get_node<Label>("Footer")->set_text("Each square is 5 feet. Victory returns your party to exploration.");
@@ -146,6 +149,7 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
+    if(get_node<Window>("SavageAttacker")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
@@ -176,6 +180,19 @@ void CombatView::refresh()
     get_node<Label>("Turn")->set_text(gs(turn));
     std::string roster;for(const auto& a:s.combatants)roster+=(a.id==s.actor?"> ":"  ")+std::to_string(a.id)+" "+a.name+"  "+std::to_string(a.hit_points)+"/"+std::to_string(a.max_hit_points)+" HP  AC "+std::to_string(a.armor_class)+"\n";
     get_node<RichTextLabel>("Roster")->set_text(gs(roster));
+    auto* modal=get_node<Window>("SavageAttacker");
+    if(player&&s.savage_attack_choice){
+        const auto& hit=*s.savage_attack_choice;const bool second=hit.second_damage.has_value();
+        const bool changed=!modal->is_visible()||get_node<Button>("SavageAttacker/First")->is_visible()!=second;
+        for(const char* name:{"Use","Skip"})get_node<Button>(String("SavageAttacker/")+name)->set_visible(!second);
+        for(const char* name:{"First","Second"})get_node<Button>(String("SavageAttacker/")+name)->set_visible(second);
+        std::string text=(hit.critical?"Critical hit\n":"Weapon hit\n")+hit.weapon+": "+std::to_string(hit.dice_count)+"d"+std::to_string(hit.dice_sides)+" + ("+std::to_string(hit.modifier)+")\nFirst damage: "+std::to_string(hit.first_damage);
+        if(second){text+="\nSecond damage: "+std::to_string(*hit.second_damage)+"\n\nKeep either roll. Defenses apply afterward.\nSavage Attacker is spent for this turn.";
+            get_node<Button>("SavageAttacker/First")->set_text(gs("First roll: "+std::to_string(hit.first_damage)));get_node<Button>("SavageAttacker/Second")->set_text(gs("Second roll: "+std::to_string(*hit.second_damage)));}
+        else text+="\n\nUse Savage Attacker to roll again, or keep this damage and save the feat for another hit this turn.\nThe attack's Action or Reaction is already spent.";
+        get_node<Label>("SavageAttacker/Text")->set_text(gs(text));if(!modal->is_visible())modal->popup_centered();
+        if(changed)get_node<Button>(second?"SavageAttacker/First":"SavageAttacker/Use")->grab_focus();
+    }else if(modal->is_visible())modal->hide();
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));

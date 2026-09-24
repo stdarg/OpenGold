@@ -285,6 +285,11 @@ Command choose_demo_command(const CombatSession& session)
         const auto verb=state.temporary_hp_offer->current.amount>=state.temporary_hp_offer->offered.amount?"temp_hp_keep":"temp_hp_use";
         for(const auto& command:offered)if(command.verb==verb)return command;
     }
+    if(state.savage_attack_choice){
+        const auto& hit=*state.savage_attack_choice;
+        const auto verb=!hit.second_damage?"savage_use":hit.first_damage>=*hit.second_damage?"savage_first":"savage_second";
+        for(const auto& command:offered)if(command.verb==verb)return command;
+    }
     // Rank offered destinations by a geometric route around obstacles. Straight
     // distance alone can strand both sides on opposite corners of a wall.
     // This is an AI heuristic; legal movement and its costs remain module-owned.

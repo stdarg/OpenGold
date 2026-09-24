@@ -1,3 +1,4 @@
+#include "combat_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "damage.h"
@@ -105,6 +106,7 @@ void weapons_and_spells(){
         auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Armed fighter",0,{2,2},profile.data},{2,"target","Target",1,{3,2}}}},42);
         turn(*combat,1);const auto verb=weapon.ranged?"ranged":"melee";
         check(combat->submit(command(*combat,verb,2))&&unit(*combat,2).hit_points==1000,"Weapon damage uses its SRD type before HP loss");
+        test::choose_savage_damage(*combat);check(unit(*combat,2).hit_points==1000,"Selected damage remains immune");
         const auto logs=combat->snapshot().log_messages;check(std::any_of(logs.begin(),logs.end(),[](const auto& m){return m.source=="{name}: {type} damage {before} -> {after}.";}),"The weapon actually hit and immunity was applied");
     }
     for(const auto verb:{"fire_bolt","scorching_ray","magic_missile"}){
@@ -112,6 +114,7 @@ void weapons_and_spells(){
         auto rules=srd5::parse_content(content()+attacker()+target+"affinity target shell immunity "+type+'\n');
         auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"toxin","Caster",0,{0,0}},{2,"target","Target",1,{7,7}}}},42);
         turn(*combat,1);check(combat->submit(command(*combat,verb,2))&&unit(*combat,2).hit_points==1000,"Fire Bolt, Scorching Ray and Magic Missile respect typed immunity");
+        test::choose_savage_damage(*combat);check(unit(*combat,2).hit_points==1000,"Selected damage remains immune");
         const auto logs=combat->snapshot().log_messages;check(std::any_of(logs.begin(),logs.end(),[](const auto& m){return m.source=="{name}: {type} damage {before} -> {after}.";}),"Spell damage actually reached immunity resolution");
     }
     // Fixed seed: three 1d4+1 rolls are separate force-damage instances.
@@ -129,9 +132,9 @@ void weapons_and_spells(){
 std::string fixture(const char* name){return read(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name);}
 std::string upgrade(std::string bytes,const Identity& identity){
     std::istringstream in(bytes);std::vector<std::string> rows;for(std::string row;std::getline(in,row);)rows.push_back(row);
-    std::ostringstream header;header<<"OGCOMBAT 12 "<<std::quoted(identity.module)<<' '<<std::quoted(identity.version)<<' '<<std::quoted(identity.content);rows[0]=header.str();
+    std::ostringstream header;header<<"OGCOMBAT 13 "<<std::quoted(identity.module)<<' '<<std::quoted(identity.version)<<' '<<std::quoted(identity.content);rows[0]=header.str();
     for(unsigned i=4;i<8;++i)rows[i]+=" 0 \"\" 0 0";
-    std::string result;for(const auto& row:rows)result+=row+'\n';return result+"0\n";
+    std::string result;for(const auto& row:rows)result+=row+'\n';return result+"0\n0\n";
 }
 void migration(){
     auto rules=module();const auto old=fixture("campaign-v10-damage.ogs");const auto disk=decode_campaign(old,*srd5::character_rules(),*rules,"damage-fixture",nullptr);

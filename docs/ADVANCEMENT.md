@@ -28,8 +28,9 @@ does not become conscious merely by leveling. No XP is deducted.
   Score Improvement was acquired, separately from the original background bonus.
 - **Defense:** level-4 Fighter choice; +1 AC while wearing armor.
 - **Savage Attacker:** level-4 choice for a character who does not already have
-  it from Soldier. The first successful weapon attack each turn uses the higher
-  of two damage rolls. Soldier's existing background feat now uses this mechanic.
+  it from Soldier. Once per turn on a weapon hit, choose whether to roll damage
+  twice, then keep either result. Soldier grants the same decisions, including
+  opportunity attacks. See [Savage Attacker](SAVAGE-ATTACKER.md).
 - **Cleric:** Cure Wounds and Healing Word; Blindness from level 3. At least
   one supported spell must be selected.
 - **Wizard:** Magic Missile, plus Scorching Ray and Blindness from level 3. Fire Bolt remains

@@ -539,11 +539,11 @@ void opportunity_migration_tests()
         std::string bytes;for(const auto& row:rows)bytes+=row+'\n';return bytes;
     };
     const auto upgraded=[&](const std::string& bytes){
-        auto rows=lines(bytes);rows[0].replace(9,1,"12");
+        auto rows=lines(bytes);rows[0].replace(9,1,"13");
         for(std::size_t i=4;i<8;++i)rows[i]+=" 0 0 0 0 0 0 \"\" 0 0";
         rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);
         const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
-        rows[0].replace(rows[0].find(old_content),old_content.size(),module->identity().content);rows.back()="0";return rows;
+        rows[0].replace(rows[0].find(old_content),old_content.size(),module->identity().content);rows.back()="0";rows.push_back("0");return rows;
     };
     const auto facing=fixture("combat-v5-facing.save");
     auto session=module->restore(facing);
@@ -670,7 +670,7 @@ void checkpoint_validation_tests()
         rejects([&] { (void)module->restore(encode(truncated)); }, "Truncated checkpoint section accepted");
     }
 
-    auto previous = lines;previous.pop_back();
+    auto previous = lines;previous.pop_back();previous.pop_back();
     previous[0].replace(9,2,"6");
     previous[0].replace(previous[0].find(module->identity().version),module->identity().version.size(),"0.6.5");
     for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<9;++field)previous[actor].resize(previous[actor].find_last_of(' '));
@@ -680,7 +680,7 @@ void checkpoint_validation_tests()
     const auto grip_separator=no_clocks.rfind(' ',no_clocks.find_last_of(' ')-1);
     invalid_overlap[grip_separator-1]='1';reject_changes({{4,invalid_overlap}});
 
-    previous = lines;previous.pop_back();
+    previous = lines;previous.pop_back();previous.pop_back();
     previous[0].replace(9,2,"4");
     for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<9;++field)previous[actor].resize(previous[actor].find_last_of(' ')); // No Temporary HP, recovery clocks, Hit Dice, grip or overlap marker before v7.
     for(std::size_t actor=4;actor<path_header;++actor)
@@ -692,7 +692,7 @@ void checkpoint_validation_tests()
     for (const unsigned version : {1u,2u}) {
         auto legacy = lines;
         legacy[0].replace(9,2,std::to_string(version));
-        legacy.resize(legacy.size()-4); // v4 scope/clock and two effect collections.
+        legacy.resize(legacy.size()-5); // v4 scope/clock, two effect collections and later pending choices.
         for (std::size_t actor = 4; actor < path_header; ++actor) {
             const auto profile = legacy[actor].find("\"\"");
             check(profile != std::string::npos, "Expected fixture with no character profile");

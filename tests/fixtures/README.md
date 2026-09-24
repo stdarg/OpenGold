@@ -270,3 +270,24 @@ With 0.6.19, older equipment/resource campaign fixtures also gain explicit Fire
 Bolt and Magic Missile grants. `campaign_fixture.h` constructs that limited
 expected ledger change independently, retaining every other body byte. Earlier
 sections' identity-only migration descriptions refer to their delivery versions.
+
+## Savage Attacker compatibility
+
+`campaign-v10-savage.ogs` and the four `combat-v12-savage*.save` files were
+written by **0.6.19**, using headers and libraries frozen from commit
+**66d1789**. Do not regenerate them with current code. Asset identity is
+`savage-fixture`; they contain no original assets.
+
+The campaign contains a level-one Dwarf Soldier Fighter and a level-four Orc
+Sage Fighter who selected Savage Attacker through advancement. Both wield
+Longswords, have two wounds and spent Second Wind, and retain 7 sourced
+Temporary HP; the Orc has one remaining Rush. The clock is 123 minutes plus
+456 milliseconds. The campaign body changes only module identity.
+
+The combat pair uses the Dwarf and a Vanguard at seed 13, before and after a
+normal melee hit. The `-reaction` pair pauses the Vanguard's leave-reach movement
+and records the old writer's automatic Savage Attacker opportunity hit. Choosing
+Use and the higher result in the new rules must match those damage, resource,
+RNG, movement and time outcomes, with two extra command revisions. Already
+completed old hits are never repeated. Format 13 appends an empty decision to
+old checkpoints; all previous fixture oracles include that explicit extension.

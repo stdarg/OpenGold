@@ -107,14 +107,22 @@ void profiles_and_migration(){
     auto legacy=rules->restore(fixture("combat-v8-grants.save"));auto continued=rules->restore(legacy->save());
     // Older combat recipes lack a background/history; preserve their effects
     // without fabricating whether Savage Attacker came from origin or leveling.
+    unsigned decision_commands{};
     for(unsigned n=0;n<12;++n){
         check(legacy->save()==continued->save(),"Legacy combat effects, resources and RNG continue deterministically");
         const auto commands=legacy->legal_commands();if(commands.empty())break;
         auto command=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="melee";});
         if(command==commands.end())command=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
         check(command!=commands.end(),"Legacy encounter can continue");check(legacy->submit(*command)&&continued->submit(*command),"Both continuations accept identical commands");
+        const auto choices=test::choose_savage_damage(*legacy);decision_commands+=choices;
+        check(test::choose_savage_damage(*continued)==choices,"Restored decisions match");
     }
     auto reference=test::with_hit_dice(fixture("combat-v8-grants-continued.save"),rules->identity(),{{1,1},{2,4},{3,4},{4,4},{5,4},{6,3},{99,0}},{{1,5143}});
+    // The old writer resolved Savage Attacker inside the attack command. Only
+    // revision gains the new decision tickets; the remaining oracle is frozen.
+    std::size_t state=0;for(unsigned row=0;row<3;++row)state=reference.find('\n',state)+1;
+    const auto revision=reference.find(' ',state)+1,end=reference.find(' ',revision);
+    reference.replace(revision,end-revision,std::to_string(std::stoull(reference.substr(revision,end-revision))+decision_commands));
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
 }

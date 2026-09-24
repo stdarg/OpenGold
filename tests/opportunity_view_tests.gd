@@ -68,7 +68,7 @@ func run_checks() -> void:
         var expected_roster: String = combat.get_node("Roster").text
         combat.get_node("Save").pressed.emit()
         require(combat.get_node("Prompt").text.contains("saved"), "Migrated checkpoint saves through existing controls")
-        require(FileAccess.get_file_as_string(path).begins_with("OGCOMBAT 12 "), "Game writes the new checkpoint format")
+        require(FileAccess.get_file_as_string(path).begins_with("OGCOMBAT 13 "), "Game writes the new checkpoint format")
         combat.get_node("Load").pressed.emit()
         require(combat.get_node("Turn").text == expected_turn and combat.get_node("Roster").text == expected_roster,
             "Subsequent reload preserves turn, resources and pending movement")

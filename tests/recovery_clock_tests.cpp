@@ -66,12 +66,12 @@ std::string fixture(const char* name){std::ifstream in(std::filesystem::path(OPE
 std::vector<std::string> rows(std::string_view bytes){std::istringstream in{std::string(bytes)};std::vector<std::string> result;for(std::string line;std::getline(in,line);)result.push_back(line);return result;}
 std::string join(const std::vector<std::string>& lines){std::string result;for(const auto& line:lines)result+=line+'\n';return result;}
 std::string upgraded(std::string_view bytes){
-    auto lines=rows(bytes);check(lines[0].starts_with("OGCOMBAT 9 "),"Frozen writer is combat nine");lines[0].replace(9,1,"12");
+    auto lines=rows(bytes);check(lines[0].starts_with("OGCOMBAT 9 "),"Frozen writer is combat nine");lines[0].replace(9,1,"13");
     lines[0].replace(lines[0].find("0.6.10"),6,module()->identity().version);
     const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
     lines[0].replace(lines[0].find(old_content),old_content.size(),module()->identity().content);
     for(unsigned i=4;i<8;++i){lines[i]+=lines[i].starts_with("2 ")?" 4500 0":" 0 0";lines[i]+=" 0 \"\" 0 0";}
-    lines.push_back("0");return join(lines);
+    lines.push_back("0");lines.push_back("0");return join(lines);
 }
 void frozen_saves(){
     auto rules=module();const auto before=fixture("combat-v9-recovery.save");auto combat=rules->restore(before);

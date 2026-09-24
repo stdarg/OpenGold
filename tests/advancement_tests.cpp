@@ -1,3 +1,4 @@
+#include "combat_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include <algorithm>
@@ -141,7 +142,7 @@ void feats(){
         check(party.member(id).character.sheet().ability_adjustments.size()==1,"A feat without ability points does not invent an ability adjustment");
         if(std::string_view(feat)=="defense"){check(party.profile(id).armor_class==ac+1,"Defense adds AC in armor");party.unequip(id,2);check(party.profile(id).armor_class==10+party.member(id).character.sheet().modifiers[1],"Defense does not grant unarmored AC");}
         else {auto rules=module();auto participants=party.participants();participants[0].cell={1,1};participants.push_back({99,"vanguard","Target",1,{2,1}});Encounter e{{12,9,std::vector<std::uint8_t>(108)},participants};bool hit=false;
-            for(unsigned seed=0;seed<100&&!hit;++seed){auto combat=rules->create(e,seed);if(combat->snapshot().actor!=id)continue;combat->submit(command(*combat,"melee"));for(const auto& log:combat->snapshot().log)hit|=log.find("Savage Attacker")!=std::string::npos;
+            for(unsigned seed=0;seed<100&&!hit;++seed){auto combat=rules->create(e,seed);if(combat->snapshot().actor!=id)continue;combat->submit(command(*combat,"melee"));test::choose_savage_damage(*combat);for(const auto& log:combat->snapshot().log)hit|=log.find("Savage Attacker")!=std::string::npos;
                 if(hit)check(rules->restore(combat->save())->save()==combat->save(),"Spent Savage Attacker state survives checkpoint");}
             check(hit,"Selected Savage Attacker modifies actual weapon damage");}
     }
