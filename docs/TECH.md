@@ -806,3 +806,9 @@ Rules 0.6.32 / PC21 adds Monk starting tool choices. Tool-category eligibility
 stays in SRD rules, with the existing generic Training controls and choice
 continuity metadata shared by Bard and Monk. No Core class-specific behavior or
 new persistence schema is introduced. See [Monk tools](MONK-TOOLS.md).
+
+Rules 0.6.33 / PC22 adds fixed Druid Herbalism Kit proficiency. Historical
+campaign ledgers validate against the pre-grant policy before reconstruction
+adds the fixed entitlement. Existing combat recipes retain their original
+policy and continuation. No new control or save schema is needed. See
+[Druid Herbalism Kit](DRUID-HERBALISM.md).

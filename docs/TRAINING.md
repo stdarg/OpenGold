@@ -155,3 +155,7 @@ instruments. Presets generate selections; old saves retain pending choices. See
 Monks choose one artisan tool or instrument from all 27 SRD options. Shared
 continuity metadata preserves instruments across Bard/Monk changes; artisan
 tools remain Monk-only choices. See [Monk tools](MONK-TOOLS.md).
+
+Druids receive fixed Herbalism Kit proficiency from their class. Old campaigns
+gain this owed fixed grant without filling pending choices or changing vitals;
+older combat profiles retain their original policy. See [Druid Herbalism Kit](DRUID-HERBALISM.md).

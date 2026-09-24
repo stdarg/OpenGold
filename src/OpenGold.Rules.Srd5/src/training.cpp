@@ -36,6 +36,7 @@ const std::array class_skills{
 struct Tool {std::string_view id,label;bool instrument;bool artisan{};};
 // SRD 5.2.1 p. 94: each instrument variant is a separate proficiency.
 constexpr std::array tools{
+    Tool{"herbalism_kit","Herbalism Kit",false},
     Tool{"thieves_tools","Thieves' Tools",false},Tool{"calligraphers_supplies","Calligrapher's Supplies",false,true},
     Tool{"alchemists_supplies","Alchemist's Supplies",false,true},
     Tool{"brewers_supplies","Brewer's Supplies",false,true},
@@ -74,6 +75,7 @@ int proficiency(unsigned level){require(level>=1&&level<=20);return 2+int((level
 bool source(std::span<const FeatureGrant> grants,std::string_view id){return std::any_of(grants.begin(),grants.end(),[&](const auto& g){return g.id==id;});}
 std::vector<FeatureGrant> fixed(std::string_view klass,std::string_view background,TrainingPolicy policy){
     std::vector<FeatureGrant> result{{"language:common",std::string(origin),1,{}}};
+    if(klass=="druid"&&policy>=TrainingPolicy::druid_herbalism)result.push_back({"tool:herbalism_kit","class:druid",1,{}});
     if(policy>=TrainingPolicy::sage&&background=="sage")for(const auto id:{"skill:arcana","skill:history","tool:calligraphers_supplies"})result.push_back({id,"background:sage",1,{}});
     if(policy>=TrainingPolicy::all_backgrounds&&background=="acolyte")for(const auto id:{"skill:insight","skill:religion","tool:calligraphers_supplies"})result.push_back({id,"background:acolyte",1,{}});
     if(policy>=TrainingPolicy::all_backgrounds&&background=="soldier")for(const auto id:{"skill:athletics","skill:intimidation"})result.push_back({id,"background:soldier",1,{}});
@@ -146,7 +148,7 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
 }
 bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
 std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
-std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::monk_tools);}
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::druid_herbalism);}
 std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
     for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());

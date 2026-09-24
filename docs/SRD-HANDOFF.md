@@ -8,19 +8,20 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. [Monk tools #215](https://github.com/stdarg/OpenGold/issues/215)
-is implemented and verified. Monks choose one of 17 artisan tools or 10 instruments
-through Training; presets generate choices and sheets/checks retain provenance.
-Overlapping background grants add proficiency once. Bard/Monk instrument choices
-transfer via existing continuity metadata; incompatible artisan choices clear.
-Rules 0.6.32 / PC21 / FX2; campaign 11 / combat 13–15 unchanged. Old missing
-choices remain pending. See [MONK-TOOLS.md](MONK-TOOLS.md).
+Branch `main`. [Druid Herbalism Kit #216](https://github.com/stdarg/OpenGold/issues/216)
+is implemented and verified. Ordinary creation/presets gain the fixed level-one
+class tool grant; existing Training/sheet displays show its source. Old campaign
+replay adds exactly that grant while preserving every other field, pending
+choices and vitals. Old combat recipes retain their original policy/continuation.
+Rules 0.6.33 / PC22 / FX2; campaign 11 / combat 13–15 unchanged. See
+[DRUID-HERBALISM.md](DRUID-HERBALISM.md). Actual prior-writer fixtures are unedited.
 
-**Next: Druid's fixed Herbalism Kit proficiency (#151), split/link a bounded child
-before coding, or resume #80 if Q23 is answered.** Use actual prior-writer fixtures
-before changing the fixed-grant migration policy. Bard tools (#214) and all-class
-starting skills (#213) are complete; their broader class trackers remain open.
-Keep one class's integration bounded and preserve the full all-class goal.
+**Next: Soldier's Gaming Set proficiency choice (#64), split/link a bounded child
+before coding, or resume #80 if Q23 is answered.** Confirm exact source and four
+variant catalog; reuse existing Training checkbox controls and rules-owned tools.
+Capture actual 0.6.33 prior-writer fixtures first. Background training documentation
+records this remaining gap. Bard tools (#214), Monk tools (#215) and all-class
+starting skills (#213) are complete; broader class/background trackers stay open.
 
 Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
 optional choice per hit. Do not enable either without the answer. The tested
@@ -79,10 +80,10 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#215 verification: 41 native/tool checks and 16 Godot runtime checks (plus seven
-native prerequisites) pass. Main/demo extensions build; 805 localized messages
-validate. Graphical Training verifies the completed Monk sheet and control flow.
-English/Spanish controls inspected at both sizes, including the bottom of the list:
-`/tmp/opengold-monk-renders`. Logs: `/tmp/opengold-monk-regression.log` and
-`/tmp/opengold-monk-render.log`. No live builds/tests remain. Older verification
-stays in the feature documents; actual prior-writer fixture bytes remain unedited.
+#216 verification: 41 native/tool checks and 16 Godot runtime checks (plus seven
+native prerequisites) pass. Main/demo builds and 806-message localization pass.
+Graphical creation verifies fixed Druid Training and completed-sheet sources;
+English/Spanish inspected at both sizes: `/tmp/opengold-druid-renders`.
+Logs: `/tmp/opengold-druid-regression.log`, `/tmp/opengold-druid-render.log`.
+Only a diagnostic assertion message and docs changed after regression.
+No live builds/tests remain. Earlier verification stays in feature documents.

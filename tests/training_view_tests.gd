@@ -98,6 +98,8 @@ func all_class_skill_controls() -> void:
 	for klass in ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Sorcerer", "Warlock", "Wizard"]:
 		await choose("Choices", klass)
 		await press("Next")
+		if klass == "Druid":
+			require(current_scene.get_node("TrainingFixed").text.contains("Herbalism Kit (Druid class)"), "Druid Training shows fixed tool source")
 		var group := 2 if klass == "Fighter" else 1
 		var count := 3 if klass in ["Bard", "Ranger"] else 2
 		var box: VBoxContainer = current_scene.get_node("Training/Rows/Group%d" % group)
@@ -143,26 +145,28 @@ func all_class_skill_controls() -> void:
 		require(not current_scene.get_node("Next").disabled, "Every class can finish all supported Training choices: " + klass)
 		await press("Next")
 		require(current_scene.get_node("PageTitle").text == ("Spell Choices" if klass in ["Cleric", "Wizard"] else "Name"), "Completed Training reaches the next creation step: " + klass)
-		if klass in ["Bard", "Monk"]:
+		if klass in ["Bard", "Monk", "Druid"]:
 			var bard_name: LineEdit = current_scene.get_node("Name")
 			bard_name.text = "Instrument Bard"
 			bard_name.text_changed.emit(bard_name.text)
 			await press("Next")
 			await press("Next")
 			var bard_sheet: String = current_scene.get_node("Description").get_parsed_text()
-			for instrument_name in (["Flute", "Lute", "Viol"] if klass == "Bard" else ["Smith's Tools"]):
+			for instrument_name in (["Flute", "Lute", "Viol"] if klass == "Bard" else ["Smith's Tools"] if klass == "Monk" else ["Herbalism Kit"]):
 				require(bard_sheet.contains(instrument_name + " (" + klass + " class)"), "Bard sheet shows selected instrument and source")
 			await press("Back")
 			await press("Back")
 		await press("Back")
 		await pick(0, "elvish", false)
 		await pick(0, "dwarvish", false)
-		if klass in ["Bard", "Monk", "Wizard"]:
+		if klass in ["Bard", "Monk", "Druid", "Wizard"]:
 			for locale in ["en", "es"]:
 				TranslationServer.set_locale(locale)
 				await press("Back")
 				await press("Next")
 				require(box.get_node("Title").text.begins_with(klass + " skills" if locale == "en" else "Habilidades de"), "Class skill heading is translated")
+				if klass == "Druid":
+					require(current_scene.get_node("TrainingFixed").text.contains("Herbalism Kit (Druid class)" if locale == "en" else "Útiles de herboristería (Clase de druida)"), "Translated Druid tool and source")
 				for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
 					root.size = size
 					await settle()
