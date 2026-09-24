@@ -762,3 +762,9 @@ training service. PC16 uses a versioned training policy; PC15 retains Sage-only
 additions and older profiles retain their original catalog. Campaign replay adds
 only owed fixed grants. Existing translated Training and character-sheet controls
 consume the same rules data. See [background training](BACKGROUND-TRAINING.md).
+
+Rules 0.6.28 derives Archery's attack bonus from the validated feat grant and
+Ranged weapon category. PC17 carries its feature bit; old profiles and campaign
+identities reject future Archery grants. The existing advancement selector reads
+the available option from the rules module. Core and Godot do not implement the
+bonus. See [Archery](ARCHERY.md) for available routes and remaining class work.

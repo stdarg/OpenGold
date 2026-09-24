@@ -8,17 +8,26 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. #212 completes Acolyte Insight, Religion and Calligrapher's Supplies,
-and Soldier Athletics and Intimidation. See [background training](BACKGROUND-TRAINING.md)
-for scope, migration and verification. Parents #61/#64 retain missing feat,
-Gaming Set and equipment/wealth choices. #211 Sage and #210 Dwarven Toughness
-explanation were previously delivered (`0004064`, `490ed19`).
+Branch `main`. #78 now has Archery through the existing Fighter level-four feat
+selector: prerequisite/provenance, +2 for Ranged weapons, persistence, translated
+selection and sheet name. See [Archery](ARCHERY.md). #78 remains open until the
+starting/other class grant routes are integrated. #212 fixed Acolyte/Soldier
+training is closed (`131942d`); its parents #61/#64 retain remaining package work.
 
-Rules 0.6.27 / PC16 / FX2; combat 13–15 and campaign 11 are unchanged.
-Old profiles keep their validation catalog; campaign replay adds owed fixed
-background grants. Actual 0.6.26 fixture provenance is in tests/fixtures/README.md.
-Main entry points: rules `training.{h,cpp}`, `srd5.cpp`, Godot `training_control.h`,
-`tests/training_tests.cpp`, `tests/training_view_tests.gd`, `tests/campaign_fixture.h`.
+Rules 0.6.28 / PC17 / FX2; combat 13–15 and campaign 11 unchanged. The actual
+0.6.27 campaign/combat fixtures retain their entire bodies except module identity.
+Old profiles and campaign identities reject newly introduced Archery grants.
+Entry points: `feature_grants.{h,cpp}`, `srd5.cpp`, `level_up_view.cpp`,
+`character_sheet_view.cpp`, `tests/archery_tests.cpp` and `tests/training_tests.cpp`.
+
+**Next: Fighter starting Fighting Style under #85. Question 22 is approved:**
+a labeled dropdown in the existing Training step, above language choices;
+initially Archery and Defense; one required selection before Next; Back preserves
+it; keyboard access; presets pre-generated; old saves retain a pending choice.
+Other styles remain tracked. Do not re-ask this layout question. Selection and
+replacement/provenance need rules integration before claiming #85 complete;
+weapon mastery also remains in that parent. Review existing Training controls,
+CharacterDraft save schema, grant validation and old-choice migration first.
 
 ## Next work and pending questions
 
@@ -72,8 +81,11 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#212: 40 native/tool checks, final focused training, 16 Godot runtime checks plus
-seven fixture prerequisites pass. Main/demo builds and 747-message localization
-check pass. Actual creation/party flow passes; both backgrounds inspected at both
-sizes in English/Spanish. No live test/build processes remain. Evidence in
-BACKGROUND-TRAINING.md; captures are local `/tmp/opengold-backgrounds-renders`.
+#78 validation is recorded in ARCHERY.md. Current native regression: 41 passing
+checks; 16 Godot runtime checks plus seven fixture prerequisites pass. Actual
+advancement confirmation/reload passes. Main/demo builds and 750-message
+localization validate. Capture artifacts: `/tmp/opengold-archery-renders`.
+English/Spanish dialogs were inspected at 1120×800 and 1920×1080. Final focused
+Archery checks pass after strengthened atomicity/version assertions. No live
+build/test processes remain. Native Godot advancement checks use translated
+bonus-source assertions, allowing the full confirmation sequence in Spanish.

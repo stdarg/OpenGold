@@ -65,7 +65,7 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     if(member)text+=i18n::formatted("   Gold {gold}   XP {xp}",{{"gold",member->wealth[3]},{"xp",member->experience}});
     if(member&&member->vitals.dead)text+="   "+i18n::utf8("Dead");
     if(member&&campaign_->can_advance(member->id))text+="   [b]"+i18n::utf8("Ready to level up")+"[/b]";
-    const auto display=[](const std::string& id){std::string label=id;std::replace(label.begin(),label.end(),'_',' ');return i18n::utf8(label);};
+    const auto display=[](const std::string& id){if(id=="archery")return i18n::utf8(N_("archery"));std::string label=id;std::replace(label.begin(),label.end(),'_',' ');return i18n::utf8(label);};
     String feats;for(const auto& grant:s.grants)if(grant.id.starts_with("feat:"))feats+=gs(display(grant.id.substr(5)))+"  ";
     if(!feats.is_empty())text+="\n"+i18n::formatted("Feat: {feats}",{{"feats",feats}});
     if(!s.prepared_spells.empty()){String spells;for(const auto& spell:s.prepared_spells)spells+=gs(display(spell))+"  ";text+="\n"+i18n::formatted("Prepared spells: {spells}",{{"spells",spells}});}

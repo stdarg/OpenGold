@@ -39,7 +39,7 @@ bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
@@ -70,12 +70,13 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
                 require(points==2);
             }else {
                 require(grant.choices.empty());
-                if(grant.id=="feat:defense")require(has_grant(grants,"feature:fighting_style"));
+                if(grant.id=="feat:defense"||(archery&&grant.id=="feat:archery"))require(has_grant(grants,"feature:fighting_style"));
                 else require(grant.id=="feat:savage_attacker");
             }
         }
         if(grant.id=="feat:defense")effects.feats|=1;
         if(grant.id=="feat:savage_attacker")effects.feats|=2;
+        if(grant.id=="feat:archery")effects.feats|=4;
     }
     require(required.empty()&&advancement_count==(level==4?1u:0u));
     return effects;

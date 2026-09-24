@@ -124,14 +124,14 @@ void CharacterCreationView::advancement_check(){
     const auto id=campaign_->state().roster.empty()?0:campaign_->state().slots[0];
     switch(advancement_stage_){
     case 0:{
-        for(const char* klass:{"wizard","fighter","cleric"}){opengold::rules::CharacterDraft draft;draft.race=advancement_check_&&std::string_view(klass)=="wizard"?"dwarf":"human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background=klass==std::string_view("fighter")?"soldier":"sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
+        for(const char* klass:{"wizard","fighter","cleric","fighter"}){opengold::rules::CharacterDraft draft;draft.race=advancement_check_&&std::string_view(klass)=="wizard"?"dwarf":"human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background=klass==std::string_view("fighter")?"soldier":"sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
         campaign_->award_experience(2700,"fixture:level-up-review");const auto slots=campaign_->state().slots;
         for(const auto member:slots)if(member)for(unsigned level=2;level<=3;++level)campaign_->advance(member,campaign_->default_advancement(member));
         party_action(0);error_="Review party: each character is ready for level 4. Click the arrow beside a name.";refresh_party();refresh_advancement_arrows();
         if(advancement_review_){advancement_review_=false;return;}break;}
     case 1:{
         auto* list=get_node<ItemList>("PartyPanel/Roster");
-        for(unsigned i=0;i<3;++i){auto* button=get_node<Button>(arrow(campaign_->state().slots[i]));
+        for(unsigned i=0;i<4;++i){auto* button=get_node<Button>(arrow(campaign_->state().slots[i]));
             if(list->get_item_at_position(button->get_position()+button->get_size()/2,true)!=i)throw std::runtime_error("Level-up arrow is not beside its own character row");}
         capture("level-up-arrows.png");press(arrow(id));break;}
     case 2:{capture_dialog("level-up-wizard.png");const auto before=opengold::encode_campaign(*campaign_,nullptr,"ui-check");press("LevelUp/Cancel");
@@ -143,9 +143,9 @@ void CharacterCreationView::advancement_check(){
         if(campaign_->member(id).character.sheet().level!=4||campaign_->member(id).character.sheet().prepared_spells.size()!=2||get_node<Button>(arrow(id))->is_visible())throw std::runtime_error("Wizard confirmation did not apply choices and hide arrow");
         show_modifiers();
         {const auto text=get_node<RichTextLabel>("ModifiersModal/Text")->get_text();
-            if(!text.contains("Sage background (+2)\nLevel 4 Ability Score Improvement (+2)\nFinal score: 19")||text.contains("Sage background (+4)"))
+            if(!text.contains(i18n::format("{background} background",{{"background",i18n::text("Sage")}})+" (+2)\n"+i18n::format("Level {level} Ability Score Improvement",{{"level",4}})+" (+2)\n"+i18n::format("Final score: {score}",{{"score",19}}))||text.contains(i18n::format("{background} background",{{"background",i18n::text("Sage")}})+" (+4)"))
                 throw std::runtime_error("Modifier dialog must separate background and level-four feat sources");
-            if(!text.contains("Dwarven Toughness: +4 maximum HP.")||text.contains("+1 maximum HP at level 1"))
+            if(!text.contains(i18n::format("Dwarven Toughness: +{hp} maximum HP.",{{"hp",4}})))
                 throw std::runtime_error("Racial section must show the attained Dwarven Toughness contribution");
             const auto saved=opengold::encode_campaign(*campaign_,nullptr,"bonus-ui-check");
             const auto module=opengold::srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));
@@ -160,7 +160,7 @@ void CharacterCreationView::advancement_check(){
         if(!has({"feat:defense","class:fighter:ability_score_improvement",4,{}})||
             !has({"feat:savage_attacker","background:soldier",1,{}}))throw std::runtime_error("Fighter must retain separate creation and advancement grants");
         const auto text=sheet_text(fighter);
-        if(!text.contains("savage attacker")||!text.contains("defense"))throw std::runtime_error("Sheet must display both acquired feats");}
+        if(!text.contains(i18n::text("savage attacker"))||!text.contains(i18n::text("defense")))throw std::runtime_error("Sheet must display both acquired feats");}
         get_node<RolfTourView>("CampaignTown")->get_node<Button>("PartyList/Rows/Member2/Advance")->emit_signal("pressed");select("LevelUp/Feat",2);get_node<CheckBox>("LevelUp/Spell1")->set_pressed(true);break;
     case 6:{capture_dialog("level-up-cleric.png");press("LevelUp/Confirm");
         const auto cleric_id=campaign_->state().slots[2];
@@ -171,6 +171,21 @@ void CharacterCreationView::advancement_check(){
         const auto module=opengold::srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));
         auto restored=opengold::decode_campaign(saved,*opengold::srd5::character_rules(),*module,"feat-ui-check",nullptr);campaign_->restore(std::move(restored.party));
         if(!has_feat()||opengold::encode_campaign(*campaign_,nullptr,"feat-ui-check")!=saved)throw std::runtime_error("UI-acquired feat must survive campaign reload");
+        get_node<RolfTourView>("CampaignTown")->get_node<Button>("PartyList/Rows/Member3/Advance")->emit_signal("pressed");
+        auto* feats=get_node<OptionButton>("LevelUp/Feat");
+        const auto archery=std::find_if(advancement_options_.feats.begin(),advancement_options_.feats.end(),[](const auto& f){return f.id=="archery";});
+        if(archery==advancement_options_.feats.end()||!archery->available)throw std::runtime_error("Fighter Archery must be selectable");
+        select("LevelUp/Feat",static_cast<int>(archery-advancement_options_.feats.begin()));
+        if(feats->get_item_text(feats->get_selected())!=i18n::text("Archery"))throw std::runtime_error("Archery choice must be translated");
+        break;}
+    case 7:{capture_dialog("level-up-archery.png");press("LevelUp/Confirm");
+        const auto archer=campaign_->state().slots[3];const auto& sheet=campaign_->member(archer).character.sheet();
+        if(std::find(sheet.grants.begin(),sheet.grants.end(),opengold::rules::FeatureGrant{"feat:archery","class:fighter:ability_score_improvement",4,{}})==sheet.grants.end())throw std::runtime_error("Confirmed Archery lacks its entitlement grant");
+        if(!sheet_text(campaign_->member(archer).character).contains(i18n::text("archery")))throw std::runtime_error("Sheet must display translated Archery");
+        const auto bytes=opengold::encode_campaign(*campaign_,nullptr,"archery-ui-check");
+        const auto module=opengold::srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));
+        auto restored=opengold::decode_campaign(bytes,*opengold::srd5::character_rules(),*module,"archery-ui-check",nullptr);campaign_->restore(std::move(restored.party));
+        if(opengold::encode_campaign(*campaign_,nullptr,"archery-ui-check")!=bytes)throw std::runtime_error("UI-acquired Archery must survive reload");
         party_action(9);capture("level-up-complete.png");
         UtilityFunctions::print("Godot advancement passed: roster and town arrows, HP preview, Cancel rollback, invalid-point prevention, level-four feat and spell confirmations.");advancement_check_=false;get_tree()->quit(0);break;
     }

@@ -384,3 +384,13 @@ at `0004064`, before the additional background grant changes. The test-only
 It contains level-three Acolyte Cleric and Soldier Fighter characters with explicit
 languages, wounds and spent spell/feat resources. Neither has the newly supported
 fixed proficiencies. The fixture is unedited.
+
+### Archery prior writer (rules 0.6.27)
+
+`campaign-v11-archery-before.ogs` and `combat-v13-archery-before.save` were written
+by the actual 0.6.27 libraries at `131942d`, before Archery changes. The test-only
+`freeze()` in archery_tests.cpp ran with those libraries and requires that version.
+The level-four Sage Fighter selected Defense, has three missing HP and one
+remaining Second Wind; the combat fixture equips a Shortbow. Both files are
+unedited, contain PC16 where applicable and have no Archery grant. Migration must
+preserve their entire bodies except the module version (and campaign checksum).
