@@ -35,7 +35,7 @@ no compatibility reduction, no agents/new tasks/model changes; goal remains paus
 
 ## Active batch B — rest workflow
 
-#30/#192/#193 remain open. The existing campaign adapter's unverified high-chance
+#30/#193 remain open; #192 delivers the reviewed player rest controls. The existing campaign adapter's unverified high-chance
 profiles now reject rather than masquerading as guaranteed city-watch events.
 Independent regressions failed before the guard correction and pass afterward;
 [scope and evidence](REST-RESOURCES.md#rest-batch-b-verified-profile-boundary).
@@ -45,9 +45,16 @@ retaining prior saves. Safe-camp/inn atomic callers consume the same engine.
 [Mechanics, compatibility and tests](REST-RESOURCES.md#resumable-activity-persistence-and-evidence).
 The complete combat-victory regression additionally preserves XP/loot across the
 interrupted rest, save/load and completion; unrelated edits remain locked.
-Automatic event connections, sleeping actor behavior and reviewed controls remain
+Automatic event connections and sleeping actor behavior remain
 unfinished; this is partial delivery, not closure of these issues.
 Q29–31 await user decisions; Q32 (fresh qualifying segments) is approved in the [register](SRD-DECISIONS.md).
+
+The shared game/demo Rest dialog now delivers Q29–31: Short/Long choice,
+per-member eligibility/resources, sequential committed dice, Finish/Escape,
+camp/inn saving, reload and retained-rest Resume/End. Original permissions and
+inn payment remain authoritative. [Controls and acceptance evidence](REST-RESOURCES.md#player-rest-controls-192).
+`opengold_godot_rest` exercises actual controls and keyboard actions; campaign
+restart tests cover pending spending through the real save/load host.
 
 ## Delivered increments
 

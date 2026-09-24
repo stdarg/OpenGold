@@ -123,7 +123,8 @@ formats 1–9 migrate without inventing a spending session. Core owns rest timin
 and transactional commits; the rules module owns resource arithmetic. Campaign
 format 12 adds resumable rest activity when present, retaining format 11 for
 ordinary saves; native activity drives the existing atomic camp/inn route, with
-reviewed controls and automatic interruption event connections still pending. See [training](TRAINING.md),
+shared game/demo controls delivered and automatic interruption event connections
+still pending. See [training](TRAINING.md),
 [rest resources](REST-RESOURCES.md), [recovery clocks](RECOVERY-CLOCKS.md) and [status effects](STATUS-EFFECTS.md) for
 mechanics, scope, persistence and tests.
 

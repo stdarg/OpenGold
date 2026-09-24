@@ -86,6 +86,7 @@ public:
     bool explore(ExplorationCommand command);
     // Both kinds run the original pre-camp and interruption services.
     bool camp(RestKind kind);
+    bool resume_camp();
     [[nodiscard]] const TourSnapshot& snapshot() const noexcept { return snapshot_; }
     [[nodiscard]] const GeoMap& map() const noexcept { return map_; }
     [[nodiscard]] const auto& sprites() const noexcept { return sprites_; }
@@ -148,6 +149,7 @@ private:
     unsigned saved_selected_character_{};
     unsigned event_stage_{}; // 0 tour, 1 before step, 2 search, 3 area entry, 4 pre-camp, 5 interrupted.
     RestKind camp_kind_{RestKind::long_rest};
+    bool resuming_camp_{};
     bool transition_{}, message_only_{};
     std::uint64_t shop_request_{};
     void configure_town();

@@ -224,6 +224,26 @@ std::string payload(std::string body){
     std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
     return "OPENGOLD-CAMPAIGN 11\n"+std::to_string(hash)+'\n'+body;
 }
+void resumption_services(){
+    for(const auto chance:{0u,255u,50u,100u}){
+        auto party=std::make_shared<CampaignParty>(module());party->add_pc(hero());
+        auto script=program({9,0,1,1,0xd2,0x6d,9,0,static_cast<std::uint8_t>(chance),1,0xd3,0x6d,0});
+        auto resources=std::make_shared<por::PhlanResources>();resources->programs[0]=script;
+        por::RolfTourSession town({},script,{},0x9914,{},resources);town.campaign_party(party);settle(town);
+        const auto start=party->begin_rest(RestKind::long_rest);
+        (void)party->advance_rest(*start,70*60000,RestWork::sleep);
+        party->interrupt_rest(party->state().rest_activity->ticket,RestInterruption::initiative);
+        check(!town.resume_camp(),"Pending dice prevent camp resumption");
+        party->finish_short_rest(party->state().short_rest->ticket);
+        const auto before=saved(*party);
+        check(town.resume_camp(),"Resumption enters original pre-camp checks");settle(town);
+        if(chance==0){check(!party->state().rest_activity&&party->state().time_minutes==540&&party->member(1).last_rest_minutes==540,
+            "Safe resumption completes retained progress plus one hour exactly");}
+        else if(chance==100){check(party->state().rest_activity&&party->state().rest_activity->interrupted&&party->state().time_minutes==75&&
+            party->state().rest_activity->elapsed_milliseconds==70*60000,"City watch prevents resumption without consuming prior progress");}
+        else check(saved(*party)==before,"Forbidden and unsupported resumption preserve all rest state and RNG");
+    }
+}
 void malformed_continuation(){
     CampaignParty party(module());const auto id=party.add_pc(hero());(void)party.rest(RestKind::short_rest);
     const auto good=saved(party);auto body=good.substr(good.find('\n',good.find('\n')+1)+1);
@@ -239,4 +259,4 @@ void malformed_continuation(){
 }
 #include "rest_activity_checks.h"
 }
-int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();resumption_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

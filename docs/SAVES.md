@@ -252,3 +252,13 @@ SRD8 stores spent uses alongside all prior resource fields; fully available
 uses retain compact formats. Campaign 11 is unchanged. Old campaigns gain
 the fixed grant from recorded advancement; old combat recipes keep their
 recorded feature access and exact continuation. [Details](ACTION-SURGE.md).
+
+## Rest activity and reviewed controls
+
+Campaign format 12 persists resumable activity when present; ordinary saves
+retain format 11. Existing supported formats continue to load. The approved
+camp/inn Rest dialog opens the existing Save dialog during pending Hit Die or
+resumption choices. Loading retains spent resources and rest progress, clears
+stale displayed roll messages, and reopens choices on returning to the town.
+The actual process-restart suite now covers nine states, including pending
+Short Rest spending and the next committed die. See [rest controls](REST-RESOURCES.md#player-rest-controls-192).

@@ -113,6 +113,7 @@ if(OPENGOLD_BUILD_TESTS)
             TIMEOUT 40 LABELS godot RESOURCE_LOCK godot_project
             ENVIRONMENT "OPENGOLD_GAME_DIR=;OPENGOLD_LANG=en;OPENGOLD_SCREENSHOT_DIR=${CMAKE_BINARY_DIR}/screenshots-test/${name}")
     endfunction()
+    opengold_godot_test(rest rest_view_tests "Godot rest controls passed" "--rest-check")
     opengold_godot_test(combat_view combat_view_tests "Game combat view checks passed")
     opengold_godot_test(grip grip_view_tests "Grip view checks passed")
     opengold_godot_test(adrenaline adrenaline_view_tests "Adrenaline view checks passed" "--adrenaline-fixtures=${PROJECT_BINARY_DIR}/adrenaline-fixtures")

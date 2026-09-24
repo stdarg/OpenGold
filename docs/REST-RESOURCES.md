@@ -85,8 +85,7 @@ flow never uses it for cancellation.
 camping grants nothing. The supported guaranteed city-watch interruption advances
 five minutes and runs entry 3, granting no recovery or spending session. Other
 probabilistic profiles remain explicitly unsupported and roll back. Safe camp
-completes the requested kind. Existing Camp [C] still requests Long Rest until
-#192 adds reviewed controls; the original paid inn PROGRAM 9 still requests Long
+completes the requested kind. Camp [C] offers the approved Short/Long Rest picker; the original paid inn PROGRAM 9 still requests Long
 Rest. Failed inn continuations restore the entire event, including payment,
 resources, cooldowns, time and RNG. See [recovery mappings](RECOVERY.md).
 
@@ -106,7 +105,8 @@ Initiative, non-cantrip casting and damage have explicit interruption inputs.
 Hosts must resolve earned Hit Dice choices before combat/time advancement, check
 camp permission before resuming and prevent unrelated exploration while a resume
 decision is pending. Automatic event connections, sleeping actors' Unconscious
-behavior and reviewed Godot controls are still pending in #192/#193. The existing
+behavior and automatic encounter scheduling remain in #193. Reviewed Godot
+controls are delivered below. The existing
 five-minute city-watch route remains unchanged; unknown probabilistic profiles
 never silently substitute an uninterrupted rest.
 
@@ -161,7 +161,7 @@ independent elapsed interval and tests the original safe/denied/interrupted/
 unsupported camp paths plus inn rollback. Existing save/party regressions retain
 old-format migrations and per-member cooldown behavior.
 
-Rendered rest controls and their campaign acceptance remain #192.
+The reviewed game/demo rest controls and their campaign acceptance are delivered below.
 
 F03a delivery validation: eleven relevant native suites, six Godot CTest entries and
 the existing game/demo party-and-recovery integration routes pass. The demo's
@@ -194,9 +194,9 @@ profiles. Previously it treated other chance values above 101 as city-watch
 interruptions without evidence. A regression covering 102, 200 and 254 failed
 before the correction; these profiles now reject without advancing time, changing vitals
 or RNG, or granting a spending entitlement. Both rest kinds retain their verified
-100/101 behavior. This closes that boundary error only: #30/#192/#193 remain
-open for the controls and resumable rest activity described above. Pending
-layout/behavior decisions are Q29–31; Q32 approves fresh qualifying rest segments. See the
+100/101 behavior. This increment closed the boundary error only; the later
+control delivery is recorded below. Q29–32 approve the shared rest controls and
+fresh qualifying segments. See the
 [decision register](SRD-DECISIONS.md).
 
 ## Resumable activity persistence and evidence
@@ -239,8 +239,40 @@ victory, retains XP/loot, checks duplicate and overflow rollback, saves/reloads,
 and resumes through Long Rest completion. Before the fix the victory threw
 “Finish or abandon the rest before changing the party.” This closes the native
 reward handoff gap; automatic encounter scheduling and effectful ECL script
-adapters remain part of #193, alongside the pending reviewed controls.
+adapters remain part of #193. The reviewed controls are delivered below.
 
 Reward-handoff final verification passed all 44 native/tool and 20 registered
 Godot checks, plus actual game/demo party/recovery routes. Existing formats and
 module identity are unchanged; this introduces no control or layout changes.
+
+## Player rest controls (#192)
+
+Approved Q29–31 are implemented once in `src/OpenGoldBox/rest_dialog_impl.h` and
+used by the game and demo. Camp opens a centered, keyboard-accessible Short/Long
+Rest picker. Each member has current HP and Hit Dice, with eligibility, cooldown
+and resource recovery details for the selected member. Start runs the existing
+original camping checks. Paid inns retain their original payment and Long Rest.
+
+After a completed Short Rest, select a member and spend one die at a time. Each
+roll commits immediately and displays its roll, Constitution modifier, actual
+healing and remaining dice. Another die is a separate decision. Ineligible
+members and exhausted dice disable spending. Finish or Escape closes spending
+without undoing rolls. If a Long Rest remains interrupted, the same dialog shows
+progress, extension and remaining time with Resume/End Rest. Resume invokes
+`RolfTourSession::resume_camp`, rechecking original permissions; forbidden or
+unsupported profiles preserve progress/resources, and failed events roll back.
+
+Save game opens the existing save dialog from this camp/inn rest workflow.
+Returning from it restores the pending rest controls. Loading clears stale roll
+messages and reopens pending choices when returning to the town view. There are
+no combat-saving controls. Closing an interrupted rest keeps earned healing,
+spent dice and elapsed time. These controls do not claim new original
+probabilistic profiles or automatic rest-interruption scheduling (#193).
+
+Evidence: `opengold_godot_rest` presses the real controls, activates spending by
+Space, finishes with Escape, checks ineligible members, sequential dice, save
+continuation, resumption and cooldown. `resumption_services` in
+`campaign_rest_tests.cpp` covers safe, forbidden, unknown and city-watch profiles.
+The actual game/demo save restart routes include a ninth `short-rest-spending`
+state: reload through the real campaign host, reopen rest controls, route Save to
+the existing dialog, and spend the next die. English/Spanish catalogs are complete.

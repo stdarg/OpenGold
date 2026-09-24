@@ -73,7 +73,8 @@
   fabricate past timings or promise a speedup before measuring it.
 - Batch related UI questions and reuse approved patterns within their recorded
   scope. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff` before questions.
-  A decision reply or workflow maintenance does not resume a paused goal.
+  Write each question visibly in the conversation; a question widget alone is
+  insufficient. A decision reply or workflow maintenance does not resume a paused goal.
 - New tasks, parallel agents and changes to compatibility require explicit
   authorization. Carry a compact handoff at authorized task boundaries. Do not
   change model/runtime settings as an incidental optimization.

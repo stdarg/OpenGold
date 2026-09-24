@@ -3,6 +3,7 @@
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/audio_stream_player.hpp>
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/option_button.hpp>
 #include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -45,7 +46,7 @@ void RolfTourView::_notification(int what)
 }
 void RolfTourView::_ready()
 {
-    ready_=true;
+    ready_=false;
     set_texture_filter(CanvasItem::TEXTURE_FILTER_NEAREST);
     // Child nodes are scene-owned; these lookups are temporary non-owning views.
     get_node<Button>("Continue")->connect("pressed",callable_mp(this,&RolfTourView::next));
@@ -88,6 +89,8 @@ void RolfTourView::_ready()
     }
     footstep_->set_data(samples);
     get_node<AudioStreamPlayer>("Footstep")->set_stream(footstep_);
+    ready_=true;
+    setup_rest();
     restart();
     if(embedded_party_)get_node<Button>("Restart")->hide();
 }
@@ -198,7 +201,7 @@ void RolfTourView::left(){movement(ExplorationCommand::turn_left);}
 void RolfTourView::right(){movement(ExplorationCommand::turn_right);}
 void RolfTourView::forward(){movement(ExplorationCommand::forward);}
 void RolfTourView::look(){movement(ExplorationCommand::look);}
-void RolfTourView::camp(){movement(ExplorationCommand::camp);}
+
 void RolfTourView::leave_shop(){if(session_){session_->leave_shop(session_->snapshot().continue_ticket);refresh();}}
 void RolfTourView::inventory()
 {
@@ -266,6 +269,7 @@ void RolfTourView::map_mode(){full_map_=!full_map_;refresh();}
 
 void RolfTourView::_input(const Ref<InputEvent>& event)
 {
+    if(get_node<Window>("RestDialog")->is_visible())return;
     const Ref<InputEventKey> key=event;
     if (key.is_null() || !key->is_pressed() || key->is_echo()) return;
     if(get_node<Control>("InventoryPanel")->is_visible())return;
@@ -287,6 +291,10 @@ void RolfTourView::_input(const Ref<InputEvent>& event)
 void RolfTourView::_process(double delta)
 {
     if (Engine::get_singleton()->is_editor_hint()) return;
+    if(rest_save_open_){
+        auto* save=Object::cast_to<Window>(get_parent()->get_node_or_null("SaveSlots"));
+        if(!save||!save->is_visible()){rest_save_open_=false;refresh_rest();}
+    }
     if (session_) {
         session_->advance(checking_?0.3:delta);
         if (session_->snapshot().footsteps!=played_footsteps_) {
@@ -295,6 +303,7 @@ void RolfTourView::_process(double delta)
         }
         if (session_->snapshot().revision!=shown_revision_) refresh();
     }
+    if(OS::get_singleton()->get_cmdline_user_args().has("--rest-check")){check_rest_controls();return;}
     if (checking_) check_run();
 }
 
@@ -327,6 +336,7 @@ void RolfTourView::refresh()
     const bool loaded=session_.has_value();
     const TourSnapshot s=loaded?session_->snapshot():TourSnapshot{};
     shown_revision_=s.revision;
+    refresh_rest();
     const bool waiting=loaded&&s.phase==TourPhase::awaiting_continue;
     const bool completed=loaded&&s.phase==TourPhase::completed;
     get_node<Button>("SaveGame")->set_disabled(!completed);get_node<Button>("LoadGame")->set_disabled(!completed);
@@ -658,7 +668,7 @@ void RolfTourView::check_recovery()
         if(member.wealth!=recovery_before_->roster.at(0).wealth||member.vitals!=recovery_before_->roster.at(0).vitals)throw std::runtime_error("Cancelled temple service changed party");
         save_check("cancelled-service");save_cancel_pending_=false;
     }
-    if(recovery_stage_==1){get_node<Button>("Camp")->emit_signal("pressed");recovery_stage_=2;return;}
+    if(recovery_stage_==1){get_node<Button>("Camp")->emit_signal("pressed");get_node<Window>("RestDialog")->get_node<Button>("Start")->emit_signal("pressed");recovery_stage_=2;return;}
     if(recovery_stage_==2){
         if(campaign_->state().time_minutes!=recovery_before_->time_minutes+5||member.vitals!=recovery_before_->roster.at(0).vitals)
             throw std::runtime_error("Original city-watch interruption must consume five minutes without recovery");
@@ -681,9 +691,15 @@ void RolfTourView::check_recovery()
     }
     if(recovery_stage_==6){get_node<Button>("Camp")->emit_signal("pressed");recovery_stage_=7;return;}
     if(recovery_stage_==7){
-        if(campaign_->state().time_minutes!=recovery_before_->time_minutes||s.dialogue.find("Rest denied")==std::string::npos)
+        if(campaign_->state().time_minutes!=recovery_before_->time_minutes||!get_node<Window>("RestDialog")->get_node<Button>("Start")->is_disabled())
             throw std::runtime_error("Immediate repeated long rest must be denied");
+        get_node<Window>("RestDialog")->get_node<Button>("Finish")->emit_signal("pressed");
         if(save_check)save_check("denied-rest");
+        if(save_check){
+            (void)campaign_->rest(opengold::RestKind::short_rest);
+            save_check("short-rest-spending");
+            campaign_->finish_short_rest(campaign_->state().short_rest->ticket);
+        }
         capture_frame("party-rest");recovery_stage_=8;checking_=false;
         UtilityFunctions::print("Godot recovery check passed: original interruption, temple payment, inn rest and repeated-rest denial.");return;
     }
@@ -691,3 +707,6 @@ void RolfTourView::check_recovery()
     for(unsigned y=0;y<16;++y)for(unsigned x=0;x<16;++x)if(session_->map().at(x,y).event_number()==target_event){check_walk_to(x,y);return;}
     throw std::runtime_error("Original recovery location is missing");
 }
+
+namespace { godot::String rest_rules_path(){return ProjectSettings::get_singleton()->globalize_path("res://../../data/rules/srd-5.2.1/combat.rules");} godot::String rest_text(std::string_view value){return godot::String::utf8(value.data(),value.size());} }
+#include "../../../src/OpenGoldBox/rest_dialog_impl.h"
