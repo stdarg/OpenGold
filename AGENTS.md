@@ -44,6 +44,22 @@
 - Ask numbered questions to confirm UI layout and control behavior before
   making independent choices about them.
 
+## Efficient SRD work
+
+- For SRD work, start with `docs/SRD-HANDOFF.md` and follow
+  `docs/SRD-WORKFLOW.md`. Keep one issue active, with explicit acceptance
+  criteria; preserve the full issue scope and record any real dependency.
+- Read targeted file sections and summarize tool output. Reuse recorded
+  decisions and test evidence while checking that the relevant state is current.
+- Run focused checks first; broaden for shared rules, persistence or unresolved
+  risk. Do not weaken acceptance or repeat passing checks without a reason.
+- Batch related UI questions, reuse approved patterns, and play the user's
+  question alert on this Mac with `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`.
+- Update the short handoff at issue/milestone boundaries. Use fresh tasks for
+  user-authorized major milestones, carrying the handoff rather than full history.
+- Use low reasoning for routine work and high for rules interactions or migrations
+  when selecting task settings. A prompt cannot change the active runtime setting.
+
 ## UI controls
 
 - Make interactive elements visibly recognizable as controls. Buttons must look

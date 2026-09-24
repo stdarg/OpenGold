@@ -1,0 +1,3 @@
+# Routine project work. Use an explicit high-effort task override for rules
+# interactions, state machines and save migrations; see docs/SRD-WORKFLOW.md.
+model_reasoning_effort = "low"
