@@ -1,4 +1,5 @@
 #include "opengold/campaign_save.h"
+#include "campaign_fixture.h"
 #include "opengold/srd5.h"
 #include "weapons.h"
 #include <algorithm>
@@ -108,7 +109,7 @@ void legacy(){
     check(party.member(1).character.inventory().find(1)->get().definition_id=="longbow","Legacy original type-45 bow must retain its established conversion");
     check(party.member(2).character.inventory().find(1)->get().definition_id=="longbow"&&party.member(3).character.inventory().find(1)->get().definition_id=="longbow","Real Longbow and item without source provenance are preserved");
     auto expected=old.substr(old.find('\n',old.find('\n')+1)+1);expected.replace(expected.find("0.6.16"),6,rules->identity().version);const auto bytes=encode_campaign(party,nullptr,"catalog-fixture");
-    check(bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1)==expected,"Migration changes only module identity, retaining original and authored weapons, grants, pools, wounds and clock");
+    check(bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(expected),"Migration adds only explicit spell grants and module identity, retaining original and authored weapons, grants, pools, wounds and clock");
     CampaignParty again(module());again.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"catalog-fixture",nullptr).party);check(encode_campaign(again,nullptr,"catalog-fixture")==bytes,"Correction occurs only once");
     const auto previous=read(fixtures/"combat-v12-catalog.save");auto c=rules->restore(previous);auto same=previous;same.replace(same.find("0.6.16"),6,rules->identity().version);check(c->save()==same,"Combat recipes have no original-item provenance and retain their saved weapon/RNG/resources");
     act(*c,"ranged");check(c->save()==rules->restore(read(fixtures/"combat-v12-catalog-continued.save"))->save(),"Frozen prior-writer combat continuation remains exact");

@@ -1,3 +1,4 @@
+#include "campaign_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "life_cycle.h"
@@ -93,7 +94,7 @@ void actual_combat(){
         "Real Poison attack applies Dwarf resistance before absorbing Temporary HP");
     const auto saved=combat->save();check(!combat->submit(attack)&&combat->save()==saved,"Stale attack cannot consume a pool twice");
     // A forged actor row cannot introduce a negative pool.
-    auto corrupt=saved;const auto at=corrupt.find(" 0 \"\" 0 0\n",corrupt.find("PC9"));check(at!=corrupt.npos,"Current actor has the empty pool suffix");corrupt.replace(at,10," -1 \"x\" 0 0\n");
+    auto corrupt=saved;const auto at=corrupt.find(" 0 \"\" 0 0\n",corrupt.find("PC10"));check(at!=corrupt.npos,"Current actor has the empty pool suffix");corrupt.replace(at,10," -1 \"x\" 0 0\n");
     rejects([&]{(void)rules->restore(corrupt);});check(combat->save()==saved,"Rejected restore leaves the original session intact");
 }
 std::string saved(const CampaignParty& party){return encode_campaign(party,nullptr,"temporary-hp");}
@@ -130,7 +131,7 @@ void old_writer(){
     for(const auto& member:party.state().roster)check(pool(member.character,member.vitals).amount==0,"Legacy campaigns gain no invented buffer");
     const auto next=encode_campaign(party,nullptr,"temporary-hp-fixture");auto body=campaign_bytes.substr(campaign_bytes.find('\n',campaign_bytes.find('\n')+1)+1);
     body.replace(body.find("0.6.13"),6,rules->identity().version);
-    check(next.substr(next.find('\n',next.find('\n')+1)+1)==body,"Campaign migration preserves every old field including fixed Dwarf grants and clocks");
+    check(next.substr(next.find('\n',next.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(body),"Campaign migration adds sourced spell grants and preserves old fields including fixed Dwarf grants and clocks");
 }
 }
 int main(){try{golden_life();rule_operations();actual_combat();campaign();old_writer();std::cout<<"Temporary HP tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

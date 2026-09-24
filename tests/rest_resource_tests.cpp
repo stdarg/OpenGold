@@ -1,3 +1,4 @@
+#include "campaign_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
@@ -142,7 +143,7 @@ void old_saves(){
     const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
     expected.replace(expected.find(old_content),old_content.size(),rules->identity().content);
     const auto rewritten=encode_campaign(party,nullptr,"rest-fixture");
-    check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==expected+"1 0 ","Campaign migration adds the empty rest window and module identity, preserving all original training, resources, effects, equipment and timers");
+    check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(expected)+"1 0 ","Campaign migration adds sourced spell grants, the empty rest window and module identity, preserving all original training, resources, effects, equipment and timers");
     const std::map<unsigned,unsigned> counts{{1,4},{2,4},{3,4},{4,1},{99,0}};
     auto combat=rules->restore(fixture("combat-v8-rest.save"));
     check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest.save"),rules->identity(),counts),"Pending combat migration adds only the unspent Hit Dice counts and format identity");

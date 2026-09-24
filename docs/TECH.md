@@ -104,8 +104,8 @@ and application ID so different time-update sizes preserve RNG continuation.
 
 Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
 Combat checkpoint version 12 stores all effect applications, timers, presentation
-facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP. Rules 0.6.18
-migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14/0.6.15/0.6.16/0.6.17 format-5/6/7/8/9/10/11/12 checkpoints, validating then canceling
+facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP. Rules 0.6.19
+migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14/0.6.15/0.6.16/0.6.17/0.6.18 format-5/6/7/8/9/10/11/12 checkpoints, validating then canceling
 obsolete facing-only queues without changing spent resources, HP or time.
 Genuine movement queues retain their saved progress; future weapon attacks use
 the corrected [Heavy requirements](HEAVY-WEAPONS.md). The
@@ -123,6 +123,13 @@ formats 1–9 migrate without inventing a spending session. Core owns rest timin
 and transactional commits; the rules module owns resource arithmetic. See [training](TRAINING.md),
 [rest resources](REST-RESOURCES.md), [recovery clocks](RECOVERY-CLOCKS.md) and [status effects](STATUS-EFFECTS.md) for
 mechanics, scope, persistence and tests.
+
+Rules 0.6.19 derives [Wizard spell access](SPELL-ACCESS.md) from sourced grants,
+separating known cantrips and retained book entries from current preparation.
+New PC10 recipes validate casting access against those grants. Campaign replay
+recovers only the preset and actual advancement selections; old combat recipes
+retain their recorded access. Full selection controls and source-specific free
+casts remain separate work.
 
 ### Why This Stack
 

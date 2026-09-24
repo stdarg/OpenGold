@@ -203,3 +203,15 @@ Frozen prior-writer fixtures verify that original armor provenance, grants,
 wounds, resources and exact combat continuation are preserved. Armor penalties
 are derived from the equipped definitions, including Chain Mail's Stealth
 Disadvantage; loading never spends or restores resources. See [armor scope](ARMOR.md).
+
+## Wizard spell knowledge
+
+Rules 0.6.19 adds sourced cantrip/book grants to the existing ledger and writes
+PC10 recipes. Casting access must agree with known cantrips and prepared book
+entries. Campaign 10, combat 12 and SRD1–7 remain unchanged. Old campaigns
+reconstruct the established Wizard preset and actual saved advancement choices;
+unprepared learned spells remain in the book and unselected choices remain
+pending. PC1–9 combat recipes retain their recorded access because those records
+lack acquisition history. The frozen 0.6.18 writer proves exact continuation;
+no load-time slot/use refund is allowed. Full selection controls and free casts
+remain open. See [spell access](SPELL-ACCESS.md).

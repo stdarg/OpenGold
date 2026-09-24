@@ -1,6 +1,7 @@
 #include "dice.h"
 #include "feature_grants.h"
 #include "training.h"
+#include "spell_access.h"
 #include "combat_grid.h"
 #include "status_effects.h"
 #include "life_cycle.h"
@@ -153,7 +154,8 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_training=magic=="PC7"||magic=="PC8"||magic=="PC9";
+    const bool with_spells=magic=="PC10";
+    const bool with_training=magic=="PC7"||magic=="PC8"||magic=="PC9"||with_spells;
     const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5"||magic=="PC6"||with_training;
     if(magic=="PC2"||selected)in>>level;
     if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
@@ -189,7 +191,7 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(const auto* item=detail::weapon(key)){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
-            d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&magic!="PC8"&&magic!="PC9"&&legacy_two_hands(key)?2:item->hands;
+            d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&magic!="PC8"&&magic!="PC9"&&!with_spells&&legacy_two_hands(key)?2:item->hands;
             d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
@@ -215,8 +217,20 @@ Definition character_definition(std::string_view bytes)
         std::string background;in>>std::quoted(background);
         const auto grants=detail::read_grants(in);
         if(with_training)(void)detail::training_profile(grants,detail::grant_source_id(klass),background,level,scores);
-        const auto features_only=with_training?detail::without_training(grants):grants;
-        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8"||magic=="PC9",magic=="PC9");
+        if(with_spells){
+            std::vector<std::string> prepared;
+            if(klass=="Wizard"){
+                if(selected_spells&4)prepared.push_back("magic_missile");
+                if(selected_spells&16)prepared.push_back("scorching_ray");
+                if(selected_spells&32)prepared.push_back("blindness");
+            }
+            const auto access=detail::spell_access(grants,klass,level,prepared);
+            if(klass=="Wizard"&&detail::wizard_casting_mask(access)!=selected_spells)
+                throw std::runtime_error("Character casting access disagrees with spell grants");
+        }else if(std::any_of(grants.begin(),grants.end(),detail::is_spell_grant))
+            throw std::runtime_error("Legacy character recipe cannot contain new spell grants");
+        const auto features_only=detail::without_spell_grants(with_training?detail::without_training(grants):grants);
+        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8"||magic=="PC9"||with_spells,magic=="PC9"||with_spells);
         if(effects.feats!=features)throw std::runtime_error("Character effects disagree with acquired grants");
         const int initial_con=ability_modifier(scores[2]-effects.abilities[2]);
         for(unsigned i=0;i<level;++i)if(hp_modifiers[i]!=(i==3?con:initial_con))
@@ -958,7 +972,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 12 ||
@@ -1026,11 +1040,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1097,6 +1111,7 @@ public:
             next.ability_adjustments.push_back(std::move(adjustment));
         }
         if(!choice.feat.empty())next.grants.push_back(detail::advancement_grant(detail::grant_source_id(sheet.character_class),next.level,choice));next.prepared_spells=choice.spells;
+        detail::learn_advancement_spells(next,choice.spells);
         next.training=detail::training_profile(next.grants,detail::grant_source_id(next.character_class),detail::grant_source_id(next.background),next.level,next.scores);
         next.hit_point_modifiers.push_back(next.modifiers[2]);
         next.hit_points=maximum_hit_points(next.hit_die,next.race=="Dwarf",next.hit_point_modifiers);
@@ -1122,6 +1137,7 @@ public:
         auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
         if(module_before(saved,{0,6,13}))std::erase_if(expected,[](const auto& g){return g.id=="trait:dwarven_resilience";});
         if(module_before(saved,{0,6,15}))std::erase_if(expected,[](const auto& g){return g.id=="trait:adrenaline_rush";});
+        if(module_before(saved,{0,6,19}))expected=detail::without_spell_grants(expected);
         if(!std::equal(grants.begin(),grants.end(),expected.begin(),expected.end()))
             throw std::runtime_error("Saved grants disagree with creation or advancement choices");
     }
@@ -1234,6 +1250,9 @@ public:
         actor.hp=std::min(d.hp,actor.hp+amount);actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};
         auto next=vitals(actor);state=std::move(next);random_state=rng;
     }
+    SpellAccess spell_access(const CharacterSheet& sheet) const override {
+        return detail::spell_access(sheet.grants,sheet.character_class,sheet.level,sheet.prepared_spells);
+    }
     EquipmentInfo equipment_info(std::string_view key) const override {
         if(const auto* item=detail::weapon(key))return {EquipmentSlot::weapon,item->hands};
         if(key=="shield")return {EquipmentSlot::shield,1};
@@ -1254,7 +1273,8 @@ public:
     CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState equipment={}) const override {
         if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>4)throw std::runtime_error("Unsupported character rules identity or level");
         (void)detail::training_profile(sheet.grants,detail::grant_source_id(sheet.character_class),detail::grant_source_id(sheet.background),sheet.level,sheet.scores);
-        const auto features_only=detail::without_training(sheet.grants);
+        const auto features_only=detail::without_spell_grants(detail::without_training(sheet.grants));
+        const auto access=spell_access(sheet);
         const auto effects=detail::validate_grants(features_only,detail::grant_source_id(sheet.character_class),
             detail::grant_source_id(sheet.race),detail::grant_source_id(sheet.background),sheet.level);
         const unsigned features=effects.feats;
@@ -1269,8 +1289,8 @@ public:
             if(sheet.bonuses[i]!=bonuses||sheet.scores[i]!=sheet.base[i]+bonuses)
                 throw std::runtime_error("Ability totals disagree with acquired choices");
         }
-        unsigned spells=sheet.character_class=="Wizard"?1:0;std::set<std::string> selected;
-        if(sheet.prepared_spells.empty()){if(sheet.character_class=="Wizard")spells|=4;else if(sheet.character_class=="Cleric")spells|=2;}
+        unsigned spells=sheet.character_class=="Wizard"?detail::wizard_casting_mask(access):0;std::set<std::string> selected;
+        if(sheet.prepared_spells.empty()&&sheet.character_class=="Cleric")spells|=2;
         for(const auto& spell:sheet.prepared_spells){
             if(!selected.insert(spell).second)throw std::runtime_error("Duplicate prepared spell");
             if(spell=="cure_wounds"&&sheet.character_class=="Cleric")spells|=2;
@@ -1280,7 +1300,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC9 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC10 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1364,6 +1384,19 @@ public:
         if(d.str_dex_disadvantage)result.spell_messages.push_back({"Cannot cast spells while wearing untrained armor.",{}});
         if(sheet.character_class=="Wizard")result.spell_messages.push_back({"Source: Fire Bolt and Wizard spellcasting, Intelligence score {score}. Attack: Intelligence modifier +2 level-one proficiency = {attack}. Magic Missile has no ability modifier to damage.",{{"score",std::to_string(sheet.scores[3])},{"attack",std::to_string(d.casting)}}});
         if(sheet.character_class=="Cleric")result.spell_messages.push_back({"Source: Cure Wounds and Cleric spellcasting, Wisdom score {score}. Healing: 2d8 + Wisdom modifier ({modifier}).",{{"score",std::to_string(sheet.scores[4])},{"modifier",std::to_string(d.casting-2)}}});
+        if(sheet.character_class=="Wizard"){
+            for(const auto& spell:access.cantrips){
+                result.spell_modifiers+="\nKnown cantrip: "+spell.label+".";
+                result.spell_messages.push_back({"Known cantrip: {spell}.",{{"spell",spell.label,true}}});
+            }
+            for(const auto& spell:access.spellbook){
+                result.spell_modifiers+="\nSpellbook: "+spell.label+" (learned at Wizard level "+std::to_string(spell.acquired_level)+").";
+                result.spell_messages.push_back({"Spellbook: {spell} (learned at Wizard level {level}).",{{"spell",spell.label,true},{"level",std::to_string(spell.acquired_level)}}});
+            }
+            result.spell_modifiers+="\nPending Wizard choices: "+std::to_string(access.cantrip_choices-access.cantrips.size())+" cantrips, "+std::to_string(access.spellbook_choices-access.spellbook.size())+" spellbook spells, "+std::to_string(access.prepared_choices-access.prepared.size())+" prepared spells.";
+            result.spell_messages.push_back({"Pending Wizard choices: {cantrips} cantrips, {book} spellbook spells, {prepared} prepared spells.",
+                {{"cantrips",std::to_string(access.cantrip_choices-access.cantrips.size())},{"book",std::to_string(access.spellbook_choices-access.spellbook.size())},{"prepared",std::to_string(access.prepared_choices-access.prepared.size())}}});
+        }
         result.spell_messages.push_back({"Active conditions are shown in the character status.",{}});
         return result;
     }
@@ -1390,7 +1423,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.18",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.19",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

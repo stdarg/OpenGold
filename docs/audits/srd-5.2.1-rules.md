@@ -332,13 +332,16 @@ cannot be expressed consistently. See
 
 Authority: [SRD pp. 47–48, 87–88](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=87).
 
-### G4 — P1: Spell access, preparation and learning are not modeled
+### G4 — P1: Spell access, preparation and learning remain incomplete
 
-The sheet holds only `prepared_spells`; profiles encode a six-bit spell mask.
-Level-one defaults are a single Wizard cantrip plus Magic Missile, or Cleric
-Cure Wounds. Advancement accepts any nonempty subset of the small offered list.
-There is no independent spellbook, cantrip selection, preparation capacity,
-class-specific replacement policy or Long Rest preparation operation.
+F07a [#199](https://github.com/stdarg/OpenGold/issues/199) now records sourced
+Wizard cantrip/book knowledge independently of preparation and retains old book
+entries across advancement. Its entitlement counts expose unfilled choices;
+only the existing Fire Bolt/Magic Missile preset and two level-two spell
+implementations are supported. See [scope and persistence](../SPELL-ACCESS.md).
+Full cantrip/book selection, class-specific replacement policies, free casts,
+copying and Long Rest preparation controls remain unfinished. Cleric and other
+class preparation policies are separate increments; G4 remains open.
 
 Concrete target examples:
 

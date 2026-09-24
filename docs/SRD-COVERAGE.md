@@ -45,6 +45,8 @@ The all-twelve-class level-four milestone is
 
 | [EQ01](https://github.com/stdarg/OpenGold/issues/53): armor catalog and training | SRD 5.2.1 p. 92 and all twelve core class tables. Twelve armor suits and Shield, AC/Dexterity rules, Strength/Stealth penalties and class training. | [armor_catalog_tests.cpp](../tests/armor_catalog_tests.cpp) checks the independent full table, all 156 class/equipment combat combinations, actual initiative/attack/spell restrictions, equipped ability checks, boundary values, shield/hands rejection and campaign/save continuation. Existing Modifiers text and names are localized. | Module 0.6.18; PC9/combat 12/campaign 10/SRD1–7 retained. Frozen 0.6.17 saves preserve existing state and prior-writer continuation. Don/doff and shield Utilize actions remain [#198](https://github.com/stdarg/OpenGold/issues/198); optional class grants, starting packages and unsupported original conversions remain open. [Scope](ARMOR.md). |
 
+| [F07a](https://github.com/stdarg/OpenGold/issues/199): Wizard spell knowledge and preparation | SRD 5.2.1 pp. 77–78. Sourced cantrip/book entries, first acquisition levels, independent preparation and pending entitlements through level 4 for existing spells. | [spell_access_tests.cpp](../tests/spell_access_tests.cpp) verifies knowledge retention, actual casting/slot use, invalid grants, atomic advancement, campaign replay and frozen-writer continuation. Existing Modifiers text is checked through the Godot creation flow in Spanish. | Module 0.6.19 / PC10; campaign 10/combat 12/SRD1–7 retained. Old campaigns recover only preset/history-backed selections; old combat retains its recorded access. Full controls #37, copying #97 and free casts #200 remain open; parent #36 stays open. [Scope](SPELL-ACCESS.md). |
+
 Light extra attacks, Monk Martial Arts, optional feature-granted proficiency,
 multiclass-entry proficiency remain their own issues. EQ02 adds the complete
 catalog and Rapier/Hand Crossbow proficiency examples; it does not establish
@@ -85,7 +87,7 @@ commit-specific findings as historical evidence.
 | G1: complete class features/advancement | Open; all twelve required | [Level-four milestone #8](https://github.com/stdarg/OpenGold/issues/8) and its class issues |
 | G2: species/background grants | Open | [Species #51](https://github.com/stdarg/OpenGold/issues/51), [backgrounds #50](https://github.com/stdarg/OpenGold/issues/50) |
 | G3: feat entitlements/choices | Open | [Feats #49](https://github.com/stdarg/OpenGold/issues/49) |
-| G4: spell access/learning/preparation | Open | [F07 #36](https://github.com/stdarg/OpenGold/issues/36) and class-specific integration |
+| G4: spell access/learning/preparation | Partial: F07a knowledge/preparation foundation | [F07 #36](https://github.com/stdarg/OpenGold/issues/36) and class-specific integration |
 | G5: spells/shared casting mechanics | Open | [Spell inventory #165](https://github.com/stdarg/OpenGold/issues/165) and named spell/mechanic issues |
 | G6: full progression/multiclassing | Open | [Higher levels #176](https://github.com/stdarg/OpenGold/issues/176), [multiclassing #179](https://github.com/stdarg/OpenGold/issues/179) and successors |
 | G7: rests/recharge | Open | [F03 #30](https://github.com/stdarg/OpenGold/issues/30) |

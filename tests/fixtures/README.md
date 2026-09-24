@@ -243,3 +243,30 @@ resources, descriptions, equipment, grants, RNG or clocks.
 `armor-srd-5.2.1.tsv` is an independent transcription of the SRD 5.2.1 p. 92
 table. Its thirteen rows cover twelve suits and Shield. Times are seconds;
 Shield's zero times denote a Utilize action, not a free equipment change.
+
+
+## Wizard spell knowledge compatibility
+
+`campaign-v10-spells.ogs`, `combat-v12-spells.save` and
+`combat-v12-spells-continued.save` were written by **0.6.18**, using headers and
+libraries frozen from commit **e3440d9**. Do not regenerate with current code.
+Asset identity is `spells-fixture`; the fixtures contain no original assets.
+
+Three Sage Wizards (Dwarf level 1, Orc level 3, Human level 4) carry Wands and
+have two wounds each. The old creation preset implicitly enabled Fire Bolt and
+Magic Missile. All advancement histories select Magic Missile at level 2. At
+level 3 the Orc selected Scorching Ray/Blindness, while the Human selected Magic
+Missile/Scorching Ray and then only Blindness at level 4. Migration must recover
+book entries from those actual choices, retaining spells no longer prepared
+without filling missing SRD selections. Their spent slots, Hit Dice, sourced
+Temporary HP, Orc Rush use, equipment and clock (123 minutes + 456 ms) remain.
+
+The combat uses the Orc and a Vanguard target, seed 13. The second file records
+an actual Scorching Ray cast. Old PC9 recipes lack book history and remain
+unchanged; only module identity changes. Spell damage, spent resources, action
+state, RNG and clock must match the frozen writer exactly.
+
+With 0.6.19, older equipment/resource campaign fixtures also gain explicit Fire
+Bolt and Magic Missile grants. `campaign_fixture.h` constructs that limited
+expected ledger change independently, retaining every other body byte. Earlier
+sections' identity-only migration descriptions refer to their delivery versions.

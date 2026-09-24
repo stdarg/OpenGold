@@ -1,4 +1,5 @@
 #include "opengold/campaign_save.h"
+#include "campaign_fixture.h"
 #include "opengold/srd5.h"
 #include <algorithm>
 #include <array>
@@ -127,7 +128,7 @@ void legacy(){
     check(party.member(1).vitals.resources=="SRD1 1 0 0 0 0"&&party.member(2).vitals.resources=="SRD7 0 1 0 0 0 0 1 0 0 7 \"spell:fixture\" 1 FX1 1 0","Existing Wind/slot/Rush expenditure and Temporary HP are never reset");
     for(const auto id:{1u,2u})check(party.profile(id).item_modifiers.find("Attacks with this weapon have Disadvantage.")!=std::string::npos,"Both weapon categories derive their missing requirement on migration");
     const auto bytes=encode_campaign(party,nullptr,"heavy-fixture");auto body=campaign.substr(campaign.find('\n',campaign.find('\n')+1)+1);body.replace(body.find("0.6.15"),6,rules->identity().version);
-    check(bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1)==body,"Campaign migration preserves all Dwarf/Orc grants, state, equipment and clock, changing only identity");
+    check(bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(body),"Campaign migration adds explicit spell grants and preserves all Dwarf/Orc grants, state, equipment and clock");
     CampaignParty again(module());again.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"heavy-fixture",nullptr).party);check(encode_campaign(again,nullptr,"heavy-fixture")==bytes,"Migration is canonical and never repeats grant introduction");
 }
 }

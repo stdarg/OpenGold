@@ -27,6 +27,18 @@ struct AdvancementOptions {
     std::vector<AdvancementOption> feats,spells;
     std::string description;
 };
+struct LearnedSpell {
+    std::string id, label, source_id;
+    unsigned acquired_level{};
+    bool operator==(const LearnedSpell&) const = default;
+};
+// Derived from sourced grants and the selected preparation. Unfilled choices
+// remain explicit; an incomplete catalog never erases an entitlement.
+struct SpellAccess {
+    std::vector<LearnedSpell> cantrips, spellbook;
+    std::vector<std::string> prepared;
+    unsigned cantrip_choices{}, spellbook_choices{}, prepared_choices{};
+};
 // Zero selects the equipped weapon's minimum required hands.
 struct EquipmentState {
     unsigned weapon_hands{};
@@ -171,6 +183,7 @@ public:
     [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>, EquipmentState equipment={}) const;
     [[nodiscard]] virtual EquipmentState migrate_equipment(std::span<const std::string>) const {return {};}
     [[nodiscard]] virtual EquipmentInfo equipment_info(std::string_view) const {return {};}
+    [[nodiscard]] virtual SpellAccess spell_access(const CharacterSheet&) const {return {};}
     [[nodiscard]] virtual AbilityCheckModifier ability_check(const CharacterSheet&,std::span<const std::string> gear,
         unsigned ability,std::string_view skill={},std::string_view tool={},EquipmentState equipment={}) const;
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;

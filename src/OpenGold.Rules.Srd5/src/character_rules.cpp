@@ -1,6 +1,7 @@
 #include "dice.h"
 #include "feature_grants.h"
 #include "training.h"
+#include "spell_access.h"
 #include "opengold/srd5.h"
 #include "status_effects.h"
 #include <algorithm>
@@ -183,6 +184,9 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
         (s.modifiers[2]<0?"- ":"+ ")+std::to_string(std::abs(s.modifiers[2]))+" (Constitution)"+
         (racial_hp?" + 1 (Dwarven Toughness)":"")+" = "+std::to_string(s.hit_points)+" HP";
     s.training=detail::training_profile(s.grants,d.character_class,d.background,s.level,s.scores);
+    const auto spells=detail::starting_spell_grants(d.character_class);
+    s.grants.insert(s.grants.end(),spells.begin(),spells.end());
+    if(d.character_class=="wizard")s.prepared_spells={"magic_missile"};
     return s;
 }
 }

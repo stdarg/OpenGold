@@ -220,9 +220,9 @@ void roundtrip(const std::filesystem::path& directory){
     auto base=prototype();auto rules=module();auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fixture-v1",&base);auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));loaded.town->attach_restored_party(replacement);
     check(encode_campaign(*replacement,&*loaded.town,"fixture-v1")==saved,"Complete serialized state round trips");
     for(const std::string prior_version:{"0.6.0","0.6.1","0.6.2","0.6.3","0.6.4","0.6.5","0.6.6"}){
-        auto previous_save=decode_campaign(changed_identity(saved,rules->identity().version,prior_version),*srd5::character_rules(),*rules,"fixture-v1",&base);
-        CampaignParty migrated(module());migrated.restore(std::move(previous_save.party));
-        check(encode_campaign(migrated,&*previous_save.town,"fixture-v1")==saved,"Earlier 0.6.x campaigns upgrade without changing saved state");
+        // Current spell grants cannot masquerade as an older writer's records.
+        // Genuine frozen previous-writer fixtures above cover migration instead.
+        rejects([&]{(void)decode_campaign(changed_identity(saved,rules->identity().version,prior_version),*srd5::character_rules(),*rules,"fixture-v1",&base);});
     }
     const auto encounter=[](const CampaignParty& p){rules::Encounter e{{8,8,std::vector<std::uint8_t>(64)},p.participants()};e.participants.push_back({99,"bandit","Bandit",1,{6,6}});return e;};
     auto combat_a=rules->create(encounter(*party),42),combat_b=rules->create(encounter(*replacement),42);

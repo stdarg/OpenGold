@@ -47,6 +47,7 @@ add_library(opengold_rules_srd5 STATIC
     src/OpenGold.Rules.Srd5/src/character_rules.cpp
     src/OpenGold.Rules.Srd5/src/feature_grants.cpp
     src/OpenGold.Rules.Srd5/src/training.cpp
+    src/OpenGold.Rules.Srd5/src/spell_access.cpp
     src/OpenGold.Rules.Srd5/src/combat_grid.cpp
     src/OpenGold.Rules.Srd5/src/status_effects.cpp
     src/OpenGold.Rules.Srd5/src/life_cycle.cpp
@@ -202,6 +203,11 @@ if(OPENGOLD_BUILD_TESTS)
     add_executable(opengold_tour_tests tests/tour_tests.cpp)
     target_link_libraries(opengold_tour_tests PRIVATE opengold_core)
     add_test(NAME opengold_tour_tests COMMAND opengold_tour_tests)
+    add_executable(opengold_spell_access_tests tests/spell_access_tests.cpp)
+    target_link_libraries(opengold_spell_access_tests PRIVATE opengold_rules_srd5 opengold_core)
+    target_compile_definitions(opengold_spell_access_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_spell_access_tests COMMAND opengold_spell_access_tests)
+
     add_executable(opengold_armor_catalog_tests tests/armor_catalog_tests.cpp)
     target_link_libraries(opengold_armor_catalog_tests PRIVATE opengold_rules_srd5 opengold_core)
     target_include_directories(opengold_armor_catalog_tests PRIVATE src/OpenGold.Rules.Srd5/src)

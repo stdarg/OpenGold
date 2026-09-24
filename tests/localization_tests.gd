@@ -89,7 +89,11 @@ func run_checks() -> void:
 	await press("Next")
 	require(current_scene.get_node("Ability0").text.contains("Fuerza"), "Ability name not translated")
 	require(current_scene.get_node("Targets/Rows/Class4").text.contains("FUE 13 o DES 13"), "Class prerequisites not translated from structured data")
-	await press("Roll")
+	for attempt in range(30):
+		await press("Roll")
+		if current_scene.get_node("Dice3").get_parsed_text().to_int() >= 13:
+			break
+	require(current_scene.get_node("Dice3").get_parsed_text().to_int() >= 13, "Fixture needs an eligible Wizard")
 	await capture("spanish-attributes")
 	for i in range(6):
 		await drag(current_scene.get_node("Dice" + str(i)).get_global_rect().get_center(), current_scene.get_node("Score" + str(i)).get_global_rect().get_center())
@@ -97,10 +101,10 @@ func run_checks() -> void:
 	var choices: ItemList = current_scene.get_node("Choices")
 	var eligible := -1
 	for i in range(choices.item_count):
-		if not choices.is_item_disabled(i):
+		if choices.get_item_text(i) == "Mago" and not choices.is_item_disabled(i):
 			eligible = i
 			break
-	require(eligible >= 0, "Fixture has no eligible class")
+	require(eligible >= 0, "Fixture has no eligible Wizard")
 	choices.select(eligible)
 	choices.item_selected.emit(eligible)
 	await settle()
@@ -120,6 +124,9 @@ func run_checks() -> void:
 	await press("Modifiers")
 	var modifiers: String = current_scene.get_node("ModifiersModal/Text").text
 	require(modifiers.contains("Ajustes de características") and modifiers.contains("Origen:"), "Rule explanations not translated")
+	require(modifiers.contains("Truco conocido: Descarga de fuego."), "Known cantrip missing from translated Modifiers")
+	require(modifiers.contains("Libro de conjuros: Proyectil mágico (aprendido en el nivel 1 de Mago)."), "Sourced book entry missing from translated Modifiers")
+	require(modifiers.contains("Elecciones de Mago pendientes: 2 trucos, 5 conjuros del libro, 3 conjuros preparados."), "Missing Wizard entitlements are not explicit")
 	await press("ModifiersModal/Close")
 	await press("SavingThrows")
 	require(current_scene.get_node("SavingThrowsModal/Text").text.contains("Salvación de Fuerza"), "Saving throws not translated")
