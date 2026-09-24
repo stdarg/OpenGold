@@ -344,7 +344,7 @@ void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
     if(snapshot.elapsed_milliseconds<combat_elapsed_)throw std::runtime_error("Combat clock moved backward");
     auto next=state_;
     std::vector<MemberId> active;for(const auto& actor:snapshot.combatants)if(actor.side==0)active.push_back(actor.id);
-    // Combat has already advanced active actors' effects. Only reserve members
+    // Combat has already advanced active actors' effects and mortality. Only reserves
     // need campaign-side updates, preventing duplicate recovery rolls.
     elapse(next,snapshot.elapsed_milliseconds-combat_elapsed_,active);
     for(const auto& actor:snapshot.combatants)if(actor.side==0){

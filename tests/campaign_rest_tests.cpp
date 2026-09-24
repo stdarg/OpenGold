@@ -27,7 +27,7 @@ void individual_eligibility(){
     CampaignParty party(module());const auto f=party.add_pc(hero()),w=party.add_pc(hero("wizard"));
     const auto unconscious=party.add_pc(hero()),dead=party.add_pc(hero()),reserve=party.add_pc(hero());party.remove(reserve);
     const auto npc=party.recruit("rest-companion",hero());
-    auto state=party.checkpoint();state.time_minutes=1000;state.subminute_milliseconds=3000;
+    auto state=party.checkpoint();state.time_minutes=1000;state.subminute_milliseconds=3000;state.random_state=29;
     for(auto& m:state.roster)m.vitals={1,false,"SRD1 0 0 0 0 0"};
     state.roster[1].last_rest_minutes=41;state.roster[1].last_rest_subminute_milliseconds=4000;
     state.roster[2].vitals={0,false,"SRD1 0 0 1 2 0"};state.roster[3].vitals={0,true,"SRD1 0 0 0 3 0"};party.restore(state);
@@ -39,13 +39,14 @@ void individual_eligibility(){
     const auto result=party.rest(RestKind::long_rest);
     check(result&&result->members==std::vector<MemberId>{f,npc}&&!result->spending&&result->duration_minutes==480,
         "Only eligible active PCs and NPCs complete the Long Rest");
-    check(party.state().time_minutes==1480&&party.state().subminute_milliseconds==3000&&party.state().random_state==42,
-        "One group rest advances eight hours once without unnecessary rolls");
+    check(party.state().time_minutes==1480&&party.state().subminute_milliseconds==3000&&party.state().random_state==11400714819323198514ULL,
+        "One group rest advances eight hours once, including the known natural-one death save");
     check(party.member(f).last_rest_minutes==1480&&party.member(f).last_rest_subminute_milliseconds==3000&&
         party.member(npc).last_rest_minutes==1480&&party.member(f).vitals.hit_points==party.member(f).character.sheet().hit_points,
         "Only successful members receive HP and completion timestamps");
-    for(auto id:{w,unconscious,dead,reserve})check(party.member(id).vitals==state.roster[id-1].vitals&&
+    for(auto id:{w,dead,reserve})check(party.member(id).vitals==state.roster[id-1].vitals&&
         party.member(id).last_rest_minutes==state.roster[id-1].last_rest_minutes,"Ineligible and reserve members gain no rest resources or cooldown reset");
+    check(party.member(unconscious).vitals.dead&&party.member(unconscious).vitals.resources=="SRD1 0 0 1 4 0"&&!party.member(unconscious).last_rest_minutes,"Ineligible mortality continues without replenishing resources or recording a rest");
     check(party.rest_info(RestKind::long_rest)[1].denial==RestDenial::none,"Eligibility is checked at the next rest start, not granted midway through the previous rest");
     auto copy=loaded(saved(party));const auto later=copy.rest(RestKind::long_rest);
     check(later&&later->members==std::vector<MemberId>{w}&&copy.member(f).last_rest_minutes==1480,"Mixed cooldowns persist across load");

@@ -127,10 +127,10 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
-Rules module **0.6.11** writes **OGCOMBAT 10**, including selected weapon grip, an
+Rules module **0.6.12** writes **OGCOMBAT 10**, including selected weapon grip, an
 involuntary shared-space marker, remaining Hit Dice and recovery clocks. Combat migration accepts **0.6.4**, format 5,
 **0.6.5**, format 6, **0.6.6**, format 7, **0.6.7/0.6.8/0.6.9**, format 8,
-and **0.6.10**, format 9,
+**0.6.10**, format 9, and **0.6.11**, format 10,
 with identical module/content IDs.
 A valid saved facing-only queue is canceled; the attacker resumes with the same
 HP, movement, spent resources, RNG and clock. The command revision changes to

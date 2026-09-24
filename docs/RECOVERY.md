@@ -12,8 +12,9 @@ complete original campaign service coverage.
   restoration adds no roll, and campaign handoff preserves stabilization and
   spent resources. Stable status now records its one rolled recovery delay;
   combat time counts it down and restores 1 HP. [Recovery clocks](RECOVERY-CLOCKS.md)
-  also survive healing, damage and save/load. Advancing them outside combat remains
-  [#195](https://github.com/stdarg/OpenGold/issues/195), so parent #31 stays open.
+  also survive healing, damage and save/load. Campaign time advances the same
+  mortality rules for active members and reserves, interleaved with lasting
+  effects; repeated combat snapshots cannot apply elapsed time twice.
 - The authored party Bandit preview grants **300 XP per living active member**
   on its first victory. Its reward key is `preview:bandit:v1`; reopening the scene,
   restarting it or using a different seed cannot award it again. The original
@@ -30,7 +31,8 @@ complete original campaign service coverage.
 - A Long Rest checks each active member at its start: at least 1 HP, alive and
   at least 16 hours since the previous completion. Eligible members recover HP,
   spent Hit Dice and supported resources after eight hours; ineligible/reserve
-  members gain no rest benefits. Time/effects advance once for the whole roster.
+  members gain no rest benefits. Time, effects and mortality advance once for
+  the whole roster.
   If nobody is eligible, the request changes nothing. Removal/rejoin preserves
   individual timers. Short Rest transactions now recharge one Second Wind and
   permit one Hit Die decision at a time after the hour, with persistent tickets
@@ -43,7 +45,8 @@ complete original campaign service coverage.
 **Camp [C]** runs ECL entry 2 before any recovery. `6DD3=255` denies rest.
 An interruption-free profile permits the requested rest for eligible members.
 New Phlan's guaranteed city-watch interruption (`6DD2=1`, `6DD3=100/101`) advances five minutes, runs
-entry 3, and grants no recovery. Choose **GO** to leave peacefully; combat with
+entry 3, and grants no rest benefits. Mortality and effect timers still advance.
+Choose **GO** to leave peacefully; combat with
 the watch remains unsupported and rolls the event back. Other nonzero
 probabilistic interruption profiles fail explicitly.
 
@@ -83,7 +86,7 @@ campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
 purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
 Combat checkpoint format is version 10 and the combat module identity is
-**0.6.11**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10
+**0.6.12**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11
 have a specific [pending-reaction migration](RULES.md#library-boundary); other
 incompatible combat saves reject.
 
@@ -98,7 +101,9 @@ The deterministic route uses the actual creation/shop/combat callbacks, verifies
 the level-two sheet, then exercises the original city-watch interruption, temple
 payment and inn rest, rejects a repeated rest and fights again without duplicate
 XP. The service fixture supplies one wounded survivor, 200 gp and one platinum;
-these are test-only setup changes. Add `--capture` and omit `--headless` for local
+a Stable companion and an unstable reserve also verify natural recovery and
+a death save during the interruption in the game route. These are test-only setup
+changes. Add `--capture` and omit `--headless` for local
 captures. Native party tests separately cover threshold boundaries, Dwarven HP,
 caster resources, overflow, reward reentry, checkpoint continuation, rest denial,
 temple eligibility, payment failure and event rollback.

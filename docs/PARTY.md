@@ -139,10 +139,10 @@ still require a supported conversion rather than silently receiving plain stats.
 Equipment metadata comes from the rules module, not from the original edition's
 `ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
 two-handed weapon/shield combination leaves the previous loadout untouched.
-Rules version 0.6.11 includes the Rogue/Monk weapon proficiency, death-save,
+Rules version 0.6.12 includes the Rogue/Monk weapon proficiency, death-save,
 Constitution/HP-history, remaining-turn-resource and opportunity-trigger corrections,
 plus allied transit, Versatile grip and feature/training grant provenance. It accepts
-0.6.10 and earlier supported campaign saves. HP migration preserves living deficits
+0.6.11 and earlier supported campaign saves. HP migration preserves living deficits
 and unconscious/dead state.
 It recomputes weapon bonuses from saved
 class/equipment choices and retains the conversion of previously unsupported
@@ -153,7 +153,7 @@ selections and preserves missing choices as pending. See [advancement](ADVANCEME
 and [training support](TRAINING.md). Older saves keep the prior
 two-handed use of Battleaxe/Spear/Quarterstaff/Trident, now with corrected damage;
 other Versatile weapons remain one-handed until changed. Standalone combat
-checkpoints from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10 migrate with identical content, canceling only obsolete
+checkpoints from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11 migrate with identical content, canceling only obsolete
 facing reactions; see [combat persistence](RULES.md#library-boundary). Combat format 10 retains Hit Dice and [recovery clocks](RECOVERY-CLOCKS.md); see also [rest resources](REST-RESOURCES.md). Other older
 combat versions require finishing the combat and saving the campaign before upgrading.
 

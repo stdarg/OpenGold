@@ -162,3 +162,8 @@ F03b delivery validation: ten relevant native suites, six Godot CTest entries,
 and the game/demo party-and-recovery routes pass. Both GDExtensions rebuild;
 localization and diff checks pass. The game route again reports the previously
 observed five ObjectDB instances at shutdown; no shutdown fix is included here.
+
+Rules 0.6.12 advances mortality alongside effects during rest time. A zero-HP
+companion or reserve may wake naturally with one HP or die; eligibility captured
+at the start still prevents unearned recharge, Hit Dice or completion timestamps.
+See [recovery scheduling](RECOVERY-CLOCKS.md#campaign-time).

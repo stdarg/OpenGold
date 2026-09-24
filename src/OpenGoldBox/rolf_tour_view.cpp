@@ -664,8 +664,14 @@ bool RolfTourView::check_expedition_step()
 }
 void RolfTourView::start_recovery_check()
 {
-    // Deterministic wounded fixture and one platinum for the original inn payment.
+    // Acceptance-only fixtures exercise mortality through ordinary camp/travel.
+    const auto reserve=campaign_->add_pc(campaign_->state().roster.at(0).character);
+    campaign_->remove(reserve);
     auto state=campaign_->checkpoint();auto& member=state.roster.at(0);
+    state.random_state=17;
+    state.roster.at(1).vitals={0,false,"SRD5 0 0 0 0 0 1 1 0 2000 FX1 1 0"};
+    state.roster.back().vitals={0,false,"SRD5 0 0 0 2 1 0 1 6000 0 FX1 1 0"};
+    // One platinum covers the original inn payment.
     if(member.vitals.dead)throw std::runtime_error("Recovery check requires a living victory survivor");
     member.vitals.hit_points=1;member.wealth[3]=200;member.wealth[4]=1;
     campaign_->restore(state);recovery_before_=std::move(state);
@@ -706,6 +712,10 @@ void RolfTourView::check_recovery()
     if(recovery_stage_==2){
         if(campaign_->state().time_minutes!=recovery_before_->time_minutes+5||member.vitals!=recovery_before_->roster.at(0).vitals)
             throw std::runtime_error("Original city-watch interruption must consume five minutes without recovery");
+        if(campaign_->state().roster.at(1).vitals.hit_points!=1||campaign_->state().roster.back().vitals.hit_points!=1||
+            campaign_->state().random_state!=11400714819323198502ULL||
+            campaign_->state().roster.back().vitals.resources!="SRD4 0 0 0 0 0 0 1 FX1 1 0")
+            throw std::runtime_error("Camp time must advance companion Stable recovery and the reserve death save exactly once");
         if(save_check)save_check("interrupted-rest");
         recovery_stage_=3;
     }
@@ -730,7 +740,7 @@ void RolfTourView::check_recovery()
             throw std::runtime_error("Immediate repeated long rest must be denied");
         if(save_check)save_check("denied-rest");
         capture_frame("party-rest");recovery_stage_=8;checking_=false;
-        UtilityFunctions::print("Godot recovery check passed: original interruption, temple payment, inn rest and repeated-rest denial.");return;
+        UtilityFunctions::print("Godot recovery check passed: original interruption, temple payment, inn rest, repeated-rest denial and companion/reserve mortality.");return;
     }
     const auto target_event=recovery_stage_==3?6u:9u;
     for(unsigned y=0;y<16;++y)for(unsigned x=0;x<16;++x)if(session_->map().at(x,y).event_number()==target_event){check_walk_to(x,y);return;}
