@@ -48,7 +48,7 @@ level-up replacement remain #91. See [Sacred Flame](SACRED-FLAME.md).
 
 ## Persistence
 
-Module **0.6.23** writes **PC12** combat recipes; the existing grant section
+Module **0.6.24** writes **PC13** combat recipes; the existing grant section
 contains the spell sources and the casting mask must agree with them. Campaign
 format **11** stores explicit starting cantrip choices. Combat format **13** and
 vital-state formats **SRD1–7** remain. PC10 reads retain their historical grants.

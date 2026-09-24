@@ -242,3 +242,13 @@ PC11 and earlier retain their recorded spells and cannot acquire Sacred Flame
 by relabeling a new recipe. Campaign 11/combat 13/SRD1–7 remain unchanged.
 Actual 0.6.22 fixtures verify exact campaign preservation and Cure Wounds
 continuation without inventing Cleric choices. See [Sacred Flame](SACRED-FLAME.md).
+
+## Action Surge
+
+Rules 0.6.24 writes PC13 with the fixed Fighter level-two grant. Encounters
+containing that feature use combat 14, retaining remaining uses, activation
+this turn and the separate non-Magic allowance. Others retain combat 13.
+SRD8 stores spent uses alongside all prior resource fields; fully available
+uses retain compact formats. Campaign 11 is unchanged. Old campaigns gain
+the fixed grant from recorded advancement; old combat recipes keep their
+recorded feature access and exact continuation. [Details](ACTION-SURGE.md).

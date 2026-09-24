@@ -84,7 +84,7 @@ void frozen_saves(){
     auto body=old.substr(old.find('\n',old.find('\n')+1)+1);body.replace(body.find("0.6.10"),6,rules->identity().version);
     const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
     body.replace(body.find(old_content),old_content.size(),rules->identity().content);
-    check(saved.substr(saved.find('\n',saved.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(body),"Campaign migration adds sourced spell grants and updates module identity; unknown elapsed recovery is never invented");
+    check(saved.substr(saved.find('\n',saved.find('\n')+1)+1)==test::with_action_surge_grants(test::with_initial_wizard_spell_grants(body),{true,true,true,true}),"Campaign migration adds sourced spell grants and updates module identity; unknown elapsed recovery is never invented");
     check(party.member(1).vitals.hit_points==0&&party.member(3).vitals.dead&&party.member(5).vitals.hit_points==0,"Stable, dead and reserve fixtures retain vitality");
 }
 CombatantView actor(const CombatSession& combat,EntityId id){const auto s=combat.snapshot();for(const auto& a:s.combatants)if(a.id==id)return a;throw std::runtime_error("Missing actor");}

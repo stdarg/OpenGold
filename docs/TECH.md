@@ -144,6 +144,12 @@ saving-throw and typed-damage services. The class-driven Godot cantrip control
 now supports Clerics and hides stale choices when the class changes. PC12
 validates the grant/casting mask; Core remains independent of spell mechanics.
 
+Rules 0.6.24 keeps the ordinary and Action Surge allowances in a rules-owned
+`ActionBudget` value. Magic eligibility consumes only the ordinary action;
+other actions spend the restricted allowance first. Existing legal-command
+and recovery-pool queries expose the feature without SRD parsing in Core/UI.
+See [Action Surge](ACTION-SURGE.md) for persistence and migration boundaries.
+
 ### Why This Stack
 
 `C/C++` fits the project because it supports a portable native engine with direct integration into Godot:

@@ -39,10 +39,11 @@ bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
+    if(action_surge&&klass=="fighter"&&level>=2)required.push_back({"feature:action_surge","class:fighter",2,{}});
     if(!damage_traits)std::erase_if(required,[](const auto& g){return g.id=="trait:dwarven_resilience";});
     if(!rush_trait)std::erase_if(required,[](const auto& g){return g.id=="trait:adrenaline_rush";});
     std::set<std::string> nonrepeatable;

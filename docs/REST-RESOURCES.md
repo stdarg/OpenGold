@@ -167,3 +167,8 @@ Rules 0.6.12 advances mortality alongside effects during rest time. A zero-HP
 companion or reserve may wake naturally with one HP or die; eligibility captured
 at the start still prevents unearned recharge, Hit Dice or completion timestamps.
 See [recovery scheduling](RECOVERY-CLOCKS.md#campaign-time).
+
+Rules 0.6.24 adds Fighter Action Surge at level 2: one use through level 4,
+fully recharged by either rest kind. Advancement preserves expenditure. SRD8
+stores the spent use alongside existing resources; compact earlier formats
+mean the new pool is available. See [Action Surge](ACTION-SURGE.md).

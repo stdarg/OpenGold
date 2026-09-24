@@ -317,3 +317,8 @@ with PC12 grant validation and the approved creation/combat controls. Shared
 spell saves now automatically fail Strength/Dexterity at zero HP. Campaign 11,
 combat 13 and resource formats remain. Partial cover, speech blockers and other
 grant routes keep #203 open.
+
+Rules 0.6.24 adds [Action Surge](ACTION-SURGE.md): Fighter level-two acquisition,
+a separately restricted extra action and Short/Long Rest recharge. PC13,
+feature-bearing combat 14 and spent-resource SRD8 preserve the new state;
+campaign 11 remains. The dedicated button is pending question 17.

@@ -120,7 +120,7 @@ void persistence_and_advancement(){
     check(rules->recovery_info(party.member(id).character.sheet(),healed).hit_dice==1,"Spell healing preserves Hit Dice");
     auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{5,1}});
     auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);const auto checkpoint=combat->save();
-    check(checkpoint.starts_with("OGCOMBAT 13 ")&&rules->restore(checkpoint)->save()==checkpoint,"Combat checkpoint stores remaining dice exactly");
+    check(checkpoint.starts_with("OGCOMBAT 14 ")&&rules->restore(checkpoint)->save()==checkpoint,"Combat checkpoint stores remaining dice exactly");
     auto copy=rules->restore(checkpoint);
     for(unsigned turn=0;turn<6;++turn){const auto end=command(*combat,"end");check(combat->submit(end)&&copy->submit(end)&&combat->save()==copy->save(),"Spent dice and effects continue deterministically through combat turns");}
     party.begin_combat();party.apply_combat(combat->snapshot());party.end_combat();
@@ -128,8 +128,12 @@ void persistence_and_advancement(){
     // Corrupt only the appended count for the character; all other checkpoint data remains valid.
     std::istringstream in(checkpoint);std::vector<std::string> rows;for(std::string row;std::getline(in,row);)rows.push_back(row);
     for(unsigned i=4;i<6;++i)if(rows[i].starts_with("1 ")){
-        const auto clocks=rows[i].rfind(' ',rows[i].rfind(' ')-1),dice=rows[i].rfind(' ',clocks-1);
-        rows[i].replace(dice+1,clocks-dice-1,"3");
+        // Published actor field 27 is Hit Dice, before clocks and feature pools.
+        std::istringstream fields(rows[i]);std::string field;
+        for(unsigned n=0;n<27;++n)fields>>std::quoted(field);
+        fields>>std::ws;const auto begin=static_cast<std::size_t>(fields.tellg());fields>>field;
+        check(field=="1","Mutation targets the actual spent Hit Dice field");
+        rows[i].replace(begin,static_cast<std::size_t>(fields.tellg())-begin,"3");
     }
     std::string bad;for(const auto& row:rows)bad+=row+'\n';rejects([&]{(void)rules->restore(bad);});
     check(copy->save()==combat->save(),"Malformed Hit Dice cannot mutate an existing combat");
@@ -143,7 +147,7 @@ void old_saves(){
     const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
     expected.replace(expected.find(old_content),old_content.size(),rules->identity().content);
     const auto rewritten=encode_campaign(party,nullptr,"rest-fixture");
-    check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(expected)+"1 0 ","Campaign migration adds sourced spell grants, the empty rest window and module identity, preserving all original training, resources, effects, equipment and timers");
+    check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==test::with_action_surge_grants(test::with_initial_wizard_spell_grants(expected),{true})+"1 0 ","Campaign migration adds sourced spell grants, the empty rest window and module identity, preserving all original training, resources, effects, equipment and timers");
     const std::map<unsigned,unsigned> counts{{1,4},{2,4},{3,4},{4,1},{99,0}};
     auto combat=rules->restore(fixture("combat-v8-rest.save"));
     check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest.save"),rules->identity(),counts),"Pending combat migration adds only the unspent Hit Dice counts and format identity");

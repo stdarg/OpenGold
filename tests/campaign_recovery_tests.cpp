@@ -1,6 +1,7 @@
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -89,13 +90,12 @@ void combat_handoff(){
     auto state=party.checkpoint();state.random_state=17;state.roster[1].vitals=stable(10000);state.roster[2].vitals=unstable();party.restore(state);
     auto actors=party.participants();actors.push_back({999,"bandit","Enemy",1,{7,7}});
     auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},42);
-    std::istringstream old_input(combat->save());std::vector<std::string> old_rows;
-    for(std::string row;std::getline(old_input,row);)old_rows.push_back(row);
-    old_rows[0].replace(9,2,"10");old_rows[0].replace(old_rows[0].find(rules->identity().version),rules->identity().version.size(),"0.6.11");
-    for(std::size_t i=4;i<4+combat->snapshot().combatants.size();++i)for(unsigned field=0;field<4;++field)old_rows[i].resize(old_rows[i].find_last_of(' '));
-    old_rows.pop_back();old_rows.pop_back();
-    std::string old_combat;for(const auto& row:old_rows)old_combat+=row+'\n';
-    check(rules->restore(old_combat)->save()==combat->save(),"Previous module's combat gains only empty Temporary HP without a roll or timing change");
+    // Use an actual prior writer, rather than relabeling a current recipe.
+    const auto frozen=[](const char* name){std::ifstream in(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name);check(bool(in),"Frozen recovery fixture exists");return std::string(std::istreambuf_iterator<char>(in),{});};
+    auto migrated=rules->restore(frozen("combat-v9-recovery.save"));
+    check(rules->restore(migrated->save())->save()==migrated->save(),"Migrated recovery checkpoint reload is exact");
+    bool declined=false;for(const auto& command:migrated->legal_commands())if(command.verb=="decline"){declined=migrated->submit(command);break;}
+    check(declined&&migrated->save()==rules->restore(frozen("combat-v9-recovery-continued.save"))->save(),"Prior writer recovery/reaction continuation stays exact");
     auto old_identity=rules->identity();old_identity.version="0.6.11";
     check(rules->accepts_campaign_identity(old_identity),"Previous campaign module remains accepted");
     auto direct=loaded(saved(party));party.begin_combat();party.apply_combat(combat->snapshot());

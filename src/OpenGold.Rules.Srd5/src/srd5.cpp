@@ -1,4 +1,5 @@
 #include "dice.h"
+#include "action_budget.h"
 #include "feature_grants.h"
 #include "training.h"
 #include "spell_access.h"
@@ -90,7 +91,7 @@ struct Definition {
     unsigned weapon_hands{};
     int versatile_sides{};
     bool shield{};
-    int hit_die{},constitution{},rushes{};
+    int hit_die{},constitution{},rushes{},surges{};
     bool dwarf{};
     detail::DamageType melee_type{detail::DamageType::bludgeoning},ranged_type{detail::DamageType::bludgeoning};
     std::vector<detail::DamageAffinity> affinities;
@@ -134,9 +135,10 @@ struct Actor : detail::LifeState {
     Participant source;
     Definition definition;
     int initiative{}, movement{}, winds{}, slots{},slots2{};
-    int hit_dice{},rushes{};
-    bool rush_used{};
-    bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{};
+    int hit_dice{},rushes{},surges{};
+    bool rush_used{},surge_used{};
+    detail::ActionBudget actions;
+    bool bonus{true}, reaction{true}, dodge{}, disengaged{};
     bool spent_slot{},savage_used{},facing_left{};
     unsigned weapon_hands{};
     bool involuntary_overlap{}; // Interrupted on an ally; retained through recovery until separated.
@@ -168,7 +170,8 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_cleric_cantrips=magic=="PC12";
+    const bool with_surge=magic=="PC13";
+    const bool with_cleric_cantrips=magic=="PC12"||with_surge;
     const bool with_cantrips=magic=="PC11"||with_cleric_cantrips;
     const bool with_spells=magic=="PC10"||with_cantrips;
     const bool with_training=magic=="PC7"||magic=="PC8"||magic=="PC9"||with_spells;
@@ -195,6 +198,7 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<6;++i)d.saves[i]=ability_modifier(scores[i])+((i==trained_saves[0]||i==trained_saves[1])?2:0);
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
     d.melee_bonus=2+str;d.melee={0,0,std::max(0,1+str)};
+    d.surges=with_surge&&klass=="Fighter"&&level>=2?1:0;
     d.winds=klass=="Fighter"?(level==4?3:2):0;d.slots=(klass=="Cleric"||klass=="Wizard")?(level==1?2:level==2?3:4):0;
     d.slots2=(klass=="Cleric"||klass=="Wizard")&&level>=3?(level==3?2:3):0;
     d.casting=2+ability_modifier(scores[klass=="Cleric"?4:3]);d.spells=klass=="Cleric"?2:klass=="Wizard"?5:0;
@@ -253,7 +257,7 @@ Definition character_definition(std::string_view bytes)
         }else if(std::any_of(grants.begin(),grants.end(),detail::is_spell_grant))
             throw std::runtime_error("Legacy character recipe cannot contain new spell grants");
         const auto features_only=detail::without_spell_grants(with_training?detail::without_training(grants):grants);
-        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8"||magic=="PC9"||with_spells,magic=="PC9"||with_spells);
+        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8"||magic=="PC9"||with_spells,magic=="PC9"||with_spells,with_surge);
         if(effects.feats!=features)throw std::runtime_error("Character effects disagree with acquired grants");
         const int initial_con=ability_modifier(scores[2]-effects.abilities[2]);
         for(unsigned i=0;i<level;++i)if(hp_modifiers[i]!=(i==3?con:initial_con))
@@ -272,23 +276,24 @@ void restore_vitals(Actor& a,const VitalState& state)
     a.hp=state.hit_points;a.dead=state.dead;
     // Prior vital formats predate spendable Hit Dice, so their dice are unspent.
     a.hit_dice=a.definition.hit_die?a.definition.level:0;
-    a.rushes=a.definition.rushes;
+    a.rushes=a.definition.rushes;a.surges=a.definition.surges;
     bool timed=false,temporary=false;
     if(!state.resources.empty()) {
         std::istringstream in(state.resources);std::string magic;
-        in>>magic>>a.winds>>a.slots;temporary=magic=="SRD6"||magic=="SRD7";timed=magic=="SRD5"||temporary;if(magic=="SRD2"||magic=="SRD3"||magic=="SRD4"||timed)in>>a.slots2;
+        in>>magic>>a.winds>>a.slots;temporary=magic=="SRD6"||magic=="SRD7"||magic=="SRD8";timed=magic=="SRD5"||temporary;if(magic=="SRD2"||magic=="SRD3"||magic=="SRD4"||timed)in>>a.slots2;
         in>>a.successes>>a.failures>>a.stable;
         if(magic=="SRD4"||timed)in>>a.hit_dice;
         if(timed)in>>a.recovery.death_save_in_ms>>a.recovery.stable_recovery_in_ms;
         if(temporary)in>>a.temporary_hp.amount>>std::quoted(a.temporary_hp.source_id);
-        if(magic=="SRD7")in>>a.rushes;
+        if(magic=="SRD7"||magic=="SRD8")in>>a.rushes;
+        if(magic=="SRD8")in>>a.surges;
         if(!in||(magic!="SRD1"&&magic!="SRD2"&&magic!="SRD3"&&magic!="SRD4"&&!timed))throw std::runtime_error("Invalid character resource state");
         if(magic=="SRD3"||magic=="SRD4"||timed)a.effects=detail::read_effects(in);
         in>>std::ws;if(!in.eof())throw std::runtime_error("Trailing character resource state");
     }
     const auto& d=a.definition;
     if(a.hp<0||a.hp>d.hp||(a.dead&&a.hp!=0)||a.winds<0||a.winds>d.winds||a.slots<0||a.slots>d.slots||
-        a.slots2<0||a.slots2>d.slots2||a.rushes<0||a.rushes>d.rushes||a.hit_dice<0||a.hit_dice>(d.hit_die?d.level:0)||
+        a.slots2<0||a.slots2>d.slots2||a.surges<0||a.surges>d.surges||a.rushes<0||a.rushes>d.rushes||a.hit_dice<0||a.hit_dice>(d.hit_die?d.level:0)||
         a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
     // Earlier campaigns could retain completed counters after stabilization.
     if(a.stable)a.successes=a.failures=0;
@@ -297,20 +302,22 @@ void restore_vitals(Actor& a,const VitalState& state)
 }
 VitalState vitals(const Actor& a)
 {
-    const bool rush=a.definition.rushes>0,temporary=rush||a.temporary_hp.amount>0,timed=temporary||(a.hp==0&&!a.dead);
+    const bool surge=a.surges<a.definition.surges,rush=surge||a.definition.rushes>0,temporary=rush||a.temporary_hp.amount>0,timed=temporary||(a.hp==0&&!a.dead);
     const bool effects=a.effects.next_id!=1,spent_dice=a.hit_dice<(a.definition.hit_die?a.definition.level:0);
     // Preserve the compact previous format when every Hit Die is available.
-    std::ostringstream out;out<<(rush?"SRD7 ":temporary?"SRD6 ":timed?"SRD5 ":spent_dice?"SRD4 ":effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
+    std::ostringstream out;out<<(surge?"SRD8 ":rush?"SRD7 ":temporary?"SRD6 ":timed?"SRD5 ":spent_dice?"SRD4 ":effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
     if(timed||spent_dice||effects||a.definition.slots2)out<<a.slots2<<' ';out<<a.successes<<' '<<a.failures<<' '<<a.stable;
     if(timed||spent_dice)out<<' '<<a.hit_dice;
     if(timed)out<<' '<<a.recovery.death_save_in_ms<<' '<<a.recovery.stable_recovery_in_ms;
     if(temporary)out<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id);
     if(rush)out<<' '<<a.rushes;
+    if(surge)out<<' '<<a.surges;
     if(timed||spent_dice||effects){out<<' ';detail::write_effects(out,a.effects);}
     std::string description;
     if(a.definition.slots)description="Level-one spell slots: "+std::to_string(a.slots)+" / "+std::to_string(a.definition.slots);
     if(a.definition.slots2)description+="\nLevel-two spell slots: "+std::to_string(a.slots2)+" / "+std::to_string(a.definition.slots2);
     if(a.definition.winds)description="Second Wind uses: "+std::to_string(a.winds)+" / "+std::to_string(a.definition.winds);
+    if(surge)description+=(description.empty()?"":"\n")+std::string("Action Surge uses: ")+std::to_string(a.surges)+" / "+std::to_string(a.definition.surges);
     if(a.hp==0)description+=(description.empty()?"":"\n")+std::string(a.dead?"Dead":a.stable?"Stable, unconscious":"Unconscious; death saves ")+(!a.dead&&!a.stable?std::to_string(a.successes)+" successes, "+std::to_string(a.failures)+" failures":"");
     if(detail::blinded(a.effects))description+="\nBlinded";
     return {a.hp,a.dead,out.str(),description};
@@ -338,7 +345,7 @@ public:
                 throw std::runtime_error("Invalid participant or unsupported rules definition: "+p.definition);
             sides.insert(p.side);
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
-            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;a.hit_dice=d.hit_die?d.level:0;a.rushes=d.rushes;
+            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;a.hit_dice=d.hit_die?d.level:0;a.rushes=d.rushes;a.surges=d.surges;
             a.facing_left=a.source.facing_left;
             if(a.source.state)restore_vitals(a,*a.source.state);
             a.initiative=roll(20);if(d.str_dex_disadvantage||a.source.surprised)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
@@ -463,9 +470,10 @@ Snapshot Session::snapshot() const
         if(def(a).slots2)status+=" | L2 slots "+std::to_string(a.slots2);
         if(def(a).winds)status+=" | Second Wind "+std::to_string(a.winds);
         s.combatants.push_back({a.source.id,a.source.name,a.source.definition,a.source.side,a.source.cell,
-            a.hp,def(a).hp,def(a).ac,a.initiative,a.movement,a.action,a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,a.facing_left,status,vitals(a)});
+            a.hp,def(a).hp,def(a).ac,a.initiative,a.movement,a.actions.available(),a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,a.facing_left,status,vitals(a)});
         const auto display=combat_display(a.source.definition);
         auto& view=s.combatants.back();view.temporary_hp=a.temporary_hp;
+        if(def(a).surges)view.resources.push_back({"action_surge",{"Action Surge",{}},unsigned(a.surges),unsigned(def(a).surges),unsigned(def(a).surges)});
         if(def(a).known_cantrips&1)view.known_cantrips.push_back("fire_bolt");
         if(def(a).known_cantrips&64)view.known_cantrips.push_back("poison_spray");
         if(def(a).known_cantrips&128)view.known_cantrips.push_back("sacred_flame");
@@ -483,6 +491,7 @@ Snapshot Session::snapshot() const
         messages.push_back({a.dead?"Dead":a.hp==0?(a.stable?"Stable, unconscious":"Unconscious"):a.dodge?"Dodging":"Ready",{}});
         if(def(a).slots)messages.push_back({"Spell slots: {count}",{{"count",std::to_string(a.slots)}}});
         if(def(a).slots2)messages.push_back({"L2 slots: {count}",{{"count",std::to_string(a.slots2)}}});
+        if(a.actions.surge)messages.push_back({"Action Surge action ready (no Magic).",{}});
         if(def(a).winds)messages.push_back({"Second Wind: {count}",{{"count",std::to_string(a.winds)}}});
         if(detail::blinded(a.effects)){
             messages.push_back({"Blinded",{}});s.combatants.back().status+=" | Blinded";
@@ -519,6 +528,7 @@ std::vector<Command> Session::legal_commands() const
     }
     const auto& a=actors_[turn_];if(a.hp<=0)return commands;const auto& d=def(a);const auto id=a.source.id;
     add(id,"end","End turn");add_grips(a);
+    if(a.surges>0&&!a.surge_used)add(id,"action_surge","Action Surge",id);
     if(a.bonus&&a.rushes>0)add(id,"adrenaline_rush","Adrenaline Rush",id);
     if(a.bonus&&a.winds>0&&a.hp<d.hp)add(id,"second_wind","Second Wind",id);
     const auto can_gesture=[&](std::string_view verb){
@@ -533,26 +543,26 @@ std::vector<Command> Session::legal_commands() const
     if(a.bonus&&(d.spells&8))for(const auto& other:actors_)
         if(!other.dead&&other.source.side==a.source.side&&other.hp<def(other).hp&&distance(a.source.cell,other.source.cell)<=60&&can_see(a,other))
             spell("healing_word","Healing Word",other.source.id);
-    if(a.action) {
+    if(a.actions.available()) {
         add(id,"dash","Dash");add(id,"dodge","Dodge");add(id,"disengage","Disengage");
         for(const auto& other:actors_) {
             if(other.dead || !line_of_sight(a.source.cell,other.source.cell))continue;
             const int feet=distance(a.source.cell,other.source.cell);
-            if((d.spells&128)&&can_gesture("sacred_flame")&&feet<=60&&can_see(a,other))
+            if(a.actions.available(true)&&(d.spells&128)&&can_gesture("sacred_flame")&&feet<=60&&can_see(a,other))
                 add(id,"sacred_flame","Sacred Flame",other.source.id);
-            if((d.spells&64)&&can_gesture("poison_spray")&&feet<=30)
+            if(a.actions.available(true)&&(d.spells&64)&&can_gesture("poison_spray")&&feet<=30)
                 add(id,"poison_spray","Poison Spray",other.source.id);
             if(other.source.side!=a.source.side && other.hp>0) {
                 if(feet<=d.reach)add(id,"melee",a.source.definition=="slums-kobold"?"Dagger attack":
                     a.source.definition=="slums-kobold-leader"||a.source.definition=="slums-kobold-leader-sword"?"Short sword attack":"Melee attack",other.source.id);
                 if(d.range>0&&feet<=d.long_range)add(id,"ranged",
                     a.source.definition=="slums-kobold-leader"?"Short bow attack":"Ranged attack",other.source.id);
-                if((d.spells&1)&&can_gesture("fire_bolt")&&feet<=120)add(id,"fire_bolt","Fire Bolt",other.source.id);
-                if((d.spells&4)&&feet<=120&&can_see(a,other))spell("magic_missile","Magic Missile",other.source.id);
-                if((d.spells&16)&&can_gesture("scorching_ray")&&a.slots2>0&&!a.spent_slot&&feet<=120)add(id,"scorching_ray","Scorching Ray",other.source.id);
-                if((d.spells&32)&&can_gesture("blindness")&&a.slots2>0&&!a.spent_slot&&feet<=120&&can_see(a,other)&&detail::can_apply(other.effects))
+                if(a.actions.available(true)&&(d.spells&1)&&can_gesture("fire_bolt")&&feet<=120)add(id,"fire_bolt","Fire Bolt",other.source.id);
+                if(a.actions.available(true)&&(d.spells&4)&&feet<=120&&can_see(a,other))spell("magic_missile","Magic Missile",other.source.id);
+                if(a.actions.available(true)&&(d.spells&16)&&can_gesture("scorching_ray")&&a.slots2>0&&!a.spent_slot&&feet<=120)add(id,"scorching_ray","Scorching Ray",other.source.id);
+                if(a.actions.available(true)&&(d.spells&32)&&can_gesture("blindness")&&a.slots2>0&&!a.spent_slot&&feet<=120&&can_see(a,other)&&detail::can_apply(other.effects))
                     add(id,"blindness","Blindness",other.source.id);
-            } else if(other.source.side==a.source.side && other.hp<def(other).hp && feet<=5 && (d.spells&2))
+            } else if(other.source.side==a.source.side && other.hp<def(other).hp && feet<=5 && a.actions.available(true) && (d.spells&2))
                 spell("cure_wounds","Cure Wounds",other.source.id);
         }
     }
@@ -687,7 +697,7 @@ bool Session::begin_turn()
         if(a.hp==0)return false;
     }
     for(auto& actor:actors_)actor.savage_used=false;
-    a.action=a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;
+    a.actions={};a.surge_used=false;a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;
     a.spent_slot=false;a.rush_used=false;
     log("Round "+std::to_string(round_)+": "+a.source.name+" acts.",{"Round {round}: {name} acts.",{{"round",std::to_string(round_)},{"name",a.source.name}}});
     return true;
@@ -756,6 +766,7 @@ void Session::advance_turn_time()
 }
 void Session::end_turn()
 {
+    actors_[turn_].actions.surge=false;
     for(std::size_t checked=0;checked<=actors_.size()*2;++checked) {
         advance_turn_time();
         turn_=(turn_+1)%actors_.size();
@@ -811,6 +822,9 @@ bool Session::submit(const Command& command)
     }else if(command.verb=="temp_hp_keep"||command.verb=="temp_hp_use") {
         detail::grant_temporary_hp(a,*temporary_offer_,command.verb=="temp_hp_keep"?TemporaryHpChoice::keep_current:TemporaryHpChoice::use_new);
         temporary_offer_.reset();
+    } else if(command.verb=="action_surge") {
+        --a.surges;a.surge_used=true;a.actions.surge=true;
+        log(a.source.name+" uses Action Surge.",{"{name} uses Action Surge.",{{"name",a.source.name}}});
     } else if(command.verb=="adrenaline_rush") {
         a.bonus=false;--a.rushes;a.rush_used=true;a.movement+=d.speed;
         TemporaryHitPoints offered{d.rushes,std::string(rush_source)};
@@ -828,7 +842,7 @@ bool Session::submit(const Command& command)
     else if(command.verb=="second_wind") {a.bonus=false;--a.winds;heal(a,roll(10)+d.level);}
     else if(command.verb=="healing_word"||command.verb=="healing_word_2"){a.bonus=false;spend();heal(actor(command.target),dice({second?4:2,4,d.casting-2}));}
     else {
-        a.action=false;
+        (void)a.actions.spend(detail::spell_components(command.verb)!=nullptr);
         if(command.verb=="dash"){a.movement+=d.speed;log(a.source.name+" dashes.",{"{name} dashes.",{{"name",a.source.name}}});}
         else if(command.verb=="dodge"){a.dodge=true;log(a.source.name+" dodges.",{"{name} dodges.",{{"name",a.source.name}}});}
         else if(command.verb=="disengage"){a.disengaged=true;log(a.source.name+" disengages.",{"{name} disengages.",{{"name",a.source.name}}});}
@@ -871,12 +885,14 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 13 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    const unsigned format=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
+    std::ostringstream out;out<<"OGCOMBAT "<<format<<' '<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
-    for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
+    for(const auto& a:actors_){out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<' '<<a.recovery.death_save_in_ms<<' '<<a.recovery.stable_recovery_in_ms<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id)<<' '<<a.rushes<<' '<<a.rush_used<<'\n';
+        <<a.actions.normal<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<' '<<a.recovery.death_save_in_ms<<' '<<a.recovery.stable_recovery_in_ms<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id)<<' '<<a.rushes<<' '<<a.rush_used;
+        if(format>=14)out<<' '<<a.surges<<' '<<a.surge_used<<' '<<a.actions.surge;out<<'\n';}
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
@@ -897,7 +913,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     input >> source.id >> std::quoted(source.definition) >> std::quoted(source.name)
           >> source.side >> source.cell.x >> source.cell.y
           >> actor.hp >> actor.initiative >> actor.movement >> actor.winds >> actor.slots
-          >> actor.successes >> actor.failures >> actor.action >> actor.bonus >> actor.reaction
+          >> actor.successes >> actor.failures >> actor.actions.normal >> actor.bonus >> actor.reaction
           >> actor.dodge >> actor.disengaged >> actor.stable >> actor.dead;
     if (version >= 2) input >> std::quoted(source.character_profile);
     if (version >= 3) input >> actor.slots2 >> actor.spent_slot >> actor.savage_used;
@@ -908,11 +924,13 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if (version >= 10) input >> actor.recovery.death_save_in_ms >> actor.recovery.stable_recovery_in_ms;
     if (version >= 11) input >> actor.temporary_hp.amount >> std::quoted(actor.temporary_hp.source_id);
     if(version>=12)input>>actor.rushes>>actor.rush_used;
+    if(version>=14)input>>actor.surges>>actor.surge_used>>actor.actions.surge;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
+    if(version<14&&definition.surges)throw std::runtime_error("Action Surge requires a version-14 checkpoint");
     if(version<12)actor.rushes=definition.rushes;
     if(version<9)actor.hit_dice=definition.hit_die?definition.level:0;
     if(version<8)actor.weapon_hands=definition.weapon_hands;
@@ -921,7 +939,10 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
         // Dash spends the action before adding a second movement allowance.
         // Accepting both extra movement and an unused action lets a later Dash
         // create a state outside the checkpoint's own movement bounds.
-        actor.movement < 0 || actor.movement > definition.speed*(1+!actor.action+actor.rush_used) ||
+        actor.movement < 0 || actor.movement > definition.speed*(1+!actor.actions.normal+actor.rush_used+(actor.surge_used&&!actor.actions.surge)) ||
+        actor.surges<0||actor.surges>definition.surges||
+        (actor.surge_used&&(!definition.surges||actor.surges==definition.surges))||
+        (actor.actions.surge&&!actor.surge_used)||
         actor.rushes<0||actor.rushes>definition.rushes||
         (actor.rush_used&&(actor.bonus||!definition.rushes||actor.rushes==definition.rushes))||
         actor.winds < 0 || actor.winds > definition.winds ||
@@ -990,7 +1011,7 @@ void Session::validate_weapon_hit() const
         !attack_hits(h.natural,h.ranged?def(*a).ranged_bonus:def(*a).melee_bonus,def(*t).ac)||
         h.mode!=attack_modifiers(*a,*t,h.ranged,false).mode()||!line_of_sight(a->source.cell,t->source.cell)||
         distance(a->source.cell,t->source.cell)>(h.ranged?def(*a).long_range:def(*a).reach)||
-        (pending()?(pending()!=h.attacker||h.target!=actors_[turn_].source.id||a->reaction||h.ranged):(h.attacker!=actors_[turn_].source.id||a->action)))
+        (pending()?(pending()!=h.attacker||h.target!=actors_[turn_].source.id||a->reaction||h.ranged):(h.attacker!=actors_[turn_].source.id||(a->actions.normal&&(!a->surge_used||a->actions.surge)))))
         throw std::runtime_error("Invalid pending Savage Attacker hit");
     const auto d=weapon_dice(*a,h.ranged);const int count=d.count*(critical_hit(*a,*t,h.natural)?2:1);
     const auto valid=[&](int n){return n>=std::max(0,count+d.bonus)&&n<=std::max(0,count*d.sides+d.bonus);};
@@ -1007,6 +1028,7 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
         throw std::runtime_error("Invalid pending Temporary HP replacement");
     bool party = false, enemies = false;
     for (const auto& actor : actors_) {
+        if(actor.actions.surge&&actor.source.id!=mover.source.id)throw std::runtime_error("Action Surge allowance outside its turn");
         if(actor.involuntary_overlap&&(actor.dead||!shares_ally_space(actor)))
             throw std::runtime_error("Invalid involuntary checkpoint overlap");
         if(actor.hp>0&&!actor.dead)(actor.source.side==0?party:enemies)=true;
@@ -1033,7 +1055,7 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
 void Session::validate_legacy_facing_reaction() const
 {
     const auto& attacker=actors_[turn_];
-    if(!pending()||!path_.empty()||path_index_||attacker.hp<=0||attacker.action)
+    if(!pending()||!path_.empty()||path_index_||attacker.hp<=0||attacker.actions.normal)
         throw std::runtime_error("Invalid pending turn reaction");
     for(auto i=reactor_index_;i<reactors_.size();++i){
         const auto found=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==reactors_[i];});
@@ -1103,10 +1125,10 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 13 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 14 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -1176,11 +1198,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1237,6 +1259,7 @@ public:
         if(!options.spells.empty()&&choice.spells.empty())throw std::runtime_error("Choose at least one supported spell");
         Actor actor;actor.definition=old;actor.winds=old.winds;actor.slots=old.slots;actor.slots2=old.slots2;restore_vitals(actor,state);
         auto next=sheet;++next.level;
+        if(next.character_class=="Fighter"&&next.level==2)next.grants.push_back({"feature:action_surge","class:fighter",2,{}});
         for(unsigned n=0;n<6;++n){next.scores[n]+=choice.abilities[n];next.bonuses[n]+=choice.abilities[n];
             if(next.scores[n]>20)throw std::runtime_error("Ability scores cannot exceed 20");
             next.modifiers[n]=ability_modifier(next.scores[n]);next.saving_throws[n]=next.modifiers[n]+(next.save_proficiencies[n]?2:0);}
@@ -1257,9 +1280,13 @@ public:
             {{"level",std::to_string(next.level)},{"hp",std::to_string(next.hit_points)},{"growth",std::to_string(growth)}}}};
         next.class_modifiers+="\nLevel "+std::to_string(next.level)+": HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.";
         next.class_messages.push_back({"Level {level}: HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.",{{"level",std::to_string(next.level)}}});
+        if(next.character_class=="Fighter"&&next.level==2){
+            next.class_modifiers+="\nAction Surge: one additional action, except Magic, on your turn. One use per Short or Long Rest.";
+            next.class_messages.push_back({"Action Surge: one additional action, except Magic, on your turn. One use per Short or Long Rest.",{}});
+        }
         actor.definition=character_definition(character_profile(next,{}).data);
         if(actor.hp>0)actor.hp+=growth;
-        actor.slots+=actor.definition.slots-old.slots;actor.slots2+=actor.definition.slots2-old.slots2;actor.winds+=actor.definition.winds-old.winds;actor.rushes+=actor.definition.rushes-old.rushes;actor.hit_dice+=actor.definition.level-old.level;
+        actor.slots+=actor.definition.slots-old.slots;actor.slots2+=actor.definition.slots2-old.slots2;actor.winds+=actor.definition.winds-old.winds;actor.rushes+=actor.definition.rushes-old.rushes;actor.surges+=actor.definition.surges-old.surges;actor.hit_dice+=actor.definition.level-old.level;
         auto continuation=vitals(actor);sheet=std::move(next);state=std::move(continuation);
         return true;
     }
@@ -1273,6 +1300,7 @@ public:
         auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
         if(module_before(saved,{0,6,13}))std::erase_if(expected,[](const auto& g){return g.id=="trait:dwarven_resilience";});
         if(module_before(saved,{0,6,15}))std::erase_if(expected,[](const auto& g){return g.id=="trait:adrenaline_rush";});
+        if(module_before(saved,{0,6,24}))std::erase_if(expected,[](const auto& g){return g.id=="feature:action_surge";});
         if(module_before(saved,{0,6,19}))expected=detail::without_spell_grants(expected);
         if(!std::equal(grants.begin(),grants.end(),expected.begin(),expected.end()))
             throw std::runtime_error("Saved grants disagree with creation or advancement choices");
@@ -1281,6 +1309,7 @@ public:
     {
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported campaign migration");
         auto definition=character_definition(character_profile(sheet,{}).data);
+        if(module_before(saved,{0,6,24})&&state.resources.starts_with("SRD8 "))throw std::runtime_error("Legacy campaign cannot contain Action Surge expenditure");
         const bool old_hp=saved.version=="0.3.0"||saved.version=="0.4.0"||saved.version=="0.5.0"||
             saved.version=="0.6.0"||saved.version=="0.6.1"||saved.version=="0.6.2";
         if(old_hp){
@@ -1320,7 +1349,7 @@ public:
         std::vector<VitalState> next;next.reserve(actors.size());
         for(const auto& a:actors)next.push_back(vitals(a));
         for(std::size_t i=0;i<participants.size();++i)
-            if(participants[i].state&&((participants[i].state->hit_points==0&&!participants[i].state->dead)||participants[i].state->resources.starts_with("SRD3 ")||participants[i].state->resources.starts_with("SRD4 ")||participants[i].state->resources.starts_with("SRD5 ")||participants[i].state->resources.starts_with("SRD6 ")||participants[i].state->resources.starts_with("SRD7 ")))participants[i].state=std::move(next[i]);
+            if(participants[i].state&&((participants[i].state->hit_points==0&&!participants[i].state->dead)||participants[i].state->resources.starts_with("SRD3 ")||participants[i].state->resources.starts_with("SRD4 ")||participants[i].state->resources.starts_with("SRD5 ")||participants[i].state->resources.starts_with("SRD6 ")||participants[i].state->resources.starts_with("SRD7 ")||participants[i].state->resources.starts_with("SRD8 ")))participants[i].state=std::move(next[i]);
         random_state=rng;
     }
     void recover(VitalState& state,const CharacterSheet& sheet) const override
@@ -1328,7 +1357,7 @@ public:
         const auto d=character_definition(character_profile(sheet,{}).data);
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
-        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};actor.temporary_hp={};actor.rushes=d.rushes;
+        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};actor.temporary_hp={};actor.rushes=d.rushes;actor.surges=d.surges;
         state=vitals(actor);
     }
     RecoveryInfo recovery_info(const CharacterSheet& sheet,const VitalState& state) const override
@@ -1336,6 +1365,7 @@ public:
         const auto d=character_definition(character_profile(sheet,{}).data);
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         RecoveryInfo result{unsigned(d.hit_die),unsigned(actor.hit_dice),unsigned(d.level),!actor.dead&&actor.hp>0,{},actor.temporary_hp};
+        if(d.surges)result.resources.push_back({"action_surge",{"Action Surge",{}},unsigned(actor.surges),unsigned(d.surges),unsigned(d.surges)});
         if(d.rushes)result.resources.push_back({"adrenaline_rush",{"Adrenaline Rush",{}},unsigned(actor.rushes),unsigned(d.rushes),unsigned(d.rushes)});
         if(d.winds)result.resources.push_back({"second_wind",{"Second Wind",{}},unsigned(actor.winds),unsigned(d.winds),1});
         if(d.slots)result.resources.push_back({"spell_slot:1",{"Level-one spell slots",{}},unsigned(actor.slots),unsigned(d.slots),0});
@@ -1353,7 +1383,7 @@ public:
         const auto d=character_definition(character_profile(sheet,{}).data);
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Short rest requires at least one HP at its start");
-        actor.winds=std::min(d.winds,actor.winds+1);actor.rushes=d.rushes;state=vitals(actor);
+        actor.winds=std::min(d.winds,actor.winds+1);actor.rushes=d.rushes;actor.surges=d.surges;state=vitals(actor);
     }
     HitDieResult spend_hit_die(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
     {
@@ -1436,7 +1466,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC12 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC13 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1570,7 +1600,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.23",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.24",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

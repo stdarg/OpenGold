@@ -7,6 +7,30 @@
 #include <regex>
 #include <stdexcept>
 namespace opengold::test {
+// The fixture author supplies one attained-level decision per Fighter ledger.
+// Add only the fixed level-two grant, independently of production replay/codecs.
+inline std::string with_action_surge_grants(std::string body,std::initializer_list<bool> eligible){
+    const std::string marker="\"feature:fighting_style\" \"class:fighter\" 1 0";
+    auto wanted=eligible.begin();std::size_t search=0;
+    while(true){auto at=body.find(marker,search);if(at==body.npos)break;
+        if(wanted==eligible.end())throw std::runtime_error("Unexpected Fighter ledger");const bool add=*wanted++;
+        const std::string soldier="\"feat:savage_attacker\" \"background:soldier\" 1 0 ";
+        if(at>=soldier.size()&&body.substr(at-soldier.size(),soldier.size())==soldier)at-=soldier.size();
+        auto begin=at-2;while(begin&&body[begin-1]>='0'&&body[begin-1]<='9')--begin;
+        std::istringstream input(body.substr(begin));unsigned count{};input>>count;
+        if(!input||count>32)throw std::runtime_error("Invalid frozen Fighter grant count");
+        std::vector<rules::FeatureGrant> grants;
+        for(unsigned n=0;n<count;++n){rules::FeatureGrant g;unsigned choices{};input>>std::quoted(g.id)>>std::quoted(g.source_id)>>g.level>>choices;
+            if(!input||choices>6)throw std::runtime_error("Malformed frozen Fighter grant");
+            for(unsigned i=0;i<choices;++i){std::string k,v;input>>std::quoted(k)>>std::quoted(v);g.choices.emplace(k,v);}grants.push_back(std::move(g));}
+        if(!input)throw std::runtime_error("Truncated frozen Fighter ledger");const auto length=static_cast<std::size_t>(input.tellg());
+        if(!add){search=begin+length;continue;}
+        grants.insert(std::find_if(grants.begin(),grants.end(),[](const auto& g){return g.level>2;}),{"feature:action_surge","class:fighter",2,{}});
+        std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
+        const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
+    }
+    if(wanted!=eligible.end())throw std::runtime_error("Missing frozen Fighter ledger");return body;
+}
 // v11 adds one absent optional-cantrip field to each v9/v10 creation draft.
 // Locate drafts by their independently known identity grammar, then skip the
 // published draft fields. Preserve every other byte of these frozen bodies.

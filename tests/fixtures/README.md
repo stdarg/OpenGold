@@ -339,3 +339,21 @@ milliseconds before combat handoff. The combat pair records the following
 Cleric turn, before and after a second actual Cure Wounds cast. Migration must
 change module identity only, preserving PC11 access, wounds, resources,
 equipment, grants, RNG and clocks. No Sacred Flame selection is invented.
+
+## Action Surge compatibility
+
+`campaign-v11-surge.ogs`, `combat-v13-surge.save` and
+`combat-v13-surge-continued.save` were written using actual **0.6.23** libraries
+from **2ae050f**, before production changes. The `freeze()` path in
+`action_surge_tests.cpp` refuses to run under the new writer. Do not regenerate
+these files. Asset identity is `surge`; no original game art is included.
+
+The campaign contains level-two Human, level-one Dwarf and level-four Orc Sage
+Fighters, with Longswords, wounds and 37 gold each. The Human spent Second Wind
+in a real encounter; campaign RNG is 789 and time is 123 minutes plus 456 ms.
+Migration adds only the fixed level-two Action Surge grant to the Human and Orc.
+Their existing resources remain unchanged; the newly supported feature starts
+available. The Dwarf gets no grant at level one. The combat files record an
+actual Dash before/after pair following Second Wind. Their PC12 access, spent
+resources, wounds, initiative, RNG, action state and clock remain exact apart
+from module identity; no extra action is invented in the old encounter.
