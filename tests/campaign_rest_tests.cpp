@@ -178,14 +178,14 @@ void campaign_services(){
     check(encode_campaign(*resumed,&*disk.town,"campaign-rest")==bytes,"Idle town saves preserve the pending spending window");
     resumed->finish_short_rest(resumed->state().short_rest->ticket);check(disk.town->explore(por::ExplorationCommand::look),"Finish permits exploration");settle(*disk.town);
     check(resumed->member(id).vitals.hit_points==7&&disk.town->script_variable(0x6c19)==7,"Next script cannot overwrite committed Hit Die healing with stale HP");
-    for(const auto kind:{RestKind::short_rest,RestKind::long_rest})for(const auto chance:{255u,50u,101u}){
+    for(const auto kind:{RestKind::short_rest,RestKind::long_rest})for(const auto chance:{255u,50u,100u,101u,102u,200u,254u}){
         party->restore(state);
         auto script=program({9,0,1,1,0xd2,0x6d,9,0,static_cast<std::uint8_t>(chance),1,0xd3,0x6d,0});
         por::RolfTourSession blocked({},script,{},0x9914,{},resources);blocked.campaign_party(party);settle(blocked);
         check(blocked.camp(kind),"Both kinds enter the original camp checks");settle(blocked);
         check(!party->state().short_rest&&party->member(id).vitals==state.roster[0].vitals&&party->state().random_state==42&&
-            party->state().time_minutes==(chance==101?5:0),"Forbidden, unsupported and five-minute interrupted camps grant neither resources nor spending rights");
-        if(chance==50)check(!blocked.script_diagnostics().empty(),"Probabilistic interruption remains an explicit unsupported profile");
+            party->state().time_minutes==((chance==100||chance==101)?5:0),"Forbidden, unsupported and five-minute interrupted camps grant neither resources nor spending rights");
+        if(chance!=255&&chance!=100&&chance!=101)check(!blocked.script_diagnostics().empty(),"Unverified interruption profiles reject explicitly instead of becoming city-watch events");
     }
     // Inn completion is still an event transaction. An unsupported instruction
     // after recovery restores the pre-event clock, resources, cooldowns and RNG.

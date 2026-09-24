@@ -33,6 +33,15 @@ earlier investigation timing is unknown, so this is not total task time.
 No token saving or faster feature throughput is claimed yet. No SRD issues closed,
 no compatibility reduction, no agents/new tasks/model changes; goal remains paused.
 
+## Active batch B — rest workflow
+
+#30/#192/#193 remain open. The existing campaign adapter's unverified high-chance
+profiles now reject rather than masquerading as guaranteed city-watch events.
+Independent regressions failed before the guard correction and pass afterward;
+[scope and evidence](REST-RESOURCES.md#rest-batch-b-verified-profile-boundary).
+This is a correction in the active batch, not completion of rest activity or UI.
+Q29–31 await user decisions; Q32 (fresh qualifying segments) is approved in the [register](SRD-DECISIONS.md).
+
 ## Delivered increments
 
 | Increment / feature | Authority and supported scope | Implementation and verification | Persistence |

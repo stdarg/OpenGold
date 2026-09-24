@@ -172,3 +172,16 @@ Rules 0.6.24 adds Fighter Action Surge at level 2: one use through level 4,
 fully recharged by either rest kind. Advancement preserves expenditure. SRD8
 stores the spent use alongside existing resources; compact earlier formats
 mean the new pool is available. See [Action Surge](ACTION-SURGE.md).
+
+## Rest batch B: verified profile boundary
+
+The campaign adapter now accepts only the documented guaranteed city-watch
+profiles (`6DD2=1`, `6DD3=100/101`), alongside already-supported safe/forbidden
+profiles. Previously it treated other chance values above 101 as city-watch
+interruptions without evidence. A regression covering 102, 200 and 254 failed
+before the correction; these profiles now reject without advancing time, changing vitals
+or RNG, or granting a spending entitlement. Both rest kinds retain their verified
+100/101 behavior. This closes that boundary error only: #30/#192/#193 remain
+open for the controls and resumable rest activity described above. Pending
+layout/behavior decisions are Q29–31; Q32 approves fresh qualifying rest segments. See the
+[decision register](SRD-DECISIONS.md).

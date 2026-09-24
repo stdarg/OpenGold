@@ -218,7 +218,7 @@ void RolfTourSession::finish_event()
         else if(interval&&chance){
             // Bounded original New Phlan profile: guaranteed city-watch interruption.
             // Probabilistic interruptions require a campaign encounter scheduler.
-            if(interval!=1||chance<100)throw EclError("Unsupported probabilistic camp interruption");
+            if(interval!=1||(chance!=100&&chance!=101))throw EclError("Unsupported probabilistic camp interruption");
             campaign_->advance_time(5);synchronize_clock();event_stage_=5;
             if(!machine_.start(3))throw EclError("Cannot enter camp interruption script");
             return;
