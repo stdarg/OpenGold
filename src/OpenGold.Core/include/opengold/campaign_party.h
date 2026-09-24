@@ -147,6 +147,8 @@ private:
     std::uint64_t combat_elapsed_{};
     void elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat={}) const;
     void editable() const;
+    void rewardable() const;
+    void commit_reward(PartyState next);
     void outside_combat() const;
     void require_rest_ticket(RestTicket ticket) const;
     void require_activity_ticket(RestTicket ticket) const;

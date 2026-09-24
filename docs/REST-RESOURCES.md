@@ -222,3 +222,25 @@ registered Godot checks passed (31 CTest entries including fixtures). Rebuilt
 actual game/demo party routes passed original camping, temple, inn and recovery
 checks. Scope review confirms C++20 Core/rules boundaries and value-owned state;
 no new UI, runtime, save location or combat-saving control was introduced.
+
+### Interrupted encounter rewards
+
+XP and original encounter loot may commit while a Long Rest is interrupted and
+its earned Hit Dice choices are resolved. The rest retains elapsed progress and
+its extension; a committed reward advances the activity revision. Duplicate
+reward IDs remain idempotent, and failed validation/overflow preserves all state.
+This exception does not unlock roster, equipment, training or leveling changes.
+Running rests and pending Hit Dice choices still reject reward changes. The
+post-combat ECL readback may synchronize identical HP/wealth without mutation;
+changed script values still reject while activity is retained.
+
+`party_tests.cpp::interrupted_rest_victory` drives a complete real combat to
+victory, retains XP/loot, checks duplicate and overflow rollback, saves/reloads,
+and resumes through Long Rest completion. Before the fix the victory threw
+“Finish or abandon the rest before changing the party.” This closes the native
+reward handoff gap; automatic encounter scheduling and effectful ECL script
+adapters remain part of #193, alongside the pending reviewed controls.
+
+Reward-handoff final verification passed all 44 native/tool and 20 registered
+Godot checks, plus actual game/demo party/recovery routes. Existing formats and
+module identity are unchanged; this introduces no control or layout changes.

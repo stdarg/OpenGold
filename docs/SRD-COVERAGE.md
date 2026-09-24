@@ -43,6 +43,8 @@ Native resumable activity now records sleep/light/exertion, interruptions and Q3
 fresh segments, rejects stale requests, and persists through format 12 while
 retaining prior saves. Safe-camp/inn atomic callers consume the same engine.
 [Mechanics, compatibility and tests](REST-RESOURCES.md#resumable-activity-persistence-and-evidence).
+The complete combat-victory regression additionally preserves XP/loot across the
+interrupted rest, save/load and completion; unrelated edits remain locked.
 Automatic event connections, sleeping actor behavior and reviewed controls remain
 unfinished; this is partial delivery, not closure of these issues.
 Q29–31 await user decisions; Q32 (fresh qualifying segments) is approved in the [register](SRD-DECISIONS.md).

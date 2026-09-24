@@ -36,6 +36,19 @@ void CampaignParty::editable() const {
     outside_combat();if(state_.short_rest)throw std::runtime_error("Finish Short Rest spending before changing the party");
     if(state_.rest_activity)throw std::runtime_error("Finish or abandon the rest before changing the party");
 }
+void CampaignParty::rewardable() const {
+    // An encounter may finish during a paused rest. Its earned rewards do not
+    // permit unrelated edits, new resting progress or unspent Hit Dice choices.
+    if(state_.rest_activity&&state_.rest_activity->interrupted&&!state_.short_rest)outside_combat();
+    else editable();
+}
+void CampaignParty::commit_reward(PartyState next){
+    if(next.rest_activity){
+        if(next.rest_activity->ticket.revision==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Rest revision exhausted");
+        ++next.rest_activity->ticket.revision;
+    }
+    state_=std::move(next);
+}
 const PartyMember& CampaignParty::member(MemberId id) const
 {
     const auto it=std::find_if(state_.roster.begin(),state_.roster.end(),[&](const auto& m){return m.id==id;});
@@ -141,7 +154,7 @@ void CampaignParty::purchase(MemberId id,const por::Equipment& item)
 void CampaignParty::set_wealth(MemberId id,std::array<std::uint16_t,7> wealth){editable();edit(id).wealth=wealth;}
 bool CampaignParty::award_loot(const std::array<unsigned,7>& wealth,const std::vector<por::Equipment>& items,std::string reward_id)
 {
-    editable();if(reward_id.empty()||reward_id.size()>160)throw std::runtime_error("Loot requires a bounded stable identity");
+    rewardable();if(reward_id.empty()||reward_id.size()>160)throw std::runtime_error("Loot requires a bounded stable identity");
     if(std::find(state_.claimed_rewards.begin(),state_.claimed_rewards.end(),reward_id)!=state_.claimed_rewards.end())return true;
     if(state_.claimed_rewards.size()>=1024||items.size()>256)throw std::runtime_error("Loot collection exceeds supported limits");
     auto next=state_;std::vector<std::size_t> recipients;
@@ -158,11 +171,11 @@ bool CampaignParty::award_loot(const std::array<unsigned,7>& wealth,const std::v
         // Encounter rewards are retained even beyond the shop's purchase cap.
         const auto id=m.character.inventory().add(equipment_conversion(item),item.label(),std::max(1u,unsigned(item.stored.stack_size)),item.stored.type);m.item_sources.emplace(id,item);
     }
-    next.claimed_rewards.push_back(std::move(reward_id));state_=std::move(next);return true;
+    next.claimed_rewards.push_back(std::move(reward_id));commit_reward(std::move(next));return true;
 }
 void CampaignParty::award_experience(unsigned amount,std::string reward_id)
 {
-    editable();
+    rewardable();
     if(reward_id.empty()||reward_id.size()>160)throw std::runtime_error("Reward requires a bounded stable identity");
     if(std::find(state_.claimed_rewards.begin(),state_.claimed_rewards.end(),reward_id)!=state_.claimed_rewards.end())return;
     if(state_.claimed_rewards.size()>=1024)throw std::runtime_error("Reward history is full");
@@ -176,7 +189,7 @@ void CampaignParty::award_experience(unsigned amount,std::string reward_id)
         member.experience+=amount;
     }
     if(!awarded)throw std::runtime_error("Reward requires a living active member");
-    next.claimed_rewards.push_back(std::move(reward_id));state_=std::move(next);
+    next.claimed_rewards.push_back(std::move(reward_id));commit_reward(std::move(next));
 }
 bool CampaignParty::can_advance(MemberId id) const
 {
@@ -294,10 +307,14 @@ por::EclHostReply CampaignParty::character_reply(unsigned slot) const
 }
 void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
 {
-    editable();if(slot>=8)throw std::runtime_error("Invalid ECL party position");if(!state_.slots[slot])return;
-    auto& m=edit(state_.slots[slot]);const auto hp=vm.variable(0x6C19);
-    if(hp>m.character.sheet().hit_points||(m.vitals.dead&&hp))throw std::runtime_error("Unsupported script HP change");
+    outside_combat();if(slot>=8)throw std::runtime_error("Invalid ECL party position");if(!state_.slots[slot])return;
+    const auto& current=member(state_.slots[slot]);const auto hp=vm.variable(0x6C19);
+    if(hp>current.character.sheet().hit_points||(current.vitals.dead&&hp))throw std::runtime_error("Unsupported script HP change");
     std::array<std::uint16_t,7> wealth;for(unsigned n=0;n<7;++n)wealth[n]=vm.variable(money[n]);
+    // The post-combat script reads back the values just published by the host.
+    // Permit that exact no-op without opening a path for script mutations.
+    if(state_.rest_activity&&hp==current.vitals.hit_points&&wealth==current.wealth)return;
+    editable();auto& m=edit(state_.slots[slot]);
     auto vitals=m.vitals;rules_->set_hit_points(vitals,m.character.sheet(),hp);
     m.wealth=wealth;m.vitals=std::move(vitals);
 }

@@ -931,6 +931,59 @@ void reward_reentry()
         check(!fight.submit({}),"Finished combat rejects more commands");
     }
 }
+void interrupted_rest_victory()
+{
+    auto party=std::make_shared<CampaignParty>(module());const auto pc=party->add_pc(character("wizard"));party->recruit("guard",character());
+    const auto started=party->begin_rest(RestKind::long_rest);check(started.has_value(),"Start rest before encounter");
+    auto protected_state=encode_campaign(*party,nullptr,"rest-victory");
+    rejects([&]{party->award_experience(300,"unexpected");});
+    rejects([&]{party->award_loot({0,0,0,1,0,0,0},{},"unexpected-loot");});
+    check(encode_campaign(*party,nullptr,"rest-victory")==protected_state,"Rewards cannot mutate a running rest");
+    (void)party->advance_rest(*started,70*60000,RestWork::sleep);
+    party->interrupt_rest(party->state().rest_activity->ticket,RestInterruption::initiative);
+    protected_state=encode_campaign(*party,nullptr,"rest-victory");
+    rejects([&]{party->award_experience(300,"premature");});
+    check(encode_campaign(*party,nullptr,"rest-victory")==protected_state,"Rewards cannot bypass pending Hit Die choices");
+    party->finish_short_rest(party->state().short_rest->ticket);
+    const auto progress=party->state().rest_activity->elapsed_milliseconds;
+    CombatDemo fight(module());fight.campaign_party(party);fight.training();finish(fight);
+    check(fight.combat().snapshot().outcome==Outcome::victory&&!party->in_combat(),"Interrupted rest encounter completes normally");
+    check(party->member(pc).experience==300&&party->state().claimed_rewards.size()==1,"Interrupted rest victory awards XP once");
+    check(party->state().rest_activity&&party->state().rest_activity->interrupted&&
+        party->state().rest_activity->elapsed_milliseconds==progress&&
+        party->state().rest_activity->extension_milliseconds==60*60000,"Victory retains rest progress and interruption extension");
+    check(!party->can_advance(pc),"Victory cannot enable leveling during unfinished rest");
+    rejects([&]{party->remove(pc);});
+    const auto old_ticket=party->state().rest_activity->ticket;
+    check(party->award_loot({0,0,0,17,0,0,0},{item(8)},"rest-encounter:loot"),"Original encounter loot can be retained during interrupted rest");
+    check(party->member(pc).wealth[3]==17&&!party->member(pc).character.inventory().items().empty(),"Interrupted encounter retains original money and equipment");
+    rejects([&]{party->resume_rest(old_ticket);});
+    const auto before=encode_campaign(*party,nullptr,"rest-victory");
+    por::EclMachine vm(program({0}));
+    for(const auto& write:party->character_reply(0).writes)vm.bind_variable(write.address,write.value);
+    party->read_character(0,vm);
+    check(encode_campaign(*party,nullptr,"rest-victory")==before,"Post-combat ECL synchronization preserves the interrupted rest exactly");
+    vm.bind_variable(0x6c19,party->member(pc).vitals.hit_points?0:1);
+    rejects([&]{party->read_character(0,vm);});
+    check(encode_campaign(*party,nullptr,"rest-victory")==before,"Script mutation cannot bypass the rest lock");
+    check(party->award_loot({0,0,0,17,0,0,0},{item(8)},"rest-encounter:loot"),"Duplicate loot claim is idempotent");
+    rejects([&]{party->award_experience(std::numeric_limits<unsigned>::max(),"rest-overflow");});
+    party->award_experience(300,party->state().claimed_rewards.front());
+    check(encode_campaign(*party,nullptr,"rest-victory")==before,"Duplicate victory reward cannot alter pending rest or RNG");
+    const auto valid=party->checkpoint();auto exhausted=valid;
+    exhausted.rest_activity->ticket.revision=std::numeric_limits<std::uint64_t>::max();party->restore(exhausted);
+    const auto exhausted_save=encode_campaign(*party,nullptr,"rest-victory");
+    rejects([&]{party->award_experience(1,"revision-overflow");});
+    rejects([&]{party->award_loot({0,0,0,1,0,0,0},{item(8)},"loot-revision-overflow");});
+    check(encode_campaign(*party,nullptr,"rest-victory")==exhausted_save,"Revision overflow cannot commit rewards partially");
+    party->restore(valid);
+    auto restored=std::make_shared<CampaignParty>(module());
+    restored->restore(decode_campaign(before,*srd5::character_rules(),*module(),"rest-victory",nullptr).party);
+    check(encode_campaign(*restored,nullptr,"rest-victory")==before,"Post-victory rest and XP round-trip exactly");
+    restored->resume_rest(restored->state().rest_activity->ticket);
+    const auto result=restored->advance_rest(restored->state().rest_activity->ticket,restored->remaining_rest_milliseconds(),RestWork::sleep);
+    check(result&&!restored->state().rest_activity&&restored->member(pc).experience==300&&restored->can_advance(pc),"Rest resumes after victory and preserves earned XP through completion");
+}
 void script_handoff()
 {
     auto party=std::make_shared<CampaignParty>(module());auto first=party->add_pc(character("fighter","First")),second=party->add_pc(character("cleric","Second"));
@@ -979,6 +1032,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();std::cout<<"Party integration tests passed\n";return 0;}
+    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();interrupted_rest_victory();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }
