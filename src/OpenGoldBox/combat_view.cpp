@@ -45,8 +45,8 @@
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
-const std::array<std::pair<const char*,const char*>,11> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
-    {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
+const std::array<std::pair<const char*,const char*>,12> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
+    {"FireBolt","fire_bolt"},{"PoisonSpray","poison_spray"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
     {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Blindness","blindness"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
 std::string spell_verb(std::string verb,unsigned slot){if(slot==2&&(verb=="magic_missile"||verb=="cure_wounds"||verb=="healing_word"))verb+="_2";return verb;}
 std::optional<Cell> movement_direction(Key key,bool shift)
@@ -185,7 +185,7 @@ void CombatView::_ready()
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
         for(const char* name:{"Turn","Roster","Prompt","Help"})get_node<Control>(name)->hide();
-        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
+        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","PoisonSpray","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -209,7 +209,7 @@ void CombatView::layout()
     place("Turn",Rect2(right,70,sidebar,70));place("Roster",Rect2(right,148,sidebar,160));
     place("Prompt",Rect2(right,318,sidebar,46));
     unsigned index=0;
-    for(const char* name:{"Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End"}) {
+    for(const char* name:{"Move","Melee","Ranged","FireBolt","PoisonSpray","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End"}) {
         const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,370+row*39,114,36));++index;
     }
     place("Continue",Rect2(right+244,526,114,36));
@@ -243,11 +243,16 @@ void CombatView::layout_reaction_controls(bool show_controls)
 {
     const double top=board_rect_.get_end().y+16;
     const bool rush=get_node<Button>("AdrenalineRush")->is_visible();
-    const double inset=(show_controls?44:0)+(rush?44:0);
+    const bool spells=get_node<Button>("FireBolt")->is_visible();
+    const double inset=(show_controls?44:0)+((rush||spells)?44:0);
     get_node<Button>("Dash")->set_position(Vector2(24,top+44));
-    get_node<Button>("Dash")->set_size(Vector2(114,36));
-    get_node<Button>("AdrenalineRush")->set_position(Vector2(148,top+44));
-    get_node<Button>("AdrenalineRush")->set_size(Vector2(300,36));
+    get_node<Button>("Dash")->set_size(Vector2(90,36));
+    get_node<Button>("AdrenalineRush")->set_position(Vector2(124,top+44));
+    get_node<Button>("AdrenalineRush")->set_size(Vector2(260,36));
+    get_node<Button>("FireBolt")->set_position(Vector2(394,top+44));
+    get_node<Button>("FireBolt")->set_size(Vector2(146,36));
+    get_node<Button>("PoisonSpray")->set_position(Vector2(404+get_node<Button>("FireBolt")->get_size().x,top+44));
+    get_node<Button>("PoisonSpray")->set_size(Vector2(146,36));
     auto* log=get_node<RichTextLabel>("Log");
     log->set_position(Vector2(24,top+inset));
     log->set_size(Vector2(board_rect_.size.x,std::max(0.0,get_size().y-board_rect_.get_end().y-64-inset)));
@@ -456,7 +461,7 @@ void CombatView::act(const Command& command)
                 const auto current=std::find_if(after.combatants.begin(),after.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
                 sound=after.savage_attack_choice||(previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points)?7:9;
             } else if(command.verb=="ranged")sound=6;
-            else if(command.verb=="fire_bolt"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
+            else if(command.verb=="fire_bolt"||command.verb=="poison_spray"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
             if(sound){
                 action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);
             }
@@ -479,7 +484,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("FireBolt")->has_focus()||get_node<Button>("PoisonSpray")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
@@ -545,7 +550,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    if(mode_!="poison_spray")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
@@ -653,6 +658,9 @@ void CombatView::refresh()
         label->set_text(presentation::hp_text(a.hit_points,a.max_hit_points,a.dead,a.temporary_hp,a.hp_messages)+"  "+i18n::format("AC {ac}",{{"ac",a.armor_class}}));
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
+    const bool show_cantrips=player&&s.outcome==Outcome::ongoing&&active!=s.combatants.end()&&!active->known_cantrips.empty();
+    get_node<Button>("FireBolt")->set_visible(show_cantrips);
+    get_node<Button>("PoisonSpray")->set_visible(show_cantrips);
     unsigned rushes=0,capacity=0;
     if(active!=s.combatants.end())for(const auto& pool:active->resources)if(pool.id=="adrenaline_rush"){rushes=pool.remaining;capacity=pool.capacity;}
     const bool show_rush=player&&capacity&&s.outcome==Outcome::ongoing;

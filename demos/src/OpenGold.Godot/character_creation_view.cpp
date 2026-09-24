@@ -1,3 +1,4 @@
+#include "../../../src/OpenGoldBox/cantrip_control.h"
 #include "../../../src/OpenGoldBox/training_control.h"
 #include "character_creation_view.h"
 #include "character_colors.h"
@@ -34,7 +35,7 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,8> steps{"Race & Gender","Alignment","Attributes","Class","Training","Name","Combat appearance","Character sheet"};
+const std::array<const char*,9> steps{"Race & Gender","Alignment","Attributes","Class","Training","Spell Choices","Name","Combat appearance","Character sheet"};
 CreationField choice_field(CreationStep step)
 {
     switch(step){case CreationStep::race:return CreationField::race;
@@ -67,6 +68,7 @@ void CharacterCreationView::_notification(int what)
 void CharacterCreationView::_ready()
 {
     presentation::setup_training_controls(*this);
+    presentation::setup_cantrip_controls(*this);
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);
     // All node pointers here and below are borrowed from the owning scene tree.
     get_node<Button>("Next")->connect("pressed",callable_mp(this,&CharacterCreationView::next));
@@ -189,6 +191,7 @@ void CharacterCreationView::layout()
     }
     place("TrainingFixed",Rect2(x+20,y+116,pw-40,126));
     place("Training",Rect2(x+20,y+250,pw-40,ph-270));
+    place("SpellChoices",Rect2(x+20,y+132,pw-40,ph-152));
     place("Name",Rect2(x+20,y+138,pw-40,46));
     for(const auto& stem:{std::string("CombatHead"),std::string("Weapon")}) {
         const int row=stem=="CombatHead"?0:1;
@@ -294,6 +297,7 @@ void CharacterCreationView::refresh()
     for(unsigned i=0;i<6;++i)show(gs("Warning"+std::to_string(i)),stats&&creator_->rules().unmet_targets(d)[i]);
     for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
     show("Name",step==CreationStep::name);
+    show("SpellChoices",step==CreationStep::spell_choices);
     show("TrainingFixed",step==CreationStep::training);show("Training",step==CreationStep::training);
     for(const auto* n:{"PortraitPrevious","PortraitNext","PortraitSelect","PortraitGender","PortraitClass","PortraitRace"})show(n,true);
     for(const auto* n:{"PortraitPrevious","PortraitNext","PortraitSelect","PortraitGender","PortraitClass","PortraitRace"})get_node<Button>(n)->set_disabled(added_to_party_);
@@ -307,7 +311,10 @@ void CharacterCreationView::refresh()
     for(int i=0;i<16;++i)get_node<Control>(gs("Palette"+std::to_string(i)))->set_visible(icon);
     get_node<Label>("PageTitle")->set_text(gs(steps[static_cast<unsigned>(step)]));
     std::string progress;
-    for(unsigned i=0;i<steps.size();++i)progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(i+1)+". "+(i==static_cast<unsigned>(CreationStep::combat_icon)?"Combat icon":steps[i])+"\n\n";
+    unsigned ordinal=0;
+    for(unsigned i=0;i<steps.size();++i){
+        if(i==static_cast<unsigned>(CreationStep::spell_choices)&&creator_->rules().cantrip_options(d).options.empty())continue;
+        progress+=(i==static_cast<unsigned>(step)?"> ":"  ")+std::to_string(++ordinal)+". "+(i==static_cast<unsigned>(CreationStep::combat_icon)?"Combat icon":steps[i])+"\n\n";}
     get_node<Label>("Steps")->set_text(gs(progress));
     get_node<Button>("Back")->set_disabled(step==CreationStep::race);
     get_node<Button>("Back")->set_text(step==CreationStep::sheet?"Edit appearance":"Back");
@@ -387,6 +394,10 @@ void CharacterCreationView::refresh()
         presentation::refresh_training_controls(*this,*creator_,callable_mp(this,&CharacterCreationView::training_toggled),[](std::string_view source){return gs(source);});
         instructions="Choose the required training options. Back preserves your selections.";
     }
+    if(step==CreationStep::spell_choices){
+        presentation::refresh_cantrip_controls(*this,*creator_,callable_mp(this,&CharacterCreationView::cantrip_toggled),[](std::string_view source){return gs(source);});
+        instructions="Choose your available cantrips. Unfilled choices remain pending; Back preserves your selections.";
+    }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
     if(icon)instructions="Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.";
     refresh_portraits();
@@ -450,6 +461,8 @@ void CharacterCreationView::perform(const std::function<void()>& action)
 }
 void CharacterCreationView::target_toggled(bool selected,int index)
 {if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
+void CharacterCreationView::cantrip_toggled(bool selected,String option)
+{if(refreshing_||!creator_||creator_->step()!=CreationStep::spell_choices)return;perform([&]{creator_->cantrip_choice(option.utf8().get_data(),selected);});}
 void CharacterCreationView::training_toggled(bool selected,String group,String option)
 {if(refreshing_||!creator_||creator_->step()!=CreationStep::training)return;perform([&]{creator_->training_choice(group.utf8().get_data(),option.utf8().get_data(),selected);});}
 void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}

@@ -40,6 +40,15 @@ template<class Translate> godot::String training_summary(const opengold::rules::
     for(const auto& l:profile.languages)text+=tr(l.label)+" ("+training_sources(l.sources,tr)+")\n";
     return text;
 }
+inline void style_choice(godot::CheckBox& control){
+    using namespace godot;auto* check=&control;
+                for(const char* state:{"normal","hover","pressed","hover_pressed","disabled","focus"}){
+                    Ref<StyleBoxFlat> style;style.instantiate();style->set_bg_color(Color(state==std::string_view("pressed")||state==std::string_view("hover_pressed")?"304851":"19262e"));
+                    style->set_border_color(Color(state==std::string_view("focus")?"ebcb80":state==std::string_view("hover")?"b0c5cc":"506570"));
+                    style->set_border_width_all(state==std::string_view("focus")?2:1);style->set_corner_radius_all(3);style->set_content_margin_all(7);
+                    if(state==std::string_view("focus"))style->set_draw_center(false);check->add_theme_stylebox_override(state,style);
+                }
+}
 inline void setup_training_controls(godot::Node& parent){
     auto* fixed=add_control<godot::RichTextLabel>(parent,"TrainingFixed",{});
     fixed->set_use_bbcode(true);fixed->set_auto_translate_mode(godot::Node::AUTO_TRANSLATE_MODE_DISABLED);
@@ -80,12 +89,7 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
                 check->set_focus_mode(Control::FOCUS_ALL);check->set_custom_minimum_size(Vector2(0,34));
                 check->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
                 check->connect("toggled",toggled.bind(training_string(group.id),node_name));
-                for(const char* state:{"normal","hover","pressed","hover_pressed","disabled","focus"}){
-                    Ref<StyleBoxFlat> style;style.instantiate();style->set_bg_color(Color(state==std::string_view("pressed")||state==std::string_view("hover_pressed")?"304851":"19262e"));
-                    style->set_border_color(Color(state==std::string_view("focus")?"ebcb80":state==std::string_view("hover")?"b0c5cc":"506570"));
-                    style->set_border_width_all(state==std::string_view("focus")?2:1);style->set_corner_radius_all(3);style->set_content_margin_all(7);
-                    if(state==std::string_view("focus"))style->set_draw_center(false);check->add_theme_stylebox_override(state,style);
-                }
+                style_choice(*check);
             }
             const bool selected=std::find(picked.begin(),picked.end(),option.id)!=picked.end();
             check->set_text(tr(option.label));check->set_pressed_no_signal(selected);check->set_disabled(!selected&&picked.size()>=group.count);check->show();

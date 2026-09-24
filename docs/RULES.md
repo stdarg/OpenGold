@@ -306,3 +306,8 @@ Rules 0.6.14 adds the [Temporary HP native foundation](TEMPORARY-HP.md), combat
 format 11 and SRD6. Rules 0.6.15 adds playable Orc Adrenaline Rush and the reviewed
 replacement/HP controls (#197), using combat 12, PC9 and SRD7. Campaign exploration
 activation remains tracked under #34; see the linked scope document.
+
+Rules 0.6.22 adds [Poison Spray and explicit Wizard cantrip choices](POISON-SPRAY.md),
+with the approved creation and main combat controls. Campaign 11 stores choices;
+PC11 validates their grants. Combat 13 and existing resource formats remain.
+Full spell selection, speech blocking and other granting sources remain open.

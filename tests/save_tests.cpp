@@ -62,8 +62,8 @@ void remove_v7_grip(std::string& body,const std::string& party_save)
     for(unsigned i=0;i<6;++i)in>>std::quoted(text); // draft identities/name
     in>>count;for(unsigned i=0;i<count;++i)in>>std::quoted(text); // class goals
     for(unsigned i=0;i<38;++i)in>>value; // six rolls, assignments, adjustment, rolled
-    const auto begin=in.tellg();in>>count;const auto end=in.tellg();
-    check(bool(in)&&count==0,"Legacy draft has no chosen training");
+    const auto begin=in.tellg();in>>count;unsigned cantrips{};in>>cantrips;const auto end=in.tellg();
+    check(bool(in)&&count==0&&cantrips==0,"Legacy draft has no chosen training or explicit cantrips");
     body.erase(static_cast<std::size_t>(begin),static_cast<std::size_t>(end-begin));
 }
 // Versions 1-5 had no sub-minute clock or encounter-scope fields.

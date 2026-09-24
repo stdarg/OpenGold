@@ -35,6 +35,9 @@ text = "Melee"
 text = "Ranged"
 [node name="FireBolt" type="Button" parent="."]
 text = "Fire Bolt"
+[node name="PoisonSpray" type="Button" parent="."]
+text = "Poison Spray"
+tooltip_text = "Ranged spell attack against a creature within 30 feet. Deals Poison damage; allies can be targeted."
 [node name="MagicMissile" type="Button" parent="."]
 text = "Magic Missile"
 [node name="CureWounds" type="Button" parent="."]

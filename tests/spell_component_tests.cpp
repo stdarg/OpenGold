@@ -1,3 +1,4 @@
+#include "campaign_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "spell_components.h"
@@ -33,8 +34,8 @@ auto battle(const RulesModule& rules,const Character& h,const std::vector<std::s
 }
 void definitions(){
     namespace detail=opengold::srd5::detail;
-    check(detail::spell_component_definitions.size()==6,"All six live spells have explicit component definitions");
-    for(const auto* id:{"fire_bolt","cure_wounds","magic_missile","scorching_ray"}){const auto* s=detail::spell_components(id);check(s&&s->verbal&&s->somatic,"Source spells require Verbal and Somatic components");}
+    check(detail::spell_component_definitions.size()==7,"All seven supported spells have explicit component definitions");
+    for(const auto* id:{"fire_bolt","poison_spray","cure_wounds","magic_missile","scorching_ray"}){const auto* s=detail::spell_components(id);check(s&&s->verbal&&s->somatic,"Source spells require Verbal and Somatic components");}
     for(const auto* id:{"healing_word","blindness"}){const auto* s=detail::spell_components(id);check(s&&s->verbal&&!s->somatic,"Source spells require only Verbal components");}
     check(detail::spell_components("cure_wounds_2")==detail::spell_components("cure_wounds")&&detail::spell_components("healing_word_2")==detail::spell_components("healing_word"),"Higher slot forms keep base components");
     check(!detail::spell_components("invented")&&!detail::spell_components("melee"),"Unknown spells and non-spell actions have no inferred components");
@@ -84,7 +85,7 @@ std::string upgrade(std::string bytes){const auto at=bytes.find("0.6.20");check(
 void legacy(){auto rules=module();const auto base=root/"tests/fixtures";
     const auto bytes=read(base/"campaign-v10-components.ogs");CampaignParty p(module());p.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"components",nullptr).party);
     const auto saved=encode_campaign(p,nullptr,"components");const auto body=[](const std::string& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};
-    check(body(saved)==upgrade(body(bytes)),"Campaign migration changes only module identity");
+    check(body(saved)==test::with_legacy_cantrip_choices(upgrade(body(bytes))),"Campaign migration changes only module identity and absent cantrip choice field");
     auto c=rules->restore(read(base/"combat-v13-components.save"));check(c->save()==upgrade(read(base/"combat-v13-components.save")),"Prior checkpoint keeps every actor, recipe, resource, queue, RNG and clock");
     check(!has(*c,"cure_wounds")&&has(*c,"healing_word"),"Old equipment acquires corrected spell eligibility on resume");
     check(c->submit(command(*c,"healing_word")),"Prior legal verbal cast accepted");

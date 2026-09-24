@@ -2,7 +2,8 @@
 
 Tracking issue: [#165](https://github.com/stdarg/OpenGold/issues/165). Inventory
 baseline: rules **0.6.21**, commit **1e89c1c**. This is a work inventory, not a
-claim that the listed spells are implemented.
+claim that the listed spells are implemented. Current delivery adds the
+[0.6.22 Wizard Poison Spray path](POISON-SPRAY.md) below.
 
 ## Scope and counting
 
@@ -10,7 +11,8 @@ The milestone requires **139 distinct spells: 27 cantrips, 57 level-one spells
 and 55 level-two spells**. It covers all twelve SRD classes, their twelve SRD
 subclasses, all nine species and their lineages, the four SRD backgrounds, and
 eligible SRD feats through character level 4. The baseline has **six partial
-playable paths and 133 missing spells**; no complete spell conformance is claimed.
+playable paths and 133 missing spells**. With 0.6.22 this becomes **seven partial
+playable paths and 132 missing spells**; no complete spell conformance is claimed.
 
 Authority: [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 Each spell name below links to its description page. Class-list membership is
@@ -141,6 +143,7 @@ complete its still-pending class/species/feat integrations.
 
 | Partial spell | Implementation | Existing evidence | Remaining spell issue |
 | --- | --- | --- | --- |
+| Poison Spray | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](POISON-SPRAY.md) | [native](../tests/poison_spray_tests.cpp), [creator](../tests/cantrip_view_tests.gd), [combat UI](../tests/poison_view_tests.gd) | [#202](https://github.com/stdarg/OpenGold/issues/202): speech blocking and remaining source integrations; native prerequisite #206 |
 | Fire Bolt | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) | [rules tests](../tests/rules_tests.cpp), [typed damage](../tests/damage_tests.cpp), [components](../tests/spell_component_tests.cpp) | [#166](https://github.com/stdarg/OpenGold/issues/166): object/ignition use, grants and full conformance |
 | Cure Wounds | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) | [rules tests](../tests/rules_tests.cpp), [components](../tests/spell_component_tests.cpp) | [#167](https://github.com/stdarg/OpenGold/issues/167): all sources, contextual healing and complete casting restrictions |
 | Magic Missile | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) | [rules tests](../tests/rules_tests.cpp), [typed damage](../tests/damage_tests.cpp), [components](../tests/spell_component_tests.cpp) | [#168](https://github.com/stdarg/OpenGold/issues/168), [#42](https://github.com/stdarg/OpenGold/issues/42), [#41](https://github.com/stdarg/OpenGold/issues/41): split targets, simultaneous damage/roll policy and Shield |
@@ -169,7 +172,7 @@ are evidence of partial behavior, not certification of the full spell.
 | [Mending](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=148) (p. 148) | B, C, D, S, W | MI, Tome, High, Thaum, Blessed, Magician, DruidicWarrior, Rock | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Message](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=148) (p. 148) | B, D, S, W | MI, Tome, High, Magician, DruidicWarrior | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Minor Illusion](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=149) (p. 149) | B, S, K, W | MI, Tome, High, Forest | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
-| [Poison Spray](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=153) (p. 153) | D, S, K, W | MI, Tome, High, Magician, DruidicWarrior, Abyssal | — | Missing; [#202](https://github.com/stdarg/OpenGold/issues/202) |
+| [Poison Spray](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=153) (p. 153) | D, S, K, W | MI, Tome, High, Magician, DruidicWarrior, Abyssal | — | Partial Wizard path; [#202](https://github.com/stdarg/OpenGold/issues/202) |
 | [Prestidigitation](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=154) (p. 154) | B, S, K, W | MI, Tome, High, Rock | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Produce Flame](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=156) (p. 156) | D | MI, Tome, Magician, DruidicWarrior | [#46](https://github.com/stdarg/OpenGold/issues/46) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Ray of Frost](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=157) (p. 157) | S, W | MI, Tome, High, Polar | [#35](https://github.com/stdarg/OpenGold/issues/35) | Missing; [#205](https://github.com/stdarg/OpenGold/issues/205) |

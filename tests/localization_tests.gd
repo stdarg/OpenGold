@@ -116,6 +116,10 @@ func run_checks() -> void:
 	current_scene.get_node("Training/Rows/Group0/dwarvish").set_pressed(true)
 	await capture("spanish-training")
 	await press("Next")
+	require(current_scene.get_node("PageTitle").text == "Elegir conjuros", "Cantrip step is translated")
+	current_scene.get_node("SpellChoices/Rows/fire_bolt").set_pressed(true)
+	await capture("spanish-cantrips")
+	await press("Next")
 	var name: LineEdit = current_scene.get_node("Name")
 	name.text = "Fighter"
 	name.text_changed.emit(name.text)

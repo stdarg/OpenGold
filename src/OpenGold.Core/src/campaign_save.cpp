@@ -14,7 +14,7 @@ std::uint64_t fingerprint(std::string_view data){std::uint64_t n=146959810393466
 // Explicit field encoding: no pointers, native object layouts or derived sheets.
 struct SaveCodec {
     bool reading{};
-    unsigned version{10};
+    unsigned version{11};
     std::stringstream stream;
     const rules::CharacterRules* creation{};
     const rules::RulesModule* module{};
@@ -39,7 +39,7 @@ struct SaveCodec {
     void field(rules::AbilityRoll& v){fields(v.dice,v.discarded);}
     void field(rules::FeatureGrant& v){fields(v.id,v.source_id,v.level,v.choices);}
     void field(rules::AdvancementChoice& v){fields(v.feat,v.abilities,v.spells);}
-    void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);if(version>=9)field(v.training);}
+    void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);if(version>=9)field(v.training);if(version>=11)field(v.cantrips);}
     void field(por::CharacterAppearance& v){fields(v.portrait_head,v.portrait_body,v.combat_head,v.combat_body,v.tall,v.colors);if(version>=4)field(v.portrait);}
     void field(InventoryItem& v){fields(v.id,v.definition_id,v.name,v.quantity,v.original_type);}
     void field(Inventory& v){fields(v.next_id_,v.items_);if(reading){std::set<std::uint64_t> ids;require(v.next_id_!=0,"Invalid next inventory ID");for(const auto& i:v.items_)require(i.id&&i.id<v.next_id_&&ids.insert(i.id).second&&i.quantity&&!i.definition_id.empty()&&!i.name.empty(),"Invalid inventory entry");}}
@@ -163,7 +163,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 10\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 11\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -183,7 +183,7 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
     require(bytes.size()<=limit,"Campaign save too large");
     unsigned version{};std::size_t header_size{};
-    for(unsigned v=1;v<=10;++v){
+    for(unsigned v=1;v<=11;++v){
         const auto header="OPENGOLD-CAMPAIGN "+std::to_string(v)+'\n';
         if(bytes.starts_with(header)){version=v;header_size=header.size();break;}
     }

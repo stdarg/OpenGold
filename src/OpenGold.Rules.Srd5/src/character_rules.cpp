@@ -38,6 +38,7 @@ public:
     std::optional<int> ability_score(const CharacterDraft& draft,unsigned ability) const override;
     CharacterSheet evaluate(const CharacterDraft& draft,bool require_name) const override;
     std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft) const override {return detail::training_options(draft);}
+    TrainingChoiceGroup cantrip_options(const CharacterDraft& draft) const override {return detail::starting_cantrip_options(draft.character_class);}
     AbilityCheckModifier ability_check(const CharacterSheet& sheet,unsigned ability,std::string_view skill,std::string_view tool) const override {
         return detail::ability_check(sheet.grants,detail::grant_source_id(sheet.character_class),detail::grant_source_id(sheet.background),sheet.level,sheet.scores,ability,skill,tool);
     }
@@ -184,7 +185,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
         (s.modifiers[2]<0?"- ":"+ ")+std::to_string(std::abs(s.modifiers[2]))+" (Constitution)"+
         (racial_hp?" + 1 (Dwarven Toughness)":"")+" = "+std::to_string(s.hit_points)+" HP";
     s.training=detail::training_profile(s.grants,d.character_class,d.background,s.level,s.scores);
-    const auto spells=detail::starting_spell_grants(d.character_class);
+    const auto spells=detail::starting_spell_grants(d.character_class,d.cantrips);
     s.grants.insert(s.grants.end(),spells.begin(),spells.end());
     if(d.character_class=="wizard")s.prepared_spells={"magic_missile"};
     return s;

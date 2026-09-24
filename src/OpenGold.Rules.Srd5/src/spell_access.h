@@ -4,7 +4,9 @@
 namespace opengold::srd5::detail {
 bool is_spell_grant(const rules::FeatureGrant&);
 std::vector<rules::FeatureGrant> without_spell_grants(std::span<const rules::FeatureGrant>);
-std::vector<rules::FeatureGrant> starting_spell_grants(std::string_view klass);
+std::vector<rules::FeatureGrant> starting_spell_grants(std::string_view klass,
+    const std::optional<std::vector<std::string>>& cantrips={});
+rules::TrainingChoiceGroup starting_cantrip_options(std::string_view klass);
 rules::SpellAccess spell_access(std::span<const rules::FeatureGrant>,std::string_view klass,unsigned level,
     std::span<const std::string> prepared);
 // Existing advancement selections learn any newly selected book spell and

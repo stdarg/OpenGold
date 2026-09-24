@@ -86,6 +86,10 @@ std::vector<Character> character_pool(const rules::CharacterRules& rules,const p
             if(group==current.end()||group->options.size()<group->count)throw std::runtime_error("Incomplete preset training options");
             for(unsigned n=0;n<group->count;++n)d.training[group->id].push_back(group->options[(name_index+n)%group->options.size()].id);
         }
+        const auto cantrips=rules.cantrip_options(d);
+        if(cantrips.count){d.cantrips.emplace();for(const auto& option:cantrips.options){
+            if(d.cantrips->size()==cantrips.count)break;d.cantrips->push_back(option.id);
+        }}
         por::CharacterAppearance appearance;
         appearance.portrait_head=por::matching_portrait_head(d.race,d.gender).value_or(art.heads.begin()->first);
         if(!art.heads.contains(appearance.portrait_head))appearance.portrait_head=art.heads.begin()->first;

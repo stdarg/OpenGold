@@ -227,3 +227,12 @@ Older combat formats gain no invented pending choice; existing damage remains,
 and subsequent qualifying hits offer the two decisions. Frozen 0.6.19 saves
 verify campaign state preservation and deterministic continuation. See
 [Savage Attacker](SAVAGE-ATTACKER.md). This adds no player combat saving.
+
+## Explicit starting cantrip choices
+
+Rules 0.6.22 writes campaign 11 and PC11 recipes. The new optional creation
+cantrip list follows training choices. Absence in formats 1–10 retains the
+historical preset; an explicit empty list remains empty. Replay validates
+cantrip source, acquisition level and capacity alongside the existing ledger.
+Combat 13/SRD1–7 remain. Frozen 0.6.21 files prove old choices, spent resources,
+clock/RNG and actual Fire Bolt continuation. See [Poison Spray](POISON-SPRAY.md).

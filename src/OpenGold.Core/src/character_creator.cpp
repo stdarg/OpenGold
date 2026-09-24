@@ -31,7 +31,23 @@ void CharacterCreator::select(CreationField field,std::string_view id)
     case CreationField::alignment:candidate.alignment=id;break;
     case CreationField::background:candidate.background=id;candidate.adjustment=0;break;
     }
+    const auto cantrips=rules_->cantrip_options(candidate);
+    if(!candidate.cantrips)candidate.cantrips.emplace();
+    std::erase_if(*candidate.cantrips,[&](const auto& id){return std::none_of(cantrips.options.begin(),cantrips.options.end(),[&](const auto& o){return o.id==id;});});
+    if(candidate.cantrips->size()>cantrips.count)candidate.cantrips->resize(cantrips.count);
     prune_training(candidate);draft_=std::move(candidate);
+}
+void CharacterCreator::cantrip_choice(std::string_view option,bool selected)
+{
+    require_editable();const auto group=rules_->cantrip_options(draft_);
+    if(std::none_of(group.options.begin(),group.options.end(),[&](const auto& o){return o.id==option;}))throw std::runtime_error("Unknown cantrip choice");
+    auto candidate=draft_;if(!candidate.cantrips)candidate.cantrips.emplace();auto& choices=*candidate.cantrips;
+    const auto found=std::find(choices.begin(),choices.end(),option);
+    if(selected&&found==choices.end()){
+        if(choices.size()>=group.count)throw std::runtime_error("Cantrip selection limit reached");
+        choices.emplace_back(option);
+    }else if(!selected&&found!=choices.end())choices.erase(found);
+    draft_=std::move(candidate);
 }
 void CharacterCreator::prune_training(CharacterDraft& candidate) const
 {
@@ -122,7 +138,9 @@ void CharacterCreator::next()
     if(step_>=CreationStep::character_class&&!rules_->class_eligible(draft_,draft_.character_class))
         throw std::runtime_error("Choose a qualified starting class. Requires "+rules_->class_requirements(draft_.character_class).description+".");
     step_=static_cast<CreationStep>(static_cast<unsigned>(step_)+1);
+    if(step_==CreationStep::spell_choices&&rules_->cantrip_options(draft_).options.empty())step_=CreationStep::name;
 }
 void CharacterCreator::back()
-{if(step_!=CreationStep::race)step_=static_cast<CreationStep>(static_cast<unsigned>(step_)-1);}
+{if(step_!=CreationStep::race)step_=static_cast<CreationStep>(static_cast<unsigned>(step_)-1);
+ if(step_==CreationStep::spell_choices&&rules_->cantrip_options(draft_).options.empty())step_=CreationStep::training;}
 }

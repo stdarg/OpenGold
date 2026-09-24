@@ -724,3 +724,8 @@ demo or compositor. Missing/deleted mappings visibly fall back to unarmed.
 
 Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
 replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).
+
+Rules 0.6.22 adds [Poison Spray and explicit Wizard cantrip choices](POISON-SPRAY.md),
+with the approved creation and main combat controls. Campaign 11 stores choices;
+PC11 validates their grants. Combat 13 and existing resource formats remain.
+Full spell selection, speech blocking and other granting sources remain open.

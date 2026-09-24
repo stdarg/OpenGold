@@ -291,3 +291,8 @@ changing the all-class completion target.
 
 This document records decisions and work boundaries. Implementation status and
 evidence are maintained in the coverage ledger and linked issues.
+
+Rules 0.6.22 adds [Poison Spray and explicit Wizard cantrip choices](POISON-SPRAY.md),
+with the approved creation and main combat controls. Campaign 11 stores choices;
+PC11 validates their grants. Combat 13 and existing resource formats remain.
+Full spell selection, speech blocking and other granting sources remain open.

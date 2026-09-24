@@ -7,8 +7,11 @@ spellcasting. Authority: [SRD 5.2.1 pp. 77–78](https://media.dndbeyond.com/com
 
 ## Implemented scope
 
-The existing creation preset explicitly records Fire Bolt as a known cantrip
-and Magic Missile as a spellbook entry and prepared spell. Existing advancement
+Rules 0.6.22 adds explicit Fire Bolt/Poison Spray starting cantrip choices through
+the approved Spell Choices step. Preset Wizards receive both available cantrips;
+old saves retain historical selections. Missing catalog choices stay pending.
+Magic Missile remains a spellbook entry and prepared spell. See
+[Poison Spray](POISON-SPRAY.md) for this increment and its open integrations. Existing advancement
 selections can also learn Scorching Ray and Blindness from Wizard level 3.
 Changing those selections retains every previously learned book entry and its
 first acquisition level. An unprepared book entry cannot be cast. Known cantrips
@@ -37,9 +40,10 @@ and Spanish. It does not select missing spells on the player's behalf.
 
 ## Persistence
 
-Module **0.6.19** writes **PC10** combat recipes; the existing grant section
+Module **0.6.22** writes **PC11** combat recipes; the existing grant section
 contains the spell sources and the casting mask must agree with them. Campaign
-format **10**, combat format **12**, and vital-state formats **SRD1–7** remain.
+format **11** stores explicit starting cantrip choices. Combat format **13** and
+vital-state formats **SRD1–7** remain. PC10 reads retain their historical grants.
 Campaigns replay creation and recorded advancement to reconstruct knowledge,
 then validate their grant ledger. Old campaigns recover the established preset
 and spells actually selected in that history, including now-unprepared spells.
@@ -55,7 +59,7 @@ Player saving remains restricted to camping or an inn.
 ## Remaining work
 
 The [level-four spell inventory](SPELL-INVENTORY.md) enumerates all required
-spells and their source routes. The four Wizard spells described here are only
+spells and their source routes. The five Wizard spells described here are only
 a subset of that catalog; missing choices are not evidence of a smaller SRD
 entitlement.
 

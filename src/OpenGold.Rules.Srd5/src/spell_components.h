@@ -4,10 +4,10 @@
 #include <string_view>
 namespace opengold::srd5::detail {
 struct SpellComponents {std::string_view id;bool verbal{},somatic{};};
-// SRD 5.2.1 spell descriptions. These six spells have no Material component.
+// SRD 5.2.1 spell descriptions. These spells have no Material component.
 // Component substitution and speech-blocking sources are separate increments.
 inline constexpr std::array spell_component_definitions{
-    SpellComponents{"fire_bolt",true,true},SpellComponents{"cure_wounds",true,true},
+    SpellComponents{"fire_bolt",true,true},SpellComponents{"poison_spray",true,true},SpellComponents{"cure_wounds",true,true},
     SpellComponents{"magic_missile",true,true},SpellComponents{"healing_word",true,false},
     SpellComponents{"scorching_ray",true,true},SpellComponents{"blindness",true,false}};
 inline const SpellComponents* spell_components(std::string_view command){

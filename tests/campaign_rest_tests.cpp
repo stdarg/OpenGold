@@ -196,7 +196,7 @@ void campaign_services(){
 }
 std::string payload(std::string body){
     std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
-    return "OPENGOLD-CAMPAIGN 10\n"+std::to_string(hash)+'\n'+body;
+    return "OPENGOLD-CAMPAIGN 11\n"+std::to_string(hash)+'\n'+body;
 }
 void malformed_continuation(){
     CampaignParty party(module());const auto id=party.add_pc(hero());(void)party.rest(RestKind::short_rest);
