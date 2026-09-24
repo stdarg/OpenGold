@@ -2,6 +2,9 @@
 #define OPENGOLD_SRD5_CONCENTRATION_H
 #include "status_effects.h"
 #include <algorithm>
+#include <charconv>
+#include <istream>
+#include <ostream>
 #include <stdexcept>
 #include <utility>
 namespace opengold::srd5::detail {
@@ -56,5 +59,27 @@ public:
 private:
     std::optional<Concentration> active_;
 };
+inline void write_concentration(std::ostream& out,const ConcentrationState& state) {
+    out<<"CN1 "<<int(bool(state.active()));
+    if(const auto& value=state.active())out<<' '<<value->source.scope<<' '<<value->source.application
+        <<' '<<value->source.caster<<' '<<value->remaining_ms;
+}
+// Parse into a fresh value; malformed fields cannot partially replace an owner.
+// The enclosing combat/campaign reader must additionally validate the source
+// against its owner and effect registry and enforce the named spell's duration.
+inline ConcentrationState read_concentration(std::istream& in) {
+    const auto number=[&](auto& value){
+        std::string token;in>>token;
+        const auto parsed=std::from_chars(token.data(),token.data()+token.size(),value);
+        if(!in||parsed.ec!=std::errc{}||parsed.ptr!=token.data()+token.size())
+            throw std::runtime_error("Invalid concentration field");
+    };
+    std::string magic;in>>magic;unsigned present{};number(present);
+    if(magic!="CN1"||present>1)throw std::runtime_error("Invalid concentration record");
+    ConcentrationState result;
+    if(present){Concentration value;number(value.source.scope);number(value.source.application);
+        number(value.source.caster);number(value.remaining_ms);result.begin(value);}
+    return result;
+}
 }
 #endif

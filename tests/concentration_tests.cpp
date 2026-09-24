@@ -1,6 +1,7 @@
 #include "concentration.h"
 #include <iostream>
 #include <limits>
+#include <sstream>
 using namespace opengold::srd5::detail;
 namespace {
 void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
@@ -21,6 +22,29 @@ void lifecycle(){
     check(state.incapacitate()==first.source&&!state.active(),"Incapacitation immediately ends concentration");
     state.begin(first);check(state.end()==first.source&&!state.active(),"Voluntary release returns cleanup identity");
 }
+std::string encode(const ConcentrationState& state){std::ostringstream out;write_concentration(out,state);return out.str();}
+ConcentrationState decode(const std::string& bytes){std::istringstream in(bytes);auto result=read_concentration(in);in>>std::ws;check(in.eof(),"No trailing record fields");return result;}
+void persistence(){
+    ConcentrationState state;check(encode(state)=="CN1 0"&&decode("CN1 0")==state,"Canonical empty state");
+    state.begin(first);state.elapse(1234);auto bytes=encode(state);
+    check(bytes=="CN1 1 7 1 9 598766","Independent canonical active record");
+    auto restored=decode(bytes);check(restored==state,"Application identity and remaining time retained");
+    std::uint64_t a=0,b=0;
+    auto left=state.damage(22,100,{},false,a),right=restored.damage(22,100,{},false,b);
+    check(a==b&&left.save->natural==right.save->natural&&encode(state)==encode(restored),"Same external RNG and saved state give exact damage continuation");
+    check(state.elapse(598766)==first.source&&restored.elapse(598766)==first.source&&state==restored,"Restored expiry removes identical source");
+    for(const char* bad:{"","CN2 0","CN1 -1","CN1 2","CN1 1","CN1 1 0 1 9 1",
+        "CN1 1 7 0 9 1","CN1 1 7 1 0 1","CN1 1 7 1 9 0","CN1 1 7 1 9 -1",
+        "CN1 1 -7 1 9 1","CN1 1 7 1 9 18446744073709551616","CN1 1 7 1 4294967296 1",
+        "CN1 1 7 1 9 12junk","CN1 0 trailing"}){
+        state.begin(first);auto before=state;bool rejected=false;
+        try{state=decode(bad);}catch(const std::exception&){rejected=true;}
+        check(rejected&&state==before,"Malformed record cannot replace existing state");
+    }
+    // This is a new subrecord, not a historical campaign fixture. Integration
+    // tests must supply actual old-writer combat/campaign files when embedding it.
+}
+
 void damage(){
     for(int amount:{0,1,19,20,21,22,59,60,61,std::numeric_limits<int>::max()}){
         ConcentrationState state;state.begin(first);std::uint64_t random=13;
@@ -54,4 +78,4 @@ void damage(){
     check(rejected&&state==before&&random==13,"Invalid damage leaves state and RNG intact");
 }
 }
-int main(){try{lifecycle();damage();std::cout<<"Concentration transitions passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{lifecycle();damage();persistence();std::cout<<"Concentration transitions passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

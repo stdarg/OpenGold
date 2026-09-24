@@ -25,6 +25,20 @@ draw counts and cleanup identity. Concentration, status-effect and Ray of Frost
 focused tests pass. This isolated helper does not change existing gameplay,
 save formats or module version.
 
+## Concentration subrecord
+
+The isolated `CN1` reader/writer preserves empty state or the application scope,
+ID, caster and exact remaining milliseconds. It parses into a fresh value,
+rejecting unknown versions, invalid presence flags, zero identifiers/duration,
+negative or overflowing numbers and malformed tokens. Tests verify canonical
+bytes and identical save/RNG/expiry continuation after a round trip.
+
+This is not yet embedded in combat or campaign saves. The enclosing reader must
+validate the caster against the owner, the application against the area/effect
+registry, and duration against the named spell. It must reject trailing fields
+at its own record boundary. Existing save formats and migration claims remain
+unchanged; #208/#209 still require actual prior-writer fixtures.
+
 ## Integration still required
 
 - [#208](https://github.com/stdarg/OpenGold/issues/208): actual Silence access,

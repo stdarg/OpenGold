@@ -20,8 +20,20 @@ installing the efficiency workflow. Work continues on #205.
 Concentration transition foundation #207 is delivered; [evidence](CONCENTRATION.md).
 Next: [Silence combat/area/player integration #208](https://github.com/stdarg/OpenGold/issues/208),
 then [campaign/ritual integration #209](https://github.com/stdarg/OpenGold/issues/209).
-Both link back to #38/#39/#43/#174. Read acceptance before implementation. New
-area geometry/control choices need numbered user confirmation; none is pending.
+Both link back to #38/#39/#43/#174. Read acceptance before implementation.
+The isolated CN1 concentration subrecord now passes canonical, malformed-input
+and deterministic continuation tests; it is not yet embedded in live saves.
+Questions 19–21 are pending; do not implement their dependent choices until answered:
+- Q19: explicit flat-grid adaptation: choose a square center, circular 20-foot
+  radius, whole occupied square for full containment, walls block spread, preview
+  distinguishes partial squares/fully contained creatures; no height/airborne model.
+- Q20: prepared “Silence — level 2” in existing Spell dropdown; Cast enters area
+  preview, arrows move it, Enter/click commits, Escape cancels free. New row below
+  Dash shows End concentration, spell and duration; release costs no action and
+  is available for the selected owner outside their turn.
+- Q21: Silence in current level 3–4 Cleric preparation choices, retaining current
+  limits/confirmation; explicit choice only, no change to saved preparations.
+These requests cite AGENTS.md for controls and explicit review for geometry.
 #205 remains partial for speech blockers and the other linked granting sources.
 Mundane gagging also remains under #39; do not equate it with magical silence.
 
@@ -65,6 +77,7 @@ Relevant entry points (read only the needed sections):
   check pass. Rendered combat at both supported sizes in English/Spanish.
 - Wizard and Cleric creation checks cover the shared step; see the feature doc.
 - Concentration foundation, status effects and Ray of Frost focused checks pass.
+  CN1 serialization follow-up passed the rebuilt concentration test.
   No runtime/save changes in this helper increment.
 - No remaining live processes after final verification. No UI questions needed
   for the delivered Ray controls; Review Training question 11 remains unresolved.
