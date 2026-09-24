@@ -104,8 +104,8 @@ and application ID so different time-update sizes preserve RNG continuation.
 
 Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
 Combat checkpoint version 13 stores all effect applications, timers, presentation
-facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP and pending Savage Attacker decisions. Rules 0.6.20
-migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14/0.6.15/0.6.16/0.6.17/0.6.18/0.6.19 format-5/6/7/8/9/10/11/12 checkpoints, validating then canceling
+facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP and pending Savage Attacker decisions. Rules 0.6.21
+migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14/0.6.15/0.6.16/0.6.17/0.6.18/0.6.19/0.6.20 format-5/6/7/8/9/10/11/12/13 checkpoints, validating then canceling
 obsolete facing-only queues without changing spent resources, HP or time.
 Genuine movement queues retain their saved progress; future weapon attacks use
 the corrected [Heavy requirements](HEAVY-WEAPONS.md). The
@@ -133,6 +133,11 @@ casts remain separate work.
 [The Savage Attacker decision](SAVAGE-ATTACKER.md) retains a value-based pending
 hit until a legal player choice resolves damage and any interrupted movement.
 Snapshots expose display values; rules validate choices and Godot owns the dialog.
+
+Rules 0.6.21 adds [Somatic hand eligibility](SPELL-COMPONENTS.md) to the existing
+spell command query. Component definitions remain in the SRD library; Core and
+Godot do not duplicate hand rules or spell requirements. Existing saved equipment
+and attack grips are retained. Speech-blocking sources remain separate work.
 
 ### Why This Stack
 

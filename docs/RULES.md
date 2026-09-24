@@ -9,6 +9,11 @@ The [shared party preview](PARTY.md) extends this module with created-character
 recipes, equipment and persistent vitals/resources. The standalone combat modes
 below retain their fixed fixtures; the character scene injects the actual party.
 
+[Spell component eligibility](SPELL-COMPONENTS.md) blocks Somatic spells when an
+equipped weapon/wand and shield occupy both hands, while retaining Verbal-only
+spells and attack grips. Speech-blocking sources and material components remain
+separate increments.
+
 ## Run from Windows CMD
 
 From the repository root:

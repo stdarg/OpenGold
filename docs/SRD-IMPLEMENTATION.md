@@ -255,6 +255,12 @@ Final closure reconciles every audit finding and every class/species/feat/spell
 ledger entry. Passing a representative party test does not prove all spell or
 multiclass interactions; targeted checks remain attached to their rules.
 
+F09 is split into [existing spell component definitions and Somatic hands
+(#201)](https://github.com/stdarg/OpenGold/issues/201), and the remaining live
+speech-blocking sources tracked by [#39](https://github.com/stdarg/OpenGold/issues/39).
+The equipment eligibility child is delivered; it does not close verbal casting
+restrictions or material/focus mechanics (#40). See [spell components](SPELL-COMPONENTS.md).
+
 ## Recommended next execution
 
 I01–I08, F01, F02a and F02b are complete. Complete #189 before closing #29.

@@ -62,7 +62,7 @@ void all_classes(){
             }
             auto c=rules->create({{4,4,std::vector<std::uint8_t>(16)},{{1,"campaign-character","Hero",0,{1,1},profile.data},{2,"target","Target",1,{2,1}}}},2);
             check(c->snapshot().actor==1&&unit(*c).initiative==(penalty?10:14),"Actual initiative uses seed-2 rolls 11/7 once for untrained armor");
-            if(klass=="wizard")check(has(*c,"fire_bolt")==!penalty&&has(*c,"magic_missile")==!penalty,"Untrained armor disables all current Wizard spells; an untrained shield does not");
+            if(klass=="wizard")check(has(*c,"fire_bolt")==(!penalty&&!shield)&&has(*c,"magic_missile")==(!penalty&&!shield),"Untrained armor blocks casting; dagger plus shield independently blocks Somatic components");
             auto copy=rules->restore(c->save());const auto before=unit(*c);const auto ticket=command(*c,"melee");check(c->submit(ticket)&&copy->submit(ticket)&&c->save()==copy->save(),"All class/armor combinations preserve exact checkpoint continuation");
             check(argument(attack(*c),"roll")==std::to_string(penalty?10:12)&&argument(attack(*c),"disadvantage")== (penalty?" (disadvantage)":""),"Actual melee attack applies the armor penalty, independent seed oracle");
             check(unit(*c,2).hit_points==1000-(penalty?7:4),"Finesse dagger damage follows actual dice without an invented armor damage penalty");

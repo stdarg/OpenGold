@@ -291,3 +291,19 @@ Use and the higher result in the new rules must match those damage, resource,
 RNG, movement and time outcomes, with two extra command revisions. Already
 completed old hits are never repeated. Format 13 appends an empty decision to
 old checkpoints; all previous fixture oracles include that explicit extension.
+
+## Spell component eligibility migration
+
+`campaign-v10-components.ogs`, `combat-v13-components.save` and
+`combat-v13-components-continued.save` were written with the actual **0.6.20**
+rules libraries from **46c54da**, before the Somatic eligibility fix. The new
+suite's freeze path ran before changing the production rules. Do not regenerate
+these bytes with the current writer.
+
+They contain an authored level-three Cleric with Cure Wounds, Healing Word and
+Blindness prepared through ordinary advancement, equipped Mace and Shield,
+17/27 HP, 37 gold and a campaign clock/RNG. The prior writer incorrectly offers
+Cure Wounds despite occupied hands. The continued combat file records a legal
+Healing Word cast. Migration changes module identity only; the new writer
+rejects Somatic casts but reproduces the prior verbal cast exactly. No original
+assets are included.
