@@ -472,6 +472,46 @@ void starting_styles(){
     rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.30","0.6.28"),*creation,*rules,"style-migration",nullptr);});
 }
 
+void freeze_bard_instruments(){
+    auto rules=module();check(rules->identity().version=="0.6.30","Requires actual writer before Bard instrument choices");
+    CampaignParty party(module());
+    for(const auto* background:{"sage","criminal","acolyte","soldier"}){
+        auto d=draft("bard",background);d.name=std::string("Bard ")+background;
+        d.training={{"origin:languages",{"elvish","dwarvish"}},{"class:bard",{"performance","persuasion","perception"}}};
+        party.add_pc(hero(d));
+    }
+    auto state=party.checkpoint();for(auto& member:state.roster){
+        member.vitals.hit_points-=2;member.vitals.resources="SRD1 0 0 0 0 0";
+    }
+    party.restore(state);const auto root=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures";
+    std::ofstream campaign(root/"campaign-v11-bard-instruments-before.ogs",std::ios::binary);
+    campaign<<encode_campaign(party,nullptr,"bard-instruments");check(bool(campaign),"Write actual prior Bard campaign");
+    std::vector<Participant> members;for(const auto& member:party.state().roster)
+        members.push_back({member.id,"campaign-character",member.character.sheet().name,0,{int(member.id),1},rules->character_profile(member.character.sheet(),{}).data,member.vitals});
+    members.push_back({99,"vanguard","Enemy",1,{6,6}});
+    std::ofstream combat(root/"combat-v14-bard-instruments-before.save",std::ios::binary);
+    combat<<rules->create({{8,8,std::vector<std::uint8_t>(64)},members},13)->save();check(bool(combat),"Write actual prior Bard combat");
+}
+
+void bard_instrument_prior_writer(){
+    auto rules=module();auto creation=srd5::character_rules();
+    const auto saved=fixture("campaign-v11-bard-instruments-before.ogs");
+    CampaignParty party(module());party.restore(decode_campaign(saved,*creation,*rules,"bard-instruments",nullptr).party);
+    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};
+    auto expected=body(saved);replace(expected,"0.6.30",rules->identity().version);
+    check(body(encode_campaign(party,nullptr,"bard-instruments"))==expected,"Prior Bard campaign retains all recorded data except module identity");
+    check(party.state().roster.size()==4,"Prior Bard fixture covers all four backgrounds");
+    for(const auto& member:party.state().roster){
+        check(member.character.creation_data().training.at("class:bard")==std::vector<std::string>{"performance","persuasion","perception"},"Prior Bard skills retain selection order");
+        check(member.vitals.hit_points==member.character.sheet().hit_points-2,"Prior Bard wounds survive");
+        check(member.vitals.resources=="SRD1 0 0 0 0 0","Prior Bard resource state survives");
+        check(!member.character.creation_data().training.contains("class:bard:instruments"),"Prior Bard instrument selections are not invented");
+    }
+    auto frozen=fixture("combat-v14-bard-instruments-before.save");auto migrated=frozen;
+    replace(migrated,"0.6.30",rules->identity().version);
+    check(rules->restore(frozen)->save()==migrated,"Prior Bard combat retains profiles, HP, resources and RNG");
+}
+
 void freeze_class_skills(){
     auto rules=module();auto creation=srd5::character_rules();check(rules->identity().version=="0.6.29","Requires actual writer before all-class skill choices");
     CampaignParty party(module());
@@ -539,4 +579,4 @@ void freeze_sage(){
 }
 
 }
-int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-class-skills")freeze_class_skills();else if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}all_class_skills();sage_training();remaining_backgrounds();starting_styles();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-bard-instruments")freeze_bard_instruments();else if(std::string_view(argv[1])=="--freeze-class-skills")freeze_class_skills();else if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}bard_instrument_prior_writer();all_class_skills();sage_training();remaining_backgrounds();starting_styles();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

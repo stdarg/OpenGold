@@ -8,30 +8,27 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. #213 completes starting class skill choices for all twelve classes
-through the existing Training groups and sourced sheet display. Exact SRD lists
-include Fighter Persuasion and Wizard Nature; Bard/Ranger choose three, Rogue
-four, others two. Presets fill choices deterministically. Old saves retain missing
-choices as pending, while Rogue keeps its prior selections. See
-[class skills](CLASS-SKILLS.md). This does not close full class packages or #29/#52.
+Branch `main`. Active increment: [Bard instruments #214](https://github.com/stdarg/OpenGold/issues/214),
+child of #125. Source and completion checklist: [BARD-INSTRUMENTS.md](BARD-INSTRUMENTS.md).
+Prior-writer preparation is complete: actual rules 0.6.30 / PC19 campaign and
+combat fixtures cover four backgrounds, recorded skills/languages, wounds and
+resource state. `bard_instrument_prior_writer()` passes exact continuation checks.
+Production instrument support is not implemented yet. **Next: implement the ten
+instrument catalog, Bard choose-three Training group, sourced grants/checks,
+versioned policy, preset generation and ordinary creation verification.** Reuse
+approved checkbox controls; don't replace missing historical choices with defaults.
+Extend the frozen-fixture test to assert pending Training and safe completion.
 
-Rules 0.6.30 / PC19 / FX2; campaign 11 / combat 13–15 unchanged. Actual 0.6.29
-fixtures from `8da4565` preserve twelve classes, recorded training, supported
-advancement, wounds and spent resources. New class grants reject under old
-identities. Reused checkbox callbacks are rebound to the current class source;
-controls retain focus and catalog order. Compatible skill choices transfer on
-class changes through rules-owned continuity metadata; all 144 class pairs are
-verified without putting SRD class names in Core. Main/demo share that implementation.
-Entry points: `training.*`, `srd5.cpp`, `training_control.h`, training native/UI
-tests and the actual fixtures. Full-party Wizard fixtures clear Fighter training
-when temporarily changing class for the untrained-shield test.
+#213 is closed: all twelve starting class skill lists and valid-selection
+preservation are implemented. See [class skills](CLASS-SKILLS.md). Rules remain
+0.6.30 / PC19 / FX2; campaign 11 / combat 13–15 unchanged. No production files
+changed during #214 baseline preparation. Baseline generator is version guarded;
+do not rerun it with a future writer or edit the fixture bytes.
 
-**Next: resume #80 if Q23 is answered; otherwise continue independent class
-training or passive-trait work.** Q23 remains pending: automatic Great Weapon
-Fighting replacement or an optional choice per hit. Do not enable either behavior
-without the answer. The [damage-roll foundation](GREAT-WEAPON-FIGHTING.md) is in
-`8da4565`; the feat is not selectable/applied. Other styles, Fighter level-up
-replacement and mastery remain #85. Q22 approves only the starting style selector.
+Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
+optional choice per hit. Do not enable either without the answer. The tested
+[damage-roll foundation](GREAT-WEAPON-FIGHTING.md) is in `8da4565`; the feat is not
+selectable/applied. Q22's starting Fighting Style selector is already delivered.
 
 ## Next work and pending questions
 
