@@ -194,3 +194,12 @@ schema change. Existing original-item conversions, inventory IDs, quantity,
 source records, equipment, HP, resources and clocks remain intact. In particular,
 original type 45 retains the Fine Composite Long Bow / SRD Longbow mapping;
 adding a native Heavy Crossbow does not justify reinterpreting old equipment.
+
+## Armor catalog compatibility
+
+Rules 0.6.18 retains the existing save schemas and accepts 0.6.17 campaigns and
+combat-12 checkpoints. New armor keys use the existing equipment representation.
+Frozen prior-writer fixtures verify that original armor provenance, grants,
+wounds, resources and exact combat continuation are preserved. Armor penalties
+are derived from the equipped definitions, including Chain Mail's Stealth
+Disadvantage; loading never spends or restores resources. See [armor scope](ARMOR.md).

@@ -85,6 +85,13 @@ rules::CharacterProfile CampaignParty::profile(MemberId id) const
         if(!item)throw std::runtime_error("Equipped item is missing");keys.push_back(item->get().definition_id);}
     return rules_->character_profile(m.character.sheet(),keys,m.equipment);
 }
+rules::AbilityCheckModifier CampaignParty::ability_check(MemberId id,unsigned ability,std::string_view skill,std::string_view tool) const
+{
+    const auto& m=member(id);std::vector<std::string> keys;
+    for(auto equipped:m.equipped){const auto item=m.character.inventory().find(equipped);
+        if(!item)throw std::runtime_error("Equipped item is missing");keys.push_back(item->get().definition_id);}
+    return rules_->ability_check(m.character.sheet(),keys,ability,skill,tool,m.equipment);
+}
 void CampaignParty::equip(MemberId id,std::uint64_t item)
 {
     editable();auto next=member(id).equipped;

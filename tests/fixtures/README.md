@@ -224,3 +224,22 @@ and match the old writer's exact result, resources and random continuation.
 `weapons-srd-5.2.1.tsv` is a separate, source-verified table of all 38 weapons
 from SRD 5.2.1 p.91. Tests compare every definition/property, including exact
 quarter-pound/copper units, without reading expected values from implementation.
+
+## Armor catalog compatibility
+
+`campaign-v10-armor.ogs`, `combat-v12-armor.save` and
+`combat-v12-armor-continued.save` were written by **0.6.17**, using headers and
+compiled libraries frozen from commit `5dfabb7`. Do not regenerate these with
+current code. Asset identity is `armor-fixture`; there are no original assets.
+Three normally created characters (Dwarf Fighter, Orc Wizard, Human Fighter)
+carry Longswords. The Fighters wear Chain Mail; the Wizard wears untrained
+Leather. The first two armor items retain authored original type 55/50 source
+records. Everyone is wounded; Second Wind, slots and Adrenaline Rush have
+spent uses, the Orc has sourced Temporary HP, and the clock is 123 minutes plus
+456 milliseconds. The combat uses seed 13 and records an actual melee attack
+continuation. Migration changes only module identity; it must not rewrite
+resources, descriptions, equipment, grants, RNG or clocks.
+
+`armor-srd-5.2.1.tsv` is an independent transcription of the SRD 5.2.1 p. 92
+table. Its thirteen rows cover twelve suits and Shield. Times are seconds;
+Shield's zero times denote a Utilize action, not a free equipment change.

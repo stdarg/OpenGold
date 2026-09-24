@@ -1,0 +1,14 @@
+# Independent SRD 5.2.1 p.92 table: key category base_ac strength stealth weight_lb cost_cp don_seconds doff_seconds
+padded light 11 0 1 8 500 60 60
+leather light 11 0 0 10 1000 60 60
+studded_leather light 12 0 0 13 4500 60 60
+hide medium 12 0 0 12 1000 300 60
+chain_shirt medium 13 0 0 20 5000 300 60
+scale_mail medium 14 0 1 45 5000 300 60
+breastplate medium 14 0 0 20 40000 300 60
+half_plate medium 15 0 1 40 75000 300 60
+ring_mail heavy 14 0 1 40 3000 600 300
+chain_mail heavy 16 13 1 55 7500 600 300
+splint heavy 17 15 1 60 20000 600 300
+plate heavy 18 15 1 65 150000 600 300
+shield shield 2 0 0 6 1000 0 0

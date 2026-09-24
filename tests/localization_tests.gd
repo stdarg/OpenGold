@@ -58,6 +58,10 @@ func run_checks() -> void:
 	var weapon_names := {"Greatclub": "Gran garrote", "Sickle": "Hoz", "Greataxe": "Gran hacha", "Lance": "Lanza de caballería", "Maul": "Maza a dos manos", "Rapier": "Estoque", "Whip": "Látigo", "Blowgun": "Cerbatana", "Hand Crossbow": "Ballesta de mano", "Heavy Crossbow": "Ballesta pesada", "Musket": "Mosquete", "Pistol": "Pistola"}
 	for key in weapon_names:
 		require(TranslationServer.translate(key) == weapon_names[key], "New weapon label is not translated: " + key)
+	var armor_names := {"Padded Armor": "Armadura acolchada", "Studded Leather Armor": "Armadura de cuero tachonado", "Hide Armor": "Armadura de pieles", "Chain Shirt": "Camisa de malla", "Scale Mail": "Cota de escamas", "Breastplate": "Coraza", "Half Plate Armor": "Armadura de semiplacas", "Ring Mail": "Cota de anillas", "Splint Armor": "Armadura de bandas", "Plate Armor": "Armadura de placas"}
+	for key in armor_names:
+		require(TranslationServer.translate(key) == armor_names[key], "New armor label is not translated: " + key)
+	require(TranslationServer.translate("This armor imposes Disadvantage on Dexterity (Stealth) checks.") == "Esta armadura impone desventaja en las pruebas de Destreza (Sigilo).", "Armor Stealth penalty is not translated")
 	require(TranslationServer.translate_plural("{count} item", "{count} items", 1) == "{count} objeto", "Spanish singular missing")
 	require(TranslationServer.translate_plural("{count} item", "{count} items", 2) == "{count} objetos", "Spanish plural missing")
 	require(TranslationServer.translate("A missing original message", "por/test/dialogue") == "A missing original message", "Source fallback failed")

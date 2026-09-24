@@ -60,6 +60,7 @@ struct AbilityCheckModifier {
     int ability_modifier{}, proficiency{}, total{};
     bool expertise{}, tool_advantage{};
     std::vector<FeatureGrant> sources;
+    bool disadvantage{}; // Independent of tool_advantage; both cancel on a roll.
 };
 struct ClassRequirements {
     std::vector<unsigned> abilities;

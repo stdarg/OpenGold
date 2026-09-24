@@ -7,6 +7,8 @@ void RulesModule::validate_saved_grants(const Identity&,const CharacterSheet& sh
 {if(!std::equal(grants.begin(),grants.end(),sheet.grants.begin(),sheet.grants.end()))throw std::runtime_error("Saved grants disagree with creation or advancement choices");}
 CharacterProfile RulesModule::character_profile(const CharacterSheet&, std::span<const std::string>, EquipmentState) const
 { throw std::runtime_error("This rules module does not support campaign characters"); }
+AbilityCheckModifier RulesModule::ability_check(const CharacterSheet&,std::span<const std::string>,unsigned,std::string_view,std::string_view,EquipmentState) const
+{ throw std::runtime_error("This rules module does not support equipped ability checks"); }
 unsigned RulesModule::experience_for_level(unsigned) const
 { throw std::runtime_error("This rules module does not support advancement"); }
 bool RulesModule::advance_character(CharacterSheet&, VitalState&) const

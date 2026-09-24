@@ -13,6 +13,7 @@
 
 namespace opengold::rules {
 struct CharacterSheet;
+struct AbilityCheckModifier;
 struct FeatureGrant;
 struct AdvancementChoice {
     std::string feat;
@@ -170,6 +171,8 @@ public:
     [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>, EquipmentState equipment={}) const;
     [[nodiscard]] virtual EquipmentState migrate_equipment(std::span<const std::string>) const {return {};}
     [[nodiscard]] virtual EquipmentInfo equipment_info(std::string_view) const {return {};}
+    [[nodiscard]] virtual AbilityCheckModifier ability_check(const CharacterSheet&,std::span<const std::string> gear,
+        unsigned ability,std::string_view skill={},std::string_view tool={},EquipmentState equipment={}) const;
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
     // False means this module's supported advancement ceiling was reached.
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;

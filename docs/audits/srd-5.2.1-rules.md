@@ -474,9 +474,11 @@ replacement now exist. Those improvements are not open gaps.
 
 [EQ02 / #54](../WEAPON-CATALOG.md) completes the source weapon table, including
 fixed Blowgun damage, while retaining original campaign conversions.
-Only leather, chain mail
-and shield are implemented; Medium armor remains unavailable despite several
-classes' training. Starting class/background packages and spellbooks are not
+[EQ01 / #53](../ARMOR.md) supplies all twelve armor suits and Shield, with
+category-based AC, starting-class training, Strength/Stealth penalties and
+equipped ability-check queries. Donning/removal and shield Utilize actions
+remain #198; unsupported original armor conversions remain in the equipment
+queue. Starting class/background packages and spellbooks are not
 awarded. A held plain wand does not establish component/focus enforcement.
 
 Weapon properties remain incomplete. [EQ03 / #55](../HEAVY-WEAPONS.md) now
