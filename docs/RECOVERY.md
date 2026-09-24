@@ -25,21 +25,22 @@ complete original campaign service coverage.
   Constitution changes and new resource capacity apply together. Existing
   expenditure is preserved; advancement does not wake or revive a character.
   Full class/subclass features and other classes' advancement remain unavailable.
-- A group long rest requires every active member to have at least 1 HP, and at
-  least 16 hours since their last completed long rest. It takes eight hours and
-  restores HP and the supported spell/Second Wind resources. Empty parties,
-  unconscious/dead members and premature repeated rests are denied without
-  changing time or resources. Removed/rejoined members retain their rest timer.
-  The [rest resource rules](REST-RESOURCES.md) now support individual Hit Die rolls
-  and partial Second Wind recharge. Campaign Short Rests and spending controls
-  remain open, along with exhaustion, species-specific durations and interrupted
-  rest resumption. Existing Long Rests also restore spent Hit Dice.
+- A Long Rest checks each active member at its start: at least 1 HP, alive and
+  at least 16 hours since the previous completion. Eligible members recover HP,
+  spent Hit Dice and supported resources after eight hours; ineligible/reserve
+  members gain no rest benefits. Time/effects advance once for the whole roster.
+  If nobody is eligible, the request changes nothing. Removal/rejoin preserves
+  individual timers. Short Rest transactions now recharge one Second Wind and
+  permit one Hit Die decision at a time after the hour, with persistent tickets
+  and immediate resource/RNG commits. [Rest controls #192](https://github.com/stdarg/OpenGold/issues/192)
+  remain pending. See [rest support](REST-RESOURCES.md) for the APIs, persistence,
+  effect handling and unsupported interruption/resumption boundaries.
 
 ## Original campaign mappings
 
 **Camp [C]** runs ECL entry 2 before any recovery. `6DD3=255` denies rest.
-An interruption-free profile permits the group rest. New Phlan's guaranteed
-city-watch interruption (`6DD2=1`, `6DD3=100/101`) advances five minutes, runs
+An interruption-free profile permits the requested rest for eligible members.
+New Phlan's guaranteed city-watch interruption (`6DD2=1`, `6DD3=100/101`) advances five minutes, runs
 entry 3, and grants no recovery. Choose **GO** to leave peacefully; combat with
 the watch remains unsupported and rolls the event back. Other nonzero
 probabilistic interruption profiles fail explicitly.

@@ -14,7 +14,7 @@ std::uint64_t fingerprint(std::string_view data){std::uint64_t n=146959810393466
 // Explicit field encoding: no pointers, native object layouts or derived sheets.
 struct SaveCodec {
     bool reading{};
-    unsigned version{9};
+    unsigned version{10};
     std::stringstream stream;
     const rules::CharacterRules* creation{};
     const rules::RulesModule* module{};
@@ -48,6 +48,9 @@ struct SaveCodec {
     void field(por::ItemTemplate& v){fields(v.raw,v.worn_location,v.hands,v.rate_of_fire,v.protection_raw,v.damage_type,v.melee_flag,v.large_damage,v.small_medium_damage,v.range,v.class_restrictions,v.ammunition_type);}
     void field(por::EquipmentBonuses& v){fields(v.weapon_to_hit,v.weapon_damage,v.armor_base_ac,v.ac_adjustment,v.save_bonus);}
     void field(por::Equipment& v){fields(v.index,v.stored,v.base,v.bonuses);}
+    void field(RestTicket& v){fields(v.session,v.revision);}
+    void field(ShortRestSession& v){fields(v.ticket,v.completed_minutes,v.completed_subminute_milliseconds,v.members);}
+    void rest(PartyState& v){if(version>=10)fields(v.next_rest_session,v.short_rest);}
     void field(rules::VitalState& v){fields(v.hit_points,v.dead,v.resources,v.description);}
     void member(PartyMember& v){
         fields(v.id,v.npc_source,v.vitals,v.wealth,v.equipped,v.morale,v.experience,v.last_rest_minutes,v.item_sources,v.creation_source);
@@ -160,7 +163,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 9\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 10\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -178,8 +181,17 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 }
 }
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
-    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 9\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");const bool third=bytes.starts_with("OPENGOLD-CAMPAIGN 3\n"),fourth=bytes.starts_with("OPENGOLD-CAMPAIGN 4\n");const bool fifth=bytes.starts_with("OPENGOLD-CAMPAIGN 5\n");const bool sixth=bytes.starts_with("OPENGOLD-CAMPAIGN 6\n");const bool seventh=bytes.starts_with("OPENGOLD-CAMPAIGN 7\n");const bool eighth=bytes.starts_with("OPENGOLD-CAMPAIGN 8\n");require(old||second||third||fourth||fifth||sixth||seventh||eighth||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
-    SaveCodec in(body);in.version=old?1:second?2:third?3:fourth?4:fifth?5:sixth?6:seventh?7:eighth?8:9;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");in.saved_identity=identity;SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
+    require(bytes.size()<=limit,"Campaign save too large");
+    unsigned version{};std::size_t header_size{};
+    for(unsigned v=1;v<=10;++v){
+        const auto header="OPENGOLD-CAMPAIGN "+std::to_string(v)+'\n';
+        if(bytes.starts_with(header)){version=v;header_size=header.size();break;}
+    }
+    require(version!=0,"Unsupported campaign save version");
+    const auto end=bytes.find('\n',header_size);require(end!=bytes.npos,"Truncated campaign save");
+    const auto body=bytes.substr(end+1);
+    require(bytes.substr(header_size,end-header_size)==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
+    SaveCodec in(body);in.version=version;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");in.saved_identity=identity;SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.rest(result.party);CampaignParty::validate(result.party);in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
 std::string read_campaign_file(const std::filesystem::path& path)
 {return read_save_file(path,limit);}

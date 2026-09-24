@@ -28,12 +28,12 @@ of a campaign save; add completed characters to the party first.
 Saving/loading is supported from the party roster and idle New Phlan exploration.
 Town controls are disabled while dialogue, input, shopping or services are pending.
 Combat must finish and return to the roster first. The core also rejects saving
-during combat or an unfinished town event. No autosaves, pending-request saves,
-mid-combat campaign saves or original DOS saves are
-implemented. The standalone tour and combat research demos retain their existing
+during combat or an unfinished town event. A completed Short Rest spending window
+may be saved at the idle boundary. No autosaves, unfinished-script-request saves,
+mid-combat campaign saves or original DOS saves are implemented. The standalone tour and combat research demos retain their existing
 behavior; these campaign controls belong to the shared party flow.
 
-Format **OPENGOLD-CAMPAIGN 9** stores:
+Format **OPENGOLD-CAMPAIGN 10** stores:
 
 - Finished character drafts, appearances, levels, advancement choices, training
   selections and acquired feature/feat/training grants,
@@ -45,6 +45,9 @@ Format **OPENGOLD-CAMPAIGN 9** stores:
 - Lasting effects in the rules-owned SRD3/FX1 continuation, including individual
   applications, source provenance, fixed DCs, remaining duration and recovery
   schedule. Encounter scope IDs distinguish reused monster IDs across fights.
+- A completed Short Rest's spending ticket, eligible members and completion time,
+  plus its next session ID. Reload continues after the last committed die without
+  replaying the hour or recharge. Malformed/stale/inactive continuations reject.
 - Current New Phlan script/resource context, private mutable ECL image, bound
   variables/flags, instruction spans, comparison flags, request counter and ECL
   RNG. The completed event is not replayed. Dialogue and visited cells persist;
@@ -89,7 +92,8 @@ Frozen 0.6.6 campaign/combat files exercise both migration paths. See the exampl
 
 Rules 0.6.10 preserves remaining Hit Dice in SRD4 vital continuations and combat
 format 9. Older characters start with unspent dice because previous modules had
-no spending operation. Campaign format 9 is unchanged; [rest resources](REST-RESOURCES.md)
+no spending operation. Campaign format 10 adds the spending continuation; formats
+1–9 migrate with no pending entitlement. [Rest resources](REST-RESOURCES.md)
 details the compatibility and currently supported scope.
 
 ## File safety and compatibility

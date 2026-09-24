@@ -42,6 +42,7 @@ std::string campaign_payload(unsigned version,const std::string& body)
 void remove_v7_grip(std::string& body,const std::string& party_save)
 {
     auto prefix=party_save.substr(party_save.find('\n',party_save.find('\n')+1)+1);
+    check(prefix.ends_with("1 0 "),"Current fixture has no rest session");prefix.resize(prefix.size()-4);
     // Omit the v8 grant extension before constructing older format fixtures.
     const auto first_grant=prefix.find(" \"feat:savage_attacker\"");
     check(first_grant!=prefix.npos,"Soldier fixture includes its creation grant");
@@ -124,6 +125,7 @@ void fog_saves(const std::filesystem::path& directory)
     single.explore(por::ExplorationCommand::turn_right);(void)single.observe_view();
     const auto current=encode_campaign(*party,&single,"fog-fixture");
     auto body=current.substr(current.find('\n',current.find('\n')+1)+1);
+    check(body.ends_with("1 0 "),"No pending rest in legacy town fixture");body.resize(body.size()-4);
     const auto suffix="1 0 \""+single.snapshot().seen.to_string()+"\" ";
     check(body.ends_with(suffix),"Knowledge is the version-five extension");
     body.resize(body.size()-suffix.size());
@@ -192,6 +194,7 @@ void roundtrip(const std::filesystem::path& directory){
     auto old_save=encode_campaign(previous,nullptr,"fixture-v1");
     // Version 3 encoded the same appearance fields without the new filename.
     auto legacy_body=old_save.substr(old_save.find('\n',old_save.find('\n')+1)+1);
+    check(legacy_body.ends_with("1 0 "),"No pending rest in legacy party fixture");legacy_body.resize(legacy_body.size()-4);
     const std::string portrait_field="\"human-male-fighter-01.png\" ";
     remove_v7_grip(legacy_body,old_save);
     const auto portrait_position=legacy_body.find(portrait_field);check(portrait_position!=legacy_body.npos,"Portrait filename is serialized");
@@ -225,7 +228,11 @@ void roundtrip(const std::filesystem::path& directory){
     auto combat_a=rules->create(encounter(*party),42),combat_b=rules->create(encounter(*replacement),42);
     for(int i=0;i<30&&combat_a->snapshot().outcome==rules::Outcome::ongoing;++i){auto command=choose_demo_command(*combat_a);check(combat_a->submit(command)&&combat_b->submit(command)&&combat_a->save()==combat_b->save(),"Next combat continues deterministically after disk reload");}
     check(replacement->member(fighter).wealth[3]==390,"Temple charge survives load");check(replacement->member(mage).vitals.resources=="SRD1 0 1 0 0 0","Spent caster slots survive load");
-    replacement->award_experience(300,"save:encounter");check(replacement->member(fighter).experience==300,"No duplicate XP after reload");check(!replacement->rest(),"Reload must not reset rest timer");replacement->rejoin(reserve);check(!replacement->rest(),"Rejoin cannot bypass existing timers");replacement->remove(reserve);
+    replacement->award_experience(300,"save:encounter");check(replacement->member(fighter).experience==300,"No duplicate XP after reload");check(!replacement->rest(),"Reload must not reset rest timer");const auto fighter_rest=replacement->member(fighter).last_rest_minutes;
+    const auto mage_vitals=replacement->member(mage).vitals;
+    replacement->rejoin(reserve);check(replacement->rest(),"A newly eligible reserve can rest after rejoining");
+    check(replacement->member(fighter).last_rest_minutes==fighter_rest&&replacement->member(mage).vitals==mage_vitals,
+        "The rejoined member does not bypass other members' cooldowns or refill their resources");replacement->remove(reserve);
     auto wounded=replacement->checkpoint();wounded.roster[0].vitals.hit_points=1;replacement->restore(wounded);party->restore(wounded);replacement->temple_heal(fighter);party->temple_heal(fighter);check(replacement->member(fighter).vitals==party->member(fighter).vitals&&replacement->state().random_state==party->state().random_state,"Service RNG continuation matches");
     loaded.town->explore(por::ExplorationCommand::look);town.explore(por::ExplorationCommand::look);settle(*loaded.town);settle(town);check(loaded.town->script_variable(0x9810)==town.script_variable(0x9810),"Script continuation matches");
     auto next=encode_campaign(*replacement,&*loaded.town,"fixture-v1");write_campaign_file(path,next);auto backup=path;backup+=".bak";check(read_campaign_file(backup)==saved,"Overwrite retains previous save");write_campaign_file(path,saved);check(read_campaign_file(backup)==next,"Second overwrite rotates previous save");

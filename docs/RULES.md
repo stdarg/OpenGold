@@ -158,8 +158,9 @@ the selected choice groups and preserves unresolved choices from older saves.
 See [training support](TRAINING.md) for the Rogue/Criminal package and limits.
 
 SRD4 vital continuations preserve spent Hit Dice and the existing resource/effect
-state; [rest resources](REST-RESOURCES.md) describes the rules-only APIs and
-remaining campaign/UI work. Campaign format 9 and PC7 remain unchanged.
+state; [rest resources](REST-RESOURCES.md) describes the rules APIs and campaign
+rest transactions. Campaign format 10 persists completed Short Rest spending
+sessions; PC7 is unchanged. Player-facing rest controls remain #192.
 
 A reaction may pause an accepted route while the mover shares an allied space.
 The remaining path must still lead to a free cell within the movement budget.

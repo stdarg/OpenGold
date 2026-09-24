@@ -31,7 +31,10 @@ std::string equipment_conversion(const por::Equipment& item)
 }
 CampaignParty::CampaignParty(std::unique_ptr<rules::RulesModule> rules):rules_(std::move(rules))
 {if(!rules_)throw std::runtime_error("Party requires a rules module");}
-void CampaignParty::editable() const {if(combat_)throw std::runtime_error("Finish combat before changing the party");}
+void CampaignParty::outside_combat() const {if(combat_)throw std::runtime_error("Finish combat before changing the party");}
+void CampaignParty::editable() const {
+    outside_combat();if(state_.short_rest)throw std::runtime_error("Finish Short Rest spending before changing the party");
+}
 const PartyMember& CampaignParty::member(MemberId id) const
 {
     const auto it=std::find_if(state_.roster.begin(),state_.roster.end(),[&](const auto& m){return m.id==id;});
@@ -40,7 +43,7 @@ const PartyMember& CampaignParty::member(MemberId id) const
 PartyMember& CampaignParty::edit(MemberId id)
 {return const_cast<PartyMember&>(std::as_const(*this).member(id));}
 void CampaignParty::select(unsigned slot)
-{editable();if(slot>=8||!state_.slots[slot])throw std::runtime_error("Empty party position");state_.selected=slot;}
+{outside_combat();if(slot>=8||!state_.slots[slot])throw std::runtime_error("Empty party position");state_.selected=slot;}
 void CampaignParty::join(MemberId id,bool npc)
 {
     if(std::find(state_.slots.begin(),state_.slots.end(),id)!=state_.slots.end())throw std::runtime_error("Already in party");
@@ -167,7 +170,7 @@ void CampaignParty::award_experience(unsigned amount,std::string reward_id)
 }
 bool CampaignParty::can_advance(MemberId id) const
 {
-    if(combat_)return false;const auto& m=member(id);const auto options=rules_->advancement_options(m.character.sheet());
+    if(combat_||state_.short_rest)return false;const auto& m=member(id);const auto options=rules_->advancement_options(m.character.sheet());
     return !m.vitals.dead&&options.level&&m.experience>=rules_->experience_for_level(options.level);
 }
 rules::AdvancementOptions CampaignParty::advancement_options(MemberId id) const
@@ -199,34 +202,13 @@ void CampaignParty::complete_training(MemberId id,const rules::CharacterRules& c
     auto member=preview_training(id,creation_rules,choices);auto next=state_;
     *std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;})=std::move(member);state_=std::move(next);
 }
-bool CampaignParty::rest()
-{
-    editable();auto next=state_;bool rested=false;const auto policy=rules_->long_rest_policy();
-    if(!policy.duration_minutes)throw std::runtime_error("Invalid rules rest duration");
-    if(next.time_minutes>std::numeric_limits<std::uint64_t>::max()-policy.duration_minutes)throw std::runtime_error("Campaign clock overflow");
-    for(auto id:next.slots)if(id){
-        auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});
-        if(member.last_rest_minutes){
-            const auto elapsed=next.time_minutes-*member.last_rest_minutes;
-            if(elapsed<policy.wait_after_rest_minutes||(elapsed==policy.wait_after_rest_minutes&&next.subminute_milliseconds<member.last_rest_subminute_milliseconds))return false;
-        }
-        // This bounded group rest requires everyone to be eligible at its start.
-        if(member.vitals.dead||member.vitals.hit_points<1)return false;
-        member.last_rest_minutes=next.time_minutes+policy.duration_minutes;
-        member.last_rest_subminute_milliseconds=next.subminute_milliseconds;rested=true;
-    }
-    if(!rested)return false;
-    elapse(next,std::uint64_t(policy.duration_minutes)*60000);
-    for(auto id:next.slots)if(id){auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});rules_->recover(member.vitals,member.character.sheet());}
-    state_=std::move(next);return true;
-}
 void CampaignParty::advance_time(unsigned minutes)
 {
     advance_time_milliseconds(std::uint64_t(minutes)*60000);
 }
 void CampaignParty::advance_time_milliseconds(std::uint64_t milliseconds)
 {
-    editable();auto next=state_;elapse(next,milliseconds);state_=std::move(next);
+    outside_combat();auto next=state_;elapse(next,milliseconds);if(milliseconds)next.short_rest.reset();state_=std::move(next);
 }
 void CampaignParty::elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat) const
 {
@@ -303,7 +285,7 @@ void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
 }
 void CampaignParty::validate(const PartyState& state)
 {
-    if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024||state.subminute_milliseconds>=60000||!state.next_combat_scope)throw std::runtime_error("Invalid party checkpoint");
+    if(state.roster.size()>128||state.selected>=8||!state.next_id||state.claimed_rewards.size()>1024||state.subminute_milliseconds>=60000||!state.next_combat_scope||!state.next_rest_session)throw std::runtime_error("Invalid party checkpoint");
     std::set<MemberId> ids,active;std::set<std::string> sources,creation_sources;
     for(const auto& m:state.roster){
         if(!m.creation_source.empty()&&(m.creation_source.size()>160||!creation_sources.insert(m.creation_source).second))throw std::runtime_error("Invalid creation source checkpoint");
@@ -324,9 +306,20 @@ void CampaignParty::validate(const PartyState& state)
         if((slot<6)!=it->npc_source.empty())throw std::runtime_error("Invalid PC/NPC checkpoint position");
     }
     if(!active.empty()&&!state.slots[state.selected])throw std::runtime_error("Invalid selected member checkpoint");
+    if(state.short_rest){
+        const auto& rest=*state.short_rest;std::set<MemberId> members;
+        if(!rest.ticket.session||rest.ticket.session>=state.next_rest_session||!rest.ticket.revision||
+            rest.completed_minutes!=state.time_minutes||rest.completed_subminute_milliseconds!=state.subminute_milliseconds||
+            rest.members.empty()||rest.members.size()>8)throw std::runtime_error("Invalid Short Rest checkpoint");
+        for(auto id:rest.members){
+            if(!active.contains(id)||!members.insert(id).second)throw std::runtime_error("Invalid Short Rest member");
+            const auto& m=*std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& value){return value.id==id;});
+            if(m.vitals.dead||m.vitals.hit_points<1)throw std::runtime_error("Invalid Short Rest vitality");
+        }
+    }
 }
 void CampaignParty::restore(PartyState state){
-    editable();validate(state);
+    outside_combat();validate(state);
     for(const auto& m:state.roster){
         std::vector<std::string> gear;for(auto id:m.equipped)gear.push_back(m.character.inventory().find(id)->get().definition_id);
         (void)rules_->character_profile(m.character.sheet(),gear,m.equipment);
@@ -343,7 +336,7 @@ std::vector<rules::Participant> CampaignParty::participants() const
     }
     if(result.empty())throw std::runtime_error("Add a living combat-ready character first");return result;
 }
-void CampaignParty::begin_combat(){editable();if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;}
+void CampaignParty::begin_combat(){outside_combat();if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;}
 void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
 {
     if(!combat_||snapshot.identity!=rules_->identity())throw std::runtime_error("Combat rules identity mismatch");
@@ -360,6 +353,7 @@ void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
         (void)rules_->character_profile(it->character.sheet(),gear,actor.equipment);
         it->vitals=actor.persistent;it->equipment=actor.equipment;
     }
+    next.short_rest.reset();
     if(!combat_registered_)++next.next_combat_scope;
     state_=std::move(next);combat_elapsed_=snapshot.elapsed_milliseconds;combat_registered_=true;
 }

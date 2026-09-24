@@ -98,7 +98,7 @@ void persistence_and_advancement(){
     const std::string from="SRD4 1 0 0 0 0 0 0 ";const auto where=bad_body.find(from);
     check(where!=bad_body.npos,"Campaign fixture contains the spent die");bad_body.replace(where,from.size(),"SRD4 1 0 0 0 0 0 2 ");
     std::uint64_t checksum=14695981039346656037ULL;for(unsigned char c:bad_body){checksum^=c;checksum*=1099511628211ULL;}
-    rejects([&]{(void)decode_campaign("OPENGOLD-CAMPAIGN 9\n"+std::to_string(checksum)+'\n'+bad_body,*srd5::character_rules(),*rules,"rest",nullptr);});
+    rejects([&]{(void)decode_campaign("OPENGOLD-CAMPAIGN 10\n"+std::to_string(checksum)+'\n'+bad_body,*srd5::character_rules(),*rules,"rest",nullptr);});
     check(encode_campaign(restored,nullptr,"rest")==saved,"An excessive die count rejects even with a correct checksum and cannot replace the campaign");
     party.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});
     check(rules->recovery_info(party.member(id).character.sheet(),party.member(id).vitals).hit_dice==0,"Training completion cannot replenish Hit Dice");
@@ -137,7 +137,7 @@ void old_saves(){
         check(info.hit_dice==unsigned(member.character.sheet().level)&&member.vitals.hit_points==member.character.sheet().hit_points-5,"Old characters start with unspent dice and retain their wounds");}
     auto expected=old.substr(old.find('\n',old.find('\n')+1)+1);expected.replace(expected.find("0.6.9"),5,rules->identity().version);
     const auto rewritten=encode_campaign(party,nullptr,"rest-fixture");
-    check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==expected,"Campaign migration changes only module identity, preserving all original training, resources, effects, equipment and timers");
+    check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==expected+"1 0 ","Campaign migration adds the empty rest window and module identity, preserving all original training, resources, effects, equipment and timers");
     const std::map<unsigned,unsigned> counts{{1,4},{2,4},{3,4},{4,1},{99,0}};
     auto combat=rules->restore(fixture("combat-v8-rest.save"));
     check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest.save"),rules->identity().version,counts),"Pending combat migration adds only the unspent Hit Dice counts and format identity");

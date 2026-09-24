@@ -6,6 +6,31 @@
 
 namespace opengold {
 using MemberId = rules::EntityId;
+enum class RestKind { short_rest, long_rest };
+enum class RestDenial { none, vitality, cooldown, combat, spending };
+struct MemberRestInfo {
+    MemberId id{};
+    rules::RecoveryInfo recovery;
+    RestDenial denial{RestDenial::none};
+    std::uint64_t wait_milliseconds{};
+};
+struct RestTicket {
+    std::uint64_t session{}, revision{};
+    auto operator<=>(const RestTicket&) const = default;
+};
+// A completed hour grants a bounded spending window, not an undoable preview.
+struct ShortRestSession {
+    RestTicket ticket;
+    std::uint64_t completed_minutes{};
+    unsigned completed_subminute_milliseconds{};
+    std::vector<MemberId> members;
+};
+struct RestResult {
+    RestKind kind{};
+    unsigned duration_minutes{};
+    std::vector<MemberId> members;
+    std::optional<RestTicket> spending;
+};
 struct PartyMember {
     MemberId id{};
     Character character;
@@ -30,6 +55,8 @@ struct PartyState {
     std::vector<std::string> claimed_rewards;
     unsigned subminute_milliseconds{};
     std::uint64_t next_combat_scope{1};
+    std::uint64_t next_rest_session{1};
+    std::optional<ShortRestSession> short_rest;
 };
 // One shared campaign value store. Sessions share this owner, never separate PCs.
 // While combat owns mutable vitals, roster/equipment/script mutations are barred.
@@ -62,6 +89,11 @@ public:
     // Atomic original loot delivery. A full set of purses leaves it unclaimed.
     bool award_loot(const std::array<unsigned,7>& wealth,const std::vector<por::Equipment>& items,std::string reward_id);
     [[nodiscard]] bool rest();
+    // The campaign service must first approve the location and interruption profile.
+    [[nodiscard]] std::vector<MemberRestInfo> rest_info(RestKind kind) const;
+    [[nodiscard]] std::optional<RestResult> rest(RestKind kind);
+    [[nodiscard]] rules::HitDieResult spend_hit_die(RestTicket ticket,MemberId id);
+    void finish_short_rest(RestTicket ticket);
     void temple_heal(MemberId target);
     void advance_time(unsigned minutes);
     void advance_time_milliseconds(std::uint64_t milliseconds);
@@ -89,6 +121,8 @@ private:
     std::uint64_t combat_elapsed_{};
     void elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat={}) const;
     void editable() const;
+    void outside_combat() const;
+    void require_rest_ticket(RestTicket ticket) const;
     PartyMember& edit(MemberId id);
     void join(MemberId id,bool npc);
 };

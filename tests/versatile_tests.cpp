@@ -114,7 +114,7 @@ void campaign_and_migration(){
     const auto grip=body.find("2 3 \"feature:fighting_style\"");
     check(grip!=body.npos,"Single-member fixture stores grip before Fighter and language grants");body[grip]='3';
     std::uint64_t checksum=14695981039346656037ULL;for(unsigned char c:body){checksum^=c;checksum*=1099511628211ULL;}
-    rejects([&]{(void)decode_campaign("OPENGOLD-CAMPAIGN 9\n"+std::to_string(checksum)+"\n"+body,*srd5::character_rules(),*rules,"grip",nullptr);});
+    rejects([&]{(void)decode_campaign("OPENGOLD-CAMPAIGN 10\n"+std::to_string(checksum)+"\n"+body,*srd5::character_rules(),*rules,"grip",nullptr);});
     check(encode_campaign(party,nullptr,"grip")==valid,"Malformed serialized grip cannot replace the current campaign");
 
     auto legacy=decode_campaign(fixture("campaign-v6-grips.ogs"),*srd5::character_rules(),*rules,"grip-fixture",nullptr);

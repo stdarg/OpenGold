@@ -157,7 +157,7 @@ void RolfTourSession::restart()
     snapshot_ = {}; snapshot_.revision = revision;
     menu_request_ = delayed_request_ = 0; remaining_delay_ = 0;
     party_ = {}; treasure_.clear(); picture_.reset();checkpoint_.reset(); diagnostics_.clear();
-    current_script_ = selected_character_ = event_stage_ = 0;
+    current_script_ = selected_character_ = event_stage_ = 0;camp_kind_=RestKind::long_rest;
     staged_enemies_.clear();staged_art_.clear();staged_records_.clear();encounter_menu_.reset();encounter_.reset();combat_request_=0;pending_loot_.clear();
     who_request_=temple_request_=0;who_slots_.clear();temple_targets_.clear();saved_campaign_.reset();
     pending_movement_.reset(); transition_ = message_only_ = false; shop_request_ = 0;
@@ -315,14 +315,20 @@ bool RolfTourSession::continue_dialogue(std::uint64_t ticket)
     return choose(ticket, 0);
 }
 
+bool RolfTourSession::camp(RestKind kind)
+{
+    if(kind!=RestKind::short_rest&&kind!=RestKind::long_rest)return false;
+    if(!town_||!campaign_||snapshot_.phase!=TourPhase::completed||campaign_->in_combat()||campaign_->state().short_rest)return false;
+    camp_kind_=kind;begin_event(2);advance(0);return true;
+}
 bool RolfTourSession::explore(ExplorationCommand command)
 {
-    if (snapshot_.phase != TourPhase::completed) return false;
+    if(command==ExplorationCommand::camp)return camp(RestKind::long_rest);
+    if (snapshot_.phase != TourPhase::completed||(campaign_&&(campaign_->in_combat()||campaign_->state().short_rest))) return false;
     if (town_) {
         if (command == ExplorationCommand::forward) {
             pending_movement_ = command; begin_event(0);
         } else if (command == ExplorationCommand::look) begin_event(1);
-        else if (command == ExplorationCommand::camp) begin_event(2);
         else { move_party(command); return true; } // Original map menu turns without running search_location.
         advance(0); return true;
     }

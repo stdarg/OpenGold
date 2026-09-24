@@ -111,7 +111,10 @@ Genuine movement queues retain exact continuation; campaign
 version 9 stores the clock, encounter scopes, rules-owned effect state, grip and
 acquired feature/feat grants with source IDs, acquisition levels and choices.
 Version 9 also stores training selections and source grants. Existing campaign
-formats 1–8 migrate, preserving missing selections as pending. See [training](TRAINING.md),
+formats 1–8 migrate, preserving missing selections as pending. Campaign version
+10 adds completed Short Rest spending tickets and individual eligibility records;
+formats 1–9 migrate without inventing a spending session. Core owns rest timing
+and transactional commits; the rules module owns resource arithmetic. See [training](TRAINING.md),
 [rest resources](REST-RESOURCES.md) and [status effects](STATUS-EFFECTS.md) for
 mechanics, scope, persistence and tests.
 

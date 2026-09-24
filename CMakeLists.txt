@@ -76,6 +76,7 @@ add_library(opengold_core STATIC
     src/OpenGold.Core/src/character_pool.cpp
     src/OpenGold.Core/src/character.cpp
     src/OpenGold.Core/src/campaign_party.cpp
+    src/OpenGold.Core/src/campaign_rest.cpp
     src/OpenGold.Core/src/campaign_save.cpp
     src/OpenGold.Core/src/save_file.cpp
     src/OpenGold.Core/src/inventory.cpp
@@ -149,6 +150,10 @@ if(OPENGOLD_BUILD_TESTS)
     target_link_libraries(opengold_rest_resource_tests PRIVATE opengold_core opengold_rules_srd5)
     target_compile_definitions(opengold_rest_resource_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     add_test(NAME opengold_rest_resource_tests COMMAND opengold_rest_resource_tests)
+    add_executable(opengold_campaign_rest_tests tests/campaign_rest_tests.cpp)
+    target_link_libraries(opengold_campaign_rest_tests PRIVATE opengold_core opengold_rules_srd5)
+    target_compile_definitions(opengold_campaign_rest_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_campaign_rest_tests COMMAND opengold_campaign_rest_tests)
     add_executable(opengold_battlefield_tests tests/battlefield_tests.cpp)
     target_link_libraries(opengold_battlefield_tests PRIVATE opengold_core)
     add_test(NAME opengold_battlefield_tests COMMAND opengold_battlefield_tests)

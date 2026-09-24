@@ -223,8 +223,10 @@ void RolfTourSession::finish_event()
             if(!machine_.start(3))throw EclError("Cannot enter camp interruption script");
             return;
         }else{
-            snapshot_.dialogue+=campaign_->rest()?"\nLong rest complete: eight hours passed; HP and supported resources recovered.":
-                "\nRest denied: every active member needs at least 1 HP and 16 hours since their previous long rest.";
+            if(campaign_->rest(camp_kind_))snapshot_.dialogue+=camp_kind_==RestKind::short_rest?
+                "\nShort rest complete: one hour passed; eligible members can spend Hit Dice.":
+                "\nLong rest complete: eight hours passed; eligible members recovered HP and supported resources.";
+            else snapshot_.dialogue+="\nRest denied: no active member is eligible.";
             for(const auto& w:character_reply(selected_character_).writes)machine_.bind_variable(w.address,w.value);
             synchronize_clock();
         }
@@ -517,7 +519,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         if(!campaign_->rest())throw EclError("Party is not eligible for a long rest");
         reply=character_reply(selected_character_);
         for(const auto& w:clock_reply().writes)reply.writes.push_back(w);
-        snapshot_.dialogue+="\nLong rest complete: eight hours passed; HP and supported resources recovered.";
+        snapshot_.dialogue+="\nLong rest complete: eight hours passed; eligible members recovered HP and supported resources.";
         break;
     default: return false;
     }
