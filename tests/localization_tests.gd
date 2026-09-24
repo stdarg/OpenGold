@@ -55,6 +55,9 @@ func drag(from: Vector2, to: Vector2) -> void:
 func run_checks() -> void:
 	TranslationServer.set_locale("es")
 	require(TranslationServer.translate("Next") == "Siguiente", "Spanish catalog not loaded")
+	var weapon_names := {"Greatclub": "Gran garrote", "Sickle": "Hoz", "Greataxe": "Gran hacha", "Lance": "Lanza de caballería", "Maul": "Maza a dos manos", "Rapier": "Estoque", "Whip": "Látigo", "Blowgun": "Cerbatana", "Hand Crossbow": "Ballesta de mano", "Heavy Crossbow": "Ballesta pesada", "Musket": "Mosquete", "Pistol": "Pistola"}
+	for key in weapon_names:
+		require(TranslationServer.translate(key) == weapon_names[key], "New weapon label is not translated: " + key)
 	require(TranslationServer.translate_plural("{count} item", "{count} items", 1) == "{count} objeto", "Spanish singular missing")
 	require(TranslationServer.translate_plural("{count} item", "{count} items", 2) == "{count} objetos", "Spanish plural missing")
 	require(TranslationServer.translate("A missing original message", "por/test/dialogue") == "A missing original message", "Source fallback failed")
@@ -108,7 +111,7 @@ func run_checks() -> void:
 	await press("Next")
 	var sheet: String = current_scene.get_node("Description").text
 	require(sheet.contains("Mira {level} [lb]b]"), "Name braces or BBCode were interpreted")
-	require(sheet.contains("Nivel 1") and sheet.contains("Dados de golpe") and sheet.contains("Salvación"), "Character sheet not translated")
+	require(sheet.contains("Nivel 1") and sheet.contains("Dados de Golpe") and sheet.contains("Salvación"), "Character sheet not translated")
 	await capture("spanish-sheet")
 	await press("Modifiers")
 	var modifiers: String = current_scene.get_node("ModifiersModal/Text").text
@@ -118,6 +121,7 @@ func run_checks() -> void:
 	require(current_scene.get_node("SavingThrowsModal/Text").text.contains("Salvación de Fuerza"), "Saving throws not translated")
 	await press("SavingThrowsModal/Close")
 	TranslationServer.set_locale("en")
+	require(TranslationServer.translate("Heavy Crossbow") == "Heavy Crossbow" and TranslationServer.translate("Hand Crossbow") == "Hand Crossbow", "English weapon labels expose internal IDs")
 	change_scene_to_file("res://scenes/character_creation.tscn")
 	await settle()
 	require(current_scene.get_node("PageTitle").text == "Race & Gender", "English reload failed")

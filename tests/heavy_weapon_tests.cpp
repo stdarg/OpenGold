@@ -40,7 +40,8 @@ struct Weapon {const char* key;bool ranged;int critical,normal,disadvantaged;};
 // initiative 16/1 then attack 20/5. Seed 13 rolls 16/2 then 17/8.
 // Damage includes +1 ability; each table entry describes the actual dice.
 constexpr std::array weapons{Weapon{"glaive",false,14,9,9},Weapon{"greatsword",false,15,7,8},
-    Weapon{"halberd",false,14,9,9},Weapon{"pike",false,14,9,9},Weapon{"longbow",true,10,5,5}};
+    Weapon{"halberd",false,14,9,9},Weapon{"pike",false,14,9,9},Weapon{"longbow",true,10,5,5},
+    Weapon{"greataxe",false,14,9,5},Weapon{"lance",false,14,9,9},Weapon{"maul",false,15,7,8},Weapon{"heavy_crossbow",true,14,9,9}};
 void thresholds(){
     auto rules=module(true);unsigned classes=0;
     for(const auto& klass:srd5::character_rules()->choices(CreationField::character_class)){
@@ -55,7 +56,8 @@ void thresholds(){
             const auto profile=rules->character_profile(h.sheet(),std::array<std::string,1>{w.key});
             check(!profile.strength_dexterity_disadvantage&&profile.movement_feet==30,"Heavy never applies armor/check/save/initiative or speed penalties");
             bool explained=false;for(const auto& m:profile.item_messages)if(m.source.find("(Heavy)")!=m.source.npos){
-                explained=argument(m,"item")==w.key&&argument(m,"score")==std::to_string(score)&&argument(m,"ability")== (w.ranged?"Dexterity":"Strength")&&
+                auto label=argument(m,"item");for(auto& ch:label){if(ch==' ')ch='_';else if(ch>='A'&&ch<='Z')ch=char(ch-'A'+'a');}
+                explained=label==w.key&&argument(m,"score")==std::to_string(score)&&argument(m,"ability")== (w.ranged?"Dexterity":"Strength")&&
                     (m.source.find("Disadvantage")!=m.source.npos)==(score==12);}
             check(explained&&profile.item_modifiers.find("(Heavy)")!=std::string::npos,"Existing Modifiers presentation identifies item, required ability, current score and result");
             for(unsigned seed:{0u,13u,40u}){
@@ -65,7 +67,7 @@ void thresholds(){
                 check(c->submit(ticket)&&copy->submit(ticket)&&c->save()==copy->save(),"Saved attack resumes with identical Heavy result and RNG");
                 const auto result=attack(*c);check(argument(result,"roll")==std::to_string(seed==40?1:score==12?(seed==0?5:8):(seed==0?20:17)),"Attack selects the independently known one/two-d20 result");
                 check(argument(result,"disadvantage")== (score==12?" (disadvantage)":""),"Only scores below 13 have the Heavy attack penalty");
-                const int damage=seed==40?0:score==13?(seed==0?w.critical:w.normal):seed==13?w.disadvantaged:std::string_view(w.key)=="greatsword"?4:w.ranged?5:9;
+                const int damage=seed==40?0:score==13?(seed==0?w.critical:w.normal):seed==13?w.disadvantaged:(std::string_view(w.key)=="greatsword"||std::string_view(w.key)=="maul")?4:std::string_view(w.key)=="longbow"?5:9;
                 check(unit(*c,2).hit_points==1000-damage,"Heavy changes the attack roll, never the damage dice or modifier");
                 const auto after=unit(*c);check(!after.action&&after.bonus_action==before.bonus_action&&after.reaction==before.reaction&&after.movement_feet==before.movement_feet&&after.persistent==before.persistent,"Weapon attack spends only its Action, never extra resources");
                 const auto saved=c->save();check(!c->submit(ticket)&&c->save()==saved,"Stale attack rejection remains atomic");

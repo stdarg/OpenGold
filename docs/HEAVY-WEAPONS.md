@@ -8,10 +8,9 @@ This does not prevent equipping or attacking. It does not change damage,
 initiative, saving throws, movement, spell attacks or fallback unarmed strikes.
 Small species do not receive the obsolete 2014 Heavy penalty.
 
-The existing Glaive, Greatsword, Halberd, Pike and Longbow definitions carry the
-property. Missing Greataxe, Lance, Maul and Heavy Crossbow definitions remain
-[#54](https://github.com/stdarg/OpenGold/issues/54), which must include their
-Heavy metadata when adding those weapons. Weapon category selects the required
+Glaive, Greataxe, Greatsword, Halberd, Lance, Maul, Pike, Heavy Crossbow and
+Longbow carry the property. [The complete catalog](WEAPON-CATALOG.md) added the
+four previously missing Heavy weapons in #54. Weapon category selects the required
 ability, independently of the ability used to make an attack.
 
 The same attack resolver handles normal and opportunity attacks. Heavy combines
@@ -29,7 +28,7 @@ Declining a reaction retains the previous writer's exact continuation.
 Player saves remain restricted to camp or inn; checkpoints are internal tests.
 
 [heavy_weapon_tests.cpp](../tests/heavy_weapon_tests.cpp) covers all twelve
-classes and all five existing Heavy weapons, scores 12/13, independent seeded
+classes and all nine Heavy weapons, scores 12/13, independent seeded
 normal/critical/miss damage, Small species, non-Heavy two-handed weapons,
 spell/unarmed exceptions, multiple Disadvantage sources, cancellation,
 opportunity attacks, stale commands, equipment rejection, level-four ASI,

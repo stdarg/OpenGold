@@ -26,6 +26,10 @@ int minimum_save_roll(int dc, int bonus) noexcept
 bool attack_hits(int natural, int bonus, int ac) noexcept
 { return natural==20 || (natural!=1 && static_cast<std::int64_t>(natural)+bonus>=ac); }
 namespace {
+std::string weapon_label(std::string_view key)
+{
+    const auto* item=detail::weapon(key);return std::string(item?item->label:key);
+}
 std::string attack_ability(std::string_view key)
 {
     const auto* item=detail::weapon(key);
@@ -58,6 +62,16 @@ std::string equipment_note(const CharacterSheet& sheet,std::string_view item)
 }
 namespace {
 constexpr std::string_view rush_source="species:orc/trait:adrenaline_rush";
+// Compatibility is checked before this helper. Feature introduction boundaries
+// must stay fixed when the current module version advances.
+bool module_before(const Identity& identity,std::array<unsigned,3> introduced)
+{
+    std::istringstream in(identity.version);std::array<unsigned,3> version{};char first{},second{};
+    in>>version[0]>>first>>version[1]>>second>>version[2];
+    if(!in||first!='.'||second!='.')throw std::runtime_error("Invalid module version");
+    in>>std::ws;if(!in.eof())throw std::runtime_error("Invalid module version");return version<introduced;
+}
+
 struct Dice { int count{}, sides{}, bonus{}; };
 struct Definition {
     int ac{}, hp{}, initiative{}, speed{}, melee_bonus{};
@@ -179,7 +193,7 @@ Definition character_definition(std::string_view bytes)
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
             if(item->dice&&!item->ranged){d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.melee_type=item->type;d.reach=item->reach;d.melee_heavy_disadvantage=item->heavy_disadvantage(scores);}
-            if(item->range){d.ranged_bonus=bonus;d.ranged={item->dice,item->sides,modifier};d.ranged_type=item->type;d.range=item->range;d.long_range=item->long_range;d.ranged_heavy_disadvantage=item->heavy_disadvantage(scores);}
+            if(item->range){d.ranged_bonus=bonus;d.ranged={item->dice,item->sides,item->fixed_damage?item->fixed_damage:modifier};d.ranged_type=item->type;d.range=item->range;d.long_range=item->long_range;d.ranged_heavy_disadvantage=item->heavy_disadvantage(scores);}
         }else if(key=="leather"||key=="chain_mail"){
             if(armor)throw std::runtime_error("Only one armor may be equipped");
             if(!trained(klass,key)){d.str_dex_disadvantage=true;d.spells=0;}
@@ -942,7 +956,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&identity.version=="0.6.15"))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 12 ||
@@ -1010,11 +1024,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1104,8 +1118,8 @@ public:
     void validate_saved_grants(const Identity& saved,const CharacterSheet& sheet,std::span<const FeatureGrant> grants) const override {
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported grant migration");
         auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
-        if(saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!=content_->identity.version)std::erase_if(expected,[](const auto& g){return g.id=="trait:dwarven_resilience";});
-        if(saved.version!="0.6.15"&&saved.version!=content_->identity.version)std::erase_if(expected,[](const auto& g){return g.id=="trait:adrenaline_rush";});
+        if(module_before(saved,{0,6,13}))std::erase_if(expected,[](const auto& g){return g.id=="trait:dwarven_resilience";});
+        if(module_before(saved,{0,6,15}))std::erase_if(expected,[](const auto& g){return g.id=="trait:adrenaline_rush";});
         if(!std::equal(grants.begin(),grants.end(),expected.begin(),expected.end()))
             throw std::runtime_error("Saved grants disagree with creation or advancement choices");
     }
@@ -1125,7 +1139,10 @@ public:
         }
         Actor actor;actor.definition=definition;actor.winds=definition.winds;
         actor.slots=definition.slots;actor.slots2=definition.slots2;restore_vitals(actor,state);
-        auto next=definition.rushes&&saved.version!=content_->identity.version?vitals(actor):state;if(next.hit_points>0)next.hit_points+=sheet.hit_points-definition.hp;
+        // Only pre-Adrenaline saves introduce a new resource pool. Later version
+        // bumps preserve already-supported Orc state just like other species.
+        const bool introduce_rush=module_before(saved,{0,6,15});
+        auto next=definition.rushes&&introduce_rush?vitals(actor):state;if(next.hit_points>0)next.hit_points+=sheet.hit_points-definition.hp;
         validate_character_state(sheet,next);state=std::move(next);
     }
     RestPolicy long_rest_policy() const override {return {480,960};}
@@ -1275,9 +1292,11 @@ public:
             else if(key=="leather")result.item_modifiers+="Source: equipped Leather armor and Dexterity score "+std::to_string(sheet.scores[1])+". AC becomes 11 + Dexterity modifier ("+std::to_string(sheet.modifiers[1])+").\n";
             else if(key=="chain_mail")result.item_modifiers+="Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength "+std::to_string(sheet.scores[0])+").\n";
             else if(key=="wand")result.item_modifiers+="Source: equipped Wand. Held focus; melee uses unarmed strike.\n";
-            else result.item_modifiers+="Source: equipped "+key+" and "+sheet.character_class+" weapon proficiency. Weapon attack uses "+attack_ability(key)+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage adds that ability modifier.\n";
+            else if(const auto* item=detail::weapon(key);item&&item->fixed_damage)
+                result.item_modifiers+="Source: equipped "+weapon_label(key)+". Attack uses "+attack_ability(key)+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage is fixed at "+std::to_string(item->fixed_damage)+" without an ability modifier.\n";
+            else result.item_modifiers+="Source: equipped "+weapon_label(key)+" and "+sheet.character_class+" weapon proficiency. Weapon attack uses "+attack_ability(key)+" modifier"+(trained(sheet.character_class,key)?" +2 class proficiency":" without proficiency")+"; damage adds that ability modifier.\n";
         }
-        for(const auto& key:gear)result.item_modifiers+="Source: equipped "+key+". "+equipment_note(sheet,key)+"\n";
+        for(const auto& key:gear)result.item_modifiers+="Source: equipped "+weapon_label(key)+". "+equipment_note(sheet,key)+"\n";
         if(features&1)result.item_modifiers+="Defense feat: +1 AC while wearing armor.\n";
         if(features&2)result.item_modifiers+="Savage Attacker: higher of two weapon-damage rolls on the first weapon hit each turn.\n";
         if(gear.empty())result.item_modifiers="No equipment modifiers. Source: unarmed strike rules and Strength score "+std::to_string(sheet.scores[0])+". Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0).";
@@ -1291,20 +1310,23 @@ public:
             else if(key=="leather")result.item_messages.push_back({"Source: equipped Leather armor and Dexterity score {score}. AC becomes 11 + Dexterity modifier ({modifier}).",{{"score",std::to_string(sheet.scores[1])},{"modifier",std::to_string(sheet.modifiers[1])}}});
             else if(key=="chain_mail")result.item_messages.push_back({"Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength {score}).",{{"score",std::to_string(sheet.scores[0])}}});
             else if(key=="wand")result.item_messages.push_back({"Source: equipped Wand. Held focus; melee uses unarmed strike.",{}});
+            else if(const auto* item=detail::weapon(key);item&&item->fixed_damage)
+                result.item_messages.push_back({"Source: equipped {item}. Attack uses {ability} modifier {proficiency}; damage is fixed at {damage} without an ability modifier.",
+                    {{"item",weapon_label(key),true},{"ability",attack_ability(key),true},{"proficiency",trained(sheet.character_class,key)?"+2 class proficiency":"without proficiency",true},{"damage",std::to_string(item->fixed_damage)}}});
             else result.item_messages.push_back({"Source: equipped {item} and {class} weapon proficiency. Weapon attack uses {ability} modifier {proficiency}; damage adds that ability modifier.",
-                {{"item",key,true},{"class",sheet.character_class,true},{"ability",attack_ability(key),true},
+                {{"item",weapon_label(key),true},{"class",sheet.character_class,true},{"ability",attack_ability(key),true},
                  {"proficiency",trained(sheet.character_class,key)?"+2 class proficiency":"without proficiency",true}}});
             result.item_messages.push_back({equipment_note(sheet,key),{}});
             if(const auto* item=detail::weapon(key);item&&item->heavy){
                 const std::string ability=item->ranged?"Dexterity":"Strength";
                 const auto score=std::to_string(sheet.scores[item->ranged?1:0]);
                 const bool penalty=item->heavy_disadvantage(sheet.scores);
-                result.item_modifiers+="Source: equipped "+key+" (Heavy). Requires "+ability+" 13; current score "+score+". "+
+                result.item_modifiers+="Source: equipped "+weapon_label(key)+" (Heavy). Requires "+ability+" 13; current score "+score+". "+
                     (penalty?"Attacks with this weapon have Disadvantage.":"Requirement met.")+"\n";
                 result.item_messages.push_back({penalty?
                     "Source: equipped {item} (Heavy). Requires {ability} 13; current score {score}. Attacks with this weapon have Disadvantage.":
                     "Source: equipped {item} (Heavy). Requires {ability} 13; current score {score}. Requirement met.",
-                    {{"item",key,true},{"ability",ability,true},{"score",score}}});
+                    {{"item",weapon_label(key),true},{"ability",ability,true},{"score",score}}});
             }
         }
         if(features&1)result.item_messages.push_back({"Defense feat: +1 AC while wearing armor.",{}});
@@ -1339,7 +1361,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.16",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.17",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

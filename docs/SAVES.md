@@ -188,3 +188,9 @@ Rules 0.6.16 derives [Heavy weapon Disadvantage](HEAVY-WEAPONS.md) from existing
 scores and equipment. PC9/combat 12/campaign 10/SRD7 are unchanged. Module
 0.6.15 saves retain all grants, pools and expenditure; loading never rolls dice
 or spends actions. Future affected attacks apply the corrected rule.
+
+Rules 0.6.17 adds the [complete weapon catalog](WEAPON-CATALOG.md) without a
+schema change. Existing original-item conversions, inventory IDs, quantity,
+source records, equipment, HP, resources and clocks remain intact. In particular,
+original type 45 retains the Fine Composite Long Bow / SRD Longbow mapping;
+adding a native Heavy Crossbow does not justify reinterpreting old equipment.

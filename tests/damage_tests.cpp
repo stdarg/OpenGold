@@ -91,7 +91,11 @@ void weapons_and_spells(){
         {"greatsword",DamageType::slashing},{"halberd",DamageType::slashing},{"longsword",DamageType::slashing},
         {"morningstar",DamageType::piercing},{"pike",DamageType::piercing},{"scimitar",DamageType::slashing},
         {"shortsword",DamageType::piercing},{"trident",DamageType::piercing},{"warhammer",DamageType::bludgeoning},
-        {"war_pick",DamageType::piercing},{"longbow",DamageType::piercing}};
+        {"war_pick",DamageType::piercing},{"longbow",DamageType::piercing},
+        {"greatclub",DamageType::bludgeoning},{"sickle",DamageType::slashing},{"greataxe",DamageType::slashing},
+        {"lance",DamageType::piercing},{"maul",DamageType::bludgeoning},{"rapier",DamageType::piercing},
+        {"whip",DamageType::slashing},{"blowgun",DamageType::piercing},{"hand_crossbow",DamageType::piercing},
+        {"heavy_crossbow",DamageType::piercing},{"musket",DamageType::piercing},{"pistol",DamageType::piercing}};
     for(const auto& weapon:damage::weapons){
         if(weapon.key=="wand")continue;
         check(weapon.type==expected_types.at(weapon.key),"Weapon metadata agrees with the independent SRD damage-type table");
