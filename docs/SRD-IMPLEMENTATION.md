@@ -19,6 +19,12 @@ F02 is split into [rules and persistence (#187)](https://github.com/stdarg/OpenG
 [missing-choice review (#189)](https://github.com/stdarg/OpenGold/issues/189).
 The rules/persistence child is delivered. See [training support](TRAINING.md) for
 the first Rogue/Criminal package and boundaries; the UI children remain open.
+F03 is split into [resource rules and persistence (#190)](https://github.com/stdarg/OpenGold/issues/190),
+[campaign rest transactions (#191)](https://github.com/stdarg/OpenGold/issues/191), and
+[rest controls (#192)](https://github.com/stdarg/OpenGold/issues/192).
+These children remain open. Hit Dice spending must allow a decision after each
+roll, rather than requiring every die to be committed beforehand. The first
+resource rules are independent of the pending F02 UI layout decisions.
 
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,
