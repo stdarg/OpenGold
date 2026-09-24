@@ -519,3 +519,14 @@ entry point. The level-three Wizard knows Ray of Frost. Saved combat retains its
 hit's FX2 state, spent Action/Adrenaline Rush, and continuation across both turns.
 Tests compare every byte except module identity and campaign checksum, preserving
 missing Shocking Grasp access rather than inventing a new selection.
+
+## Pre-Warlock Poison Spray fixtures
+
+`campaign-v11-warlock-poison-before.ogs`, `combat-v13-warlock-poison-before.save`,
+and `combat-v13-warlock-poison-continued.save` were captured with actual rules
+0.6.38 at `3b7e943`, before production edits, using
+`opengold_eldritch_blast_tests --freeze --warlock-poison`. The guard rejects newer
+writers. They preserve the old explicit Eldritch Blast choice, pending second
+cantrip, wounds/wealth and spent Dash/Adrenaline Rush, then reproduce the next
+turn's Eldritch Blast attack. Current tests compare exact bytes except module
+identity and campaign checksum.

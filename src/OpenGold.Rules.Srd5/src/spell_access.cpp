@@ -25,7 +25,8 @@ std::vector<FeatureGrant> without_spell_grants(std::span<const FeatureGrant> gra
 }
 TrainingChoiceGroup starting_cantrip_options(std::string_view klass){
     if(klass=="warlock")return {"class:warlock:pact_magic","Warlock cantrips",2,
-        {{"eldritch_blast","Eldritch Blast","Ranged spell attack: 1d10 Force damage, 120 feet; creature targets currently supported."}}};
+        {{"eldritch_blast","Eldritch Blast","Ranged spell attack: 1d10 Force damage, 120 feet; creature targets currently supported."},
+         {"poison_spray","Poison Spray","Ranged spell attack: 1d12 Poison damage, 30 feet."}}};
     if(klass=="cleric")return {"class:cleric:spellcasting","Cleric cantrips",3,
         {{"sacred_flame","Sacred Flame","Dexterity save: 1d8 Radiant damage, visible creature within 60 feet."}}};
     if(klass!="wizard")return {};
@@ -39,7 +40,7 @@ std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std
     if(klass=="warlock"){
         std::vector<FeatureGrant> result;std::set<std::string> unique;
         for(const auto& id:cantrips.value_or(std::vector<std::string>{})){
-            require(id=="eldritch_blast"&&unique.insert(id).second);result.push_back(grant(id,1,"class:warlock:pact_magic"));
+            require((id=="eldritch_blast"||id=="poison_spray")&&unique.insert(id).second);result.push_back(grant(id,1,"class:warlock:pact_magic"));
         }return result;
     }
     if(klass=="cleric"){
@@ -60,8 +61,10 @@ SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view k
         // Cantrip portion of Pact Magic only; slots and advancement remain separate.
         require(level==1&&prepared.empty());result.cantrip_choices=2;std::set<std::string> known;
         for(const auto& g:grants)if(is_spell_grant(g)){
-            require(g==grant("eldritch_blast",1,"class:warlock:pact_magic")&&known.insert(g.id).second);
-            result.cantrips.push_back({"eldritch_blast","Eldritch Blast",g.source_id,g.level});
+            require(g.id=="spell:eldritch_blast"||g.id=="spell:poison_spray");
+            const auto& spell=find(std::string_view(g.id).substr(6));
+            require(g==grant(spell.id,1,"class:warlock:pact_magic")&&known.insert(g.id).second);
+            result.cantrips.push_back({std::string(spell.id),std::string(spell.label),g.source_id,g.level});
         }return result;
     }
     if(klass=="Cleric"){

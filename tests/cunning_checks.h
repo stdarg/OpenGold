@@ -18,7 +18,7 @@ void run(){
         check(std::find(h.sheet().grants.begin(),h.sheet().grants.end(),FeatureGrant{"feature:cunning_action","class:rogue",2,{}})!=h.sheet().grants.end(),"Sourced level-two grant");
         check(!rules->advancement_options(h.sheet()).level&&!h.advance(*rules,state),"Level three remains explicitly unsupported");
         auto bad=h.sheet();std::erase_if(bad.grants,[](const auto& g){return g.id=="feature:cunning_action";});rejects([&]{(void)rules->character_profile(bad,{});});
-        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC26","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
+        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC27","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
         for(bool bonus_first:{false,true}){
             c=battle(h);const int speed=unit(*c).movement_feet;write("available",*c);
             act(*c,bonus_first?"cunning_dash":"dash");check(unit(*c).action==bonus_first&&unit(*c).bonus_action!=bonus_first&&unit(*c).movement_feet==speed*2,"Dash spends exactly its chosen budget");
@@ -40,7 +40,7 @@ void run(){
     auto soldier_draft=draft("rogue","soldier");soldier_draft.training=choices();soldier_draft.training["class:rogue:expertise"]={"investigation","perception"};soldier_draft.training["background:soldier:gaming_set"]={"dice"};auto soldier=hero(soldier_draft);VitalState soldier_state;check(soldier.advance(*rules,soldier_state),"Soldier Rogue advances normally");
     auto hit=battle(soldier);act(*hit,"melee");check(bool(hit->snapshot().savage_attack_choice)&&!has(*hit,"cunning_dash"),"Pending damage decision blocks Cunning Action");
     const auto pending=hit->save();check(!hit->submit({hit->snapshot().revision,1,0,"cunning_dash"})&&pending==hit->save(),"Pending damage attempt rejects atomically");act(*hit,"savage_skip");check(has(*hit,"cunning_dash"),"Completing damage restores access to unspent Bonus Action");
-    auto forged=hit->save();replace(forged,"0.6.38","0.6.34");rejects([&]{(void)rules->restore(forged);});forged=hit->save();replace(forged,"OGCOMBAT 15","OGCOMBAT 14");rejects([&]{(void)rules->restore(forged);});
+    auto forged=hit->save();replace(forged,"0.6.39","0.6.34");rejects([&]{(void)rules->restore(forged);});forged=hit->save();replace(forged,"OGCOMBAT 15","OGCOMBAT 14");rejects([&]{(void)rules->restore(forged);});
     for(const auto& resource:rules->recovery_info(soldier.sheet(),soldier_state).resources)check(resource.id!="cunning_action","Cunning Action is not a rest-use pool");
     // A real Ray of Frost hit reduces every Dash allowance, including the new one.
     auto d=draft();d.training=choices();auto rogue=hero(d);VitalState vitals;check(rogue.advance(*rules,vitals),"Slow fixture advances normally");
@@ -57,7 +57,7 @@ void run(){
     rejects([&]{party.advance(1,party.default_advancement(1));});party.award_experience(1200,"cunning-xp");
     for(MemberId id=1;id<=4;++id){party.advance(id,party.default_advancement(id));check(party.member(id).character.sheet().level==2&&party.member(id).vitals.hit_points==party.member(id).character.sheet().hit_points-2,"Ordinary campaign advancement preserves old wounds");}
     const auto bytes=encode_campaign(party,nullptr,"cunning");CampaignParty copy(module());copy.restore(decode_campaign(bytes,*creation,*rules,"cunning",nullptr).party);check(encode_campaign(copy,nullptr,"cunning")==bytes,"Advanced campaign replay exact");
-    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.38","0.6.34"),*creation,*rules,"cunning",nullptr);});
+    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.39","0.6.34"),*creation,*rules,"cunning",nullptr);});
     check(bool(copy.rest(RestKind::short_rest)),"Rogue short rest valid");auto rest=copy.state().short_rest;check(bool(rest),"Rest ticket exists");copy.finish_short_rest(rest->ticket);check(bool(copy.rest(RestKind::long_rest)),"Rogue long rest valid");
 }
 }

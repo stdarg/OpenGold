@@ -334,3 +334,8 @@ The shared value-owned effect model records sourced Opportunity Attack
 suppression; combat uses it when forming and validating movement interruptions.
 Reaction budgets are unchanged. PC26 validates access, FX3 encodes the new effect,
 and existing campaign/combat schemas and old choices remain compatible.
+
+Rules 0.6.39 adds [level-one Warlock Poison Spray access](WARLOCK-POISON-SPRAY.md).
+PC27 validates the distinct Pact Magic source and casting mask; existing Charisma
+casting, spell effects and shared Godot controls are reused. Old choices remain
+unchanged, while new presets fill both available starting cantrips.

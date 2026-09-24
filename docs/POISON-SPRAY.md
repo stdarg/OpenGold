@@ -75,7 +75,11 @@ to the repository.
 
 Poison Spray remains partial in [the full spell inventory](SPELL-INVENTORY.md).
 Live speech-blocking sources remain #39. Druid #152, Sorcerer #132, Warlock #160,
-Magic Initiate #75/#200, Pact of the Tome #161, Elf #68, Druidic Warrior #147 and
+Magic Initiate #75/#200, Pact of the Tome #161, Elf #67, Druidic Warrior #147 and
 Abyssal Tiefling #73 must supply their own grants/abilities and applicable choices.
 Magician access is part of #152. Higher-level scaling remains #176–178.
 Parents #202, #37 and #165 stay open until their remaining acceptance is met.
+
+Rules 0.6.39 also delivers the [level-one Warlock source](WARLOCK-POISON-SPRAY.md)
+with Charisma attacks, explicit selection and preserved old choices. Later
+Warlock levels remain #160; parent #202 still tracks other grant integrations.

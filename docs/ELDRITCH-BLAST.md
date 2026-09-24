@@ -8,7 +8,9 @@ Authority: [SRD 5.2.1, pp. 71 and 127](https://media.dndbeyond.com/compendium-im
 The approved Q26 Spell Choices step exposes Eldritch Blast to level-one Warlocks.
 The grant records `class:warlock:pact_magic`, level one and cantrip access. The
 rules validate class, source, acquisition level, uniqueness and selected casting
-mask. Two cantrips are owed; the unavailable second choice remains pending.
+mask. Rules 0.6.37 exposed one of two owed cantrips.
+[Warlock Poison Spray](WARLOCK-POISON-SPRAY.md) now makes both available; saved
+choices stay unchanged.
 Presets select the supported cantrip in advance. Missing old choices stay pending.
 This delivers only the cantrip portion of Pact Magic, not slots or preparation.
 

@@ -129,10 +129,16 @@ func run_checks() -> void:
 	require(current_scene.get_node("PageTitle").text == "Name", "Name follows choices")
 	await press("Back")
 	require(blast.button_pressed, "Back retains choice")
+	var poison: CheckBox = current_scene.get_node("SpellChoices/Rows/poison_spray")
+	poison.grab_focus()
+	await keyboard(KEY_SPACE)
+	require(poison.button_pressed and current_scene.get_node("SpellChoices/Rows/Count").text.ends_with("(2 / 2)"), "Second supported cantrip completes Warlock choices")
+	require(not current_scene.get_node("SpellChoices/Rows/Pending").visible, "No starting cantrip remains pending")
 	for locale in ["en", "es"]:
 		TranslationServer.set_locale(locale)
 		await press("Back")
 		await press("Next")
+		require(blast.button_pressed and poison.button_pressed, "Back retains both selected cantrips")
 		require(blast.text.contains("Eldritch Blast" if locale == "en" else "Descarga sobrenatural"), "Localized cantrip")
 		for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
 			root.size = size
@@ -146,6 +152,6 @@ func run_checks() -> void:
 	await press("Next")
 	await press("Next")
 	await press("Modifiers")
-	require(current_scene.get_node("ModifiersModal/Text").text.contains("Eldritch Blast"), "Final sheet retains selected spell")
+	require(current_scene.get_node("ModifiersModal/Text").text.contains("Eldritch Blast") and current_scene.get_node("ModifiersModal/Text").text.contains("Poison Spray"), "Final sheet retains both selected spells")
 	print("Warlock creator checks passed")
 	quit(0)

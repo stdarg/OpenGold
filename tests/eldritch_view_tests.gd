@@ -75,6 +75,29 @@ func run_checks() -> void:
         require(cast.disabled, "Occupied Somatic hand disables casting")
         await load_fixture("unknown")
         require(not cast.visible, "Unselected spell has no casting control")
+        await load_fixture("both")
+        require(spells.item_count == 2 and not cast.disabled, "Both selected Warlock cantrips available")
+        var poison_index := -1
+        for i in range(spells.item_count):
+            if spells.get_item_metadata(i) == "poison_spray": poison_index = i
+        require(poison_index >= 0, "Poison Spray is selectable")
+        spells.select(poison_index); spells.item_selected.emit(poison_index)
+        await settle()
+        for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+            root.size = size; await settle()
+            require(spells.get_rect().end.x + 8 <= cast.position.x and cast.get_rect().end.x < root.size.x - 300, "Poison controls fit")
+            if not captures.is_empty():
+                await RenderingServer.frame_post_draw
+                require(root.get_texture().get_image().save_png(captures.path_join("warlock-poison-" + locale + "-" + str(size.x) + ".png")) == OK, "Poison controls captured")
+        cast.grab_focus(); await key(KEY_ENTER)
+        point = canvas.get_global_transform_with_canvas() * (Vector2(3.5, 1.5) * (canvas.get_combined_minimum_size().x / 12.0))
+        for down in [true, false]:
+            var event := InputEventMouseButton.new()
+            event.button_index = MOUSE_BUTTON_LEFT; event.pressed = down; event.position = point
+            root.push_input(event, true)
+        await settle()
+        require(cast.disabled and current_scene.selected_character_id() == 1 and current_scene.get_node("Log").get_parsed_text().contains("+ 6"), "Chosen Poison Spray casts at ally with Charisma without changing selection")
+        cast.release_focus()
         require(not current_scene.get_node("Save").visible and not current_scene.get_node("Load").visible, "No player combat saving")
     restore_files()
     print("Eldritch Blast view checks passed")

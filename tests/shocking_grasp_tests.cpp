@@ -29,7 +29,7 @@ void freeze(){auto rules=module();check(rules->identity().version=="0.6.37","Fre
     std::ofstream(base/"combat-v15-shocking-before.save")<<c->save();act(*c,"end");act(*c,"end");std::ofstream(base/"combat-v15-shocking-continued.save")<<c->save();
 }
 void access(){auto rules=module();auto h=hero();const auto access=rules->spell_access(h.sheet());check(access.cantrips.size()==1&&access.cantrips[0].id=="shocking_grasp"&&access.cantrips[0].source_id=="class:wizard:spellcasting","Real Wizard source");
-    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with("PC26 1 0 1028 "),"Selected bit in versioned recipe");profile.replace(0,4,"PC25");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{2,1}}}},13);});
+    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with("PC27 1 0 1028 "),"Selected bit in versioned recipe");profile.replace(0,4,"PC25");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{2,1}}}},13);});
     auto old_identity=rules->identity();old_identity.version="0.6.37";rejects([&]{rules->validate_saved_grants(old_identity,h.sheet(),h.sheet().grants);});
     auto c=battle(*custom(),hero(1,"fire_bolt"));check(!has(*c,"shocking_grasp"),"Unknown spell unavailable");
     auto wrong=h.sheet();for(auto& g:wrong.grants)if(g.id=="spell:shocking_grasp")g.source_id="species:elf";rejects([&]{(void)rules->character_profile(wrong,{});});
@@ -75,7 +75,7 @@ void legality(){auto rules=custom();for(int feet:{5,10}){auto c=battle(*rules,he
     for(auto gear:std::vector<std::vector<std::string>>{{"quarterstaff","shield"},{"wand","shield"},{"plate"}}){auto c=battle(*rules,hero(),13,{2,1},gear);auto before=c->save();check(!has(*c,"shocking_grasp")&&!c->submit({c->snapshot().revision,1,2,"shocking_grasp"})&&c->save()==before,"Hands/untrained armor reject without mutation");}
     auto c=battle(*rules,hero());auto before=c->save();for(EntityId id:{0u,999u})check(!c->submit({c->snapshot().revision,1,id,"shocking_grasp"})&&c->save()==before,"Unknown target atomic");
 }
-void persistence_guards(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"shocking_grasp",2);const auto current=c->save();auto old=current;old.replace(old.find("0.6.38"),6,"0.6.37");rejects([&]{(void)rules->restore(old);});
+void persistence_guards(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"shocking_grasp",2);const auto current=c->save();auto old=current;old.replace(old.find("0.6.39"),6,"0.6.37");rejects([&]{(void)rules->restore(old);});
     auto malformed=current;const auto fx=malformed.find("FX3 ");check(fx!=malformed.npos,"Actual live effect encoded as FX3");malformed.replace(fx,3,"FX2");rejects([&]{(void)rules->restore(malformed);});check(c->save()==current,"Rejected restore preserves current session");
     auto board=Battlefield{8,8,std::vector<std::uint8_t>(64)};auto profile=rules->character_profile(hero().sheet(),{}).data;
     auto dead=rules->create({board,{{1,"campaign-character","Wizard",0,{1,1},profile},{2,"target","Dead",1,{2,1},{},VitalState{0,true,{}}},{3,"target","Enemy",1,{6,1}}}},13);while(dead->snapshot().actor!=1)act(*dead,"end");auto before=dead->save();check(!has(*dead,"shocking_grasp",2)&&!dead->submit({dead->snapshot().revision,1,2,"shocking_grasp"})&&dead->save()==before,"Dead creature cannot be targeted");

@@ -39,18 +39,18 @@ auto battle(const RulesModule& rules,const Character& h,unsigned seed=13,Cell ta
     check(c->snapshot().actor==1,"Independent seed reaches caster");return c;
 }
 void access(){auto creation=srd5::character_rules();auto rules=module();auto d=draft();
-    auto options=creation->cantrip_options(d);check(options.count==2&&options.options.size()==1&&options.options[0].id=="eldritch_blast","Two Warlock choices, supported catalog is explicit");
+    auto options=creation->cantrip_options(d);check(options.count==2&&options.options.size()==2&&options.options[0].id=="eldritch_blast","Two Warlock choices, supported catalog is explicit");
     check(rules->spell_access(creation->evaluate(d,true)).cantrips.empty(),"Missing choices stay pending");
     auto access=rules->spell_access(hero().sheet());check(access.cantrip_choices==2&&access.cantrips.size()==1&&access.cantrips[0].source_id=="class:warlock:pact_magic","Explicit real Pact Magic grant");
     for(auto bad:std::vector<std::vector<std::string>>{{"eldritch_blast","eldritch_blast"},{"fire_bolt"},{"unknown"}}){d.cantrips=bad;rejects([&]{(void)creation->evaluate(d,true);});}
     for(const auto& klass:creation->choices(CreationField::character_class))if(klass.id!="warlock"){d=draft();d.character_class=klass.id;d.cantrips=std::vector<std::string>{"eldritch_blast"};rejects([&]{(void)creation->evaluate(d,true);});}
     auto saved_identity=rules->identity();saved_identity.version="0.6.36";
     rejects([&]{rules->validate_saved_grants(saved_identity,hero().sheet(),hero().sheet().grants);});
-    auto content=custom();auto current=battle(*content,hero());auto forged=current->save();forged.replace(forged.find("0.6.38"),6,"0.6.36");rejects([&]{(void)content->restore(forged);});
+    auto content=custom();auto current=battle(*content,hero());auto forged=current->save();forged.replace(forged.find("0.6.39"),6,"0.6.36");rejects([&]{(void)content->restore(forged);});
     auto invalid=hero().sheet();for(auto& g:invalid.grants)if(g.id=="spell:eldritch_blast")g.source_id="class:wizard:spellcasting";rejects([&]{(void)rules->character_profile(invalid,{});});
-    auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC26 1 2 512 "),"Versioned selected mask");profile.replace(0,4,"PC24");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
+    auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC27 1 2 512 "),"Versioned selected mask");profile.replace(0,4,"PC24");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
     por::CharacterArt art;Image head;head.width=88;head.height=40;head.rgba.assign(88*40*4,128);Image body;body.width=88;body.height=48;body.rgba.assign(88*48*4,128);art.heads.emplace(1,por::PortraitPart{"fixture",head});art.bodies.emplace(1,por::PortraitPart{"fixture",body});
-    unsigned count=0;for(const auto& preset:character_pool(*creation,art))if(preset.sheet().character_class=="Warlock"){++count;check(rules->spell_access(preset.sheet()).cantrips.size()==1,"Presets pre-generate supported choices");}check(count>0,"Preset route exercised");
+    unsigned count=0;for(const auto& preset:character_pool(*creation,art))if(preset.sheet().character_class=="Warlock"){++count;check(rules->spell_access(preset.sheet()).cantrips.size()==2,"Presets pre-generate supported choices");}check(count>0,"Preset route exercised");
 }
 void rolls(){
     // Independent SplitMix64 golden values: two initiative rolls, then attack.
@@ -115,5 +115,6 @@ void ui_fixtures(){const auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"e
     }
 }
 
+#include "warlock_poison_checks.h"
 }
-int main(int argc,char**){try{if(argc==2){freeze();return 0;}access();rolls();eligibility();allies_and_unconscious();campaign();legacy();ui_fixtures();std::cout<<"Eldritch Blast tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char**){try{if(argc==3){warlock_poison::freeze();return 0;}if(argc==2){freeze();return 0;}access();rolls();eligibility();allies_and_unconscious();campaign();legacy();ui_fixtures();warlock_poison::run();std::cout<<"Eldritch Blast tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

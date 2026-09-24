@@ -8,22 +8,24 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Completed [Wizard Shocking Grasp #226](https://github.com/stdarg/OpenGold/issues/226)
-under #223. Rules 0.6.38 / PC26 / FX3 supports ordinary Wizard levels 1–4,
-Intelligence melee spell attacks and Opportunity Attack suppression until the
-**target's** next turn. Reaction budgets remain intact. Uses approved Spell Choices
-and Spell/Cast controls. [Scope/evidence](SHOCKING-GRASP.md). #223 remains open for
-other class/species/feat grants and speech blockers; campaign 11/combat 13–15 stay.
-Actual prior 0.6.37 writer fixtures at `310319e` retain exact choices/continuation.
+Branch `main`. Completed [Warlock Poison Spray #227](https://github.com/stdarg/OpenGold/issues/227)
+under #202/#160. Rules 0.6.39 / PC27 adds explicit level-one Pact Magic access,
+Charisma casting and a second available starting cantrip. New presets fill both;
+old selections remain unchanged. [Scope/evidence](WARLOCK-POISON-SPRAY.md).
+Campaign 11, combat 13–15 and FX1–3 stay unchanged. Actual 0.6.38 fixtures at
+`3b7e943` preserve the prior single-cantrip choice and exact Eldritch continuation.
 
-Previous: [Warlock Eldritch Blast #224](https://github.com/stdarg/OpenGold/issues/224)
-completed in `310319e`. **Q26 approved** Warlock shared Spell Choices, preset choices,
-pending unsupported choices, old selections retained, shared Spell/Cast.
-[Scope](ELDRITCH-BLAST.md); objects #225 and later Pact Magic/levels #160 remain.
-Next useful grant integration: Poison Spray already has mechanics and is on the
-Warlock list (SRD p.75; inventory #202). Add its explicit Warlock source through
-the approved pattern, enabling two available cantrips while preserving old choices.
-Inspect #202/#160 and split a bounded child before implementation; no code started.
+Previous: Wizard Shocking Grasp #226 is in `3b7e943`; Warlock Eldritch Blast #224
+is in `310319e`. See their feature docs for remaining source/level/object work.
+**Q26 approved** Warlock shared Spell Choices, preset choices, pending missing
+choices, existing selections retained and shared Spell/Cast. Both currently
+implemented Warlock cantrips use that pattern; full Pact Magic/later levels #160
+and other Poison Spray routes #202 remain open.
+
+Next: inspect another remaining grant integration, such as Sorcerer #132, or
+resume pending feature work when its answer arrives. Extending Spell Choices to
+a new class requires checking the recorded approvals and AGENTS.md first; no
+Sorcerer controls or new numbered question have been proposed yet.
 
 [Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220) remains pending
 Q25; its tested eligibility/progression helper and real 0.6.35 baseline fixtures
@@ -96,16 +98,16 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#226 verification: all 43 native/tool checks and 19 headless Godot checks plus
+#227 verification: all 43 native/tool checks and 19 headless Godot checks plus
 ten native prerequisites pass. Main/demo builds and 825-message localization pass.
-Asset-backed Shocking Grasp and existing Wizard creator checks pass. English/Spanish
-creation/combat renders cover 1120×800 and 1920×1080.
-Logs: `/tmp/shocking-regression.log`, `/tmp/shocking-creator.log`,
-`/tmp/shocking-existing-creator.log`, `/tmp/shocking-combat-render.log`;
-renders `/tmp/opengold-shocking-renders`.
+The asset-backed Warlock creator and bilingual combat checks pass; English/Spanish
+renders cover 1120×800 and 1920×1080.
+Logs: `/tmp/warlock-poison-regression.log`, `/tmp/warlock-poison-creator.log`,
+`/tmp/warlock-poison-combat-render.log`; renders:
+`/tmp/opengold-warlock-poison-renders`.
 Creator checks require `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD`; they are not
 registered in the asset-free headless suite. No live processes remain.
 
-Next: resume #220 if Q25 arrives; otherwise the Warlock Poison Spray grant route
-above is independent. Preserve pending #80/#208/#209/#189 questions.
+Resume #220 if Q25 arrives; otherwise use independently actionable backlog work.
+Preserve pending #80/#208/#209/#189 questions rather than re-asking them.
 Do not close parent trackers from narrow child evidence.

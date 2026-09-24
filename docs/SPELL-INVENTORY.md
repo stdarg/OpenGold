@@ -7,7 +7,9 @@ claim that the listed spells are implemented. Current delivery adds the
 [0.6.23 Cleric Sacred Flame path](SACRED-FLAME.md), and
 [0.6.25 Wizard Ray of Frost path](RAY-OF-FROST.md), and
 [0.6.37 level-one Warlock Eldritch Blast path](ELDRITCH-BLAST.md), and
-[0.6.38 Wizard Shocking Grasp path](SHOCKING-GRASP.md) below.
+[0.6.38 Wizard Shocking Grasp path](SHOCKING-GRASP.md) below. Rules 0.6.39 adds
+the [level-one Warlock Poison Spray route](WARLOCK-POISON-SPRAY.md) to an existing
+partial spell; the distinct-spell count is unchanged.
 
 ## Scope and counting
 
@@ -183,7 +185,7 @@ are evidence of partial behavior, not certification of the full spell.
 | [Mending](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=148) (p. 148) | B, C, D, S, W | MI, Tome, High, Thaum, Blessed, Magician, DruidicWarrior, Rock | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Message](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=148) (p. 148) | B, D, S, W | MI, Tome, High, Magician, DruidicWarrior | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Minor Illusion](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=149) (p. 149) | B, S, K, W | MI, Tome, High, Forest | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
-| [Poison Spray](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=153) (p. 153) | D, S, K, W | MI, Tome, High, Magician, DruidicWarrior, Abyssal | — | Partial Wizard path; [#202](https://github.com/stdarg/OpenGold/issues/202) |
+| [Poison Spray](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=153) (p. 153) | D, S, K, W | MI, Tome, High, Magician, DruidicWarrior, Abyssal | — | Partial Wizard levels 1–4 and Warlock level 1; [#202](https://github.com/stdarg/OpenGold/issues/202) |
 | [Prestidigitation](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=154) (p. 154) | B, S, K, W | MI, Tome, High, Rock | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Produce Flame](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=156) (p. 156) | D | MI, Tome, Magician, DruidicWarrior | [#46](https://github.com/stdarg/OpenGold/issues/46) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Ray of Frost](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=157) (p. 157) | S, W | MI, Tome, High, Polar | [#35](https://github.com/stdarg/OpenGold/issues/35) | Partial: [Wizard selection, Cold attack and timed slow](RAY-OF-FROST.md); other sources and verbal blockers remain. [#205](https://github.com/stdarg/OpenGold/issues/205) |
