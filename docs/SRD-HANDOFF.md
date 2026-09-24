@@ -8,18 +8,28 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Completed [Cunning Action #218](https://github.com/stdarg/OpenGold/issues/218):
-Rogue ordinary advancement to level two, Bonus Action Dash/Disengage and approved
-Q24 row below existing combat buttons. Rules 0.6.35 / PC24; campaign 11 unchanged,
-Cunning combat uses existing format 15 Dash counts. Actual 0.6.34 prior-writer
-fixtures at `a2aed46` preserve all backgrounds, wounds and spent action budgets.
-See [CUNNING-ACTION.md](CUNNING-ACTION.md). Hide remains #219; parent #113 and
-Rogue levels three/four #116 remain open. Starting training #213–#217 are complete.
+Branch `main`. Active [Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220),
+child of #112. Source eligibility/progression helper and actual 0.6.35 baseline
+fixtures are prepared; see [SNEAK-ATTACK.md](SNEAK-ATTACK.md). No live behavior or
+version changes: rules 0.6.35 / PC24, campaign 11 / combat 13–15.
 
-Unarmored Defense was already implemented for Barbarian/Monk in character AC
-calculation and covered by party tests; no duplicate changes were needed.
-Q24 approved the labeled dropdown and Use Bonus Action button, keyboard access,
-and disabled unavailable states. No further UI approval needed for this increment.
+**Q25 pending:** centered eligible-hit dialog with target/extra dice, Use Sneak
+Attack or Keep hit; save Sneak Attack. Use spends this turn's use; Savage Attacker
+follows and rerolls weapon dice only. All other actions wait; Action/Reaction stays
+spent; keyboard access, no combat-saving controls. Do not implement the dependent
+control/decision ordering until answered. Continue independently actionable backlog
+work while waiting, preserving #220's complete acceptance.
+
+Parent #112 remains open. Level-three/four integration is #221 after ordinary
+advancement #116. Existing grants infrastructure is sufficient despite wider #29
+remaining open; prerequisite #24 is closed. Read #220 and its feature doc before
+integration. Distinguish Ranged weapons from thrown Melee attacks, combine attack
+damage before resistance/flooring, and reset use on every combatant turn.
+
+Cunning Action #218 is delivered in `3846c21`: ordinary Rogue level two, Bonus
+Dash/Disengage, approved Q24 row. Hide #219, parent #113 and Rogue integration #116
+remain open. Starting training #213–#217 are complete. Unarmored Defense already
+exists for Barbarian/Monk; no duplicate implementation needed.
 
 Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
 optional choice per hit. Do not enable either without the answer. The tested
@@ -78,18 +88,13 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#218 verification: all 41 native/tool checks pass across the full regression
-and targeted Archery/Cunning reruns. Archery's old “Rogues never advance” fixture
-now verifies level two is supported and later levels stay unavailable. All 17
-Godot runtime checks plus eight native prerequisites pass. Main/demo builds and
-816-message localization pass. English/Spanish controls rendered and inspected at
-1120×800 and 1920×1080: `/tmp/opengold-cunning-renders`. Logs:
-`/tmp/opengold-cunning-regression.log`, `/tmp/opengold-cunning-final-native.log`,
-`/tmp/opengold-cunning-godot.log`, `/tmp/opengold-cunning-render.log`.
-The final fixture filename correction also passed `opengold_training_tests`.
+#220 foundation verification: `opengold_damage_tests` and
+`opengold_training_tests` pass. Independent catalog/roll circumstances and full
+source dice progression are checked; actual 0.6.35 campaign and both Savage hit
+continuations preserve exact state. Log: `/tmp/opengold-sneak-foundation.log`.
+No live feature/UI change; no broader regression claim for unimplemented behavior.
 
-**Next: inspect Sneak Attack #112 and split its timing/optional damage decisions
-into a bounded child if needed.** Verify prerequisites #29/#24 and reuse existing
-weapon-hit/damage decision infrastructure. Consult cached SRD text and confirm
-any new control behavior before coding. Do not infer full Rogue completion from
-level-two support. Pending #80/#208/#209 questions remain above.
+Previous #218 evidence: 41 native/tool checks, 17 Godot runtime checks plus eight
+native prerequisites, main/demo builds and 816-message localization pass.
+Bilingual renders at both sizes: `/tmp/opengold-cunning-renders`. Logs begin
+`/tmp/opengold-cunning-`. Do not repeat unrelated checks without new changes.

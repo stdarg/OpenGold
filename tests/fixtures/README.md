@@ -480,3 +480,13 @@ written by actual rules 0.6.34 at `a2aed46`, before Cunning Action changes, usin
 backgrounds and complete training. Their campaign wounds and combat Action Dash
 plus Adrenaline Rush expenditure must survive migration without refunds.
 The generator refuses a newer module; keep these fixtures unchanged.
+
+## Sneak Attack baseline
+
+`campaign-v11-sneak-before.ogs` and the three `combat-v15-sneak-*.save` files
+were produced by rules 0.6.35 at `3846c21`, using
+`opengold_training_tests --freeze-sneak` before live Sneak Attack changes.
+They cover normally attained Rogue levels one/two, Soldier training, wounds,
+wealth, spent Bonus Action Dash and an attack awaiting Savage Attacker. The
+second-roll/resolved files are actual continuations, not fabricated expectations.
+Keep these unchanged after the feature is introduced. See `SNEAK-ATTACK.md`.

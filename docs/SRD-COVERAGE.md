@@ -143,3 +143,12 @@ See [Cunning Action](CUNNING-ACTION.md) for acceptance evidence. Hide remains #2
 parent #113 and later Rogue advancement #116 remain open. Barbarian/Monk Unarmored
 Defense was already present in character AC calculation and existing party tests;
 no duplicate implementation was needed.
+
+### Sneak Attack preparation (#220; parent #112 remains open)
+
+Source-backed eligibility/progression helpers and genuine 0.6.35 Rogue
+campaign/pending-hit baselines are prepared and tested. They are not connected
+to live combat. Optional hit controls await Q25; source grants, per-turn state,
+damage/decision integration, persistence and player-path verification remain.
+Level-three/four acceptance is retained in #221, dependent on #116. See
+[Sneak Attack](SNEAK-ATTACK.md); this foundation does not close a feature issue.

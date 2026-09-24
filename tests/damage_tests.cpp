@@ -3,6 +3,7 @@
 #include "opengold/srd5.h"
 #include "damage.h"
 #include "damage_roll.h"
+#include "sneak_attack.h"
 #include "life_cycle.h"
 #include "weapons.h"
 #include <algorithm>
@@ -31,6 +32,23 @@ Character hero(std::string race="dwarf",std::string klass="fighter",unsigned lev
     for(unsigned i=1;i<level;++i)check(result.advance(*module(),scratch),"Fixture level is supported");return result;
 }
 auto resolve(std::initializer_list<DamagePart> parts,std::initializer_list<DamageAffinity> affinities){return damage::resolve_damage(parts,affinities);}
+void sneak_attack_foundation(){
+    // Independent SRD catalog list, including fixed-damage Blowgun and thrown Dart.
+    const std::vector<std::string_view> eligible{"dagger","dart","light_crossbow","shortbow","sling","rapier","scimitar","shortsword","whip","blowgun","hand_crossbow","heavy_crossbow","longbow","musket","pistol"};
+    for(const auto& weapon:damage::weapons){
+        const bool suitable=std::find(eligible.begin(),eligible.end(),weapon.key)!=eligible.end();
+        for(int mode:{-1,0,1})for(bool ally:{false,true})for(bool is_weapon:{false,true}){
+            const bool circumstances=mode==1||(mode==0&&ally);
+            check(damage::sneak_attack_eligible({is_weapon,weapon.finesse,weapon.ranged,mode,ally})==(suitable&&circumstances&&is_weapon),"Independent catalog and net roll circumstances determine eligibility");
+        }
+    }
+    check(!damage::sneak_attack_eligible({true,false,false,1,true}),"Thrown non-Finesse Melee weapons remain ineligible despite range");
+    check(damage::sneak_attack_eligible({true,true,false,0,true}),"Opposing Advantage/Disadvantage cancel; ally permits normal Finesse hit");
+    rejects([]{(void)damage::sneak_attack_eligible({true,true,false,2,true});});
+    const std::array<int,20> counts{1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10};
+    for(unsigned level=1;level<=counts.size();++level){const auto dice=damage::sneak_attack_dice(level);check(dice.count==counts[level-1]&&dice.sides==6&&dice.bonus==0,"Source table uses Rogue level and adds no ability modifier");}
+    rejects([]{(void)damage::sneak_attack_dice(0);});rejects([]{(void)damage::sneak_attack_dice(21);});
+}
 void arithmetic(){
     const DamageAffinity resist{AffinityKind::resistance,DamageType::fire,"first"},vulnerable{AffinityKind::vulnerability,DamageType::fire,"second"};
     check(resolve({{DamageType::fire,28-5}},{resist,vulnerable}).total==22,"SRD example: adjustment to 23, resistance rounds down to 11, vulnerability doubles to 22");
@@ -219,4 +237,4 @@ void freeze_gwf(){
 }
 
 }
-int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-gwf"){freeze_gwf();return 0;}damage_rolls();gwf_prior_continuation();arithmetic();species_combat();weapons_and_spells();migration();malformed();std::cout<<"Typed damage tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-gwf"){freeze_gwf();return 0;}sneak_attack_foundation();damage_rolls();gwf_prior_continuation();arithmetic();species_combat();weapons_and_spells();migration();malformed();std::cout<<"Typed damage tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
