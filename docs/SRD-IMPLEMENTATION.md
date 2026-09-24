@@ -257,9 +257,9 @@ multiclass interactions; targeted checks remain attached to their rules.
 
 ## Recommended next execution
 
-I01–I08, F01 and F02a are complete. Complete the two F02 UI children (#188–#189)
-before closing #29. Creation layout confirmation is required; the user has
-approved keeping old choices pending for completion through Review Training.
+I01–I08, F01, F02a and F02b are complete. Complete #189 before closing #29.
+The user has approved keeping old choices pending for completion through Review
+Training; its button/dialog placement awaits confirmation.
 The campaign preview/confirmation API for #189 is implemented and preserves
 existing choices and resources; its player-facing controls remain pending.
 F03a and F03b are complete. Complete #192's reviewed rest controls and #193's
