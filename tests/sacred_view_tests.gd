@@ -60,9 +60,11 @@ func run_checks() -> void:
     require(not combat.get_node("Save").visible and not combat.get_node("Load").visible, "No player combat saving")
     for which in ["blocked", "unknown", "known"]:
         await load_fixture(which)
-        var sacred: Button = combat.get_node("SacredFlame")
+        var sacred: Button = combat.get_node("CastCantrip")
         require(sacred.visible == (which != "unknown"), "Only Clerics knowing Sacred Flame see its button")
-        require(not combat.get_node("FireBolt").visible and not combat.get_node("PoisonSpray").visible, "Cleric row omits unlearned Wizard cantrips")
+        var spells: OptionButton = combat.get_node("Cantrip")
+        require(spells.item_count == (0 if which == "unknown" else 1), "Cleric list omits unlearned cantrips")
+        if which != "unknown": require(spells.get_item_metadata(0) == "sacred_flame", "Cleric choice is Sacred Flame")
         require(sacred.disabled == (which != "known"), "Eligibility follows knowledge and occupied hands")
         require(sacred.position.x >= combat.get_node("AdrenalineRush").get_rect().end.x and sacred.get_rect().end.x < root.size.x - 300, "Sacred Flame occupies approved first spell position")
         var prompts := ""
@@ -71,38 +73,49 @@ func run_checks() -> void:
             prompts += combat.get_node("Prompt").text + "\n"
         require(prompts.contains("Sacred Flame") == (which == "known"), "Keyboard cycle follows current eligibility")
     await load_fixture("known")
-    if not captures.is_empty():
-        DirAccess.make_dir_recursive_absolute(captures)
-        for locale in ["en", "es"]:
-            TranslationServer.set_locale(locale)
-            change_scene_to_file("res://scenes/combat_demo.tscn")
-            await settle()
-            combat = current_scene
-            combat.set_process(false)
-            await load_fixture("known")
-            require(combat.get_node("SacredFlame").text == ("Sacred Flame" if locale == "en" else "Llama sagrada"), "Rendered locale is active")
-            for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
-                root.size = size
-                await settle()
-                require(combat.get_node("SacredFlame").get_rect().end.x < root.size.x - 300, "Translated spell control fits")
-                await RenderingServer.frame_post_draw
-                require(root.get_texture().get_image().save_png(captures.path_join("combat-" + locale + "-" + str(size.x) + ".png")) == OK, "Combat row rendered")
-        TranslationServer.set_locale("en")
+    for locale in ["en", "es"]:
+        TranslationServer.set_locale(locale)
         change_scene_to_file("res://scenes/combat_demo.tscn")
         await settle()
         combat = current_scene
         combat.set_process(false)
         await load_fixture("known")
-        root.size = Vector2i(1120, 800)
-        await settle()
-    var sacred: Button = combat.get_node("SacredFlame")
+        require(combat.get_node("Cantrip").get_item_text(0) == ("Sacred Flame" if locale == "en" else "Llama sagrada"), "Rendered locale is active")
+        for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+            root.size = size
+            await settle()
+            require(combat.get_node("CastCantrip").get_rect().end.x < root.size.x - 300, "Translated spell control fits")
+            if not captures.is_empty():
+                DirAccess.make_dir_recursive_absolute(captures)
+                await RenderingServer.frame_post_draw
+                require(root.get_texture().get_image().save_png(captures.path_join("combat-" + locale + "-" + str(size.x) + ".png")) == OK, "Combat row rendered")
+    TranslationServer.set_locale("en")
+    change_scene_to_file("res://scenes/combat_demo.tscn")
+    await settle()
+    combat = current_scene
+    combat.set_process(false)
+    await load_fixture("known")
+    root.size = Vector2i(1120, 800)
+    await settle()
+    var sacred: Button = combat.get_node("CastCantrip")
     sacred.grab_focus()
     await key(KEY_ENTER)
     require(combat.get_node("Prompt").text.contains("Sacred Flame") and not sacred.disabled, "Enter selects the spell without consuming Action")
     await click_cell(Vector2(3, 1))
-    require(sacred.disabled and combat.get_node("FireBolt").disabled, "Clicking a legal ally casts and consumes Action")
+    require(sacred.disabled, "Clicking a legal ally casts and consumes Action")
     require(combat.selected_character_id() == 1, "Spell target click does not switch selection to ally")
     require(combat.get_node("Log").get_parsed_text().contains("Ally"), "Cast log identifies the chosen ally")
+    sacred.release_focus()
+    await load_fixture("known")
+    var selected := false
+    for attempt in range(20):
+        await key(KEY_A)
+        if combat.get_node("Prompt").text.contains("Sacred Flame"):
+            selected = true
+            break
+    require(selected, "A selects the cantrip with the shared controls")
+    await key(KEY_SPACE)
+    require(sacred.disabled and combat.selected_character_id() == 1, "A/Space casts on the selected legal creature")
     restore_files()
     print("Sacred Flame view checks passed")
     quit(0)

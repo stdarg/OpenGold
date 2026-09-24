@@ -31,10 +31,10 @@ Preset Wizards receive both available cantrips. Historical saves retain only
 their recorded choices. Magic Missile remains the existing spellbook preset;
 full book/preparation editors and filling pending choices remain #37.
 
-The main combat row shows Fire Bolt and Poison Spray below End Turn/Grip and
-to the right of Dash/Adrenaline Rush whenever the actor knows either cantrip.
-Unavailable actions are disabled, including spells the actor does not know.
-Rules snapshots report knowledge separately from current casting eligibility.
+The main combat row uses the approved [Spell dropdown and Cast button](CANTRIP-CONTROLS.md)
+below End Turn/Grip, to the right of Dash/Adrenaline Rush. It lists only known
+cantrips; Cast is disabled when the selected spell is unavailable. Rules snapshots
+report knowledge separately from current casting eligibility.
 Poison Spray participates in the existing keyboard action cycle. In its targeting
 mode, clicking a legal ally casts at that ally rather than changing party selection.
 No player combat-save controls are added. The old standalone combat demo retains

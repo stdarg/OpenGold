@@ -81,6 +81,8 @@ private:
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void select_party(opengold::rules::EntityId id);
     void move_selected(opengold::rules::Cell direction);
+    void cantrip_selected(std::int64_t index);void cast_cantrip();
+    std::string cantrip_;
     void spell_slot();
     void adjust_zoom(int percentage_points);
     unsigned spell_slot_{1};

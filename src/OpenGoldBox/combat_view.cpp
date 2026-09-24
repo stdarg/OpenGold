@@ -45,8 +45,8 @@
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
-const std::array<std::pair<const char*,const char*>,13> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
-    {"FireBolt","fire_bolt"},{"PoisonSpray","poison_spray"},{"SacredFlame","sacred_flame"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
+const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
+    {"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
     {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Blindness","blindness"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
 std::string spell_verb(std::string verb,unsigned slot){if(slot==2&&(verb=="magic_missile"||verb=="cure_wounds"||verb=="healing_word"))verb+="_2";return verb;}
 std::optional<Cell> movement_direction(Key key,bool shift)
@@ -141,6 +141,8 @@ void CombatView::_ready()
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
+    get_node<OptionButton>("Cantrip")->connect("item_selected",callable_mp(this,&CombatView::cantrip_selected));
+    get_node<Button>("CastCantrip")->connect("pressed",callable_mp(this,&CombatView::cast_cantrip));
     get_node<Button>("ActionSurge")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("action_surge")));
     get_node<Button>("AdrenalineRush")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("adrenaline_rush")));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
@@ -186,7 +188,7 @@ void CombatView::_ready()
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
         for(const char* name:{"Turn","Roster","Prompt","Help"})get_node<Control>(name)->hide();
-        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","PoisonSpray","SacredFlame","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
+        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -210,7 +212,7 @@ void CombatView::layout()
     place("Turn",Rect2(right,70,sidebar,70));place("Roster",Rect2(right,148,sidebar,160));
     place("Prompt",Rect2(right,318,sidebar,46));
     unsigned index=0;
-    for(const char* name:{"Move","Melee","Ranged","FireBolt","PoisonSpray","SacredFlame","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End"}) {
+    for(const char* name:{"Move","Melee","Ranged","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","End"}) {
         const unsigned row=index/3,column=index%3;place(name,Rect2(right+column*122,370+row*39,114,36));++index;
     }
     place("Continue",Rect2(right+244,526,114,36));
@@ -244,7 +246,7 @@ void CombatView::layout_reaction_controls(bool show_controls)
 {
     const double top=board_rect_.get_end().y+16;
     const bool rush=get_node<Button>("AdrenalineRush")->is_visible();
-    const bool spells=get_node<Button>("FireBolt")->is_visible()||get_node<Button>("SacredFlame")->is_visible();
+    const bool spells=get_node<OptionButton>("Cantrip")->is_visible();
     const bool surge=get_node<Button>("ActionSurge")->is_visible();
     const double inset=(show_controls?44:0)+((rush||spells||surge)?44:0);
     get_node<Button>("Dash")->set_position(Vector2(24,top+44));
@@ -253,12 +255,12 @@ void CombatView::layout_reaction_controls(bool show_controls)
     get_node<Button>("AdrenalineRush")->set_size(Vector2(260,36));
     get_node<Button>("ActionSurge")->set_position(Vector2(394,top+44));
     get_node<Button>("ActionSurge")->set_size(Vector2(260,36));
-    get_node<Button>("SacredFlame")->set_position(Vector2(394,top+44));
-    get_node<Button>("SacredFlame")->set_size(Vector2(146,36));
-    get_node<Button>("FireBolt")->set_position(Vector2(394,top+44));
-    get_node<Button>("FireBolt")->set_size(Vector2(146,36));
-    get_node<Button>("PoisonSpray")->set_position(Vector2(404+get_node<Button>("FireBolt")->get_size().x,top+44));
-    get_node<Button>("PoisonSpray")->set_size(Vector2(146,36));
+    get_node<Label>("CantripLabel")->set_position(Vector2(394,top+44));
+    get_node<Label>("CantripLabel")->set_size(Vector2(64,36));
+    get_node<OptionButton>("Cantrip")->set_position(Vector2(464,top+44));
+    get_node<OptionButton>("Cantrip")->set_size(Vector2(200,36));
+    get_node<Button>("CastCantrip")->set_position(Vector2(674,top+44));
+    get_node<Button>("CastCantrip")->set_size(Vector2(80,36));
     auto* log=get_node<RichTextLabel>("Log");
     log->set_position(Vector2(24,top+inset));
     log->set_size(Vector2(board_rect_.size.x,std::max(0.0,get_size().y-board_rect_.get_end().y-64-inset)));
@@ -398,6 +400,14 @@ void CombatView::grip_selected(std::int64_t index)
     if(hands==1||hands==2)immediate(hands==1?"grip_one":"grip_two");
     refresh();
 }
+void CombatView::cantrip_selected(std::int64_t index)
+{
+    auto* choices=get_node<OptionButton>("Cantrip");
+    if(index<0||index>=choices->get_item_count())return;
+    cantrip_=String(choices->get_item_metadata(index)).utf8().get_data();
+    mode_="move";refresh();
+}
+void CombatView::cast_cantrip(){if(!cantrip_.empty())select_mode(gs(cantrip_));}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::adjust_zoom(int percentage_points)
 {
@@ -490,8 +500,9 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("FireBolt")->has_focus()||get_node<Button>("PoisonSpray")->has_focus()||get_node<Button>("SacredFlame")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
+    if(key.is_valid()&&(get_node<OptionButton>("Cantrip")->has_focus()||get_node<OptionButton>("Cantrip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
         if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
@@ -664,11 +675,24 @@ void CombatView::refresh()
         label->set_text(presentation::hp_text(a.hit_points,a.max_hit_points,a.dead,a.temporary_hp,a.hp_messages)+"  "+i18n::format("AC {ac}",{{"ac",a.armor_class}}));
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
-    const auto knows=[&](std::string_view id){return player&&s.outcome==Outcome::ongoing&&active!=s.combatants.end()&&std::find(active->known_cantrips.begin(),active->known_cantrips.end(),id)!=active->known_cantrips.end();};
-    const bool show_cantrips=knows("fire_bolt")||knows("poison_spray");
-    get_node<Button>("SacredFlame")->set_visible(knows("sacred_flame"));
-    get_node<Button>("FireBolt")->set_visible(show_cantrips);
-    get_node<Button>("PoisonSpray")->set_visible(show_cantrips);
+    auto* cantrips=get_node<OptionButton>("Cantrip");
+    std::vector<std::string> known;
+    if(player&&s.outcome==Outcome::ongoing&&active!=s.combatants.end())known=active->known_cantrips;
+    if(std::find(known.begin(),known.end(),mode_)!=known.end())cantrip_=mode_;
+    if(std::find(known.begin(),known.end(),cantrip_)==known.end())cantrip_=known.empty()?"":known.front();
+    // Preserve the live popup and keyboard selection during unrelated refreshes.
+    bool changed=cantrips->get_item_count()!=int(known.size());
+    for(int i=0;!changed&&i<cantrips->get_item_count();++i)changed=String(cantrips->get_item_metadata(i))!=gs(known[i]);
+    if(changed){
+        cantrips->clear();
+        for(const auto& id:known){
+            const char* label=id=="fire_bolt"?N_("Fire Bolt"):id=="poison_spray"?N_("Poison Spray"):id=="sacred_flame"?N_("Sacred Flame"):nullptr;
+            cantrips->add_item(label?i18n::text(label):gs(id));
+            cantrips->set_item_metadata(cantrips->get_item_count()-1,gs(id));
+        }
+    }
+    if(!known.empty())cantrips->select(int(std::find(known.begin(),known.end(),cantrip_)-known.begin()));
+    for(const char* name:{"CantripLabel","Cantrip","CastCantrip"})get_node<Control>(name)->set_visible(!known.empty());
     unsigned rushes=0,capacity=0;
     if(active!=s.combatants.end())for(const auto& pool:active->resources)if(pool.id=="adrenaline_rush"){rushes=pool.remaining;capacity=pool.capacity;}
     const bool show_rush=player&&capacity&&s.outcome==Outcome::ongoing;
@@ -706,6 +730,7 @@ void CombatView::refresh()
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
+    get_node<Button>("CastCantrip")->set_disabled(cantrip_.empty()||!enabled(cantrip_));
     get_node<Button>("ActionSurge")->set_disabled(!enabled("action_surge"));
     get_node<Button>("AdrenalineRush")->set_disabled(!enabled("adrenaline_rush"));
     get_node<Button>("SpellSlot")->set_text(i18n::format("Slot level {level}",{{"level",spell_slot_}}));

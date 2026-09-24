@@ -52,7 +52,7 @@ func run_checks() -> void:
             await load_fixture(caster + ("-blocked" if blocked else "-free"))
             if not legacy:
                 require(combat.get_node("Grip").selected == (0 if blocked else 1), "Original attack grip is preserved")
-            var somatic := ["FireBolt", "MagicMissile", "ScorchingRay"] if caster == "wizard" else ["CureWounds"]
+            var somatic := [("FireBolt" if legacy else "CastCantrip"), "MagicMissile", "ScorchingRay"] if caster == "wizard" else ["CureWounds"]
             for button in somatic:
                 require(combat.get_node(button).disabled == blocked, "Somatic action must follow hands: " + button)
             if not legacy:

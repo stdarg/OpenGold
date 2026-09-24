@@ -62,49 +62,63 @@ func run_checks() -> void:
     require(not combat.get_node("Save").visible and not combat.get_node("Load").visible, "No player combat saving")
     for which in ["blocked", "unknown", "known"]:
         await load_fixture(which)
-        var poison: Button = combat.get_node("PoisonSpray")
-        var fire: Button = combat.get_node("FireBolt")
-        require(poison.visible and fire.visible, "Both cantrip controls remain visible for a character knowing either")
-        require(poison.disabled == (which != "known"), "Poison availability follows knowledge and Somatic eligibility")
-        require(fire.disabled == (which == "blocked"), "Fire Bolt retains its existing eligibility")
-        require(fire.position.x >= combat.get_node("AdrenalineRush").get_rect().end.x and poison.position.x >= fire.get_rect().end.x, "Approved spell row is to the right of Dash and Adrenaline Rush")
-        require(poison.get_rect().end.x < root.size.x - 300 and poison.get_rect().end.y <= combat.get_node("Log").position.y, "Spell controls fit minimum window and do not cover the log")
+        var spells: OptionButton = combat.get_node("Cantrip")
+        var cast: Button = combat.get_node("CastCantrip")
+        require(spells.visible and cast.visible, "Known cantrips expose shared controls")
+        require(spells.item_count == (1 if which == "unknown" else 2), "Dropdown includes only known cantrips")
+        require(spells.get_item_metadata(0) == "fire_bolt", "Fire Bolt remains a known choice")
+        spells.select(0); spells.item_selected.emit(0)
+        require(cast.disabled == (which == "blocked"), "Fire Bolt follows Somatic eligibility")
+        if which != "unknown":
+            require(spells.get_item_metadata(1) == "poison_spray", "Poison Spray is selectable when known")
+            spells.select(1); spells.item_selected.emit(1)
+            require(cast.disabled == (which == "blocked"), "Selected Poison Spray follows Somatic eligibility")
+        require(combat.get_node("CantripLabel").position.x >= combat.get_node("AdrenalineRush").get_rect().end.x, "Approved spell row stays right of Adrenaline Rush")
+        require(cast.get_rect().end.x < root.size.x - 300 and cast.get_rect().end.y <= combat.get_node("Log").position.y, "Shared controls fit and do not cover the log")
         var prompts := ""
         for i in range(18):
             await key(KEY_A)
             prompts += combat.get_node("Prompt").text + "\n"
         require(prompts.contains("Poison Spray") == (which == "known"), "Keyboard cycle follows current cantrip eligibility")
     await load_fixture("known")
-    if not captures.is_empty():
-        DirAccess.make_dir_recursive_absolute(captures)
-        for locale in ["en", "es"]:
-            TranslationServer.set_locale(locale)
-            change_scene_to_file("res://scenes/combat_demo.tscn")
-            await settle()
-            combat = current_scene
-            combat.set_process(false)
-            await load_fixture("known")
-            require(combat.get_node("PoisonSpray").text == ("Poison Spray" if locale == "en" else "Rociada venenosa"), "Rendered locale is active")
-            for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
-                root.size = size
-                await settle()
-                require(combat.get_node("FireBolt").get_rect().end.x + 10 <= combat.get_node("PoisonSpray").position.x and combat.get_node("PoisonSpray").get_rect().end.x < root.size.x - 300, "Translated spell controls fit without overlap")
-                await RenderingServer.frame_post_draw
-                require(root.get_texture().get_image().save_png(captures.path_join("combat-" + locale + "-" + str(size.x) + ".png")) == OK, "Combat row rendered")
-        TranslationServer.set_locale("en")
+    for locale in ["en", "es"]:
+        TranslationServer.set_locale(locale)
         change_scene_to_file("res://scenes/combat_demo.tscn")
         await settle()
         combat = current_scene
         combat.set_process(false)
         await load_fixture("known")
-        root.size = Vector2i(1120, 800)
-        await settle()
-    var poison: Button = combat.get_node("PoisonSpray")
+        require(combat.get_node("Cantrip").get_item_text(1) == ("Poison Spray" if locale == "en" else "Rociada venenosa"), "Rendered locale is active")
+        for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+            root.size = size
+            await settle()
+            require(combat.get_node("Cantrip").get_rect().end.x + 10 <= combat.get_node("CastCantrip").position.x and combat.get_node("CastCantrip").get_rect().end.x < root.size.x - 300, "Translated spell controls fit without overlap")
+            if not captures.is_empty():
+                DirAccess.make_dir_recursive_absolute(captures)
+                await RenderingServer.frame_post_draw
+                require(root.get_texture().get_image().save_png(captures.path_join("combat-" + locale + "-" + str(size.x) + ".png")) == OK, "Combat row rendered")
+    TranslationServer.set_locale("en")
+    change_scene_to_file("res://scenes/combat_demo.tscn")
+    await settle()
+    combat = current_scene
+    combat.set_process(false)
+    await load_fixture("known")
+    root.size = Vector2i(1120, 800)
+    await settle()
+    var spells: OptionButton = combat.get_node("Cantrip")
+    spells.select(0); spells.item_selected.emit(0)
+    spells.grab_focus()
+    await key(KEY_ENTER)
+    await key(KEY_DOWN)
+    await key(KEY_ENTER)
+    require(spells.get_item_metadata(spells.selected) == "poison_spray", "Keyboard chooses Poison Spray without ending the turn")
+    var poison: Button = combat.get_node("CastCantrip")
+    require(not poison.disabled, "Selecting a spell consumes no action")
     poison.grab_focus()
     await key(KEY_ENTER)
     require(combat.get_node("Prompt").text.contains("Poison Spray") and not poison.disabled, "Enter selects the spell without consuming Action")
     await click_cell(Vector2(3, 1))
-    require(poison.disabled and combat.get_node("FireBolt").disabled, "Clicking a legal ally casts and consumes Action")
+    require(poison.disabled, "Clicking a legal ally casts and consumes Action")
     require(combat.selected_character_id() == 1, "Spell target click does not switch selection to ally")
     require(combat.get_node("Log").get_parsed_text().contains("Ally"), "Attack log identifies the chosen ally")
     restore_files()

@@ -1,8 +1,7 @@
 # SRD handoff
 
-Updated 2026-09-24. **SRD goal paused by the user.** The current request is only
-to install the efficiency workflow. Do not resume SRD implementation without
-the user's resumption instruction. A question reply alone does not resume it.
+Updated 2026-09-24. **SRD goal active again.** The user resumed the goal after
+installing the efficiency workflow. Work continues on #205.
 
 ## Current state
 
@@ -14,10 +13,11 @@ the user's resumption instruction. A question reply alone does not resume it.
   Last observed open label count: 162; counts are snapshots, not completion proof.
 - Rules 0.6.24 / PC13; combat 14 with eligible Fighters, otherwise 13; spent
   Surge uses SRD8; campaign 11. See [Action Surge](ACTION-SURGE.md).
-- No unfinished feature edits or live tool processes at the pause. No Ray of
-  Frost or Spell dropdown implementation has started.
+- The approved shared cantrip dropdown/Cast control is delivered as the first
+  UI increment for #205; Ray of Frost mechanics and its creation choice remain
+  unimplemented. No unfinished feature edits or live processes at handoff.
 
-## Next issue after resumption
+## Current issue
 
 [Ray of Frost #205](https://github.com/stdarg/OpenGold/issues/205): read its full
 acceptance before coding. High effort is appropriate for sourced, nonstacking
@@ -52,13 +52,16 @@ Relevant entry points (read only the needed sections):
   Adrenaline Rush. List known cantrips; Cast highlights legal targets; clicking
   casts. Support keyboard use and retain A/Space; disable unavailable Cast.
   Ray of Frost becomes a Wizard choice in the existing Spell Choices step.
-  This approval is recorded for later implementation, not a resume instruction.
+  Combat selector delivered; Ray of Frost choice remains to implement. No new
+  layout question is needed for that already-approved choice.
 - Play Glass.aiff before numbered questions. Batch related questions and reuse
   approvals. Existing scope/architecture rules still apply.
 
 ## Verification and local environment
 
-- Native implementation passed 38 native/tool and 15 Godot runtime checks.
+- Shared selector passed 9 affected Godot checks, 6 native fixture prerequisites,
+  English/Spanish rendering at both sizes and 739-message localization validation.
+- Action Surge native implementation passed 38 native/tool and 15 Godot runtime checks.
   Button follow-up passed 8 affected Godot checks, 5 native fixture prerequisites,
   rendered English/Spanish at both supported sizes and 739-message localization.
   These results cover Action Surge, not future edits. [Evidence](https://github.com/stdarg/OpenGold/issues/86#issuecomment-5818117420).

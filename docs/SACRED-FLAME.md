@@ -30,10 +30,10 @@ checkboxes. The base entitlement is three cantrips, increasing to four at level
 choice; old saved Clerics retain their recorded spells. Grants carry the source
 `class:cleric:spellcasting` and acquisition level 1.
 
-The main combat row places Sacred Flame in the first spell position, beside
-Dash/Adrenaline Rush, when the current Cleric knows it. It is disabled when
-casting is unavailable and participates in the keyboard action cycle. Selecting
-it highlights legal creatures, including allies and the caster. Clicking an
+The main combat row lists Sacred Flame in the approved [Spell dropdown](CANTRIP-CONTROLS.md)
+when the current Cleric knows it. Cast is disabled when casting is unavailable;
+the existing keyboard action cycle remains. Selecting the spell and pressing
+Cast highlights legal creatures, including allies and the caster. Clicking an
 eligible ally casts without changing party selection. The standalone combat
 demo retains its existing layout; both creators share the spell-choice control.
 

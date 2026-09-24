@@ -33,14 +33,17 @@ text = "Move"
 text = "Melee"
 [node name="Ranged" type="Button" parent="."]
 text = "Ranged"
-[node name="FireBolt" type="Button" parent="."]
-text = "Fire Bolt"
-[node name="PoisonSpray" type="Button" parent="."]
-text = "Poison Spray"
-tooltip_text = "Ranged spell attack against a creature within 30 feet. Deals Poison damage; allies can be targeted."
-[node name="SacredFlame" type="Button" parent="."]
-text = "Sacred Flame"
-tooltip_text = "A visible creature within 60 feet makes a Dexterity save against Radiant damage. Allies can be targeted."
+[node name="CantripLabel" type="Label" parent="."]
+text = "Spell"
+visible = false
+vertical_alignment = 1
+[node name="Cantrip" type="OptionButton" parent="."]
+visible = false
+focus_mode = 2
+[node name="CastCantrip" type="Button" parent="."]
+text = "Cast"
+visible = false
+
 [node name="MagicMissile" type="Button" parent="."]
 text = "Magic Missile"
 [node name="CureWounds" type="Button" parent="."]
