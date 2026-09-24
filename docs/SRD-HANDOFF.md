@@ -15,6 +15,12 @@ installing the efficiency workflow. Work continues on #205.
 - Wizard choice, main-game casting, Cold damage, nonstacking sourced slow,
   caster-turn expiry and campaign/camp continuation are implemented.
 
+While Silence questions remain pending, #210 corrects the Dwarven Toughness
+racial explanation after leveling. It reuses the existing localized HP-source
+message; HP arithmetic, grants and formats remain unchanged. Advancement, character
+and save tests pass, as does the Godot Dwarf advancement/Modifiers reload check;
+743 English/Spanish messages validate. See DAMAGE.md.
+
 ## Current issue
 
 Concentration transition foundation #207 is delivered; [evidence](CONCENTRATION.md).

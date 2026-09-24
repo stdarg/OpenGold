@@ -124,7 +124,7 @@ void CharacterCreationView::advancement_check(){
     const auto id=campaign_->state().roster.empty()?0:campaign_->state().slots[0];
     switch(advancement_stage_){
     case 0:{
-        for(const char* klass:{"wizard","fighter","cleric"}){opengold::rules::CharacterDraft draft;draft.race="human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background=klass==std::string_view("fighter")?"soldier":"sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
+        for(const char* klass:{"wizard","fighter","cleric"}){opengold::rules::CharacterDraft draft;draft.race=advancement_check_&&std::string_view(klass)=="wizard"?"dwarf":"human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background=klass==std::string_view("fighter")?"soldier":"sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
         campaign_->award_experience(2700,"fixture:level-up-review");const auto slots=campaign_->state().slots;
         for(const auto member:slots)if(member)for(unsigned level=2;level<=3;++level)campaign_->advance(member,campaign_->default_advancement(member));
         party_action(0);error_="Review party: each character is ready for level 4. Click the arrow beside a name.";refresh_party();refresh_advancement_arrows();
@@ -145,6 +145,8 @@ void CharacterCreationView::advancement_check(){
         {const auto text=get_node<RichTextLabel>("ModifiersModal/Text")->get_text();
             if(!text.contains("Sage background (+2)\nLevel 4 Ability Score Improvement (+2)\nFinal score: 19")||text.contains("Sage background (+4)"))
                 throw std::runtime_error("Modifier dialog must separate background and level-four feat sources");
+            if(!text.contains("Dwarven Toughness: +4 maximum HP.")||text.contains("+1 maximum HP at level 1"))
+                throw std::runtime_error("Racial section must show the attained Dwarven Toughness contribution");
             const auto saved=opengold::encode_campaign(*campaign_,nullptr,"bonus-ui-check");
             const auto module=opengold::srd5::load(std::filesystem::u8path(game_rules_file().utf8().get_data()));
             auto restored=opengold::decode_campaign(saved,*opengold::srd5::character_rules(),*module,"bonus-ui-check",nullptr);

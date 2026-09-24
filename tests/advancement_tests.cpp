@@ -21,6 +21,26 @@ auto duel(const RulesModule& rules,const CampaignParty& party){
     for(unsigned seed=0;seed<100;++seed){auto combat=rules.create(encounter,seed);if(combat->snapshot().actor==participants[0].id)return combat;}
     throw std::runtime_error("No first initiative seed");
 }
+void dwarf_class_sources(){
+    for(const auto& [klass,die]:std::vector<std::pair<std::string,int>>{{"barbarian",12},{"bard",8},{"cleric",8},{"druid",8},{"fighter",10},{"monk",8},{"paladin",10},{"ranger",10},{"rogue",8},{"sorcerer",6},{"warlock",8},{"wizard",6}}){
+        auto draft=character(klass).creation_data();draft.race="dwarf";draft.rolls[2]={{6,4,4,1},3};
+        const auto adjustments=srd5::character_rules()->adjustments("sage");
+        for(unsigned i=0;i<adjustments.size();++i)if(adjustments[i].bonuses[2]==0){draft.adjustment=i;break;}
+        CampaignParty party(module());auto id=party.add_pc(Character(*srd5::character_rules(),draft,{}));
+        party.award_experience(2700,"dwarf-source");
+        const unsigned maximum=klass=="fighter"||klass=="cleric"||klass=="wizard"?4:1;
+        for(unsigned level=1;level<=maximum;++level){
+            if(level>1){auto choice=party.default_advancement(id);if(level==4){choice.abilities={};choice.abilities[2]=2;}party.advance(id,choice);}
+            const auto& sheet=party.member(id).character.sheet();
+            const int expected=die+3+(level-1)*(die/2+4)+(level==4?4:0);
+            check(sheet.hit_points==expected,"All starting classes and supported advancement have independent Dwarf HP totals");
+            check(sheet.racial_messages.front().source=="Dwarven Toughness: +{hp} maximum HP."&&sheet.racial_messages.front().arguments[0].value==std::to_string(level),"All class paths expose the attained Toughness contribution");
+            auto bytes=saved(party);CampaignParty restored(module());restored.restore(decode_campaign(bytes,*srd5::character_rules(),*module(),"advancement-fixture",nullptr).party);
+            check(restored.member(id).character.sheet().racial_modifiers==sheet.racial_modifiers&&saved(restored)==bytes,"Reload preserves source explanation and campaign bytes");
+        }
+    }
+}
+
 void progression(){
     for(const char* klass:{"fighter","cleric","wizard"}){
         CampaignParty party(module());const auto id=party.add_pc(character(klass));
@@ -85,8 +105,14 @@ void hp_history(){
             const auto expected=example.hp[level-1]+(dwarf?int(level):0);
             check(party.member(id).character.sheet().hit_points==expected,"HP history follows the SRD sequence even when earlier gains were clamped");
             check(party.profile(id).hit_points==expected,"Combat profile independently reconstructs the HP history");
+            const auto correct_source=[&](const Message& m){return m.source=="Dwarven Toughness: +{hp} maximum HP."&&m.arguments.size()==1&&m.arguments[0].name=="hp"&&m.arguments[0].value==std::to_string(level);};
+            const auto& sheet=party.member(id).character.sheet();
+            check(std::count_if(sheet.racial_messages.begin(),sheet.racial_messages.end(),correct_source)==int(dwarf),"Species explanation gives total Toughness at the attained level");
+            if(dwarf)check(sheet.racial_modifiers.starts_with("Dwarven Toughness: +"+std::to_string(level)+" maximum HP."),"Plain-text source agrees with localized source");
             const auto bytes=saved(party);auto loaded=decode_campaign(bytes,*srd5::character_rules(),*module(),"advancement-fixture",nullptr);
             CampaignParty restored(module());restored.restore(std::move(loaded.party));check(saved(restored)==bytes,"Each level reconstructs exactly from saved advancement choices");
+            const auto& restored_sources=restored.member(id).character.sheet().racial_messages;
+            check(std::count_if(restored_sources.begin(),restored_sources.end(),correct_source)==int(dwarf),"Reload reconstructs current racial contribution without stale level-one text");
         }
         const auto& member=party.member(id);const int maximum=example.hp[3]+(dwarf?4:0);
         check(member.vitals.hit_points==(unconscious?0:maximum-2),"Constitution advancement preserves wounds and does not wake an unconscious character");
@@ -170,4 +196,4 @@ void spells(){
     }
 }
 }
-int main(){try{progression();hp_history();ability_sources();feats();spells();std::cout<<"Manual advancement tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{dwarf_class_sources();progression();hp_history();ability_sources();feats();spells();std::cout<<"Manual advancement tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

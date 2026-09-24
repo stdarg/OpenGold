@@ -1298,6 +1298,11 @@ public:
         next.training=detail::training_profile(next.grants,detail::grant_source_id(next.character_class),detail::grant_source_id(next.background),next.level,next.scores);
         next.hit_point_modifiers.push_back(next.modifiers[2]);
         next.hit_points=maximum_hit_points(next.hit_die,next.race=="Dwarf",next.hit_point_modifiers);
+        if(next.race=="Dwarf"){
+            next.racial_modifiers.replace(0,next.racial_modifiers.find('\n'),"Dwarven Toughness: +"+std::to_string(next.level)+" maximum HP.");
+            for(auto& message:next.racial_messages)if(message.source=="Dwarven Toughness: +{hp} maximum HP.")
+                message.arguments={{"hp",std::to_string(next.level)}};
+        }
         const int growth=next.hit_points-sheet.hit_points;
         next.hp_explanation="Level "+std::to_string(next.level)+": "+std::to_string(next.hit_points)+" maximum HP; gain "+std::to_string(growth)+". Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.";
         next.hp_messages={{"Level {level}: {hp} maximum HP; gain {growth}. Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.",

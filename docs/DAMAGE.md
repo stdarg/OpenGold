@@ -107,3 +107,26 @@ UI check and all 574 English/Spanish catalog entries. The game party route still
 reports the previously observed eight ObjectDB instances at shutdown; the
 dedicated node ownership check passes. This increment does not claim to repair
 that existing integration-route cleanup warning.
+
+## Dwarven Toughness source display
+
+[#210](https://github.com/stdarg/OpenGold/issues/210) corrects the racial section
+of the character sheet after leveling. It now shows the attained contribution
+(+1 through +4 maximum HP), using the same translated message as combat HP
+sources. The former level-one-only explanation could remain visible even when
+the underlying maximum HP already included the later species bonuses.
+Authority: [SRD 5.2.1 p. 84](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=84).
+
+This is a presentation correction: HP arithmetic, wounds, resources, grants and
+save formats are unchanged. Reconstructing existing saved advancement choices
+also reconstructs the corrected explanation. Advancement tests verify all twelve
+classes at creation, Fighter/Cleric/Wizard levels 1–4, independent HP totals,
+Constitution increases, wounded/unconscious characters and campaign reloads.
+Other classes' advancement remains in their own issues. Dwarf tracker #66 still
+requires Darkvision, Stonecunning and Poisoned-save Advantage.
+
+Validation for #210: rebuilt advancement, character and save tests pass; the
+Godot advancement check now advances a Dwarf Wizard, verifies the actual Modifiers
+text contains +4, and reloads the campaign to verify the same dialog text.
+English/Spanish localization validates 743 messages. Existing control placement
+and styling are unchanged.
