@@ -33,7 +33,8 @@ void selection(){
     for(const auto& klass:srd5::character_rules()->choices(CreationField::character_class)){
         CampaignParty p(module());auto id=p.add_pc(hero(klass.id));p.award_experience(2700,"archery");
         if(klass.id!="fighter"&&klass.id!="wizard"&&klass.id!="cleric"){
-            check(!p.can_advance(id),"Unimplemented class advancement does not invent Fighting Style entitlement");continue;
+            if(klass.id=="rogue"){check(p.can_advance(id),"Rogue level two is supported");p.advance(id,p.default_advancement(id));}
+            check(!p.can_advance(id),"Unsupported later advancement does not invent Fighting Style entitlement");continue;
         }
         grow(p,id,3);auto choice=p.default_advancement(id);choice.feat="archery";choice.abilities={};
         const auto options=p.advancement_options(id);const auto option=std::find_if(options.feats.begin(),options.feats.end(),[](const auto& f){return f.id=="archery";});
@@ -92,8 +93,8 @@ void persistence(){
     auto profile=rules->character_profile(leveled().sheet(),std::array<std::string,1>{"shortbow"}).data;
     auto encounter=Encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Archer",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}};
     auto mislabeled=rules->create(encounter,13)->save();replace(mislabeled,rules->identity().version,"0.6.27");rejects([&]{(void)rules->restore(mislabeled);});
-    auto wrong_mask=profile;replace(wrong_mask,"PC23 4 4 ","PC23 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
-    replace(profile,"PC23","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
+    auto wrong_mask=profile;replace(wrong_mask,"PC24 4 4 ","PC24 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
+    replace(profile,"PC24","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
     auto saved_identity=rules->identity();saved_identity.version="0.6.27";const auto sheet=leveled().sheet();rejects([&]{rules->validate_saved_grants(saved_identity,sheet,sheet.grants);});
 }
 void freeze(){

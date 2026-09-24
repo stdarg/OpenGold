@@ -818,3 +818,9 @@ service and checkbox presentation. Tools use an explicit category enum to keep
 artisan, instrument and gaming entitlements distinct. Source validation and
 legacy policy handling remain rules-owned; Core and save schemas are unchanged.
 See [Soldier Gaming Set](SOLDIER-GAMING.md).
+
+Rules 0.6.35 / PC24 adds bounded Rogue level-two advancement and Cunning Action
+Dash/Disengage. Rules-derived Bonus Action entitlements feed the approved combat
+row; Godot does not calculate eligibility or movement. Existing combat format 15
+stores Dash counts and existing action budgets; old profiles retain their original
+behavior. See [Cunning Action](CUNNING-ACTION.md).

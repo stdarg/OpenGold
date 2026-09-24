@@ -134,6 +134,7 @@ struct CombatantView {
     TemporaryHitPoints temporary_hp;
     std::vector<ResourcePool> resources;
     std::vector<Message> hp_messages;
+    std::vector<std::string> bonus_actions; // Entitlements remain visible after spending the Bonus Action.
     std::vector<std::string> known_cantrips; // Knowledge persists while casting is unavailable.
 };
 struct TemporaryHpOffer {

@@ -301,3 +301,14 @@ bbcode_enabled = true
 scroll_active = false
 mouse_filter = 1
 theme_override_font_sizes/normal_font_size = 14
+
+[node name="CunningActionLabel" type="Label" parent="."]
+visible = false
+text = "Cunning Action"
+
+[node name="CunningAction" type="OptionButton" parent="."]
+visible = false
+
+[node name="UseCunningAction" type="Button" parent="."]
+visible = false
+text = "Use Bonus Action"

@@ -143,6 +143,9 @@ void CombatView::_ready()
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
     get_node<OptionButton>("Cantrip")->connect("item_selected",callable_mp(this,&CombatView::cantrip_selected));
     get_node<Button>("CastCantrip")->connect("pressed",callable_mp(this,&CombatView::cast_cantrip));
+    get_node<Button>("UseCunningAction")->connect("pressed",callable_mp(this,&CombatView::use_cunning_action));
+    get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Dash")));
+    get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Disengage")));
     get_node<Button>("ActionSurge")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("action_surge")));
     get_node<Button>("AdrenalineRush")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("adrenaline_rush")));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
@@ -248,7 +251,14 @@ void CombatView::layout_reaction_controls(bool show_controls)
     const bool rush=get_node<Button>("AdrenalineRush")->is_visible();
     const bool spells=get_node<OptionButton>("Cantrip")->is_visible();
     const bool surge=get_node<Button>("ActionSurge")->is_visible();
-    const double inset=(show_controls?44:0)+((rush||spells||surge)?44:0);
+    const bool cunning=get_node<OptionButton>("CunningAction")->is_visible();
+    const double inset=cunning?132:(show_controls?44:0)+((rush||spells||surge)?44:0);
+    get_node<Label>("CunningActionLabel")->set_position(Vector2(24,top+88));
+    get_node<Label>("CunningActionLabel")->set_size(Vector2(180,36));
+    get_node<OptionButton>("CunningAction")->set_position(Vector2(214,top+88));
+    get_node<OptionButton>("CunningAction")->set_size(Vector2(200,36));
+    get_node<Button>("UseCunningAction")->set_position(Vector2(424,top+88));
+    get_node<Button>("UseCunningAction")->set_size(Vector2(330,36));
     get_node<Button>("Dash")->set_position(Vector2(24,top+44));
     get_node<Button>("Dash")->set_size(Vector2(90,36));
     get_node<Button>("AdrenalineRush")->set_position(Vector2(124,top+44));
@@ -407,6 +417,7 @@ void CombatView::cantrip_selected(std::int64_t index)
     cantrip_=String(choices->get_item_metadata(index)).utf8().get_data();
     mode_="move";refresh();
 }
+void CombatView::use_cunning_action(){immediate(get_node<OptionButton>("CunningAction")->get_selected()==1?"cunning_disengage":"cunning_dash");}
 void CombatView::cast_cantrip(){if(!cantrip_.empty())select_mode(gs(cantrip_));}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::adjust_zoom(int percentage_points)
@@ -500,9 +511,9 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
-    if(key.is_valid()&&(get_node<OptionButton>("Cantrip")->has_focus()||get_node<OptionButton>("Cantrip")->get_popup()->is_visible()))return;
+    if(key.is_valid()&&(get_node<OptionButton>("CunningAction")->has_focus()||get_node<OptionButton>("CunningAction")->get_popup()->is_visible()||get_node<OptionButton>("Cantrip")->has_focus()||get_node<OptionButton>("Cantrip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
         if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
@@ -519,7 +530,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
         if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
         if(key->get_keycode()==Key::KEY_SPACE){
-            for(const char* verb:{"action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            for(const char* verb:{"cunning_dash","cunning_disengage","action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
             const auto offered=demo_->combat().legal_commands();
             const auto target=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==mode_&&c.target==selected_;});
             if(target!=offered.end())act(*target);
@@ -730,6 +741,12 @@ void CombatView::refresh()
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
+    const auto cunning_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==(player?s.actor:selected_);});
+    const bool show_cunning=cunning_actor!=s.combatants.end()&&!cunning_actor->bonus_actions.empty()&&s.outcome==Outcome::ongoing;
+    for(const char* name:{"CunningActionLabel","CunningAction","UseCunningAction"})get_node<Control>(name)->set_visible(show_cunning);
+    const bool cunning_enabled=enabled("cunning_dash")||enabled("cunning_disengage");
+    get_node<OptionButton>("CunningAction")->set_disabled(!cunning_enabled);
+    get_node<Button>("UseCunningAction")->set_disabled(!cunning_enabled);
     get_node<Button>("CastCantrip")->set_disabled(cantrip_.empty()||!enabled(cantrip_));
     get_node<Button>("ActionSurge")->set_disabled(!enabled("action_surge"));
     get_node<Button>("AdrenalineRush")->set_disabled(!enabled("adrenaline_rush"));

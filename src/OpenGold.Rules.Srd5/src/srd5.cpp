@@ -93,7 +93,7 @@ struct Definition {
     int versatile_sides{};
     bool shield{};
     int hit_die{},constitution{},rushes{},surges{};
-    bool dwarf{};
+    bool dwarf{},cunning{};
     detail::DamageType melee_type{detail::DamageType::bludgeoning},ranged_type{detail::DamageType::bludgeoning};
     std::vector<detail::DamageAffinity> affinities;
 };
@@ -176,7 +176,8 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_gaming=magic=="PC23";
+    const bool with_cunning=magic=="PC24";
+    const bool with_gaming=magic=="PC23"||with_cunning;
     const bool with_herbalism=magic=="PC22"||with_gaming;
     const bool with_monk_tools=magic=="PC21"||with_herbalism;
     const bool with_instruments=magic=="PC20"||with_monk_tools;
@@ -197,7 +198,7 @@ Definition character_definition(std::string_view bytes)
     for(auto& score:scores)in>>score;
     if(!in||(magic!="PC1"&&magic!="PC2"&&!selected)||level<1||level>(selected?4u:2u)||features>(with_archery?7u:3u)||selected_spells>(with_frost?511u:with_cleric_cantrips?255u:with_cantrips?127u:63u)||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
-    if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")throw std::runtime_error("Advancement is unsupported for this class");
+    if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard"&&!(with_cunning&&klass=="Rogue"&&level==2))throw std::runtime_error("Advancement is unsupported for this class");
     const auto races=character_rules()->choices(CreationField::race);
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
@@ -214,6 +215,7 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<6;++i)d.saves[i]=ability_modifier(scores[i])+((i==trained_saves[0]||i==trained_saves[1])?2:0);
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
     d.melee_bonus=2+str;d.melee={0,0,std::max(0,1+str)};
+    d.cunning=with_cunning&&klass=="Rogue"&&level==2;
     d.surges=with_surge&&klass=="Fighter"&&level>=2?1:0;
     d.winds=klass=="Fighter"?(level==4?3:2):0;d.slots=(klass=="Cleric"||klass=="Wizard")?(level==1?2:level==2?3:4):0;
     d.slots2=(klass=="Cleric"||klass=="Wizard")&&level>=3?(level==3?2:3):0;
@@ -381,7 +383,7 @@ public:
                 actors_[i].recovery.death_save_in_ms=i?turn_end_ms(i-1):0;
         }
         log("Combat begins. Each square is 5 feet.");update_outcome();
-        frost_movement_=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return (a.definition.known_cantrips&256)||detail::speed_penalty(a.effects);});
+        frost_movement_=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.cunning||(a.definition.known_cantrips&256)||detail::speed_penalty(a.effects);});
         if(!restoring&&outcome_==Outcome::ongoing&&!begin_turn())end_turn();
     }
     Snapshot snapshot() const override;
@@ -492,6 +494,7 @@ Snapshot Session::snapshot() const
             a.hp,def(a).hp,def(a).ac,a.initiative,movement_left(a),a.actions.available(),a.bonus,a.reaction,a.hp>0&&!a.dead,a.dead,a.facing_left,status,vitals(a)});
         const auto display=combat_display(a.source.definition);
         auto& view=s.combatants.back();view.temporary_hp=a.temporary_hp;
+        if(def(a).cunning)view.bonus_actions={"cunning_dash","cunning_disengage"};
         if(def(a).surges)view.resources.push_back({"action_surge",{"Action Surge",{}},unsigned(a.surges),unsigned(def(a).surges),unsigned(def(a).surges)});
         if(def(a).known_cantrips&1)view.known_cantrips.push_back("fire_bolt");
         if(def(a).known_cantrips&64)view.known_cantrips.push_back("poison_spray");
@@ -550,6 +553,7 @@ std::vector<Command> Session::legal_commands() const
     const auto& a=actors_[turn_];if(a.hp<=0)return commands;const auto& d=def(a);const auto id=a.source.id;
     add(id,"end","End turn");add_grips(a);
     if(a.surges>0&&!a.surge_used)add(id,"action_surge","Action Surge",id);
+    if(a.bonus&&d.cunning){add(id,"cunning_dash","Cunning Action: Dash");add(id,"cunning_disengage","Cunning Action: Disengage");}
     if(a.bonus&&a.rushes>0)add(id,"adrenaline_rush","Adrenaline Rush",id);
     if(a.bonus&&a.winds>0&&a.hp<d.hp)add(id,"second_wind","Second Wind",id);
     const auto can_gesture=[&](std::string_view verb){
@@ -850,6 +854,10 @@ bool Session::submit(const Command& command)
     } else if(command.verb=="action_surge") {
         --a.surges;a.surge_used=true;a.actions.surge=true;
         log(a.source.name+" uses Action Surge.",{"{name} uses Action Surge.",{{"name",a.source.name}}});
+    } else if(command.verb=="cunning_dash"||command.verb=="cunning_disengage") {
+        a.bonus=false;
+        if(command.verb=="cunning_dash"){a.movement+=d.speed;++a.dashes;log(a.source.name+" dashes.",{"{name} dashes.",{{"name",a.source.name}}});}
+        else {a.disengaged=true;log(a.source.name+" disengages.",{"{name} disengages.",{{"name",a.source.name}}});}
     } else if(command.verb=="adrenaline_rush") {
         a.bonus=false;--a.rushes;a.rush_used=true;a.movement+=d.speed;++a.dashes;
         TemporaryHitPoints offered{d.rushes,std::string(rush_source)};
@@ -962,8 +970,8 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     actor.definition = source.character_profile.empty()
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
-    if(version<15&&(definition.known_cantrips&256))throw std::runtime_error("Ray of Frost requires a version-15 checkpoint");
-    if(version>=15&&(actor.dashes<0||actor.dashes>int(!actor.actions.normal)+actor.rush_used+int(actor.surge_used&&!actor.actions.surge)||actor.movement>definition.speed*(1+actor.dashes)))throw std::runtime_error("Invalid Dash allowance count");
+    if(version<15&&((definition.known_cantrips&256)||definition.cunning))throw std::runtime_error("Movement features require a version-15 checkpoint");
+    if(version>=15&&(actor.dashes<0||actor.dashes>int(!actor.actions.normal)+int(actor.rush_used||(definition.cunning&&!actor.bonus))+int(actor.surge_used&&!actor.actions.surge)||actor.movement>definition.speed*(1+actor.dashes)))throw std::runtime_error("Invalid Dash allowance count");
     if(version<14&&definition.surges)throw std::runtime_error("Action Surge requires a version-14 checkpoint");
     if(version<12)actor.rushes=definition.rushes;
     if(version<9)actor.hit_dice=definition.hit_die?definition.level:0;
@@ -973,7 +981,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
         // Dash spends the action before adding a second movement allowance.
         // Accepting both extra movement and an unused action lets a later Dash
         // create a state outside the checkpoint's own movement bounds.
-        actor.movement < 0 || actor.movement > definition.speed*(1+!actor.actions.normal+actor.rush_used+(actor.surge_used&&!actor.actions.surge)) ||
+        actor.movement < 0 || actor.movement > definition.speed*(1+!actor.actions.normal+int(actor.rush_used||(definition.cunning&&!actor.bonus))+(actor.surge_used&&!actor.actions.surge)) ||
         actor.surges<0||actor.surges>definition.surges||
         (actor.surge_used&&(!definition.surges||actor.surges==definition.surges))||
         (actor.actions.surge&&!actor.surge_used)||
@@ -1159,7 +1167,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 15 ||
@@ -1175,23 +1183,24 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::vector<Actor> actors;
     for (unsigned i = 0; i < count; ++i) {
         auto actor = read_checkpoint_actor(input, version, *content);
-        if(module_before(identity,{0,6,26})&&(actor.source.character_profile.starts_with("PC15 ")||actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))))
+        if(module_before(identity,{0,6,26})&&(actor.source.character_profile.starts_with("PC15 ")||actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain a Sage-training profile");
-        if(module_before(identity,{0,6,27})&&(actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))))
+        if(module_before(identity,{0,6,27})&&(actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain the completed fixed-background profile");
-        if(module_before(identity,{0,6,28})&&(actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))))
+        if(module_before(identity,{0,6,28})&&(actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain an Archery profile");
-        if(module_before(identity,{0,6,29})&&(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 ")))))))
+        if(module_before(identity,{0,6,29})&&(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 "))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain a starting-style profile");
-        if(module_before(identity,{0,6,34})&&actor.source.character_profile.starts_with("PC23 "))
+        if(module_before(identity,{0,6,35})&&actor.source.character_profile.starts_with("PC24 "))throw std::runtime_error("Legacy checkpoint cannot contain Cunning Action profiles");
+        if(module_before(identity,{0,6,34})&&(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))
             throw std::runtime_error("Legacy combat cannot contain Gaming Set profiles");
-        if(module_before(identity,{0,6,33})&&(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 ")))
+        if(module_before(identity,{0,6,33})&&(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 "))))
             throw std::runtime_error("Legacy combat cannot contain Herbalism Kit profiles");
-        if(module_before(identity,{0,6,32})&&(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))
+        if(module_before(identity,{0,6,32})&&(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))
             throw std::runtime_error("Legacy combat cannot contain Monk tool profiles");
-        if(module_before(identity,{0,6,31})&&(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 ")))))
+        if(module_before(identity,{0,6,31})&&(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 "))))))
             throw std::runtime_error("Legacy combat cannot contain Bard instrument profiles");
-        if(module_before(identity,{0,6,30})&&(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))
+        if(module_before(identity,{0,6,30})&&(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))
             throw std::runtime_error("Legacy checkpoint cannot contain an all-class skill profile");
         encounter.participants.push_back(actor.source);
         actors.push_back(std::move(actor));
@@ -1250,11 +1259,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","ray_of_frost","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","archery","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","cunning_dash","cunning_disengage","ray_of_frost","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","archery","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1263,7 +1272,7 @@ public:
     {return advance_character(sheet,state,default_advancement(sheet));}
     AdvancementOptions advancement_options(const CharacterSheet& sheet) const override
     {
-        if(sheet.level>=4||(sheet.character_class!="Fighter"&&sheet.character_class!="Cleric"&&sheet.character_class!="Wizard"))return {};
+        if(sheet.level>=4||(sheet.character_class!="Fighter"&&sheet.character_class!="Cleric"&&sheet.character_class!="Wizard"&&!(sheet.character_class=="Rogue"&&sheet.level==1)))return {};
         AdvancementOptions result;result.level=sheet.level+1;
         result.description="Fixed-average HP growth. Spendable resources gain only their new capacity; existing expenditure remains.";
         if(result.level==4)result.feats={
@@ -1312,6 +1321,7 @@ public:
         if(!options.spells.empty()&&choice.spells.empty())throw std::runtime_error("Choose at least one supported spell");
         Actor actor;actor.definition=old;actor.winds=old.winds;actor.slots=old.slots;actor.slots2=old.slots2;restore_vitals(actor,state);
         auto next=sheet;++next.level;
+        if(next.character_class=="Rogue"&&next.level==2)next.grants.push_back({"feature:cunning_action","class:rogue",2,{}});
         if(next.character_class=="Fighter"&&next.level==2)next.grants.push_back({"feature:action_surge","class:fighter",2,{}});
         for(unsigned n=0;n<6;++n){next.scores[n]+=choice.abilities[n];next.bonuses[n]+=choice.abilities[n];
             if(next.scores[n]>20)throw std::runtime_error("Ability scores cannot exceed 20");
@@ -1336,6 +1346,10 @@ public:
         next.hp_explanation="Level "+std::to_string(next.level)+": "+std::to_string(next.hit_points)+" maximum HP; gain "+std::to_string(growth)+". Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.";
         next.hp_messages={{"Level {level}: {hp} maximum HP; gain {growth}. Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase.",
             {{"level",std::to_string(next.level)},{"hp",std::to_string(next.hit_points)},{"growth",std::to_string(growth)}}}};
+        if(next.character_class=="Rogue"){
+            next.class_modifiers+="\nCunning Action: Dash or Disengage as a Bonus Action on your turn. Hide remains unavailable.";
+            next.class_messages.push_back({"Cunning Action: Dash or Disengage as a Bonus Action on your turn. Hide remains unavailable.",{}});
+        }
         next.class_modifiers+="\nLevel "+std::to_string(next.level)+": HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.";
         next.class_messages.push_back({"Level {level}: HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.",{{"level",std::to_string(next.level)}}});
         if(next.character_class=="Fighter"&&next.level==2){
@@ -1354,6 +1368,7 @@ public:
         actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
     }
     void validate_saved_grants(const Identity& saved,const CharacterSheet& sheet,std::span<const FeatureGrant> grants) const override {
+        if(module_before(saved,{0,6,35})&&sheet.character_class=="Rogue"&&sheet.level>1)throw std::runtime_error("Legacy campaign cannot contain advanced Rogues");
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported grant migration");
         if(module_before(saved,{0,6,25})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:ray_of_frost";}))throw std::runtime_error("Legacy campaign cannot grant Ray of Frost");
         if(module_before(saved,{0,6,29})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:fighter:fighting_style";}))throw std::runtime_error("Legacy campaign cannot contain starting Fighting Style grants");
@@ -1378,6 +1393,7 @@ public:
     }
     void migrate_character_state(const Identity& saved,const CharacterSheet& sheet,VitalState& state) const override
     {
+        if(module_before(saved,{0,6,35})&&sheet.character_class=="Rogue"&&sheet.level>1)throw std::runtime_error("Legacy campaign cannot contain advanced Rogues");
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported campaign migration");
         auto definition=character_definition(character_profile(sheet,{}).data);
         if(module_before(saved,{0,6,25})&&state.resources.find("FX2 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Ray of Frost");
@@ -1538,7 +1554,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC23 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC24 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1672,7 +1688,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.34",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.35",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

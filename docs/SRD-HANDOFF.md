@@ -8,23 +8,18 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. [Soldier Gaming Set #217](https://github.com/stdarg/OpenGold/issues/217)
-is implemented and verified. All twelve Soldier classes choose one of four
-variants in Training; presets generate choices and sheets/checks show provenance.
-Class changes retain the background choice; leaving Soldier clears it. Old saves
-keep choices pending; completion preserves prior grants, levels and vitals.
-Rules 0.6.34 / PC23 / FX2; campaign 11 / combat 13–15 unchanged. Tools now use an
-explicit category enum. See [SOLDIER-GAMING.md](SOLDIER-GAMING.md). Actual prior
-0.6.33 twelve-class fixtures remain unedited. #64 stays open for equipment/wealth.
+Branch `main`. Completed [Cunning Action #218](https://github.com/stdarg/OpenGold/issues/218):
+Rogue ordinary advancement to level two, Bonus Action Dash/Disengage and approved
+Q24 row below existing combat buttons. Rules 0.6.35 / PC24; campaign 11 unchanged,
+Cunning combat uses existing format 15 Dash counts. Actual 0.6.34 prior-writer
+fixtures at `a2aed46` preserve all backgrounds, wounds and spent action budgets.
+See [CUNNING-ACTION.md](CUNNING-ACTION.md). Hide remains #219; parent #113 and
+Rogue levels three/four #116 remain open. Starting training #213–#217 are complete.
 
-**Next: inspect Unarmored Defense support for Barbarian/Monk under #103/#117;
-implement the first missing class through a source-backed bounded child, or resume
-#80 if Q23 is answered.** No matching unarmored-defense entry was found in the
-armor files/coverage index during the initial search; inspect character/combat
-AC calculation before concluding it is missing. Reuse existing numerical sheet
-explanations where possible; new controls still require numbered confirmation.
-Starting skill/tool increments #213–#217 are complete; full class/background
-trackers and the overall all-class goal remain open.
+Unarmored Defense was already implemented for Barbarian/Monk in character AC
+calculation and covered by party tests; no duplicate changes were needed.
+Q24 approved the labeled dropdown and Use Bonus Action button, keyboard access,
+and disabled unavailable states. No further UI approval needed for this increment.
 
 Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
 optional choice per hit. Do not enable either without the answer. The tested
@@ -83,11 +78,18 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#217 verification: all 41 native/tool checks pass across regression plus targeted
-reruns. Five old completion fixtures were updated to explicitly choose Soldier's
-Gaming Set, then passed. All 16 Godot runtime checks plus seven native prerequisites
-pass. Main/demo builds and 811-message localization pass. Graphical normal creation,
-class-change preservation and completed-sheet source checks pass; bilingual controls
-inspected at both sizes: `/tmp/opengold-soldier-renders`. Logs:
-`/tmp/opengold-soldier-regression.log`, `/tmp/opengold-soldier-recheck.log`,
-`/tmp/opengold-soldier-render.log`. No live builds/tests remain.
+#218 verification: all 41 native/tool checks pass across the full regression
+and targeted Archery/Cunning reruns. Archery's old “Rogues never advance” fixture
+now verifies level two is supported and later levels stay unavailable. All 17
+Godot runtime checks plus eight native prerequisites pass. Main/demo builds and
+816-message localization pass. English/Spanish controls rendered and inspected at
+1120×800 and 1920×1080: `/tmp/opengold-cunning-renders`. Logs:
+`/tmp/opengold-cunning-regression.log`, `/tmp/opengold-cunning-final-native.log`,
+`/tmp/opengold-cunning-godot.log`, `/tmp/opengold-cunning-render.log`.
+The final fixture filename correction also passed `opengold_training_tests`.
+
+**Next: inspect Sneak Attack #112 and split its timing/optional damage decisions
+into a bounded child if needed.** Verify prerequisites #29/#24 and reuse existing
+weapon-hit/damage decision infrastructure. Consult cached SRD text and confirm
+any new control behavior before coding. Do not infer full Rogue completion from
+level-two support. Pending #80/#208/#209 questions remain above.

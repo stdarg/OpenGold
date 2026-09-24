@@ -471,3 +471,12 @@ resource state. Fighter/Cleric/Wizard have level-four advancement. Campaign PCs
 are in reserve; combat includes all twelve. PC22 profiles and fixture bytes
 remain unedited. Migration changes only identity/checksum; missing Gaming Set
 choices stay pending until explicitly completed.
+
+## Cunning Action baseline
+
+`campaign-v11-cunning-before.ogs` and `combat-v13-cunning-before.save` were
+written by actual rules 0.6.34 at `a2aed46`, before Cunning Action changes, using
+`opengold_training_tests --freeze-cunning`. Four level-one Orc Rogues cover all
+backgrounds and complete training. Their campaign wounds and combat Action Dash
+plus Adrenaline Rush expenditure must survive migration without refunds.
+The generator refuses a newer module; keep these fixtures unchanged.

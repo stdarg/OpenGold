@@ -133,3 +133,13 @@ Do not mark a tracking issue complete solely because its first child works.
 SRD-derived rules use the attribution in
 [NOTICE](../data/rules/srd-5.2.1/NOTICE.md); see the
 [official SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
+
+### Rogue level-two Cunning Action increment (#218)
+
+Rogue ordinary advancement reaches level two (300 XP, fixed-average d8 HP,
+source grant, preserved training/vitals). Bonus Action Dash/Disengage reuse the
+shared movement and opportunity-attack lifecycle and have approved combat controls.
+See [Cunning Action](CUNNING-ACTION.md) for acceptance evidence. Hide remains #219;
+parent #113 and later Rogue advancement #116 remain open. Barbarian/Monk Unarmored
+Defense was already present in character AC calculation and existing party tests;
+no duplicate implementation was needed.

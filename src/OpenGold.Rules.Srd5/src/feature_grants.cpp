@@ -43,6 +43,7 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
+    if(klass=="rogue"&&level>=2)required.push_back({"feature:cunning_action","class:rogue",2,{}});
     if(action_surge&&klass=="fighter"&&level>=2)required.push_back({"feature:action_surge","class:fighter",2,{}});
     if(!damage_traits)std::erase_if(required,[](const auto& g){return g.id=="trait:dwarven_resilience";});
     if(!rush_trait)std::erase_if(required,[](const auto& g){return g.id=="trait:adrenaline_rush";});
