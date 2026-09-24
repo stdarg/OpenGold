@@ -55,3 +55,27 @@ Wind remaining. The combat seed is 42 and Battleaxe wielder 3 acts first.
 The campaign asset identity is `grip-fixture`. Migration preserves hand use,
 wounds and recovery, introduces the corrected two-handed melee dice, and
 retains deterministic subsequent saves and combat commands.
+
+## Feature and feat grant migration
+
+`campaign-v7-grants.ogs`, `combat-v8-grants.save` and
+`combat-v8-grants-continued.save` were written by rules **0.6.7** from commit
+`abda7ea`, using its headers and compiled libraries. Do not regenerate with the
+current writer. The campaign asset identity is `grant-fixture`; all data is authored.
+
+| Member | Class/background | Level | Level-four choice | Max/current HP | AC |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Fighter/Soldier | 1 | None | 12/9 | 16 |
+| 2 | Fighter/Soldier | 4 | +2 Constitution | 40/37 | 16 |
+| 3 | Fighter/Sage | 4 | Defense | 40/37 | 17 |
+| 4 | Fighter/Sage | 4 | Savage Attacker | 40/37 | 16 |
+| 5 | Dwarf Wizard/Sage | 4 | +2 Constitution | 38/35 | 12 |
+| 6 | Cleric/Soldier | 3 | None | 24/21 | 16 |
+
+Fighters have one Second Wind remaining; the casters have one slot of each
+available level remaining. Everyone carries a Longsword; all except the Wizard
+wear Chain Mail. The combat seed is 42. Its continued reference applies twelve
+commands, choosing the first legal melee attack or otherwise End Turn. Migration
+must preserve the exact resulting damage, per-turn feat usage, resource/turn
+budgets, RNG and log. Campaign history identifies the grants' sources; the older
+combat recipes only encode effects and must not acquire fabricated provenance.

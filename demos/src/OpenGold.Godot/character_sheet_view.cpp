@@ -60,7 +60,8 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     if(member)text+="   XP "+std::to_string(member->experience);
     if(member&&campaign_->can_advance(member->id))text+="   [b]Ready to level up[/b]";
     const auto display=[](const std::string& id){std::string label=id;std::replace(label.begin(),label.end(),'_',' ');return label;};
-    if(!s.feats.empty()){text+="\nFeat: ";for(const auto& feat:s.feats)text+=display(feat)+"  ";}
+    std::string feats;for(const auto& grant:s.grants)if(grant.id.starts_with("feat:"))feats+=display(grant.id.substr(5))+"  ";
+    if(!feats.empty())text+="\nFeat: "+feats;
     if(!s.prepared_spells.empty()){text+="\nPrepared spells: ";for(const auto& spell:s.prepared_spells)text+=display(spell)+"  ";}
     text+="\n[font_size=14]"+literal(s.hp_explanation)+"[/font_size]";
     text+="\n\n[table=3][cell][b]Attribute     [/b][/cell][cell][b]Score     [/b][/cell][cell][b]Saving throw[/b][/cell]";

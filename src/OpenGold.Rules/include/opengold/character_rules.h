@@ -3,6 +3,7 @@
 #include "opengold/rules.h"
 #include "opengold/message.h"
 #include <array>
+#include <map>
 
 namespace opengold::rules {
 enum class CreationField { race, gender, character_class, alignment, background };
@@ -24,6 +25,14 @@ struct AbilityAdjustment {
     unsigned level{};
     std::array<int,6> bonuses{};
     Message label_message;
+};
+// Stable rules IDs, never translated labels. A source and acquisition level
+// identify an entitlement; choices retain the selections made for that grant.
+struct FeatureGrant {
+    std::string id, source_id;
+    unsigned level{};
+    std::map<std::string,std::string> choices;
+    bool operator==(const FeatureGrant&) const = default;
 };
 struct ClassRequirements {
     std::vector<unsigned> abilities;
@@ -51,7 +60,8 @@ struct CharacterSheet {
     std::string racial_modifiers, class_modifiers, background_modifiers;
     // Derived presentation messages; not character identity or save-file keys.
     std::vector<Message> hp_messages, racial_messages, class_messages, background_messages;
-    std::vector<std::string> feats,prepared_spells;
+    std::vector<FeatureGrant> grants;
+    std::vector<std::string> prepared_spells;
     // Constitution modifier after each attained level, rebuilt from choices.
     // Keeps minimum-one HP gains separate from retroactive modifier changes.
     std::vector<int> hit_point_modifiers;

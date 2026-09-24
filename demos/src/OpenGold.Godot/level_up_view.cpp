@@ -126,7 +126,7 @@ void CharacterCreationView::advancement_check(){
     const auto id=campaign_->state().roster.empty()?0:campaign_->state().slots[0];
     switch(advancement_stage_){
     case 0:{
-        for(const char* klass:{"wizard","fighter","cleric"}){opengold::rules::CharacterDraft draft;draft.race="human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background="sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
+        for(const char* klass:{"wizard","fighter","cleric"}){opengold::rules::CharacterDraft draft;draft.race="human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background=klass==std::string_view("fighter")?"soldier":"sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
         campaign_->award_experience(2700,"fixture:level-up-review");const auto slots=campaign_->state().slots;
         for(const auto member:slots)if(member)for(unsigned level=2;level<=3;++level)campaign_->advance(member,campaign_->default_advancement(member));
         party_action(0);error_="Review party: each character is ready for level 4. Click the arrow beside a name.";refresh_party();refresh_advancement_arrows();
@@ -154,7 +154,13 @@ void CharacterCreationView::advancement_check(){
             if(get_node<RichTextLabel>("ModifiersModal/Text")->get_text()!=text)throw std::runtime_error("Saved bonus sources must reconstruct the same modifier dialog");}
         close_modifiers();party_action(7);break;
     case 4:{auto* town=get_node<RolfTourView>("CampaignTown");if(!town->can_leave()){auto* next=town->get_node<Button>("Continue");if(next->is_visible()&&!next->is_disabled())next->emit_signal("pressed");return;}town->resume_party();auto* button=town->get_node<Button>("PartyList/Rows/Member1/Advance");if(!button->is_visible())throw std::runtime_error("Town level-up arrow is missing");button->emit_signal("pressed");if(!get_node<Window>("LevelUp")->is_visible())throw std::runtime_error("Town arrow did not open advancement");select("LevelUp/Feat",1);break;}
-    case 5:capture_dialog("level-up-fighter.png");press("LevelUp/Confirm");if(campaign_->member(campaign_->state().slots[1]).character.sheet().feats!=std::vector<std::string>{"defense"})throw std::runtime_error("Fighter feat was not applied");
+    case 5:{capture_dialog("level-up-fighter.png");press("LevelUp/Confirm");
+        const auto& fighter=campaign_->member(campaign_->state().slots[1]).character;
+        const auto has=[&](const opengold::rules::FeatureGrant& grant){return std::find(fighter.sheet().grants.begin(),fighter.sheet().grants.end(),grant)!=fighter.sheet().grants.end();};
+        if(!has({"feat:defense","class:fighter:ability_score_improvement",4,{}})||
+            !has({"feat:savage_attacker","background:soldier",1,{}}))throw std::runtime_error("Fighter must retain separate creation and advancement grants");
+        const auto text=sheet_text(fighter);
+        if(!text.contains("savage attacker")||!text.contains("defense"))throw std::runtime_error("Sheet must display both acquired feats");}
         get_node<RolfTourView>("CampaignTown")->get_node<Button>("PartyList/Rows/Member2/Advance")->emit_signal("pressed");get_node<CheckBox>("LevelUp/Spell1")->set_pressed(true);break;
     case 6:capture_dialog("level-up-cleric.png");press("LevelUp/Confirm");party_action(9);capture("level-up-complete.png");
         UtilityFunctions::print("Godot advancement passed: roster and town arrows, HP preview, Cancel rollback, invalid-point prevention, level-four feat and spell confirmations.");advancement_check_=false;get_tree()->quit(0);break;

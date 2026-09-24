@@ -65,7 +65,8 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     if(member&&member->vitals.dead)text+="   "+i18n::utf8("Dead");
     if(member&&campaign_->can_advance(member->id))text+="   [b]"+i18n::utf8("Ready to level up")+"[/b]";
     const auto display=[](const std::string& id){std::string label=id;std::replace(label.begin(),label.end(),'_',' ');return i18n::utf8(label);};
-    if(!s.feats.empty()){String feats;for(const auto& feat:s.feats)feats+=gs(display(feat))+"  ";text+="\n"+i18n::formatted("Feat: {feats}",{{"feats",feats}});}
+    String feats;for(const auto& grant:s.grants)if(grant.id.starts_with("feat:"))feats+=gs(display(grant.id.substr(5)))+"  ";
+    if(!feats.is_empty())text+="\n"+i18n::formatted("Feat: {feats}",{{"feats",feats}});
     if(!s.prepared_spells.empty()){String spells;for(const auto& spell:s.prepared_spells)spells+=gs(display(spell))+"  ";text+="\n"+i18n::formatted("Prepared spells: {spells}",{{"spells",spells}});}
     text+="\n[font_size=14]"+std::string(i18n::render(s.hp_messages).utf8().get_data())+"[/font_size]";
     text+=i18n::utf8("\n\n[table=3][cell][b]Attribute     [/b][/cell][cell][b]Score     [/b][/cell][cell][b]Saving throw[/b][/cell]");

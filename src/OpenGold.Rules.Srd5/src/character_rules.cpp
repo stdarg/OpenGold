@@ -1,4 +1,5 @@
 #include "dice.h"
+#include "feature_grants.h"
 #include "opengold/srd5.h"
 #include "status_effects.h"
 #include <algorithm>
@@ -123,6 +124,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     s.race=label(CreationField::race,d.race);s.gender=label(CreationField::gender,d.gender);
     s.character_class=label(CreationField::character_class,d.character_class);
     s.alignment=label(CreationField::alignment,d.alignment);s.background=label(CreationField::background,d.background);
+    s.grants=detail::starting_grants(d.character_class,d.race,d.background);
     if(require_name && (d.name.empty()||d.name.size()>160 || d.name.find_first_not_of(" \t\r\n")==std::string::npos ||
         std::any_of(d.name.begin(),d.name.end(),[](unsigned char c){return c<32||c==127;})))
         throw std::runtime_error("Enter a name before finishing your character.");

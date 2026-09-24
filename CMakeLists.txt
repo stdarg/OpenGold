@@ -45,6 +45,7 @@ target_include_directories(opengold_rules PUBLIC src/OpenGold.Rules/include)
 add_library(opengold_rules_srd5 STATIC
     src/OpenGold.Rules.Srd5/src/srd5.cpp
     src/OpenGold.Rules.Srd5/src/character_rules.cpp
+    src/OpenGold.Rules.Srd5/src/feature_grants.cpp
     src/OpenGold.Rules.Srd5/src/combat_grid.cpp
     src/OpenGold.Rules.Srd5/src/status_effects.cpp
 )
@@ -135,6 +136,10 @@ if(OPENGOLD_BUILD_TESTS)
     target_link_libraries(opengold_advancement_tests PRIVATE opengold_core opengold_rules_srd5)
     target_compile_definitions(opengold_advancement_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     add_test(NAME opengold_advancement_tests COMMAND opengold_advancement_tests)
+    add_executable(opengold_feature_grant_tests tests/feature_grant_tests.cpp)
+    target_link_libraries(opengold_feature_grant_tests PRIVATE opengold_core opengold_rules_srd5)
+    target_compile_definitions(opengold_feature_grant_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_feature_grant_tests COMMAND opengold_feature_grant_tests)
     add_executable(opengold_battlefield_tests tests/battlefield_tests.cpp)
     target_link_libraries(opengold_battlefield_tests PRIVATE opengold_core)
     add_test(NAME opengold_battlefield_tests COMMAND opengold_battlefield_tests)

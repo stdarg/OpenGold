@@ -33,9 +33,9 @@ mid-combat campaign saves or original DOS saves are
 implemented. The standalone tour and combat research demos retain their existing
 behavior; these campaign controls belong to the shared party flow.
 
-Format **OPENGOLD-CAMPAIGN 7** stores:
+Format **OPENGOLD-CAMPAIGN 8** stores:
 
-- Finished character drafts, appearances, levels, advancement choices,
+- Finished character drafts, appearances, levels, advancement choices and acquired feature/feat grants,
   stable member and inventory IDs,
   inventory and original item provenance, equipment and selected grip, purses, NPC identities/morale,
   active/reserve membership, selected slot and character-pool candidate identities.
@@ -61,13 +61,18 @@ when the save is later loaded during normal play.
 Character sheets are reconstructed through the rules module by replaying validated
 advancement choices. Levels 1–4 of the Fighter/Cleric/Wizard subset, selected
 feats/spells and spent level-one/two resources persist; see [advancement](ADVANCEMENT.md).
-Equipment and roster state are validated before replacement.
+Format 8 explicitly persists grant IDs, sources, acquisition levels and choices.
+On load, those records must agree with the validated creation/advancement history;
+missing, duplicate, forged or inconsistent records reject before replacing live state.
+Formats 1–7 reconstruct the grant records from their existing history. No extra
+feat is awarded and no resource is refilled. Equipment and roster state are also
+validated before replacement.
 Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
 HP calculation while preserving wounds, zero-HP/dead state and spent resources.
 Rules 0.6.4 also accepts 0.6.3 campaigns without reapplying HP repairs.
-Rules 0.6.7 additionally accepts 0.6.4/0.6.5/0.6.6 campaigns. Standalone combat checkpoints
+Rules 0.6.8 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7 campaigns. Standalone combat checkpoints
 retain the post-attack action, Bonus Action, movement and spell usage; the
-[0.6.4/0.6.5/0.6.6 combat migrations](RULES.md#library-boundary) cancel facing-only queues
+[0.6.4/0.6.5/0.6.6/0.6.7 combat migrations](RULES.md#library-boundary) cancel facing-only queues
 and preserve genuine movement reactions. Format 7 also records involuntary
 shared spaces after an allied-transit interruption; healing and recovery retain
 valid checkpoints without moving actors or replenishing resources. Other combat module versions reject.
@@ -90,8 +95,8 @@ an ordered fingerprint manifest of installed DAX archives and ITEMS. A different
 asset installation, unknown definition, malformed resource state or incompatible
 version rejects explicitly. Reinstalling identical assets at a new path is valid.
 FNV-1a fingerprints/checksums detect accidental changes; they are not signatures
-or protection against deliberate tampering. Formats 1 through 6 and the supported
-rules 0.3.0–0.6.6 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
+or protection against deliberate tampering. Formats 1 through 7 and the supported
+rules 0.3.0–0.6.7 campaign identities migrate; see [manual advancement](ADVANCEMENT.md).
 
 Writes use a temporary file, flush it to disk and verify its bytes before replacing
 the destination. Windows uses `ReplaceFileW` with a retained backup, or

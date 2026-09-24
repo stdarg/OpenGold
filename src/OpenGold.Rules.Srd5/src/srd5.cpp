@@ -1,4 +1,5 @@
 #include "dice.h"
+#include "feature_grants.h"
 #include "combat_grid.h"
 #include "status_effects.h"
 #include "weapons.h"
@@ -122,11 +123,11 @@ int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
 Definition character_definition(std::string_view bytes)
 {
-    if(bytes.size()>1024)throw std::runtime_error("Character profile exceeds limit");
+    if(bytes.size()>8192)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5";
+    const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5"||magic=="PC6";
     if(magic=="PC2"||selected)in>>level;
     if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
@@ -137,7 +138,7 @@ Definition character_definition(std::string_view bytes)
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
     std::vector<int> hp_modifiers(level,con);
-    if(magic=="PC4"||magic=="PC5")for(auto& modifier:hp_modifiers)in>>modifier;
+    if(magic=="PC4"||magic=="PC5"||magic=="PC6")for(auto& modifier:hp_modifiers)in>>modifier;
     in>>count;
     if(!in||count>3||hp_modifiers.back()!=con||((features&1)&&hp_modifiers.front()!=con))
         throw std::runtime_error("Invalid character HP history or equipment count");
@@ -161,7 +162,7 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(const auto* item=detail::weapon(key)){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
-            d.weapon_hands=magic!="PC5"&&legacy_two_hands(key)?2:item->hands;
+            d.weapon_hands=magic!="PC5"&&magic!="PC6"&&legacy_two_hands(key)?2:item->hands;
             d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
@@ -177,10 +178,19 @@ Definition character_definition(std::string_view bytes)
         }else throw std::runtime_error("Unsupported equipment conversion: "+key);
     }
     d.shield=shield;
-    if(magic=="PC5"){
+    if(magic=="PC5"||magic=="PC6"){
         unsigned requested{};in>>requested;
         if(!in)throw std::runtime_error("Invalid character grip");
         if(requested){validate_grip(d,requested);hands=hands-d.weapon_hands+requested;d.weapon_hands=requested;}
+    }
+    if(magic=="PC6"){
+        std::string background;in>>std::quoted(background);
+        const auto grants=detail::read_grants(in);
+        const auto effects=detail::validate_grants(grants,detail::grant_source_id(klass),detail::grant_source_id(race),background,level);
+        if(effects.feats!=features)throw std::runtime_error("Character effects disagree with acquired grants");
+        const int initial_con=ability_modifier(scores[2]-effects.abilities[2]);
+        for(unsigned i=0;i<level;++i)if(hp_modifiers[i]!=(i==3?con:initial_con))
+            throw std::runtime_error("HP history disagrees with acquired ability choices");
     }
     if(hands>2)throw std::runtime_error("Not enough free hands. Unequip the shield or two-handed weapon first.");
     if(!armor&&klass=="Barbarian")d.ac=std::max(d.ac,10+dex+con);
@@ -834,7 +844,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6"))&&compatible_identity==content->identity;
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&identity.version=="0.6.7"))&&compatible_identity==content->identity;
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 8 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
@@ -893,11 +903,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -911,8 +921,8 @@ public:
         result.description="Fixed-average HP growth. Spendable resources gain only their new capacity; existing expenditure remains.";
         if(result.level==4)result.feats={
             {"ability_score_improvement","Ability points","Add 2 to one ability or 1 to two abilities; maximum 20."},
-            {"defense","Defense","+1 AC while wearing armor. Requires the Fighter's Fighting Style feature.",sheet.character_class=="Fighter"},
-            {"savage_attacker","Savage Attacker","Roll weapon damage twice on the first weapon hit each turn; use the higher result.",sheet.background!="Soldier"},
+            {"defense","Defense","+1 AC while wearing armor. Requires the Fighter's Fighting Style feature.",detail::has_grant(sheet.grants,"feature:fighting_style")&&!detail::has_grant(sheet.grants,"feat:defense")},
+            {"savage_attacker","Savage Attacker","Roll weapon damage twice on the first weapon hit each turn; use the higher result.",!detail::has_grant(sheet.grants,"feat:savage_attacker")},
             {"grappler","Grappler","Unavailable: grappling is not implemented.",false},
             {"magic_initiate","Magic Initiate","Unavailable: its complete spell-selection feature is not implemented.",false}};
         if(sheet.character_class=="Cleric")result.spells={
@@ -963,7 +973,7 @@ public:
             adjustment.label_message={"Level {level} Ability Score Improvement",{{"level",std::to_string(next.level)}}};
             next.ability_adjustments.push_back(std::move(adjustment));
         }
-        if(!choice.feat.empty())next.feats.push_back(choice.feat);next.prepared_spells=choice.spells;
+        if(!choice.feat.empty())next.grants.push_back(detail::advancement_grant(detail::grant_source_id(sheet.character_class),next.level,choice));next.prepared_spells=choice.spells;
         next.hit_point_modifiers.push_back(next.modifiers[2]);
         next.hit_points=maximum_hit_points(next.hit_die,next.race=="Dwarf",next.hit_point_modifiers);
         const int growth=next.hit_points-sheet.hit_points;
@@ -1055,16 +1065,19 @@ public:
     }
     CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState equipment={}) const override {
         if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>4)throw std::runtime_error("Unsupported character rules identity or level");
-        unsigned features=sheet.background=="Soldier"?2:0;
-        if(sheet.feats.size()!=(sheet.level==4?1u:0u))throw std::runtime_error("Invalid advancement feat count");
-        if(sheet.hit_point_modifiers.size()!=sheet.level||
-            (sheet.level==4&&sheet.feats.front()!="ability_score_improvement"&&
-                sheet.hit_point_modifiers.front()!=sheet.hit_point_modifiers.back()))
-            throw std::runtime_error("HP history does not match character advancement");
-        for(const auto& feat:sheet.feats){
-            if(feat=="defense"&&sheet.character_class=="Fighter")features|=1;
-            else if(feat=="savage_attacker"&&sheet.background!="Soldier")features|=2;
-            else if(feat!="ability_score_improvement")throw std::runtime_error("Invalid advancement feat");
+        const auto effects=detail::validate_grants(sheet.grants,detail::grant_source_id(sheet.character_class),
+            detail::grant_source_id(sheet.race),detail::grant_source_id(sheet.background),sheet.level);
+        const unsigned features=effects.feats;
+        if(sheet.hit_point_modifiers.size()!=sheet.level)throw std::runtime_error("HP history does not match character advancement");
+        const bool asi=detail::has_grant(sheet.grants,"feat:ability_score_improvement");
+        if(sheet.ability_adjustments.size()!=(asi?2u:1u))throw std::runtime_error("Ability sources disagree with acquired grants");
+        if(asi){const auto& adjustment=sheet.ability_adjustments.back();
+            if(adjustment.source_id!="feat:ability_score_improvement"||adjustment.level!=4||adjustment.bonuses!=effects.abilities)
+                throw std::runtime_error("Ability sources disagree with acquired choices");}
+        for(unsigned i=0;i<6;++i){
+            const auto bonuses=sheet.ability_adjustments.front().bonuses[i]+effects.abilities[i];
+            if(sheet.bonuses[i]!=bonuses||sheet.scores[i]!=sheet.base[i]+bonuses)
+                throw std::runtime_error("Ability totals disagree with acquired choices");
         }
         unsigned spells=sheet.character_class=="Wizard"?1:0;std::set<std::string> selected;
         if(sheet.prepared_spells.empty()){if(sheet.character_class=="Wizard")spells|=4;else if(sheet.character_class=="Cleric")spells|=2;}
@@ -1077,11 +1090,12 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC5 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC6 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
-        out<<' '<<equipment.weapon_hands;
+        out<<' '<<equipment.weapon_hands<<' '<<std::quoted(detail::grant_source_id(sheet.background));
+        detail::write_grants(out,sheet.grants);
         const auto data=out.str();const auto d=character_definition(data);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
         CharacterProfile result{data,d.hp,d.ac,"Level 1-4 subset: HP, selected feats, supported prepared spells and level-one/two slots. Additional class/subclass and species features remain unavailable.",d.speed,d.melee_bonus};
@@ -1150,7 +1164,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.7",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.8",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

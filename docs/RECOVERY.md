@@ -78,7 +78,7 @@ campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
 purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
 Combat checkpoint format is version 8 and the combat module identity is
-**0.6.7**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6
+**0.6.8**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7
 have a specific [pending-reaction migration](RULES.md#library-boundary); other
 incompatible combat saves reject.
 

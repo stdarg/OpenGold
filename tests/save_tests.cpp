@@ -41,7 +41,13 @@ std::string campaign_payload(unsigned version,const std::string& body)
 // final field using the same party serialized without a town, then omit it.
 void remove_v7_grip(std::string& body,const std::string& party_save)
 {
-    const auto prefix=party_save.substr(party_save.find('\n',party_save.find('\n')+1)+1);
+    auto prefix=party_save.substr(party_save.find('\n',party_save.find('\n')+1)+1);
+    // Omit the v8 grant extension before constructing older format fixtures.
+    const auto first_grant=prefix.find(" \"feat:savage_attacker\"");
+    check(first_grant!=prefix.npos,"Soldier fixture includes its creation grant");
+    const auto grants_begin=prefix.rfind(' ',first_grant-1);
+    const auto grants_size=prefix.size()-3-grants_begin;
+    body.erase(grants_begin,grants_size);prefix.erase(grants_begin,grants_size);
     check(prefix.ends_with("\" 0 0 ")&&body.starts_with(prefix.substr(0,prefix.size()-2)),"Single-member fixture ends in creation source, grip, town flag");
     body.erase(prefix.size()-4,2);
 }

@@ -127,9 +127,9 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
-Rules module **0.6.7** writes **OGCOMBAT 8**, including selected weapon grip and an
+Rules module **0.6.8** writes **OGCOMBAT 8**, including selected weapon grip and an
 involuntary shared-space marker. Combat migration accepts **0.6.4**, format 5,
-**0.6.5**, format 6, and **0.6.6**, format 7,
+**0.6.5**, format 6, **0.6.6**, format 7, and **0.6.7**, format 8,
 with identical module/content IDs.
 A valid saved facing-only queue is canceled; the attacker resumes with the same
 HP, movement, spent resources, RNG and clock. The command revision changes to
@@ -142,6 +142,14 @@ remain readable with their previous hand requirements. Combat stores the current
 grip separately from that initial recipe so later choices survive reload and
 campaign handoff. Rules own valid choices, labels and damage; Godot renders them.
 See [equipment](PARTY.md) for the seven supported Versatile weapons.
+
+PC6 adds the background ID and acquired feature/feat grants after grip. Each
+records a stable rules ID, source ID, acquisition level and named choices.
+The rules validate entitlements, prerequisites, duplicates and ability choices
+before deriving combat effects. PC1–PC5 remain readable. Old combat recipes lack
+the original background and complete advancement history, so they retain their
+validated legacy effects without inventing source records. Campaign migration
+has that history and reconstructs exact grants. See [advancement](ADVANCEMENT.md).
 
 A reaction may pause an accepted route while the mover shares an allied space.
 The remaining path must still lead to a free cell within the movement budget.
