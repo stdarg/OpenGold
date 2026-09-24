@@ -64,9 +64,10 @@ MovementGrid::MovementGrid(const Battlefield& board, Cell origin,
     for (const auto& occupant : occupants) {
         if (!board_.contains(occupant.cell)) throw std::runtime_error("Invalid occupant cell");
         auto& entry = occupancy_[index(occupant.cell)];
-        // Enemy occupancy wins even if malformed input also lists an ally.
-        if (occupant.hostile) entry = Occupancy::enemy;
-        else if (entry == Occupancy::empty) entry = Occupancy::ally;
+        // Apply the strongest restriction when several creatures overlap:
+        // a conscious enemy blocks; an incapacitated enemy adds difficult terrain.
+        const auto candidate=occupant.hostile?(occupant.incapacitated?Occupancy::incapacitated_enemy:Occupancy::enemy):Occupancy::ally;
+        entry=std::max(entry,candidate);
     }
 }
 
@@ -87,7 +88,7 @@ std::optional<int> MovementGrid::step_cost(Cell from, Cell to) const
         return std::nullopt;
     const auto occupant = occupancy_[index(to)];
     if (occupant == Occupancy::enemy) return std::nullopt;
-    return board_.at(to) == 2 ? 10 : 5;
+    return board_.at(to) == 2 || occupant == Occupancy::incapacitated_enemy ? 10 : 5;
 }
 
 ReachableCells MovementGrid::reachable(int budget) const

@@ -824,3 +824,9 @@ Dash/Disengage. Rules-derived Bonus Action entitlements feed the approved combat
 row; Godot does not calculate eligibility or movement. Existing combat format 15
 stores Dash counts and existing action budgets; old profiles retain their original
 behavior. See [Cunning Action](CUNNING-ACTION.md).
+
+Rules 0.6.36 corrects movement through Unconscious enemies. The shared value-owned
+occupancy grid distinguishes blocked enemies from passable incapacitated enemies,
+with a single Difficult Terrain surcharge. Existing movement controls reuse rules
+queries; formats and character grants are unchanged. Enemy-overlap continuation
+is validated against module version. See [Unconscious transit](UNCONSCIOUS-TRANSIT.md).

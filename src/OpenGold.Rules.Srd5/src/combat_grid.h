@@ -14,12 +14,12 @@ void validate_battlefield(const rules::Battlefield& board);
 
 struct Occupant {
     rules::Cell cell;
-    bool hostile{};
+    bool hostile{},incapacitated{};
 };
 
 class ReachableCells {
 public:
-    // The origin and allied spaces are transit cells, never destinations.
+    // The origin and occupied spaces are transit cells, never destinations.
     [[nodiscard]] std::optional<int> cost_to(rules::Cell destination) const;
     // Excludes the origin, includes the destination. Empty means no legal move.
     [[nodiscard]] std::vector<rules::Cell> path_to(rules::Cell destination) const;
@@ -42,7 +42,7 @@ public:
     [[nodiscard]] ReachableCells reachable(int budget) const;
 
 private:
-    enum class Occupancy { empty, ally, enemy };
+    enum class Occupancy { empty, ally, incapacitated_enemy, enemy };
     rules::Battlefield board_;
     rules::Cell origin_;
     std::vector<Occupancy> occupancy_;

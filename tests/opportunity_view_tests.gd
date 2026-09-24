@@ -72,6 +72,27 @@ func run_checks() -> void:
         combat.get_node("Load").pressed.emit()
         require(combat.get_node("Turn").text == expected_turn and combat.get_node("Roster").text == expected_roster,
             "Subsequent reload preserves turn, resources and pending movement")
+    # The existing movement input now crosses an Unconscious enemy from a real
+    # prior-writer checkpoint. The occupied square itself remains forbidden.
+    var transit := FileAccess.get_file_as_bytes("res://../../../tests/fixtures/combat-v13-unconscious-transit-before.save")
+    require(not transit.is_empty(), "Unconscious-transit baseline exists")
+    var transit_file := FileAccess.open(path, FileAccess.WRITE)
+    transit_file.store_buffer(transit); transit_file.close()
+    combat.get_node("Load").pressed.emit()
+    combat.get_node("Move").pressed.emit()
+    root.size = Vector2i(1920, 1080)
+    for frame in range(4): await process_frame
+    var canvas: Control = combat.get_node("BattlefieldScroll/Canvas")
+    var tile: float = canvas.custom_minimum_size.x / 6.0
+    for cell in [Vector2i(2, 1), Vector2i(3, 1)]:
+        for pressed in [true, false]:
+            var click := InputEventMouseButton.new()
+            click.button_index = MOUSE_BUTTON_LEFT; click.pressed = pressed
+            click.position = canvas.get_global_transform_with_canvas() * ((Vector2(cell) + Vector2(0.5, 0.5)) * tile)
+            root.push_input(click)
+        for frame in range(4): await process_frame
+        require(combat.selected_character_cell() == (Vector2i(0, 1) if cell.x == 2 else cell), "Actual mouse input rejects occupied destination and crosses to free destination")
+    require(combat.get_node("Log").get_parsed_text().contains("Move 10 ft | Action ready"), "UI reports twenty feet spent and preserves the Action")
     restore_files()
     print("Opportunity view checks passed: migrated facing, remaining movement, pending reaction, save/load")
     quit(0)

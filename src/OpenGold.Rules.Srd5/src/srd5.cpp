@@ -142,7 +142,7 @@ struct Actor : detail::LifeState {
     bool bonus{true}, reaction{true}, dodge{}, disengaged{};
     bool spent_slot{},savage_used{},facing_left{};
     unsigned weapon_hands{};
-    bool involuntary_overlap{}; // Interrupted on an ally; retained through recovery until separated.
+    bool involuntary_overlap{}; // Interrupted in an occupied space; retained through recovery until separated.
     detail::EffectState effects;
 };
 int movement_left(const Actor& a)
@@ -422,13 +422,13 @@ private:
     bool line_of_sight(Cell a,Cell b) const { return detail::has_line_of_sight(board_,a,b); }
     bool can_see(const Actor& a,const Actor& b) const {return !detail::blinded(a.effects)&&line_of_sight(a.source.cell,b.source.cell);}
     unsigned turn_end_ms(std::size_t index) const {return unsigned((index+1)*detail::round_ms/actors_.size());}
-    bool shares_ally_space(const Actor& who) const {
+    bool shares_occupied_space(const Actor& who) const {
         return std::any_of(actors_.begin(),actors_.end(),[&](const auto& other){
-            return other.source.id!=who.source.id&&!other.dead&&other.source.side==who.source.side&&other.source.cell==who.source.cell;
+            return other.source.id!=who.source.id&&!other.dead&&other.source.cell==who.source.cell;
         });
     }
     void clear_departed_overlaps() {
-        for(auto& a:actors_)if(a.dead||!shares_ally_space(a))a.involuntary_overlap=false;
+        for(auto& a:actors_)if(a.dead||!shares_occupied_space(a))a.involuntary_overlap=false;
     }
     unsigned next_save_ms(EntityId target) const;
     unsigned next_turn_ms(const Actor& target) const;
@@ -467,7 +467,7 @@ detail::MovementGrid Session::movement_grid(const Actor& mover) const
         // Unconscious actors still occupy space; corpses do not. The mover's
         // current cell is the path origin, not an obstacle.
         if (!other.dead && other.source.id != mover.source.id)
-            occupants.push_back({other.source.cell, other.source.side != mover.source.side});
+            occupants.push_back({other.source.cell, other.source.side != mover.source.side, other.hp==0});
     }
     return {board_, mover.source.cell, occupants};
 }
@@ -625,7 +625,7 @@ void Session::damage(Actor& target,int amount,bool critical)
     if(target.hp==0&&!target.dead&&!target.stable)target.recovery.death_save_in_ms=next_turn_ms(target);
     if(target.hp==0) {
         target.dodge=false;
-        if(!target.dead&&shares_ally_space(target))target.involuntary_overlap=true;
+        if(!target.dead&&shares_occupied_space(target))target.involuntary_overlap=true;
         log(target.source.name+(target.dead?" is defeated.":" falls unconscious."),
             {target.dead?"{name} is defeated.":"{name} falls unconscious.",{{"name",target.source.name}}});
     }
@@ -633,7 +633,7 @@ void Session::damage(Actor& target,int amount,bool critical)
 }
 void Session::heal(Actor& target,int amount)
 {
-    if(target.hp==0&&shares_ally_space(target))target.involuntary_overlap=true;
+    if(target.hp==0&&shares_occupied_space(target))target.involuntary_overlap=true;
     const int restored=detail::heal_life(target,amount,def(target).hp);
     log(target.source.name+" recovers "+std::to_string(restored)+" HP.",
         {"{name} recovers {hp} HP.",{{"name",target.source.name},{"hp",std::to_string(restored)}}});
@@ -719,7 +719,7 @@ bool Session::begin_turn()
             const int result=detail::death_save(a,rng_);
             log(a.source.name+" death save: "+std::to_string(result),
                 {"{name} death save: {roll}",{{"name",a.source.name},{"roll",std::to_string(result)}}});
-            if(result==20&&shares_ally_space(a))a.involuntary_overlap=true;
+            if(result==20&&shares_occupied_space(a))a.involuntary_overlap=true;
             if(a.dead)clear_departed_overlaps();
         }
         if(a.hp==0)return false;
@@ -788,7 +788,7 @@ void Session::advance_turn_time()
             {"{name} recovers from a blindness effect.",{{"name",target.source.name}}});
     });
     for(auto& a:actors_)if(detail::advance_recovery_clock(a,delta)){
-        if(shares_ally_space(a))a.involuntary_overlap=true;
+        if(shares_occupied_space(a))a.involuntary_overlap=true;
         log(a.source.name+" recovers 1 HP naturally.",{"{name} recovers 1 HP naturally.",{{"name",a.source.name}}});
     }
     elapsed_ms_+=std::min<std::uint64_t>(delta,std::numeric_limits<std::uint64_t>::max()-elapsed_ms_);
@@ -1071,7 +1071,7 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
     bool party = false, enemies = false;
     for (const auto& actor : actors_) {
         if(actor.actions.surge&&actor.source.id!=mover.source.id)throw std::runtime_error("Action Surge allowance outside its turn");
-        if(actor.involuntary_overlap&&(actor.dead||!shares_ally_space(actor)))
+        if(actor.involuntary_overlap&&(actor.dead||!shares_occupied_space(actor)))
             throw std::runtime_error("Invalid involuntary checkpoint overlap");
         if(actor.hp>0&&!actor.dead)(actor.source.side==0?party:enemies)=true;
         if(actor.dead)continue;
@@ -1080,8 +1080,8 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
             const bool in_transit=pending()&&!legacy_facing_reaction&&path_index_>0&&
                 path_[path_index_-1]==mover.source.cell&&
                 (actor.source.id==mover.source.id||other.source.id==mover.source.id);
-            if(actor.source.side==other.source.side&&
-                (in_transit||actor.involuntary_overlap||other.involuntary_overlap))continue;
+            if((in_transit&&(actor.source.side==other.source.side||actor.hp==0||other.hp==0))||
+                actor.involuntary_overlap||other.involuntary_overlap)continue;
             throw std::runtime_error("Invalid overlapping checkpoint actors");
         }
     }
@@ -1167,7 +1167,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 15 ||
@@ -1205,6 +1205,9 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         encounter.participants.push_back(actor.source);
         actors.push_back(std::move(actor));
     }
+    if(module_before(identity,{0,6,36}))for(const auto& a:actors)for(const auto& b:actors)
+        if(a.source.id<b.source.id&&!a.dead&&!b.dead&&a.source.side!=b.source.side&&a.source.cell==b.source.cell)
+            throw std::runtime_error("Legacy combat cannot contain enemy transit overlap");
     // Build and validate a separate owned candidate. Any failure destroys it;
     // callers never receive a partially restored session or lose a live one.
     // The constructor checks identities/geometry; saved order and RNG then
@@ -1241,7 +1244,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         if(!input||legacy_facing_reaction>2)throw std::runtime_error("Invalid checkpoint turn reaction");
     }
     if(version<7)for(auto& a:session->actors_)
-        if(a.hp==0&&!a.dead&&session->shares_ally_space(a))a.involuntary_overlap=true;
+        if(a.hp==0&&!a.dead&&session->shares_occupied_space(a))a.involuntary_overlap=true;
     // Validate the old queue before removing it. Migration must not conceal a
     // malformed checkpoint or change damage, spent resources, time or dice.
     session->validate_restored_state(legacy_facing_reaction!=0);
@@ -1259,11 +1262,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","cunning_dash","cunning_disengage","ray_of_frost","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","archery","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","unconscious_enemy_transit","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","cunning_dash","cunning_disengage","ray_of_frost","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","archery","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1688,7 +1691,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.35",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.36",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

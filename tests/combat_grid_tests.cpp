@@ -31,7 +31,7 @@ int reference_step(const Battlefield& board, const std::vector<int>& occupants, 
         (board.at({from.x,to.y}) == 1 || board.at({to.x,from.y}) == 1)) return -1;
     const int occupant = occupants[to.y*board.width+to.x];
     if (occupant == 2) return -1;
-    return board.at(to) == 2 ? 10 : 5;
+    return board.at(to) == 2 || occupant == 3 ? 10 : 5;
 }
 
 std::vector<int> reference_costs(const Battlefield& board, const std::vector<int>& occupants, Cell origin)
@@ -55,7 +55,7 @@ void compare_routes(const Battlefield& board, const std::vector<int>& occupants,
 {
     std::vector<Occupant> actors;
     for (int i = 0; i < static_cast<int>(occupants.size()); ++i)
-        if (occupants[i]) actors.push_back({{i%board.width,i/board.width}, occupants[i] == 2});
+        if (occupants[i]) actors.push_back({{i%board.width,i/board.width}, occupants[i] >= 2, occupants[i] == 3});
     const MovementGrid grid(board, origin, actors);
     const auto expected = reference_costs(board, occupants, origin);
     for (const int budget : {0, 5, 9, 10, 15, 20, 30, std::numeric_limits<int>::max()}) {
@@ -89,15 +89,15 @@ void compare_routes(const Battlefield& board, const std::vector<int>& occupants,
 
 void exhaustive_movement()
 {
-    // Every assignment of floor/wall/difficult/ally/enemy to the five cells
-    // other than the origin: 5^5 = 3,125 boards, including disconnected maps.
-    for (unsigned pattern = 0; pattern < 3125; ++pattern) {
+    // Every assignment of floor/wall/difficult/ally/enemy/unconscious enemy to the five cells
+    // other than the origin: 6^5 = 7,776 boards, including disconnected maps.
+    for (unsigned pattern = 0; pattern < 7776; ++pattern) {
         Battlefield board{3,2,std::vector<std::uint8_t>(6)};
         std::vector<int> occupants(6);
         auto remaining = pattern;
         for (int cell = 1; cell < 6; ++cell) {
-            const auto kind = remaining%5;
-            remaining /= 5;
+            const auto kind = remaining%6;
+            remaining /= 6;
             if (kind <= 2) board.terrain[cell] = kind;
             else occupants[cell] = kind-2;
         }
@@ -173,6 +173,13 @@ void allied_transit()
         "Difficult ground under an ally adds its normal five-foot surcharge once");
     auto hostile=allies;hostile[1].hostile=true;grid=MovementGrid(corridor,{0,0},hostile);
     check(!grid.reachable(60).cost_to({3,0}),"A hostile creature still blocks the corridor");
+    hostile[1].incapacitated=true;grid=MovementGrid(corridor,{0,0},hostile);
+    check(grid.reachable(25).cost_to({3,0})==25&&!grid.reachable(24).cost_to({3,0}),"Unconscious hostile square adds difficult terrain to the route");
+    corridor.terrain[2]=2;grid=MovementGrid(corridor,{0,0},hostile);
+    check(grid.reachable(25).cost_to({3,0})==25,"Enemy occupancy and difficult ground do not stack");
+    check(!grid.can_stop_at({2,0}),"Unconscious enemy still occupies its square");
+    auto overlapping=hostile;overlapping.push_back({{2,0},true,false});grid=MovementGrid(corridor,{0,0},overlapping);
+    check(!grid.reachable(60).cost_to({3,0}),"Conscious enemy wins over overlapping incapacitated enemy");
     corridor.terrain[1]=1;grid=MovementGrid(corridor,{0,0},allies);
     check(!grid.reachable(60).cost_to({3,0}),"Allied occupancy cannot bypass a wall");
 }

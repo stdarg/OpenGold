@@ -152,3 +152,12 @@ to live combat. Optional hit controls await Q25; source grants, per-turn state,
 damage/decision integration, persistence and player-path verification remain.
 Level-three/four acceptance is retained in #221, dependent on #116. See
 [Sneak Attack](SNEAK-ATTACK.md); this foundation does not close a feature issue.
+
+### Unconscious enemy transit (#222, bounded child of #44)
+
+Existing zero-HP Unconscious creatures can be crossed by either side, with the
+correct nonstacking Difficult Terrain cost and no occupied voluntary endpoints.
+Search/execution share the occupancy model. Interrupted enemy overlap preserves
+spent movement through recovery and reload. See [Unconscious transit](UNCONSCIOUS-TRANSIT.md).
+Tiny/size differences, large footprints, other Incapacitated sources and the Prone
+consequence remain tracked by #44/#45/#35; this increment does not close them.

@@ -490,3 +490,12 @@ They cover normally attained Rogue levels one/two, Soldier training, wounds,
 wealth, spent Bonus Action Dash and an attack awaiting Savage Attacker. The
 second-roll/resolved files are actual continuations, not fabricated expectations.
 Keep these unchanged after the feature is introduced. See `SNEAK-ATTACK.md`.
+
+## Unconscious enemy transit baseline
+
+`combat-v13-unconscious-transit-before.save` and
+`combat-v13-unconscious-transit-dash.save` were written by actual rules 0.6.35
+at `ff297ef`, before the movement correction, with
+`opengold_rules_tests --freeze-unconscious-transit`. The baseline contains a
+stable Unconscious blocker, a conscious guard and an active mover. The second
+file is the actual prior Dash continuation. Preserve their bytes.

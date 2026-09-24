@@ -741,5 +741,6 @@ void installed() {
     }
     std::cout<<"Original Slums event completed with real rules combat: "<<(outcome==Outcome::victory?"victory":"defeat")<<".\n";
 }
+#include "unconscious_transit_checks.h"
 }
-int main(){try{turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();opportunity_migration_tests();allied_transit_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-unconscious-transit"){unconscious_transit::freeze();return 0;}unconscious_transit::prior_writer();unconscious_transit::run();turn_budget_tests();boundary_tests();mechanics_tests();death_save_turn_entry_tests();opportunity_migration_tests();allied_transit_tests();checkpoint_validation_tests();installed();std::cout<<"Rules tests passed.\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

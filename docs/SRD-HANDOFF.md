@@ -8,28 +8,28 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Active [Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220),
-child of #112. Source eligibility/progression helper and actual 0.6.35 baseline
-fixtures are prepared; see [SNEAK-ATTACK.md](SNEAK-ATTACK.md). No live behavior or
-version changes: rules 0.6.35 / PC24, campaign 11 / combat 13–15.
+Branch `main`. Completed [Unconscious enemy transit #222](https://github.com/stdarg/OpenGold/issues/222),
+a bounded child of #44. Rules 0.6.36 corrects passing through living zero-HP
+enemies with one Difficult Terrain surcharge, preserving occupied endpoints,
+reaction interruptions and involuntary overlap through recovery/exit. PC24,
+campaign 11 and combat formats 13–15 are unchanged. Prior 0.6.35 fixtures at
+`ff297ef` preserve exact state and Dash continuation. See
+[UNCONSCIOUS-TRANSIT.md](UNCONSCIOUS-TRANSIT.md). #44 remains open for size/Tiny
+rules and Prone; #45 covers footprints and #35 other condition sources.
 
-**Q25 pending:** centered eligible-hit dialog with target/extra dice, Use Sneak
-Attack or Keep hit; save Sneak Attack. Use spends this turn's use; Savage Attacker
-follows and rerolls weapon dice only. All other actions wait; Action/Reaction stays
-spent; keyboard access, no combat-saving controls. Do not implement the dependent
-control/decision ordering until answered. Continue independently actionable backlog
-work while waiting, preserving #220's complete acceptance.
+[Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220) remains pending
+Q25; its tested eligibility/progression helper and real 0.6.35 baseline fixtures
+are in `ff297ef`, not wired into combat. See [SNEAK-ATTACK.md](SNEAK-ATTACK.md).
+**Q25:** centered eligible-hit dialog with target/extra dice, Use Sneak Attack or
+Keep hit; save Sneak Attack. Use spends this turn's use; Savage Attacker follows
+and rerolls weapon dice only. Other actions wait; Action/Reaction stays spent;
+keyboard access, no combat-saving controls. Do not implement the dependent
+control/decision ordering until answered. Continue independent backlog work.
 
-Parent #112 remains open. Level-three/four integration is #221 after ordinary
-advancement #116. Existing grants infrastructure is sufficient despite wider #29
-remaining open; prerequisite #24 is closed. Read #220 and its feature doc before
-integration. Distinguish Ranged weapons from thrown Melee attacks, combine attack
-damage before resistance/flooring, and reset use on every combatant turn.
-
-Cunning Action #218 is delivered in `3846c21`: ordinary Rogue level two, Bonus
-Dash/Disengage, approved Q24 row. Hide #219, parent #113 and Rogue integration #116
-remain open. Starting training #213–#217 are complete. Unarmored Defense already
-exists for Barbarian/Monk; no duplicate implementation needed.
+Parent #112 remains open; level-three/four integration is #221 after #116.
+Cunning Action #218 is in `3846c21`: Rogue level two and Bonus Dash/Disengage.
+Hide #219, parent #113 and Rogue integration #116 remain open. Starting training
+#213–#217 are complete. Barbarian/Monk Unarmored Defense was already implemented.
 
 Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
 optional choice per hit. Do not enable either without the answer. The tested
@@ -88,13 +88,16 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#220 foundation verification: `opengold_damage_tests` and
-`opengold_training_tests` pass. Independent catalog/roll circumstances and full
-source dice progression are checked; actual 0.6.35 campaign and both Savage hit
-continuations preserve exact state. Log: `/tmp/opengold-sneak-foundation.log`.
-No live feature/UI change; no broader regression claim for unimplemented behavior.
+#222 verification: all 41 native/tool checks, all 17 Godot runtime checks plus
+eight native prerequisites, main/demo builds and 816-message localization pass.
+The extended existing opportunity UI test verifies actual clicks through the
+loaded corridor, rejected occupied endpoints, twenty feet spent and the unspent
+Action. Rules checks also cover reaction interruption, healing, death/natural
+recovery and exit. Logs: `/tmp/opengold-transit-regression.log`,
+`/tmp/opengold-transit-ui.log`, `/tmp/opengold-transit-recovery.log`.
+No layout or text changes; existing movement controls are reused.
 
-Previous #218 evidence: 41 native/tool checks, 17 Godot runtime checks plus eight
-native prerequisites, main/demo builds and 816-message localization pass.
-Bilingual renders at both sizes: `/tmp/opengold-cunning-renders`. Logs begin
-`/tmp/opengold-cunning-`. Do not repeat unrelated checks without new changes.
+#220 preparation: focused damage/training checks passed; no live feature claim.
+Next: resume #220 if Q25 arrives; otherwise select an independently actionable
+source-backed issue. Preserve pending #80/#208/#209/#189 questions above rather
+than re-asking. Do not close parent trackers from narrow child evidence.
