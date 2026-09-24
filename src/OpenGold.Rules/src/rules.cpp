@@ -1,7 +1,7 @@
 #include "opengold/rules.h"
 #include <stdexcept>
 namespace opengold::rules {
-CharacterProfile RulesModule::character_profile(const CharacterSheet&, std::span<const std::string>) const
+CharacterProfile RulesModule::character_profile(const CharacterSheet&, std::span<const std::string>, EquipmentState) const
 { throw std::runtime_error("This rules module does not support campaign characters"); }
 unsigned RulesModule::experience_for_level(unsigned) const
 { throw std::runtime_error("This rules module does not support advancement"); }

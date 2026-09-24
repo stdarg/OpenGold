@@ -37,6 +37,14 @@ std::string campaign_payload(unsigned version,const std::string& body)
     for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
     return "OPENGOLD-CAMPAIGN "+std::to_string(version)+'\n'+std::to_string(hash)+'\n'+body;
 }
+// These synthetic legacy cases have one member and no grip choice. Locate its
+// final field using the same party serialized without a town, then omit it.
+void remove_v7_grip(std::string& body,const std::string& party_save)
+{
+    const auto prefix=party_save.substr(party_save.find('\n',party_save.find('\n')+1)+1);
+    check(prefix.ends_with("\" 0 0 ")&&body.starts_with(prefix.substr(0,prefix.size()-2)),"Single-member fixture ends in creation source, grip, town flag");
+    body.erase(prefix.size()-4,2);
+}
 // Versions 1-5 had no sub-minute clock or encounter-scope fields.
 void remove_v6_clock(std::string& body)
 {
@@ -99,6 +107,7 @@ void fog_saves(const std::filesystem::path& directory)
     const auto suffix="1 0 \""+single.snapshot().seen.to_string()+"\" ";
     check(body.ends_with(suffix),"Knowledge is the version-five extension");
     body.resize(body.size()-suffix.size());
+    remove_v7_grip(body,encode_campaign(*party,nullptr,"fog-fixture"));
     remove_v6_clock(body);
     auto old_base=prototype();
     auto legacy=decode_campaign(campaign_payload(4,body),*srd5::character_rules(),*rules,"fog-fixture",&old_base);
@@ -165,6 +174,7 @@ void roundtrip(const std::filesystem::path& directory){
     auto legacy_body=old_save.substr(old_save.find('\n',old_save.find('\n')+1)+1);
     const std::string portrait_field="\"human-male-fighter-01.png\" ";
     const auto portrait_position=legacy_body.find(portrait_field);check(portrait_position!=legacy_body.npos,"Portrait filename is serialized");
+    remove_v7_grip(legacy_body,old_save);
     legacy_body.erase(portrait_position,portrait_field.size());
     remove_v6_clock(legacy_body);
     std::uint64_t legacy_hash=14695981039346656037ULL;for(unsigned char c:legacy_body){legacy_hash^=c;legacy_hash*=1099511628211ULL;}
@@ -186,7 +196,7 @@ void roundtrip(const std::filesystem::path& directory){
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);
     auto base=prototype();auto rules=module();auto loaded=decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,"fixture-v1",&base);auto replacement=std::make_shared<CampaignParty>(module());replacement->restore(std::move(loaded.party));loaded.town->attach_restored_party(replacement);
     check(encode_campaign(*replacement,&*loaded.town,"fixture-v1")==saved,"Complete serialized state round trips");
-    for(const std::string prior_version:{"0.6.0","0.6.1","0.6.2","0.6.3","0.6.4","0.6.5"}){
+    for(const std::string prior_version:{"0.6.0","0.6.1","0.6.2","0.6.3","0.6.4","0.6.5","0.6.6"}){
         auto previous_save=decode_campaign(changed_identity(saved,rules->identity().version,prior_version),*srd5::character_rules(),*rules,"fixture-v1",&base);
         CampaignParty migrated(module());migrated.restore(std::move(previous_save.party));
         check(encode_campaign(migrated,&*previous_save.town,"fixture-v1")==saved,"Earlier 0.6.x campaigns upgrade without changing saved state");

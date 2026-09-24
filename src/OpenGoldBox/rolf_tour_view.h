@@ -70,6 +70,7 @@ private:
     void refresh_inventory();
     void inventory_selected(std::int64_t index);
     void equip_item(bool equip);
+    void grip_selected(std::int64_t index);
     void party_selected(std::int64_t index);
     void level_up_requested(int slot);
     void close_sheet();

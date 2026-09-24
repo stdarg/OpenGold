@@ -78,7 +78,7 @@ rules::CharacterProfile CampaignParty::profile(MemberId id) const
     const auto& m=member(id);std::vector<std::string> keys;
     for(auto equipped:m.equipped){auto item=m.character.inventory().find(equipped);
         if(!item)throw std::runtime_error("Equipped item is missing");keys.push_back(item->get().definition_id);}
-    return rules_->character_profile(m.character.sheet(),keys);
+    return rules_->character_profile(m.character.sheet(),keys,m.equipment);
 }
 void CampaignParty::equip(MemberId id,std::uint64_t item)
 {
@@ -89,11 +89,25 @@ void CampaignParty::equip(MemberId id,std::uint64_t item)
     if(info.slot==rules::EquipmentSlot::weapon)
         std::erase_if(next,[&](auto key){return rules_->equipment_info(m.character.inventory().find(key)->get().definition_id).slot==rules::EquipmentSlot::weapon;});
     std::vector<std::string> keys;for(auto key:next)keys.push_back(m.character.inventory().find(key)->get().definition_id);
-    keys.push_back(found->get().definition_id);(void)rules_->character_profile(m.character.sheet(),keys);
-    next.push_back(item);m.equipped=std::move(next);
+    keys.push_back(found->get().definition_id);
+    const auto equipment=info.slot==rules::EquipmentSlot::weapon?rules::EquipmentState{}:m.equipment;
+    (void)rules_->character_profile(m.character.sheet(),keys,equipment);
+    next.push_back(item);m.equipped=std::move(next);m.equipment=equipment;
 }
 void CampaignParty::unequip(MemberId id,std::uint64_t item)
-{editable();auto& items=edit(id).equipped;std::erase(items,item);}
+{
+    editable();auto& m=edit(id);auto& items=m.equipped;
+    if(std::find(items.begin(),items.end(),item)==items.end())return;
+    if(equipment_info(id,item).slot==rules::EquipmentSlot::weapon)m.equipment={};
+    std::erase(items,item);
+}
+void CampaignParty::set_grip(MemberId id,unsigned hands)
+{
+    editable();auto& m=edit(id);const auto current=profile(id);
+    if(std::none_of(current.grips.begin(),current.grips.end(),[&](const auto& choice){return choice.hands==hands&&choice.available;}))
+        throw std::runtime_error("This grip is incompatible with the equipped weapon or shield.");
+    m.equipment={hands};
+}
 rules::EquipmentInfo CampaignParty::equipment_info(MemberId id,std::uint64_t item) const
 {
     const auto found=member(id).character.inventory().find(item);
@@ -211,7 +225,7 @@ void CampaignParty::elapse(PartyState& state,std::uint64_t milliseconds,std::spa
         if(std::find(in_combat.begin(),in_combat.end(),member.id)!=in_combat.end())continue;
         std::vector<std::string> gear;
         for(auto id:member.equipped)gear.push_back(member.character.inventory().find(id)->get().definition_id);
-        const auto profile=rules_->character_profile(member.character.sheet(),gear);
+        const auto profile=rules_->character_profile(member.character.sheet(),gear,member.equipment);
         participants.push_back({member.id,"campaign-character",member.character.sheet().name,0,{},profile.data,member.vitals});
     }
     rules_->elapse(participants,milliseconds,state.random_state);
@@ -298,7 +312,14 @@ void CampaignParty::validate(const PartyState& state)
     }
     if(!active.empty()&&!state.slots[state.selected])throw std::runtime_error("Invalid selected member checkpoint");
 }
-void CampaignParty::restore(PartyState state){editable();validate(state);state_=std::move(state);}
+void CampaignParty::restore(PartyState state){
+    editable();validate(state);
+    for(const auto& m:state.roster){
+        std::vector<std::string> gear;for(auto id:m.equipped)gear.push_back(m.character.inventory().find(id)->get().definition_id);
+        (void)rules_->character_profile(m.character.sheet(),gear,m.equipment);
+    }
+    state_=std::move(state);
+}
 std::vector<rules::Participant> CampaignParty::participants() const
 {
     std::vector<rules::Participant> result;
@@ -322,7 +343,9 @@ void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
     for(const auto& actor:snapshot.combatants)if(actor.side==0){
         const auto it=std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==actor.id;});
         if(it==next.roster.end()||actor.max_hit_points!=it->character.sheet().hit_points)throw std::runtime_error("Combat party identity mismatch");
-        it->vitals=actor.persistent;
+        std::vector<std::string> gear;for(auto id:it->equipped)gear.push_back(it->character.inventory().find(id)->get().definition_id);
+        (void)rules_->character_profile(it->character.sheet(),gear,actor.equipment);
+        it->vitals=actor.persistent;it->equipment=actor.equipment;
     }
     if(!combat_registered_)++next.next_combat_scope;
     state_=std::move(next);combat_elapsed_=snapshot.elapsed_milliseconds;combat_registered_=true;

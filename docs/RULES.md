@@ -127,8 +127,9 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
-Rules module **0.6.6** writes **OGCOMBAT 7**, including an involuntary shared-space
-marker. Combat migration accepts **0.6.4**, format 5, and **0.6.5**, format 6,
+Rules module **0.6.7** writes **OGCOMBAT 8**, including selected weapon grip and an
+involuntary shared-space marker. Combat migration accepts **0.6.4**, format 5,
+**0.6.5**, format 6, and **0.6.6**, format 7,
 with identical module/content IDs.
 A valid saved facing-only queue is canceled; the attacker resumes with the same
 HP, movement, spent resources, RNG and clock. The command revision changes to
@@ -136,6 +137,11 @@ invalidate the canceled choices. A saved leave-reach queue retains its order,
 partially resolved position and deterministic continuation. Invalid old state is
 rejected before migration. Campaign saves continue to accept the documented
 older versions; they do not contain paused combat queues.
+PC5 character profiles add an equipment hand choice after the gear list. PC1–PC4
+remain readable with their previous hand requirements. Combat stores the current
+grip separately from that initial recipe so later choices survive reload and
+campaign handoff. Rules own valid choices, labels and damage; Godot renders them.
+See [equipment](PARTY.md) for the seven supported Versatile weapons.
 
 A reaction may pause an accepted route while the mover shares an allied space.
 The remaining path must still lead to a free cell within the movement budget.
@@ -161,6 +167,9 @@ co-occupancy remain in the condition/creature-state increments (#35/#44).
 - One melee or ranged attack per Attack action, ascending AC, natural 1/20,
   doubled damage dice on critical hits, Dodge and ranged disadvantage from long
   range or an adjacent visible enemy. No hidden dice in the UI or AI.
+- Versatile one-/two-handed melee damage, shield compatibility and free grip
+  selection during the active turn or the wielder's pending opportunity reaction.
+  Thrown attacks retain their base damage die.
 - Dash; Second Wind; Fire Bolt; touch-range Cure Wounds; single-target Magic
   Missile. Two level-1 spell slots in the caster fixtures. Cure Wounds uses
   2d8 plus the casting ability modifier from this baseline.

@@ -60,21 +60,21 @@ attribution applies; original game resources are loaded locally.
 
 ## Saves and verification
 
-Campaign formats 3–6 record each confirmed choice and reconstruct the resulting
+Campaign formats 3–7 record each confirmed choice and reconstruct the resulting
 sheet and Constitution history through the rules module. Formats 1 and 2 migrate
-their existing levels using the previous default choices. Rules module 0.6.6
-accepts the supported 0.3.0–0.6.5 campaign identities; unrelated content identities
+their existing levels using the previous default choices. Rules module 0.6.7
+accepts the supported 0.3.0–0.6.6 campaign identities; unrelated content identities
 still reject. Loading an affected older campaign corrects maximum HP and preserves
 the living character's HP deficit. Unconscious/dead characters stay at zero, and
 spent resources and death-save counters persist. The correction applies once;
-the campaign format remains 6. New combat profiles use PC4 to carry HP history.
+campaign format 7 also retains grip. PC5 profiles carry HP history and grip.
 Ability-adjustment sources are also reconstructed from creation and advancement
 choices, including older saves. Each records its source ID, acquisition level
 and ability amounts. This presentation correction introduced no profile or campaign format change.
-Standalone combat checkpoints use version 7 to retain second-level slots,
+Standalone combat checkpoints use version 8 to retain second-level slots,
 per-turn spell/feat usage, timed effects, presentation facing, pending movement
-reactions and involuntary overlap during allied transit.
-Modules 0.6.4/0.6.5 have specific [combat migrations](RULES.md#library-boundary)
+reactions, involuntary overlap during allied transit, and weapon grip.
+Modules 0.6.4/0.6.5/0.6.6 have specific [combat migrations](RULES.md#library-boundary)
 that retain movement queues and cancel obsolete facing reactions without
 refunding resources. Other old
 combat identities are not migrated.

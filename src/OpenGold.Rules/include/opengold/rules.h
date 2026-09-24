@@ -25,6 +25,12 @@ struct AdvancementOptions {
     std::vector<AdvancementOption> feats,spells;
     std::string description;
 };
+// Zero selects the equipped weapon's minimum required hands.
+struct EquipmentState {
+    unsigned weapon_hands{};
+    bool operator==(const EquipmentState&) const = default;
+};
+struct GripOption { unsigned hands{}; Message label; bool available{true}; };
 struct CharacterProfile {
     std::string data;
     int hit_points{}, armor_class{};
@@ -33,6 +39,8 @@ struct CharacterProfile {
     std::string item_modifiers, spell_modifiers;
     bool strength_dexterity_disadvantage{};
     std::vector<Message> item_messages, spell_messages;
+    EquipmentState equipment;
+    std::vector<GripOption> grips;
 };
 enum class EquipmentSlot { unsupported, weapon, armor, shield };
 struct EquipmentInfo { EquipmentSlot slot{EquipmentSlot::unsupported}; unsigned hands{}; };
@@ -85,6 +93,8 @@ struct CombatantView {
     std::vector<Message> conditions; // Derived display state; mechanics stay in the module.
     std::string type_name, melee_weapon, ranged_weapon; // Rules-owned combat display data.
     bool ranged_attack_available{};
+    EquipmentState equipment;
+    std::vector<GripOption> grips;
 };
 struct Snapshot {
     Identity identity;
@@ -126,7 +136,8 @@ public:
     [[nodiscard]] virtual std::vector<std::string> supported_features() const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> create(Encounter encounter, std::uint64_t seed) const = 0;
     [[nodiscard]] virtual std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const = 0;
-    [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>) const;
+    [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>, EquipmentState equipment={}) const;
+    [[nodiscard]] virtual EquipmentState migrate_equipment(std::span<const std::string>) const {return {};}
     [[nodiscard]] virtual EquipmentInfo equipment_info(std::string_view) const {return {};}
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
     // False means this module's supported advancement ceiling was reached.

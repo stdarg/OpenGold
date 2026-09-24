@@ -133,3 +133,9 @@ tooltip_text = "Increase battlefield zoom by 10 percentage points"
 [node name="ZoomIn100" type="Button" parent="."]
 text = "+100%"
 tooltip_text = "Increase battlefield zoom by 100 percentage points"
+
+[node name="GripLabel" type="Label" parent="."]
+text = "Grip"
+
+[node name="Grip" type="OptionButton" parent="."]
+focus_mode = 2

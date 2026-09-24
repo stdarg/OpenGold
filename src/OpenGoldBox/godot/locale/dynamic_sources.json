@@ -81,5 +81,6 @@
   "success",
   "failure",
   "blindness",
-  "Blindness training"
+  "Blindness training",
+  "This grip is incompatible with the equipped weapon or shield."
 ]

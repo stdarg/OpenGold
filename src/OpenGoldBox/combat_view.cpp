@@ -1,6 +1,8 @@
 #include "godot_images.h"
 #include "application_settings.h"
 #include "localization.h"
+#include "grip_control.h"
+#include <godot_cpp/classes/popup_menu.hpp>
 #include "game_resources.h"
 #include "combat_view.h"
 #include "combat_sprite_layout.h"
@@ -141,6 +143,7 @@ void CombatView::_ready()
     get_node<Button>("Move")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String("move")));
     get_node<Button>("SpellSlot")->connect("pressed",callable_mp(this,&CombatView::spell_slot));
     get_node<Button>("SecondWind")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("second_wind")));
+    get_node<OptionButton>("Grip")->connect("item_selected",callable_mp(this,&CombatView::grip_selected));
     get_node<Button>("End")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("end")));
     get_node<Button>("React")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("opportunity")));
     get_node<Button>("Decline")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("decline")));
@@ -217,7 +220,7 @@ void CombatView::layout()
     place("Help",Rect2(right,700,sidebar,height-746));
     place("Log",Rect2(24,board_rect_.get_end().y+16,left_width,height-board_rect_.get_end().y-64));
     bool party_controls=false;
-    if(campaign_&&demo_&&demo_->has_combat()){
+    if(demo_&&demo_->has_combat()){
         const auto state=demo_->combat().snapshot();
         party_controls=state.outcome==Outcome::ongoing&&std::any_of(state.combatants.begin(),state.combatants.end(),
             [&](const auto& actor){return actor.id==state.actor&&actor.side==0;});
@@ -228,12 +231,15 @@ void CombatView::layout()
 }
 void CombatView::layout_reaction_controls(bool show_controls)
 {
-    if(!campaign_)return;
     const double top=board_rect_.get_end().y+16;
     const double inset=show_controls?44:0;
     auto* log=get_node<RichTextLabel>("Log");
     log->set_position(Vector2(24,top+inset));
     log->set_size(Vector2(board_rect_.size.x,std::max(0.0,get_size().y-board_rect_.get_end().y-64-inset)));
+    get_node<Label>("GripLabel")->set_position(Vector2(392,top));
+    get_node<Label>("GripLabel")->set_size(Vector2(50,36));
+    get_node<OptionButton>("Grip")->set_position(Vector2(448,top));
+    get_node<OptionButton>("Grip")->set_size(Vector2(244,36));
     const double button_width=174;
     get_node<Button>("React")->set_position(Vector2(24,top));
     get_node<Button>("React")->set_size(Vector2(button_width,36));
@@ -358,6 +364,14 @@ void CombatView::select_mode(String verb)
 {
     error_.clear();mode_=spell_verb(verb.utf8().get_data(),spell_slot_);if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
 }
+void CombatView::grip_selected(std::int64_t index)
+{
+    auto* grip=get_node<OptionButton>("Grip");
+    if(index<0||index>=grip->get_item_count())return;
+    const auto hands=grip->get_item_id(index);
+    if(hands==1||hands==2)immediate(hands==1?"grip_one":"grip_two");
+    refresh();
+}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::adjust_zoom(int percentage_points)
 {
@@ -449,13 +463,14 @@ void CombatView::_input(const Ref<InputEvent>& event)
 {
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
         if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
             move_selected(*direction);get_viewport()->set_input_as_handled();return;
         }
         if(key->get_keycode()==Key::KEY_A){
             std::vector<std::string> actions;
-            for(const auto& command:demo_->combat().legal_commands())if(command.verb!="end"&&std::find(actions.begin(),actions.end(),command.verb)==actions.end())actions.push_back(command.verb);
+            for(const auto& command:demo_->combat().legal_commands())if(command.verb!="end"&&command.verb!="grip_one"&&command.verb!="grip_two"&&std::find(actions.begin(),actions.end(),command.verb)==actions.end())actions.push_back(command.verb);
             if(!actions.empty()){
                 const auto current=std::find(actions.begin(),actions.end(),mode_);
                 mode_=actions[current==actions.end()?0:(std::size_t(current-actions.begin())+1)%actions.size()];refresh();
@@ -619,7 +634,7 @@ void CombatView::refresh()
     get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,5>{{{"Move","move"},{"End","end"},{"SecondWind","second_wind"},{"React","opportunity"},{"Decline","decline"}}})
         get_node<Button>(node)->set_disabled(!enabled(verb));
-    if(campaign_){
+    {
         const bool party_turn=loaded&&s.outcome==Outcome::ongoing&&player;
         const bool reaction=loaded&&s.outcome==Outcome::ongoing&&s.reaction_pending&&player;
         layout_reaction_controls(party_turn);
@@ -627,6 +642,10 @@ void CombatView::refresh()
         get_node<Button>("React")->set_visible(reaction);
         get_node<Button>("Decline")->set_visible(reaction);
     }
+    const auto grip_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
+    const bool show_grip=player&&grip_actor!=s.combatants.end()&&!grip_actor->grips.empty();
+    get_node<Label>("GripLabel")->set_visible(show_grip);get_node<OptionButton>("Grip")->set_visible(show_grip);
+    if(show_grip)presentation::refresh_grip(*get_node<OptionButton>("Grip"),grip_actor->equipment,grip_actor->grips);
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());
     get_node<Button>("Save")->set_disabled(!loaded||demo_->is_slums());get_node<Button>("Load")->set_disabled(!loaded||demo_->is_slums());
     get_node<Button>("Revisit")->set_disabled(!loaded||!demo_->script_complete()||s.outcome!=Outcome::victory);

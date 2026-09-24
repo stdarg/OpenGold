@@ -2,6 +2,7 @@
 #include "godot_nodes.h"
 #include "application_settings.h"
 #include "localization.h"
+#include "grip_control.h"
 #include "game_resources.h"
 #include "rolf_tour_view.h"
 #include "opengold/srd5.h"
@@ -65,6 +66,7 @@ void RolfTourView::_ready()
     for(unsigned slot=0;slot<8;++slot){auto* member=get_node<Button>(String("PartyList/Rows/Member")+String::num_uint64(slot));member->connect("pressed",callable_mp(this,&RolfTourView::party_selected).bind(slot));
         auto arrow=presentation::make_node<Button>();arrow->set_name("Advance");arrow->set_text(String::utf8("↑"));arrow->set_size(Vector2(30,26));arrow->set_tooltip_text(i18n::text(N_("Level up")));
         arrow->connect("pressed",callable_mp(this,&RolfTourView::level_up_requested).bind(slot));presentation::attach_child(*member,std::move(arrow));}
+    get_node<OptionButton>("InventoryPanel/Grip")->connect("item_selected",callable_mp(this,&RolfTourView::grip_selected));
     get_node<ItemList>("InventoryPanel/Items")->connect("item_selected",callable_mp(this,&RolfTourView::inventory_selected));
     get_node<Button>("InventoryPanel/Equip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(true));
     get_node<Button>("InventoryPanel/Unequip")->connect("pressed",callable_mp(this,&RolfTourView::equip_item).bind(false));
@@ -141,11 +143,13 @@ void RolfTourView::layout()
     place("InventoryPanel",Rect2(margin+40,90,width-2*margin-80,height-160));
     auto* inventory_panel=get_node<Control>("InventoryPanel");
     get_node<Control>("InventoryPanel/Items")->set_position(Vector2(20,70));
-    get_node<Control>("InventoryPanel/Items")->set_size(inventory_panel->get_size()-Vector2(40,210));
+    get_node<Control>("InventoryPanel/Items")->set_size(inventory_panel->get_size()-Vector2(40,254));
     get_node<Control>("InventoryPanel/Close")->set_position(Vector2(20,inventory_panel->get_size().y-54));
     get_node<Control>("InventoryPanel/Close")->set_size(Vector2(180,36));
     const auto iw=inventory_panel->get_size().x,ih=inventory_panel->get_size().y;
     get_node<Control>("InventoryPanel/Header")->set_position(Vector2(20,18));get_node<Control>("InventoryPanel/Header")->set_size(Vector2(iw-40,44));
+    place("InventoryPanel/GripLabel",Rect2(20,ih-180,64,36));
+    place("InventoryPanel/Grip",Rect2(90,ih-180,280,36));
     get_node<Control>("InventoryPanel/Status")->set_position(Vector2(20,ih-132));get_node<Control>("InventoryPanel/Status")->set_size(Vector2(iw-40,68));
     get_node<Control>("InventoryPanel/Equip")->set_position(Vector2(220,ih-54));get_node<Control>("InventoryPanel/Equip")->set_size(Vector2(150,36));
     get_node<Control>("InventoryPanel/Unequip")->set_position(Vector2(390,ih-54));get_node<Control>("InventoryPanel/Unequip")->set_size(Vector2(150,36));
@@ -211,8 +215,11 @@ void RolfTourView::inventory()
 void RolfTourView::refresh_inventory()
 {
     auto* items=get_node<ItemList>("InventoryPanel/Items");items->clear();
+    presentation::refresh_grip(*get_node<OptionButton>("InventoryPanel/Grip"),{},{});
     if(!campaign_||!campaign_->selected())return;
     const auto& m=campaign_->member(campaign_->selected());
+    const auto profile=campaign_->profile(m.id);
+    presentation::refresh_grip(*get_node<OptionButton>("InventoryPanel/Grip"),profile.equipment,profile.grips);
     get_node<Label>("InventoryPanel/Header")->set_text(i18n::format("{name} / {class} / {gold} gp",{{"name",String::utf8(m.character.sheet().name.c_str())},{"class",i18n::text(m.character.sheet().character_class)},{"gold",m.wealth[3]}}));
     for(const auto& item:m.character.inventory().items())items->add_item((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?i18n::text("Equipped / "):String())+i18n::format("{item} x{quantity}",{{"item",i18n::text(item.name)},{"quantity",item.quantity}}));
     if(items->get_item_count())items->select(0);
@@ -227,6 +234,19 @@ void RolfTourView::inventory_selected(std::int64_t index)
     if(index<0||static_cast<std::size_t>(index)>=items.size())return;
     try{get_node<Label>("InventoryPanel/Status")->set_text(i18n::text(opengold::srd5::equipment_note(m.character.sheet(),items[index].definition_id)));}
     catch(const std::exception& e){get_node<Label>("InventoryPanel/Status")->set_text(i18n::text(e.what()));}
+}
+void RolfTourView::grip_selected(std::int64_t index)
+{
+    const auto selection=get_node<ItemList>("InventoryPanel/Items")->get_selected_items();
+    String error;
+    try{
+        auto* grip=get_node<OptionButton>("InventoryPanel/Grip");
+        if(index<0||index>=grip->get_item_count())return;
+        campaign_->set_grip(campaign_->selected(),grip->get_item_id(index));
+    }catch(const std::exception& e){error=i18n::text(e.what());}
+    refresh_inventory();
+    if(!selection.is_empty()){get_node<ItemList>("InventoryPanel/Items")->select(selection[0]);inventory_selected(selection[0]);}
+    if(!error.is_empty())get_node<Label>("InventoryPanel/Status")->set_text(error);
 }
 void RolfTourView::equip_item(bool equip)
 {
@@ -565,6 +585,16 @@ void RolfTourView::check_town()
         campaign_->restore(changed);refresh_inventory();get_node<ItemList>("InventoryPanel/Items")->select(0);
         get_node<Button>("InventoryPanel/Equip")->emit_signal("pressed");
         if(!get_node<Label>("InventoryPanel/Status")->get_text().contains("Untrained shield: no AC bonus"))throw std::runtime_error("Equip must display the untrained penalty");
+        auto grip_fixture=retained;auto& wielder=grip_fixture.roster.at(0);
+        const auto staff=wielder.character.inventory().add("quarterstaff","Quarterstaff",1);
+        wielder.equipped.push_back(staff);campaign_->restore(grip_fixture);refresh_inventory();
+        auto* grip=get_node<OptionButton>("InventoryPanel/Grip");
+        if(grip->get_item_count()!=2||!grip->is_item_disabled(1))throw std::runtime_error("Town inventory must disable two hands with a shield");
+        get_node<ItemList>("InventoryPanel/Items")->select(0);get_node<Button>("InventoryPanel/Unequip")->emit_signal("pressed");
+        grip->emit_signal("item_selected",1);
+        if(campaign_->profile(id).equipment.weapon_hands!=2||grip->get_selected_id()!=2)throw std::runtime_error("Town inventory did not apply two hands");
+        grip->emit_signal("item_selected",0);
+        if(campaign_->profile(id).equipment.weapon_hands!=1)throw std::runtime_error("Town inventory did not apply one hand");
         campaign_->restore(retained);refresh_inventory();
         capture_frame("phlan-inventory");
         get_node<Button>("InventoryPanel/Close")->emit_signal("pressed");

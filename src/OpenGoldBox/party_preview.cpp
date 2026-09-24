@@ -1,6 +1,7 @@
 #include "godot_images.h"
 #include "godot_nodes.h"
 #include "localization.h"
+#include "grip_control.h"
 #include "game_resources.h"
 #include "character_creation_view.h"
 #include "combat_view.h"
@@ -68,6 +69,7 @@ void CharacterCreationView::setup_party()
     campaign_=std::make_shared<CampaignParty>(srd5::load(pack));
     auto panel=presentation::instantiate_scene("res://scenes/party_panel.tscn");i18n::prepare_ui(*panel);presentation::attach_child(*this,std::move(panel));
     get_node<Control>("PartyPanel")->hide();
+    get_node<OptionButton>("PartyPanel/Grip")->connect("item_selected",callable_mp(this,&CharacterCreationView::party_grip_selected));
     get_node<Button>("Party")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(0));
     get_node<Button>("AddParty")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(1));
     get_node<Button>("ReturnParty")->connect("pressed",callable_mp(this,&CharacterCreationView::party_action).bind(9));
@@ -104,7 +106,9 @@ void CharacterCreationView::party_layout()
     place("PartyPanel/ActionSprite",Rect2(w-140,364,120,120));
     place("PartyPanel/ReadyLabel",Rect2(w-284,488,120,24));
     place("PartyPanel/ActionLabel",Rect2(w-140,488,120,24));
-    place("PartyPanel/Inventory",Rect2(350,h-280,w-374,140));
+    place("PartyPanel/Inventory",Rect2(350,h-280,w-374,96));
+    place("PartyPanel/GripLabel",Rect2(350,h-176,64,36));
+    place("PartyPanel/Grip",Rect2(420,h-176,280,36));
     const std::array<const char*,9> buttons{"Create","Remove","Rejoin","Recruit","Equip","Unequip","Explore","Combat","Close"};
     const double bw=(w-64)/5;
     for(unsigned i=0;i<buttons.size();++i)place((std::string("PartyPanel/")+buttons[i]).c_str(),Rect2(24+(i%5)*(bw+4),h-125+(i/5)*44,bw,36));
@@ -123,6 +127,17 @@ void CharacterCreationView::party_selected(std::int64_t index)
     for(unsigned slot=0;slot<8;++slot)if(campaign_->state().slots[slot]==id)campaign_->select(slot);
     refresh_party();
 }
+void CharacterCreationView::party_grip_selected(std::int64_t index)
+{
+    const auto selection=get_node<ItemList>("PartyPanel/Inventory")->get_selected_items();
+    try{
+        auto* grip=get_node<OptionButton>("PartyPanel/Grip");
+        if(index<0||index>=grip->get_item_count())return;
+        campaign_->set_grip(campaign_->state().roster.at(roster_index_).id,grip->get_item_id(index));error_=String();
+    }catch(const std::exception& e){error_=i18n::text(e.what());}
+    refresh_party();
+    if(!selection.is_empty())get_node<ItemList>("PartyPanel/Inventory")->select(selection[0]);
+}
 void CharacterCreationView::refresh_party()
 {
     auto* list=get_node<ItemList>("PartyPanel/Roster");list->clear();
@@ -133,10 +148,13 @@ void CharacterCreationView::refresh_party()
     }
     auto* items=get_node<ItemList>("PartyPanel/Inventory");items->clear();
     std::string sheet=i18n::utf8("Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster.");
+    presentation::refresh_grip(*get_node<OptionButton>("PartyPanel/Grip"),{},{});
     if(!state.roster.empty()){
         roster_index_=std::min(roster_index_,state.roster.size()-1);list->select(roster_index_);
         const auto& m=state.roster[roster_index_];
         sheet=sheet_text(m.character,&m).utf8().get_data();
+        const auto profile=campaign_->profile(m.id);
+        presentation::refresh_grip(*get_node<OptionButton>("PartyPanel/Grip"),profile.equipment,profile.grips);
         for(const auto& item:m.character.inventory().items())items->add_item((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?i18n::text("Equipped / "):String())+i18n::format("{item} x{quantity}",{{"item",i18n::text(item.name)},{"quantity",item.quantity}}));
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         const auto resolved=por::resolve_combat_appearance(m,*body_catalog_);
@@ -198,7 +216,19 @@ void CharacterCreationView::equipment_art_check()
         if(step<5){const auto name="equipment-art-"+std::string(member?"npc":"pc")+"-"+std::to_string(step)+".png";capture(name.c_str());}
         switch(step){
         case 0:gear(0,true);break;
-        case 1:gear(2,true);break;
+        case 1:{
+            auto* grip=get_node<OptionButton>("PartyPanel/Grip");
+            const auto id=campaign_->state().roster.at(member).id;
+            require(grip->get_item_count()==2&&grip->get_selected_id()==1,"Party inventory offers both longsword grips");
+            grip->emit_signal("item_selected",1);
+            require(campaign_->profile(id).equipment.weapon_hands==2&&grip->get_selected_id()==2,"Party dropdown applies two hands");
+            grip->emit_signal("item_selected",0);
+            require(campaign_->profile(id).equipment.weapon_hands==1,"Party dropdown applies one hand");
+            gear(2,true);require(grip->is_item_disabled(1),"Equipped shield disables two hands in party inventory");
+            const auto profile=campaign_->profile(id).data;grip->emit_signal("item_selected",1);
+            require(campaign_->profile(id).data==profile&&grip->get_selected_id()==1,"Rejected party grip restores displayed selection");
+            error_=String();refresh_party();break;
+        }
         case 2:gear(0,false);break;
         case 3:gear(1,true);break;
         case 4:gear(2,false);break;

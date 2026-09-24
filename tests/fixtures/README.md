@@ -42,3 +42,16 @@ original writer bytes, including trailing spaces. They contain no original asset
   after guards 4 and 2 take their opportunity attacks. Both miss, movement
   finishes at (1,2), and 25 feet remain. New rules must match all actor, log,
   RNG, clock and resource fields after applying the same commands.
+
+## Versatile grip migration
+
+`campaign-v6-grips.ogs` and `combat-v7-grips.save` were written by the **0.6.6**
+libraries built from commit `5daabbb`, using that commit's headers. Do not
+regenerate them with the current writer. They contain no original assets.
+Members 1–7 carry Quarterstaff, Spear, Battleaxe, Trident, Longsword, Warhammer
+and War Pick respectively; member 7 is a recruited NPC. The old hand use is
+two, two, two, two, one, one, one. Member 1 is wounded at 5 HP with one Second
+Wind remaining. The combat seed is 42 and Battleaxe wielder 3 acts first.
+The campaign asset identity is `grip-fixture`. Migration preserves hand use,
+wounds and recovery, introduces the corrected two-handed melee dice, and
+retains deterministic subsequent saves and combat commands.

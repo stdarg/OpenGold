@@ -19,6 +19,7 @@ struct PartyMember {
     unsigned last_rest_subminute_milliseconds{};
     std::map<std::uint64_t,por::Equipment> item_sources;
     std::string creation_source; // Stable pool candidate identity, empty for authored PCs.
+    rules::EquipmentState equipment;
 };
 struct PartyState {
     std::vector<PartyMember> roster;
@@ -45,6 +46,7 @@ public:
     void remove(MemberId id);
     void equip(MemberId id,std::uint64_t item);
     void unequip(MemberId id,std::uint64_t item);
+    void set_grip(MemberId id,unsigned hands);
     [[nodiscard]] rules::EquipmentInfo equipment_info(MemberId id,std::uint64_t item) const;
     void purchase(MemberId id,const por::Equipment& item);
     void set_wealth(MemberId id,std::array<std::uint16_t,7> wealth);

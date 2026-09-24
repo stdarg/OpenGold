@@ -47,7 +47,7 @@ func run_checks() -> void:
         await settle()
         require(blindness.get_global_rect().end.x <= size.x, "Blindness stays inside window")
         require(not blindness.get_global_rect().intersects(combat.get_node("SpellSlot").get_global_rect()), "Spell buttons do not overlap")
-        require(not combat.get_node("End").get_global_rect().intersects(combat.get_node("React").get_global_rect()), "Action grid does not overlap reactions")
+        require(not (combat.get_node("End").visible and combat.get_node("React").visible and combat.get_node("End").get_global_rect().intersects(combat.get_node("React").get_global_rect())), "Visible turn and reaction controls do not overlap")
     blindness.emit_signal("pressed")
     require(combat.get_node("Prompt").text.contains("Blindness"), "Selecting spell changes targeting mode")
     var canvas: Control = combat.get_node("BattlefieldScroll/Canvas")

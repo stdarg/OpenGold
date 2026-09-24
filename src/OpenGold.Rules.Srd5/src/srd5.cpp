@@ -63,7 +63,23 @@ struct Definition {
     int range{}, long_range{}, winds{}, slots{}, casting{}, level{}, spells{},slots2{};
     bool str_dex_disadvantage{},savage{};
     std::array<int,6> saves{};
+    unsigned weapon_hands{};
+    int versatile_sides{};
+    bool shield{};
 };
+bool legacy_two_hands(std::string_view key)
+{return key=="quarterstaff"||key=="spear"||key=="battleaxe"||key=="trident";}
+std::vector<GripOption> grip_options(const Definition& d)
+{
+    if(!d.versatile_sides)return {};
+    return {{1,{"One hand — {dice}",{{"dice","1d"+std::to_string(d.melee.sides)}}},true},
+        {2,{"Two hands — {dice}",{{"dice","1d"+std::to_string(d.versatile_sides)}}},!d.shield}};
+}
+void validate_grip(const Definition& d,unsigned hands)
+{
+    if(d.versatile_sides?(hands!=1&&hands!=2)||(hands==2&&d.shield):hands!=d.weapon_hands)
+        throw std::runtime_error("This grip is incompatible with the equipped weapon or shield.");
+}
 struct CombatDisplay {const char* type;const char* melee;const char* ranged;};
 CombatDisplay combat_display(std::string_view definition)
 {
@@ -85,6 +101,7 @@ struct Actor {
     int hp{}, initiative{}, movement{}, winds{}, slots{}, successes{}, failures{},slots2{};
     bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{}, stable{}, dead{};
     bool spent_slot{},savage_used{},facing_left{};
+    unsigned weapon_hands{};
     bool involuntary_overlap{}; // Interrupted on an ally; retained through recovery until separated.
     detail::EffectState effects;
 };
@@ -109,7 +126,7 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool selected=magic=="PC3"||magic=="PC4";
+    const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5";
     if(magic=="PC2"||selected)in>>level;
     if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
@@ -120,7 +137,7 @@ Definition character_definition(std::string_view bytes)
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
     std::vector<int> hp_modifiers(level,con);
-    if(magic=="PC4")for(auto& modifier:hp_modifiers)in>>modifier;
+    if(magic=="PC4"||magic=="PC5")for(auto& modifier:hp_modifiers)in>>modifier;
     in>>count;
     if(!in||count>3||hp_modifiers.back()!=con||((features&1)&&hp_modifiers.front()!=con))
         throw std::runtime_error("Invalid character HP history or equipment count");
@@ -144,7 +161,8 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(const auto* item=detail::weapon(key)){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
-            hands+=item->hands;
+            d.weapon_hands=magic!="PC5"&&legacy_two_hands(key)?2:item->hands;
+            d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
             if(item->dice&&!item->ranged){d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.reach=item->reach;}
@@ -157,6 +175,12 @@ Definition character_definition(std::string_view bytes)
         }else if(key=="shield"){
             if(shield)throw std::runtime_error("Only one shield may be equipped");shield=true;++hands;
         }else throw std::runtime_error("Unsupported equipment conversion: "+key);
+    }
+    d.shield=shield;
+    if(magic=="PC5"){
+        unsigned requested{};in>>requested;
+        if(!in)throw std::runtime_error("Invalid character grip");
+        if(requested){validate_grip(d,requested);hands=hands-d.weapon_hands+requested;d.weapon_hands=requested;}
     }
     if(hands>2)throw std::runtime_error("Not enough free hands. Unequip the shield or two-handed weapon first.");
     if(!armor&&klass=="Barbarian")d.ac=std::max(d.ac,10+dex+con);
@@ -219,7 +243,7 @@ public:
                 throw std::runtime_error("Invalid participant or unsupported rules definition: "+p.definition);
             sides.insert(p.side);
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
-            Actor a; a.definition=d;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;
+            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;
             a.facing_left=a.source.facing_left;
             if(a.source.state)restore_vitals(a,*a.source.state);
             a.initiative=roll(20);if(d.str_dex_disadvantage||a.source.surprised)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
@@ -332,6 +356,7 @@ Snapshot Session::snapshot() const
         if(display.melee)view.melee_weapon=display.melee;
         if(display.ranged)view.ranged_weapon=display.ranged;
         view.ranged_attack_available=def(a).range>0;
+        view.equipment={a.weapon_hands};view.grips=grip_options(def(a));
         auto& messages=s.combatants.back().status_messages;
         messages.push_back({a.dead?"Dead":a.hp==0?(a.stable?"Stable, unconscious":"Unconscious"):a.dodge?"Dodging":"Ready",{}});
         if(def(a).slots)messages.push_back({"Spell slots: {count}",{{"count",std::to_string(a.slots)}}});
@@ -350,12 +375,18 @@ std::vector<Command> Session::legal_commands() const
     const auto add=[&](EntityId who,std::string verb,std::string label,EntityId target=0,Cell destination=Cell{}) {
         commands.push_back({revision_,who,target,std::move(verb),std::move(label),destination});
     };
+    const auto add_grips=[&](const Actor& a){
+        for(const auto& option:grip_options(def(a)))if(option.available&&option.hands!=a.weapon_hands)
+            add(a.source.id,option.hands==1?"grip_one":"grip_two",option.hands==1?"One hand":"Two hands");
+    };
     if(pending()) {
+        const auto reactor=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==pending();});
+        add_grips(*reactor);
         add(pending(),"opportunity","Opportunity attack",actors_[turn_].source.id);
         add(pending(),"decline","Decline reaction");return commands;
     }
     const auto& a=actors_[turn_];if(a.hp<=0)return commands;const auto& d=def(a);const auto id=a.source.id;
-    add(id,"end","End turn");
+    add(id,"end","End turn");add_grips(a);
     if(a.bonus&&a.winds>0&&a.hp<d.hp)add(id,"second_wind","Second Wind",id);
     const auto spell=[&](const char* verb,const char* label,EntityId target){
         if(a.spent_slot)return;
@@ -435,7 +466,8 @@ void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
     std::vector<MessageArgument> arguments{{"actor",a.source.name},{"target",target.source.name},{"roll",std::to_string(natural)},
         {"bonus",std::to_string(bonus)},{"ac",std::to_string(def(target).ac)},{"disadvantage",modifier_label,true}};
     if(!hit){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});return;}
-    const Dice damage_dice=spell?spell_dice:ranged?d.ranged:d.melee;
+    Dice damage_dice=spell?spell_dice:ranged?d.ranged:d.melee;
+    if(!spell&&!ranged&&d.versatile_sides&&a.weapon_hands==2)damage_dice.sides=d.versatile_sides;
     int amount=dice(damage_dice,natural==20);
     bool savage=false;
     if(!spell&&damage_dice.count&&d.savage&&!a.savage_used){amount=std::max(amount,dice(damage_dice,natural==20));a.savage_used=true;savage=true;message+=" (Savage Attacker)";}
@@ -557,7 +589,9 @@ bool Session::submit(const Command& command)
     }
     const bool second=command.verb.ends_with("_2");
     const auto spend=[&]{if(second||command.verb=="scorching_ray"||command.verb=="blindness")--a.slots2;else --a.slots;a.spent_slot=true;};
-    if(command.verb=="opportunity"||command.verb=="decline") {
+    if(command.verb=="grip_one"||command.verb=="grip_two") {
+        a.weapon_hands=command.verb=="grip_one"?1:2;
+    } else if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
         ++reactor_index_;update_outcome();
         if(outcome_==Outcome::ongoing){
@@ -604,12 +638,12 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 7 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 8 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<'\n';
+        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<'\n';
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
@@ -632,11 +666,14 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if (version >= 3) input >> actor.slots2 >> actor.spent_slot >> actor.savage_used;
     if (version >= 5) input >> actor.facing_left;
     if (version >= 7) input >> actor.involuntary_overlap;
+    if (version >= 8) input >> actor.weapon_hands;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
+    if(version<8)actor.weapon_hands=definition.weapon_hands;
+    validate_grip(definition,actor.weapon_hands);
     if (actor.hp < 0 || actor.hp > definition.hp || (actor.dead && actor.hp > 0) ||
         // Dash spends the action before adding a second movement allowance.
         // Accepting both extra movement and an unused action lets a later Dash
@@ -797,8 +834,8 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5"))&&compatible_identity==content->identity;
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 7 ||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6"))&&compatible_identity==content->identity;
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 8 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -856,11 +893,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1012,7 +1049,11 @@ public:
         if(key=="leather"||key=="chain_mail")return {EquipmentSlot::armor,0};
         return {};
     }
-    CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear) const override {
+    EquipmentState migrate_equipment(std::span<const std::string> gear) const override {
+        for(const auto& key:gear)if(legacy_two_hands(key))return {2};
+        return {};
+    }
+    CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState equipment={}) const override {
         if(sheet.identity!=character_rules()->identity()||sheet.level<1||sheet.level>4)throw std::runtime_error("Unsupported character rules identity or level");
         unsigned features=sheet.background=="Soldier"?2:0;
         if(sheet.feats.size()!=(sheet.level==4?1u:0u))throw std::runtime_error("Invalid advancement feat count");
@@ -1036,14 +1077,21 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC4 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC5 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
+        out<<' '<<equipment.weapon_hands;
         const auto data=out.str();const auto d=character_definition(data);
         if(d.hp!=sheet.hit_points)throw std::runtime_error("Character HP does not match rules profile");
         CharacterProfile result{data,d.hp,d.ac,"Level 1-4 subset: HP, selected feats, supported prepared spells and level-one/two slots. Additional class/subclass and species features remain unavailable.",d.speed,d.melee_bonus};
         result.strength_dexterity_disadvantage=d.str_dex_disadvantage;
+        result.equipment={d.weapon_hands};result.grips=grip_options(d);
+        if(d.versatile_sides){
+            const auto sides=d.weapon_hands==2?d.versatile_sides:d.melee.sides;
+            result.item_messages.push_back({"Weapon grip: {hands} hands; melee damage 1d{sides} + ability modifier.",{{"hands",std::to_string(d.weapon_hands)},{"sides",std::to_string(sides)}}});
+            result.item_modifiers+="Weapon grip: "+std::to_string(d.weapon_hands)+" hands; melee damage 1d"+std::to_string(sides)+" + ability modifier.\n";
+        }
         for(const auto& key:gear){
             if(key=="shield")result.item_modifiers+=trained(sheet.character_class,key)?"Source: equipped Shield: +2 AC.\n":"Source: equipped Shield: +0 AC (untrained).\n";
             else if(key=="leather")result.item_modifiers+="Source: equipped Leather armor and Dexterity score "+std::to_string(sheet.scores[1])+". AC becomes 11 + Dexterity modifier ("+std::to_string(sheet.modifiers[1])+").\n";
@@ -1102,7 +1150,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.6",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.7",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

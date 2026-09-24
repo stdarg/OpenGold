@@ -76,6 +76,7 @@ private:
     void center_on(opengold::rules::Cell cell);
     std::optional<std::pair<opengold::rules::EntityId,opengold::rules::Cell>> followed_;
     bool panning_{},check_target_centered_{};
+    void grip_selected(std::int64_t index);
     void layout();void layout_status();void layout_reaction_controls(bool reaction);void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void select_party(opengold::rules::EntityId id);

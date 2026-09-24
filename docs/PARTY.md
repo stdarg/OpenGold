@@ -85,7 +85,7 @@ unavailable. Only Fighter, Cleric, and Wizard can advance beyond level one.
   modeled. Ability modifiers, proficiency, AC, maximum HP and movement come from
   SRD calculations. Dwarven starting HP and Goliath speed are included.
 - Other class/species/background features, skills, origin feats, lineage and
-  spell selection, components, weapon mastery, versatile two-handed attacks,
+  spell selection, components, weapon mastery,
   size-specific movement and expanded spells remain unimplemented. The displayed
   combat subset is not a complete SRD character implementation.
 
@@ -112,10 +112,18 @@ Legacy names absent from SRD 5.2.1 use these explicit SRD equivalents:
 | 50 / 55 / 59 | leather / chain_mail / shield |
 
 Damage dice, finesse, thrown/ranged distances, reach and mandatory two-hand
-requirements follow the SRD weapon table, except that OpenGoldBox battle axes,
-spears, quarterstaffs (including Bo Stick and Jo Stick), and tridents require
-two hands. Versatile weapons use their one-handed
-damage profile. All starting classes are proficient with simple weapons;
+requirements follow the SRD weapon table. The Grip dropdown below each game
+inventory list and beside combat turn/reaction controls selects one or two hands.
+Quarterstaff (including Bo Stick and Jo Stick) and Spear use 1d6/1d8;
+Battleaxe, Longsword, Trident, Warhammer and War Pick use 1d8/1d10.
+The alternate die applies only to two-handed melee, including critical hits and
+opportunity attacks. Thrown attacks always use the base die. A shield disables
+two-handed use. Grip changes use no turn resource, roll or game time; changes
+in combat are available on the wielder's turn or during their pending reaction.
+Newly equipped weapons start with their minimum hand requirement. Replacing or
+removing the weapon clears its previous choice. Existing original artwork is
+selected by weapon/shield combination and does not add new grip-specific poses.
+All starting classes are proficient with simple weapons;
 Barbarian, Fighter, Paladin and Ranger are proficient with all martial weapons.
 Rogue is proficient with martial weapons that have Finesse or Light; Monk is
 proficient with martial weapons that have Light. Shortsword and Scimitar therefore
@@ -123,7 +131,7 @@ include their proficiency bonus for both classes. The catalog records Light
 for proficiency; its extra-attack mechanics remain unimplemented. Optional
 feature-granted and multiclass-entry training remain separate work.
 Weapon mastery, ammunition consumption/recovery,
-versatile two-handed selection and charged magical wand effects are not added
+and charged magical wand effects are not added
 by this change. Bows and a plain focus retain unarmed melee; ranged weapons
 provide actual ranged combat commands. Enchanted/effect-bearing original items
 still require a supported conversion rather than silently receiving plain stats.
@@ -131,14 +139,17 @@ still require a supported conversion rather than silently receiving plain stats.
 Equipment metadata comes from the rules module, not from the original edition's
 `ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
 two-handed weapon/shield combination leaves the previous loadout untouched.
-Rules version 0.6.6 includes the Rogue/Monk weapon proficiency, death-save,
+Rules version 0.6.7 includes the Rogue/Monk weapon proficiency, death-save,
 Constitution/HP-history, remaining-turn-resource and opportunity-trigger corrections,
-plus allied transit, and accepts 0.6.5 and earlier supported
+plus allied transit and Versatile grip, and accepts 0.6.6 and earlier supported
 campaign saves. HP migration preserves living deficits and unconscious/dead state.
 It recomputes weapon bonuses from saved
 class/equipment choices and retains the conversion of previously unsupported
-ordinary weapons with verified original provenance. Standalone combat
-checkpoints from modules 0.6.4/0.6.5 migrate with identical content, canceling only obsolete
+ordinary weapons with verified original provenance. Campaign format 7 and combat
+format 8 retain grip independently of HP/resources. Older saves keep the prior
+two-handed use of Battleaxe/Spear/Quarterstaff/Trident, now with corrected damage;
+other Versatile weapons remain one-handed until changed. Standalone combat
+checkpoints from modules 0.6.4/0.6.5/0.6.6 migrate with identical content, canceling only obsolete
 facing reactions; see [combat persistence](RULES.md#library-boundary). Other older
 combat versions require finishing the combat and saving the campaign before upgrading.
 
