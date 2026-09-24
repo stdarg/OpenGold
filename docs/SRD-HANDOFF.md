@@ -8,22 +8,22 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Active increment: [Bard instruments #214](https://github.com/stdarg/OpenGold/issues/214),
-child of #125. Source and completion checklist: [BARD-INSTRUMENTS.md](BARD-INSTRUMENTS.md).
-Prior-writer preparation is complete: actual rules 0.6.30 / PC19 campaign and
-combat fixtures cover four backgrounds, recorded skills/languages, wounds and
-resource state. `bard_instrument_prior_writer()` passes exact continuation checks.
-Production instrument support is not implemented yet. **Next: implement the ten
-instrument catalog, Bard choose-three Training group, sourced grants/checks,
-versioned policy, preset generation and ordinary creation verification.** Reuse
-approved checkbox controls; don't replace missing historical choices with defaults.
-Extend the frozen-fixture test to assert pending Training and safe completion.
+Branch `main`. [Bard instruments #214](https://github.com/stdarg/OpenGold/issues/214)
+is implemented and verified. Bards choose three of all ten SRD instruments through
+Training; presets generate choices, sheets show sources and checks apply the
+existing proficiency/Advantage rules. Old choices remain pending. Rules 0.6.31 /
+PC20 / FX2; campaign 11 / combat 13–15 unchanged. Real prior-writer fixtures stay
+unedited. See [BARD-INSTRUMENTS.md](BARD-INSTRUMENTS.md) for scope and evidence.
+
+**Next: continue class tool training with Monk (#117), splitting/linking a bounded
+child before coding, or resume #80 if Q23 has been answered.** Read the source's
+Artisan's Tools list and Monk entitlement; don't infer its catalog from Bard.
+Reuse approved Training checkbox controls and existing tool grant/check services.
+Capture a real 0.6.31 prior-writer fixture before production changes. Druid's fixed
+Herbalism Kit remains another missing starting tool entitlement (#151).
 
 #213 is closed: all twelve starting class skill lists and valid-selection
-preservation are implemented. See [class skills](CLASS-SKILLS.md). Rules remain
-0.6.30 / PC19 / FX2; campaign 11 / combat 13–15 unchanged. No production files
-changed during #214 baseline preparation. Baseline generator is version guarded;
-do not rerun it with a future writer or edit the fixture bytes.
+preservation are implemented. See [class skills](CLASS-SKILLS.md).
 
 Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
 optional choice per hit. Do not enable either without the answer. The tested
@@ -82,9 +82,12 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#213 verification is recorded in CLASS-SKILLS.md: 41 native/tool regression checks pass,
-including all 144 class-to-class preservation cases. All 16 Godot runtime checks and seven native prerequisites
-pass. All-class Training, Wizard/Cleric creation, main/demo creation and full party
-flows pass. Main/demo builds and 777-message localization validate. English/Spanish
-Bard/Wizard lists inspected at both sizes: `/tmp/opengold-class-skills-renders`.
-No live build/test processes remain. Prior feature evidence stays in its documents.
+#214 verification: 41 native/tool checks and 16 Godot runtime checks (plus seven
+native prerequisites) pass. Final added combat/source-forgery checks pass in the
+training target. Main and demo extensions build; 788 localization messages validate.
+The graphical main Training flow passes, including completed Bard sheet sources.
+English/Spanish controls inspected at both sizes: `/tmp/opengold-bard-main-renders`.
+Logs: `/tmp/opengold-bard-regression.log`, `/tmp/opengold-bard-main-render.log`,
+`/tmp/opengold-bard-final-native.log`. Demo Training reached the translated-label
+assertion because demo has no locale catalog; main graphical/localized run passes.
+No live builds/tests remain. Historical verification stays in feature documents.

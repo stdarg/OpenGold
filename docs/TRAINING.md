@@ -147,3 +147,7 @@ preserves that pool and all prior vital continuation.
 
 Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
 replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).
+
+Bard starting instrument proficiencies use a choose-three group from all ten SRD
+instruments. Presets generate selections; old saves retain pending choices. See
+[Bard instruments](BARD-INSTRUMENTS.md) for sources, versioning and verification.

@@ -20,6 +20,7 @@ template<class Translate> godot::String training_source(std::string_view id,cons
     if(id=="origin:languages")return tr(N_("Starting languages"));
     if(id=="class:fighter:fighting_style")return tr(N_("Fighter Fighting Style"));
     if(id=="class:barbarian")return tr(N_("Barbarian class"));
+    if(id=="class:bard:instruments")return tr(N_("Bard class"));
     if(id=="class:bard")return tr(N_("Bard class"));
     if(id=="class:cleric")return tr(N_("Cleric class"));
     if(id=="class:druid")return tr(N_("Druid class"));

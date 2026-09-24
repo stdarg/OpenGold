@@ -795,3 +795,9 @@ Class skill groups share a continuity key while retaining distinct source IDs.
 Core uses that metadata to carry selections across class changes, then prunes
 options and counts against the new group. Rules remain responsible for lists,
 counts and provenance; Core contains no SRD class-specific transfer logic.
+
+Rules 0.6.31 / PC20 adds Bard instrument choices to the existing rules-owned
+training service. Older recipes retain their original entitlement policy; campaign
+choice maps need no schema change. The shared Training controls render the new
+group and translated tool sources without SRD mechanics in Core or Godot. See
+[Bard instruments](BARD-INSTRUMENTS.md).
