@@ -198,5 +198,6 @@
   "Wizard cantrips",
   "Cleric cantrips",
   "Dexterity save: 1d8 Radiant damage, visible creature within 60 feet.",
-  "Action Surge"
+  "Action Surge",
+  "Ranged spell attack: 1d8 Cold damage, 60 feet; Speed reduced by 10 feet until your next turn."
 ]

@@ -7,7 +7,7 @@ struct SpellComponents {std::string_view id;bool verbal{},somatic{};};
 // SRD 5.2.1 spell descriptions. These spells have no Material component.
 // Component substitution and speech-blocking sources are separate increments.
 inline constexpr std::array spell_component_definitions{
-    SpellComponents{"sacred_flame",true,true},SpellComponents{"fire_bolt",true,true},SpellComponents{"poison_spray",true,true},SpellComponents{"cure_wounds",true,true},
+    SpellComponents{"ray_of_frost",true,true},SpellComponents{"sacred_flame",true,true},SpellComponents{"fire_bolt",true,true},SpellComponents{"poison_spray",true,true},SpellComponents{"cure_wounds",true,true},
     SpellComponents{"magic_missile",true,true},SpellComponents{"healing_word",true,false},
     SpellComponents{"scorching_ray",true,true},SpellComponents{"blindness",true,false}};
 inline const SpellComponents* spell_components(std::string_view command){

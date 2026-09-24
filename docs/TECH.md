@@ -740,3 +740,9 @@ Rules 0.6.22 adds [Poison Spray and explicit Wizard cantrip choices](POISON-SPRA
 with the approved creation and main combat controls. Campaign 11 stores choices;
 PC11 validates their grants. Combat 13 and existing resource formats remain.
 Full spell selection, speech blocking and other granting sources remain open.
+
+Rules 0.6.25 adds [Ray of Frost](RAY-OF-FROST.md) through sourced Wizard access,
+typed attacks and the shared effect/recovery timeline. Nonstacking Speed penalties
+are applied to base movement remaining and recorded Dash allowances, preserving
+movement already spent. FX2 represents effects with no repeat saving throw;
+PC14 and combat 15 validate the new access and movement continuation.

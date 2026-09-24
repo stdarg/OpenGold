@@ -150,3 +150,8 @@ ordering make time partitions deterministic, including death suppressing saves. 
 
 Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
 replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).
+
+Rules 0.6.25 adds sourced Ray of Frost applications in FX2. These have no repeat
+save timer; shared effect and campaign schedulers advance their expiry deadlines
+without consuming RNG. Penalties do not stack; independent sources expire
+separately. See [Ray of Frost](RAY-OF-FROST.md) for movement and persistence tests.

@@ -48,7 +48,7 @@ void access(){auto creation=srd5::character_rules();auto rules=module();auto d=d
     Image body;body.width=88;body.height=48;body.rgba.assign(88*48*4,128);
     art.heads.emplace(1,por::PortraitPart{"fixture",head});art.bodies.emplace(1,por::PortraitPart{"fixture",body});
     unsigned wizards=0;for(const auto& preset:character_pool(*creation,art))if(preset.sheet().character_class=="Wizard"){
-        ++wizards;check(preset.creation_data().cantrips==std::optional{std::vector<std::string>{"fire_bolt","poison_spray"}}&&rules->spell_access(preset.sheet()).cantrips.size()==2,"Preset Wizards arrive with pre-generated available cantrips");
+        ++wizards;check(preset.creation_data().cantrips==std::optional{std::vector<std::string>{"fire_bolt","poison_spray","ray_of_frost"}}&&rules->spell_access(preset.sheet()).cantrips.size()==3,"Preset Wizards arrive with pre-generated available cantrips");
     }check(wizards>0,"Preset Wizard path exercised");
     const auto original=creation->evaluate(d,true);check(rules->spell_access(original).cantrips.size()==1&&rules->spell_access(original).cantrips[0].id=="fire_bolt","Missing draft choices retain legacy Fire Bolt only");
     d.cantrips.emplace();auto sheet=creation->evaluate(d,true);check(rules->spell_access(sheet).cantrips.empty(),"Explicit empty selection remains pending without silently refilling");
@@ -57,7 +57,7 @@ void access(){auto creation=srd5::character_rules();auto rules=module();auto d=d
     for(auto bad:std::vector<std::vector<std::string>>{{"poison_spray","poison_spray"},{"magic_missile"},{"unknown"},{"poison_spray","fire_bolt","fire_bolt","poison_spray"}}){d.cantrips=bad;rejects([&]{(void)creation->evaluate(d,true);});}
     for(const auto& klass:creation->choices(CreationField::character_class))if(klass.id!="wizard"){d=draft();d.character_class=klass.id;d.cantrips=std::vector<std::string>{"poison_spray"};rejects([&]{(void)creation->evaluate(d,true);});}
     for(unsigned level=1;level<=4;++level){auto h=hero(level);auto current=rules->spell_access(h.sheet());check(current.cantrip_choices==(level==4?4u:3u)&&current.cantrips.size()==2&&current.cantrips[1].acquired_level==1,"Advancement retains chosen cantrips, source and correct entitlement");}
-    auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC13 1 0 69 "),"Explicit cantrip mask belongs to new recipe");profile.replace(0,4,"PC10");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
+    auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC14 1 0 69 "),"Explicit cantrip mask belongs to new recipe");profile.replace(0,4,"PC10");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
     auto invalid=hero().sheet();for(auto& g:invalid.grants)if(g.id=="spell:poison_spray")g.source_id="species:tiefling";rejects([&]{(void)rules->character_profile(invalid,{});});
 }
 void rolls(){

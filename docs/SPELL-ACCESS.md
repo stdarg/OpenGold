@@ -91,3 +91,8 @@ Existing native save/resource/equipment regressions independently expect only
 the two old preset grants to be added to their frozen Wizard ledgers.
 `localization_tests.gd` creates a Wizard through existing controls and checks
 the translated knowledge, source level and pending counts in Modifiers.
+
+Rules 0.6.25 adds Ray of Frost as a third supported starting Wizard choice. New
+presets receive all three supported choices; existing explicit selections and
+legacy Fire Bolt-only access stay unchanged. PC14 validates its new spell mask.
+See [Ray of Frost](RAY-OF-FROST.md) for effects and remaining source integrations.

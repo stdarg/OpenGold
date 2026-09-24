@@ -4,7 +4,8 @@ Tracking issue: [#165](https://github.com/stdarg/OpenGold/issues/165). Inventory
 baseline: rules **0.6.21**, commit **1e89c1c**. This is a work inventory, not a
 claim that the listed spells are implemented. Current delivery adds the
 [0.6.22 Wizard Poison Spray path](POISON-SPRAY.md) and
-[0.6.23 Cleric Sacred Flame path](SACRED-FLAME.md) below.
+[0.6.23 Cleric Sacred Flame path](SACRED-FLAME.md), and
+[0.6.25 Wizard Ray of Frost path](RAY-OF-FROST.md) below.
 
 ## Scope and counting
 
@@ -14,7 +15,8 @@ subclasses, all nine species and their lineages, the four SRD backgrounds, and
 eligible SRD feats through character level 4. The baseline has **six partial
 playable paths and 133 missing spells**. With 0.6.22 this becomes **seven partial
 playable paths and 132 missing spells**. With 0.6.23 there are **eight partial
-playable paths and 131 missing spells**; no complete spell conformance is claimed.
+playable paths and 131 missing spells**. With 0.6.25 there are **nine partial
+playable paths and 130 missing spells**; no complete spell conformance is claimed.
 
 Authority: [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 Each spell name below links to its description page. Class-list membership is
@@ -178,7 +180,7 @@ are evidence of partial behavior, not certification of the full spell.
 | [Poison Spray](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=153) (p. 153) | D, S, K, W | MI, Tome, High, Magician, DruidicWarrior, Abyssal | — | Partial Wizard path; [#202](https://github.com/stdarg/OpenGold/issues/202) |
 | [Prestidigitation](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=154) (p. 154) | B, S, K, W | MI, Tome, High, Rock | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Produce Flame](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=156) (p. 156) | D | MI, Tome, Magician, DruidicWarrior | [#46](https://github.com/stdarg/OpenGold/issues/46) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
-| [Ray of Frost](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=157) (p. 157) | S, W | MI, Tome, High, Polar | [#35](https://github.com/stdarg/OpenGold/issues/35) | Missing; [#205](https://github.com/stdarg/OpenGold/issues/205) |
+| [Ray of Frost](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=157) (p. 157) | S, W | MI, Tome, High, Polar | [#35](https://github.com/stdarg/OpenGold/issues/35) | Partial: [Wizard selection, Cold attack and timed slow](RAY-OF-FROST.md); other sources and verbal blockers remain. [#205](https://github.com/stdarg/OpenGold/issues/205) |
 | [Resistance](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=158) (p. 158) | C, D | MI, Tome, Thaum, Blessed, Magician, DruidicWarrior | [#38](https://github.com/stdarg/OpenGold/issues/38) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Sacred Flame](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=159) (p. 159) | C | MI, Tome, Thaum, Blessed | Partial-cover model; [#39](https://github.com/stdarg/OpenGold/issues/39) | Partial Cleric path; [#203](https://github.com/stdarg/OpenGold/issues/203) |
 | [Shillelagh](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=162) (p. 162) | D | MI, Tome, Magician, DruidicWarrior | — | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |

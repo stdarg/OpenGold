@@ -22,7 +22,8 @@ void elapse_recovery(std::span<RecoverySubject> subjects,std::uint64_t milliseco
                 any=true;step=std::min(step,std::uint64_t(life.stable?life.recovery.stable_recovery_in_ms:life.recovery.death_save_in_ms));
             }
             for(const auto& effect:subject.effects.effects.get().active){
-                any=true;step=std::min({step,std::uint64_t(effect.remaining_ms),std::uint64_t(effect.save_in_ms)});
+                any=true;step=std::min(step,std::uint64_t(effect.remaining_ms));
+                if(effect.save_in_ms)step=std::min(step,std::uint64_t(effect.save_in_ms));
             }
         }
         if(!any)return;

@@ -20,10 +20,10 @@ operate the dropdown; focused Enter/Space operates Cast without ending the turn.
 Selection survives unrelated refreshes, and changing actors/knowledge removes
 choices that no longer apply. Stable spell IDs are stored as item metadata;
 labels are localized. No SRD costs or eligibility rules are duplicated in UI.
+Rules 0.6.25 adds the sourced [Ray of Frost](RAY-OF-FROST.md) choice to this list.
 
 Rules, grants and save formats are unchanged. No combat saving controls are
-exposed. The standalone demo keeps its previous controls. Ray of Frost's damage,
-timed Speed effect and creation choice are still outstanding under #205.
+exposed. The standalone demo keeps its previous controls. Ray of Frost's further source/component integrations remain tracked under #205.
 
 ## Verification
 

@@ -8,21 +8,20 @@ installing the efficiency workflow. Work continues on #205.
 - Goal: close all `SRD_improvements` issues; all twelve classes, first through
   level 4, then through 20 and multiclassing. [Index](https://github.com/stdarg/OpenGold/issues/186),
   [plan](SRD-IMPLEMENTATION.md), [coverage](SRD-COVERAGE.md).
-- Branch at handoff: `main`. Latest feature: Action Surge, commits `6b798ec`
-  and `ad63d56`, pushed; [#86](https://github.com/stdarg/OpenGold/issues/86) closed.
-  Last observed open label count: 162; counts are snapshots, not completion proof.
-- Rules 0.6.24 / PC13; combat 14 with eligible Fighters, otherwise 13; spent
-  Surge uses SRD8; campaign 11. See [Action Surge](ACTION-SURGE.md).
-- The approved shared cantrip dropdown/Cast control is delivered as the first
-  UI increment for #205; Ray of Frost mechanics and its creation choice remain
-  unimplemented. No unfinished feature edits or live processes at handoff.
+- Branch: `main`. Rules 0.6.25 Ray of Frost Wizard increment is delivered; shared selector was delivered in `bc2d152`. #205 remains partial.
+  Last observed open label count: 162; this is a snapshot, not completion proof.
+- PC14 / FX2; combat 15 for Ray access/effects, otherwise 13/14; campaign 11.
+  [Ray of Frost evidence and remaining scope](RAY-OF-FROST.md).
+- Wizard choice, main-game casting, Cold damage, nonstacking sourced slow,
+  caster-turn expiry and campaign/camp continuation are implemented.
 
 ## Current issue
 
-[Ray of Frost #205](https://github.com/stdarg/OpenGold/issues/205): read its full
-acceptance before coding. High effort is appropriate for sourced, nonstacking
-Speed reduction, caster-turn expiry, movement already spent and persistence.
-Do not treat a native-only path as final completion.
+[Ray of Frost #205](https://github.com/stdarg/OpenGold/issues/205) remains open for
+shared speech-blocking components (#39) and other grant routes (linked in the
+feature document). Next bounded work: inspect #39 and its dependencies to resolve
+the component gap across supported spells. Do not repeat the finished Ray checks
+or count every granting class as implemented. Full SRD scope remains intact.
 
 Relevant entry points (read only the needed sections):
 
@@ -52,19 +51,19 @@ Relevant entry points (read only the needed sections):
   Adrenaline Rush. List known cantrips; Cast highlights legal targets; clicking
   casts. Support keyboard use and retain A/Space; disable unavailable Cast.
   Ray of Frost becomes a Wizard choice in the existing Spell Choices step.
-  Combat selector delivered; Ray of Frost choice remains to implement. No new
-  layout question is needed for that already-approved choice.
+  Combat selector and Ray of Frost choice are delivered. Reuse this approval.
 - Play Glass.aiff before numbered questions. Batch related questions and reuse
   approvals. Existing scope/architecture rules still apply.
 
 ## Verification and local environment
 
-- Shared selector passed 9 affected Godot checks, 6 native fixture prerequisites,
-  English/Spanish rendering at both sizes and 739-message localization validation.
-- Action Surge native implementation passed 38 native/tool and 15 Godot runtime checks.
-  Button follow-up passed 8 affected Godot checks, 5 native fixture prerequisites,
-  rendered English/Spanish at both supported sizes and 739-message localization.
-  These results cover Action Surge, not future edits. [Evidence](https://github.com/stdarg/OpenGold/issues/86#issuecomment-5818117420).
+- Ray increment: 39 native/tool checks pass in aggregate (only stale catalog count
+  failed the broad run; corrected and rerun). 16 Godot runtime checks plus seven
+  native fixture prerequisites pass. Main/demo builds and 744-message localization
+  check pass. Rendered combat at both supported sizes in English/Spanish.
+- Wizard and Cleric creation checks cover the shared step; see the feature doc.
+- No remaining live processes after final verification. No UI questions needed
+  for the delivered Ray controls; Review Training question 11 remains unresolved.
 - Bash/macOS; `build/mac-check` is the game/native build; `build/sprite-demo` is
   separate. Godot: `/Applications/Godot_mono.app/Contents/MacOS/Godot`.
 - Main project: `src/OpenGoldBox/godot`; local original assets: `/Users/edmond/POOLRAD`.

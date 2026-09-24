@@ -10,7 +10,7 @@ constexpr std::string_view source="class:wizard:spellcasting";
 struct Spell {std::string_view id,label;unsigned level,mask;};
 // Existing spell implementations only. This is not the complete Wizard list.
 constexpr std::array spells{
-    Spell{"sacred_flame","Sacred Flame",0,128},Spell{"fire_bolt","Fire Bolt",0,1},Spell{"poison_spray","Poison Spray",0,64},Spell{"magic_missile","Magic Missile",1,4},
+    Spell{"ray_of_frost","Ray of Frost",0,256},Spell{"sacred_flame","Sacred Flame",0,128},Spell{"fire_bolt","Fire Bolt",0,1},Spell{"poison_spray","Poison Spray",0,64},Spell{"magic_missile","Magic Missile",1,4},
     Spell{"scorching_ray","Scorching Ray",2,16},Spell{"blindness","Blindness",2,32}};
 void require(bool ok){if(!ok)throw std::runtime_error("Invalid spell grant, spellbook entry or preparation");}
 const Spell& find(std::string_view id){
@@ -29,7 +29,8 @@ TrainingChoiceGroup starting_cantrip_options(std::string_view klass){
     if(klass!="wizard")return {};
     return {std::string(source),"Wizard cantrips",3,
         {{"fire_bolt","Fire Bolt","Ranged spell attack: 1d10 Fire damage, 120 feet."},
-         {"poison_spray","Poison Spray","Ranged spell attack: 1d12 Poison damage, 30 feet."}}};
+         {"poison_spray","Poison Spray","Ranged spell attack: 1d12 Poison damage, 30 feet."},
+         {"ray_of_frost","Ray of Frost","Ranged spell attack: 1d8 Cold damage, 60 feet; Speed reduced by 10 feet until your next turn."}}};
 }
 std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std::optional<std::vector<std::string>>& cantrips){
     if(klass=="cleric"){
@@ -41,7 +42,7 @@ std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std
     if(klass!="wizard"){require(!cantrips||cantrips->empty());return {};}
     const auto chosen=cantrips.value_or(std::vector<std::string>{"fire_bolt"});
     require(chosen.size()<=3);std::set<std::string> unique;std::vector<FeatureGrant> result;
-    for(const auto& id:chosen){require((id=="fire_bolt"||id=="poison_spray")&&unique.insert(id).second);result.push_back(grant(id,1));}
+    for(const auto& id:chosen){require((id=="fire_bolt"||id=="poison_spray"||id=="ray_of_frost")&&unique.insert(id).second);result.push_back(grant(id,1));}
     result.push_back(grant("magic_missile",1));return result;
 }
 SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view klass,unsigned level,std::span<const std::string> prepared){
