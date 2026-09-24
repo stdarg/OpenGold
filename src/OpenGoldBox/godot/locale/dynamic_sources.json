@@ -251,5 +251,9 @@
   "Three-Dragon Ante",
   "Cunning Action: Dash",
   "Cunning Action: Disengage",
-  "Cunning Action: Dash or Disengage as a Bonus Action on your turn. Hide remains unavailable."
+  "Cunning Action: Dash or Disengage as a Bonus Action on your turn. Hide remains unavailable.",
+  "Eldritch Blast",
+  "Warlock cantrips",
+  "Ranged spell attack: 1d10 Force damage, 120 feet; creature targets currently supported.",
+  "Pact Magic cantrips: Charisma score {score}; spell attack bonus {attack}; pending choices {cantrips}."
 ]

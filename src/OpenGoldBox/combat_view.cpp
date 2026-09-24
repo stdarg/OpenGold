@@ -269,7 +269,7 @@ void CombatView::layout_reaction_controls(bool show_controls)
     get_node<Label>("CantripLabel")->set_size(Vector2(64,36));
     get_node<OptionButton>("Cantrip")->set_position(Vector2(464,top+44));
     get_node<OptionButton>("Cantrip")->set_size(Vector2(200,36));
-    get_node<Button>("CastCantrip")->set_position(Vector2(674,top+44));
+    get_node<Button>("CastCantrip")->set_position(Vector2(474+get_node<OptionButton>("Cantrip")->get_size().x,top+44));
     get_node<Button>("CastCantrip")->set_size(Vector2(80,36));
     auto* log=get_node<RichTextLabel>("Log");
     log->set_position(Vector2(24,top+inset));
@@ -488,7 +488,7 @@ void CombatView::act(const Command& command)
                 const auto current=std::find_if(after.combatants.begin(),after.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
                 sound=after.savage_attack_choice||(previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points)?7:9;
             } else if(command.verb=="ranged")sound=6;
-            else if(command.verb=="ray_of_frost"||command.verb=="fire_bolt"||command.verb=="poison_spray"||command.verb=="sacred_flame"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
+            else if(command.verb=="eldritch_blast"||command.verb=="ray_of_frost"||command.verb=="fire_bolt"||command.verb=="poison_spray"||command.verb=="sacred_flame"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
             if(sound){
                 action_seconds_[command.actor]=1.0;if(attack_sound_)attack_sound_->play(sound);
             }
@@ -578,7 +578,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    if(mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    if(mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
@@ -697,7 +697,7 @@ void CombatView::refresh()
     if(changed){
         cantrips->clear();
         for(const auto& id:known){
-            const char* label=id=="fire_bolt"?N_("Fire Bolt"):id=="poison_spray"?N_("Poison Spray"):id=="sacred_flame"?N_("Sacred Flame"):id=="ray_of_frost"?N_("Ray of Frost"):nullptr;
+            const char* label=id=="fire_bolt"?N_("Fire Bolt"):id=="poison_spray"?N_("Poison Spray"):id=="sacred_flame"?N_("Sacred Flame"):id=="eldritch_blast"?N_("Eldritch Blast"):id=="ray_of_frost"?N_("Ray of Frost"):nullptr;
             cantrips->add_item(label?i18n::text(label):gs(id));
             cantrips->set_item_metadata(cantrips->get_item_count()-1,gs(id));
         }

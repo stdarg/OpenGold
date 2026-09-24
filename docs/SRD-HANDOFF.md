@@ -8,14 +8,20 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Completed [Unconscious enemy transit #222](https://github.com/stdarg/OpenGold/issues/222),
-a bounded child of #44. Rules 0.6.36 corrects passing through living zero-HP
-enemies with one Difficult Terrain surcharge, preserving occupied endpoints,
-reaction interruptions and involuntary overlap through recovery/exit. PC24,
-campaign 11 and combat formats 13–15 are unchanged. Prior 0.6.35 fixtures at
-`ff297ef` preserve exact state and Dash continuation. See
-[UNCONSCIOUS-TRANSIT.md](UNCONSCIOUS-TRANSIT.md). #44 remains open for size/Tiny
-rules and Prone; #45 covers footprints and #35 other condition sources.
+Branch `main`. Completed increment: [#224](https://github.com/stdarg/OpenGold/issues/224),
+level-one Warlock Eldritch Blast creature casting, under #160/#204. **Q26 approved:**
+reuse the existing Spell Choices pattern, two owed cantrips, second pending until
+supported, pre-generated presets, old selections retained, shared Spell/Cast.
+Rules 0.6.37 / PC25 implements explicit Pact Magic cantrip grants and Charisma
+attacks. [Scope and evidence](ELDRITCH-BLAST.md). Objects are a separate prerequisite
+[#225](https://github.com/stdarg/OpenGold/issues/225); levels 2–4, full Pact Magic,
+Tome/invocations and speech blockers remain open. Do not close #204 from this child.
+Shocking Grasp [#223](https://github.com/stdarg/OpenGold/issues/223) is queued;
+no implementation landed. It can reuse approved shared cantrip controls.
+
+Previous increment: [Unconscious transit #222](https://github.com/stdarg/OpenGold/issues/222)
+is complete in `15fcda5`; see [scope](UNCONSCIOUS-TRANSIT.md). Its existing saved
+state and Dash continuation remain preserved.
 
 [Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220) remains pending
 Q25; its tested eligibility/progression helper and real 0.6.35 baseline fixtures
@@ -88,16 +94,16 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#222 verification: all 41 native/tool checks, all 17 Godot runtime checks plus
-eight native prerequisites, main/demo builds and 816-message localization pass.
-The extended existing opportunity UI test verifies actual clicks through the
-loaded corridor, rejected occupied endpoints, twenty feet spent and the unspent
-Action. Rules checks also cover reaction interruption, healing, death/natural
-recovery and exit. Logs: `/tmp/opengold-transit-regression.log`,
-`/tmp/opengold-transit-ui.log`, `/tmp/opengold-transit-recovery.log`.
-No layout or text changes; existing movement controls are reused.
+#224 verification: all 42 native/tool checks, final focused Eldritch checks,
+all 18 headless Godot checks plus nine native prerequisites, and asset-backed
+Warlock creator checks passed. Main/demo builds and 820-message localization
+pass. English/Spanish creation/combat renders cover 1120×800 and 1920×1080.
+Localized Cast follows the dropdown's actual width to avoid overlap.
+Logs: `/tmp/eb-regression.log`, `/tmp/eb-final-checks.log`, `/tmp/eb-creator.log`,
+`/tmp/eb-combat-render.log`; renders `/tmp/opengold-eldritch-renders`.
+Creator checks require `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD`; they are not
+registered in the asset-free headless suite. See the feature doc for scope.
 
-#220 preparation: focused damage/training checks passed; no live feature claim.
-Next: resume #220 if Q25 arrives; otherwise select an independently actionable
-source-backed issue. Preserve pending #80/#208/#209/#189 questions above rather
-than re-asking. Do not close parent trackers from narrow child evidence.
+Next: resume #220 if Q25 arrives; otherwise Shocking Grasp #223 can reuse the
+approved Spell/Cast controls. Preserve pending #80/#208/#209/#189 questions.
+Do not close parent trackers from narrow child evidence. No live processes remain.

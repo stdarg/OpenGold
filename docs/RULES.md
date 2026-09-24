@@ -322,3 +322,9 @@ Rules 0.6.24 adds [Action Surge](ACTION-SURGE.md): Fighter level-two acquisition
 a separately restricted extra action and Short/Long Rest recharge. PC13,
 feature-bearing combat 14 and spent-resource SRD8 preserve the new state;
 campaign 11 remains. The dedicated button is pending question 17.
+
+Rules 0.6.37 adds [level-one Warlock Eldritch Blast](ELDRITCH-BLAST.md) through
+explicit Pact Magic cantrip grants and the approved shared selection/casting
+controls. PC25 validates access and uses Charisma; campaign/combat formats stay
+unchanged. Old missing choices remain pending. Object targets, later Warlock
+levels, slots, invocations and general speech blockers remain separate work.

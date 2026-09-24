@@ -5,7 +5,8 @@ baseline: rules **0.6.21**, commit **1e89c1c**. This is a work inventory, not a
 claim that the listed spells are implemented. Current delivery adds the
 [0.6.22 Wizard Poison Spray path](POISON-SPRAY.md) and
 [0.6.23 Cleric Sacred Flame path](SACRED-FLAME.md), and
-[0.6.25 Wizard Ray of Frost path](RAY-OF-FROST.md) below.
+[0.6.25 Wizard Ray of Frost path](RAY-OF-FROST.md), and
+[0.6.37 level-one Warlock Eldritch Blast path](ELDRITCH-BLAST.md) below.
 
 ## Scope and counting
 
@@ -16,7 +17,8 @@ eligible SRD feats through character level 4. The baseline has **six partial
 playable paths and 133 missing spells**. With 0.6.22 this becomes **seven partial
 playable paths and 132 missing spells**. With 0.6.23 there are **eight partial
 playable paths and 131 missing spells**. With 0.6.25 there are **nine partial
-playable paths and 130 missing spells**; no complete spell conformance is claimed.
+playable paths and 130 missing spells**. With 0.6.37 there are **ten partial
+playable paths and 129 missing spells**; no complete spell conformance is claimed.
 
 Authority: [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 Each spell name below links to its description page. Class-list membership is
@@ -147,6 +149,7 @@ complete its still-pending class/species/feat integrations.
 
 | Partial spell | Implementation | Existing evidence | Remaining spell issue |
 | --- | --- | --- | --- |
+| Eldritch Blast | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](ELDRITCH-BLAST.md) | [native](../tests/eldritch_blast_tests.cpp), [creator](../tests/warlock_cantrip_view_tests.gd), [combat UI](../tests/eldritch_view_tests.gd) | [#204](https://github.com/stdarg/OpenGold/issues/204): objects, levels 2–4, Tome, speech blocking |
 | Sacred Flame | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](SACRED-FLAME.md) | [native](../tests/sacred_flame_tests.cpp), [creator](../tests/cleric_cantrip_view_tests.gd), [combat UI](../tests/sacred_view_tests.gd) | [#203](https://github.com/stdarg/OpenGold/issues/203): partial-cover exception, speech blocking and remaining sources |
 | Poison Spray | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](POISON-SPRAY.md) | [native](../tests/poison_spray_tests.cpp), [creator](../tests/cantrip_view_tests.gd), [combat UI](../tests/poison_view_tests.gd) | [#202](https://github.com/stdarg/OpenGold/issues/202): speech blocking and remaining source integrations; native prerequisite #206 |
 | Fire Bolt | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp) | [rules tests](../tests/rules_tests.cpp), [typed damage](../tests/damage_tests.cpp), [components](../tests/spell_component_tests.cpp) | [#166](https://github.com/stdarg/OpenGold/issues/166): object/ignition use, grants and full conformance |
@@ -168,7 +171,7 @@ are evidence of partial behavior, not certification of the full spell.
 | [Chill Touch](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=115) (p. 115) | S, K, W | MI, Tome, High, Chthonic | [#35](https://github.com/stdarg/OpenGold/issues/35) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Dancing Lights](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=121) (p. 121) | B, S, W | MI, Tome, High, Drow | [#38](https://github.com/stdarg/OpenGold/issues/38), [#46](https://github.com/stdarg/OpenGold/issues/46) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Druidcraft](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=126) (p. 126) | D | MI, Tome, Magician, DruidicWarrior, Wood | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
-| [Eldritch Blast](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=127) (p. 127) | K | Tome | — | Missing; [#204](https://github.com/stdarg/OpenGold/issues/204) |
+| [Eldritch Blast](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=127) (p. 127) | K | Tome | Objects [#225](https://github.com/stdarg/OpenGold/issues/225) | Partial level-one Warlock creatures; [#204](https://github.com/stdarg/OpenGold/issues/204) |
 | [Elementalism](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=127) (p. 127) | D, S, W | MI, Tome, High, Magician, DruidicWarrior | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Fire Bolt](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=132) (p. 132) | S, W | MI, Tome, High, Arid, Infernal | — | Partial; [#166](https://github.com/stdarg/OpenGold/issues/166) |
 | [Guidance](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=138) (p. 138) | C, D | MI, Tome, Thaum, Blessed, Magician, DruidicWarrior | [#29](https://github.com/stdarg/OpenGold/issues/29), [#38](https://github.com/stdarg/OpenGold/issues/38) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |

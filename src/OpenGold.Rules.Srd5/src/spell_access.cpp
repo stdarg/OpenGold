@@ -10,7 +10,7 @@ constexpr std::string_view source="class:wizard:spellcasting";
 struct Spell {std::string_view id,label;unsigned level,mask;};
 // Existing spell implementations only. This is not the complete Wizard list.
 constexpr std::array spells{
-    Spell{"ray_of_frost","Ray of Frost",0,256},Spell{"sacred_flame","Sacred Flame",0,128},Spell{"fire_bolt","Fire Bolt",0,1},Spell{"poison_spray","Poison Spray",0,64},Spell{"magic_missile","Magic Missile",1,4},
+    Spell{"eldritch_blast","Eldritch Blast",0,512},Spell{"ray_of_frost","Ray of Frost",0,256},Spell{"sacred_flame","Sacred Flame",0,128},Spell{"fire_bolt","Fire Bolt",0,1},Spell{"poison_spray","Poison Spray",0,64},Spell{"magic_missile","Magic Missile",1,4},
     Spell{"scorching_ray","Scorching Ray",2,16},Spell{"blindness","Blindness",2,32}};
 void require(bool ok){if(!ok)throw std::runtime_error("Invalid spell grant, spellbook entry or preparation");}
 const Spell& find(std::string_view id){
@@ -24,6 +24,8 @@ std::vector<FeatureGrant> without_spell_grants(std::span<const FeatureGrant> gra
     std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_spell_grant(g))result.push_back(g);return result;
 }
 TrainingChoiceGroup starting_cantrip_options(std::string_view klass){
+    if(klass=="warlock")return {"class:warlock:pact_magic","Warlock cantrips",2,
+        {{"eldritch_blast","Eldritch Blast","Ranged spell attack: 1d10 Force damage, 120 feet; creature targets currently supported."}}};
     if(klass=="cleric")return {"class:cleric:spellcasting","Cleric cantrips",3,
         {{"sacred_flame","Sacred Flame","Dexterity save: 1d8 Radiant damage, visible creature within 60 feet."}}};
     if(klass!="wizard")return {};
@@ -33,6 +35,12 @@ TrainingChoiceGroup starting_cantrip_options(std::string_view klass){
          {"ray_of_frost","Ray of Frost","Ranged spell attack: 1d8 Cold damage, 60 feet; Speed reduced by 10 feet until your next turn."}}};
 }
 std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std::optional<std::vector<std::string>>& cantrips){
+    if(klass=="warlock"){
+        std::vector<FeatureGrant> result;std::set<std::string> unique;
+        for(const auto& id:cantrips.value_or(std::vector<std::string>{})){
+            require(id=="eldritch_blast"&&unique.insert(id).second);result.push_back(grant(id,1,"class:warlock:pact_magic"));
+        }return result;
+    }
     if(klass=="cleric"){
         std::vector<FeatureGrant> result;std::set<std::string> unique;
         for(const auto& id:cantrips.value_or(std::vector<std::string>{})){
@@ -47,6 +55,14 @@ std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std
 }
 SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view klass,unsigned level,std::span<const std::string> prepared){
     SpellAccess result;
+    if(klass=="Warlock"){
+        // Cantrip portion of Pact Magic only; slots and advancement remain separate.
+        require(level==1&&prepared.empty());result.cantrip_choices=2;std::set<std::string> known;
+        for(const auto& g:grants)if(is_spell_grant(g)){
+            require(g==grant("eldritch_blast",1,"class:warlock:pact_magic")&&known.insert(g.id).second);
+            result.cantrips.push_back({"eldritch_blast","Eldritch Blast",g.source_id,g.level});
+        }return result;
+    }
     if(klass=="Cleric"){
         require(level>=1&&level<=4);
         require(std::find(grants.begin(),grants.end(),FeatureGrant{"feature:spellcasting","class:cleric",1,{}})!=grants.end());
@@ -66,7 +82,7 @@ SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view k
     std::set<std::string> known;std::array<unsigned,5> books{},cantrips{};
     for(const auto& g:grants)if(is_spell_grant(g)){
         require(g.source_id==source&&g.level>=1&&g.level<=level&&known.insert(g.id).second);
-        const auto& spell=find(std::string_view(g.id).substr(6));require(spell.id!="sacred_flame");
+        const auto& spell=find(std::string_view(g.id).substr(6));require(spell.id!="sacred_flame"&&spell.id!="eldritch_blast");
         require(g==grant(spell.id,g.level));
         require(spell.level==0||spell.level<=(g.level>=3?2u:1u));
         auto& list=spell.level?result.spellbook:result.cantrips;

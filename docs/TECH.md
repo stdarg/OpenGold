@@ -830,3 +830,9 @@ occupancy grid distinguishes blocked enemies from passable incapacitated enemies
 with a single Difficult Terrain surcharge. Existing movement controls reuse rules
 queries; formats and character grants are unchanged. Enemy-overlap continuation
 is validated against module version. See [Unconscious transit](UNCONSCIOUS-TRANSIT.md).
+
+Rules 0.6.37 adds [level-one Warlock Eldritch Blast](ELDRITCH-BLAST.md) through
+explicit Pact Magic cantrip grants and the approved shared selection/casting
+controls. PC25 validates access and uses Charisma; campaign/combat formats stay
+unchanged. Old missing choices remain pending. Object targets, later Warlock
+levels, slots, invocations and general speech blockers remain separate work.
