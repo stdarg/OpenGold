@@ -176,7 +176,8 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_herbalism=magic=="PC22";
+    const bool with_gaming=magic=="PC23";
+    const bool with_herbalism=magic=="PC22"||with_gaming;
     const bool with_monk_tools=magic=="PC21"||with_herbalism;
     const bool with_instruments=magic=="PC20"||with_monk_tools;
     const bool with_class_skills=magic=="PC19"||with_instruments;
@@ -252,7 +253,7 @@ Definition character_definition(std::string_view bytes)
     if(magic=="PC6"||with_training){
         std::string background;in>>std::quoted(background);
         const auto grants=detail::read_grants(in);
-        if(with_training)(void)detail::training_profile(grants,detail::grant_source_id(klass),background,level,scores,with_herbalism?detail::TrainingPolicy::druid_herbalism:with_monk_tools?detail::TrainingPolicy::monk_tools:with_instruments?detail::TrainingPolicy::bard_instruments:with_class_skills?detail::TrainingPolicy::class_skills:with_styles?detail::TrainingPolicy::fighter_style:with_backgrounds?detail::TrainingPolicy::all_backgrounds:with_sage?detail::TrainingPolicy::sage:detail::TrainingPolicy::legacy);
+        if(with_training)(void)detail::training_profile(grants,detail::grant_source_id(klass),background,level,scores,with_gaming?detail::TrainingPolicy::soldier_gaming:with_herbalism?detail::TrainingPolicy::druid_herbalism:with_monk_tools?detail::TrainingPolicy::monk_tools:with_instruments?detail::TrainingPolicy::bard_instruments:with_class_skills?detail::TrainingPolicy::class_skills:with_styles?detail::TrainingPolicy::fighter_style:with_backgrounds?detail::TrainingPolicy::all_backgrounds:with_sage?detail::TrainingPolicy::sage:detail::TrainingPolicy::legacy);
         if(with_spells){
             std::vector<std::string> prepared;
             if(klass=="Wizard"){
@@ -1158,7 +1159,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 15 ||
@@ -1174,21 +1175,23 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::vector<Actor> actors;
     for (unsigned i = 0; i < count; ++i) {
         auto actor = read_checkpoint_actor(input, version, *content);
-        if(module_before(identity,{0,6,26})&&(actor.source.character_profile.starts_with("PC15 ")||actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 ")))))))
+        if(module_before(identity,{0,6,26})&&(actor.source.character_profile.starts_with("PC15 ")||actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain a Sage-training profile");
-        if(module_before(identity,{0,6,27})&&(actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 ")))))))
+        if(module_before(identity,{0,6,27})&&(actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain the completed fixed-background profile");
-        if(module_before(identity,{0,6,28})&&(actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 ")))))))
+        if(module_before(identity,{0,6,28})&&(actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain an Archery profile");
-        if(module_before(identity,{0,6,29})&&(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 "))))))
+        if(module_before(identity,{0,6,29})&&(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 ")))))))
             throw std::runtime_error("Legacy checkpoint cannot contain a starting-style profile");
-        if(module_before(identity,{0,6,33})&&actor.source.character_profile.starts_with("PC22 "))
+        if(module_before(identity,{0,6,34})&&actor.source.character_profile.starts_with("PC23 "))
+            throw std::runtime_error("Legacy combat cannot contain Gaming Set profiles");
+        if(module_before(identity,{0,6,33})&&(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 ")))
             throw std::runtime_error("Legacy combat cannot contain Herbalism Kit profiles");
-        if(module_before(identity,{0,6,32})&&(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 ")))
+        if(module_before(identity,{0,6,32})&&(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))
             throw std::runtime_error("Legacy combat cannot contain Monk tool profiles");
-        if(module_before(identity,{0,6,31})&&(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 "))))
+        if(module_before(identity,{0,6,31})&&(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 ")))))
             throw std::runtime_error("Legacy combat cannot contain Bard instrument profiles");
-        if(module_before(identity,{0,6,30})&&(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||actor.source.character_profile.starts_with("PC22 ")))))
+        if(module_before(identity,{0,6,30})&&(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||actor.source.character_profile.starts_with("PC23 "))))))
             throw std::runtime_error("Legacy checkpoint cannot contain an all-class skill profile");
         encounter.participants.push_back(actor.source);
         actors.push_back(std::move(actor));
@@ -1247,7 +1250,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1354,6 +1357,7 @@ public:
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported grant migration");
         if(module_before(saved,{0,6,25})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:ray_of_frost";}))throw std::runtime_error("Legacy campaign cannot grant Ray of Frost");
         if(module_before(saved,{0,6,29})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:fighter:fighting_style";}))throw std::runtime_error("Legacy campaign cannot contain starting Fighting Style grants");
+        if(module_before(saved,{0,6,34})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="background:soldier:gaming_set";}))throw std::runtime_error("Legacy campaign cannot contain Soldier Gaming Set choices");
         if(module_before(saved,{0,6,33})&&detail::has_grant(grants,"tool:herbalism_kit"))throw std::runtime_error("Legacy campaign cannot contain Herbalism Kit proficiency");
         if(module_before(saved,{0,6,32})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:monk:tools";}))throw std::runtime_error("Legacy campaign cannot contain Monk tool choices");
         if(module_before(saved,{0,6,31})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:bard:instruments";}))throw std::runtime_error("Legacy campaign cannot contain Bard instrument choices");
@@ -1534,7 +1538,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC22 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC23 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1668,7 +1672,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.33",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.34",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

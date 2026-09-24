@@ -92,7 +92,7 @@ void campaign(){
     check(pool(party.member(id).character,party.member(id).vitals).remaining==1,"Encounter updates campaign use count");
     auto bytes=encode_campaign(party,nullptr,"adrenaline");CampaignParty copy(module());copy.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"adrenaline",nullptr).party);
     check(encode_campaign(copy,nullptr,"adrenaline")==bytes,"Campaign save/load preserves pool and spent use");
-    copy.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}},{"class:fighter",{"athletics","history"}}});copy.award_experience(900,"rush-xp");copy.advance(id,copy.default_advancement(id));
+    copy.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}},{"class:fighter",{"athletics","history"}},{"background:soldier:gaming_set",{"dice"}}});copy.award_experience(900,"rush-xp");copy.advance(id,copy.default_advancement(id));
     check(pool(copy.member(id).character,copy.member(id).vitals).remaining==1,"Training and level growth do not refill spent uses");
     auto actors=copy.participants();actors.push_back({99,"vanguard","Opponent",1,{18,18}});auto second=rules->create({{20,20,std::vector<std::uint8_t>(400)},actors},42);
     check(unit(*second).temporary_hp.amount==2&&pool(copy.member(id).character,unit(*second).persistent).remaining==1,"Next encounter inherits buffer and expenditure");

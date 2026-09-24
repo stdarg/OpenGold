@@ -8,20 +8,23 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. [Druid Herbalism Kit #216](https://github.com/stdarg/OpenGold/issues/216)
-is implemented and verified. Ordinary creation/presets gain the fixed level-one
-class tool grant; existing Training/sheet displays show its source. Old campaign
-replay adds exactly that grant while preserving every other field, pending
-choices and vitals. Old combat recipes retain their original policy/continuation.
-Rules 0.6.33 / PC22 / FX2; campaign 11 / combat 13–15 unchanged. See
-[DRUID-HERBALISM.md](DRUID-HERBALISM.md). Actual prior-writer fixtures are unedited.
+Branch `main`. [Soldier Gaming Set #217](https://github.com/stdarg/OpenGold/issues/217)
+is implemented and verified. All twelve Soldier classes choose one of four
+variants in Training; presets generate choices and sheets/checks show provenance.
+Class changes retain the background choice; leaving Soldier clears it. Old saves
+keep choices pending; completion preserves prior grants, levels and vitals.
+Rules 0.6.34 / PC23 / FX2; campaign 11 / combat 13–15 unchanged. Tools now use an
+explicit category enum. See [SOLDIER-GAMING.md](SOLDIER-GAMING.md). Actual prior
+0.6.33 twelve-class fixtures remain unedited. #64 stays open for equipment/wealth.
 
-**Next: Soldier's Gaming Set proficiency choice (#64), split/link a bounded child
-before coding, or resume #80 if Q23 is answered.** Confirm exact source and four
-variant catalog; reuse existing Training checkbox controls and rules-owned tools.
-Capture actual 0.6.33 prior-writer fixtures first. Background training documentation
-records this remaining gap. Bard tools (#214), Monk tools (#215) and all-class
-starting skills (#213) are complete; broader class/background trackers stay open.
+**Next: inspect Unarmored Defense support for Barbarian/Monk under #103/#117;
+implement the first missing class through a source-backed bounded child, or resume
+#80 if Q23 is answered.** No matching unarmored-defense entry was found in the
+armor files/coverage index during the initial search; inspect character/combat
+AC calculation before concluding it is missing. Reuse existing numerical sheet
+explanations where possible; new controls still require numbered confirmation.
+Starting skill/tool increments #213–#217 are complete; full class/background
+trackers and the overall all-class goal remain open.
 
 Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
 optional choice per hit. Do not enable either without the answer. The tested
@@ -80,10 +83,11 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#216 verification: 41 native/tool checks and 16 Godot runtime checks (plus seven
-native prerequisites) pass. Main/demo builds and 806-message localization pass.
-Graphical creation verifies fixed Druid Training and completed-sheet sources;
-English/Spanish inspected at both sizes: `/tmp/opengold-druid-renders`.
-Logs: `/tmp/opengold-druid-regression.log`, `/tmp/opengold-druid-render.log`.
-Only a diagnostic assertion message and docs changed after regression.
-No live builds/tests remain. Earlier verification stays in feature documents.
+#217 verification: all 41 native/tool checks pass across regression plus targeted
+reruns. Five old completion fixtures were updated to explicitly choose Soldier's
+Gaming Set, then passed. All 16 Godot runtime checks plus seven native prerequisites
+pass. Main/demo builds and 811-message localization pass. Graphical normal creation,
+class-change preservation and completed-sheet source checks pass; bilingual controls
+inspected at both sizes: `/tmp/opengold-soldier-renders`. Logs:
+`/tmp/opengold-soldier-regression.log`, `/tmp/opengold-soldier-recheck.log`,
+`/tmp/opengold-soldier-render.log`. No live builds/tests remain.

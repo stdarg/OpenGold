@@ -812,3 +812,9 @@ campaign ledgers validate against the pre-grant policy before reconstruction
 adds the fixed entitlement. Existing combat recipes retain their original
 policy and continuation. No new control or save schema is needed. See
 [Druid Herbalism Kit](DRUID-HERBALISM.md).
+
+Rules 0.6.34 / PC23 adds Soldier Gaming Set choices through the existing training
+service and checkbox presentation. Tools use an explicit category enum to keep
+artisan, instrument and gaming entitlements distinct. Source validation and
+legacy policy handling remain rules-owned; Core and save schemas are unchanged.
+See [Soldier Gaming Set](SOLDIER-GAMING.md).

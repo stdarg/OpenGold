@@ -36,6 +36,7 @@ template<class Translate> godot::String training_source(std::string_view id,cons
     if(id=="class:rogue:expertise")return tr(N_("Rogue Expertise"));
     if(id=="class:rogue:thieves_cant")return tr(N_("Rogue / Thieves' Cant"));
     if(id=="background:acolyte")return tr(N_("Acolyte background"));
+    if(id=="background:soldier:gaming_set")return tr(N_("Soldier background"));
     if(id=="background:soldier")return tr(N_("Soldier background"));
     if(id=="background:sage")return tr(N_("Sage background"));
     if(id=="background:criminal")return tr(N_("Criminal background"));

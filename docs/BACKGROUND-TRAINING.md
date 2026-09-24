@@ -34,9 +34,9 @@ ability improvements. [Godot checks](../tests/training_view_tests.gd) cover the
 actual choice groups, background switching, keyboard access and final party sheet.
 
 Acolyte #61 remains open for Magic Initiate and starting equipment/wealth.
-Soldier #64 retains its existing Savage Attacker support, but its Gaming Set
-selection and starting equipment/wealth remain open. This increment completes
-only their fixed skill/tool grants.
+Soldier #64 retains Savage Attacker; [Gaming Set selection](SOLDIER-GAMING.md)
+is delivered separately in #217. Starting equipment/wealth remains open. This
+original increment completed only the fixed skill/tool grants.
 
 Verification: all 40 native/tool regression checks pass; the final focused
 training check also verifies valid preceding PC15 Sage profiles. All 16 Godot

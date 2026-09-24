@@ -159,3 +159,8 @@ tools remain Monk-only choices. See [Monk tools](MONK-TOOLS.md).
 Druids receive fixed Herbalism Kit proficiency from their class. Old campaigns
 gain this owed fixed grant without filling pending choices or changing vitals;
 older combat profiles retain their original policy. See [Druid Herbalism Kit](DRUID-HERBALISM.md).
+
+Soldiers choose one of four Gaming Set variants through Training, independently
+of class. Class changes retain the choice; leaving Soldier removes it. Presets
+generate choices and old saves keep missing choices pending. See
+[Soldier Gaming Set](SOLDIER-GAMING.md).
