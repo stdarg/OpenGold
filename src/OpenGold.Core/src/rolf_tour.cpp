@@ -318,13 +318,13 @@ bool RolfTourSession::continue_dialogue(std::uint64_t ticket)
 bool RolfTourSession::camp(RestKind kind)
 {
     if(kind!=RestKind::short_rest&&kind!=RestKind::long_rest)return false;
-    if(!town_||!campaign_||snapshot_.phase!=TourPhase::completed||campaign_->in_combat()||campaign_->state().short_rest)return false;
+    if(!town_||!campaign_||snapshot_.phase!=TourPhase::completed||campaign_->in_combat()||campaign_->state().short_rest||campaign_->state().rest_activity)return false;
     camp_kind_=kind;begin_event(2);advance(0);return true;
 }
 bool RolfTourSession::explore(ExplorationCommand command)
 {
     if(command==ExplorationCommand::camp)return camp(RestKind::long_rest);
-    if (snapshot_.phase != TourPhase::completed||(campaign_&&(campaign_->in_combat()||campaign_->state().short_rest))) return false;
+    if (snapshot_.phase != TourPhase::completed||(campaign_&&(campaign_->in_combat()||campaign_->state().short_rest||campaign_->state().rest_activity))) return false;
     if (town_) {
         if (command == ExplorationCommand::forward) {
             pending_movement_ = command; begin_event(0);

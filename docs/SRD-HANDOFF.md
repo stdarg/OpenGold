@@ -24,7 +24,7 @@ continue independent native work, not dependent controls. [Decision register](SR
 
 Authority inspected: SRD 5.2.1 pp.185/187; [rest support](REST-RESOURCES.md),
 [original campaign mappings](RECOVERY.md). Native resources/spending already exist;
-UI and resumable activity do not. Original probabilistic profiles stay explicit
+Native resumable activity is implemented; UI and automatic event integration remain. Original probabilistic profiles stay explicit
 until researched; do not silently treat them as safe or as city-watch events.
 
 Completed correction: `phlan_session.cpp` now rejects chance values above 101
@@ -41,7 +41,7 @@ Baseline: rebuilt and passed campaign_rest/rest_resource tests (0.92s); log
 `/tmp/rest-batch-baseline.log`. No gameplay UI change yet. Record later phase
 transitions explicitly; token delta unavailable.
 
-Rules 0.6.40 / PC28; campaign 11; combat 13–15 / FX1–3. Read
+Rules 0.6.40 / PC28; campaign 12 with activity, otherwise 11; combat 13–15 / FX1–3. Read
 [workflow](SRD-WORKFLOW.md) and [map](SRD-REPO-MAP.md) for checks/navigation.
 Other pending questions Q19–21/Q23/Q25 remain outside this batch.
 
@@ -54,5 +54,26 @@ Next work stays within this batch; no issues closed for the guard correction.
 Guard verification: all 44 native/tool and 20 registered Godot checks passed
 (31 Godot/fixture entries); actual game and demo party/recovery routes passed. No UI changes.
 Verification completed 22:30:45 UTC. No live processes remain.
-Next: native resumable rest activity under approved Q32, then UI integration
-after Q29–31 answers. Preserve the current writer before changing persistence.
+Native activity implementation began 22:31:07 UTC. Preserved actual `aeeb3b7`
+writer fixtures before save edits. Focused activity/save checks passed. Native implementation/review ran
+22:31–22:49 UTC; build/verification overlapped 22:46–22:51 UTC. Final verification
+completed 22:51:40 UTC: all 44 native/tool checks and 20 Godot checks passed
+(31 entries with fixtures), plus actual game/demo party and recovery routes.
+Logs `/tmp/rest-activity-final-regression.log`, `/tmp/rest-activity-game-route.log`,
+`/tmp/rest-activity-demo-final-route.log`. No live verification remains.
+Tested the native-activity commit tree; docs only updated afterward. Token delta
+unavailable. No issues closed: this increment proves native requirements while
+player controls and event integration remain pending.
+
+Current native delivery: rules-owned timing, revisioned rest requests,
+sleep/light/exertion clocks, Q32 fresh segments, abandonment, format-12 activity
+persistence, prior format-11 exact next-die continuation, interrupted combat
+handoff, and blocking unrelated town events while an activity is retained.
+Existing atomic safe-camp/inn routes consume the engine. No new UI or issues.
+
+Next remains batch B: connect initiative/non-cantrip/damage events and sleeping
+actors; integrate approved controls only after Q29–31 answers. The existing
+city-watch five-minute path is unchanged. Reuse `phlan_session.cpp:finish_event`
+and `rolf_tour.cpp:camp`; resume needs the original permission check without
+starting another rest or charging inn payment twice. Revisit `editable()` for
+scoped interruption event writes; do not broadly unlock equipment/training.

@@ -74,6 +74,7 @@ struct TemporaryHitPoints {
 enum class TemporaryHpChoice { keep_current, use_new };
 struct RestPolicy {
     unsigned duration_minutes{}, wait_after_rest_minutes{};
+    unsigned minimum_sleep_minutes{}, maximum_light_minutes{}, interruption_extension_minutes{}, exertion_limit_minutes{};
 };
 struct ResourcePool {
     std::string id;

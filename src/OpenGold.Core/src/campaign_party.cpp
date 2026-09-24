@@ -34,6 +34,7 @@ CampaignParty::CampaignParty(std::unique_ptr<rules::RulesModule> rules):rules_(s
 void CampaignParty::outside_combat() const {if(combat_)throw std::runtime_error("Finish combat before changing the party");}
 void CampaignParty::editable() const {
     outside_combat();if(state_.short_rest)throw std::runtime_error("Finish Short Rest spending before changing the party");
+    if(state_.rest_activity)throw std::runtime_error("Finish or abandon the rest before changing the party");
 }
 const PartyMember& CampaignParty::member(MemberId id) const
 {
@@ -179,7 +180,7 @@ void CampaignParty::award_experience(unsigned amount,std::string reward_id)
 }
 bool CampaignParty::can_advance(MemberId id) const
 {
-    if(combat_||state_.short_rest)return false;const auto& m=member(id);const auto options=rules_->advancement_options(m.character.sheet());
+    if(combat_||state_.short_rest||state_.rest_activity)return false;const auto& m=member(id);const auto options=rules_->advancement_options(m.character.sheet());
     return !m.vitals.dead&&options.level&&m.experience>=rules_->experience_for_level(options.level);
 }
 rules::AdvancementOptions CampaignParty::advancement_options(MemberId id) const
@@ -217,7 +218,14 @@ void CampaignParty::advance_time(unsigned minutes)
 }
 void CampaignParty::advance_time_milliseconds(std::uint64_t milliseconds)
 {
-    outside_combat();auto next=state_;elapse(next,milliseconds);if(milliseconds)next.short_rest.reset();state_=std::move(next);
+    outside_combat();
+    if(state_.rest_activity&&state_.short_rest&&milliseconds)throw std::runtime_error("Finish interrupted-rest Hit Dice choices before advancing time");
+    if(state_.rest_activity&&!state_.rest_activity->interrupted&&milliseconds)throw std::runtime_error("Advance active rest through its activity request");
+    auto next=state_;elapse(next,milliseconds);
+    if(milliseconds){next.short_rest.reset();if(next.rest_activity){
+        if(next.rest_activity->ticket.revision==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Rest revision exhausted");
+        ++next.rest_activity->ticket.revision;
+    }}state_=std::move(next);
 }
 void CampaignParty::elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat) const
 {
@@ -316,6 +324,30 @@ void CampaignParty::validate(const PartyState& state)
         if((slot<6)!=it->npc_source.empty())throw std::runtime_error("Invalid PC/NPC checkpoint position");
     }
     if(!active.empty()&&!state.slots[state.selected])throw std::runtime_error("Invalid selected member checkpoint");
+    if(state.rest_activity){
+        const auto& rest=*state.rest_activity;std::set<MemberId> members;
+        if(!rest.ticket.session||rest.ticket.session>=state.next_rest_session||!rest.ticket.revision||
+            (rest.kind!=RestKind::short_rest&&rest.kind!=RestKind::long_rest)||
+            (rest.work!=RestWork::sleep&&rest.work!=RestWork::light_activity&&rest.work!=RestWork::exertion)||
+            (rest.interruption!=RestInterruption::initiative&&rest.interruption!=RestInterruption::spell&&rest.interruption!=RestInterruption::damage&&rest.interruption!=RestInterruption::exertion)||
+            rest.started_subminute_milliseconds>=60000||rest.started_minutes>state.time_minutes||
+            (rest.started_minutes==state.time_minutes&&rest.started_subminute_milliseconds>state.subminute_milliseconds)||
+            rest.members.empty()||rest.members.size()>8||rest.segment_milliseconds>rest.elapsed_milliseconds||
+            rest.sleep_milliseconds>rest.elapsed_milliseconds||rest.light_milliseconds!=rest.elapsed_milliseconds-rest.sleep_milliseconds||
+            (rest.interrupted&&(rest.kind!=RestKind::long_rest||rest.segment_milliseconds))||
+            (state.short_rest&&(!rest.interrupted||state.short_rest->ticket.session<=rest.ticket.session)))
+            throw std::runtime_error("Invalid rest activity checkpoint");
+        if(rest.exertion_milliseconds>std::numeric_limits<std::uint64_t>::max()-rest.elapsed_milliseconds)throw std::runtime_error("Rest clock overflow");
+        const auto physical=rest.elapsed_milliseconds+rest.exertion_milliseconds;
+        const auto elapsed_minutes=physical/60000;
+        const auto carry=(rest.started_subminute_milliseconds+physical%60000)/60000;
+        if(elapsed_minutes>state.time_minutes-rest.started_minutes||carry>state.time_minutes-rest.started_minutes-elapsed_minutes||
+            (elapsed_minutes+carry==state.time_minutes-rest.started_minutes&&
+             (rest.started_subminute_milliseconds+physical%60000)%60000>state.subminute_milliseconds))
+            throw std::runtime_error("Rest progress exceeds elapsed campaign time");
+        for(auto id:rest.members)if(!active.contains(id)||!members.insert(id).second)throw std::runtime_error("Invalid rest activity member");
+        if(state.short_rest)for(auto id:state.short_rest->members)if(!members.contains(id))throw std::runtime_error("Short Rest member did not start this activity");
+    }
     if(state.short_rest){
         const auto& rest=*state.short_rest;std::set<MemberId> members;
         if(!rest.ticket.session||rest.ticket.session>=state.next_rest_session||!rest.ticket.revision||
@@ -328,8 +360,36 @@ void CampaignParty::validate(const PartyState& state)
         }
     }
 }
+void CampaignParty::validate_rest_activity(const PartyState& state,const rules::RulesModule& rules){
+    validate(state);
+    if(state.rest_activity){
+        const auto& activity=*state.rest_activity;
+        const auto timing=activity.kind==RestKind::long_rest?rules.long_rest_policy():rules.short_rest_policy();
+        const auto base=std::uint64_t(timing.duration_minutes)*60000;
+        if(!base||activity.extension_milliseconds>std::numeric_limits<std::uint64_t>::max()-base||
+            activity.elapsed_milliseconds>=base+activity.extension_milliseconds||
+            (activity.kind==RestKind::short_rest&&(activity.extension_milliseconds||activity.exertion_milliseconds))||
+            (activity.kind==RestKind::long_rest&&(!timing.interruption_extension_minutes||
+                activity.extension_milliseconds%(std::uint64_t(timing.interruption_extension_minutes)*60000)||
+                (activity.interrupted&&!activity.extension_milliseconds)||
+                (!activity.extension_milliseconds&&activity.segment_milliseconds!=activity.elapsed_milliseconds)||
+                activity.light_milliseconds>std::uint64_t(timing.maximum_light_minutes)*60000||
+                activity.exertion_milliseconds>std::uint64_t(timing.exertion_limit_minutes)*60000)))
+            throw std::runtime_error("Rest activity disagrees with rules timing");
+        if(activity.kind==RestKind::long_rest)for(auto id:activity.members){
+            const auto& m=*std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& member){return member.id==id;});
+            if(!m.last_rest_minutes)continue;
+            if(*m.last_rest_minutes>activity.started_minutes)throw std::runtime_error("Rest started before member eligibility");
+            const auto elapsed=activity.started_minutes-*m.last_rest_minutes;
+            if(elapsed<=timing.wait_after_rest_minutes&&
+                std::uint64_t(timing.wait_after_rest_minutes-elapsed)*60000+m.last_rest_subminute_milliseconds>activity.started_subminute_milliseconds)
+                throw std::runtime_error("Rest started before member eligibility");
+        }
+    }
+}
 void CampaignParty::restore(PartyState state){
-    outside_combat();validate(state);
+    outside_combat();
+    validate_rest_activity(state,*rules_);
     for(const auto& m:state.roster){
         std::vector<std::string> gear;for(auto id:m.equipped)gear.push_back(m.character.inventory().find(id)->get().definition_id);
         (void)rules_->character_profile(m.character.sheet(),gear,m.equipment);
@@ -346,7 +406,7 @@ std::vector<rules::Participant> CampaignParty::participants() const
     }
     if(result.empty())throw std::runtime_error("Add a living combat-ready character first");return result;
 }
-void CampaignParty::begin_combat(){outside_combat();if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;}
+void CampaignParty::begin_combat(){outside_combat();if(state_.rest_activity&&(!state_.rest_activity->interrupted||state_.short_rest))throw std::runtime_error("Resolve rest interruption and Hit Dice choices before combat");if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;}
 void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
 {
     if(!combat_||snapshot.identity!=rules_->identity())throw std::runtime_error("Combat rules identity mismatch");
@@ -364,6 +424,10 @@ void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
         it->vitals=actor.persistent;it->equipment=actor.equipment;
     }
     next.short_rest.reset();
+    if(next.rest_activity){
+        if(next.rest_activity->ticket.revision==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Rest revision exhausted");
+        ++next.rest_activity->ticket.revision;
+    }
     if(!combat_registered_)++next.next_combat_scope;
     state_=std::move(next);combat_elapsed_=snapshot.elapsed_milliseconds;combat_registered_=true;
 }

@@ -50,7 +50,13 @@ struct SaveCodec {
     void field(por::Equipment& v){fields(v.index,v.stored,v.base,v.bonuses);}
     void field(RestTicket& v){fields(v.session,v.revision);}
     void field(ShortRestSession& v){fields(v.ticket,v.completed_minutes,v.completed_subminute_milliseconds,v.members);}
-    void rest(PartyState& v){if(version>=10)fields(v.next_rest_session,v.short_rest);}
+    void field(RestActivity& v){
+        unsigned kind=static_cast<unsigned>(v.kind),work=static_cast<unsigned>(v.work),interruption=static_cast<unsigned>(v.interruption);
+        fields(v.ticket,kind,v.started_minutes,v.started_subminute_milliseconds,v.elapsed_milliseconds,v.segment_milliseconds,
+            v.sleep_milliseconds,v.light_milliseconds,v.exertion_milliseconds,v.extension_milliseconds,v.interrupted,work,interruption,v.members);
+        if(reading){v.kind=static_cast<RestKind>(kind);v.work=static_cast<RestWork>(work);v.interruption=static_cast<RestInterruption>(interruption);}
+    }
+    void rest(PartyState& v){if(version>=10)fields(v.next_rest_session,v.short_rest);if(version>=12)field(v.rest_activity);}
     void field(rules::VitalState& v){fields(v.hit_points,v.dead,v.resources,v.description);}
     void member(PartyMember& v){
         fields(v.id,v.npc_source,v.vitals,v.wealth,v.equipped,v.morale,v.experience,v.last_rest_minutes,v.item_sources,v.creation_source);
@@ -163,7 +169,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 11\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -183,7 +189,7 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
     require(bytes.size()<=limit,"Campaign save too large");
     unsigned version{};std::size_t header_size{};
-    for(unsigned v=1;v<=11;++v){
+    for(unsigned v=1;v<=12;++v){
         const auto header="OPENGOLD-CAMPAIGN "+std::to_string(v)+'\n';
         if(bytes.starts_with(header)){version=v;header_size=header.size();break;}
     }
@@ -191,7 +197,7 @@ SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules
     const auto end=bytes.find('\n',header_size);require(end!=bytes.npos,"Truncated campaign save");
     const auto body=bytes.substr(end+1);
     require(bytes.substr(header_size,end-header_size)==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
-    SaveCodec in(body);in.version=version;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");in.saved_identity=identity;SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.rest(result.party);CampaignParty::validate(result.party);in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
+    SaveCodec in(body);in.version=version;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");in.saved_identity=identity;SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.rest(result.party);CampaignParty::validate_rest_activity(result.party,module);in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
 std::string read_campaign_file(const std::filesystem::path& path)
 {return read_save_file(path,limit);}

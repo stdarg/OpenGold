@@ -543,3 +543,16 @@ wounds, 37 units of wealth, and campaign RNG 789. Combat starts at seed 2, spend
 Dash and Adrenaline Rush, then the continuation ends the turn. Tests require
 byte-identical recipes/budgets/random continuation aside from module identity
 and campaign checksum; no new cantrip is inferred on loading.
+
+## Pre-rest-activity campaign fixtures
+
+`campaign-v11-rest-activity-before.ogs` and
+`campaign-v11-rest-activity-spent.ogs` were produced by the actual `aeeb3b7`
+writer (rules 0.6.40), before rest activity or format 12 changes, using
+`opengold_campaign_rest_tests --freeze-rest-activity`. The guard requires the old
+session allocation as well as format 11 and rules identity. The level-four
+Fighter/Wizard party starts wounded with spent resources, clock 1000 minutes plus
+4321 milliseconds and RNG 29. The first file retains a completed Short Rest
+spending session; the second is the actual next Fighter Hit Die continuation.
+Tests require exact bytes, preserving wounds, resources, tickets, time and RNG.
+Do not regenerate these fixtures using the new engine.

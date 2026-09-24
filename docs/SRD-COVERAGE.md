@@ -39,7 +39,12 @@ no compatibility reduction, no agents/new tasks/model changes; goal remains paus
 profiles now reject rather than masquerading as guaranteed city-watch events.
 Independent regressions failed before the guard correction and pass afterward;
 [scope and evidence](REST-RESOURCES.md#rest-batch-b-verified-profile-boundary).
-This is a correction in the active batch, not completion of rest activity or UI.
+Native resumable activity now records sleep/light/exertion, interruptions and Q32
+fresh segments, rejects stale requests, and persists through format 12 while
+retaining prior saves. Safe-camp/inn atomic callers consume the same engine.
+[Mechanics, compatibility and tests](REST-RESOURCES.md#resumable-activity-persistence-and-evidence).
+Automatic event connections, sleeping actor behavior and reviewed controls remain
+unfinished; this is partial delivery, not closure of these issues.
 Q29–31 await user decisions; Q32 (fresh qualifying segments) is approved in the [register](SRD-DECISIONS.md).
 
 ## Delivered increments

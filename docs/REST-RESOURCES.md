@@ -90,12 +90,25 @@ completes the requested kind. Existing Camp [C] still requests Long Rest until
 Rest. Failed inn continuations restore the entire event, including payment,
 resources, cooldowns, time and RNG. See [recovery mappings](RECOVERY.md).
 
-The campaign currently models uninterrupted rest as an atomic time advance after
-the host's checks. It does not yet model eight hours of sleeping/light activity,
-late interruptions, resumed Long Rests, or the Short Rest benefit of a Long Rest
-interrupted after an hour. These require a separate campaign activity/interruption
-scheduler tracked in [F03d #193](https://github.com/stdarg/OpenGold/issues/193);
-no probabilistic profile silently substitutes an uninterrupted rest.
+The native campaign activity now tracks resting, sleep, light activity and physical
+exertion separately. Existing safe-camp/inn calls consume this engine atomically.
+Revisioned requests support interruption, resumption and abandonment; rejected or
+stale requests preserve time, effects, resources and RNG. Long Rest requires six
+hours of sleep and no more than two light hours, with an extra resting hour per
+interruption. At least one fresh uninterrupted resting hour earns Short Rest
+benefits (Q32); previously credited segments cannot qualify again. Completing or
+abandoning a rest never reverses committed Hit Dice or elapsed time.
+
+Activity checkpoints retain eligible members and progress across save/load and
+explicitly interrupted combat handoff. Physical exertion consumes campaign time
+without increasing resting time; reaching one hour interrupts a Long Rest.
+Initiative, non-cantrip casting and damage have explicit interruption inputs.
+Hosts must resolve earned Hit Dice choices before combat/time advancement, check
+camp permission before resuming and prevent unrelated exploration while a resume
+decision is pending. Automatic event connections, sleeping actors' Unconscious
+behavior and reviewed Godot controls are still pending in #192/#193. The existing
+five-minute city-watch route remains unchanged; unknown probabilistic profiles
+never silently substitute an uninterrupted rest.
 
 ## Persistence
 
@@ -185,3 +198,27 @@ or RNG, or granting a spending entitlement. Both rest kinds retain their verifie
 open for the controls and resumable rest activity described above. Pending
 layout/behavior decisions are Q29–31; Q32 approves fresh qualifying rest segments. See the
 [decision register](SRD-DECISIONS.md).
+
+## Resumable activity persistence and evidence
+
+Campaign format **12** appends an optional activity record after the existing
+rest-spending continuation. It records the session/revision, kind, start clock,
+resting/fresh-segment/sleep/light/exertion/extension milliseconds, interruption
+state/cause, current work and eligible IDs. Only saves containing an activity use
+12; ordinary saves retain 11. Readers retain formats 1–11 and validate activity
+structure, elapsed-clock bounds and rules timing before replacing live state.
+Rules identity 0.6.40, PC28 and combat formats remain unchanged.
+
+`tests/rest_activity_checks.h`, run by `opengold_campaign_rest_tests`, verifies
+fresh-segment recovery, millisecond boundaries, light/sleep and exertion limits,
+stale/duplicate/overflow rejection, interrupted combat handoff, abandonment and
+correct-checksum malformed records. Frozen actual `aeeb3b7` writer fixtures prove
+byte-identical loading and the next Hit Die result/RNG for existing spending
+sessions. See `tests/fixtures/README.md` for provenance. These native checks do
+not constitute completion of the remaining player workflow.
+
+Final native-activity tree verification: all 44 native/tool checks and all 20
+registered Godot checks passed (31 CTest entries including fixtures). Rebuilt
+actual game/demo party routes passed original camping, temple, inn and recovery
+checks. Scope review confirms C++20 Core/rules boundaries and value-owned state;
+no new UI, runtime, save location or combat-saving control was introduced.

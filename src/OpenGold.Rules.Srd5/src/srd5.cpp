@@ -1453,7 +1453,7 @@ public:
         auto next=definition.rushes&&introduce_rush?vitals(actor):state;if(next.hit_points>0)next.hit_points+=sheet.hit_points-definition.hp;
         validate_character_state(sheet,next);state=std::move(next);
     }
-    RestPolicy long_rest_policy() const override {return {480,960};}
+    RestPolicy long_rest_policy() const override {return {480,960,360,120,60,60};}
     RestPolicy short_rest_policy() const override {return {60,0};}
     void elapse(std::span<Participant> participants,std::uint64_t milliseconds,std::uint64_t& random_state) const override
     {

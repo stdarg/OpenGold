@@ -7,7 +7,10 @@
 namespace opengold {
 using MemberId = rules::EntityId;
 enum class RestKind { short_rest, long_rest };
-enum class RestDenial { none, vitality, cooldown, combat, spending };
+enum class RestDenial { none, vitality, cooldown, combat, spending, activity };
+enum class RestWork { sleep, light_activity, exertion };
+// spell means a non-cantrip; a cantrip does not interrupt rest.
+enum class RestInterruption { initiative, spell, damage, exertion };
 struct MemberRestInfo {
     MemberId id{};
     rules::RecoveryInfo recovery;
@@ -25,9 +28,21 @@ struct ShortRestSession {
     unsigned completed_subminute_milliseconds{};
     std::vector<MemberId> members;
 };
+struct RestActivity {
+    RestTicket ticket;
+    RestKind kind{};
+    std::uint64_t started_minutes{};
+    unsigned started_subminute_milliseconds{};
+    std::uint64_t elapsed_milliseconds{}, segment_milliseconds{}, sleep_milliseconds{}, light_milliseconds{};
+    std::uint64_t exertion_milliseconds{}, extension_milliseconds{};
+    bool interrupted{};
+    RestWork work{RestWork::sleep};
+    RestInterruption interruption{RestInterruption::initiative};
+    std::vector<MemberId> members;
+};
 struct RestResult {
     RestKind kind{};
-    unsigned duration_minutes{};
+    std::uint64_t duration_minutes{};
     std::vector<MemberId> members;
     std::optional<RestTicket> spending;
 };
@@ -57,6 +72,7 @@ struct PartyState {
     std::uint64_t next_combat_scope{1};
     std::uint64_t next_rest_session{1};
     std::optional<ShortRestSession> short_rest;
+    std::optional<RestActivity> rest_activity;
 };
 // One shared campaign value store. Sessions share this owner, never separate PCs.
 // While combat owns mutable vitals, roster/equipment/script mutations are barred.
@@ -92,6 +108,13 @@ public:
     // The campaign service must first approve the location and interruption profile.
     [[nodiscard]] std::vector<MemberRestInfo> rest_info(RestKind kind) const;
     [[nodiscard]] std::optional<RestResult> rest(RestKind kind);
+    [[nodiscard]] std::optional<RestTicket> begin_rest(RestKind kind);
+    // Advances a caller-approved activity interval; never skips host encounters.
+    [[nodiscard]] std::optional<RestResult> advance_rest(RestTicket ticket,std::uint64_t milliseconds,RestWork work);
+    void interrupt_rest(RestTicket ticket,RestInterruption cause);
+    void resume_rest(RestTicket ticket);
+    void abandon_rest(RestTicket ticket);
+    [[nodiscard]] std::uint64_t remaining_rest_milliseconds() const;
     [[nodiscard]] rules::HitDieResult spend_hit_die(RestTicket ticket,MemberId id);
     void finish_short_rest(RestTicket ticket);
     void temple_heal(MemberId target);
@@ -109,6 +132,7 @@ public:
     [[nodiscard]] PartyState checkpoint() const {return state_;}
     void restore(PartyState state);
     static void validate(const PartyState& state);
+    static void validate_rest_activity(const PartyState& state,const rules::RulesModule& rules);
     [[nodiscard]] std::vector<rules::Participant> participants() const;
     void begin_combat();
     void apply_combat(const rules::Snapshot& snapshot);
@@ -125,6 +149,9 @@ private:
     void editable() const;
     void outside_combat() const;
     void require_rest_ticket(RestTicket ticket) const;
+    void require_activity_ticket(RestTicket ticket) const;
+    void interrupt_rest_state(PartyState& state,RestInterruption cause) const;
+    void short_rest_benefits(PartyState& state,const std::vector<MemberId>& members) const;
     PartyMember& edit(MemberId id);
     void join(MemberId id,bool npc);
 };

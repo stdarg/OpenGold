@@ -2,6 +2,8 @@
 #include "opengold/srd5.h"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <limits>
 #include <stdexcept>
 using namespace opengold;
@@ -22,6 +24,19 @@ unsigned winds(const PartyMember& member){
     const auto info=module()->recovery_info(member.character.sheet(),member.vitals);
     for(const auto& pool:info.resources)if(pool.id=="second_wind")return pool.remaining;
     throw std::runtime_error("Missing Second Wind pool");
+}
+void freeze_activity_baseline(){
+    CampaignParty party(module());auto id=party.add_pc(hero());party.add_pc(hero("wizard"));
+    auto state=party.checkpoint();state.time_minutes=1000;state.subminute_milliseconds=4321;state.random_state=29;
+    for(auto& member:state.roster)member.vitals={1,false,"SRD1 0 0 0 0 0"};party.restore(state);
+    (void)party.rest(RestKind::short_rest);
+    check(party.state().short_rest->ticket.session==1&&party.state().next_rest_session==2,"Freeze requires pre-activity rest implementation");
+    const auto write=[&](const char* name){const auto bytes=saved(party);
+        check(bytes.starts_with("OPENGOLD-CAMPAIGN 11\n")&&party.identity().version=="0.6.40","Freeze requires actual pre-activity writer");
+        std::ofstream out(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name,std::ios::binary);out<<bytes;check(bool(out),"Write prior rest fixture");};
+    write("campaign-v11-rest-activity-before.ogs");
+    (void)party.spend_hit_die(party.state().short_rest->ticket,id);
+    write("campaign-v11-rest-activity-spent.ogs");
 }
 void individual_eligibility(){
     CampaignParty party(module());const auto f=party.add_pc(hero()),w=party.add_pc(hero("wizard"));
@@ -178,6 +193,17 @@ void campaign_services(){
     check(encode_campaign(*resumed,&*disk.town,"campaign-rest")==bytes,"Idle town saves preserve the pending spending window");
     resumed->finish_short_rest(resumed->state().short_rest->ticket);check(disk.town->explore(por::ExplorationCommand::look),"Finish permits exploration");settle(*disk.town);
     check(resumed->member(id).vitals.hit_points==7&&disk.town->script_variable(0x6c19)==7,"Next script cannot overwrite committed Hit Die healing with stale HP");
+    (void)resumed->begin_rest(RestKind::long_rest);
+    for(unsigned phase=0;phase<2;++phase){
+        const auto before=encode_campaign(*resumed,&*disk.town,"campaign-rest");
+        check(!disk.town->explore(por::ExplorationCommand::turn_left)&&
+            !disk.town->explore(por::ExplorationCommand::forward)&&
+            !disk.town->explore(por::ExplorationCommand::look)&&
+            !disk.town->camp(RestKind::long_rest),"Active or interrupted rest blocks unrelated campaign events");
+        check(encode_campaign(*resumed,&*disk.town,"campaign-rest")==before,"Blocked exploration preserves party and town state");
+        if(!phase)resumed->interrupt_rest(resumed->state().rest_activity->ticket,RestInterruption::initiative);
+    }
+    resumed->abandon_rest(resumed->state().rest_activity->ticket);
     for(const auto kind:{RestKind::short_rest,RestKind::long_rest})for(const auto chance:{255u,50u,100u,101u,102u,200u,254u}){
         party->restore(state);
         auto script=program({9,0,1,1,0xd2,0x6d,9,0,static_cast<std::uint8_t>(chance),1,0xd3,0x6d,0});
@@ -201,7 +227,7 @@ std::string payload(std::string body){
 void malformed_continuation(){
     CampaignParty party(module());const auto id=party.add_pc(hero());(void)party.rest(RestKind::short_rest);
     const auto good=saved(party);auto body=good.substr(good.find('\n',good.find('\n')+1)+1);
-    const std::string tail="2 1 1 1 60 0 1 1 ";check(body.ends_with(tail),"Independent fixture locates the version-ten continuation");
+    const std::string tail="3 1 2 1 60 0 1 1 ";check(body.ends_with(tail),"Independent fixture locates the version-ten continuation");
     const auto prefix=body.substr(0,body.size()-tail.size());
     for(const auto bad:{"0 0 ","1 1 1 1 60 0 1 1 ","2 1 0 1 60 0 1 1 ","2 1 1 0 60 0 1 1 ",
         "2 1 1 1 59 0 1 1 ","2 1 1 1 60 1 1 1 ","2 1 1 1 60 0 0 ","2 1 1 1 60 0 2 1 1 ","2 1 1 1 60 0 1 999 "})
@@ -211,5 +237,6 @@ void malformed_continuation(){
     const auto exhausted=saved(party);rejects([&]{(void)party.spend_hit_die(party.state().short_rest->ticket,id);});
     check(saved(party)==exhausted,"Revision exhaustion cannot consume a die or RNG");party.finish_short_rest(party.state().short_rest->ticket);
 }
+#include "rest_activity_checks.h"
 }
-int main(){try{individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
