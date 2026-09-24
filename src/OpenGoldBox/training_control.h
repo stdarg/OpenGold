@@ -25,6 +25,7 @@ template<class Translate> godot::String training_source(std::string_view id,cons
     if(id=="class:cleric")return tr(N_("Cleric class"));
     if(id=="class:druid")return tr(N_("Druid class"));
     if(id=="class:fighter")return tr(N_("Fighter class"));
+    if(id=="class:monk:tools")return tr(N_("Monk class"));
     if(id=="class:monk")return tr(N_("Monk class"));
     if(id=="class:paladin")return tr(N_("Paladin class"));
     if(id=="class:ranger")return tr(N_("Ranger class"));

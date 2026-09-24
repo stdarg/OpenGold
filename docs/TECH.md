@@ -801,3 +801,8 @@ training service. Older recipes retain their original entitlement policy; campai
 choice maps need no schema change. The shared Training controls render the new
 group and translated tool sources without SRD mechanics in Core or Godot. See
 [Bard instruments](BARD-INSTRUMENTS.md).
+
+Rules 0.6.32 / PC21 adds Monk starting tool choices. Tool-category eligibility
+stays in SRD rules, with the existing generic Training controls and choice
+continuity metadata shared by Bard and Monk. No Core class-specific behavior or
+new persistence schema is introduced. See [Monk tools](MONK-TOOLS.md).

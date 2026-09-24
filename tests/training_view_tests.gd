@@ -129,25 +129,35 @@ func all_class_skill_controls() -> void:
 			await press("Back")
 			await press("Next")
 			require(instrument.button_pressed, "Back preserves instrument choices")
+		if klass == "Monk":
+			require(current_scene.get_node("Next").disabled, "Monk tool remains required")
+			var tool: CheckBox = current_scene.get_node("Training/Rows/Group2/smiths_tools")
+			tool.grab_focus()
+			await keyboard(KEY_SPACE)
+			require(tool.button_pressed and tool.has_focus(), "Monk tool keyboard focus")
+			require(current_scene.get_node("Training/Rows/Group2/flute").disabled, "Second Monk tool disabled")
+			await press("Back")
+			await press("Next")
+			require(tool.button_pressed, "Back preserves Monk tool")
 		if klass == "Fighter": await choose("Training/Rows/Group1/Choice", "Defense")
 		require(not current_scene.get_node("Next").disabled, "Every class can finish all supported Training choices: " + klass)
 		await press("Next")
 		require(current_scene.get_node("PageTitle").text == ("Spell Choices" if klass in ["Cleric", "Wizard"] else "Name"), "Completed Training reaches the next creation step: " + klass)
-		if klass == "Bard":
+		if klass in ["Bard", "Monk"]:
 			var bard_name: LineEdit = current_scene.get_node("Name")
 			bard_name.text = "Instrument Bard"
 			bard_name.text_changed.emit(bard_name.text)
 			await press("Next")
 			await press("Next")
 			var bard_sheet: String = current_scene.get_node("Description").get_parsed_text()
-			for instrument_name in ["Flute", "Lute", "Viol"]:
-				require(bard_sheet.contains(instrument_name + " (Bard class)"), "Bard sheet shows selected instrument and source")
+			for instrument_name in (["Flute", "Lute", "Viol"] if klass == "Bard" else ["Smith's Tools"]):
+				require(bard_sheet.contains(instrument_name + " (" + klass + " class)"), "Bard sheet shows selected instrument and source")
 			await press("Back")
 			await press("Back")
 		await press("Back")
 		await pick(0, "elvish", false)
 		await pick(0, "dwarvish", false)
-		if klass in ["Bard", "Wizard"]:
+		if klass in ["Bard", "Monk", "Wizard"]:
 			for locale in ["en", "es"]:
 				TranslationServer.set_locale(locale)
 				await press("Back")
@@ -159,10 +169,14 @@ func all_class_skill_controls() -> void:
 					current_scene.get_node("Training").scroll_vertical = int(box.position.y)
 					await settle()
 					await capture("skills-" + klass.to_lower() + "-" + locale + "-" + str(size.x))
-					if klass == "Bard":
+					if klass in ["Bard", "Monk"]:
 						current_scene.get_node("Training").scroll_vertical = int(current_scene.get_node("Training/Rows/Group2").position.y)
 						await settle()
-						await capture("instruments-" + locale + "-" + str(size.x))
+						await capture(klass.to_lower() + "-tools-" + locale + "-" + str(size.x))
+						if klass == "Monk":
+							current_scene.get_node("Training").scroll_vertical = 100000
+							await settle()
+							await capture("monk-tools-bottom-" + locale + "-" + str(size.x))
 			TranslationServer.set_locale("en")
 			root.size = Vector2i(1120, 800)
 		for check in checks:

@@ -440,3 +440,12 @@ level-one Bards covering Sage, Criminal, Acolyte and Soldier. All have explicit
 Performance/Persuasion/Perception and Elvish/Dwarvish, two missing HP and recorded
 resource state. Combat profiles are PC19. Both files remain unedited; their
 round-trip baseline permits only module identity and campaign checksum changes.
+
+### Monk tool choice prior writer (rules 0.6.31)
+
+`campaign-v11-monk-tools-before.ogs` and `combat-v14-monk-tools-before.save` were
+written using the actual 0.6.31 libraries at `1c5f9bf`, before Monk tool changes.
+`freeze_monk_tools()` is version guarded. Four level-one Monks cover all current
+backgrounds with Acrobatics/Insight, Elvish/Dwarvish, two missing HP and recorded
+resources. PC20 combat recipes and all fixture bytes remain unedited. Migration
+checks permit only module identity/checksum changes and keep tool choices pending.

@@ -151,3 +151,7 @@ replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).
 Bard starting instrument proficiencies use a choose-three group from all ten SRD
 instruments. Presets generate selections; old saves retain pending choices. See
 [Bard instruments](BARD-INSTRUMENTS.md) for sources, versioning and verification.
+
+Monks choose one artisan tool or instrument from all 27 SRD options. Shared
+continuity metadata preserves instruments across Bard/Monk changes; artisan
+tools remain Monk-only choices. See [Monk tools](MONK-TOOLS.md).
