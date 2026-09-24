@@ -375,3 +375,12 @@ module version and verifies that migration invents no Ray of Frost grant.
 records the reproducible setup and rejects execution with a newer writer. The
 level-3 Sage Wizard has explicit language/cantrip choices, wounds and spent slots;
 it has none of the three newly supported Sage grants. The fixture is unedited.
+
+### Acolyte/Soldier fixed training (rules 0.6.26)
+
+`campaign-v11-backgrounds-before.ogs` was written by the actual 0.6.26 libraries
+at `0004064`, before the additional background grant changes. The test-only
+`freeze_backgrounds()` setup ran with those libraries and requires that version.
+It contains level-three Acolyte Cleric and Soldier Fighter characters with explicit
+languages, wounds and spent spell/feat resources. Neither has the newly supported
+fixed proficiencies. The fixture is unedited.

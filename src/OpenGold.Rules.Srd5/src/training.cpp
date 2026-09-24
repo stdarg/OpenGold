@@ -32,9 +32,11 @@ void require(bool ok){if(!ok)throw std::runtime_error("Invalid training choices 
 int modifier(int score){return score<10?(score-11)/2:(score-10)/2;}
 int proficiency(unsigned level){require(level>=1&&level<=20);return 2+int((level-1)/4);}
 bool source(std::span<const FeatureGrant> grants,std::string_view id){return std::any_of(grants.begin(),grants.end(),[&](const auto& g){return g.id==id;});}
-std::vector<FeatureGrant> fixed(std::string_view klass,std::string_view background,bool sage_training){
+std::vector<FeatureGrant> fixed(std::string_view klass,std::string_view background,TrainingPolicy policy){
     std::vector<FeatureGrant> result{{"language:common",std::string(origin),1,{}}};
-    if(sage_training&&background=="sage")for(const auto id:{"skill:arcana","skill:history","tool:calligraphers_supplies"})result.push_back({id,"background:sage",1,{}});
+    if(policy>=TrainingPolicy::sage&&background=="sage")for(const auto id:{"skill:arcana","skill:history","tool:calligraphers_supplies"})result.push_back({id,"background:sage",1,{}});
+    if(policy>=TrainingPolicy::all_backgrounds&&background=="acolyte")for(const auto id:{"skill:insight","skill:religion","tool:calligraphers_supplies"})result.push_back({id,"background:acolyte",1,{}});
+    if(policy>=TrainingPolicy::all_backgrounds&&background=="soldier")for(const auto id:{"skill:athletics","skill:intimidation"})result.push_back({id,"background:soldier",1,{}});
     if(background=="criminal")for(const auto id:{"skill:sleight_of_hand","skill:stealth","tool:thieves_tools"})result.push_back({id,"background:criminal",1,{}});
     if(klass=="rogue"){
         result.push_back({"tool:thieves_tools",std::string(rogue),1,{}});
@@ -53,13 +55,13 @@ void add_choices(std::vector<FeatureGrant>& grants,const TrainingChoices& choice
     for(const auto& value:values){require(seen.insert(value).second&&std::any_of(group.options.begin(),group.options.end(),[&](const auto& o){return o.id==value;}));
         grants.push_back({std::string(prefix)+value,group.id,1,{}});}
 }
-std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view background,const TrainingChoices& choices,bool sage_training){
+std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     std::vector<TrainingChoiceGroup> result{{std::string(origin),"Starting languages",2,language_options(false)}};
     if(klass=="rogue"){
         TrainingChoiceGroup group{std::string(rogue),"Rogue skills",4,{}};
         for(const auto& s:skills)if(std::find(rogue_skills.begin(),rogue_skills.end(),s.id)!=rogue_skills.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
         result.push_back(std::move(group));group={std::string(expertise),"Rogue Expertise",2,{}};
-        const auto known=fixed(klass,background,sage_training);const auto& picked=selected(choices,rogue);
+        const auto known=fixed(klass,background,policy);const auto& picked=selected(choices,rogue);
         for(const auto& s:skills)if(source(known,"skill:"+std::string(s.id))||std::find(picked.begin(),picked.end(),s.id)!=picked.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
         result.push_back(std::move(group));group={std::string(cant),"Additional Rogue language",1,language_options(true)};
         const auto& starting=selected(choices,origin);
@@ -86,15 +88,15 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
 }
 bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
 std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
-std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,true);}
-std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,bool sage_training){
-    auto result=fixed(klass,background,sage_training);const auto groups=options(klass,background,choices,sage_training);
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::all_backgrounds);}
+std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
+    auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
     for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());
     for(const auto& group:groups)add_choices(result,choices,group,group.id==rogue?"skill:":group.id==expertise?"expertise:":"language:");
     return result;
 }
-TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,bool sage_training){
-    auto required=fixed(klass,background,sage_training);TrainingChoices choices;std::vector<FeatureGrant> actual;
+TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,TrainingPolicy policy){
+    auto required=fixed(klass,background,policy);TrainingChoices choices;std::vector<FeatureGrant> actual;
     for(const auto& grant:grants)if(is_training_grant(grant)){
         require(grant.level==1&&grant.choices.empty());actual.push_back(grant);
         const auto found=std::find(required.begin(),required.end(),grant);
@@ -102,12 +104,12 @@ TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::strin
         const auto prefix=grant.source_id==rogue?"skill:":grant.source_id==expertise?"expertise:":"language:";
         require(grant.id.starts_with(prefix));choices[grant.source_id].push_back(grant.id.substr(std::string_view(prefix).size()));
     }
-    require(required.empty());auto expected=training_grants(klass,background,choices,sage_training);
+    require(required.empty());auto expected=training_grants(klass,background,choices,policy);
     const auto order=[](const FeatureGrant& a,const FeatureGrant& b){return std::tie(a.id,a.source_id,a.level)<std::tie(b.id,b.source_id,b.level);};
     std::sort(actual.begin(),actual.end(),order);std::sort(expected.begin(),expected.end(),order);require(actual==expected);return choices;
 }
-TrainingProfile training_profile(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,const std::array<int,6>& scores,bool sage_training){
-    const auto choices=training_choices(grants,klass,background,sage_training);const auto groups=options(klass,background,choices,sage_training);TrainingProfile result;result.complete=true;
+TrainingProfile training_profile(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,const std::array<int,6>& scores,TrainingPolicy policy){
+    const auto choices=training_choices(grants,klass,background,policy);const auto groups=options(klass,background,choices,policy);TrainingProfile result;result.complete=true;
     for(const auto& group:groups)result.complete&=selected(choices,group.id).size()==group.count;
     for(const auto& s:skills){const auto bonus=check_modifier(grants,scores,level,s.ability,s.id,{});
         result.skills.push_back({std::string(s.id),std::string(s.label),s.ability,bonus.total,source(grants,"skill:"+std::string(s.id)),bonus.expertise,bonus.sources});}

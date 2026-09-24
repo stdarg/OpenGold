@@ -78,6 +78,22 @@ func keyboard(key: Key) -> void:
 		root.push_input(event, true)
 		await settle()
 
+func background_captures(background: String, translated: String) -> void:
+	for locale in ["en", "es"]:
+		TranslationServer.set_locale(locale)
+		await press("Back")
+		await press("Next")
+		var fixed: String = current_scene.get_node("TrainingFixed").text
+		require(fixed.contains(background + " background" if locale == "en" else translated), "Missing translated fixed background source")
+		for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+			root.size = size
+			await settle()
+			await capture(background.to_lower() + "-" + locale + "-" + str(size.x))
+	TranslationServer.set_locale("en")
+	root.size = Vector2i(1120, 800)
+	await press("Back")
+	await press("Next")
+
 func run_checks() -> void:
 	change_scene_to_file("res://scenes/character_creation.tscn")
 	await settle()
@@ -134,6 +150,24 @@ func run_checks() -> void:
 	await press("Next")
 	require(not current_scene.get_node("Training/Rows/Group2/stealth").visible and current_scene.get_node("Training/Rows/Group2/perception").button_pressed, "Background change clears valid Expertise or keeps invalid Expertise")
 	await press("Back")
+	await press("Back")
+	await choose("Background", "Acolyte")
+	await press("Next")
+	await press("Next")
+	require(current_scene.get_node("TrainingFixed").text.contains("Insight") and current_scene.get_node("TrainingFixed").text.contains("Religion") and current_scene.get_node("TrainingFixed").text.contains("Calligrapher"), "Acolyte fixed skills/tool missing")
+	await pick(2, "religion")
+	require(not current_scene.get_node("Next").disabled, "Background Religion cannot fulfill Rogue Expertise")
+	await background_captures("Acolyte", "Trasfondo de acólito")
+	await press("Back")
+	await press("Back")
+	await choose("Background", "Soldier")
+	await press("Next")
+	await press("Next")
+	require(current_scene.get_node("TrainingFixed").text.contains("Athletics") and current_scene.get_node("TrainingFixed").text.contains("Intimidation"), "Soldier fixed skills missing")
+	require(not current_scene.get_node("Training/Rows/Group2/religion").visible and current_scene.get_node("Training/Rows/Group2/perception").button_pressed, "Background change must drop lost Religion Expertise and retain Perception")
+	await pick(2, "athletics")
+	await background_captures("Soldier", "Trasfondo de soldado")
+	await press("Back")
 	await choose("Choices", "Fighter")
 	await press("Next")
 	require(not current_scene.get_node("Training/Rows/Group1").visible and not current_scene.get_node("Next").disabled, "Class change loses starting languages or retains Rogue requirements")
@@ -156,7 +190,7 @@ func run_checks() -> void:
 	await press("Next")
 	await press("Next")
 	var sheet: String = current_scene.get_node("Description").get_parsed_text()
-	require(sheet.contains("Supported training choices complete") and sheet.contains("Perception +") and sheet.contains("Rogue Expertise") and sheet.contains("Undercommon"), "Sheet lacks bonuses, sources or languages")
+	require(sheet.contains("Supported training choices complete") and sheet.contains("Perception +") and sheet.contains("Rogue Expertise") and sheet.contains("Undercommon") and sheet.contains("Soldier background") and sheet.contains("Athletics +") and sheet.contains("Intimidation +"), "Sheet lacks bonuses, sources or languages")
 	await press("AddParty")
 	require(current_scene.get_node("PartyPanel/Sheet").get_parsed_text().contains("Supported training choices complete"), "Adding to party lost training")
 	print("Training UI checks passed: keyboard, limits, dependent Expertise, Back, background/class changes, sheet and party.")

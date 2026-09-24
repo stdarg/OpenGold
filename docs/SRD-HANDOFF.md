@@ -1,94 +1,79 @@
 # SRD handoff
 
-Updated 2026-09-24. **SRD goal active again.** The user resumed the goal after
-installing the efficiency workflow. Work continues on #205.
+Updated 2026-09-24. **Goal active:** close all `SRD_improvements` issues, with
+all twelve classes through level 4, then level 20 and multiclassing. Work one
+bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
+[Index](https://github.com/stdarg/OpenGold/issues/186), [plan](SRD-IMPLEMENTATION.md),
+[coverage](SRD-COVERAGE.md). Query GitHub for counts; old snapshots are stale.
 
-## Current state
+## Current increment
 
-- Goal: close all `SRD_improvements` issues; all twelve classes, first through
-  level 4, then through 20 and multiclassing. [Index](https://github.com/stdarg/OpenGold/issues/186),
-  [plan](SRD-IMPLEMENTATION.md), [coverage](SRD-COVERAGE.md).
-- Branch: `main`. Rules 0.6.26 Sage fixed training is delivered; Ray of Frost was delivered earlier; shared selector was delivered in `bc2d152`. #205 remains partial.
-  Last observed open label count: 162; this is a snapshot, not completion proof.
-- PC15 / FX2; combat 15 for Ray access/effects, otherwise 13/14; campaign 11.
-  [Ray of Frost evidence and remaining scope](RAY-OF-FROST.md).
-- Wizard choice, main-game casting, Cold damage, nonstacking sourced slow,
-  caster-turn expiry and campaign/camp continuation are implemented.
+Branch `main`. #212 completes Acolyte Insight, Religion and Calligrapher's Supplies,
+and Soldier Athletics and Intimidation. See [background training](BACKGROUND-TRAINING.md)
+for scope, migration and verification. Parents #61/#64 retain missing feat,
+Gaming Set and equipment/wealth choices. #211 Sage and #210 Dwarven Toughness
+explanation were previously delivered (`0004064`, `490ed19`).
 
-While Silence questions remain pending, #210 corrected the Dwarven Toughness
-racial explanation (490ed19). #211 supplies Sage Arcana, History and Calligrapher's
-Supplies grants for every starting class, with old-save migration and existing
-Training controls. See SAGE-TRAINING.md for evidence and remaining package work.
+Rules 0.6.27 / PC16 / FX2; combat 13–15 and campaign 11 are unchanged.
+Old profiles keep their validation catalog; campaign replay adds owed fixed
+background grants. Actual 0.6.26 fixture provenance is in tests/fixtures/README.md.
+Main entry points: rules `training.{h,cpp}`, `srd5.cpp`, Godot `training_control.h`,
+`tests/training_tests.cpp`, `tests/training_view_tests.gd`, `tests/campaign_fixture.h`.
 
-## Current issue
+## Next work and pending questions
 
-Concentration transition foundation #207 is delivered; [evidence](CONCENTRATION.md).
-Next: [Silence combat/area/player integration #208](https://github.com/stdarg/OpenGold/issues/208),
-then [campaign/ritual integration #209](https://github.com/stdarg/OpenGold/issues/209).
-Both link back to #38/#39/#43/#174. Read acceptance before implementation.
-The isolated CN1 concentration subrecord now passes canonical, malformed-input
-and deterministic continuation tests; it is not yet embedded in live saves.
-Questions 19–21 are pending; do not implement their dependent choices until answered:
-- Q19: explicit flat-grid adaptation: choose a square center, circular 20-foot
-  radius, whole occupied square for full containment, walls block spread, preview
-  distinguishes partial squares/fully contained creatures; no height/airborne model.
+[Silence combat/area integration #208](https://github.com/stdarg/OpenGold/issues/208)
+and [campaign/ritual integration #209](https://github.com/stdarg/OpenGold/issues/209)
+remain dependent on unanswered questions 19–21. Do not re-ask or implement their
+dependent choices without answers. These requests cite AGENTS.md for controls
+and explicit review for geometry:
+
+- Q19: flat grid; square center within 120 feet, circular 20-foot radius, whole
+  occupied square determines full containment, walls block spread; preview
+  distinguishes partial squares and fully contained creatures. No height model.
 - Q20: prepared “Silence — level 2” in existing Spell dropdown; Cast enters area
   preview, arrows move it, Enter/click commits, Escape cancels free. New row below
-  Dash shows End concentration, spell and duration; release costs no action and
+  Dash shows End concentration, spell and duration. Release costs no action and
   is available for the selected owner outside their turn.
 - Q21: Silence in current level 3–4 Cleric preparation choices, retaining current
   limits/confirmation; explicit choice only, no change to saved preparations.
-These requests cite AGENTS.md for controls and explicit review for geometry.
-#205 remains partial for speech blockers and the other linked granting sources.
-Mundane gagging also remains under #39; do not equate it with magical silence.
 
-Relevant entry points (read only the needed sections):
-
-- `src/OpenGold.Rules.Srd5/src/{srd5.cpp,status_effects.h,status_effects.cpp}`:
-  legal commands, attack resolution, movement, effect lifecycle and checkpoint.
-- `src/OpenGold.Rules.Srd5/src/{spell_access.h,spell_access.cpp,spell_components.h}`:
-  sourced access and components. [Spell inventory](SPELL-INVENTORY.md).
-- `src/OpenGoldBox/{combat_view.cpp,character_creation_view.cpp}` and game scenes:
-  existing controls. [Spell access](SPELL-ACCESS.md), [status effects](STATUS-EFFECTS.md).
-- `tests/{poison_spray_tests.cpp,sacred_flame_tests.cpp,status_effect_tests.cpp}`
-  and `tests/{poison_view_tests.gd,sacred_view_tests.gd}`: reusable test patterns.
+Concentration lifecycle #207 and isolated CN1 codec are delivered; CN1 is not
+embedded in live saves. See [CONCENTRATION.md](CONCENTRATION.md).
+#205 Ray of Frost remains partial for other grant routes and #39 speech blockers;
+see [RAY-OF-FROST.md](RAY-OF-FROST.md). Mundane gagging remains separate.
+Continue independently actionable backlog work while these questions are pending.
 
 ## Decisions to preserve
 
-- No player combat saving. Saving is at camp or an inn; internal checkpoints
-  are allowed for deterministic continuation/testing.
-- Missing old-save training choices stay pending for Review Training (#189).
-  Preset characters get pre-generated choices. Question 11 about the specific
-  Review Training layout is still unresolved; retrieve its wording if needed.
-- Creation has approved Training and Spell Choices steps; Back retains valid
-  selections and missing catalog choices stay explicitly pending.
-- Grip dropdown, HP source tooltips/colors, Temporary HP replacement, Adrenaline
-  Rush, Savage Attacker's two-stage dialog and Action Surge controls are approved.
-  See their feature docs/current implementation rather than re-asking.
-- **Question 18 approved 2026-09-24:** replace individual combat cantrip buttons
-  with a labeled Spell dropdown and Cast button in the same row to the right of
-  Adrenaline Rush. List known cantrips; Cast highlights legal targets; clicking
-  casts. Support keyboard use and retain A/Space; disable unavailable Cast.
-  Ray of Frost becomes a Wizard choice in the existing Spell Choices step.
-  Combat selector and Ray of Frost choice are delivered. Reuse this approval.
-- Play Glass.aiff before numbered questions. Batch related questions and reuse
-  approvals. Existing scope/architecture rules still apply.
+- Saves only at camp/inn; no player combat-save controls. Internal continuation
+  fixtures/checkpoints are permitted.
+- Missing old training selections remain pending. Review Training #189 has
+  unanswered layout question 11; retrieve its wording if needed. Presets must
+  have pre-generated training selections.
+- Approved creation steps: Training, then class-driven Spell Choices, then Name.
+  Back keeps valid selections; unsupported catalog choices remain pending.
+- Q18 approved and delivered: shared Spell dropdown and Cast in the existing
+  combat row to the right of Adrenaline Rush; known cantrips, legal target preview,
+  keyboard access, A/Space cycle and disabled unavailable casting. Reuse approval.
+- Grip, HP source tooltips/colors, Temp HP replacement, Adrenaline Rush, Savage
+  Attacker two-stage choice and Action Surge controls are approved; see feature docs.
+- Play `/System/Library/Sounds/Glass.aiff` with `/usr/bin/afplay` before numbered
+  questions. Batch related questions and reuse approvals. Fixed data displayed
+  by existing controls does not require another layout approval.
 
-## Verification and local environment
+## Environment and verification
 
-- Ray increment: 39 native/tool checks pass in aggregate (only stale catalog count
-  failed the broad run; corrected and rerun). 16 Godot runtime checks plus seven
-  native fixture prerequisites pass. Main/demo builds and 744-message localization
-  check pass. Rendered combat at both supported sizes in English/Spanish.
-- Wizard and Cleric creation checks cover the shared step; see the feature doc.
-- Concentration foundation, status effects and Ray of Frost focused checks pass.
-  CN1 serialization follow-up passed the rebuilt concentration test.
-  No runtime/save changes in this helper increment.
-- Sage validation: native regression and Godot/creation checks are recorded in
-  SAGE-TRAINING.md; 745 English/Spanish messages validate.
-- No remaining live processes after final verification. No UI questions needed
-  for the delivered Ray controls; Review Training question 11 remains unresolved.
-- Bash/macOS; `build/mac-check` is the game/native build; `build/sprite-demo` is
-  separate. Godot: `/Applications/Godot_mono.app/Contents/MacOS/Godot`.
-- Main project: `src/OpenGoldBox/godot`; local original assets: `/Users/edmond/POOLRAD`.
-  Use [the workflow](SRD-WORKFLOW.md) for focused build/test commands and boundaries.
+Bash/macOS. `build/mac-check` is the main build, `build/sprite-demo` separate.
+Godot: `/Applications/Godot_mono.app/Contents/MacOS/Godot`; project:
+`src/OpenGoldBox/godot`; local original assets: `/Users/edmond/POOLRAD`.
+Run Godot tests serially (shared checkpoint paths). Prepare the project once after
+native/localization changes; see workflow for fixture exclusion and test commands.
+Finished creation training appears in `Description`, not `ModifiersModal`.
+Refresh locale-dependent creator text with Back/Next after changing locale.
+
+#212: 40 native/tool checks, final focused training, 16 Godot runtime checks plus
+seven fixture prerequisites pass. Main/demo builds and 747-message localization
+check pass. Actual creation/party flow passes; both backgrounds inspected at both
+sizes in English/Spanish. No live test/build processes remain. Evidence in
+BACKGROUND-TRAINING.md; captures are local `/tmp/opengold-backgrounds-renders`.

@@ -756,3 +756,9 @@ Rules 0.6.26 adds the Sage fixed training package. PC15 validates those grants;
 prior profiles use the previous training policy. Campaign reconstruction adds
 only owed fixed grants from the existing background. The shared Training display
 and modifier queries expose them; see [Sage training](SAGE-TRAINING.md).
+
+Rules 0.6.27 adds Acolyte and Soldier fixed proficiencies through the shared
+training service. PC16 uses a versioned training policy; PC15 retains Sage-only
+additions and older profiles retain their original catalog. Campaign replay adds
+only owed fixed grants. Existing translated Training and character-sheet controls
+consume the same rules data. See [background training](BACKGROUND-TRAINING.md).

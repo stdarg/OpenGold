@@ -57,7 +57,7 @@ void access(){auto creation=srd5::character_rules();auto rules=module();auto d=d
     for(auto bad:std::vector<std::vector<std::string>>{{"poison_spray","poison_spray"},{"magic_missile"},{"unknown"},{"poison_spray","fire_bolt","fire_bolt","poison_spray"}}){d.cantrips=bad;rejects([&]{(void)creation->evaluate(d,true);});}
     for(const auto& klass:creation->choices(CreationField::character_class))if(klass.id!="wizard"){d=draft();d.character_class=klass.id;d.cantrips=std::vector<std::string>{"poison_spray"};rejects([&]{(void)creation->evaluate(d,true);});}
     for(unsigned level=1;level<=4;++level){auto h=hero(level);auto current=rules->spell_access(h.sheet());check(current.cantrip_choices==(level==4?4u:3u)&&current.cantrips.size()==2&&current.cantrips[1].acquired_level==1,"Advancement retains chosen cantrips, source and correct entitlement");}
-    auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC15 1 0 69 "),"Explicit cantrip mask belongs to new recipe");profile.replace(0,4,"PC10");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
+    auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC16 1 0 69 "),"Explicit cantrip mask belongs to new recipe");profile.replace(0,4,"PC10");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
     auto invalid=hero().sheet();for(auto& g:invalid.grants)if(g.id=="spell:poison_spray")g.source_id="species:tiefling";rejects([&]{(void)rules->character_profile(invalid,{});});
 }
 void rolls(){
@@ -108,7 +108,7 @@ void campaign(){auto rules=module();auto creation=srd5::character_rules();for(bo
 }}
 void legacy(){auto rules=module();auto creation=srd5::character_rules();const auto base=root/"tests/fixtures";const auto old=read(base/"campaign-v10-poison.ogs");CampaignParty p(module());p.restore(decode_campaign(old,*creation,*rules,"poison",nullptr).party);
     auto expected=old.substr(old.find('\n',old.find('\n')+1)+1);expected.replace(expected.find("0.6.21"),6,rules->identity().version);const auto saved=encode_campaign(p,nullptr,"poison");
-    check(saved.substr(saved.find('\n',saved.find('\n')+1)+1)==test::with_sage_training_grants(test::with_legacy_cantrip_choices(expected)),"Actual old writer gains only an absent choices field, module identity and owed Sage grants");
+    check(saved.substr(saved.find('\n',saved.find('\n')+1)+1)==test::with_background_training_grants(test::with_legacy_cantrip_choices(expected)),"Actual old writer gains only an absent choices field, module identity and owed background grants");
     check(!p.member(1).character.creation_data().cantrips&&rules->spell_access(p.member(1).character.sheet()).cantrips.size()==1,"Old Wizard retains Fire Bolt, never automatically learns Poison Spray");
     const auto initial=read(base/"combat-v13-poison.save");auto c=rules->restore(initial);auto upgraded=initial;upgraded.replace(upgraded.find("0.6.21"),6,rules->identity().version);check(c->save()==upgraded&&!has(*c,"poison_spray"),"Prior PC10 recipe/resources/RNG are retained byte for byte");
     check(c->submit(command(*c,"fire_bolt",99)),"Prior Fire Bolt casts");check(c->save()==rules->restore(read(base/"combat-v13-poison-continued.save"))->save(),"Actual previous writer continuation remains identical");

@@ -94,7 +94,7 @@ void actual_combat(){
         "Real Poison attack applies Dwarf resistance before absorbing Temporary HP");
     const auto saved=combat->save();check(!combat->submit(attack)&&combat->save()==saved,"Stale attack cannot consume a pool twice");
     // A forged actor row cannot introduce a negative pool.
-    auto corrupt=saved;const auto at=corrupt.find(" 0 \"\" 0 0",corrupt.find("PC15"));check(at!=corrupt.npos,"Current actor has the empty pool suffix");corrupt.replace(at,9," -1 \"x\" 0 0");
+    auto corrupt=saved;const auto at=corrupt.find(" 0 \"\" 0 0",corrupt.find("PC16"));check(at!=corrupt.npos,"Current actor has the empty pool suffix");corrupt.replace(at,9," -1 \"x\" 0 0");
     rejects([&]{(void)rules->restore(corrupt);});check(combat->save()==saved,"Rejected restore leaves the original session intact");
 }
 std::string saved(const CampaignParty& party){return encode_campaign(party,nullptr,"temporary-hp");}

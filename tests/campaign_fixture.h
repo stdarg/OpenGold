@@ -7,10 +7,10 @@
 #include <regex>
 #include <stdexcept>
 namespace opengold::test {
-// Add the independently specified fixed Sage package to authored campaign
+// Add independently specified fixed background packages to authored campaign
 // fixtures. Locate each draft's background and its following grant ledger;
 // never invoke current grant generation or the production save decoder.
-inline std::string with_sage_training_grants(std::string body){
+inline std::string with_background_training_grants(std::string body,unsigned packages=3){
     const std::regex draft(R"re("(?:dragonborn|dwarf|elf|gnome|goliath|halfling|human|orc|tiefling)" "(?:female|male|nonbinary)" "(?:barbarian|bard|cleric|druid|fighter|monk|paladin|ranger|rogue|sorcerer|warlock|wizard)" )re");
     const std::regex first_grant(R"re("(?:feature:|feat:|trait:|language:)[^"]+" "[^"]+" [0-9]+ [0-9]+)re");
     std::size_t search=0;std::smatch match;
@@ -19,19 +19,23 @@ inline std::string with_sage_training_grants(std::string body){
         const auto start=search+match.position();std::istringstream fields(body.substr(start));std::string field,background;
         for(unsigned n=0;n<6;++n){fields>>std::quoted(field);if(n==4)background=field;}
         if(!fields)throw std::runtime_error("Malformed frozen draft identity");
-        search=start+static_cast<std::size_t>(fields.tellg());if(background!="sage")continue;
-        rest=body.substr(search);if(!std::regex_search(rest,match,first_grant))throw std::runtime_error("Missing Sage ledger");
+        search=start+static_cast<std::size_t>(fields.tellg());if(!((background=="sage"&&(packages&1))||((background=="acolyte"||background=="soldier")&&(packages&2))))continue;
+        rest=body.substr(search);if(!std::regex_search(rest,match,first_grant))throw std::runtime_error("Missing background ledger");
         const auto first=search+match.position();auto begin=first-2;while(begin&&body[begin-1]>='0'&&body[begin-1]<='9')--begin;
         std::istringstream input(body.substr(begin));unsigned count{};input>>count;
-        if(!input||!count||count>128)throw std::runtime_error("Invalid Sage ledger count");
+        if(!input||!count||count>128)throw std::runtime_error("Invalid background ledger count");
         std::vector<rules::FeatureGrant> grants;
         for(unsigned n=0;n<count;++n){rules::FeatureGrant g;unsigned choices{};input>>std::quoted(g.id)>>std::quoted(g.source_id)>>g.level>>choices;
-            if(!input||choices>6)throw std::runtime_error("Malformed frozen Sage grant");
+            if(!input||choices>6)throw std::runtime_error("Malformed frozen background grant");
             for(unsigned k=0;k<choices;++k){std::string key,value;input>>std::quoted(key)>>std::quoted(value);g.choices.emplace(key,value);}grants.push_back(std::move(g));}
-        if(!input)throw std::runtime_error("Truncated Sage ledger");const auto length=static_cast<std::size_t>(input.tellg());
+        if(!input)throw std::runtime_error("Truncated background ledger");const auto length=static_cast<std::size_t>(input.tellg());
         const auto common=std::find_if(grants.begin(),grants.end(),[](const auto& g){return g.id=="language:common"&&g.source_id=="origin:languages";});
-        if(common==grants.end()||std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="background:sage";}))throw std::runtime_error("Unexpected pre-Sage grants");
-        grants.insert(common+1,{{"skill:arcana","background:sage",1,{}},{"skill:history","background:sage",1,{}},{"tool:calligraphers_supplies","background:sage",1,{}}});
+        std::vector<rules::FeatureGrant> added;
+        if(background=="sage")added={{"skill:arcana","background:sage",1,{}},{"skill:history","background:sage",1,{}},{"tool:calligraphers_supplies","background:sage",1,{}}};
+        else if(background=="acolyte")added={{"skill:insight","background:acolyte",1,{}},{"skill:religion","background:acolyte",1,{}},{"tool:calligraphers_supplies","background:acolyte",1,{}}};
+        else added={{"skill:athletics","background:soldier",1,{}},{"skill:intimidation","background:soldier",1,{}}};
+        if(common==grants.end()||std::any_of(added.begin(),added.end(),[&](const auto& g){return std::find(grants.begin(),grants.end(),g)!=grants.end();}))throw std::runtime_error("Unexpected prior background grants");
+        grants.insert(common+1,added.begin(),added.end());
         std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
         const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
     }return body;
@@ -105,7 +109,7 @@ inline std::string with_initial_wizard_spell_grants(std::string body){
         std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
         const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
     }
-    return with_sage_training_grants(with_legacy_cantrip_choices(std::move(body)));
+    return with_background_training_grants(with_legacy_cantrip_choices(std::move(body)));
 }
 }
 #endif

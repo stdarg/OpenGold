@@ -266,7 +266,12 @@ void sage_training(){
         if(klass.id=="rogue"){
             d.training={{"class:rogue:expertise",{"arcana","history"}}};sheet=hero(d).sheet();
             check(skill(sheet,"arcana").expertise&&skill(sheet,"arcana").bonus==6,"Rogue may apply Expertise to background-granted Arcana");
-            const auto original=rules->character_profile(sheet,{}).data;auto old=original;replace(old,"PC15","PC14");
+            const auto original=rules->character_profile(sheet,{}).data;
+            auto pc15=original;replace(pc15,"PC16","PC15");
+            auto prior=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Prior Sage",0,{1,1},pc15},{2,"vanguard","Enemy",1,{5,1}}}},1);
+            auto checkpoint=prior->save();replace(checkpoint,"0.6.27","0.6.26");
+            check(rules->restore(checkpoint)->save()==prior->save(),"Valid PC15 Sage Expertise remains accepted under the preceding rules identity");
+            auto old=original;replace(old,"PC16","PC14");
             rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
         }
     }
@@ -279,15 +284,77 @@ void sage_training(){
     auto expected_body=bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);replace(expected_body,"0.6.25",rules->identity().version);
     const auto current=encode_campaign(party,nullptr,"sage-migration");auto again=decode_campaign(current,*creation,*rules,"sage-migration",nullptr);CampaignParty restored(module());restored.restore(std::move(again.party));
     check(encode_campaign(restored,nullptr,"sage-migration")==current,"Current Sage campaign is canonical after reload");
-    check(current.substr(current.find('\n',current.find('\n')+1)+1)==test::with_sage_training_grants(expected_body),"Every prior campaign byte remains except identity and exactly three fixed Sage grants");
+    check(current.substr(current.find('\n',current.find('\n')+1)+1)==test::with_background_training_grants(expected_body),"Every prior campaign byte remains except identity and exactly three fixed Sage grants");
     auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
     const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
     check(rules->restore(combat->save())->save()==combat->save(),"New Sage recipe retains combat continuation");
-    auto forged_combat=combat->save();replace(forged_combat,"0.6.26","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
+    auto forged_combat=combat->save();replace(forged_combat,"0.6.27","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
     party.award_experience(1800,"sage-four");auto choice=party.default_advancement(1);choice.abilities={};choice.abilities[3]=2;party.advance(1,choice);
     check(party.member(1).character.sheet().scores[3]==18&&skill(party.member(1).character.sheet(),"arcana").bonus==6,"Intelligence ASI recomputes Sage skill bonus at level four");
-    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.26","0.6.25")})
+    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.27","0.6.25")})
         rejects([&]{(void)decode_campaign(bad,*creation,*rules,"sage-migration",nullptr);});
+}
+
+void remaining_backgrounds(){
+    auto creation=srd5::character_rules();auto rules=module();
+    for(const auto& klass:creation->choices(CreationField::character_class))for(const auto background:{"acolyte","soldier"}){
+        const bool acolyte=background==std::string_view("acolyte");
+        auto d=draft(klass.id,background);auto sheet=hero(d).sheet();
+        const auto first=acolyte?"insight":"athletics",second=acolyte?"religion":"intimidation";
+        for(const auto id:{first,second}){
+            const auto& trained=skill(sheet,id);
+            check(trained.proficient&&trained.sources.size()==1&&trained.sources[0].source_id=="background:"+std::string(background),"All starting classes receive fixed background provenance");
+        }
+        check(skill(sheet,first).bonus==5&&skill(sheet,second).bonus==(acolyte?5:4),"Independent fixed-background ability and proficiency totals");
+        if(acolyte){
+            const auto result=creation->ability_check(sheet,3,"religion","calligraphers_supplies");
+            check(result.total==5&&result.proficiency==2&&result.tool_advantage,"Acolyte skill and tool grant Advantage without stacking proficiency");
+        }
+        auto bad=sheet;std::erase_if(bad.grants,[&](const auto& g){return g.id=="skill:"+std::string(first);});rejects([&]{(void)rules->character_profile(bad,{});});
+        bad=sheet;bad.grants.push_back({"skill:"+std::string(first),"background:"+std::string(background),1,{}});rejects([&]{(void)rules->character_profile(bad,{});});
+        if(klass.id=="rogue"){
+            d.training={{"class:rogue",{first,"acrobatics","perception","persuasion"}},{"class:rogue:expertise",{first,second}}};sheet=hero(d).sheet();
+            check(skill(sheet,first).bonus==7&&skill(sheet,first).sources.size()==3&&skill(sheet,second).bonus==(acolyte?7:6),"Rogue Expertise accepts background skills; overlapping class and background grants do not stack");
+        }
+        auto old=rules->character_profile(sheet,{}).data;replace(old,"PC16","PC15");
+        rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
+    }
+    const auto bytes=fixture("campaign-v11-backgrounds-before.ogs");
+    CampaignParty party(module());party.restore(decode_campaign(bytes,*creation,*rules,"backgrounds-migration",nullptr).party);
+    for(MemberId id:{1,2}){
+        const auto& m=party.member(id);
+        check(m.character.sheet().level==3&&m.vitals.hit_points==m.character.sheet().hit_points-3,"Background migration retains attained levels and wounds");
+        check(m.character.creation_data().training==TrainingChoices{{"origin:languages",{"elvish","dwarvish"}}},"Migration retains explicit choices");
+        check(m.vitals.resources==(id==1?"SRD2 0 1 1 0 0 0":"SRD1 1 0 0 0 0"),"Migration retains spent spell/feat resources");
+    }
+    auto body=[](const auto& b){return b.substr(b.find('\n',b.find('\n')+1)+1);};
+    auto expected=body(bytes);replace(expected,"0.6.26",rules->identity().version);
+    const auto current=encode_campaign(party,nullptr,"backgrounds-migration");
+    check(body(current)==test::with_background_training_grants(expected,2),"Every historical campaign byte remains except identity and exactly five owed fixed grants");
+    CampaignParty again(module());again.restore(decode_campaign(current,*creation,*rules,"backgrounds-migration",nullptr).party);
+    check(encode_campaign(again,nullptr,"backgrounds-migration")==current,"Migrated background campaign round trips canonically");
+    rejects([&]{(void)decode_campaign(corrupt(current,"0.6.27","0.6.26"),*creation,*rules,"backgrounds-migration",nullptr);});
+    auto members=party.participants();members[0].cell={1,1};members[1].cell={2,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
+    const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
+    check(rules->restore(combat->save())->save()==combat->save(),"PC16 preserves combat continuation");
+    auto forged=combat->save();replace(forged,"0.6.27","0.6.26");rejects([&]{(void)rules->restore(forged);});
+    party.award_experience(3600,"backgrounds-four");
+    for(MemberId id:{1,2}){auto choice=party.default_advancement(id);choice.abilities={};choice.abilities[id==1?4:0]=2;party.advance(id,choice);}
+    check(skill(party.member(1).character.sheet(),"insight").bonus==6&&skill(party.member(2).character.sheet(),"athletics").bonus==6,"Level-four ability improvements recompute fixed skill modifiers");
+}
+
+void freeze_backgrounds(){
+    auto rules=module();check(rules->identity().version=="0.6.26","Freeze requires actual pre-background writer");
+    CampaignParty party(module());
+    for(const auto background:{"acolyte","soldier"}){
+        auto d=draft(background==std::string_view("acolyte")?"cleric":"fighter",background);
+        d.training={{"origin:languages",{"elvish","dwarvish"}}};party.add_pc(hero(d));
+    }
+    party.award_experience(1800,"backgrounds-migration");
+    for(MemberId id:{1,2})for(int i=0;i<2;++i)party.advance(id,party.default_advancement(id));
+    auto state=party.checkpoint();for(auto& m:state.roster){m.vitals.hit_points-=3;m.vitals.resources=m.id==1?"SRD2 0 1 1 0 0 0":"SRD1 1 0 0 0 0";}party.restore(std::move(state));
+    std::ofstream out(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures/campaign-v11-backgrounds-before.ogs",std::ios::binary);
+    out<<encode_campaign(party,nullptr,"backgrounds-migration");check(bool(out),"Write actual prior background fixture");
 }
 
 void freeze_sage(){
@@ -302,4 +369,4 @@ void freeze_sage(){
 }
 
 }
-int main(int argc,char**){try{if(argc==2){freeze_sage();return 0;}sage_training();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}sage_training();remaining_backgrounds();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
