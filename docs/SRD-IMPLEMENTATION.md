@@ -22,7 +22,8 @@ the first Rogue/Criminal package and boundaries; the UI children remain open.
 F03 is split into [resource rules and persistence (#190)](https://github.com/stdarg/OpenGold/issues/190),
 [campaign rest transactions (#191)](https://github.com/stdarg/OpenGold/issues/191), and
 [rest controls (#192)](https://github.com/stdarg/OpenGold/issues/192).
-These children remain open. Hit Dice spending must allow a decision after each
+The resource rules and persistence child is delivered; campaign and UI children
+remain open. Hit Dice spending must allow a decision after each
 roll, rather than requiring every die to be committed beforehand. The first
 resource rules are independent of the pending F02 UI layout decisions.
 
@@ -253,6 +254,9 @@ before closing #29. Creation layout confirmation is required; the user has
 approved keeping old choices pending for completion through Review Training.
 The campaign preview/confirmation API for #189 is implemented and preserves
 existing choices and resources; its player-facing controls remain pending.
+F03a is complete. Continue #191's campaign rest and spending transactions, then
+#192's reviewed controls, before closing #30. See [rest resources](REST-RESOURCES.md)
+for the implemented boundary and verification.
 The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

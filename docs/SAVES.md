@@ -66,7 +66,7 @@ Format 8 explicitly persists grant IDs, sources, acquisition levels and choices.
 On load, those records must agree with the validated creation/advancement history;
 missing, duplicate, forged or inconsistent records reject before replacing live state.
 Formats 1–7 reconstruct the grant records from their existing history. No extra
-feat is awarded and no resource is refilled. Equipment and roster state are also
+feat is awarded and no previously spendable resource is refilled. Equipment and roster state are also
 validated before replacement. Format 9 adds skill, tool, Expertise and language
 selections and source grants. Older saves reconstruct fixed training grants while
 leaving optional selections pending. Version 8 grants are validated against their
@@ -74,9 +74,9 @@ original feature/feat scope before reconstruction. See [training support](TRAINI
 Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
 HP calculation while preserving wounds, zero-HP/dead state and spent resources.
 Rules 0.6.4 also accepts 0.6.3 campaigns without reapplying HP repairs.
-Rules 0.6.9 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8 campaigns. Standalone combat checkpoints
+Rules 0.6.10 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9 campaigns. Standalone combat checkpoints
 retain the post-attack action, Bonus Action, movement and spell usage; the
-[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8 combat migrations](RULES.md#library-boundary) cancel facing-only queues
+[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9 combat migrations](RULES.md#library-boundary) cancel facing-only queues
 and preserve genuine movement reactions. Format 7 also records involuntary
 shared spaces after an allied-transit interruption; healing and recovery retain
 valid checkpoints without moving actors or replenishing resources. Other combat module versions reject.
@@ -86,6 +86,11 @@ Versatile weapons retain one hand. The alternate melee die is corrected under
 the current rules, while wounds, resources and pending movement are preserved.
 Frozen 0.6.6 campaign/combat files exercise both migration paths. See the examples in
 [advancement](ADVANCEMENT.md).
+
+Rules 0.6.10 preserves remaining Hit Dice in SRD4 vital continuations and combat
+format 9. Older characters start with unspent dice because previous modules had
+no spending operation. Campaign format 9 is unchanged; [rest resources](REST-RESOURCES.md)
+details the compatibility and currently supported scope.
 
 ## File safety and compatibility
 

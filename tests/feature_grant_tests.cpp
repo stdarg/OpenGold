@@ -1,5 +1,6 @@
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
+#include "combat_fixture.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -113,7 +114,7 @@ void profiles_and_migration(){
         if(command==commands.end())command=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
         check(command!=commands.end(),"Legacy encounter can continue");check(legacy->submit(*command)&&continued->submit(*command),"Both continuations accept identical commands");
     }
-    auto reference=fixture("combat-v8-grants-continued.save");replace(reference,"0.6.7",rules->identity().version);
+    auto reference=test::with_hit_dice(fixture("combat-v8-grants-continued.save"),rules->identity().version,{{1,1},{2,4},{3,4},{4,4},{5,4},{6,3},{99,0}});
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
 }

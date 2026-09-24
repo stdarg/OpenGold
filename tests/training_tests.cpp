@@ -1,5 +1,6 @@
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
+#include "combat_fixture.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -109,7 +110,8 @@ void persistence(){
     const auto pending=encode_campaign(migrated,nullptr,"training-fixture");
     auto again=decode_campaign(pending,*srd5::character_rules(),*rules,"training-fixture",nullptr);CampaignParty twice(module());twice.restore(std::move(again.party));
     check(encode_campaign(twice,nullptr,"training-fixture")==pending,"Unresolved choices remain pending across repeated saves");
-    auto old_combat=fixture("combat-v8-training.save");auto migrated_combat=rules->restore(old_combat);replace(old_combat,"0.6.8",rules->identity().version);
+    auto old_combat=fixture("combat-v8-training.save");auto migrated_combat=rules->restore(old_combat);
+    old_combat=test::with_hit_dice(old_combat,rules->identity().version,{{1,1},{2,1},{3,4},{4,4},{99,0}});
     check(migrated_combat->save()==old_combat,"Legacy combat retains every old recipe, RNG, wound and resource without injecting new choices");
     auto fighter=draft("fighter");fighter.training={{"origin:languages",{"elvish","orc"}}};CampaignParty growing(module());const auto f=growing.add_pc(hero(fighter));
     growing.award_experience(2700,"training-xp");for(unsigned level=2;level<=3;++level)growing.advance(f,growing.default_advancement(f));

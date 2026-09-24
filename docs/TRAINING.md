@@ -53,10 +53,12 @@ skill names, proficiency math or grant prefixes. There is no new runtime or UI s
 
 ## Persistence and pending choices
 
-Rules **0.6.9**, **PC7** character recipes and campaign format **9** carry training
-provenance. The campaign stores the original selections as well as the acquired
+Rules **0.6.9** introduced **PC7** character recipes and campaign format **9** to
+carry training provenance. The campaign stores the original selections as well as the acquired
 grant records, which must agree on load. PC7 validates grant entitlements and
-choices before creating an actor. Combat format remains **OGCOMBAT 8**.
+choices before creating an actor. Current rules **0.6.10** use **OGCOMBAT 9**
+and SRD4 to retain spent Hit Dice; [rest resources](REST-RESOURCES.md) describes
+that extension. Training completion preserves those resources too.
 
 Per the user's approved policy, older campaign saves keep missing choices pending.
 Only deterministic fixed grants are reconstructed; optional skills, Expertise and

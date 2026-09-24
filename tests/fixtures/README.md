@@ -92,3 +92,20 @@ All are wounded by 2 HP; the Fighter has one Second Wind and the Wizard has one
 slot at each spell level remaining. Combat seed 42 retains their original PC6
 recipes and state. Migration must not invent optional training choices, heal
 wounds, refill resources or rewrite the paused combat recipes.
+
+## Rest resource migration
+
+`campaign-v9-rest.ogs`, `combat-v8-rest.save` and
+`combat-v8-rest-continued.save` were written by rules **0.6.9** from commit
+`7b55636`, before spendable Hit Dice existed. The original libraries and headers
+produced these files; do not regenerate them with the current writer. They use
+asset identity `rest-fixture` and authored Human characters: level-four Fighter,
+Wizard and Cleric, plus level-one Rogue/Criminal. All training is selected. The
+Fighter uses Defense and a Longsword in two hands; both casters increased
+Constitution at level four. Each character is wounded by 5 HP. Fighter has one
+Second Wind, Wizard one slot of each level and an active Blinded effect, Cleric
+two level-one slots and no level-two slots. Campaign time and prior rest offsets
+are nonzero. The combat starts with the Fighter's departure from the enemy's
+reach; the second file resolves that pending opportunity attack using the old
+writer. Migration must preserve every original field and outcome while adding
+only unspent Hit Dice to format-nine combat actors.

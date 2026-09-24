@@ -30,8 +30,10 @@ complete original campaign service coverage.
   restores HP and the supported spell/Second Wind resources. Empty parties,
   unconscious/dead members and premature repeated rests are denied without
   changing time or resources. Removed/rejoined members retain their rest timer.
-  Short rests, Hit Die spending, exhaustion, species-specific rest durations and
-  resuming interrupted rests remain unsupported.
+  The [rest resource rules](REST-RESOURCES.md) now support individual Hit Die rolls
+  and partial Second Wind recharge. Campaign Short Rests and spending controls
+  remain open, along with exhaustion, species-specific durations and interrupted
+  rest resumption. Existing Long Rests also restore spent Hit Dice.
 
 ## Original campaign mappings
 
@@ -77,8 +79,8 @@ campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
 purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
-Combat checkpoint format is version 8 and the combat module identity is
-**0.6.9**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8
+Combat checkpoint format is version 9 and the combat module identity is
+**0.6.10**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9
 have a specific [pending-reaction migration](RULES.md#library-boundary); other
 incompatible combat saves reject.
 

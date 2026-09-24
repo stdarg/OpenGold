@@ -670,8 +670,9 @@ void RolfTourView::check_recovery()
         if(save_check)save_check("temple-payment");
         recovery_before_=campaign_->checkpoint();recovery_stage_=5;
     }
-    if(recovery_stage_==5&&campaign_->state().time_minutes==recovery_before_->time_minutes+480){
-        if(member.vitals.hit_points!=member.character.sheet().hit_points||member.wealth[4]!=0)
+    // Include the travel time to the inn, as the game integration check does.
+    if(recovery_stage_==5&&member.last_rest_minutes&&member.last_rest_minutes!=recovery_before_->roster.at(0).last_rest_minutes){
+        if(*member.last_rest_minutes<recovery_before_->time_minutes+480||member.vitals.hit_points!=member.character.sheet().hit_points||member.wealth[4]!=0)
             throw std::runtime_error("Original inn payment and full recovery must persist");
         if(save_check)save_check("inn-rest");
         if(save_check){bool rejected=false;try{campaign_->temple_heal(id);}catch(const std::exception&){rejected=true;}if(!rejected)throw std::runtime_error("Full-health temple service should reject");save_check("rejected-service");}

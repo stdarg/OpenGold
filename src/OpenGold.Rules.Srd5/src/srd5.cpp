@@ -68,6 +68,7 @@ struct Definition {
     unsigned weapon_hands{};
     int versatile_sides{};
     bool shield{};
+    int hit_die{},constitution{};
 };
 bool legacy_two_hands(std::string_view key)
 {return key=="quarterstaff"||key=="spear"||key=="battleaxe"||key=="trident";}
@@ -101,6 +102,7 @@ struct Actor {
     Participant source;
     Definition definition;
     int hp{}, initiative{}, movement{}, winds{}, slots{}, successes{}, failures{},slots2{};
+    int hit_dice{};
     bool action{true}, bonus{true}, reaction{true}, dodge{}, disengaged{}, stable{}, dead{};
     bool spent_slot{},savage_used{},facing_left{};
     unsigned weapon_hands{};
@@ -146,7 +148,7 @@ Definition character_definition(std::string_view bytes)
     const auto classes=character_rules()->choices(CreationField::character_class);
     if(std::none_of(classes.begin(),classes.end(),[&](const auto& c){return c.label==klass;}))throw std::runtime_error("Unknown class");
     const int die=klass=="Barbarian"?12:(klass=="Fighter"||klass=="Paladin"||klass=="Ranger")?10:(klass=="Wizard"||klass=="Sorcerer")?6:8;
-    Definition d;d.hp=maximum_hit_points(die,race=="Dwarf",hp_modifiers);
+    Definition d;d.hp=maximum_hit_points(die,race=="Dwarf",hp_modifiers);d.hit_die=die;d.constitution=con;
     const auto trained_saves=detail::class_save_proficiencies(klass);
     for(unsigned i=0;i<6;++i)d.saves[i]=ability_modifier(scores[i])+((i==trained_saves[0]||i==trained_saves[1])?2:0);
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
@@ -205,26 +207,32 @@ Definition character_definition(std::string_view bytes)
 void restore_vitals(Actor& a,const VitalState& state)
 {
     a.hp=state.hit_points;a.dead=state.dead;
+    // Prior vital formats predate spendable Hit Dice, so their dice are unspent.
+    a.hit_dice=a.definition.hit_die?a.definition.level:0;
     if(!state.resources.empty()) {
         std::istringstream in(state.resources);std::string magic;
-        in>>magic>>a.winds>>a.slots;if(magic=="SRD2"||magic=="SRD3")in>>a.slots2;
+        in>>magic>>a.winds>>a.slots;if(magic=="SRD2"||magic=="SRD3"||magic=="SRD4")in>>a.slots2;
         in>>a.successes>>a.failures>>a.stable;
-        if(!in||(magic!="SRD1"&&magic!="SRD2"&&magic!="SRD3"))throw std::runtime_error("Invalid character resource state");
-        if(magic=="SRD3")a.effects=detail::read_effects(in);
+        if(magic=="SRD4")in>>a.hit_dice;
+        if(!in||(magic!="SRD1"&&magic!="SRD2"&&magic!="SRD3"&&magic!="SRD4"))throw std::runtime_error("Invalid character resource state");
+        if(magic=="SRD3"||magic=="SRD4")a.effects=detail::read_effects(in);
         in>>std::ws;if(!in.eof())throw std::runtime_error("Trailing character resource state");
     }
     const auto& d=a.definition;
     if(a.hp<0||a.hp>d.hp||(a.dead&&a.hp!=0)||a.winds<0||a.winds>d.winds||a.slots<0||a.slots>d.slots||
-        a.slots2<0||a.slots2>d.slots2||a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
+        a.slots2<0||a.slots2>d.slots2||a.hit_dice<0||a.hit_dice>(d.hit_die?d.level:0)||
+        a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
     // Earlier campaigns could retain completed counters after stabilization.
     if(a.stable)a.successes=a.failures=0;
 }
 VitalState vitals(const Actor& a)
 {
-    const bool effects=a.effects.next_id!=1;
-    std::ostringstream out;out<<(effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
-    if(effects||a.definition.slots2)out<<a.slots2<<' ';out<<a.successes<<' '<<a.failures<<' '<<a.stable;
-    if(effects){out<<' ';detail::write_effects(out,a.effects);}
+    const bool effects=a.effects.next_id!=1,spent_dice=a.hit_dice<(a.definition.hit_die?a.definition.level:0);
+    // Preserve the compact previous format when every Hit Die is available.
+    std::ostringstream out;out<<(spent_dice?"SRD4 ":effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
+    if(spent_dice||effects||a.definition.slots2)out<<a.slots2<<' ';out<<a.successes<<' '<<a.failures<<' '<<a.stable;
+    if(spent_dice)out<<' '<<a.hit_dice;
+    if(spent_dice||effects){out<<' ';detail::write_effects(out,a.effects);}
     std::string description;
     if(a.definition.slots)description="Level-one spell slots: "+std::to_string(a.slots)+" / "+std::to_string(a.definition.slots);
     if(a.definition.slots2)description+="\nLevel-two spell slots: "+std::to_string(a.slots2)+" / "+std::to_string(a.definition.slots2);
@@ -256,7 +264,7 @@ public:
                 throw std::runtime_error("Invalid participant or unsupported rules definition: "+p.definition);
             sides.insert(p.side);
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
-            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;
+            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;a.hit_dice=d.hit_die?d.level:0;
             a.facing_left=a.source.facing_left;
             if(a.source.state)restore_vitals(a,*a.source.state);
             a.initiative=roll(20);if(d.str_dex_disadvantage||a.source.surprised)a.initiative=std::min(a.initiative,roll(20));a.initiative+=d.initiative;a.movement=d.speed;
@@ -651,12 +659,12 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    std::ostringstream out;out<<"OGCOMBAT 8 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
+    std::ostringstream out;out<<"OGCOMBAT 9 "<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_)out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<'\n';
+        <<a.action<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<'\n';
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
@@ -680,11 +688,13 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if (version >= 5) input >> actor.facing_left;
     if (version >= 7) input >> actor.involuntary_overlap;
     if (version >= 8) input >> actor.weapon_hands;
+    if (version >= 9) input >> actor.hit_dice;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
+    if(version<9)actor.hit_dice=definition.hit_die?definition.level:0;
     if(version<8)actor.weapon_hands=definition.weapon_hands;
     validate_grip(definition,actor.weapon_hands);
     if (actor.hp < 0 || actor.hp > definition.hp || (actor.dead && actor.hp > 0) ||
@@ -695,6 +705,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
         actor.winds < 0 || actor.winds > definition.winds ||
         actor.slots < 0 || actor.slots > definition.slots ||
         actor.slots2 < 0 || actor.slots2 > definition.slots2 ||
+        actor.hit_dice < 0 || actor.hit_dice > (definition.hit_die?definition.level:0) ||
         actor.successes < 0 || actor.successes > 3 || actor.failures < 0 || actor.failures > 4)
         throw std::runtime_error("Invalid checkpoint actor state");
     return actor;
@@ -847,8 +858,8 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8")))&&compatible_identity==content->identity;
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 8 ||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9")))&&compatible_identity==content->identity;
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 9 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -906,11 +917,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -988,7 +999,7 @@ public:
         next.class_messages.push_back({"Level {level}: HP and spell-slot advancement applied. Additional class and subclass features remain unavailable.",{{"level",std::to_string(next.level)}}});
         actor.definition=character_definition(character_profile(next,{}).data);
         if(actor.hp>0)actor.hp+=growth;
-        actor.slots+=actor.definition.slots-old.slots;actor.slots2+=actor.definition.slots2-old.slots2;actor.winds+=actor.definition.winds-old.winds;
+        actor.slots+=actor.definition.slots-old.slots;actor.slots2+=actor.definition.slots2-old.slots2;actor.winds+=actor.definition.winds-old.winds;actor.hit_dice+=actor.definition.level-old.level;
         auto continuation=vitals(actor);sheet=std::move(next);state=std::move(continuation);
         return true;
     }
@@ -1023,6 +1034,7 @@ public:
         validate_character_state(sheet,next);state=std::move(next);
     }
     RestPolicy long_rest_policy() const override {return {480,960};}
+    RestPolicy short_rest_policy() const override {return {60,0};}
     void elapse(std::span<Participant> participants,std::uint64_t milliseconds,std::uint64_t& random_state) const override
     {
         // Work on owned candidates so malformed state cannot partly advance a
@@ -1031,7 +1043,7 @@ public:
         for(const auto& p:participants){
             Actor a;a.source=p;
             a.definition=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
-            a.hp=a.definition.hp;a.winds=a.definition.winds;a.slots=a.definition.slots;a.slots2=a.definition.slots2;
+            a.hp=a.definition.hp;a.winds=a.definition.winds;a.slots=a.definition.slots;a.slots2=a.definition.slots2;a.hit_dice=a.definition.hit_die?a.definition.level:0;
             if(p.state)restore_vitals(a,*p.state);
             actors.push_back(std::move(a));
         }
@@ -1041,7 +1053,7 @@ public:
         std::vector<VitalState> next;next.reserve(actors.size());
         for(const auto& a:actors)next.push_back(vitals(a));
         for(std::size_t i=0;i<participants.size();++i)
-            if(participants[i].state&&participants[i].state->resources.starts_with("SRD3 "))participants[i].state=std::move(next[i]);
+            if(participants[i].state&&(participants[i].state->resources.starts_with("SRD3 ")||participants[i].state->resources.starts_with("SRD4 ")))participants[i].state=std::move(next[i]);
         random_state=rng;
     }
     void recover(VitalState& state,const CharacterSheet& sheet) const override
@@ -1049,8 +1061,36 @@ public:
         const auto d=character_definition(character_profile(sheet,{}).data);
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
-        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.successes=actor.failures=0;actor.stable=false;
+        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;
         state=vitals(actor);
+    }
+    RecoveryInfo recovery_info(const CharacterSheet& sheet,const VitalState& state) const override
+    {
+        const auto d=character_definition(character_profile(sheet,{}).data);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
+        RecoveryInfo result{unsigned(d.hit_die),unsigned(actor.hit_dice),unsigned(d.level),!actor.dead&&actor.hp>0,{}};
+        if(d.winds)result.resources.push_back({"second_wind",{"Second Wind",{}},unsigned(actor.winds),unsigned(d.winds),1});
+        if(d.slots)result.resources.push_back({"spell_slot:1",{"Level-one spell slots",{}},unsigned(actor.slots),unsigned(d.slots),0});
+        if(d.slots2)result.resources.push_back({"spell_slot:2",{"Level-two spell slots",{}},unsigned(actor.slots2),unsigned(d.slots2),0});
+        return result;
+    }
+    void recover_short_rest(VitalState& state,const CharacterSheet& sheet) const override
+    {
+        const auto d=character_definition(character_profile(sheet,{}).data);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
+        if(actor.dead||actor.hp<1)throw std::runtime_error("Short rest requires at least one HP at its start");
+        actor.winds=std::min(d.winds,actor.winds+1);state=vitals(actor);
+    }
+    HitDieResult spend_hit_die(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
+    {
+        const auto d=character_definition(character_profile(sheet,{}).data);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
+        if(actor.dead||actor.hp<1||actor.hit_dice<1)throw std::runtime_error("No Hit Die can be spent by this character");
+        auto rng=random_state;const int rolled=roll_die(rng,d.hit_die);
+        const int healing=std::min(d.hp-actor.hp,std::max(1,rolled+d.constitution));
+        actor.hp+=healing;--actor.hit_dice;
+        HitDieResult result{unsigned(d.hit_die),rolled,d.constitution,healing,unsigned(actor.hit_dice)};
+        auto next=vitals(actor);state=std::move(next);random_state=rng;return result;
     }
     void temple_heal(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
     {
@@ -1176,7 +1216,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.9",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.10",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

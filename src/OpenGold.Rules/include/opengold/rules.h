@@ -56,6 +56,21 @@ struct VitalState {
 struct RestPolicy {
     unsigned duration_minutes{}, wait_after_rest_minutes{};
 };
+struct ResourcePool {
+    std::string id;
+    Message label;
+    unsigned remaining{}, capacity{}, short_rest_recovery{};
+};
+struct RecoveryInfo {
+    unsigned hit_die{}, hit_dice{}, hit_dice_max{};
+    bool can_rest{};
+    std::vector<ResourcePool> resources;
+};
+struct HitDieResult {
+    unsigned die{};
+    int roll{}, modifier{}, healing{};
+    unsigned remaining{};
+};
 using EntityId = std::uint32_t;
 struct Cell { int x{}, y{}; auto operator<=>(const Cell&) const = default; };
 struct Battlefield {
@@ -147,6 +162,11 @@ public:
     [[nodiscard]] virtual AdvancementChoice default_advancement(const CharacterSheet&) const {return {};}
     virtual bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const;
     virtual void recover(VitalState& state, const CharacterSheet& sheet) const;
+    [[nodiscard]] virtual RecoveryInfo recovery_info(const CharacterSheet&,const VitalState&) const;
+    // The campaign must establish completed-rest eligibility before invoking
+    // these resource operations. Each spend commits one die and its RNG draw.
+    virtual void recover_short_rest(VitalState&,const CharacterSheet&) const;
+    virtual HitDieResult spend_hit_die(VitalState&,const CharacterSheet&,std::uint64_t&) const;
     // Advances module-owned lasting effects for a group in deterministic order.
     virtual void elapse(std::span<Participant>, std::uint64_t, std::uint64_t&) const {}
     virtual void validate_character_state(const CharacterSheet&, const VitalState&) const;
@@ -156,6 +176,7 @@ public:
     virtual void migrate_character_state(const Identity&, const CharacterSheet& sheet, VitalState& state) const
     {validate_character_state(sheet,state);}
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
+    [[nodiscard]] virtual RestPolicy short_rest_policy() const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };
 }
