@@ -13,6 +13,26 @@ Eleven have partial playable paths and 128 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Workflow maintenance — not SRD functionality
+
+2026-09-24: adopted batch execution in [AGENTS.md](../AGENTS.md) and
+[workflow](SRD-WORKFLOW.md), with a compact [repository map](SRD-REPO-MAP.md),
+[decision register](SRD-DECISIONS.md) and current batch card in the
+[handoff](SRD-HANDOFF.md). Related requirements share implementation/evidence;
+mandatory ticket splitting is superseded without reducing acceptance.
+This ledger is the canonical completion record. Feature docs hold behavior and
+durable evidence, the spell inventory holds source/coverage requirements, and
+issue updates/handoff link here instead of reproducing delivery narratives.
+Historical records are retained; new work follows this ownership convention.
+
+Validation: local Markdown links, explicit map paths and named native test targets
+resolve; conflicting old active-workflow phrases were removed; diff whitespace
+checks pass. Documentation-only change: no game build or gameplay test rerun.
+Observed implementation-to-verification interval: 21:52:55–21:56:28 UTC (3m33s);
+earlier investigation timing is unknown, so this is not total task time.
+No token saving or faster feature throughput is claimed yet. No SRD issues closed,
+no compatibility reduction, no agents/new tasks/model changes; goal remains paused.
+
 ## Delivered increments
 
 | Increment / feature | Authority and supported scope | Implementation and verification | Persistence |

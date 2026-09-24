@@ -4,7 +4,9 @@ Reviewed 2026-09-24 against GitHub issue bodies, repository-wide issue comments,
 `main` at `8429158`, the coverage ledger, handoff and relevant feature documents.
 This is a planning review, not certification that any open issue is complete.
 The implementation goal remains **paused**. No issue is closed, deleted or
-re-scoped by this document. Proposed workflow changes await review.
+re-scoped by this document. Workflow recommendations were adopted by the user on 2026-09-24 and are now
+implemented in AGENTS.md and SRD-WORKFLOW.md. Issue consolidation/removal
+recommendations remain proposals; no issue acceptance has been reduced.
 
 ## Baseline and findings
 
@@ -223,7 +225,7 @@ below preserve the requirements; they are not instructions to close issues now.
 | #34 already has native/combat delivery but requires exploration Adrenaline Rush | Assign that remaining implementation once, coordinated with Orc #72 and campaign #174. Share the evidence; do not build three exploration action paths. | TEMPORARY-HP.md explicitly says exploration activation is missing. Do not close #34 merely because its two children are closed. |
 | #29/#189, #78/#85/#140/#147, #111/#110/#116, #79 and #82 | Reconcile acceptance against existing delivered code first; implement only the uncovered choices/routes/levels. | Training/Archery are materially delivered but retain missing paths. This review does not prove any of these issues fully closable. |
 | Boilerplate “spell choices” in noncasting class-start tickets | Remove the implication that those classes need intrinsic spellcasting; retain any spell choices actually granted by species/background/feats. | The class-start wording is templated. It must not generate fictional class mechanics. |
-| Mandatory new child for every property, class grant or level-only extension | Replace with a named checklist in the batch unless a separate owner, distinct decision/state machine or genuinely independent deliverable warrants an issue. | Existing #60/species/higher-level templates and the workflow require splits; changing that policy needs explicit adoption. |
+| Mandatory new child for every property, class grant or level-only extension | Replace with a named checklist in the batch unless a separate owner, distinct decision/state machine or genuinely independent deliverable warrants an issue. | Existing #60/species/higher-level templates and the workflow require splits; the adopted workflow now replaces that mechanical splitting policy. |
 | Blanket dependence on an entire tracker | Replace execution blockers with named capabilities and evidence. | Monk starting work need not await Shield; class skill choices need not await the old-save Review Training UI. This does not waive the final acceptance gate. |
 | New free-form simulations for every tabletop possibility | Require an existing SRD/campaign requirement and a concrete player use before building one. For example, enforce cannot-speak casting eligibility, but do not invent a general gagging/restraint game merely to exercise it. Any excluded required interaction needs an explicit reviewed adaptation. | #39/#174 are broad; source/removal behavior must remain explicit. No blanket exemption from Verbal rules is proposed. |
 | #175–184 higher levels/resurrection/multiclassing | Keep in the full goal, outside the immediate level-four delivery queue. | These were explicitly requested. Deferral is sequencing, not removal. |
@@ -264,9 +266,11 @@ results before coding; do not hide 128 spells inside a nominally “one issue”
 
 ## Durable execution proposal
 
-These changes are proposed, not yet enacted. The current implementation goal
-stays paused while this review is discussed. This document is linked from the
-existing handoff, which AGENTS.md already requires future work to read.
+The workflow changes below are adopted; the operational rules now live in
+[SRD-WORKFLOW.md](SRD-WORKFLOW.md), the navigation map in
+[SRD-REPO-MAP.md](SRD-REPO-MAP.md), and approvals in
+[SRD-DECISIONS.md](SRD-DECISIONS.md). This table retains the rationale, not a
+second operating procedure. The implementation goal remains paused.
 
 | Change after approval | Durable location / enforcement | Acceleration and proof |
 | --- | --- | --- |

@@ -1,124 +1,60 @@
 # SRD handoff
 
-Updated 2026-09-24. **Goal paused after #228:** close all `SRD_improvements` issues, with
-all twelve classes through level 4, then level 20 and multiclassing. Work one
-bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
-[Index](https://github.com/stdarg/OpenGold/issues/186), [plan](SRD-IMPLEMENTATION.md),
-[coverage](SRD-COVERAGE.md). Query GitHub for counts; old snapshots are stale.
+Updated 2026-09-24. **SRD implementation goal paused after #228**, at the user's
+request. Full scope remains all twelve classes through level 4, then level 20
+and multiclassing. Workflow maintenance is authorized; it does not resume coding.
 
-## Current review — implementation remains paused
+## Entry points — read only what the active work needs
 
-The user requested backlog grouping and an efficiency proposal after discussing
-slow completion and issue growth. Read [SRD-BATCHING-REVIEW.md](SRD-BATCHING-REVIEW.md)
-before proposing the next implementation step. It maps all 168 open issues once
-into 24 work families plus 10 cross-cutting trackers, identifies consolidation
-candidates, and specifies a durable batch workflow. That workflow is **proposed**;
-it does not yet replace AGENTS.md/SRD-WORKFLOW.md or authorize resuming coding.
-No issues were closed or removed by the review. Next action is user discussion
-of the grouping, consolidations and proposed first delivery/checkpoint.
+- [Workflow](SRD-WORKFLOW.md): adopted batch execution, checks and effort tracking.
+- [Repository map](SRD-REPO-MAP.md): code ownership, test targets, local environment.
+- [Decision register](SRD-DECISIONS.md): approved scope and pending questions.
+- [Batch grouping](SRD-BATCHING-REVIEW.md): all 168 open issues at the review snapshot;
+  use it when selecting a batch, not on every turn. Refresh affected GitHub issues
+  before implementation/closure; cached counts are not live status.
+- [Coverage](SRD-COVERAGE.md): canonical completion record and evidence links.
 
-## Current increment
+## Current batch card — workflow maintenance
 
-Branch `main`. [Sorcerer cantrip access #228](https://github.com/stdarg/OpenGold/issues/228)
-adds the four currently implemented eligible cantrips at level one, explicit
-`class:sorcerer:spellcasting` grants and Charisma attacks. **Q27 approved** the
-existing Spell Choices and Spell/Cast patterns, preset choices and pending old
-selections. [Scope/evidence](SORCERER-CANTRIPS.md). Rules 0.6.40 / PC28;
-campaign 11, combat 13–15 and FX1–3 stay unchanged. Actual 0.6.39 writer fixtures
-at `6988432` retain old choices, spent resources and exact turn continuation.
+Status: verified; commit/push delivery next. User authorized implementing efficiency suggestions.
+Branch `main`; baseline `57b67a7`. Outcome: repository-enforced batch workflow,
+compact navigation/decision records, reduced duplicate status and effort tracking.
+No gameplay, compatibility, model, task or agent changes are authorized here.
 
-**Goal paused at the user’s request after #228.** Implementation was committed
-and pushed in `8429158`; #228 is closed. Do not start another implementation
-issue until the user resumes. Sorcerer #132 remains open for the complete catalog,
-leveled spells/slots, Innate Sorcery and later levels/replacements. Fire Bolt's
-existing enemy-only targeting gap is recorded on #166; source access does not
-close full spell conformance.
+| Acceptance | Owner / evidence |
+| --- | --- |
+| One batch, targeted reads, WIP limit, no speculative foundations | AGENTS.md and SRD-WORKFLOW.md |
+| Find code/test entry points without broad rediscovery | SRD-REPO-MAP.md; paths and targets checked |
+| Preserve approvals and unanswered questions | SRD-DECISIONS.md; existing handoff/conversation |
+| Canonical completion and short current-state record | SRD-COVERAGE.md plus this card |
+| Remove conflicting mandatory ticket-splitting policy | Implementation plan and spell inventory link to adopted workflow |
+| Measure effort and report checkpoint | Workflow phase table; next implementation batch uses observed timing |
 
-Previous: Warlock Poison Spray #227 in `6988432`, Wizard Shocking Grasp #226 in
-`3b7e943`, Warlock Eldritch Blast #224 in `310319e`. Feature docs retain remaining
-source/level/object work. Q26 remains approved for Warlock creation/casting.
+Verification: documentation links, map paths/targets, contradictory-instruction
+search, `git diff --check`; no game build for a documentation-only change.
+Compatibility policy: unchanged. Live process handles: none before delivery.
 
-[Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220) remains pending
-Q25; its tested eligibility/progression helper and real 0.6.35 baseline fixtures
-are in `ff297ef`, not wired into combat. See [SNEAK-ATTACK.md](SNEAK-ATTACK.md).
-**Q25:** centered eligible-hit dialog with target/extra dice, Use Sneak Attack or
-Keep hit; save Sneak Attack. Use spends this turn's use; Savage Attacker follows
-and rerolls weapon dice only. Other actions wait; Action/Reaction stays spent;
-keyboard access, no combat-saving controls. Do not implement the dependent
-control/decision ordering until answered. Continue independent backlog work.
+Effort: investigation began before explicit timing was recorded (unknown).
+Documentation implementation timestamp: 2026-09-24 21:52:55 UTC. Verification completed 21:56:28 UTC (3m33s observed interval). Build: not
+applicable. Token delta: unavailable. [Coverage](SRD-COVERAGE.md) records the
+validated outcome; commit/push result belongs in the delivery response.
 
-Parent #112 remains open; level-three/four integration is #221 after #116.
-Cunning Action #218 is in `3846c21`: Rogue level two and Bonus Dash/Disengage.
-Hide #219, parent #113 and Rogue integration #116 remain open. Starting training
-#213–#217 are complete. Barbarian/Monk Unarmored Defense was already implemented.
+## Next implementation batch — not started
 
-Q23 remains pending for #80: automatic Great Weapon Fighting replacement or an
-optional choice per hit. Do not enable either without the answer. The tested
-[damage-roll foundation](GREAT-WEAPON-FIGHTING.md) is in `8da4565`; the feat is not
-selectable/applied. Q22's starting Fighting Style selector is already delivered.
+Recommended candidate A: #29/#189 Review Training, using the existing native
+preview/commit and Training controls. **Blocked on pending Q11 layout** and
+resumption. Retrieve its exact original wording before dependent coding; do not
+infer approval or repeat the question automatically. User has not authorized
+resuming the goal. Other pending decisions: Q19–21, Q23, Q25; see register.
 
-## Next work and pending questions
+On resumption, replace this card with the selected package: outcome, original
+issues, fixed acceptance rows, source/level matrix, dependencies, approved/pending
+decisions, affected paths, persistence policy, commands/tested revision, timestamps,
+two-hour review checkpoint and live handles. One batch plus at most one necessary
+prerequisite; do not rotate through unrelated partial features.
 
-[Silence combat/area integration #208](https://github.com/stdarg/OpenGold/issues/208)
-and [campaign/ritual integration #209](https://github.com/stdarg/OpenGold/issues/209)
-remain dependent on unanswered questions 19–21. Do not re-ask or implement their
-dependent choices without answers. These requests cite AGENTS.md for controls
-and explicit review for geometry:
-
-- Q19: flat grid; square center within 120 feet, circular 20-foot radius, whole
-  occupied square determines full containment, walls block spread; preview
-  distinguishes partial squares and fully contained creatures. No height model.
-- Q20: prepared “Silence — level 2” in existing Spell dropdown; Cast enters area
-  preview, arrows move it, Enter/click commits, Escape cancels free. New row below
-  Dash shows End concentration, spell and duration. Release costs no action and
-  is available for the selected owner outside their turn.
-- Q21: Silence in current level 3–4 Cleric preparation choices, retaining current
-  limits/confirmation; explicit choice only, no change to saved preparations.
-
-Concentration lifecycle #207 and isolated CN1 codec are delivered; CN1 is not
-embedded in live saves. See [CONCENTRATION.md](CONCENTRATION.md).
-#205 Ray of Frost remains partial for other grant routes and #39 speech blockers;
-see [RAY-OF-FROST.md](RAY-OF-FROST.md). Mundane gagging remains separate.
-Continue independently actionable backlog work while these questions are pending.
-
-## Decisions to preserve
-
-- Saves only at camp/inn; no player combat-save controls. Internal continuation
-  fixtures/checkpoints are permitted.
-- Missing old training selections remain pending. Review Training #189 has
-  unanswered layout question 11; retrieve its wording if needed. Presets must
-  have pre-generated training selections.
-- Approved creation steps: Training, then class-driven Spell Choices, then Name.
-  Back keeps valid selections; unsupported catalog choices remain pending.
-- Q18 approved and delivered: shared Spell dropdown and Cast in the existing
-  combat row to the right of Adrenaline Rush; known cantrips, legal target preview,
-  keyboard access, A/Space cycle and disabled unavailable casting. Reuse approval.
-- Grip, HP source tooltips/colors, Temp HP replacement, Adrenaline Rush, Savage
-  Attacker two-stage choice and Action Surge controls are approved; see feature docs.
-- Play `/System/Library/Sounds/Glass.aiff` with `/usr/bin/afplay` before numbered
-  questions. Batch related questions and reuse approvals. Fixed data displayed
-  by existing controls does not require another layout approval.
-
-## Environment and verification
-
-Bash/macOS. `build/mac-check` is the main build, `build/sprite-demo` separate.
-Godot: `/Applications/Godot_mono.app/Contents/MacOS/Godot`; project:
-`src/OpenGoldBox/godot`; local original assets: `/Users/edmond/POOLRAD`.
-Run Godot tests serially (shared checkpoint paths). Prepare the project once after
-native/localization changes; see workflow for fixture exclusion and test commands.
-Finished creation training appears in `Description`, not `ModifiersModal`.
-Refresh locale-dependent creator text with Back/Next after changing locale.
-
-#228 verification: all 44 native/tool checks and 20 headless Godot checks plus
-eleven native prerequisites pass. Main/demo builds and 827-message localization
-pass. Asset-backed creator and graphical combat checks pass; English/Spanish
-renders cover 1120×800 and 1920×1080. Logs: `/tmp/sorcerer-regression.log`,
-`/tmp/sorcerer-creator.log`, `/tmp/sorcerer-combat-render.log`,
-`/tmp/sorcerer-demo.log`; renders: `/tmp/opengold-sorcerer-renders`.
-Creator checks require `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD`; they are not
-registered in the asset-free headless suite. No live processes remain.
-
-After the user resumes, #220 can proceed if Q25 arrives; otherwise select
-independently actionable backlog work.
-Preserve pending #80/#208/#209/#189 questions rather than re-asking them.
-Do not close parent trackers from narrow child evidence.
+Last gameplay delivery: #228 in `8429158`; [evidence](SORCERER-CANTRIPS.md).
+Rules 0.6.40 / PC28, campaign 11, combat 13–15, FX1–3. Compatibility unchanged.
+Prepared but not playable: Sneak Attack [foundation](SNEAK-ATTACK.md) at `ff297ef`
+(Q25), Great Weapon Fighting [foundation](GREAT-WEAPON-FIGHTING.md) at `8da4565`
+(Q23), concentration [foundation](CONCENTRATION.md) (Q19–21 integration).

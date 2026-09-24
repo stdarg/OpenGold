@@ -5,33 +5,85 @@ as the backlog, and [coverage](SRD-COVERAGE.md) as completion evidence. Keep the
 [full implementation plan](SRD-IMPLEMENTATION.md), all twelve classes and later
 level/multiclass milestones intact. Efficiency changes execution, not acceptance.
 
-## One issue cycle
+## One delivery batch cycle
 
-1. Read the handoff, `git status --short`, and the selected issue's current body
-   and relevant comments. Read `TECH.md` and the applicable feature requirements
-   before implementation; reuse the current session's reading. Do not reload the
-   entire backlog or audit unless selecting a new milestone or reconciling scope.
-2. State a short completion checklist from the issue: source rule, player path,
-   affected persistence, independent expected results and relevant checks. Finish
-   this issue before opening unrelated work. If a real prerequisite blocks it,
-   record the dependency and move to that prerequisite within authorized scope.
-3. Use `rg` to locate symbols, then bounded reads. Batch independent reads; keep
-   edits and dependent checks sequential. Keep full build logs in ignored local
-   storage and return summaries or failure excerpts. Avoid repeatedly polling
-   unchanged processes or expanding successful output into the conversation.
-4. Gather related UI questions in one numbered request before dependent coding.
-   Reuse recorded approvals; ask only about material new choices. Record answers
-   in the handoff. A reply to a pending question does not resume a paused goal.
-5. Implement and run the focused checks below. Broaden once for shared rules or
-   persistence changes. Repeat only affected checks after fixes. Passing narrow
-   checks cannot establish whole-feature completion; inspect the actual player
-   path and migration behavior required by the issue.
-6. Review scope, architecture and the diff, update coverage/support documentation,
-   commit only owned changes, push, then close the issue only if all acceptance
-   criteria are met. Report the result and remaining dependencies briefly.
-7. Replace stale handoff entries with current state. Keep it roughly one page:
-   active/next issue, key decisions, relevant paths, verification, pending questions
-   and live process handles. Historical detail belongs in commits and issue links.
+1. Read the short handoff, check branch/worktree state, then inspect the active
+   issues and relevant comments. Use the repository map to locate code. Read
+   TECH and relevant requirements once per context; re-read only changed or
+   uncertain sections. Full backlog snapshots are for planning/reconciliation,
+   not every implementation turn.
+2. Fill the handoff card before coding: named outcome, original issues, immutable
+   acceptance rows, source/level matrix, real dependencies, decisions and checks.
+   Select a bounded package from the batching review, not an entire work family.
+   Each requirement has one implementation owner; related tickets share evidence.
+3. Resolve related UI/policy questions together using the decision register.
+   Existing approval is reusable only within its recorded scope. Keep dependent
+   work pending when an answer is required; do useful independent work inside
+   the batch. At most one necessary prerequisite may be active with a return path.
+4. Plan persistence across the batch. Distinguish schema changes, semantic
+   changes and data additions. Reuse valid records; version when rejection or
+   continuation requires it. Capture actual prior-writer evidence before changing
+   the writer. Preserve every supported released format and its required tests.
+5. Implement a real player path, including all named grants/routes. No speculative
+   helper or abstraction without an immediate consumer. A separate state machine
+   may warrant a reviewable substep, not automatically another GitHub issue.
+6. Run focused checks as implementation evolves. Run required broader checks on
+   the final integrated tree. Repeat after relevant changes/failures or unresolved
+   risk, not routinely. Build before testing; record the tested revision/tree and
+   commands. Save full logs locally and return concise results/failure excerpts.
+7. Review every acceptance row, architecture, scope and diff. Record delivery
+   once in SRD-COVERAGE with links to durable tests/feature evidence; feature docs
+   explain behavior, issue updates link to it, and handoff retains only next state.
+   Commit/push owned work, then close only issues whose full acceptance is proven.
+   Administrative consolidation is not functional completion.
+8. At the review checkpoint report elapsed effort, delivered original requirements,
+   player paths, blockers and new scope. Do not silently reset an unsuccessful
+   trial. A checkpoint is a report boundary, not permission to skip checks, kill
+   a live verification process or independently change goal status.
+
+This batch policy supersedes old one-issue and mandatory-child-ticket execution
+instructions in planning documents and issue boilerplate. Exact rule requirements,
+new UI approvals, distinct state-machine review and all-class scope remain binding.
+Do not mass-edit historical issues or close consolidation candidates just to
+reduce counts. When an issue enters a batch, reconcile its execution note with
+this policy without removing acceptance criteria.
+
+## Read, build and token discipline
+
+- Use the map, `rg -n` and bounded `sed` ranges rather than whole large files.
+  If output truncates, narrow the next query instead of repeating the same dump.
+- Cache a backlog snapshot for the planning session. Refresh only affected issue
+  bodies/comments at batch start, before closure, or when new evidence arrives.
+- Batch independent reads; keep dependent edits, checks and approvals sequential.
+- Avoid rewriting unchanged files: timestamp churn can trigger unnecessary builds.
+- Do not reconfigure unchanged CMake or regenerate bindings without a cause.
+  Adding a real target can require reconfiguration; measure that cost rather
+  than avoiding a necessary test. Never build concurrently in the same directory.
+- Poll a known live handle with useful waits; do not restart because observation
+  timed out. Record handles in handoff before yielding long-running work.
+- Optimize a build bottleneck only after timings identify repeated cost and a
+  bounded fix is likely to repay its own effort. No new tooling project by default.
+
+## Effort and checkpoint record
+
+Use UTC clock/tool timestamps. Start a new batch with a checkpoint two hours of
+elapsed active work later unless the user specifies otherwise. Exclude user-paused
+intervals; label unknown timing rather than reconstructing it from memory.
+Record coarse phase transitions, not per-command bookkeeping:
+
+| Phase | Start/end UTC | Wall time | Evidence / outcome |
+| --- | --- | --- | --- |
+| Investigation/decisions | observed timestamps | measured or unknown | requirements and blocker |
+| Implementation | observed timestamps | measured | changed paths |
+| Build | observed timestamps | measured | log and configuration cause |
+| Verification | observed timestamps | measured | tests, revision, results |
+| Delivery | observed timestamps | measured | commit/push/issues |
+
+Parallel phase durations overlap: report elapsed time separately and do not sum
+it as unique effort. Report token deltas only if the runtime supplies comparable
+start/end usage; otherwise mark unavailable. Never infer token savings from fewer
+commits. At checkpoints compare accepted requirements delivered, original issue
+closures, WIP, added scope and build/test time with the batch's baseline.
 
 ## Verification selection
 

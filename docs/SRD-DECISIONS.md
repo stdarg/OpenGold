@@ -1,0 +1,41 @@
+# SRD decision register
+
+Authoritative working register of user decisions; updated 2026-09-24 from the
+conversation and feature/handoff records. These entries summarize approved scope,
+not verbatim transcripts. Preserve question IDs. If exact missing wording matters,
+retrieve it before coding; do not reconstruct an approval from a summary.
+A reply resolves only its question and does not resume a paused goal.
+
+## Pending — do not implement dependent choices
+
+| ID | Issue / decision | Recorded scope |
+| --- | --- | --- |
+| Q11 | #189 Review Training layout | Policy is approved: retain missing old choices and let the user complete them. Button/dialog layout remains unanswered; exact original wording is not in this compact record. Retrieve it before implementation; do not silently choose a layout or re-ask an already pending question. |
+| Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
+| Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
+| Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |
+| Q23 | #80 Great Weapon Fighting | Automatic beneficial replacement of weapon-die 1/2 with 3, versus optional per-hit choice. Helper exists; neither live behavior is approved. |
+| Q25 | #112/#220 Sneak Attack | Proposed centered eligible-hit dialog, target/extra dice, Use or Keep hit/save use. Use spends this turn's use; Savage follows with weapon dice only. Other actions wait, Action/Reaction remain spent; keyboard, no combat-save controls. Pending. |
+
+## Approved patterns and policies
+
+| Reference | Scope that may be reused | Limit / evidence |
+| --- | --- | --- |
+| Initial four decisions | Preserve remaining turn resources; SRD opportunity triggers without facing reactions; allied transit; Versatile grip/damage/shield behavior | [Implementation plan](SRD-IMPLEMENTATION.md); these do not settle unrelated campaign policies. |
+| Q1 / Grip | Labeled one/two-hand dropdown with actual dice, keyboard, immediate persistence; two hands unavailable with shield | [Implementation plan](SRD-IMPLEMENTATION.md). |
+| Old-save training / Q9–10 | Keep missing choices pending; approved Training step after Class and before Name; Back keeps valid choices, invalid choices pruned; presets pre-generate their training | [Training](TRAINING.md). Q11 layout remains pending. |
+| Q5–7 / HP, Adrenaline and saving | HP colors/source tooltips and separate Temporary HP; Adrenaline Rush beside Dash; **player saves only at camp/inn** | [Temporary HP](TEMPORARY-HP.md). Internal combat checkpoint tests permitted; no player combat Save/Load controls. |
+| Q8 | Two-stage Savage Attacker hit/damage-choice dialog, keyboard, action/reaction retained as spent | [Savage Attacker](SAVAGE-ATTACKER.md). Does not approve Sneak Attack's new decision order. |
+| Q12–16 | Wizard/Cleric Spell Choices; supported selections, counts, Back, pending catalog choices, preset choices; approved casting row | [Cantrip controls](CANTRIP-CONTROLS.md), [Sacred Flame](SACRED-FLAME.md). |
+| Q17 | Action Surge beside Adrenaline Rush, remaining uses, disabled when unavailable, keyboard | [Action Surge](ACTION-SURGE.md). |
+| Q18 | Shared labeled Spell dropdown and Cast in existing combat row; known cantrips, legal target preview, keyboard and A/Space cycle | [Cantrip controls](CANTRIP-CONTROLS.md). Replaces individual spell buttons; adding fixed data in this pattern needs no repeated layout question. |
+| Q22 | Fighter starting Fighting Style dropdown in Training, initially Archery/Defense; required selection, Back, keyboard, presets, old missing choice pending | [Fighter styles](FIGHTER-STYLES.md). Not blanket approval of future independent selectors. |
+| Q24 | Rogue level-two Cunning Action row below combat buttons: dropdown and Use Bonus Action; Dash/Disengage initially, keyboard, turn/budget restrictions | [Cunning Action](CUNNING-ACTION.md). Hide requires its actual rule/target behavior. |
+| Q26 | Warlock existing Spell Choices pattern and Spell/Cast; presets, retained old selections | [Eldritch Blast](ELDRITCH-BLAST.md), [Warlock Poison Spray](WARLOCK-POISON-SPRAY.md). |
+| Q27 | Sorcerer existing Spell Choices and Spell/Cast with four supported cantrips, Charisma, presets, old selections pending | [Sorcerer cantrips](SORCERER-CANTRIPS.md). |
+| Workflow adoption | User authorized efficiency implementation after backlog review | Batch workflow is active; SRD coding goal remains paused after #228. No authorization to discard save compatibility, create a fresh task or spawn agents. |
+
+Before a new question, check this register and the relevant feature doc. Ask a
+numbered question only for a material undecided layout/control/policy choice,
+with concrete options. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`.
+Append new decisions here once; other documents should link to this register.

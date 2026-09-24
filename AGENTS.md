@@ -46,19 +46,37 @@
 
 ## Efficient SRD work
 
-- For SRD work, start with `docs/SRD-HANDOFF.md` and follow
-  `docs/SRD-WORKFLOW.md`. Keep one issue active, with explicit acceptance
-  criteria; preserve the full issue scope and record any real dependency.
-- Read targeted file sections and summarize tool output. Reuse recorded
-  decisions and test evidence while checking that the relevant state is current.
-- Run focused checks first; broaden for shared rules, persistence or unresolved
-  risk. Do not weaken acceptance or repeat passing checks without a reason.
-- Batch related UI questions, reuse approved patterns, and play the user's
-  question alert on this Mac with `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`.
-- Update the short handoff at issue/milestone boundaries. Use fresh tasks for
-  user-authorized major milestones, carrying the handoff rather than full history.
-- Use low reasoning for routine work and high for rules interactions or migrations
-  when selecting task settings. A prompt cannot change the active runtime setting.
+- Start with `docs/SRD-HANDOFF.md`, then follow `docs/SRD-WORKFLOW.md`.
+  Use `docs/SRD-REPO-MAP.md` for targeted navigation and
+  `docs/SRD-DECISIONS.md` for approvals; do not reload the whole history.
+- Keep one delivery batch active, with fixed acceptance criteria and one
+  implementation owner per requirement. Batch related issues/source routes;
+  preserve their full acceptance. Use the existing backlog grouping in
+  `docs/SRD-BATCHING-REVIEW.md`. A checklist is the default; create another issue
+  only for a genuine separate dependency/deliverable, not each grant or level.
+  This execution policy supersedes older mandatory ticket-splitting language;
+  it does not supersede feature requirements or review boundaries.
+- Keep at most one necessary prerequisite active with an explicit return path.
+  Build foundations only when the active batch consumes them. Do not rotate
+  through unrelated partial features to avoid a blocker.
+- Search with `rg`, then read bounded sections. Reuse current evidence and
+  snapshots; refresh affected issues when their state matters. Keep full logs
+  outside conversation and return failures or summaries, not truncated dumps.
+- Use `docs/SRD-COVERAGE.md` as the completion record. Handoff holds only current
+  state; feature docs hold mechanics/evidence. Link records instead of copying
+  delivery narratives. Record tested revision, commands and material limitations.
+- Run focused checks during development; broader required checks on the final
+  integrated changes. Never use stale binaries or weaken verification. Preserve
+  released-save compatibility; no unapproved reduction in supported history.
+- Record phase timings and the next review checkpoint on the handoff batch card.
+  Measure delivered original requirements, not child-ticket count. Do not
+  fabricate past timings or promise a speedup before measuring it.
+- Batch related UI questions and reuse approved patterns within their recorded
+  scope. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff` before questions.
+  A decision reply or workflow maintenance does not resume a paused goal.
+- New tasks, parallel agents and changes to compatibility require explicit
+  authorization. Carry a compact handoff at authorized task boundaries. Do not
+  change model/runtime settings as an incidental optimization.
 
 ## UI controls
 

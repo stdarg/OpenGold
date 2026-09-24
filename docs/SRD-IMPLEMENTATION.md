@@ -2,6 +2,13 @@
 
 Date: 2026-09-23. Status: issue backlog created; incremental implementation started.
 
+Execution policy updated 2026-09-24: [SRD-WORKFLOW.md](SRD-WORKFLOW.md) and
+[AGENTS.md](../AGENTS.md) now define one active **delivery batch**. Related
+requirements may share implementation and verification; historical “one per
+increment” and child-splitting language below describes review boundaries,
+not mandatory new tickets or separate releases. Preserve all acceptance criteria.
+Use the [batch grouping](SRD-BATCHING-REVIEW.md) and [decision register](SRD-DECISIONS.md).
+
 The [GitHub issue index](https://github.com/stdarg/OpenGold/issues/186) links all
 steps, labeled `SRD_improvements`. The [coverage ledger](SRD-COVERAGE.md) records
 completed work and verification. I01–I08 are delivered in
@@ -70,7 +77,8 @@ multiple increments; it is not a promise of completion in one execution.
 
 Before starting an increment, inspect the current branch and confirm its exact
 scope, prerequisites and independent expected results. Reconcile work already
-completed by other contributors. Split an oversized item before coding. Save
+completed by other contributors. Bound oversized work with named acceptance substeps before coding; create a
+separate issue only for a genuine independent dependency/deliverable. Save
 migration belongs with the feature that changes saved state.
 
 Each completed increment must:
@@ -85,8 +93,8 @@ Each completed increment must:
   push the current branch to `origin`.
 - Report the behavior delivered, tests run, remaining limitations and next item.
 
-One increment is the default execution unit. A request can authorize a named
-sequence; existing authorization for rules does not need to be repeated. New UI
+One delivery batch is the default execution unit; it may close several related
+issues. Existing authorization for rules does not need to be repeated. New UI
 choices require the numbered layout/control questions specified by
 [AGENTS.md](../AGENTS.md). Gather those questions before the affected increment;
 reuse established scenes and controls. This plan selects no new layouts.
@@ -120,7 +128,7 @@ behavior as current. This milestone does not claim complete class support.
 
 These are subsequent increment templates, with explicit scope limits. They
 are interleaved with the character/class work below as prerequisites permit.
-Each row is one increment unless its stated split rule applies. Do not build
+Rows are acceptance boundaries that may share a delivery batch. Do not build
 every abstraction before delivering additional character behavior.
 
 | ID | Scope and first use | Acceptance boundary / split rule |
@@ -204,10 +212,11 @@ must link each spell to its implementation, tests and any reviewed adaptation.
 The [level-four spell inventory](SPELL-INVENTORY.md) records 139 distinct spells,
 their class and additional grant routes, dependencies and current evidence.
 It reconciles the printed class lists with spell descriptions, including
-Phantasmal Force and Sorcerer access to Mind Spike. Six paths are partial;
-133 spells are missing. #165 remains open for implementation and source-route
+Phantasmal Force and Sorcerer access to Mind Spike. Current counts and delivery evidence live in the coverage ledger; do not
+maintain another status snapshot here. #165 remains open for implementation and source-route
 integration. The first new single-spell children are #202–205; rows still marked
-as queued require a named bounded issue before coding.
+as queued require a named bounded batch checklist before coding, linked to #165;
+a new issue is needed only for a genuinely separate deliverable.
 
 - A batch contains at most three to five straightforward spells using already
   verified mechanics. Name the spells and expected behaviors before starting.

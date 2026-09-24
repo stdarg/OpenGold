@@ -147,8 +147,11 @@ spell to prove each new capability.
 **Partial** rows link to the existing code and tests below. **Missing** rows have
 no spell implementation/conformance test yet. A **queue** entry remains assigned
 to [#165](https://github.com/stdarg/OpenGold/issues/165) for decomposition, not a runnable implementation batch. Create its
-named child before coding: at most 3–5 straightforward spells using verified
-mechanics, or one complex spell with prerequisite children. The first four
+named batch checklist under the existing owner before coding: at most 3–5
+straightforward spells using verified
+mechanics, or one complex spell with explicit prerequisites. Separate tickets
+are optional when they represent genuinely independent deliverables; see
+[workflow](SRD-WORKFLOW.md). The first four
 new single-spell children are [#202](https://github.com/stdarg/OpenGold/issues/202)–205. Existing [#41](https://github.com/stdarg/OpenGold/issues/41), [#141](https://github.com/stdarg/OpenGold/issues/141), [#146](https://github.com/stdarg/OpenGold/issues/146) and [#166](https://github.com/stdarg/OpenGold/issues/166)–171
 are reused rather than duplicated. Closing any one effect issue does not
 complete its still-pending class/species/feat integrations.
