@@ -201,6 +201,14 @@ class/level is marked complete. First inventory every SRD spell accessible in
 the target tier, including species, feats and subclass grants. The inventory
 must link each spell to its implementation, tests and any reviewed adaptation.
 
+The [level-four spell inventory](SPELL-INVENTORY.md) records 139 distinct spells,
+their class and additional grant routes, dependencies and current evidence.
+It reconciles the printed class lists with spell descriptions, including
+Phantasmal Force and Sorcerer access to Mind Spike. Six paths are partial;
+133 spells are missing. #165 remains open for implementation and source-route
+integration. The first new single-spell children are #202–205; rows still marked
+as queued require a named bounded issue before coding.
+
 - A batch contains at most three to five straightforward spells using already
   verified mechanics. Name the spells and expected behaviors before starting.
 - A spell introducing a new mechanic gets its own increment and any explicit

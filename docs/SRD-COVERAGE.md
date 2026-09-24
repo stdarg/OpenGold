@@ -7,6 +7,12 @@ planned increment and recurring work queue. All use `SRD_improvements`.
 The all-twelve-class level-four milestone is
 [#8](https://github.com/stdarg/OpenGold/issues/8).
 
+The [level-four spell inventory](SPELL-INVENTORY.md) records **139 required
+spells**, including source discrepancies between class tables and descriptions.
+Six have partial playable paths and 133 are missing. It links grant routes,
+dependencies, current evidence and bounded child issues; inventory work alone
+does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
+
 ## Delivered increments
 
 | Increment / feature | Authority and supported scope | Implementation and verification | Persistence |

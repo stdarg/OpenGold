@@ -54,6 +54,11 @@ Player saving remains restricted to camping or an inn.
 
 ## Remaining work
 
+The [level-four spell inventory](SPELL-INVENTORY.md) enumerates all required
+spells and their source routes. The four Wizard spells described here are only
+a subset of that catalog; missing choices are not evidence of a smaller SRD
+entitlement.
+
 - [#37](https://github.com/stdarg/OpenGold/issues/37): full learning and
   preparation controls and filling pending choices. This increment retains the
   existing advancement selection flow; it does not add a Long Rest editor.
