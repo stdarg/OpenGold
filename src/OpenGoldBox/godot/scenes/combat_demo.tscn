@@ -152,6 +152,11 @@ text = "Adrenaline Rush"
 visible = false
 tooltip_text = "Bonus Action: Dash and gain Temporary HP equal to proficiency bonus. All uses return after a Short or Long Rest."
 
+[node name="ActionSurge" type="Button" parent="."]
+text = "Action Surge"
+visible = false
+tooltip_text = "Action Surge: one additional action, except Magic, on your turn. One use per Short or Long Rest."
+
 [node name="TemporaryHP" type="Window" parent="."]
 title = "Temporary HP"
 visible = false

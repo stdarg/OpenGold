@@ -141,6 +141,7 @@ void CombatView::_ready()
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
+    get_node<Button>("ActionSurge")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("action_surge")));
     get_node<Button>("AdrenalineRush")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("adrenaline_rush")));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
         get_node<Button>(String("SavageAttacker/")+node)->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String(verb)));
@@ -244,11 +245,14 @@ void CombatView::layout_reaction_controls(bool show_controls)
     const double top=board_rect_.get_end().y+16;
     const bool rush=get_node<Button>("AdrenalineRush")->is_visible();
     const bool spells=get_node<Button>("FireBolt")->is_visible()||get_node<Button>("SacredFlame")->is_visible();
-    const double inset=(show_controls?44:0)+((rush||spells)?44:0);
+    const bool surge=get_node<Button>("ActionSurge")->is_visible();
+    const double inset=(show_controls?44:0)+((rush||spells||surge)?44:0);
     get_node<Button>("Dash")->set_position(Vector2(24,top+44));
     get_node<Button>("Dash")->set_size(Vector2(90,36));
     get_node<Button>("AdrenalineRush")->set_position(Vector2(124,top+44));
     get_node<Button>("AdrenalineRush")->set_size(Vector2(260,36));
+    get_node<Button>("ActionSurge")->set_position(Vector2(394,top+44));
+    get_node<Button>("ActionSurge")->set_size(Vector2(260,36));
     get_node<Button>("SacredFlame")->set_position(Vector2(394,top+44));
     get_node<Button>("SacredFlame")->set_size(Vector2(146,36));
     get_node<Button>("FireBolt")->set_position(Vector2(394,top+44));
@@ -486,7 +490,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("FireBolt")->has_focus()||get_node<Button>("PoisonSpray")->has_focus()||get_node<Button>("SacredFlame")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("FireBolt")->has_focus()||get_node<Button>("PoisonSpray")->has_focus()||get_node<Button>("SacredFlame")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
@@ -504,7 +508,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
         if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
         if(key->get_keycode()==Key::KEY_SPACE){
-            for(const char* verb:{"adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            for(const char* verb:{"action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
             const auto offered=demo_->combat().legal_commands();
             const auto target=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==mode_&&c.target==selected_;});
             if(target!=offered.end())act(*target);
@@ -670,6 +674,10 @@ void CombatView::refresh()
     const bool show_rush=player&&capacity&&s.outcome==Outcome::ongoing;
     get_node<Button>("AdrenalineRush")->set_visible(show_rush);get_node<Button>("Dash")->set_visible(show_rush);
     get_node<Button>("AdrenalineRush")->set_text(i18n::format("Adrenaline Rush ({remaining}/{maximum})",{{"remaining",rushes},{"maximum",capacity}}));
+    unsigned surges=0,surge_capacity=0;
+    if(active!=s.combatants.end())for(const auto& pool:active->resources)if(pool.id=="action_surge"){surges=pool.remaining;surge_capacity=pool.capacity;}
+    get_node<Button>("ActionSurge")->set_visible(player&&surge_capacity&&s.outcome==Outcome::ongoing);
+    get_node<Button>("ActionSurge")->set_text(i18n::format("Action Surge ({remaining}/{maximum})",{{"remaining",surges},{"maximum",surge_capacity}}));
     auto* modal=get_node<Window>("TemporaryHP");
     if(player&&s.temporary_hp_offer){
         const auto& offer=*s.temporary_hp_offer;
@@ -698,6 +706,7 @@ void CombatView::refresh()
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
+    get_node<Button>("ActionSurge")->set_disabled(!enabled("action_surge"));
     get_node<Button>("AdrenalineRush")->set_disabled(!enabled("adrenaline_rush"));
     get_node<Button>("SpellSlot")->set_text(i18n::format("Slot level {level}",{{"level",spell_slot_}}));
     get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));

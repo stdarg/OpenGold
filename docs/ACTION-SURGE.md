@@ -58,15 +58,19 @@ see [fixture provenance](../tests/fixtures/README.md).
 
 Validation passed 38 native/tool checks and 15 Godot runtime checks, including
 six native fixture prerequisites for the latter. Both native Godot extensions
-built successfully. Localization checks validate 738 English/Spanish messages.
+built successfully. Localization checks validate 739 English/Spanish messages.
 The historical campaign comparisons allow only the new fixed grant and module
 identity; all other saved bytes remain unchanged.
 
-The existing keyboard action cycle exposes the native legal command: A selects
-Action Surge and Space activates it. This reuses the existing generic flow;
-[the Godot check](../tests/action_surge_view_tests.gd) verifies activation and
-two Dash actions. The dedicated combat button is awaiting question 17's
-layout/control approval, so #86 remains open.
+The approved combat button appears beside Adrenaline Rush for eligible Fighters,
+shows remaining uses and stays visible but disabled while unavailable. Mouse,
+focused Enter/Space and the existing A/Space action cycle activate the same native
+command immediately. Its tooltip explains the Magic restriction and recharge.
+[The Godot check](../tests/action_surge_view_tests.gd) verifies levels 1–4, another
+class, spent uses, pending damage decisions, mouse and keyboard activation, two
+Dash actions and English/Spanish layouts at 1120 × 800 and 1920 × 1080. The UI
+follow-up passed eight affected Godot checks and five native fixture checks;
+the rendered control check also passed. #86's through-level-four scope is complete.
 The existing Short Rest and Hit Dice controls remain #192. Higher-level second
 uses remain #178; multiclass acquisition remains #179–184. This increment does
 not claim the rest of the Fighter feature set or the all-class milestone.

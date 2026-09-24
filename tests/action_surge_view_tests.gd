@@ -2,8 +2,10 @@ extends SceneTree
 var originals := {}
 var path := ""
 var fixtures := ""
+var captures := ""
 func _initialize() -> void:
     for arg in OS.get_cmdline_user_args():
+        if arg.begins_with("--surge-capture="): captures = arg.trim_prefix("--surge-capture=")
         if arg.begins_with("--surge-fixtures="): fixtures = arg.trim_prefix("--surge-fixtures=")
     call_deferred("run_checks")
 func restore_files() -> void:
@@ -49,6 +51,56 @@ func run_checks() -> void:
     await settle()
     current_scene.set_process(false)
     require(not current_scene.get_node("Save").visible and not current_scene.get_node("Load").visible, "No player combat saving")
+    for name in ["level1", "cleric", "available", "level3", "level4", "pending", "decision"]:
+        await load_fixture(name)
+        var surge: Button = current_scene.get_node("ActionSurge")
+        var entitled: bool = name not in ["level1", "cleric"]
+        require(surge.visible == entitled, "Button appears only for entitled Fighters")
+        if entitled:
+            require(surge.disabled == (name in ["pending", "decision"]), "Spent uses and pending decisions disable activation")
+            require(surge.text == ("Action Surge (0/1)" if name == "pending" else "Action Surge (1/1)"), "Button displays remaining resource")
+        if name == "decision":
+            current_scene.get_node("SavageAttacker/Skip").pressed.emit()
+            await settle()
+            require(not surge.disabled, "Resolving damage choice permits Surge after the ordinary attack")
+    for locale in ["en", "es"]:
+        TranslationServer.set_locale(locale)
+        change_scene_to_file("res://scenes/combat_demo.tscn")
+        await settle()
+        current_scene.set_process(false)
+        await load_fixture("level4")
+        var surge: Button = current_scene.get_node("ActionSurge")
+        require(surge.text == ("Action Surge (1/1)" if locale == "en" else "Oleada de acción (1/1)"), "Translated resource label")
+        for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+            root.size = size
+            await settle()
+            var rush: Button = current_scene.get_node("AdrenalineRush")
+            require(surge.position.y == rush.position.y and surge.position.x > rush.get_rect().end.x, "Surge is beside Adrenaline Rush")
+            require(surge.get_rect().end.x < root.size.x - 300, "Translated control fits before party sidebar")
+            require(surge.get_rect().end.y <= current_scene.get_node("Log").position.y, "Log does not overlap the control row")
+            require(surge.focus_mode == Control.FOCUS_ALL, "Button supports keyboard focus")
+            if not captures.is_empty():
+                DirAccess.make_dir_recursive_absolute(captures)
+                await RenderingServer.frame_post_draw
+                require(root.get_texture().get_image().save_png(captures.path_join("surge-" + locale + "-" + str(size.x) + ".png")) == OK, "Rendered control capture")
+        surge.grab_focus()
+        await key(KEY_ENTER)
+        require(surge.visible and surge.disabled and surge.text.ends_with("(0/1)"), "Focused Enter spends exactly one use and retains the disabled button")
+        require(current_scene.get_node("Log").get_parsed_text().contains("Action Surge action ready" if locale == "en" else "Acción de Oleada de acción disponible"), "Focused Enter activates without ending the turn")
+    TranslationServer.set_locale("en")
+    change_scene_to_file("res://scenes/combat_demo.tscn")
+    await settle()
+    current_scene.set_process(false)
+    await load_fixture("available")
+    var surge: Button = current_scene.get_node("ActionSurge")
+    for down in [true, false]:
+        var event := InputEventMouseButton.new()
+        event.button_index = MOUSE_BUTTON_LEFT; event.pressed = down
+        event.position = surge.get_global_rect().get_center()
+        root.push_input(event, true)
+    await settle()
+    require(surge.disabled and surge.text == "Action Surge (0/1)", "Mouse click immediately spends the use")
+    surge.release_focus()
     await load_fixture("available")
     await choose("Action Surge")
     await key(KEY_SPACE)

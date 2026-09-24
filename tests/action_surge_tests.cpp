@@ -103,6 +103,11 @@ void legacy(){auto rules=module();auto creation=srd5::character_rules();auto old
 }
 
 void ui_fixtures(){const auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"surge-fixtures";std::filesystem::create_directories(path);
+    std::ofstream(path/"level1.save")<<battle(hero(1))->save();
+    std::ofstream(path/"cleric.save")<<battle(hero(1,"human","cleric"))->save();
+    for(unsigned level=3;level<=4;++level)std::ofstream(path/("level"+std::to_string(level)+".save"))<<battle(hero(level,"orc"),{"longsword"})->save();
+    auto h=hero(3);auto state=VitalState{h.sheet().hit_points};auto choice=module()->default_advancement(h.sheet());choice.feat="savage_attacker";choice.abilities={};check(h.advance(*module(),state,choice),"UI feat fixture");
+    auto pending=battle(h,{"longsword"});act(*pending,"melee",2);check(bool(pending->snapshot().savage_attack_choice),"UI pending damage choice");std::ofstream(path/"decision.save")<<pending->save();
     auto c=battle(hero(2),{"longsword"});std::ofstream(path/"available.save")<<c->save();act(*c,"action_surge");std::ofstream(path/"pending.save")<<c->save();
 }
 
