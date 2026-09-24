@@ -392,7 +392,7 @@ void CharacterCreationView::refresh()
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
     if(step==CreationStep::training){
-        presentation::refresh_training_controls(*this,*creator_,callable_mp(this,&CharacterCreationView::training_toggled),[](std::string_view source){return i18n::text(source);});
+        presentation::refresh_training_controls(*this,*creator_,callable_mp(this,&CharacterCreationView::training_toggled),callable_mp(this,&CharacterCreationView::training_selected),[](std::string_view source){return i18n::text(source);});
         instructions=N_("Choose the required training options. Back preserves your selections.");
     }
     if(step==CreationStep::spell_choices){
@@ -464,6 +464,15 @@ void CharacterCreationView::target_toggled(bool selected,int index)
 {if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
 void CharacterCreationView::cantrip_toggled(bool selected,String option)
 {if(refreshing_||!creator_||creator_->step()!=CreationStep::spell_choices)return;perform([&]{creator_->cantrip_choice(option.utf8().get_data(),selected);});}
+void CharacterCreationView::training_selected(std::int64_t index,String group)
+{
+    if(refreshing_||!creator_||creator_->step()!=CreationStep::training||index<=0)return;
+    perform([&]{const auto groups=creator_->rules().training_options(creator_->draft());
+        const auto found=std::find_if(groups.begin(),groups.end(),[&](const auto& g){return g.id==group.utf8().get_data();});
+        if(found==groups.end()||found->control!=opengold::rules::TrainingChoiceControl::single_selection||static_cast<std::size_t>(index)>found->options.size())throw std::runtime_error("Unknown training choice");
+        creator_->training_choice(found->id,found->options[index-1].id,true);
+    });
+}
 void CharacterCreationView::training_toggled(bool selected,String group,String option)
 {if(refreshing_||!creator_||creator_->step()!=CreationStep::training)return;perform([&]{creator_->training_choice(group.utf8().get_data(),option.utf8().get_data(),selected);});}
 void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}
@@ -642,7 +651,8 @@ void CharacterCreationView::check_run()
         choose(CreationField::character_class,"fighter");press("Next");
         if(creator_->step()!=CreationStep::training||!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Qualified Fighter must complete Training before Name");
         get_node<CheckBox>("Training/Rows/Group0/elvish")->set_pressed(true);
-        get_node<CheckBox>("Training/Rows/Group0/dwarvish")->set_pressed(true);press("Next");
+        get_node<CheckBox>("Training/Rows/Group0/dwarvish")->set_pressed(true);
+        get_node<OptionButton>("Training/Rows/Group1/Choice")->select(2);get_node<OptionButton>("Training/Rows/Group1/Choice")->emit_signal("item_selected",2);press("Next");
         if(creator_->step()!=CreationStep::name)throw std::runtime_error("Completed training must advance to Name");break;
     case 9:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Empty name accepted");
         get_node<LineEdit>("Name")->grab_focus();

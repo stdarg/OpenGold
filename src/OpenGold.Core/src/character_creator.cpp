@@ -73,7 +73,10 @@ void CharacterCreator::training_choice(std::string_view id,std::string_view opti
     if(group==groups.end()||std::none_of(group->options.begin(),group->options.end(),[&](const auto& o){return o.id==option;}))
         throw std::runtime_error("Unknown training choice");
     auto& values=candidate.training[std::string(id)];const auto found=std::find(values.begin(),values.end(),option);
-    if(selected&&found==values.end()){
+    if(selected&&group->control==TrainingChoiceControl::single_selection){
+        if(group->count!=1)throw std::runtime_error("Invalid single-selection training group");
+        values={std::string(option)};
+    }else if(selected&&found==values.end()){
         if(values.size()>=group->count)throw std::runtime_error("Training selection limit reached");
         values.emplace_back(option);
     }else if(!selected&&found!=values.end())values.erase(found);

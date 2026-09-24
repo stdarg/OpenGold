@@ -768,3 +768,11 @@ Ranged weapon category. PC17 carries its feature bit; old profiles and campaign
 identities reject future Archery grants. The existing advancement selector reads
 the available option from the rules module. Core and Godot do not implement the
 bonus. See [Archery](ARCHERY.md) for available routes and remaining class work.
+
+Rules 0.6.29 adds Fighter starting styles as a single-selection training group.
+Core replaces that group's selection atomically; Godot renders the approved
+standard dropdown using group metadata. Style feats remain subject to feature
+validation as well as training validation. PC18 accepts their distinct level-one
+source; old profile policies and identities reject it. Existing campaign choice
+maps need no schema change. Old choices remain pending. See
+[Fighter starting styles](FIGHTER-STYLES.md) for evidence and remaining work.

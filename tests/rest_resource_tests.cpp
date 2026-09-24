@@ -101,7 +101,7 @@ void persistence_and_advancement(){
     std::uint64_t checksum=14695981039346656037ULL;for(unsigned char c:bad_body){checksum^=c;checksum*=1099511628211ULL;}
     rejects([&]{(void)decode_campaign("OPENGOLD-CAMPAIGN 11\n"+std::to_string(checksum)+'\n'+bad_body,*srd5::character_rules(),*rules,"rest",nullptr);});
     check(encode_campaign(restored,nullptr,"rest")==saved,"An excessive die count rejects even with a correct checksum and cannot replace the campaign");
-    party.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});
+    party.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}}});
     check(rules->recovery_info(party.member(id).character.sheet(),party.member(id).vitals).hit_dice==0,"Training completion cannot replenish Hit Dice");
     party.award_experience(300,"rest-xp");party.advance(id,party.default_advancement(id));
     auto info=rules->recovery_info(party.member(id).character.sheet(),party.member(id).vitals);

@@ -94,7 +94,7 @@ void actual_combat(){
         "Real Poison attack applies Dwarf resistance before absorbing Temporary HP");
     const auto saved=combat->save();check(!combat->submit(attack)&&combat->save()==saved,"Stale attack cannot consume a pool twice");
     // A forged actor row cannot introduce a negative pool.
-    auto corrupt=saved;const auto at=corrupt.find(" 0 \"\" 0 0",corrupt.find("PC17"));check(at!=corrupt.npos,"Current actor has the empty pool suffix");corrupt.replace(at,9," -1 \"x\" 0 0");
+    auto corrupt=saved;const auto at=corrupt.find(" 0 \"\" 0 0",corrupt.find("PC18"));check(at!=corrupt.npos,"Current actor has the empty pool suffix");corrupt.replace(at,9," -1 \"x\" 0 0");
     rejects([&]{(void)rules->restore(corrupt);});check(combat->save()==saved,"Rejected restore leaves the original session intact");
 }
 std::string saved(const CampaignParty& party){return encode_campaign(party,nullptr,"temporary-hp");}
@@ -104,7 +104,7 @@ void campaign(){
     const auto npc=party.recruit("temp-hp-companion",hero());auto state=party.checkpoint();
     for(auto& member:state.roster){member.vitals.hit_points=1;rules->grant_temporary_hit_points(member.vitals,member.character.sheet(),{8,"spell:fixture"},TemporaryHpChoice::use_new);}party.restore(state);
     const auto bytes=saved(party);auto copy=loaded(bytes);check(saved(copy)==bytes,"Campaign canonically preserves sourced pools for active, reserve and NPC members");
-    party.complete_training(active,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});check(pool(party.member(active).character,party.member(active).vitals).amount==8,"Training completion preserves Temporary HP");
+    party.complete_training(active,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}}});check(pool(party.member(active).character,party.member(active).vitals).amount==8,"Training completion preserves Temporary HP");
     party.award_experience(900,"temporary-hp-xp");party.advance(active,party.default_advancement(active));check(pool(party.member(active).character,party.member(active).vitals).amount==8,"Advancement preserves the existing pool without scaling it");
     const auto short_rest=party.rest(RestKind::short_rest);check(bool(short_rest),"Short Rest completes");
     (void)party.spend_hit_die(*short_rest->spending,active);party.finish_short_rest(party.state().short_rest->ticket);

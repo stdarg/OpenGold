@@ -50,7 +50,6 @@ Archery; English/Spanish dialogs were rendered and inspected at 1120×800 and
 The advancement test's existing bonus-source assertions now use translated
 message templates so that the same checks can run in Spanish.
 
-Question 22 is approved for the next #85 increment: a labeled Fighting Style
-dropdown above languages in Training, initially Archery/Defense, required before
-Next, preserved on Back, keyboard accessible, pre-generated for presets and
-pending for old saves. That starting selector is not part of this implementation.
+The subsequent [Fighter starting-style increment](FIGHTER-STYLES.md) implements
+approved question 22 and adds the level-one Archery route. Level-up replacement
+and other class routes remain open.

@@ -75,7 +75,7 @@ func keyboard(key: Key) -> void:
 		var event := InputEventKey.new()
 		event.keycode = key
 		event.pressed = down
-		root.push_input(event, true)
+		Input.parse_input_event(event)
 		await settle()
 
 func background_captures(background: String, translated: String) -> void:
@@ -170,11 +170,39 @@ func run_checks() -> void:
 	await press("Back")
 	await choose("Choices", "Fighter")
 	await press("Next")
-	require(not current_scene.get_node("Training/Rows/Group1").visible and not current_scene.get_node("Next").disabled, "Class change loses starting languages or retains Rogue requirements")
+	var style: OptionButton = current_scene.get_node("Training/Rows/Group1/Choice")
+	require(style.is_visible_in_tree() and style.selected == 0 and current_scene.get_node("Next").disabled, "Fighter must choose a starting style")
+	require(current_scene.get_node("Training/Rows/Group1").get_index() == 0 and not current_scene.get_node("Training/Rows/Group1/acrobatics").visible, "Style must appear above languages without Rogue controls")
+	style.grab_focus()
+	await keyboard(KEY_SPACE)
+	require(style.get_popup().visible, "Keyboard must open the style dropdown")
+	await keyboard(KEY_DOWN)
+	await keyboard(KEY_ENTER)
+	require(style.selected == 2 and style.has_focus() and not current_scene.get_node("Next").disabled, "Keyboard Archery choice must complete training and retain focus")
+	await press("Next")
+	await press("Back")
+	require(style.selected == 2, "Back must preserve the chosen style")
+	await choose("Training/Rows/Group1/Choice", "Defense")
+	require(style.selected == 1 and not current_scene.get_node("Next").disabled, "Changing style must replace its selection")
+	for locale in ["en", "es"]:
+		TranslationServer.set_locale(locale)
+		await press("Back")
+		await press("Next")
+		require(style.selected == 1 and style.get_item_text(1) == ("Defense" if locale == "en" else "Defensa"), "Translated dropdown must preserve Defense")
+		for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+			root.size = size
+			await settle()
+			current_scene.get_node("Training").scroll_vertical = 0
+			await settle()
+			await capture("style-" + locale + "-" + str(size.x))
+	TranslationServer.set_locale("en")
+	root.size = Vector2i(1120, 800)
+	await press("Back")
+	await press("Next")
 	await press("Back")
 	await choose("Choices", "Rogue")
 	await press("Next")
-	require(current_scene.get_node("Next").disabled and not current_scene.get_node("Training/Rows/Group1/acrobatics").button_pressed, "Returning to Rogue invents prior choices")
+	require(not style.visible and current_scene.get_node("Next").disabled and not current_scene.get_node("Training/Rows/Group1/acrobatics").button_pressed, "Returning to Rogue invents prior choices")
 	for skill in ["acrobatics", "investigation", "perception", "persuasion"]:
 		await pick(1, skill)
 	await pick(2, "perception")

@@ -57,6 +57,9 @@ void add_choices(std::vector<FeatureGrant>& grants,const TrainingChoices& choice
 }
 std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     std::vector<TrainingChoiceGroup> result{{std::string(origin),"Starting languages",2,language_options(false)}};
+    if(klass=="fighter"&&policy>=TrainingPolicy::fighter_style)
+        result.push_back({"class:fighter:fighting_style","Fighting Style",1,
+            {{"defense","Defense","+1 AC while wearing armor."},{"archery","Archery","+2 to attack rolls with Ranged weapons."}},TrainingChoiceControl::single_selection});
     if(klass=="rogue"){
         TrainingChoiceGroup group{std::string(rogue),"Rogue skills",4,{}};
         for(const auto& s:skills)if(std::find(rogue_skills.begin(),rogue_skills.end(),s.id)!=rogue_skills.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
@@ -88,20 +91,21 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
 }
 bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
 std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
-std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::all_backgrounds);}
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::fighter_style);}
 std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
     for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());
-    for(const auto& group:groups)add_choices(result,choices,group,group.id==rogue?"skill:":group.id==expertise?"expertise:":"language:");
+    for(const auto& group:groups)add_choices(result,choices,group,group.id=="class:fighter:fighting_style"?"feat:":group.id==rogue?"skill:":group.id==expertise?"expertise:":"language:");
     return result;
 }
 TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,TrainingPolicy policy){
     auto required=fixed(klass,background,policy);TrainingChoices choices;std::vector<FeatureGrant> actual;
-    for(const auto& grant:grants)if(is_training_grant(grant)){
+    // Style selections emit feats; keep them in feature validation as well.
+    for(const auto& grant:grants)if(is_training_grant(grant)||grant.source_id=="class:fighter:fighting_style"){
         require(grant.level==1&&grant.choices.empty());actual.push_back(grant);
         const auto found=std::find(required.begin(),required.end(),grant);
         if(found!=required.end()){required.erase(found);continue;}
-        const auto prefix=grant.source_id==rogue?"skill:":grant.source_id==expertise?"expertise:":"language:";
+        const auto prefix=grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id==rogue?"skill:":grant.source_id==expertise?"expertise:":"language:";
         require(grant.id.starts_with(prefix));choices[grant.source_id].push_back(grant.id.substr(std::string_view(prefix).size()));
     }
     require(required.empty());auto expected=training_grants(klass,background,choices,policy);

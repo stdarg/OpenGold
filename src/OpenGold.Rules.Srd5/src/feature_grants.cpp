@@ -39,7 +39,7 @@ bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
@@ -56,7 +56,11 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
         if(grant.id!="feat:ability_score_improvement")require(nonrepeatable.insert(grant.id).second);
         const auto fixed=std::find(required.begin(),required.end(),grant);
         if(fixed!=required.end())required.erase(fixed);
-        else {
+        else if(starting_styles&&grant.source_id=="class:fighter:fighting_style"){
+            require(klass=="fighter"&&grant.level==1&&grant.choices.empty()&&
+                (grant.id=="feat:defense"||grant.id=="feat:archery")&&has_grant(grants,"feature:fighting_style"));
+            require(entitlements.emplace(grant.source_id,grant.level).second);
+        }else {
             require((klass=="fighter"||klass=="cleric"||klass=="wizard")&&grant.level==4&&
                 grant.source_id=="class:"+std::string(klass)+":ability_score_improvement");
             require(entitlements.emplace(grant.source_id,grant.level).second);++advancement_count;

@@ -4,6 +4,7 @@
 #include "opengold/character_creator.h"
 #include <godot_cpp/classes/check_box.hpp>
 #include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/option_button.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
 #include <godot_cpp/classes/scroll_container.hpp>
 #include <godot_cpp/classes/v_box_container.hpp>
@@ -17,6 +18,7 @@ namespace presentation {
 inline godot::String training_string(std::string_view s){return godot::String::utf8(s.data(),s.size());}
 template<class Translate> godot::String training_source(std::string_view id,const Translate& tr){
     if(id=="origin:languages")return tr(N_("Starting languages"));
+    if(id=="class:fighter:fighting_style")return tr(N_("Fighter Fighting Style"));
     if(id=="class:rogue")return tr(N_("Rogue class"));
     if(id=="class:rogue:expertise")return tr(N_("Rogue Expertise"));
     if(id=="class:rogue:thieves_cant")return tr(N_("Rogue / Thieves' Cant"));
@@ -65,22 +67,36 @@ inline void setup_training_controls(godot::Node& parent){
 // The scene owns every node. Reuse controls across refreshes so toggling does
 // not destroy the focused checkbox or its keyboard navigation position.
 template<class Translate> void refresh_training_controls(godot::Node& parent,const opengold::CharacterCreator& creator,
-    const godot::Callable& toggled,const Translate& tr){
+    const godot::Callable& toggled,const godot::Callable& selected,const Translate& tr){
     using namespace godot;
     auto* rows=parent.get_node<VBoxContainer>("Training/Rows");
     auto fixed=creator.draft();fixed.training.clear();
     parent.get_node<RichTextLabel>("TrainingFixed")->set_text("[b]"+tr(N_("Fixed training"))+"[/b]\n"+training_summary(creator.rules().evaluate(fixed,false).training,tr,true));
     const auto groups=creator.rules().training_options(creator.draft());
-    for(int i=groups.size();i<rows->get_child_count();++i)Object::cast_to<Control>(rows->get_child(i))->hide();
+    for(unsigned i=groups.size();i<static_cast<unsigned>(rows->get_child_count());++i)rows->get_node<Control>(String("Group")+String::num_uint64(i))->hide();
     for(unsigned i=0;i<groups.size();++i){
         const auto& group=groups[i];const auto name=String("Group")+String::num_uint64(i);
         auto* box=Object::cast_to<VBoxContainer>(rows->get_node_or_null(name));
         if(!box){auto owned=make_node<VBoxContainer>();owned->set_name(name);box=attach_child(*rows,std::move(owned));
             box->add_theme_constant_override("separation",5);auto label=make_node<Label>();label->set_name("Title");attach_child(*box,std::move(label));}
-        box->show();const auto found=creator.draft().training.find(group.id);
+        box->show();rows->move_child(box,i);const auto found=creator.draft().training.find(group.id);
         const std::vector<std::string> empty;const auto& picked=found==creator.draft().training.end()?empty:found->second;
         auto* title=box->get_node<Label>("Title");title->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
         title->set_text(tr(group.label)+" ("+String::num_uint64(picked.size())+" / "+String::num_uint64(group.count)+")");
+        auto* choice=Object::cast_to<OptionButton>(box->get_node_or_null("Choice"));
+        if(choice&&group.control!=opengold::rules::TrainingChoiceControl::single_selection){choice->hide();choice->set_disabled(true);}
+        if(group.control==opengold::rules::TrainingChoiceControl::single_selection){
+            for(int j=0;j<box->get_child_count();++j)if(auto* check=Object::cast_to<CheckBox>(box->get_child(j))){check->hide();check->set_disabled(true);}
+            if(!choice){auto owned=make_node<OptionButton>();owned->set_name("Choice");choice=attach_child(*box,std::move(owned));
+                choice->set_focus_mode(Control::FOCUS_ALL);choice->set_custom_minimum_size(Vector2(0,38));
+                choice->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);}
+            if(choice->has_meta("training_callback")){const Callable previous=choice->get_meta("training_callback");choice->disconnect("item_selected",previous);}
+            const auto callback=selected.bind(training_string(group.id));choice->connect("item_selected",callback);choice->set_meta("training_callback",callback);
+            choice->clear();choice->add_item(tr(N_("Choose an option")));choice->set_item_disabled(0,true);
+            int index=0;for(unsigned n=0;n<group.options.size();++n){const auto& option=group.options[n];choice->add_item(tr(option.label));choice->set_item_tooltip(n+1,tr(option.description));
+                if(std::find(picked.begin(),picked.end(),option.id)!=picked.end())index=n+1;}
+            choice->select(index);choice->set_tooltip_text(training_source(group.id,tr));choice->set_disabled(false);choice->show();continue;
+        }
         for(int j=0;j<box->get_child_count();++j)if(auto* check=Object::cast_to<CheckBox>(box->get_child(j))){
             if(std::none_of(group.options.begin(),group.options.end(),[&](const auto& o){return training_string(o.id)==String(check->get_name());})){
                 check->hide();check->set_disabled(true);
@@ -99,6 +115,12 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
             check->set_tooltip_text(training_source(group.id,tr));
         }
     }
+    String signature;for(const auto& group:groups)signature+=training_string(group.id)+";";
+    if(!rows->has_meta("training_groups")||String(rows->get_meta("training_groups"))!=signature)
+        parent.get_node<ScrollContainer>("Training")->set_v_scroll(0);
+    rows->set_meta("training_groups",signature);
+    unsigned first=0;for(unsigned i=0;i<groups.size();++i)if(groups[i].control==opengold::rules::TrainingChoiceControl::single_selection)
+        rows->move_child(rows->get_node<VBoxContainer>(String("Group")+String::num_uint64(i)),first++);
 }
 }
 #endif

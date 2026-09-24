@@ -151,7 +151,7 @@ void migration(){
     const auto decline=command(*combat,"decline");check(combat->submit(decline)&&combat->save()==upgrade(fixture("combat-v10-damage-continued.save"),rules->identity()),"Pre-change writer's pending movement continues byte-for-byte apart from identity");
     CampaignParty pending(module());const auto pending_id=pending.add_pc(hero("dwarf","fighter",2));auto waiting=pending.checkpoint();
     waiting.roster[0].vitals=party.member(1).vitals;pending.restore(waiting);
-    pending.complete_training(pending_id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});
+    pending.complete_training(pending_id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}}});
     check(pending.member(pending_id).vitals==waiting.roster[0].vitals,"Completing missing training preserves resistance and the full vital continuation");
     const auto& dwarf=party.member(1);const auto before=dwarf.vitals;rejects([&]{party.complete_training(1,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});});
     check(party.member(1).vitals==before,"Repeated completed training cannot change a resistant character");

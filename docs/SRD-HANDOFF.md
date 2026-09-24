@@ -8,26 +8,27 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. #78 now has Archery through the existing Fighter level-four feat
-selector: prerequisite/provenance, +2 for Ranged weapons, persistence, translated
-selection and sheet name. See [Archery](ARCHERY.md). #78 remains open until the
-starting/other class grant routes are integrated. #212 fixed Acolyte/Soldier
-training is closed (`131942d`); its parents #61/#64 retain remaining package work.
+Branch `main`. Approved question 22 is implemented under #85: Fighter Training
+has a required Archery/Defense dropdown above languages, preserved on Back and
+keyboard accessible. Presets receive a choice; old saves retain a pending choice.
+See [Fighter styles](FIGHTER-STYLES.md). #85 remains open for other styles,
+replacement on Fighter level-up and weapon mastery. #78/#79 retain remaining
+class routes. #212 is closed; its parents #61/#64 retain package work.
 
-Rules 0.6.28 / PC17 / FX2; combat 13–15 and campaign 11 unchanged. The actual
-0.6.27 campaign/combat fixtures retain their entire bodies except module identity.
-Old profiles and campaign identities reject newly introduced Archery grants.
-Entry points: `feature_grants.{h,cpp}`, `srd5.cpp`, `level_up_view.cpp`,
-`character_sheet_view.cpp`, `tests/archery_tests.cpp` and `tests/training_tests.cpp`.
+Rules 0.6.29 / PC18 / FX2; combat 13–15 and campaign 11 unchanged. Starting
+style grants use `class:fighter:fighting_style` at level one, separate from level
+four. Nonrepeatability spans both sources. Actual 0.6.28 campaign/combat fixtures
+preserve all prior choices, wounds and expenditure without assigning a style.
+Old profiles and identities reject the new source. Entry points: `training.*`,
+`feature_grants.*`, `srd5.cpp`, `training_control.h`, `training_tests.cpp` and
+`training_view_tests.gd`. Main/demo creation controls use the same group metadata.
 
-**Next: Fighter starting Fighting Style under #85. Question 22 is approved:**
-a labeled dropdown in the existing Training step, above language choices;
-initially Archery and Defense; one required selection before Next; Back preserves
-it; keyboard access; presets pre-generated; old saves retain a pending choice.
-Other styles remain tracked. Do not re-ask this layout question. Selection and
-replacement/provenance need rules integration before claiming #85 complete;
-weapon mastery also remains in that parent. Review existing Training controls,
-CharacterDraft save schema, grant validation and old-choice migration first.
+**Next: continue #85 with remaining style/replacement/mastery work.** Review its
+scope and split distinct state machines before implementation. Replacement is
+not old-save completion: the existing pending-training API preserves chosen
+selections. Any new level-up control layout still needs a numbered question;
+Q22 only approves the starting Training dropdown. Other Fighting Style feats
+retain their existing issue tracking. Do not claim all class choices complete.
 
 ## Next work and pending questions
 
@@ -81,11 +82,12 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#78 validation is recorded in ARCHERY.md. Current native regression: 41 passing
-checks; 16 Godot runtime checks plus seven fixture prerequisites pass. Actual
-advancement confirmation/reload passes. Main/demo builds and 750-message
-localization validate. Capture artifacts: `/tmp/opengold-archery-renders`.
-English/Spanish dialogs were inspected at 1120×800 and 1920×1080. Final focused
-Archery checks pass after strengthened atomicity/version assertions. No live
-build/test processes remain. Native Godot advancement checks use translated
-bonus-source assertions, allowing the full confirmation sequence in Spanish.
+Starting-style verification is recorded in FIGHTER-STYLES.md. Native regression
+covered 41 checks; six old training-completion fixtures now include the required
+style and pass their focused rerun. All 16 Godot runtime checks and their native
+prerequisites pass after rebuilding those fixtures. Main/demo extension builds,
+755-message localization and keyboard selection checks pass. English/Spanish
+Training layouts were inspected at 1120×800 and 1920×1080 under
+`/tmp/opengold-styles-renders`. Full party-path verification also exercises the
+new choice; its untrained-shield fixture clears the Fighter style when temporarily
+constructing a Wizard. Native checks use translated bonus-source assertions. No live build/test processes remain.

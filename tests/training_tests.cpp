@@ -68,8 +68,17 @@ void creation_controls(){
     creator.training_choice("class:rogue:thieves_cant","undercommon",true);
     creator.select(CreationField::character_class,"fighter");
     check(creator.draft().training.size()==1&&creator.draft().training.at("origin:languages")==std::vector<std::string>({"elvish","orc"}),"Class change preserves starting languages and clears Rogue groups");
+    check(!creator.training_complete(),"Fighter requires its own starting style choice");
+    creator.training_choice("class:fighter:fighting_style","defense",true);
+    check(creator.training_complete(),"Fighter languages and style complete its supported training");
+    creator.training_choice("class:fighter:fighting_style","archery",true);
+    check(creator.draft().training.at("class:fighter:fighting_style")==std::vector<std::string>{"archery"},"Single selection replaces the prior style atomically");
+    const auto style_before=creator.draft().training;rejects([&]{creator.training_choice("class:fighter:fighting_style","unimplemented",true);});
+    check(creator.draft().training==style_before,"Invalid replacement preserves the prior style");
+    creator.select(CreationField::background,"sage");check(creator.draft().training==style_before,"Changing background preserves a valid style");
+    creator.select(CreationField::background,"criminal");
     creator.select(CreationField::character_class,"rogue");
-    check(!creator.training_complete(),"Returning to Rogue does not invent cleared choices");
+    check(!creator.draft().training.contains("class:fighter:fighting_style")&&!creator.training_complete(),"Returning to Rogue clears the invalid style without inventing cleared choices");
     for(const auto* group:{"class:rogue","class:rogue:expertise","class:rogue:thieves_cant"})
         for(const auto& value:selected.at(group))creator.training_choice(group,value,true);
     creator.next();creator.next();creator.next();creator.name("Created Rogue");creator.next();creator.next();
@@ -89,6 +98,10 @@ void preset_training(){
     for(unsigned i=0;i<pool.size();++i){
         const auto& c=pool[i];++classes[c.creation_data().character_class];
         check(c.sheet().training.complete&&c.creation_data().training==again[i].creation_data().training,"Preset training is complete and deterministic");
+        if(c.creation_data().character_class=="fighter"){
+            const auto& picked=c.creation_data().training.at("class:fighter:fighting_style");
+            check(picked.size()==1&&std::find(c.sheet().grants.begin(),c.sheet().grants.end(),FeatureGrant{"feat:"+picked[0],"class:fighter:fighting_style",1,{}})!=c.sheet().grants.end(),"Every preset Fighter has one pre-generated style and its grant");
+        }
         check(c.sheet().training.languages.size()==(c.creation_data().character_class=="rogue"?5u:3u),"Preset languages are distinct and include all fixed and selected grants");
         CampaignParty party(module());const auto id=party.add_pc(c);const auto bytes=encode_campaign(party,nullptr,"preset");
         auto decoded=decode_campaign(bytes,*creation,*module(),"preset",nullptr);party.restore(std::move(decoded.party));
@@ -211,6 +224,7 @@ void complete_saved_training(){
         auto selected=id<=2?choices():TrainingChoices{{"origin:languages",{"elvish","orc"}}};
         if(id==2)selected["class:rogue:expertise"]={"investigation","perception"};
         const auto before=encode_campaign(party,nullptr,"training-fixture");const auto previous=party.member(id);
+        if(previous.character.sheet().character_class=="Fighter")selected["class:fighter:fighting_style"]={"archery"};
         const auto preview=party.preview_training(id,*creation,selected);
         check(encode_campaign(party,nullptr,"training-fixture")==before,"Opening, editing and discarding a preview has no campaign effects");
         const auto& character=preview.character;const auto& old=previous.character;
@@ -267,11 +281,11 @@ void sage_training(){
             d.training={{"class:rogue:expertise",{"arcana","history"}}};sheet=hero(d).sheet();
             check(skill(sheet,"arcana").expertise&&skill(sheet,"arcana").bonus==6,"Rogue may apply Expertise to background-granted Arcana");
             const auto original=rules->character_profile(sheet,{}).data;
-            auto pc15=original;replace(pc15,"PC17","PC15");
+            auto pc15=original;replace(pc15,"PC18","PC15");
             auto prior=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Prior Sage",0,{1,1},pc15},{2,"vanguard","Enemy",1,{5,1}}}},1);
-            auto checkpoint=prior->save();replace(checkpoint,"0.6.28","0.6.26");
+            auto checkpoint=prior->save();replace(checkpoint,"0.6.29","0.6.26");
             check(rules->restore(checkpoint)->save()==prior->save(),"Valid PC15 Sage Expertise remains accepted under the preceding rules identity");
-            auto old=original;replace(old,"PC17","PC14");
+            auto old=original;replace(old,"PC18","PC14");
             rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
         }
     }
@@ -288,10 +302,10 @@ void sage_training(){
     auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
     const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
     check(rules->restore(combat->save())->save()==combat->save(),"New Sage recipe retains combat continuation");
-    auto forged_combat=combat->save();replace(forged_combat,"0.6.28","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
+    auto forged_combat=combat->save();replace(forged_combat,"0.6.29","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
     party.award_experience(1800,"sage-four");auto choice=party.default_advancement(1);choice.abilities={};choice.abilities[3]=2;party.advance(1,choice);
     check(party.member(1).character.sheet().scores[3]==18&&skill(party.member(1).character.sheet(),"arcana").bonus==6,"Intelligence ASI recomputes Sage skill bonus at level four");
-    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.28","0.6.25")})
+    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.29","0.6.25")})
         rejects([&]{(void)decode_campaign(bad,*creation,*rules,"sage-migration",nullptr);});
 }
 
@@ -316,7 +330,7 @@ void remaining_backgrounds(){
             d.training={{"class:rogue",{first,"acrobatics","perception","persuasion"}},{"class:rogue:expertise",{first,second}}};sheet=hero(d).sheet();
             check(skill(sheet,first).bonus==7&&skill(sheet,first).sources.size()==3&&skill(sheet,second).bonus==(acolyte?7:6),"Rogue Expertise accepts background skills; overlapping class and background grants do not stack");
         }
-        auto old=rules->character_profile(sheet,{}).data;replace(old,"PC17","PC15");
+        auto old=rules->character_profile(sheet,{}).data;replace(old,"PC18","PC15");
         rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
     }
     const auto bytes=fixture("campaign-v11-backgrounds-before.ogs");
@@ -333,14 +347,72 @@ void remaining_backgrounds(){
     check(body(current)==test::with_background_training_grants(expected,2),"Every historical campaign byte remains except identity and exactly five owed fixed grants");
     CampaignParty again(module());again.restore(decode_campaign(current,*creation,*rules,"backgrounds-migration",nullptr).party);
     check(encode_campaign(again,nullptr,"backgrounds-migration")==current,"Migrated background campaign round trips canonically");
-    rejects([&]{(void)decode_campaign(corrupt(current,"0.6.28","0.6.26"),*creation,*rules,"backgrounds-migration",nullptr);});
+    rejects([&]{(void)decode_campaign(corrupt(current,"0.6.29","0.6.26"),*creation,*rules,"backgrounds-migration",nullptr);});
     auto members=party.participants();members[0].cell={1,1};members[1].cell={2,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
     const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
-    check(rules->restore(combat->save())->save()==combat->save(),"PC17 preserves combat continuation");
-    auto forged=combat->save();replace(forged,"0.6.28","0.6.26");rejects([&]{(void)rules->restore(forged);});
+    check(rules->restore(combat->save())->save()==combat->save(),"PC18 preserves combat continuation");
+    auto forged=combat->save();replace(forged,"0.6.29","0.6.26");rejects([&]{(void)rules->restore(forged);});
     party.award_experience(3600,"backgrounds-four");
     for(MemberId id:{1,2}){auto choice=party.default_advancement(id);choice.abilities={};choice.abilities[id==1?4:0]=2;party.advance(id,choice);}
     check(skill(party.member(1).character.sheet(),"insight").bonus==6&&skill(party.member(2).character.sheet(),"athletics").bonus==6,"Level-four ability improvements recompute fixed skill modifiers");
+}
+
+void starting_styles(){
+    auto rules=module();auto creation=srd5::character_rules();
+    for(const auto& klass:creation->choices(CreationField::character_class))for(const auto style:{"defense","archery"}){
+        auto d=draft(klass.id,"sage");d.training={{"origin:languages",{"elvish","dwarvish"}},{"class:fighter:fighting_style",{style}}};
+        if(klass.id!="fighter"){rejects([&]{(void)hero(d);});continue;}
+        auto c=hero(d);const auto& sheet=c.sheet();
+        check(sheet.training.complete&&std::find(sheet.grants.begin(),sheet.grants.end(),FeatureGrant{"feat:"+std::string(style),"class:fighter:fighting_style",1,{}})!=sheet.grants.end(),"Starting style has a distinct level-one entitlement and completes training");
+        check(rules->character_profile(sheet,std::array<std::string,1>{"breastplate"}).armor_class==(style==std::string_view("defense")?17:16),"Starting Defense adds exactly one AC with armor");
+        check(rules->character_profile(sheet,{}).armor_class==12&&rules->character_profile(sheet,std::array<std::string,1>{"shield"}).armor_class==14,"Starting Defense does not improve unarmored or shield-only AC");
+        auto invalid=d;invalid.training["class:fighter:fighting_style"]={"archery","defense"};rejects([&]{(void)hero(invalid);});
+        invalid=d;invalid.training["class:fighter:fighting_style"]={"great_weapon_fighting"};rejects([&]{(void)hero(invalid);});
+        auto profile=rules->character_profile(sheet,std::array<std::string,1>{"shortbow"}).data;
+        Encounter encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Starter",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,1}}}};
+        auto battle=rules->create(encounter,13);check(battle->snapshot().actor==1,"Independent starting-style initiative seed");
+        const auto actions=battle->legal_commands();const auto attack=std::find_if(actions.begin(),actions.end(),[](const auto& a){return a.verb=="ranged";});check(attack!=actions.end()&&battle->submit(*attack),"Starting style participates in ordinary attack");
+        bool checked=false;for(const auto& m:battle->snapshot().log_messages)if(m.source.starts_with("{actor} -> {target}: d20"))for(const auto& arg:m.arguments)if(arg.name=="bonus"){check(arg.value==(style==std::string_view("archery")?"6":"4"),"Starting Archery contributes exactly +2 to the real ranged attack");checked=true;}
+        check(checked&&rules->restore(battle->save())->save()==battle->save(),"Starting style and spent attack retain canonical combat continuation");
+        replace(profile,"PC18","PC17");encounter.participants[0].character_profile=profile;rejects([&]{(void)rules->create(encounter,13);});
+        CampaignParty p(module());auto id=p.add_pc(c);p.award_experience(2700,"starting-style");for(int i=0;i<2;++i)p.advance(id,p.default_advancement(id));
+        auto choice=p.default_advancement(id);choice.feat=style;choice.abilities={};const auto old=encode_campaign(p,nullptr,"starting-style");rejects([&]{p.advance(id,choice);});check(encode_campaign(p,nullptr,"starting-style")==old,"Duplicate style cannot consume a level-four entitlement");
+        choice=p.default_advancement(id);choice.abilities={};choice.abilities[2]=2;p.advance(id,choice);
+        check(p.member(id).character.sheet().scores[2]==19,"Starting style coexists with a Constitution ASI");
+        const auto bytes=encode_campaign(p,nullptr,"starting-style");CampaignParty again(module());again.restore(decode_campaign(bytes,*creation,*rules,"starting-style",nullptr).party);check(encode_campaign(again,nullptr,"starting-style")==bytes,"Style plus retroactive Constitution HP history survives reload");
+    }
+    const auto old=fixture("campaign-v11-styles-before.ogs");CampaignParty p(module());p.restore(decode_campaign(old,*creation,*rules,"style-migration",nullptr).party);
+    auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};auto expected=body(old);replace(expected,"0.6.28",rules->identity().version);
+    check(body(encode_campaign(p,nullptr,"style-migration"))==expected,"Actual prior campaign retains every choice, grant, wound and resource byte except module identity");
+    auto old_combat=fixture("combat-v14-styles-before.save");auto expected_combat=old_combat;replace(expected_combat,"0.6.28",rules->identity().version);check(rules->restore(old_combat)->save()==expected_combat,"Actual PC17 combat retains all recipes and continuation state");
+    for(MemberId id:{1,2,3,4}){
+        const auto before=p.member(id);check(!before.character.sheet().training.complete,"Old Fighters retain a pending style regardless of attained level");
+        auto choices=before.character.creation_data().training;choices["class:fighter:fighting_style"]={id==2?"archery":"defense"};
+        if(id==2){auto duplicate=choices;duplicate["class:fighter:fighting_style"]={"defense"};const auto bytes=encode_campaign(p,nullptr,"style-migration");rejects([&]{p.complete_training(id,*creation,duplicate);});check(encode_campaign(p,nullptr,"style-migration")==bytes,"Completion cannot duplicate an old advancement feat");}
+        p.complete_training(id,*creation,choices);const auto& after=p.member(id);
+        check(after.character.sheet().training.complete&&after.vitals==before.vitals&&after.character.advancements()==before.character.advancements()&&after.character.sheet().hit_points==before.character.sheet().hit_points,"Completing old style preserves vitals, levels, HP history and previous feat choices");
+    }
+    const auto bytes=encode_campaign(p,nullptr,"style-migration");CampaignParty again(module());again.restore(decode_campaign(bytes,*creation,*rules,"style-migration",nullptr).party);check(encode_campaign(again,nullptr,"style-migration")==bytes,"Completed historical starting styles save canonically");
+    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.29","0.6.28"),*creation,*rules,"style-migration",nullptr);});
+}
+
+void freeze_styles(){
+    auto rules=module();check(rules->identity().version=="0.6.28","Requires actual writer before starting styles");
+    CampaignParty party(module());
+    for(int i=0;i<4;++i){auto d=draft("fighter","sage");d.training={{"origin:languages",{"elvish","dwarvish"}}};party.add_pc(hero(d));}
+    party.award_experience(2700,"style-migration");
+    for(MemberId id:{2,3,4}){
+        for(int i=0;i<2;++i)party.advance(id,party.default_advancement(id));
+        auto choice=party.default_advancement(id);
+        if(id<4){choice.feat=id==2?"defense":"archery";choice.abilities={};}else {choice.abilities={};choice.abilities[2]=2;}
+        party.advance(id,choice);
+    }
+    auto state=party.checkpoint();for(auto& m:state.roster){m.vitals.hit_points-=2;m.vitals.resources="SRD1 1 0 0 0 0";}party.restore(state);
+    std::ofstream out(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures/campaign-v11-styles-before.ogs",std::ios::binary);
+    out<<encode_campaign(party,nullptr,"style-migration");check(bool(out),"Write actual prior style fixture");
+    auto members=party.participants();for(unsigned i=0;i<members.size();++i)members[i].cell={int(i+1),1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
+    std::ofstream combat(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures/combat-v14-styles-before.save",std::ios::binary);
+    combat<<rules->create({{8,8,std::vector<std::uint8_t>(64)},members},13)->save();check(bool(combat),"Write actual prior style combat");
 }
 
 void freeze_backgrounds(){
@@ -369,4 +441,4 @@ void freeze_sage(){
 }
 
 }
-int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}sage_training();remaining_backgrounds();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}sage_training();remaining_backgrounds();starting_styles();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -35,10 +35,12 @@ struct FeatureGrant {
     bool operator==(const FeatureGrant&) const = default;
 };
 using TrainingChoices = std::map<std::string,std::vector<std::string>>;
+enum class TrainingChoiceControl { checkboxes, single_selection };
 struct TrainingChoiceGroup {
     std::string id, label;
     unsigned count{};
     std::vector<CreationChoice> options;
+    TrainingChoiceControl control{TrainingChoiceControl::checkboxes};
 };
 struct SkillTraining {
     std::string id, label;

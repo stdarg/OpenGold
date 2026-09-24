@@ -107,7 +107,7 @@ void combat_and_campaign(){
     CampaignParty party(module());const auto id=party.add_pc(character);auto checkpoint=party.checkpoint();checkpoint.roster[0].vitals=stable;party.restore(checkpoint);
     const auto saved=encode_campaign(party,nullptr,"clock");auto disk=decode_campaign(saved,*srd5::character_rules(),*rules,"clock",nullptr);
     CampaignParty restored(module());restored.restore(disk.party);check(encode_campaign(restored,nullptr,"clock")==saved,"Campaign persists rolled timers exactly without a load-time RNG draw");
-    party.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});
+    party.complete_training(id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}}});
     check(party.member(id).vitals==stable,"Review Training preserves the recovery continuation");
     party.award_experience(900,"recovery-xp");party.advance(id,party.default_advancement(id));
     check(party.member(id).vitals.resources=="SRD5 1 0 0 0 0 1 2 0 1000 FX1 1 0","Advancement adds only its new Hit Die and retains the exact Stable deadline");

@@ -13,7 +13,7 @@ struct GrantEffects {
     std::array<int,6> abilities{};
 };
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits=true,bool rush_trait=true,bool action_surge=true,bool archery=true);
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits=true,bool rush_trait=true,bool action_surge=true,bool archery=true,bool starting_styles=true);
 void write_grants(std::ostream& out,std::span<const rules::FeatureGrant> grants);
 std::vector<rules::FeatureGrant> read_grants(std::istream& in);
 }

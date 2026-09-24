@@ -394,3 +394,14 @@ The level-four Sage Fighter selected Defense, has three missing HP and one
 remaining Second Wind; the combat fixture equips a Shortbow. Both files are
 unedited, contain PC16 where applicable and have no Archery grant. Migration must
 preserve their entire bodies except the module version (and campaign checksum).
+
+### Fighter starting styles prior writer (rules 0.6.28)
+
+`campaign-v11-styles-before.ogs` and `combat-v14-styles-before.save` were written
+by the actual 0.6.28 libraries at `dda8d0c`, before starting-style changes. The
+test-only `freeze_styles()` in training_tests.cpp ran against that writer and
+requires its version. Four Human Sage Fighters have explicit languages: level
+one, level-four Defense, level-four Archery and level-four Constitution +2.
+Each has two missing HP and spent Second Wind. Both files are unedited; combat
+contains PC17 profiles. Migration must preserve their bodies except module
+identity and campaign checksum, without inventing a starting style.
