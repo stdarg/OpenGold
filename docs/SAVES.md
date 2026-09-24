@@ -173,3 +173,13 @@ spent resources, RNG and mortality timing remain intact. See [damage](DAMAGE.md)
 
 Rules 0.6.14 adds [Temporary HP](TEMPORARY-HP.md) in combat format 11 and SRD6
 vital state. Campaign format 10 and PC8 remain unchanged; old saves gain no pool.
+
+Rules 0.6.15 adds PC9's fixed Orc grant, SRD7's remaining Adrenaline Rush uses,
+and combat 12's turn allowance and unresolved Temporary HP decision. Formats
+through combat 11/module 0.6.14 migrate without resource refunds or RNG changes.
+Campaign format remains 10 and continues to disallow saves during battle.
+[Temporary HP](TEMPORARY-HP.md) documents exact boundaries and frozen fixtures.
+
+Player save policy: save while camping or at an inn. Do not expose saving during
+combat. Combat checkpoint codecs remain internal tools for deterministic testing
+and continuation; their existence does not authorize an in-combat save control.

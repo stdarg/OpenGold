@@ -1,4 +1,5 @@
 #include "godot_images.h"
+#include "hp_presentation.h"
 #include "application_settings.h"
 #include "localization.h"
 #include "grip_control.h"
@@ -140,6 +141,9 @@ void CombatView::_ready()
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
+    get_node<Button>("AdrenalineRush")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("adrenaline_rush")));
+    get_node<Button>("TemporaryHP/Keep")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("temp_hp_keep")));
+    get_node<Button>("TemporaryHP/Use")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("temp_hp_use")));
     get_node<Button>("Move")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String("move")));
     get_node<Button>("SpellSlot")->connect("pressed",callable_mp(this,&CombatView::spell_slot));
     get_node<Button>("SecondWind")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("second_wind")));
@@ -179,7 +183,7 @@ void CombatView::_ready()
         if(campaign_)for(const char* name:{"Training","Slums","Replay","Save","Load","Revisit"})get_node<Control>(name)->hide();
         get_node<Label>("Footer")->set_text(i18n::text(N_("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end")));
         for(const char* name:{"Turn","Roster","Prompt","Help"})get_node<Control>(name)->hide();
-        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dash","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
+        for(const char* name:{"Training","Slums","Replay","Move","Melee","Ranged","FireBolt","MagicMissile","CureWounds","HealingWord","ScorchingRay","Blindness","SpellSlot","SecondWind","Dodge","Disengage","Continue","Save","Load","Revisit"})get_node<Control>(name)->hide();
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
@@ -227,12 +231,21 @@ void CombatView::layout()
     }
     layout_reaction_controls(party_controls);
     place("Footer",Rect2(24,height-34,width-48,24));
+    for(unsigned slot=0;slot<8;++slot){
+        auto* label=get_node<RichTextLabel>(gs("PartyHP"+std::to_string(slot)));
+        label->set_position(Vector2(width-300,60+slot*(height-120)/8.0+52));label->set_size(Vector2(270,28));
+    }
     layout_status();
 }
 void CombatView::layout_reaction_controls(bool show_controls)
 {
     const double top=board_rect_.get_end().y+16;
-    const double inset=show_controls?44:0;
+    const bool rush=get_node<Button>("AdrenalineRush")->is_visible();
+    const double inset=(show_controls?44:0)+(rush?44:0);
+    get_node<Button>("Dash")->set_position(Vector2(24,top+44));
+    get_node<Button>("Dash")->set_size(Vector2(114,36));
+    get_node<Button>("AdrenalineRush")->set_position(Vector2(148,top+44));
+    get_node<Button>("AdrenalineRush")->set_size(Vector2(300,36));
     auto* log=get_node<RichTextLabel>("Log");
     log->set_position(Vector2(24,top+inset));
     log->set_size(Vector2(board_rect_.size.x,std::max(0.0,get_size().y-board_rect_.get_end().y-64-inset)));
@@ -461,8 +474,11 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
+    if(get_node<Window>("TemporaryHP")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&(get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus())&&
+        (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
         if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
@@ -479,7 +495,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
         if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
         if(key->get_keycode()==Key::KEY_SPACE){
-            for(const char* verb:{"second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            for(const char* verb:{"adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
             const auto offered=demo_->combat().legal_commands();
             const auto target=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==mode_&&c.target==selected_;});
             if(target!=offered.end())act(*target);
@@ -620,16 +636,40 @@ void CombatView::refresh()
     if(loaded)last_actor_=s.actor;
     get_node<Label>("Turn")->set_text(turn);layout_status();
     String roster;for(const auto& a:s.combatants){
-        roster+=String(a.id==s.actor?"> ":"  ")+i18n::format("{id} {name}  {current}/{maximum} HP  AC {ac}\n",
-            {{"id",a.id},{"name",gs(a.name)},{"current",a.hit_points},{"maximum",a.max_hit_points},{"ac",a.armor_class}});
-        if(!a.conditions.empty())roster+="    "+i18n::render(a.conditions)+"\n";
+        roster+=String(a.id==s.actor?"> ":"  ")+String::num_int64(a.id)+" "+presentation::bbcode_literal(gs(a.name))+"  "+
+            presentation::hp_text(a.hit_points,a.max_hit_points,a.dead,a.temporary_hp,a.hp_messages)+"  "+i18n::format("AC {ac}",{{"ac",a.armor_class}})+"\n";
+        if(!a.conditions.empty())roster+="    "+presentation::bbcode_literal(i18n::render(a.conditions))+"\n";
     }
     get_node<RichTextLabel>("Roster")->set_text(roster);
+    for(unsigned slot=0;slot<8;++slot){
+        auto* label=get_node<RichTextLabel>(gs("PartyHP"+std::to_string(slot)));
+        const auto id=campaign_?campaign_->state().slots[slot]:0;label->set_visible(bool(id));if(!id)continue;
+        const auto found=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==id;});
+        if(found==s.combatants.end()){label->hide();continue;}
+        const auto& a=*found;
+        label->set_position(Vector2(get_size().x-300,60+slot*(get_size().y-120)/8.0+52));label->set_size(Vector2(270,28));
+        label->set_text(presentation::hp_text(a.hit_points,a.max_hit_points,a.dead,a.temporary_hp,a.hp_messages)+"  "+i18n::format("AC {ac}",{{"ac",a.armor_class}}));
+    }
+    const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
+    unsigned rushes=0,capacity=0;
+    if(active!=s.combatants.end())for(const auto& pool:active->resources)if(pool.id=="adrenaline_rush"){rushes=pool.remaining;capacity=pool.capacity;}
+    const bool show_rush=player&&capacity&&s.outcome==Outcome::ongoing;
+    get_node<Button>("AdrenalineRush")->set_visible(show_rush);get_node<Button>("Dash")->set_visible(show_rush);
+    get_node<Button>("AdrenalineRush")->set_text(i18n::format("Adrenaline Rush ({remaining}/{maximum})",{{"remaining",rushes},{"maximum",capacity}}));
+    auto* modal=get_node<Window>("TemporaryHP");
+    if(player&&s.temporary_hp_offer){
+        const auto& offer=*s.temporary_hp_offer;
+        get_node<Label>("TemporaryHP/Text")->set_text(i18n::format("Choose Temporary HP\n\nCurrent: {current} — {current_source}\nNew: {offered} — {offered_source}\n\nThe amounts do not add. The Bonus Action and use are already spent.",
+            {{"current",offer.current.amount},{"current_source",presentation::temporary_hp_source(offer.current)},
+             {"offered",offer.offered.amount},{"offered_source",presentation::temporary_hp_source(offer.offered)}}));
+        if(!modal->is_visible()){modal->popup_centered();get_node<Button>("TemporaryHP/Keep")->grab_focus();}
+    }else if(modal->is_visible()){modal->hide();if(show_rush)get_node<Button>("AdrenalineRush")->grab_focus();}
     get_node<Button>("Continue")->set_visible(demo_&&(demo_->waiting()||(loaded&&s.outcome!=Outcome::ongoing)));
     get_node<Button>("End")->set_visible(!get_node<Button>("Continue")->is_visible());
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
+    get_node<Button>("AdrenalineRush")->set_disabled(!enabled("adrenaline_rush"));
     get_node<Button>("SpellSlot")->set_text(i18n::format("Slot level {level}",{{"level",spell_slot_}}));
     get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,5>{{{"Move","move"},{"End","end"},{"SecondWind","second_wind"},{"React","opportunity"},{"Decline","decline"}}})
@@ -707,15 +747,13 @@ void CombatView::_draw()
         const auto found=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& c){return c.id==id;});
         const int hp=found==snapshot.combatants.end()?member.vitals.hit_points:found->hit_points;
         const int maximum=found==snapshot.combatants.end()?member.character.sheet().hit_points:found->max_hit_points;
-        const int armor_class=found==snapshot.combatants.end()?campaign_->profile(id).armor_class:found->armor_class;
-        const bool deceased=found==snapshot.combatants.end()?member.vitals.dead:found->dead;
         const double size=std::min(64.0,row_height-18),portrait_y=top+4;
         const Rect2 image_rect(right+5,portrait_y,size,size);
         draw_rect(image_rect,Color("10171c"));
         if(const auto portrait=portraits_.find(id);portrait!=portraits_.end())draw_texture_rect(portrait->second,image_rect,false);
         else if(const auto sprite=art_.find(id);sprite!=art_.end())draw_texture_rect(sprite->second.texture,image_rect,false);
         draw_rect(Rect2(right+5,portrait_y+size+2,size,5),Color("37191d"));
-        draw_rect(Rect2(right+5,portrait_y+size+2,size*std::clamp(double(hp)/std::max(1,maximum),0.0,1.0),5),Color("d6444b"));
+        draw_rect(Rect2(right+5,portrait_y+size+2,size*std::clamp(double(hp)/std::max(1,maximum),0.0,1.0),5),Color(presentation::hp_color(hp,maximum)));
         const double text_x=right+82;
         const auto line=[&](String value,double y,int size,Color color){
             auto cursor=Vector2(text_x,y);
@@ -724,9 +762,7 @@ void CombatView::_draw()
         line(gs(member.character.sheet().name),top+27,17,Color("e2edf0"));
         const auto& sheet=member.character.sheet();
         line(gs(sheet.character_class).capitalize()+" / "+gs(sheet.race).capitalize()+" / "+gs(sheet.gender).capitalize(),top+49,13,Color("a8c1c7"));
-        if(deceased)line("DECEASED  AC "+String::num_int64(armor_class),top+68,15,Color("ef515b"));
-        else if(hp==0)line("UNCONSCIOUS  AC "+String::num_int64(armor_class),top+68,15,Color("e7c484"));
-        else line(String::num_int64(hp)+" / "+String::num_int64(maximum)+" HP  AC "+String::num_int64(armor_class),top+68,15,Color("efb9bb"));
+
     }
 }
 void CombatView::draw_battlefield()
@@ -833,6 +869,16 @@ void CombatView::_process(double delta)
                 get_viewport()->push_input(mouse,true);
                 if(demo_->combat().snapshot().revision!=s.revision+1)throw std::runtime_error("Action button/target click did not submit command");
                 checked_input_=true;++check_steps_;return;
+            }
+        }
+        if(party_check_&&settings::flag("--adrenaline-check")&&active->side==0){
+            if(s.temporary_hp_offer){get_node<Button>("TemporaryHP/Keep")->emit_signal("pressed");return;}
+            if(!get_node<Button>("AdrenalineRush")->is_disabled()){
+                const auto before=active->hit_points;get_node<Button>("AdrenalineRush")->emit_signal("pressed");
+                const auto after=demo_->combat().snapshot();
+                const auto current=std::find_if(after.combatants.begin(),after.combatants.end(),[&](const auto& a){return a.id==active->id;});
+                if(current==after.combatants.end()||current->bonus_action||current->hit_points!=before||(!after.temporary_hp_offer&&current->temporary_hp.amount!=2))throw std::runtime_error("Ordinary Orc Adrenaline Rush control failed");
+                UtilityFunctions::print("Orc campaign Adrenaline Rush button passed");return;
             }
         }
         if(checking_||party_check_||defeat_check_||active->side==1) {

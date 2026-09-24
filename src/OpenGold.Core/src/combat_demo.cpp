@@ -281,6 +281,10 @@ Command choose_demo_command(const CombatSession& session)
 {
     const auto state=session.snapshot();const auto offered=session.legal_commands();if(offered.empty())throw std::runtime_error("No legal combat command");
     const auto& active=*std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor;});
+    if(state.temporary_hp_offer){
+        const auto verb=state.temporary_hp_offer->current.amount>=state.temporary_hp_offer->offered.amount?"temp_hp_keep":"temp_hp_use";
+        for(const auto& command:offered)if(command.verb==verb)return command;
+    }
     // Rank offered destinations by a geometric route around obstacles. Straight
     // distance alone can strand both sides on opposite corners of a wall.
     // This is an AI heuristic; legal movement and its costs remain module-owned.

@@ -139,7 +139,7 @@ still require a supported conversion rather than silently receiving plain stats.
 Equipment metadata comes from the rules module, not from the original edition's
 `ITEMS` hand counts. Replacing a weapon retains a compatible shield. A rejected
 two-handed weapon/shield combination leaves the previous loadout untouched.
-Rules version 0.6.14 includes the Rogue/Monk weapon proficiency, death-save,
+Rules version 0.6.15 includes the Rogue/Monk weapon proficiency, death-save,
 Constitution/HP-history, remaining-turn-resource and opportunity-trigger corrections,
 plus allied transit, Versatile grip and feature/training grant provenance. It accepts
 0.6.13 and earlier supported campaign saves. HP migration preserves living deficits
@@ -153,8 +153,8 @@ selections and preserves missing choices as pending. See [advancement](ADVANCEME
 and [training support](TRAINING.md). Older saves keep the prior
 two-handed use of Battleaxe/Spear/Quarterstaff/Trident, now with corrected damage;
 other Versatile weapons remain one-handed until changed. Standalone combat
-checkpoints from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13 migrate with matching content or a [verified preceding pack](DAMAGE.md), canceling only obsolete
-facing reactions; see [combat persistence](RULES.md#library-boundary). Combat format 11 retains [Temporary HP](TEMPORARY-HP.md), Hit Dice and [recovery clocks](RECOVERY-CLOCKS.md); see also [rest resources](REST-RESOURCES.md). Other older
+checkpoints from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14 migrate with matching content or a [verified preceding pack](DAMAGE.md), canceling only obsolete
+facing reactions; see [combat persistence](RULES.md#library-boundary). Combat format 12 retains [Temporary HP](TEMPORARY-HP.md), Hit Dice and [recovery clocks](RECOVERY-CLOCKS.md); see also [rest resources](REST-RESOURCES.md). Other older
 combat versions require finishing the combat and saving the campaign before upgrading.
 
 Untrained use is allowed under [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):
@@ -256,3 +256,6 @@ godot --headless --path demos/godot res://scenes/character_creation.tscn -- --pa
 
 For local screenshots, omit `--headless` and append `--capture`. Inspect at
 1280x900 and 1120x800. Existing character, town and combat checks remain available.
+
+Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
+replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).

@@ -1,13 +1,41 @@
 # Temporary Hit Points
 
-The native foundation in [#196](https://github.com/stdarg/OpenGold/issues/196)
-implements the Temporary Hit Point pool for [F05b #34](https://github.com/stdarg/OpenGold/issues/34).
-It does not yet grant a playable feature or expose a new control.
-[#197](https://github.com/stdarg/OpenGold/issues/197) supplies Orc Adrenaline Rush,
-the replacement decision and the reviewed HP presentation. Keep #34 open until
-that ordinary game flow and its applicable campaign integration are complete.
+The native foundation [#196](https://github.com/stdarg/OpenGold/issues/196) supplies
+the shared pool. [#197](https://github.com/stdarg/OpenGold/issues/197) adds a playable
+source: a normally created Orc of any of the twelve classes can use Adrenaline
+Rush in combat. This is the activated-trait portion of [Orc #72](https://github.com/stdarg/OpenGold/issues/72),
+not Darkvision or Relentless Endurance.
 
-Authority: [SRD 5.2.1 pp. 17–18](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
+Authority: [SRD 5.2.1 pp. 17–18 and 86](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
+
+## Adrenaline Rush and controls
+
+The sourced level-one Orc trait grants uses equal to proficiency bonus (two at
+the currently supported levels). It spends one use and a Bonus Action, performs
+Dash using the actor's actual Speed, and grants Temporary HP equal to proficiency
+bonus. Ordinary Action Dash can also be used, for three movement allowances.
+Movement still provokes opportunity attacks. Short and Long Rests restore all
+uses. Training, advancement and new encounters preserve expenditure; advancement
+adds only any newly gained capacity. Curated original-game Orc monsters do not
+silently acquire the player-species trait.
+
+Adrenaline Rush is visibly labeled beside Dash beneath the existing turn
+controls, with remaining/capacity counts, keyboard focus and an explanatory
+tooltip. The older action grid remains hidden. A first pool applies immediately.
+An existing pool opens a centered window showing both amounts and sources, with
+Keep current and Use new buttons. Neither is automatically submitted. The grant's
+use and Bonus Action remain spent while other commands and movement wait. A
+smaller new pool is a valid choice. Stale command tickets cannot duplicate the
+grant or decision. Automated combat adjudicates its own choice by retaining the
+larger pool; the player's interface always asks.
+
+Ordinary HP is green at full health, yellow when wounded above 20%, and red at
+20% or below (including zero). Separate Temporary HP is green on character sheets
+and the combat roster. HP hints identify Constitution, Dwarven Toughness and the
+Temporary HP source where applicable. No current status effect reduces maximum
+HP. Missing ordinary HP is identified as such: historical attacks and script HP
+losses have not been individually recorded, so hints do not invent their cause.
+An unrelated condition such as Blinded is not described as an HP penalty.
 
 ## Rules and caller contract
 
@@ -41,23 +69,27 @@ with a specific overriding lifetime must implement that lifetime when added.
 
 ## Persistence and architecture
 
-Rules **0.6.14** writes combat format **11**. Each actor row appends the amount
-and quoted source ID. **SRD6** stores the same data with existing resources,
-Hit Dice, mortality clocks and effects in the rules-owned vital continuation.
-Characters without a pool retain the existing compact SRD1–SRD5 formats.
-Campaign format **10**, **PC8** and the content pack are unchanged.
+Rules **0.6.15** writes combat format **12**. In addition to the format-11 sourced
+pool, actor rows retain Adrenaline Rush uses and whether its movement allowance
+was used this turn. A final section stores the optional unresolved offer. Restore
+validates entitlement, amount/source, spent costs, movement capacity, conscious
+recipient and absence of a competing opportunity queue before committing.
+**PC9** requires the fixed sourced Orc grant; **PC1–PC8** remain readable.
+**SRD7** records uses with existing resources, pool, Hit Dice, mortality clocks
+and effects. Other species retain SRD1–SRD6. Campaign format **10** is unchanged.
 
-Earlier supported combat modules through **0.6.13** migrate with an empty pool.
-Old campaigns gain no invented grant, healing, elapsed time or RNG draw. The
-previous fixed Dwarf resistance grant is validated and retained. Current saves
-reject negative/overflowing amounts, missing or malformed sources and trailing
-fields. Candidate state is validated before replacing a live character/session.
+Prior combat modules through **0.6.14** migrate without new dice rolls, healing,
+elapsed time or refunds to existing resources. Legacy Orcs gain the new fixed
+trait and its previously unavailable use capacity; existing Dwarf resistance is
+validated and preserved. Current Orc use counts survive subsequent reloads.
+Malformed counters, source IDs, pending offers and trailing fields reject before
+replacing live state.
 
 The source and amount are available through `RecoveryInfo` and `CombatantView`.
 The shared life-cycle value type owns the pool; no ownership uses raw pointers,
 and Core/Godot do not decode the SRD resource string. Rules remain C++20 and
-independent of Godot. No new runtime, framework or presentation control is added
-by #196.
+independent of Godot. No new runtime or framework is introduced. Godot controls display rules-owned
+queries; Core and presentation never parse SRD7 themselves.
 
 ## Verification and remaining delivery
 
@@ -72,17 +104,43 @@ Frozen files from the **0.6.13** writer at commit `eea7368` preserve wounds,
 resources, Dwarf grants, mortality timers, RNG and a pending opportunity decision.
 They were generated before changing the writer; see [fixture provenance](../tests/fixtures/README.md).
 
-The user approved an Adrenaline Rush button beside Dash. For #197, ordinary HP
-will be green at full health, yellow when wounded above 20%, and red at 20% or
-below; Temporary HP remains separate and green. Tooltips identify applicable HP
-increases/reductions and their actual sources. A centered keep-current/use-new
-decision retains spent costs and survives save/load. Those controls, pending
-offer state, feature use/recharge tracking and playable entitlement remain #197.
+`opengold_adrenaline_tests` covers ordinary creation in all twelve classes,
+shared Bonus Action costs, both Dash allowances, explicit lower/equal/higher
+replacement, stale commands, pending save/load, opportunity continuation,
+resource validation, training/advancement, campaign continuation and rests.
+Frozen **0.6.14** writer files at `efbe48d` independently retain Orc/Dwarf state,
+spent resources, Temporary HP, mortality clocks and pending movement. The Godot
+check drives the feature buttons, keyboard replacement, and checkpoint handlers;
+`--party-check --adrenaline-check` exercises normal Orc creation, shops, campaign
+combat, advancement and recovery using the existing game route. English and
+Spanish catalogs cover the new labels, hints and decision text.
 
-Delivery checks for #196: both Godot libraries built; all 17 selected native
-suites, six Godot control/ownership checks and both game/demo party routes passed.
-Catalog validation passes for all 574 entries; catalog changes only refresh
-source locations. Scope review confirms value ownership, C++20 and unchanged
-controls. The game integration route still reports the previously observed
-ObjectDB cleanup warning (five instances on this run); its assertions and the
-dedicated node-ownership check pass. No cleanup fix is claimed here.
+## Remaining integration boundaries
+
+Campaign saves retain resolved pools and spent uses between encounters. The
+existing campaign engine rejects saving during an active battle; this increment
+does not add mid-encounter campaign checkpoints. Standalone training combat's
+checkpoint codec preserves an unresolved choice exactly for internal continuation
+and regression checks. Per the user's save policy, no combat Save/Load controls
+are exposed; player saving belongs at camp or an inn.
+
+Activating Adrenaline Rush during exploration, before combat, remains missing.
+Its resource/HP effect and an outstanding replacement choice must be owned by the
+campaign, and exploration time/action semantics need to be defined. Keep parent
+[#34](https://github.com/stdarg/OpenGold/issues/34) open for that integration;
+additional granting spells/features remain their own tracked increments.
+
+Delivery verification: all 18 selected native suites and seven Godot checks
+(including project preparation) passed. The normal Orc game route passed creation,
+shops, both combats, advancement, interrupted camping, temple healing, inn
+recovery and companion/reserve mortality. The demo party route also passed.
+Rendered English and Spanish decisions/buttons fit at 1920×1080 and 1120×800;
+the actual campaign roster displays separate green HP/Temporary HP and the
+Adrenaline Rush source hint. Both Godot libraries build and the 591-entry
+English/Spanish catalog validates. Ownership remains value-based native state
+and Godot-owned scene nodes; no runtime or architecture substitution is made.
+
+The baseline Dwarf game route still reports the previously observed five
+ObjectDB instances at shutdown. Its gameplay assertions and the dedicated
+node-ownership check pass; this increment does not claim to fix that cleanup
+warning.

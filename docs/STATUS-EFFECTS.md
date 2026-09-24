@@ -82,7 +82,7 @@ are prepared in an owned candidate before replacing live campaign state.
 
 ## Persistence and boundaries
 
-- Rules module **0.6.14** writes **OGCOMBAT 11** checkpoints containing source scope,
+- Rules module **0.6.15** writes **OGCOMBAT 12** checkpoints containing source scope,
   elapsed time and each actor's effect collection. The checkpoint byte limit is
   4 MiB; each creature supports at most 128 simultaneous applications. A full
   collection offers no further Blindness command.
@@ -93,7 +93,7 @@ are prepared in an owned candidate before replacing live campaign state.
   the next encounter scope. Versions 1–5 migrate with zero sub-minute offsets
   and no effects. Supported preceding content packs migrate; unrelated identities
   still reject. The [combat migration](RULES.md#library-boundary) accepts module
-  0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13 with matching content or a [verified preceding pack](DAMAGE.md); other old combat identities require their original module.
+  0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14 with matching content or a [verified preceding pack](DAMAGE.md); other old combat identities require their original module.
 - Campaign format 7 adds weapon grip separately from the opaque effect/resource
   continuation; combat format 8 retains grip changes during pending reactions.
 - Campaign format 8 and PC6 profiles add acquired feature/feat provenance and
@@ -147,3 +147,6 @@ Recovery clocks in SRD5/combat 10 preserve death-save cadence and natural Stable
 recovery independently of FX1. The [campaign scheduler #195](https://github.com/stdarg/OpenGold/issues/195)
 merges those deadlines chronologically; entity order and mortality-before-effect
 ordering make time partitions deterministic, including death suppressing saves. See [recovery clock support](RECOVERY-CLOCKS.md).
+
+Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
+replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).

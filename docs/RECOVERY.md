@@ -86,7 +86,7 @@ campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
 purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
 Combat checkpoint format is version 11 and the combat module identity is
-**0.6.14**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13
+**0.6.15**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14
 have a specific [pending-reaction migration](RULES.md#library-boundary); other
 incompatible combat saves reject.
 
@@ -113,3 +113,6 @@ character advancement, class tables, Dwarven Toughness, Cure Wounds and Long Res
 Original interface/price evidence: [Lee's PC 1.3 research](https://gamefaqs.gamespot.com/c64/578753-pool-of-radiance/faqs/73869),
 sections 8.5, 12.3 and 12.4.2. Original dialogue, scripts and assets are loaded
 from the user's installation and are not distributed.
+
+Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
+replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).

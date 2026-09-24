@@ -62,8 +62,8 @@ attribution applies; original game resources are loaded locally.
 
 Campaign formats 3–10 record each confirmed choice and reconstruct the resulting
 sheet and Constitution history through the rules module. Formats 1 and 2 migrate
-their existing levels using the previous default choices. Rules module 0.6.14
-accepts the supported 0.3.0–0.6.13 campaign identities; unrelated content identities
+their existing levels using the previous default choices. Rules module 0.6.15
+accepts the supported 0.3.0–0.6.14 campaign identities; unrelated content identities
 still reject. Loading an affected older campaign corrects maximum HP and preserves
 the living character's HP deficit. Unconscious/dead characters stay at zero, and
 spent resources and death-save counters persist. The correction applies once;
@@ -99,7 +99,7 @@ and ability amounts. This presentation correction introduced no profile or campa
 Standalone combat checkpoints use version 11 to retain second-level slots,
 per-turn spell/feat usage, timed effects, presentation facing, pending movement
 reactions, involuntary overlap during allied transit, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP.
-Modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13 have specific [combat migrations](RULES.md#library-boundary)
+Modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14 have specific [combat migrations](RULES.md#library-boundary)
 that retain movement queues and cancel obsolete facing reactions without
 refunding resources. Other old
 combat identities are not migrated.
@@ -134,3 +134,6 @@ across all twelve classes, separate advancement entitlements and choices,
 prerequisites, duplicates, forged sources and malformed saved choices. Frozen
 0.6.7 campaign and combat files verify unchanged HP, armor and spent resources;
 combat continuation matches the previous writer's damage, usage and RNG exactly.
+
+Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
+replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).

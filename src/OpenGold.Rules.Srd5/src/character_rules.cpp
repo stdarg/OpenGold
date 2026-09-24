@@ -154,7 +154,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     for(unsigned i=0;i<6;++i){s.save_proficiencies[i]=i==trained[0]||i==trained[1];
         s.saving_throws[i]=s.modifiers[i]+(s.save_proficiencies[i]?2:0);}
     s.class_modifiers="Source: "+s.character_class+" class, level 1. Saving-throw training adds +2 proficiency to "+ability_names[trained[0]]+" and "+ability_names[trained[1]]+".\nSource: "+s.character_class+" Hit Die and Constitution score "+std::to_string(s.scores[2])+". Starting HP: maximum d"+std::to_string(s.hit_die)+" + Constitution modifier ("+std::to_string(s.modifiers[2])+").";
-    s.racial_modifiers=d.race=="dwarf"?"Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1.":d.race=="goliath"?"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).":"No numeric racial modifiers are currently applied.";
+    s.racial_modifiers=d.race=="dwarf"?"Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1.":d.race=="goliath"?"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).":d.race=="orc"?"Orc / Adrenaline Rush: Bonus Action Dash and Temporary HP equal to proficiency bonus. Uses equal to proficiency bonus; all recover on a Short or Long Rest.":"No numeric racial modifiers are currently applied.";
     s.racial_modifiers+="\nOther racial traits and conditional effects are not implemented.";
     s.background_modifiers="Source: "+s.background+" background, selected ability increases. "+options[d.adjustment].label+". Other background features are not implemented.";
     s.hit_points=s.hit_die+s.modifiers[2]+racial_hp;
@@ -165,6 +165,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
         {{"class",s.character_class,true},{"score",std::to_string(s.scores[2])},{"die",std::to_string(s.hit_die)},{"modifier",std::to_string(s.modifiers[2])}}}};
     if (racial_hp) s.racial_messages.push_back({"Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1.",{}});
     else if (d.race=="goliath") s.racial_messages.push_back({"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).",{}});
+    else if(d.race=="orc")s.racial_messages.push_back({"Orc / Adrenaline Rush: Bonus Action Dash and Temporary HP equal to proficiency bonus. Uses equal to proficiency bonus; all recover on a Short or Long Rest.",{}});
     else s.racial_messages.push_back({"No numeric racial modifiers are currently applied.",{}});
     if(d.race=="dwarf"){
         s.racial_modifiers+="\nSource: Dwarf / Dwarven Resilience. Resistance to Poison damage (half, rounded down).";

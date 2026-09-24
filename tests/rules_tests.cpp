@@ -539,11 +539,11 @@ void opportunity_migration_tests()
         std::string bytes;for(const auto& row:rows)bytes+=row+'\n';return bytes;
     };
     const auto upgraded=[&](const std::string& bytes){
-        auto rows=lines(bytes);rows[0].replace(9,1,"11");
-        for(std::size_t i=4;i<8;++i)rows[i]+=" 0 0 0 0 0 0 \"\"";
+        auto rows=lines(bytes);rows[0].replace(9,1,"12");
+        for(std::size_t i=4;i<8;++i)rows[i]+=" 0 0 0 0 0 0 \"\" 0 0";
         rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);
         const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
-        rows[0].replace(rows[0].find(old_content),old_content.size(),module->identity().content);rows.pop_back();return rows;
+        rows[0].replace(rows[0].find(old_content),old_content.size(),module->identity().content);rows.back()="0";return rows;
     };
     const auto facing=fixture("combat-v5-facing.save");
     auto session=module->restore(facing);
@@ -670,19 +670,19 @@ void checkpoint_validation_tests()
         rejects([&] { (void)module->restore(encode(truncated)); }, "Truncated checkpoint section accepted");
     }
 
-    auto previous = lines;
+    auto previous = lines;previous.pop_back();
     previous[0].replace(9,2,"6");
     previous[0].replace(previous[0].find(module->identity().version),module->identity().version.size(),"0.6.5");
-    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<7;++field)previous[actor].resize(previous[actor].find_last_of(' '));
+    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<9;++field)previous[actor].resize(previous[actor].find_last_of(' '));
     check(module->restore(encode(previous))->save()==checkpoint,"Pre-transit 0.6.5 movement checkpoint upgrades without changing its continuation");
     auto invalid_overlap=lines[4];auto no_clocks=invalid_overlap;
-    for(unsigned n=0;n<4;++n)no_clocks.resize(no_clocks.find_last_of(' '));
+    for(unsigned n=0;n<6;++n)no_clocks.resize(no_clocks.find_last_of(' '));
     const auto grip_separator=no_clocks.rfind(' ',no_clocks.find_last_of(' ')-1);
     invalid_overlap[grip_separator-1]='1';reject_changes({{4,invalid_overlap}});
 
-    previous = lines;
+    previous = lines;previous.pop_back();
     previous[0].replace(9,2,"4");
-    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<7;++field)previous[actor].resize(previous[actor].find_last_of(' ')); // No Temporary HP, recovery clocks, Hit Dice, grip or overlap marker before v7.
+    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<9;++field)previous[actor].resize(previous[actor].find_last_of(' ')); // No Temporary HP, recovery clocks, Hit Dice, grip or overlap marker before v7.
     for(std::size_t actor=4;actor<path_header;++actor)
         previous[actor].resize(previous[actor].find_last_of(' ')); // Version 4 has no facing field.
     check(module->restore(encode(previous))->save()==checkpoint,"Version 4 checkpoint migrates to facing right");
@@ -692,7 +692,7 @@ void checkpoint_validation_tests()
     for (const unsigned version : {1u,2u}) {
         auto legacy = lines;
         legacy[0].replace(9,2,std::to_string(version));
-        legacy.resize(legacy.size()-3); // v4 scope/clock and two effect collections.
+        legacy.resize(legacy.size()-4); // v4 scope/clock and two effect collections.
         for (std::size_t actor = 4; actor < path_header; ++actor) {
             const auto profile = legacy[actor].find("\"\"");
             check(profile != std::string::npos, "Expected fixture with no character profile");

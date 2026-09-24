@@ -119,6 +119,12 @@ struct CombatantView {
     EquipmentState equipment;
     std::vector<GripOption> grips;
     TemporaryHitPoints temporary_hp;
+    std::vector<ResourcePool> resources;
+    std::vector<Message> hp_messages;
+};
+struct TemporaryHpOffer {
+    EntityId recipient{};
+    TemporaryHitPoints current, offered;
 };
 struct Snapshot {
     Identity identity;
@@ -132,6 +138,7 @@ struct Snapshot {
     std::vector<Message> log_messages;
     bool reaction_pending{};
     std::uint64_t elapsed_milliseconds{};
+    std::optional<TemporaryHpOffer> temporary_hp_offer;
 };
 // Verbs are owned by a module, not an enumeration of edition-specific rules.
 // Presentation submits only currently offered commands. The module revalidates.

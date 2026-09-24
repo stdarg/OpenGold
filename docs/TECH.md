@@ -103,9 +103,9 @@ rest-completion precision. Effect processing orders simultaneous events by entit
 and application ID so different time-update sizes preserve RNG continuation.
 
 Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
-Combat checkpoint version 11 stores all effect applications, timers, presentation
-facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP. Rules 0.6.14
-migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13 format-5/6/7/8/9/10 checkpoints, validating then canceling
+Combat checkpoint version 12 stores all effect applications, timers, presentation
+facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice, mortality recovery clocks and sourced Temporary HP. Rules 0.6.15
+migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13/0.6.14 format-5/6/7/8/9/10/11 checkpoints, validating then canceling
 obsolete facing-only queues without changing spent resources, HP or time.
 Genuine movement queues retain exact continuation; campaign
 version 9 stores the clock, encounter scopes, rules-owned effect state, grip and
@@ -700,3 +700,6 @@ from the reviewed equipment pose; head composition and palette selection follow.
 Runtime masks and restoration use locally decoded original records. The catalog
 continues to describe complete reference poses and is never rewritten by the
 demo or compositor. Missing/deleted mappings visibly fall back to unarmed.
+
+Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
+replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).

@@ -92,7 +92,8 @@ void combat_handoff(){
     std::istringstream old_input(combat->save());std::vector<std::string> old_rows;
     for(std::string row;std::getline(old_input,row);)old_rows.push_back(row);
     old_rows[0].replace(9,2,"10");old_rows[0].replace(old_rows[0].find(rules->identity().version),rules->identity().version.size(),"0.6.11");
-    for(std::size_t i=4;i<4+combat->snapshot().combatants.size();++i)for(unsigned field=0;field<2;++field)old_rows[i].resize(old_rows[i].find_last_of(' '));
+    for(std::size_t i=4;i<4+combat->snapshot().combatants.size();++i)for(unsigned field=0;field<4;++field)old_rows[i].resize(old_rows[i].find_last_of(' '));
+    old_rows.pop_back();
     std::string old_combat;for(const auto& row:old_rows)old_combat+=row+'\n';
     check(rules->restore(old_combat)->save()==combat->save(),"Previous module's combat gains only empty Temporary HP without a roll or timing change");
     auto old_identity=rules->identity();old_identity.version="0.6.11";

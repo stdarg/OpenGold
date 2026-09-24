@@ -57,7 +57,7 @@ Rules **0.6.9** introduced **PC7** character recipes and campaign format **9** t
 carry training provenance. The campaign stores the original selections as well as the acquired
 grant records, which must agree on load. PC7 validates grant entitlements and
 choices before creating an actor. PC8 additionally validates the Dwarf resistance
-grant, with no training-choice changes. Current rules **0.6.14** use **OGCOMBAT 11**, SRD4 for spent Hit Dice and
+grant, with no training-choice changes. Current rules **0.6.15** use **OGCOMBAT 12**, SRD4 for spent Hit Dice and
 SRD5 for [mortality recovery clocks](RECOVERY-CLOCKS.md); [rest resources](REST-RESOURCES.md) describes
 that extension. Training completion preserves those resources too.
 
@@ -103,3 +103,6 @@ remain required. The UI children carry their own rendered integration checks.
 
 SRD6 adds [sourced Temporary HP](TEMPORARY-HP.md); completing pending training
 preserves that pool and all prior vital continuation.
+
+Rules 0.6.15 also persists Orc Adrenaline Rush uses and pending Temporary HP
+replacement in combat format 12 and SRD7; see [Temporary HP](TEMPORARY-HP.md).

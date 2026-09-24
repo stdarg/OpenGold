@@ -158,3 +158,22 @@ the old writer did not support it. Combat migration appends only the empty pool
 to each actor and updates format/module identity; declining the saved opportunity
 decision matches the frozen continuation. Campaign migration changes only module
 identity and retains all existing state.
+
+### Adrenaline Rush introduction (0.6.14 writer)
+
+`campaign-v10-adrenaline.ogs`, `combat-v11-adrenaline.save` and
+`combat-v11-adrenaline-continued.save` were generated from commit **efbe48d**
+before the #197 writer changed. Source and static libraries were frozen under
+`/tmp/opengold-adrenaline-legacy`; its generator checked module version 0.6.14.
+These are five level-two normally created characters (alternating Orc and Dwarf,
+one Wizard and four Fighters), including an Orc reserve. They retain wounds,
+spent Wind/slots/Hit Dice, zero-HP recovery deadlines, a deceased character and
+Blinded. The first Orc also has 7 Temporary HP from `spell:fixture`. The campaign
+uses time 1234 minutes plus 5678 ms and an earlier individual Long Rest.
+
+The combat pauses before actor 4 leaves an enemy's reach; the continued file
+records the old writer's Decline result. Migrating both must produce the same
+continuation without changing RNG, time, pool, existing resources or Dwarf
+grants. Orc use capacity is new and starts full; the campaign independently
+checks the exact resulting SRD7 state. Do not regenerate these files with the
+current writer.

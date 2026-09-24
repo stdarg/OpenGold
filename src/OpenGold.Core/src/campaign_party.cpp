@@ -76,6 +76,8 @@ void CampaignParty::remove(MemberId id)
     if(it==state_.slots.end())throw std::runtime_error("Member is not in party");*it=0;
     if(!selected())for(unsigned i=0;i<8;++i)if(state_.slots[i]){state_.selected=i;break;}
 }
+rules::RecoveryInfo CampaignParty::recovery_info(MemberId id) const
+{const auto& who=member(id);return rules_->recovery_info(who.character.sheet(),who.vitals);}
 rules::CharacterProfile CampaignParty::profile(MemberId id) const
 {
     const auto& m=member(id);std::vector<std::string> keys;

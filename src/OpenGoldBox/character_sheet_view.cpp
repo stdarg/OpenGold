@@ -1,4 +1,5 @@
 #include "godot_nodes.h"
+#include "hp_presentation.h"
 #include "game_resources.h"
 #include "character_text.h"
 #include "character_creation_view.h"
@@ -56,11 +57,10 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
         }
         text+=i18n::formatted("Future class goals: {classes}\n\n",{{"classes",goals}});
     }
-    const int hp_modifier=s.hit_points-s.hit_die;
-    const auto hp_number=[&](int hp){const auto value=std::to_string(hp);
-        return hp_modifier==0?value:"[color="+std::string(hp_modifier>0?"#f3d55b":"#f08080")+"]"+value+"[/color]";};
-    text+=i18n::formatted("[b]HP {current} / {maximum}[/b]   Hit Dice: {level}d{die}",
-        {{"current",gs(hp_number(member?member->vitals.hit_points:s.hit_points))},{"maximum",gs(hp_number(s.hit_points))},{"level",s.level},{"die",s.hit_die}});
+    rules::TemporaryHitPoints temporary;
+    if(member)temporary=campaign_->recovery_info(member->id).temporary_hp;
+    text+="[b]"+std::string(presentation::hp_text(member?member->vitals.hit_points:s.hit_points,s.hit_points,member&&member->vitals.dead,temporary,s.hp_messages).utf8().get_data())+"[/b]";
+    text+=i18n::formatted("   Hit Dice: {level}d{die}",{{"level",s.level},{"die",s.hit_die}});
     if(member)text+=i18n::formatted("   Gold {gold}   XP {xp}",{{"gold",member->wealth[3]},{"xp",member->experience}});
     if(member&&member->vitals.dead)text+="   "+i18n::utf8("Dead");
     if(member&&campaign_->can_advance(member->id))text+="   [b]"+i18n::utf8("Ready to level up")+"[/b]";

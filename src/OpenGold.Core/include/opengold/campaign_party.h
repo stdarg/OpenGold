@@ -99,6 +99,7 @@ public:
     void advance_time_milliseconds(std::uint64_t milliseconds);
     [[nodiscard]] std::uint64_t time_hours() const noexcept {return state_.time_minutes/60;}
     [[nodiscard]] rules::CharacterProfile profile(MemberId id) const;
+    [[nodiscard]] rules::RecoveryInfo recovery_info(MemberId id) const;
     [[nodiscard]] bool has_item(unsigned original_type) const;
     [[nodiscard]] unsigned strength() const;
     [[nodiscard]] std::array<unsigned,4> query(unsigned address,unsigned effect) const;

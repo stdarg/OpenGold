@@ -714,7 +714,7 @@ void RolfTourView::check_recovery()
             throw std::runtime_error("Original city-watch interruption must consume five minutes without recovery");
         if(campaign_->state().roster.at(1).vitals.hit_points!=1||campaign_->state().roster.back().vitals.hit_points!=1||
             campaign_->state().random_state!=11400714819323198502ULL||
-            campaign_->state().roster.back().vitals.resources!="SRD4 0 0 0 0 0 0 1 FX1 1 0")
+            campaign_->state().roster.back().vitals.resources!=(campaign_->state().roster.back().character.sheet().race=="Orc"?"SRD7 0 0 0 0 0 0 1 0 0 0 \"\" 2 FX1 1 0":"SRD4 0 0 0 0 0 0 1 FX1 1 0"))
             throw std::runtime_error("Camp time must advance companion Stable recovery and the reserve death save exactly once");
         if(save_check)save_check("interrupted-rest");
         recovery_stage_=3;

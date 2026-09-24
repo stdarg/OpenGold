@@ -20,6 +20,7 @@ theme_override_colors/font_color = Color(0.475, 0.839, 0.831, 1)
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 2
 [node name="Roster" type="RichTextLabel" parent="."]
+bbcode_enabled = true
 theme_override_font_sizes/normal_font_size = 16
 scroll_active = true
 [node name="Prompt" type="Label" parent="."]
@@ -139,3 +140,99 @@ text = "Grip"
 
 [node name="Grip" type="OptionButton" parent="."]
 focus_mode = 2
+
+[node name="AdrenalineRush" type="Button" parent="."]
+text = "Adrenaline Rush"
+visible = false
+tooltip_text = "Bonus Action: Dash and gain Temporary HP equal to proficiency bonus. All uses return after a Short or Long Rest."
+
+[node name="TemporaryHP" type="Window" parent="."]
+title = "Temporary HP"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(560, 290)
+
+[node name="Background" type="ColorRect" parent="TemporaryHP"]
+offset_right = 560.0
+offset_bottom = 290.0
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="Label" parent="TemporaryHP"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 536.0
+offset_bottom = 213.0
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Keep" type="Button" parent="TemporaryHP"]
+offset_left = 24.0
+offset_top = 230.0
+offset_right = 272.0
+offset_bottom = 270.0
+text = "Keep current"
+
+[node name="Use" type="Button" parent="TemporaryHP"]
+offset_left = 288.0
+offset_top = 230.0
+offset_right = 536.0
+offset_bottom = 270.0
+text = "Use new"
+
+[node name="PartyHP0" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP1" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP2" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP3" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP4" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP5" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP6" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="PartyHP7" type="RichTextLabel" parent="."]
+visible = false
+bbcode_enabled = true
+scroll_active = false
+mouse_filter = 1
+theme_override_font_sizes/normal_font_size = 14
