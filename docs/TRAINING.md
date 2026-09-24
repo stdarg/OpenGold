@@ -63,7 +63,19 @@ Only deterministic fixed grants are reconstructed; optional skills, Expertise an
 languages are not invented. Version 8's feature/feat ledger is validated against
 its original scope before adding training records. Formats 1–7 continue their
 existing reconstruction. Pending choices survive another save/load unchanged.
-The Review Training button and transactional completion are tracked in #189.
+The Review Training button remains tracked in #189, pending layout confirmation.
+
+The campaign completion API is implemented for that flow. `preview_training`
+returns an owned candidate with all supported pending choices filled. It
+reconstructs creation and replays existing advancement choices, retaining the
+appearance and inventory. Previously selected entries cannot be replaced, and
+characters with completed training cannot use this operation to change it.
+`complete_training` applies only a valid candidate. Incomplete/invalid choices,
+unknown members and both operations during combat reject without changing the
+campaign. Discarding a preview requires no rollback because it never edits the
+live party. Confirmation preserves the original wounds, death state, effects,
+spent resources, gear, XP, clock, RNG and rest eligibility; reserve members can
+also complete pending selections. This API adds no save-format change.
 
 Module 0.6.8 combat checkpoints and PC6 recipes retain their original effects,
 resources, RNG and recipes. Older supported combat migrations also remain available.
@@ -78,5 +90,10 @@ tool/skill Advantage, language permissions, incomplete selections and invalid
 choices. Campaign tests check exact round trips and transactional rejection;
 combat tests retain source records and reject forged ones. Frozen 0.6.8 files
 verify pending choices, existing resources and exact unchanged combat state.
+Completion checks use those migrated characters at levels one and four, including
+an equipped Fighter with spent Second Wind and an active effect, a Wizard with
+spent spell slots, a reserve Rogue, and an unconscious character. They verify
+preview isolation, rejected-operation atomicity, preserved prior selections,
+advancement replay and campaign/next-combat persistence.
 Existing advancement, feature-grant, character, party, save and combat regressions
 remain required. The UI children carry their own rendered integration checks.

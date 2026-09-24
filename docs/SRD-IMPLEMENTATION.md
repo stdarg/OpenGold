@@ -245,6 +245,8 @@ multiclass interactions; targeted checks remain attached to their rules.
 I01–I08, F01 and F02a are complete. Complete the two F02 UI children (#188–#189)
 before closing #29. Creation layout confirmation is required; the user has
 approved keeping old choices pending for completion through Review Training.
+The campaign preview/confirmation API for #189 is implemented and preserves
+existing choices and resources; its player-facing controls remain pending.
 The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

@@ -20,6 +20,10 @@ public:
     bool advance(const rules::RulesModule& rules, rules::VitalState& state);
     bool advance(const rules::RulesModule& rules,rules::VitalState& state,const rules::AdvancementChoice& choice);
     [[nodiscard]] const auto& advancements() const {return advancements_;}
+    // Reconstructs a candidate with missing training filled and the same history.
+    // Existing selections cannot be replaced; this does not mutate live vitals.
+    [[nodiscard]] Character preview_training(const rules::CharacterRules& creation_rules,
+        const rules::RulesModule& rules,const rules::TrainingChoices& choices) const;
 private:
     rules::CharacterDraft creation_;
     rules::CharacterSheet sheet_;

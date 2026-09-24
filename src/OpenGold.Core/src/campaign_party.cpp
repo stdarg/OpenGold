@@ -186,6 +186,19 @@ void CampaignParty::advance(MemberId id,const rules::AdvancementChoice& choice)
     editable();auto member=preview_advancement(id,choice);auto next=state_;
     *std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;})=std::move(member);state_=std::move(next);
 }
+PartyMember CampaignParty::preview_training(MemberId id,const rules::CharacterRules& creation_rules,
+    const rules::TrainingChoices& choices) const
+{
+    editable();auto next=member(id);
+    next.character=next.character.preview_training(creation_rules,*rules_,choices);
+    rules_->validate_character_state(next.character.sheet(),next.vitals);
+    return next;
+}
+void CampaignParty::complete_training(MemberId id,const rules::CharacterRules& creation_rules,const rules::TrainingChoices& choices)
+{
+    auto member=preview_training(id,creation_rules,choices);auto next=state_;
+    *std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;})=std::move(member);state_=std::move(next);
+}
 bool CampaignParty::rest()
 {
     editable();auto next=state_;bool rested=false;const auto policy=rules_->long_rest_policy();

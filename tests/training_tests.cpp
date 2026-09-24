@@ -116,5 +116,68 @@ void persistence(){
     auto choice=growing.default_advancement(f);choice.abilities={};choice.abilities[1]=2;growing.advance(f,choice);
     check(skill(growing.member(f).character.sheet(),"stealth").bonus==6,"Level-up rebuilds skill totals after an ability modifier changes");
 }
+void complete_saved_training(){
+    auto creation=srd5::character_rules();auto rules=module();
+    auto loaded=decode_campaign(fixture("campaign-v8-training.ogs"),*creation,*rules,"training-fixture",nullptr);
+    CampaignParty party(module());party.restore(std::move(loaded.party));
+    party.set_wealth(3,{0,0,0,37,0,0,2});
+    por::Equipment sword;sword.stored.type=36;sword.stored.stack_size=1;sword.stored.value=10;
+    party.purchase(3,sword);party.equip(3,1);party.set_grip(3,2);
+    auto state=party.checkpoint();state.time_minutes=100;state.subminute_milliseconds=1234;state.random_state=918273;
+    state.roster[2].last_rest_minutes=50;state.roster[2].last_rest_subminute_milliseconds=789;
+    state.roster[2].vitals.resources="SRD3 1 0 0 0 0 0 FX1 2 1 1 1 77 99 \"Source caster\" 13 43000 2000";
+    state.roster[2].vitals.description="Blinded";
+    party.restore(state);party.remove(2); // Pending reserve members can also complete their choices.
+    const auto original=encode_campaign(party,nullptr,"training-fixture");
+    auto invalid=choices();invalid["class:rogue:expertise"]={"arcana","stealth"};
+    rejects([&]{party.complete_training(1,*creation,invalid);});
+    rejects([&]{party.complete_training(1,*creation,{});});
+    rejects([&]{party.complete_training(99,*creation,choices());});
+    check(encode_campaign(party,nullptr,"training-fixture")==original,"Invalid and incomplete confirmation leaves every campaign field unchanged");
+    party.begin_combat();
+    rejects([&]{(void)party.preview_training(1,*creation,choices());});
+    rejects([&]{party.complete_training(1,*creation,choices());});party.end_combat();
+    check(encode_campaign(party,nullptr,"training-fixture")==original,"Combat rejects training preview and confirmation without changing state");
+    for(MemberId id=1;id<=4;++id){
+        auto selected=id<=2?choices():TrainingChoices{{"origin:languages",{"elvish","orc"}}};
+        if(id==2)selected["class:rogue:expertise"]={"investigation","perception"};
+        const auto before=encode_campaign(party,nullptr,"training-fixture");const auto previous=party.member(id);
+        const auto preview=party.preview_training(id,*creation,selected);
+        check(encode_campaign(party,nullptr,"training-fixture")==before,"Opening, editing and discarding a preview has no campaign effects");
+        const auto& character=preview.character;const auto& old=previous.character;
+        check(character.sheet().training.complete&&character.creation_data().training==selected,"Preview includes the requested complete training");
+        check(character.sheet().level==old.sheet().level&&character.sheet().scores==old.sheet().scores&&
+            character.sheet().hit_point_modifiers==old.sheet().hit_point_modifiers&&character.sheet().hit_points==old.sheet().hit_points&&
+            character.sheet().prepared_spells==old.sheet().prepared_spells&&character.advancements()==old.advancements(),
+            "Reconstruction preserves attained levels, ASI, Constitution history, feat and spell choices");
+        check(character.appearance()==old.appearance()&&std::equal(character.inventory().items().begin(),character.inventory().items().end(),old.inventory().items().begin(),old.inventory().items().end()),
+            "Preview preserves appearance and full item records");
+        for(const auto& grant:old.sheet().grants)check(std::find(character.sheet().grants.begin(),character.sheet().grants.end(),grant)!=character.sheet().grants.end(),"Existing grants retain exact provenance");
+        check(preview.vitals==previous.vitals,"Preview preserves wounds, effects, timers, death state and spent resources exactly");
+        auto expected=party.checkpoint();expected.roster[id-1]=preview;CampaignParty comparison(module());comparison.restore(expected);
+        party.complete_training(id,*creation,selected);
+        check(encode_campaign(party,nullptr,"training-fixture")==encode_campaign(comparison,nullptr,"training-fixture"),
+            "Confirmation changes only the selected character, exactly as previewed; gear, wealth, clock, RNG and roster are unchanged");
+    }
+    check(skill(party.member(1).character.sheet(),"stealth").bonus==7,"Confirmed Criminal Expertise changes the check bonus");
+    const auto completed=encode_campaign(party,nullptr,"training-fixture");
+    rejects([&]{party.complete_training(1,*creation,choices());});
+    rejects([&]{party.complete_training(3,*creation,{{"origin:languages",{"dwarvish","orc"}}});});
+    check(encode_campaign(party,nullptr,"training-fixture")==completed,"Completed training cannot be reopened as a respec");
+    auto reloaded=decode_campaign(completed,*creation,*rules,"training-fixture",nullptr);CampaignParty restored(module());restored.restore(std::move(reloaded.party));
+    check(encode_campaign(restored,nullptr,"training-fixture")==completed,"Completed training and unchanged campaign resources survive exact save/reload");
+    auto members=restored.participants();members.push_back({99,"vanguard","Enemy",1,{6,6}});
+    auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
+    check(rules->restore(combat->save())->save()==combat->save(),"Completed training is accepted in the next combat and its checkpoint");
+
+    auto partial=draft();partial.training={{"origin:languages",{"elvish"}},{"class:rogue",{"perception"}}};
+    CampaignParty incomplete(module());const auto id=incomplete.add_pc(hero(partial));
+    const auto pending=encode_campaign(incomplete,nullptr,"partial");auto replacement=choices();replacement["origin:languages"]={"dwarvish","orc"};
+    rejects([&]{incomplete.complete_training(id,*creation,replacement);});
+    check(encode_campaign(incomplete,nullptr,"partial")==pending,"Already chosen entries cannot be replaced while other groups are pending");
+    auto unconscious=incomplete.checkpoint();unconscious.roster[0].vitals={0,false,"SRD1 0 0 1 2 0"};incomplete.restore(unconscious);
+    incomplete.complete_training(id,*creation,choices());
+    check(incomplete.member(id).vitals==unconscious.roster[0].vitals,"Training completion does not stabilize or heal an unconscious character");
 }
-int main(){try{grants_and_checks();invalid_choices();persistence();std::cout<<"Training grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+}
+int main(){try{grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
