@@ -530,3 +530,16 @@ writers. They preserve the old explicit Eldritch Blast choice, pending second
 cantrip, wounds/wealth and spent Dash/Adrenaline Rush, then reproduce the next
 turn's Eldritch Blast attack. Current tests compare exact bytes except module
 identity and campaign checksum.
+
+## Pre-Sorcerer cantrip fixtures
+
+`campaign-v11-sorcerer-cantrip-before.ogs`,
+`combat-v13-sorcerer-cantrip-before.save` and
+`combat-v13-sorcerer-cantrip-continued.save` were captured with actual rules
+0.6.39 / PC27 at `6988432`, before Sorcerer cantrip access. The freeze helper in
+`sorcerer_cantrip_tests.cpp` requires that prior writer and must not be run with
+current rules. The Orc/Sage Sorcerer has no selected cantrips, equipped staff,
+wounds, 37 units of wealth, and campaign RNG 789. Combat starts at seed 2, spends
+Dash and Adrenaline Rush, then the continuation ends the turn. Tests require
+byte-identical recipes/budgets/random continuation aside from module identity
+and campaign checksum; no new cantrip is inferred on loading.

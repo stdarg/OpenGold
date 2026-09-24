@@ -64,3 +64,7 @@ Additional access routes remain [Sorcerer #132](https://github.com/stdarg/OpenGo
 [Polar Land #157](https://github.com/stdarg/OpenGold/issues/157).
 Full spell selection remains #37; scaling above level 4 remains #176–178.
 See the [spell inventory](SPELL-INVENTORY.md) for the complete grant mapping.
+
+Rules 0.6.40 adds the explicit [level-one Sorcerer source](SORCERER-CANTRIPS.md)
+with Charisma casting in #228. References above to remaining Sorcerer access
+now concern later levels and the rest of #132, rather than this delivered route.

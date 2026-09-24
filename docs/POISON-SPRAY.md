@@ -83,3 +83,7 @@ Parents #202, #37 and #165 stay open until their remaining acceptance is met.
 Rules 0.6.39 also delivers the [level-one Warlock source](WARLOCK-POISON-SPRAY.md)
 with Charisma attacks, explicit selection and preserved old choices. Later
 Warlock levels remain #160; parent #202 still tracks other grant integrations.
+
+Rules 0.6.40 adds the explicit [level-one Sorcerer source](SORCERER-CANTRIPS.md)
+with Charisma casting in #228. References above to remaining Sorcerer access
+now concern later levels and the rest of #132, rather than this delivered route.

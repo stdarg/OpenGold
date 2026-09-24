@@ -339,3 +339,9 @@ Rules 0.6.39 adds [level-one Warlock Poison Spray access](WARLOCK-POISON-SPRAY.m
 PC27 validates the distinct Pact Magic source and casting mask; existing Charisma
 casting, spell effects and shared Godot controls are reused. Old choices remain
 unchanged, while new presets fill both available starting cantrips.
+
+Rules 0.6.40 adds [level-one Sorcerer cantrips](SORCERER-CANTRIPS.md): explicit
+source-owned Fire Bolt, Poison Spray, Ray of Frost and Shocking Grasp choices.
+PC28 validates access and Charisma attacks. Existing Spell Choices/Spell/Cast
+controls are reused under Q27; old choices and save schemas remain unchanged.
+Full Sorcerer spellcasting and Innate Sorcery remain #132.

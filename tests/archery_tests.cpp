@@ -93,8 +93,8 @@ void persistence(){
     auto profile=rules->character_profile(leveled().sheet(),std::array<std::string,1>{"shortbow"}).data;
     auto encounter=Encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Archer",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}};
     auto mislabeled=rules->create(encounter,13)->save();replace(mislabeled,rules->identity().version,"0.6.27");rejects([&]{(void)rules->restore(mislabeled);});
-    auto wrong_mask=profile;replace(wrong_mask,"PC27 4 4 ","PC27 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
-    replace(profile,"PC27","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
+    auto wrong_mask=profile;replace(wrong_mask,"PC28 4 4 ","PC28 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
+    replace(profile,"PC28","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
     auto saved_identity=rules->identity();saved_identity.version="0.6.27";const auto sheet=leveled().sheet();rejects([&]{rules->validate_saved_grants(saved_identity,sheet,sheet.grants);});
 }
 void freeze(){

@@ -1,6 +1,6 @@
 # SRD handoff
 
-Updated 2026-09-24. **Goal active:** close all `SRD_improvements` issues, with
+Updated 2026-09-24. **Pause requested after #228:** close all `SRD_improvements` issues, with
 all twelve classes through level 4, then level 20 and multiclassing. Work one
 bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 [Index](https://github.com/stdarg/OpenGold/issues/186), [plan](SRD-IMPLEMENTATION.md),
@@ -8,24 +8,24 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Completed [Warlock Poison Spray #227](https://github.com/stdarg/OpenGold/issues/227)
-under #202/#160. Rules 0.6.39 / PC27 adds explicit level-one Pact Magic access,
-Charisma casting and a second available starting cantrip. New presets fill both;
-old selections remain unchanged. [Scope/evidence](WARLOCK-POISON-SPRAY.md).
-Campaign 11, combat 13–15 and FX1–3 stay unchanged. Actual 0.6.38 fixtures at
-`3b7e943` preserve the prior single-cantrip choice and exact Eldritch continuation.
+Branch `main`. [Sorcerer cantrip access #228](https://github.com/stdarg/OpenGold/issues/228)
+adds the four currently implemented eligible cantrips at level one, explicit
+`class:sorcerer:spellcasting` grants and Charisma attacks. **Q27 approved** the
+existing Spell Choices and Spell/Cast patterns, preset choices and pending old
+selections. [Scope/evidence](SORCERER-CANTRIPS.md). Rules 0.6.40 / PC28;
+campaign 11, combat 13–15 and FX1–3 stay unchanged. Actual 0.6.39 writer fixtures
+at `6988432` retain old choices, spent resources and exact turn continuation.
 
-Previous: Wizard Shocking Grasp #226 is in `3b7e943`; Warlock Eldritch Blast #224
-is in `310319e`. See their feature docs for remaining source/level/object work.
-**Q26 approved** Warlock shared Spell Choices, preset choices, pending missing
-choices, existing selections retained and shared Spell/Cast. Both currently
-implemented Warlock cantrips use that pattern; full Pact Magic/later levels #160
-and other Poison Spray routes #202 remain open.
+**User requested pausing after #228 for a progress discussion.** Implementation
+and checks are complete; commit/push and issue closure are the final delivery steps
+before the goal is paused. Do not start another issue until the user resumes. Sorcerer #132 remains open for the complete catalog,
+leveled spells/slots, Innate Sorcery and later levels/replacements. Fire Bolt's
+existing enemy-only targeting gap is recorded on #166; source access does not
+close full spell conformance.
 
-Next: inspect another remaining grant integration, such as Sorcerer #132, or
-resume pending feature work when its answer arrives. Extending Spell Choices to
-a new class requires checking the recorded approvals and AGENTS.md first; no
-Sorcerer controls or new numbered question have been proposed yet.
+Previous: Warlock Poison Spray #227 in `6988432`, Wizard Shocking Grasp #226 in
+`3b7e943`, Warlock Eldritch Blast #224 in `310319e`. Feature docs retain remaining
+source/level/object work. Q26 remains approved for Warlock creation/casting.
 
 [Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220) remains pending
 Q25; its tested eligibility/progression helper and real 0.6.35 baseline fixtures
@@ -98,16 +98,16 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#227 verification: all 43 native/tool checks and 19 headless Godot checks plus
-ten native prerequisites pass. Main/demo builds and 825-message localization pass.
-The asset-backed Warlock creator and bilingual combat checks pass; English/Spanish
-renders cover 1120×800 and 1920×1080.
-Logs: `/tmp/warlock-poison-regression.log`, `/tmp/warlock-poison-creator.log`,
-`/tmp/warlock-poison-combat-render.log`; renders:
-`/tmp/opengold-warlock-poison-renders`.
+#228 verification: all 44 native/tool checks and 20 headless Godot checks plus
+eleven native prerequisites pass. Main/demo builds and 827-message localization
+pass. Asset-backed creator and graphical combat checks pass; English/Spanish
+renders cover 1120×800 and 1920×1080. Logs: `/tmp/sorcerer-regression.log`,
+`/tmp/sorcerer-creator.log`, `/tmp/sorcerer-combat-render.log`,
+`/tmp/sorcerer-demo.log`; renders: `/tmp/opengold-sorcerer-renders`.
 Creator checks require `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD`; they are not
 registered in the asset-free headless suite. No live processes remain.
 
-Resume #220 if Q25 arrives; otherwise use independently actionable backlog work.
+After the user resumes, #220 can proceed if Q25 arrives; otherwise select
+independently actionable backlog work.
 Preserve pending #80/#208/#209/#189 questions rather than re-asking them.
 Do not close parent trackers from narrow child evidence.

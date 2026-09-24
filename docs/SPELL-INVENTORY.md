@@ -9,7 +9,9 @@ claim that the listed spells are implemented. Current delivery adds the
 [0.6.37 level-one Warlock Eldritch Blast path](ELDRITCH-BLAST.md), and
 [0.6.38 Wizard Shocking Grasp path](SHOCKING-GRASP.md) below. Rules 0.6.39 adds
 the [level-one Warlock Poison Spray route](WARLOCK-POISON-SPRAY.md) to an existing
-partial spell; the distinct-spell count is unchanged.
+partial spell; the distinct-spell count is unchanged. Rules 0.6.40 adds
+[level-one Sorcerer access](SORCERER-CANTRIPS.md) to Fire Bolt, Poison Spray, Ray of
+Frost and Shocking Grasp. The count remains eleven partial spells and 128 missing.
 
 ## Scope and counting
 

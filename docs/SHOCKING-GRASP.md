@@ -55,3 +55,7 @@ renders were inspected at 1120×800 and 1920×1080. Main/demo extensions build;
 825 localization messages validate. Logs: `/tmp/shocking-regression.log`,
 `/tmp/shocking-creator.log`, `/tmp/shocking-existing-creator.log`, and
 `/tmp/shocking-combat-render.log`; renders `/tmp/opengold-shocking-renders`.
+
+Rules 0.6.40 adds the explicit [level-one Sorcerer source](SORCERER-CANTRIPS.md)
+with Charisma casting in #228. References above to remaining Sorcerer access
+now concern later levels and the rest of #132, rather than this delivered route.
