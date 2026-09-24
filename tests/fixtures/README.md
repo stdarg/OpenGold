@@ -367,3 +367,11 @@ was copied unchanged after the shared selector increment `bc2d152` (whose rules
 were still 0.6.24). It records explicit Wizard Fire Bolt/Poison Spray knowledge.
 The Ray of Frost regression requires byte-identical restoration apart from the
 module version and verifies that migration invents no Ray of Frost grant.
+
+### Sage fixed training (rules 0.6.25)
+
+`campaign-v11-sage-before.ogs` was written by the actual 0.6.25 libraries at
+`490ed19`, before the Sage grant changes. `freeze_sage()` in training_tests.cpp
+records the reproducible setup and rejects execution with a newer writer. The
+level-3 Sage Wizard has explicit language/cantrip choices, wounds and spent slots;
+it has none of the three newly supported Sage grants. The fixture is unedited.

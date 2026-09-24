@@ -94,6 +94,24 @@ func run_checks() -> void:
 	await press("Next")
 	await choose("Choices", "Wizard")
 	await press("Next")
+	var fixed: RichTextLabel = current_scene.get_node("TrainingFixed")
+	for label in ["Arcana", "History", "Calligrapher's Supplies"]:
+		require(fixed.get_parsed_text().contains(label), "Sage fixed training is visible: " + label)
+	for locale in ["en", "es"]:
+		TranslationServer.set_locale(locale)
+		await press("Back")
+		await press("Next")
+		require(fixed.get_parsed_text().contains("Sage background" if locale == "en" else "Trasfondo de sabio"), "Sage source label is human-readable and localized")
+		require(fixed.get_parsed_text().contains("Calligrapher's Supplies" if locale == "en" else "Útiles de caligrafía"), "Tool proficiency label is localized")
+		for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+			root.size = size
+			await settle()
+			await capture("sage-training-" + locale + "-" + str(size.x))
+	TranslationServer.set_locale("en")
+	await press("Back")
+	await press("Next")
+	root.size = Vector2i(1120, 800)
+	await settle()
 	await pick(0, "elvish")
 	await pick(0, "dwarvish")
 	await press("Next")
@@ -130,5 +148,7 @@ func run_checks() -> void:
 	await press("Modifiers")
 	var sheet: String = current_scene.get_node("ModifiersModal/Text").text
 	require(sheet.contains("Poison Spray") and sheet.contains("Fire Bolt") and sheet.contains("Ray of Frost"), "Created character sheet shows all three choices")
+	for label in ["Arcana", "History", "Calligrapher's Supplies", "Sage background"]:
+		require(current_scene.get_node("Description").get_parsed_text().contains(label), "Created character sheet retains Sage training: " + label)
 	print("Cantrip creator checks passed")
 	quit(0)

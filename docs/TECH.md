@@ -751,3 +751,8 @@ The concentration transition helper owns only optional value state and returns
 source identities for cleanup. Combat and campaign integration remain separate;
 see [concentration](CONCENTRATION.md). No new runtime or save format is introduced
 by the foundation.
+
+Rules 0.6.26 adds the Sage fixed training package. PC15 validates those grants;
+prior profiles use the previous training policy. Campaign reconstruction adds
+only owed fixed grants from the existing background. The shared Training display
+and modifier queries expose them; see [Sage training](SAGE-TRAINING.md).

@@ -3,6 +3,7 @@
 #include "opengold/character_pool.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
+#include "campaign_fixture.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -247,5 +248,58 @@ void complete_saved_training(){
     incomplete.complete_training(id,*creation,choices());
     check(incomplete.member(id).vitals==unconscious.roster[0].vitals,"Training completion does not stabilize or heal an unconscious character");
 }
+void sage_training(){
+    auto rules=module();auto creation=srd5::character_rules();
+    for(const auto& klass:creation->choices(CreationField::character_class)){
+        auto d=draft(klass.id,"sage");const auto adjustments=creation->adjustments("sage");
+        for(unsigned i=0;i<adjustments.size();++i)if(adjustments[i].bonuses[3]==0){d.adjustment=i;break;}
+        auto sheet=hero(d).sheet();check(sheet.scores[3]==15,"Authored Intelligence stays 15");
+        for(const auto id:{"arcana","history"}){
+            const auto& trained=skill(sheet,id);check(trained.proficient&&trained.bonus==4&&trained.sources.size()==1&&trained.sources[0].source_id=="background:sage","Every starting class gets sourced +2 Sage proficiency");
+        }
+        const auto tool=creation->ability_check(sheet,3,{},"calligraphers_supplies");
+        check(tool.total==4&&tool.proficiency==2&&tool.sources.size()==1&&tool.sources[0].id=="tool:calligraphers_supplies","Fixed tool proficiency participates in ability-check API");
+        const auto combined=creation->ability_check(sheet,3,"arcana","calligraphers_supplies");
+        check(combined.total==4&&combined.tool_advantage,"Applicable skill plus tool grants Advantage, not doubled proficiency");
+        auto bad=sheet;std::erase_if(bad.grants,[](const auto& g){return g.id=="skill:arcana";});rejects([&]{(void)rules->character_profile(bad,{});});
+        bad=sheet;bad.grants.push_back({"skill:arcana","background:sage",1,{}});rejects([&]{(void)rules->character_profile(bad,{});});
+        if(klass.id=="rogue"){
+            d.training={{"class:rogue:expertise",{"arcana","history"}}};sheet=hero(d).sheet();
+            check(skill(sheet,"arcana").expertise&&skill(sheet,"arcana").bonus==6,"Rogue may apply Expertise to background-granted Arcana");
+            const auto original=rules->character_profile(sheet,{}).data;auto old=original;replace(old,"PC15","PC14");
+            rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
+        }
+    }
+    const auto bytes=fixture("campaign-v11-sage-before.ogs");
+    auto loaded=decode_campaign(bytes,*creation,*rules,"sage-migration",nullptr);CampaignParty party(module());party.restore(std::move(loaded.party));
+    const auto& member=party.member(1);const auto& sheet=member.character.sheet();
+    check(sheet.level==3&&skill(sheet,"arcana").proficient&&skill(sheet,"history").proficient,"Prior-writer campaign receives owed fixed grants at reconstruction");
+    check(member.vitals.hit_points==sheet.hit_points-3&&member.vitals.resources=="SRD2 0 1 1 0 0 0","Migration preserves wounds and spent level-one/two slots");
+    check(member.character.creation_data().training==TrainingChoices{{"origin:languages",{"elvish","dwarvish"}}}&&member.character.creation_data().cantrips==std::optional(std::vector<std::string>{"fire_bolt","ray_of_frost"}),"Migration preserves explicit choices");
+    auto expected_body=bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);replace(expected_body,"0.6.25",rules->identity().version);
+    const auto current=encode_campaign(party,nullptr,"sage-migration");auto again=decode_campaign(current,*creation,*rules,"sage-migration",nullptr);CampaignParty restored(module());restored.restore(std::move(again.party));
+    check(encode_campaign(restored,nullptr,"sage-migration")==current,"Current Sage campaign is canonical after reload");
+    check(current.substr(current.find('\n',current.find('\n')+1)+1)==test::with_sage_training_grants(expected_body),"Every prior campaign byte remains except identity and exactly three fixed Sage grants");
+    auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
+    const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
+    check(rules->restore(combat->save())->save()==combat->save(),"New Sage recipe retains combat continuation");
+    auto forged_combat=combat->save();replace(forged_combat,"0.6.26","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
+    party.award_experience(1800,"sage-four");auto choice=party.default_advancement(1);choice.abilities={};choice.abilities[3]=2;party.advance(1,choice);
+    check(party.member(1).character.sheet().scores[3]==18&&skill(party.member(1).character.sheet(),"arcana").bonus==6,"Intelligence ASI recomputes Sage skill bonus at level four");
+    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.26","0.6.25")})
+        rejects([&]{(void)decode_campaign(bad,*creation,*rules,"sage-migration",nullptr);});
 }
-int main(){try{creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+
+void freeze_sage(){
+    auto rules=module();check(rules->identity().version=="0.6.25","Freeze requires actual pre-Sage writer");
+    auto d=draft("wizard","sage");d.cantrips=std::vector<std::string>{"fire_bolt","ray_of_frost"};
+    d.training={{"origin:languages",{"elvish","dwarvish"}}};
+    CampaignParty party(module());auto id=party.add_pc(hero(d));party.award_experience(900,"sage-migration");
+    for(int i=0;i<2;++i)party.advance(id,party.default_advancement(id));
+    auto state=party.checkpoint();state.roster[0].vitals.hit_points-=3;state.roster[0].vitals.resources="SRD2 0 1 1 0 0 0";party.restore(std::move(state));
+    std::ofstream out(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures/campaign-v11-sage-before.ogs",std::ios::binary);
+    out<<encode_campaign(party,nullptr,"sage-migration");check(bool(out),"Write actual prior-writer fixture");
+}
+
+}
+int main(int argc,char**){try{if(argc==2){freeze_sage();return 0;}sage_training();creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

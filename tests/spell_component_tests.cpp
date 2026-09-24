@@ -85,7 +85,7 @@ std::string upgrade(std::string bytes){const auto at=bytes.find("0.6.20");check(
 void legacy(){auto rules=module();const auto base=root/"tests/fixtures";
     const auto bytes=read(base/"campaign-v10-components.ogs");CampaignParty p(module());p.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"components",nullptr).party);
     const auto saved=encode_campaign(p,nullptr,"components");const auto body=[](const std::string& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};
-    check(body(saved)==test::with_legacy_cantrip_choices(upgrade(body(bytes))),"Campaign migration changes only module identity and absent cantrip choice field");
+    check(body(saved)==test::with_sage_training_grants(test::with_legacy_cantrip_choices(upgrade(body(bytes)))),"Campaign migration changes only module identity, absent cantrip choices and owed Sage grants");
     auto c=rules->restore(read(base/"combat-v13-components.save"));check(c->save()==upgrade(read(base/"combat-v13-components.save")),"Prior checkpoint keeps every actor, recipe, resource, queue, RNG and clock");
     check(!has(*c,"cure_wounds")&&has(*c,"healing_word"),"Old equipment acquires corrected spell eligibility on resume");
     check(c->submit(command(*c,"healing_word")),"Prior legal verbal cast accepted");

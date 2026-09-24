@@ -8,18 +8,17 @@ installing the efficiency workflow. Work continues on #205.
 - Goal: close all `SRD_improvements` issues; all twelve classes, first through
   level 4, then through 20 and multiclassing. [Index](https://github.com/stdarg/OpenGold/issues/186),
   [plan](SRD-IMPLEMENTATION.md), [coverage](SRD-COVERAGE.md).
-- Branch: `main`. Rules 0.6.25 Ray of Frost Wizard increment is delivered; shared selector was delivered in `bc2d152`. #205 remains partial.
+- Branch: `main`. Rules 0.6.26 Sage fixed training is delivered; Ray of Frost was delivered earlier; shared selector was delivered in `bc2d152`. #205 remains partial.
   Last observed open label count: 162; this is a snapshot, not completion proof.
-- PC14 / FX2; combat 15 for Ray access/effects, otherwise 13/14; campaign 11.
+- PC15 / FX2; combat 15 for Ray access/effects, otherwise 13/14; campaign 11.
   [Ray of Frost evidence and remaining scope](RAY-OF-FROST.md).
 - Wizard choice, main-game casting, Cold damage, nonstacking sourced slow,
   caster-turn expiry and campaign/camp continuation are implemented.
 
-While Silence questions remain pending, #210 corrects the Dwarven Toughness
-racial explanation after leveling. It reuses the existing localized HP-source
-message; HP arithmetic, grants and formats remain unchanged. Advancement, character
-and save tests pass, as does the Godot Dwarf advancement/Modifiers reload check;
-743 English/Spanish messages validate. See DAMAGE.md.
+While Silence questions remain pending, #210 corrected the Dwarven Toughness
+racial explanation (490ed19). #211 supplies Sage Arcana, History and Calligrapher's
+Supplies grants for every starting class, with old-save migration and existing
+Training controls. See SAGE-TRAINING.md for evidence and remaining package work.
 
 ## Current issue
 
@@ -85,6 +84,8 @@ Relevant entry points (read only the needed sections):
 - Concentration foundation, status effects and Ray of Frost focused checks pass.
   CN1 serialization follow-up passed the rebuilt concentration test.
   No runtime/save changes in this helper increment.
+- Sage validation: native regression and Godot/creation checks are recorded in
+  SAGE-TRAINING.md; 745 English/Spanish messages validate.
 - No remaining live processes after final verification. No UI questions needed
   for the delivered Ray controls; Review Training question 11 remains unresolved.
 - Bash/macOS; `build/mac-check` is the game/native build; `build/sprite-demo` is
