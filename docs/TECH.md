@@ -746,3 +746,8 @@ typed attacks and the shared effect/recovery timeline. Nonstacking Speed penalti
 are applied to base movement remaining and recorded Dash allowances, preserving
 movement already spent. FX2 represents effects with no repeat saving throw;
 PC14 and combat 15 validate the new access and movement continuation.
+
+The concentration transition helper owns only optional value state and returns
+source identities for cleanup. Combat and campaign integration remain separate;
+see [concentration](CONCENTRATION.md). No new runtime or save format is introduced
+by the foundation.

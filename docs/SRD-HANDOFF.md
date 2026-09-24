@@ -17,11 +17,13 @@ installing the efficiency workflow. Work continues on #205.
 
 ## Current issue
 
-[Ray of Frost #205](https://github.com/stdarg/OpenGold/issues/205) remains open for
-shared speech-blocking components (#39) and other grant routes (linked in the
-feature document). Next bounded work: inspect #39 and its dependencies to resolve
-the component gap across supported spells. Do not repeat the finished Ray checks
-or count every granting class as implemented. Full SRD scope remains intact.
+Concentration transition foundation #207 is delivered; [evidence](CONCENTRATION.md).
+Next: [Silence combat/area/player integration #208](https://github.com/stdarg/OpenGold/issues/208),
+then [campaign/ritual integration #209](https://github.com/stdarg/OpenGold/issues/209).
+Both link back to #38/#39/#43/#174. Read acceptance before implementation. New
+area geometry/control choices need numbered user confirmation; none is pending.
+#205 remains partial for speech blockers and the other linked granting sources.
+Mundane gagging also remains under #39; do not equate it with magical silence.
 
 Relevant entry points (read only the needed sections):
 
@@ -62,6 +64,8 @@ Relevant entry points (read only the needed sections):
   native fixture prerequisites pass. Main/demo builds and 744-message localization
   check pass. Rendered combat at both supported sizes in English/Spanish.
 - Wizard and Cleric creation checks cover the shared step; see the feature doc.
+- Concentration foundation, status effects and Ray of Frost focused checks pass.
+  No runtime/save changes in this helper increment.
 - No remaining live processes after final verification. No UI questions needed
   for the delivered Ray controls; Review Training question 11 remains unresolved.
 - Bash/macOS; `build/mac-check` is the game/native build; `build/sprite-demo` is

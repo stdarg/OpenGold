@@ -65,3 +65,7 @@ Blindness controls.
 CTest registers the game check without original assets. The demo can run the
 same script with `--legacy` and the `--component-fixtures` directory written by
 the native suite.
+
+The remaining magical-silence path is split into concentration transitions #207,
+Silence combat/area/player integration #208 and campaign/ritual integration #209.
+See [concentration](CONCENTRATION.md). These do not imply gagging is supported.
