@@ -8,27 +8,27 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Approved question 22 is implemented under #85: Fighter Training
-has a required Archery/Defense dropdown above languages, preserved on Back and
-keyboard accessible. Presets receive a choice; old saves retain a pending choice.
-See [Fighter styles](FIGHTER-STYLES.md). #85 remains open for other styles,
-replacement on Fighter level-up and weapon mastery. #78/#79 retain remaining
-class routes. #212 is closed; its parents #61/#64 retain package work.
+Branch `main`. #80 Great Weapon Fighting has a shared damage-roll foundation;
+see [evidence and remaining integration](GREAT-WEAPON-FIGHTING.md). Combat uses
+the normal rule; the feat is not yet selectable/applied. Independent tests prove
+per-die replacement without rerolls, critical dice with one flat modifier and
+successive Savage rolls. Actual 0.6.29 files from `88c2649` reproduce a critical
+Greatsword/Savage sequence exactly. No format/module version changed.
 
-Rules 0.6.29 / PC18 / FX2; combat 13–15 and campaign 11 unchanged. Starting
-style grants use `class:fighter:fighting_style` at level one, separate from level
-four. Nonrepeatability spans both sources. Actual 0.6.28 campaign/combat fixtures
-preserve all prior choices, wounds and expenditure without assigning a style.
-Old profiles and identities reject the new source. Entry points: `training.*`,
-`feature_grants.*`, `srd5.cpp`, `training_control.h`, `training_tests.cpp` and
-`training_view_tests.gd`. Main/demo creation controls use the same group metadata.
+**Q23 is pending:** automatic beneficial replacement, or an optional choice on
+each eligible hit. Do not enable either combat behavior until answered. Meanwhile
+other independently actionable backlog work is authorized. For full #80, add
+eligibility/grants, both starting and advancement selectors, reactions/current
+continuation validation, spell/unarmed/thrown exclusions and class routes.
+`damage_roll.h`, `srd5.cpp` and `damage_tests.cpp` are the foundation entry points.
 
-**Next: continue #85 with remaining style/replacement/mastery work.** Review its
-scope and split distinct state machines before implementation. Replacement is
-not old-save completion: the existing pending-training API preserves chosen
-selections. Any new level-up control layout still needs a numbered question;
-Q22 only approves the starting Training dropdown. Other Fighting Style feats
-retain their existing issue tracking. Do not claim all class choices complete.
+Fighter starting Archery/Defense (#85, approved Q22) is delivered in `88c2649`:
+required dropdown above languages, keyboard access, Back preservation, generated
+presets and old pending choices. Rules 0.6.29 / PC18 / FX2; campaign 11 / combat
+13–15. See [Fighter styles](FIGHTER-STYLES.md). #85 remains open for other styles,
+replacement on Fighter level-up and mastery; #78/#79 retain class routes.
+Replacement is not pending-training completion: that API preserves chosen
+selections. Any new level-up control layout requires a numbered question.
 
 ## Next work and pending questions
 
@@ -82,12 +82,8 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-Starting-style verification is recorded in FIGHTER-STYLES.md. Native regression
-covered 41 checks; six old training-completion fixtures now include the required
-style and pass their focused rerun. All 16 Godot runtime checks and their native
-prerequisites pass after rebuilding those fixtures. Main/demo extension builds,
-755-message localization and keyboard selection checks pass. English/Spanish
-Training layouts were inspected at 1120×800 and 1920×1080 under
-`/tmp/opengold-styles-renders`. Full party-path verification also exercises the
-new choice; its untrained-shield fixture clears the Fighter style when temporarily
-constructing a Wizard. Native checks use translated bonus-source assertions. No live build/test processes remain.
+Starting-style verification remains in FIGHTER-STYLES.md. For the damage-roll
+foundation, all 41 native/tool checks pass; main/demo builds and the combat/Savage
+Godot checks (plus native prerequisite) pass. No new UI or localization changes.
+Logs: `/tmp/opengold-gwf-regression.log`, `/tmp/opengold-gwf-godot.log` and
+`/tmp/opengold-gwf-demo.log`. No live build/test processes remain.

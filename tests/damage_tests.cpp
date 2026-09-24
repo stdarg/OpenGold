@@ -2,6 +2,7 @@
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "damage.h"
+#include "damage_roll.h"
 #include "life_cycle.h"
 #include "weapons.h"
 #include <algorithm>
@@ -165,5 +166,55 @@ void malformed(){
     auto sheet=hero().sheet();auto grant=std::find_if(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.id=="trait:dwarven_resilience";});grant->source_id="species:human";
     rejects([&]{(void)module()->character_profile(sheet,{});});
 }
+void damage_rolls(){
+    using damage::DamageDieRule;
+    for(int face=1;face<=12;++face){
+        check(damage::damage_die_value(face,DamageDieRule::normal)==face,"Declining a die replacement preserves every face");
+        check(damage::damage_die_value(face,DamageDieRule::great_weapon_fighting)==(face<3?3:face),"Great Weapon Fighting raises only 1 and 2 to 3");
+    }
+    // Independent SplitMix64 seed-zero sequence: d6 2,1,2,5,2,1,6,3.
+    // These expected sums distinguish individual replacements from a total
+    // floor, rerolls, doubled modifiers and replacing only ordinary hit dice.
+    std::uint64_t normal=0,style=0;
+    check(damage::roll_damage(normal,{2,6,4})==7&&damage::roll_damage(style,{2,6,4},false,DamageDieRule::great_weapon_fighting)==10,"Replace each die before adding the flat modifier");
+    check(normal==4354685564936845354ULL&&style==normal,"No reroll or additional RNG draw");
+    normal=style=0;
+    check(damage::roll_damage(normal,{2,6,4},true)==14&&damage::roll_damage(style,{2,6,4},true,DamageDieRule::great_weapon_fighting)==18,"Critical hits replace all four dice while adding the modifier once");
+    check(normal==8709371129873690708ULL&&style==normal,"Critical replacement preserves the next random state");
+    check(damage::roll_damage(style,{2,6,4},true,DamageDieRule::great_weapon_fighting)==19&&style==17418742259747381416ULL,"A second Savage-style critical roll independently replaces its four dice");
+    normal=style=0;
+    check(damage::roll_damage(normal,{2,6,-10})==0&&damage::roll_damage(style,{2,6,-10},false,DamageDieRule::great_weapon_fighting)==0,"Negative flat modifiers remain unchanged; total damage cannot be negative");
+    style=7;check(damage::roll_damage(style,{0,0,1},true,DamageDieRule::great_weapon_fighting)==1&&style==7,"Fixed damage gets neither extra damage nor random draws");
 }
-int main(){try{arithmetic();species_combat();weapons_and_spells();migration();malformed();std::cout<<"Typed damage tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+void gwf_prior_continuation(){
+    auto rules=module();const auto root=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures";
+    const auto campaign=read(root/"campaign-v11-gwf-before.ogs");CampaignParty party(module());party.restore(decode_campaign(campaign,*srd5::character_rules(),*rules,"gwf-fixture",nullptr).party);
+    check(encode_campaign(party,nullptr,"gwf-fixture")==campaign,"Extracted roller preserves the actual previous writer's campaign exactly");
+    auto combat=rules->restore(read(root/"combat-v14-gwf-first.save"));check(combat->save()==read(root/"combat-v14-gwf-first.save"),"Actual critical first-roll choice restores exactly");
+    auto act=[&](std::string_view verb){for(const auto& c:combat->legal_commands())if(c.verb==verb){check(combat->submit(c),"Prior continuation command accepted");return;}throw std::runtime_error("Missing continuation command");};
+    act("savage_use");check(combat->save()==read(root/"combat-v14-gwf-second.save"),"Second critical damage roll matches the pre-extraction writer's RNG and result");
+    combat=rules->restore(combat->save());act("savage_second");check(combat->save()==read(root/"combat-v14-gwf-resolved.save"),"Applying the saved roll matches prior HP, action and Savage expenditure");
+}
+void freeze_gwf(){
+    auto rules=module();check(rules->identity().version=="0.6.29","Requires the actual pre-Great Weapon Fighting writer");
+    auto draft=hero("human").creation_data();draft.training={{"origin:languages",{"elvish","dwarvish"}},{"class:fighter:fighting_style",{"defense"}}};
+    CampaignParty party(module());const auto id=party.add_pc(Character(*srd5::character_rules(),draft,{}));
+    party.award_experience(2700,"gwf-fixture");for(int i=0;i<2;++i)party.advance(id,party.default_advancement(id));
+    auto choice=party.default_advancement(id);choice.feat="archery";choice.abilities={};party.advance(id,choice);
+    auto state=party.checkpoint();state.roster[0].vitals.hit_points-=3;state.roster[0].vitals.resources="SRD1 1 0 0 0 0";party.restore(state);
+    const auto root=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures";
+    auto write=[&](const char* name,const std::string& bytes){std::ofstream out(root/name,std::ios::binary);out<<bytes;check(bool(out),"Write actual prior GWF fixture");};
+    write("campaign-v11-gwf-before.ogs",encode_campaign(party,nullptr,"gwf-fixture"));
+    auto members=party.participants();members[0].cell={1,1};members[0].character_profile=rules->character_profile(party.member(id).character.sheet(),std::array<std::string,1>{"greatsword"}).data;
+    members.push_back({99,"vanguard","Enemy",1,{2,1}});
+    auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},0);
+    auto act=[&](std::string_view verb){for(const auto& c:combat->legal_commands())if(c.verb==verb){check(combat->submit(c),"Prior writer command accepted");return;}throw std::runtime_error("Missing prior writer command");};
+    check(combat->snapshot().actor==id,"Prior writer initiative starts with Fighter");act("melee");
+    check(combat->snapshot().savage_attack_choice&&combat->snapshot().savage_attack_choice->critical,"Prior writer critical hit awaits Savage choice");
+    write("combat-v14-gwf-first.save",combat->save());act("savage_use");
+    write("combat-v14-gwf-second.save",combat->save());act("savage_second");
+    write("combat-v14-gwf-resolved.save",combat->save());
+}
+
+}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-gwf"){freeze_gwf();return 0;}damage_rolls();gwf_prior_continuation();arithmetic();species_combat();weapons_and_spells();migration();malformed();std::cout<<"Typed damage tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

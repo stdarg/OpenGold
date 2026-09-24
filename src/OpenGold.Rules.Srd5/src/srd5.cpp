@@ -1,4 +1,5 @@
 #include "dice.h"
+#include "damage_roll.h"
 #include "action_budget.h"
 #include "feature_grants.h"
 #include "training.h"
@@ -76,7 +77,7 @@ bool module_before(const Identity& identity,std::array<unsigned,3> introduced)
     in>>std::ws;if(!in.eof())throw std::runtime_error("Invalid module version");return version<introduced;
 }
 
-struct Dice { int count{}, sides{}, bonus{}; };
+using Dice=detail::DamageDice;
 struct Definition {
     int ac{}, hp{}, initiative{}, speed{}, melee_bonus{};
     Dice melee;
@@ -405,7 +406,7 @@ private:
     const Actor& actor(EntityId id) const { return *std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;}); }
     Actor& actor(EntityId id) { return *std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;}); }
     int roll(int sides) {return roll_die(rng_,sides);}
-    int dice(Dice d,bool critical=false) {int total=d.bonus;for(int i=0;i<d.count*(critical?2:1);++i)total+=roll(d.sides);return std::max(0,total);}
+    int dice(Dice d,bool critical=false) {return detail::roll_damage(rng_,d,critical);}
     void log(std::string english, Message message={}) {
         if(message.source.empty())message.source=english;
         if(log_.size()==80){log_.erase(log_.begin());log_messages_.erase(log_messages_.begin());}

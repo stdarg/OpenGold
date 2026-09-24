@@ -776,3 +776,10 @@ validation as well as training validation. PC18 accepts their distinct level-one
 source; old profile policies and identities reject it. Existing campaign choice
 maps need no schema change. Old choices remain pending. See
 [Fighter starting styles](FIGHTER-STYLES.md) for evidence and remaining work.
+
+The internal damage roller owns no resources and accepts value-only dice and
+an explicit die-value rule. Current combat invokes the normal rule; the Great
+Weapon Fighting replacement helper is tested but awaits feat/control integration.
+It never rerolls or doubles flat modifiers on critical hits. Actual pre-extraction
+Savage Attacker checkpoints prove unchanged continuation. See
+[Great Weapon Fighting](GREAT-WEAPON-FIGHTING.md).

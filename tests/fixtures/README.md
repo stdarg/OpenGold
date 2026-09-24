@@ -405,3 +405,14 @@ one, level-four Defense, level-four Archery and level-four Constitution +2.
 Each has two missing HP and spent Second Wind. Both files are unedited; combat
 contains PC17 profiles. Migration must preserve their bodies except module
 identity and campaign checksum, without inventing a starting style.
+
+### Great Weapon Fighting preparation (rules 0.6.29)
+
+`campaign-v11-gwf-before.ogs` and `combat-v14-gwf-{first,second,resolved}.save`
+were written by the actual 0.6.29 libraries at `88c2649`, before extracting the
+damage roller. The `freeze_gwf()` setup in damage_tests.cpp requires that version.
+The Human Soldier Fighter has starting Defense, level-four Archery, wounds and
+spent Second Wind. Seed zero produces a critical Greatsword hit; the combat
+files capture the first Savage Attacker decision, second rolled result and its
+application. Files are unedited. The foundation checks exact campaign bytes and
+both real command transitions, including RNG, HP and action/feat expenditure.
