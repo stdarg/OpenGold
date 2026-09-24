@@ -41,6 +41,7 @@ struct TrainingChoiceGroup {
     unsigned count{};
     std::vector<CreationChoice> options;
     TrainingChoiceControl control{TrainingChoiceControl::checkboxes};
+    std::string continuity_id; // Same choice purpose across changing source entitlements.
 };
 struct SkillTraining {
     std::string id, label;

@@ -63,7 +63,7 @@ void invalid(){auto rules=module();const auto base=hero().sheet();const auto tes
     s=base;s.grants.push_back(s.grants[index]);test(s);s=base;s.grants.erase(s.grants.begin()+index);test(s);
     s=base;s.grants.push_back({"spell:scorching_ray","class:wizard:spellcasting",1,{{"access","spellbook"}}});test(s);
     s=hero("fighter").sheet();s.grants.push_back(base.grants[index]);test(s);
-    auto profile=rules->character_profile(base,{}).data;check(profile.starts_with("PC18 1 0 5 "),"New combat recipe carries sourced access");auto bad=profile;bad.replace(0,4,"PC9");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Wizard",0,{1,1},bad},{99,"vanguard","Target",1,{5,1}}}},13);});
+    auto profile=rules->character_profile(base,{}).data;check(profile.starts_with("PC19 1 0 5 "),"New combat recipe carries sourced access");auto bad=profile;bad.replace(0,4,"PC9");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Wizard",0,{1,1},bad},{99,"vanguard","Target",1,{5,1}}}},13);});
     bad=profile;bad.replace(bad.find(" 0 5 ")+3,1,"4");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Wizard",0,{1,1},bad},{99,"vanguard","Target",1,{5,1}}}},13);});
 }
 void legacy(){auto rules=module();CampaignParty party(module());party.restore(decode_campaign(read(root/"tests/fixtures/campaign-v10-spells.ogs"),*srd5::character_rules(),*rules,"spells-fixture",nullptr).party);

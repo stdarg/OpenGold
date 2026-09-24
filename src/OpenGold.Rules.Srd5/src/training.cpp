@@ -17,7 +17,22 @@ constexpr std::array skills{
     Skill{"investigation","Investigation",3},Skill{"medicine","Medicine",4},Skill{"nature","Nature",3},
     Skill{"perception","Perception",4},Skill{"performance","Performance",5},Skill{"persuasion","Persuasion",5},
     Skill{"religion","Religion",3},Skill{"sleight_of_hand","Sleight of Hand",1},Skill{"stealth","Stealth",1},Skill{"survival","Survival",4}};
-constexpr std::array<std::string_view,10> rogue_skills{"acrobatics","athletics","deception","insight","intimidation","investigation","perception","persuasion","sleight_of_hand","stealth"};
+struct ClassSkills { std::string_view id,label;unsigned count;std::vector<std::string_view> skills; };
+// SRD 5.2.1 Core Traits tables; an empty list denotes Bard's unrestricted list.
+const std::array class_skills{
+    ClassSkills{"barbarian","Barbarian skills",2,{"animal_handling","athletics","intimidation","nature","perception","survival"}},
+    ClassSkills{"bard","Bard skills",3,{}},
+    ClassSkills{"cleric","Cleric skills",2,{"history","insight","medicine","persuasion","religion"}},
+    ClassSkills{"druid","Druid skills",2,{"animal_handling","arcana","insight","medicine","nature","perception","religion","survival"}},
+    ClassSkills{"fighter","Fighter skills",2,{"acrobatics","animal_handling","athletics","history","insight","intimidation","persuasion","perception","survival"}},
+    ClassSkills{"monk","Monk skills",2,{"acrobatics","athletics","history","insight","religion","stealth"}},
+    ClassSkills{"paladin","Paladin skills",2,{"athletics","insight","intimidation","medicine","persuasion","religion"}},
+    ClassSkills{"ranger","Ranger skills",3,{"animal_handling","athletics","insight","investigation","nature","perception","stealth","survival"}},
+    ClassSkills{"rogue","Rogue skills",4,{"acrobatics","athletics","deception","insight","intimidation","investigation","perception","persuasion","sleight_of_hand","stealth"}},
+    ClassSkills{"sorcerer","Sorcerer skills",2,{"arcana","deception","insight","intimidation","persuasion","religion"}},
+    ClassSkills{"warlock","Warlock skills",2,{"arcana","deception","history","intimidation","investigation","nature","religion"}},
+    ClassSkills{"wizard","Wizard skills",2,{"arcana","history","insight","investigation","medicine","nature","religion"}}
+};
 struct Language {std::string_view id,label;bool standard;};
 constexpr std::array languages{
     Language{"common","Common",true},Language{"common_sign_language","Common Sign Language",true},
@@ -60,10 +75,15 @@ std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view
     if(klass=="fighter"&&policy>=TrainingPolicy::fighter_style)
         result.push_back({"class:fighter:fighting_style","Fighting Style",1,
             {{"defense","Defense","+1 AC while wearing armor."},{"archery","Archery","+2 to attack rolls with Ranged weapons."}},TrainingChoiceControl::single_selection});
+    if(klass=="rogue"||(policy>=TrainingPolicy::class_skills&&!klass.empty())){
+        const auto data=std::find_if(class_skills.begin(),class_skills.end(),[&](const auto& c){return c.id==klass;});
+        require(data!=class_skills.end());TrainingChoiceGroup group{"class:"+std::string(klass),std::string(data->label),data->count,{},TrainingChoiceControl::checkboxes,"class_skills"};
+        for(const auto& skill:skills)if(data->skills.empty()||std::find(data->skills.begin(),data->skills.end(),skill.id)!=data->skills.end())
+            group.options.push_back({std::string(skill.id),std::string(skill.label),{}});
+        result.push_back(std::move(group));
+    }
     if(klass=="rogue"){
-        TrainingChoiceGroup group{std::string(rogue),"Rogue skills",4,{}};
-        for(const auto& s:skills)if(std::find(rogue_skills.begin(),rogue_skills.end(),s.id)!=rogue_skills.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
-        result.push_back(std::move(group));group={std::string(expertise),"Rogue Expertise",2,{}};
+        TrainingChoiceGroup group{std::string(expertise),"Rogue Expertise",2,{}};
         const auto known=fixed(klass,background,policy);const auto& picked=selected(choices,rogue);
         for(const auto& s:skills)if(source(known,"skill:"+std::string(s.id))||std::find(picked.begin(),picked.end(),s.id)!=picked.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
         result.push_back(std::move(group));group={std::string(cant),"Additional Rogue language",1,language_options(true)};
@@ -91,11 +111,11 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
 }
 bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
 std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
-std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::fighter_style);}
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::class_skills);}
 std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
     for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());
-    for(const auto& group:groups)add_choices(result,choices,group,group.id=="class:fighter:fighting_style"?"feat:":group.id==rogue?"skill:":group.id==expertise?"expertise:":"language:");
+    for(const auto& group:groups)add_choices(result,choices,group,group.id=="class:fighter:fighting_style"?"feat:":group.id=="class:"+std::string(klass)?"skill:":group.id==expertise?"expertise:":"language:");
     return result;
 }
 TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,TrainingPolicy policy){
@@ -105,7 +125,7 @@ TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::strin
         require(grant.level==1&&grant.choices.empty());actual.push_back(grant);
         const auto found=std::find(required.begin(),required.end(),grant);
         if(found!=required.end()){required.erase(found);continue;}
-        const auto prefix=grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id==rogue?"skill:":grant.source_id==expertise?"expertise:":"language:";
+        const auto prefix=grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id=="class:"+std::string(klass)?"skill:":grant.source_id==expertise?"expertise:":"language:";
         require(grant.id.starts_with(prefix));choices[grant.source_id].push_back(grant.id.substr(std::string_view(prefix).size()));
     }
     require(required.empty());auto expected=training_grants(klass,background,choices,policy);

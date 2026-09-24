@@ -114,6 +114,8 @@ func run_checks() -> void:
 	await settle()
 	await pick(0, "elvish")
 	await pick(0, "dwarvish")
+	await pick(1, "nature")
+	await pick(1, "investigation")
 	await press("Next")
 	require(current_scene.get_node("PageTitle").text == "Spell Choices", "Spell Choices follows Training")
 	var fire: CheckBox = current_scene.get_node("SpellChoices/Rows/fire_bolt")
@@ -148,7 +150,7 @@ func run_checks() -> void:
 	await press("Modifiers")
 	var sheet: String = current_scene.get_node("ModifiersModal/Text").text
 	require(sheet.contains("Poison Spray") and sheet.contains("Fire Bolt") and sheet.contains("Ray of Frost"), "Created character sheet shows all three choices")
-	for label in ["Arcana", "History", "Calligrapher's Supplies", "Sage background"]:
+	for label in ["Arcana", "History", "Calligrapher's Supplies", "Sage background", "Nature +", "Wizard class"]:
 		require(current_scene.get_node("Description").get_parsed_text().contains(label), "Created character sheet retains Sage training: " + label)
 	print("Cantrip creator checks passed")
 	quit(0)

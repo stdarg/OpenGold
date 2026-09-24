@@ -783,3 +783,15 @@ Weapon Fighting replacement helper is tested but awaits feat/control integration
 It never rerolls or doubles flat modifiers on critical hits. Actual pre-extraction
 Savage Attacker checkpoints prove unchanged continuation. See
 [Great Weapon Fighting](GREAT-WEAPON-FIGHTING.md).
+
+Rules 0.6.30 adds the eleven missing starting class skill catalogs to the shared
+training service, preserving Rogue's catalog. PC19 selects that policy; older
+profiles retain their original lists. The campaign choice map is unchanged and
+old missing selections remain pending. Reused checkbox callbacks are rebound to
+the current class entitlement without replacing the focused control. Presets
+use the existing rules-driven generator. See [class skills](CLASS-SKILLS.md).
+
+Class skill groups share a continuity key while retaining distinct source IDs.
+Core uses that metadata to carry selections across class changes, then prunes
+options and counts against the new group. Rules remain responsible for lists,
+counts and provenance; Core contains no SRD class-specific transfer logic.

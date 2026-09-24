@@ -211,6 +211,7 @@ void CharacterCreationView::party_check()
             if(before==CreationStep::training){
                 get_node<CheckBox>("Training/Rows/Group0/elvish")->set_pressed(true);
                 get_node<CheckBox>("Training/Rows/Group0/dwarvish")->set_pressed(true);
+        get_node<CheckBox>("Training/Rows/Group2/athletics")->set_pressed(true);get_node<CheckBox>("Training/Rows/Group2/history")->set_pressed(true);
                 get_node<OptionButton>("Training/Rows/Group1/Choice")->select(2);get_node<OptionButton>("Training/Rows/Group1/Choice")->emit_signal("item_selected",2);
             }
             next();

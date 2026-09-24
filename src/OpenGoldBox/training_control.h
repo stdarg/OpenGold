@@ -19,6 +19,17 @@ inline godot::String training_string(std::string_view s){return godot::String::u
 template<class Translate> godot::String training_source(std::string_view id,const Translate& tr){
     if(id=="origin:languages")return tr(N_("Starting languages"));
     if(id=="class:fighter:fighting_style")return tr(N_("Fighter Fighting Style"));
+    if(id=="class:barbarian")return tr(N_("Barbarian class"));
+    if(id=="class:bard")return tr(N_("Bard class"));
+    if(id=="class:cleric")return tr(N_("Cleric class"));
+    if(id=="class:druid")return tr(N_("Druid class"));
+    if(id=="class:fighter")return tr(N_("Fighter class"));
+    if(id=="class:monk")return tr(N_("Monk class"));
+    if(id=="class:paladin")return tr(N_("Paladin class"));
+    if(id=="class:ranger")return tr(N_("Ranger class"));
+    if(id=="class:sorcerer")return tr(N_("Sorcerer class"));
+    if(id=="class:warlock")return tr(N_("Warlock class"));
+    if(id=="class:wizard")return tr(N_("Wizard class"));
     if(id=="class:rogue")return tr(N_("Rogue class"));
     if(id=="class:rogue:expertise")return tr(N_("Rogue Expertise"));
     if(id=="class:rogue:thieves_cant")return tr(N_("Rogue / Thieves' Cant"));
@@ -102,14 +113,17 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
                 check->hide();check->set_disabled(true);
             }
         }
-        for(const auto& option:group.options){
+        int option_index=1;for(const auto& option:group.options){
             const auto node_name=training_string(option.id);auto* check=Object::cast_to<CheckBox>(box->get_node_or_null(node_name));
             if(!check){auto owned=make_node<CheckBox>();owned->set_name(node_name);check=attach_child(*box,std::move(owned));
                 check->set_focus_mode(Control::FOCUS_ALL);check->set_custom_minimum_size(Vector2(0,34));
                 check->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
-                check->connect("toggled",toggled.bind(training_string(group.id),node_name));
                 style_choice(*check);
             }
+            // A reused row can now belong to another class's skill group.
+            if(check->has_meta("training_callback")){const Callable previous=check->get_meta("training_callback");check->disconnect("toggled",previous);}
+            const auto callback=toggled.bind(training_string(group.id),node_name);check->connect("toggled",callback);check->set_meta("training_callback",callback);
+            box->move_child(check,option_index++);
             const bool selected=std::find(picked.begin(),picked.end(),option.id)!=picked.end();
             check->set_text(tr(option.label));check->set_pressed_no_signal(selected);check->set_disabled(!selected&&picked.size()>=group.count);check->show();
             check->set_tooltip_text(training_source(group.id,tr));

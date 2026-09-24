@@ -581,7 +581,7 @@ void RolfTourView::check_town()
         get_node<Button>("InventoryPanel/Equip")->emit_signal("pressed");
         const auto retained=campaign_->checkpoint();auto changed=retained;
         auto& member=changed.roster.at(0);auto inventory=member.character.inventory();auto draft=member.character.creation_data();draft.character_class="wizard";
-        draft.training.erase("class:fighter:fighting_style"); // This untrained-shield fixture changes class.
+        draft.training.erase("class:fighter");draft.training.erase("class:fighter:fighting_style"); // This untrained-shield fixture changes class.
         member.character=opengold::Character(*opengold::srd5::character_rules(),draft,member.character.appearance());member.character.inventory()=std::move(inventory);member.equipped.clear();member.vitals={member.character.sheet().hit_points,false,{}};
         campaign_->restore(changed);refresh_inventory();get_node<ItemList>("InventoryPanel/Items")->select(0);
         get_node<Button>("InventoryPanel/Equip")->emit_signal("pressed");

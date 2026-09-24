@@ -94,6 +94,55 @@ func background_captures(background: String, translated: String) -> void:
 	await press("Back")
 	await press("Next")
 
+func all_class_skill_controls() -> void:
+	for klass in ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Sorcerer", "Warlock", "Wizard"]:
+		await choose("Choices", klass)
+		await press("Next")
+		var group := 2 if klass == "Fighter" else 1
+		var count := 3 if klass in ["Bard", "Ranger"] else 2
+		var box: VBoxContainer = current_scene.get_node("Training/Rows/Group%d" % group)
+		var checks: Array[CheckBox] = []
+		for child in box.get_children():
+			if child is CheckBox and child.visible: checks.append(child)
+		require(checks.size() >= count and box.get_node("Title").text == klass + " skills (0 / " + str(count) + ")", "Fresh class skill group: " + klass)
+		checks[0].grab_focus()
+		await keyboard(KEY_SPACE)
+		require(checks[0].button_pressed and checks[0].has_focus(), "Class skill keyboard selection retains focus: " + klass)
+		for i in range(1, count):
+			checks[i].set_pressed(true)
+			await settle()
+		require(box.get_node("Title").text.ends_with("(%d / %d)" % [count, count]) and checks[count].disabled, "Class skill count and selection limit: " + klass)
+		await press("Back")
+		await press("Next")
+		require(checks[0].button_pressed and checks[count - 1].button_pressed, "Back preserves class skills: " + klass)
+		await pick(0, "elvish")
+		await pick(0, "dwarvish")
+		if klass == "Fighter": await choose("Training/Rows/Group1/Choice", "Defense")
+		require(not current_scene.get_node("Next").disabled, "Every class can finish all supported Training choices: " + klass)
+		await press("Next")
+		require(current_scene.get_node("PageTitle").text == ("Spell Choices" if klass in ["Cleric", "Wizard"] else "Name"), "Completed Training reaches the next creation step: " + klass)
+		await press("Back")
+		await pick(0, "elvish", false)
+		await pick(0, "dwarvish", false)
+		if klass in ["Bard", "Wizard"]:
+			for locale in ["en", "es"]:
+				TranslationServer.set_locale(locale)
+				await press("Back")
+				await press("Next")
+				require(box.get_node("Title").text.begins_with(klass + " skills" if locale == "en" else "Habilidades de"), "Class skill heading is translated")
+				for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+					root.size = size
+					await settle()
+					current_scene.get_node("Training").scroll_vertical = int(box.position.y)
+					await settle()
+					await capture("skills-" + klass.to_lower() + "-" + locale + "-" + str(size.x))
+			TranslationServer.set_locale("en")
+			root.size = Vector2i(1120, 800)
+		for check in checks:
+			if check.button_pressed: check.set_pressed(false)
+		await settle()
+		await press("Back")
+
 func run_checks() -> void:
 	change_scene_to_file("res://scenes/character_creation.tscn")
 	await settle()
@@ -102,14 +151,19 @@ func run_checks() -> void:
 	await press("Next")
 	await press("Next")
 	await choose("Background", "Criminal")
-	for attempt in range(100):
-		await press("Roll")
-		if current_scene.get_node("Dice1").get_parsed_text().to_int() >= 13:
-			break
-	require(current_scene.get_node("Dice1").get_parsed_text().to_int() >= 13, "Fixture needs eligible Rogue and Fighter")
+	var qualified := false
+	for attempt in range(2000):
+		current_scene.get_node("Roll").pressed.emit()
+		qualified = true
+		for ability in [0, 1, 3, 4, 5]:
+			qualified = qualified and current_scene.get_node("Dice" + str(ability)).get_parsed_text().to_int() >= 13
+		if qualified: break
+	require(qualified, "Fixture needs all twelve classes' primary abilities")
+	await settle()
 	for i in range(6):
 		await drag(current_scene.get_node("Dice" + str(i)).get_global_rect().get_center(), current_scene.get_node("Score" + str(i)).get_global_rect().get_center())
 	await press("Next")
+	await all_class_skill_controls()
 	await choose("Choices", "Rogue")
 	await press("Next")
 	require(current_scene.get_node("PageTitle").text == "Training", "Training must follow Class")
@@ -173,6 +227,7 @@ func run_checks() -> void:
 	var style: OptionButton = current_scene.get_node("Training/Rows/Group1/Choice")
 	require(style.is_visible_in_tree() and style.selected == 0 and current_scene.get_node("Next").disabled, "Fighter must choose a starting style")
 	require(current_scene.get_node("Training/Rows/Group1").get_index() == 0 and not current_scene.get_node("Training/Rows/Group1/acrobatics").visible, "Style must appear above languages without Rogue controls")
+	require(current_scene.get_node("Training/Rows/Group2/acrobatics").button_pressed and current_scene.get_node("Training/Rows/Group2/persuasion").button_pressed, "Fighter keeps compatible Rogue skill selections up to its limit")
 	style.grab_focus()
 	await keyboard(KEY_SPACE)
 	require(style.get_popup().visible, "Keyboard must open the style dropdown")
@@ -202,7 +257,7 @@ func run_checks() -> void:
 	await press("Back")
 	await choose("Choices", "Rogue")
 	await press("Next")
-	require(not style.visible and current_scene.get_node("Next").disabled and not current_scene.get_node("Training/Rows/Group1/acrobatics").button_pressed, "Returning to Rogue invents prior choices")
+	require(not style.visible and current_scene.get_node("Next").disabled and current_scene.get_node("Training/Rows/Group1/acrobatics").button_pressed, "Returning to Rogue keeps valid skills and requires its missing choices")
 	for skill in ["acrobatics", "investigation", "perception", "persuasion"]:
 		await pick(1, skill)
 	await pick(2, "perception")
@@ -221,5 +276,5 @@ func run_checks() -> void:
 	require(sheet.contains("Supported training choices complete") and sheet.contains("Perception +") and sheet.contains("Rogue Expertise") and sheet.contains("Undercommon") and sheet.contains("Soldier background") and sheet.contains("Athletics +") and sheet.contains("Intimidation +"), "Sheet lacks bonuses, sources or languages")
 	await press("AddParty")
 	require(current_scene.get_node("PartyPanel/Sheet").get_parsed_text().contains("Supported training choices complete"), "Adding to party lost training")
-	print("Training UI checks passed: keyboard, limits, dependent Expertise, Back, background/class changes, sheet and party.")
+	print("Training UI checks passed: all twelve class skill lists, keyboard, limits, dependent Expertise, Back, background/class changes, sheet and party.")
 	quit(0)

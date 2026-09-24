@@ -10,7 +10,8 @@ completion of missing choices in existing saves remains in #189.
 ## First supported package
 
 - All eighteen skills have their ordinary governing abilities and derived bonuses.
-- Rogue chooses four skills from its SRD list and two proficient skills for
+- All twelve classes choose their starting skills from their SRD lists; see
+  [class skill coverage](CLASS-SKILLS.md). Rogue chooses four and two proficient skills for
   Expertise. Its fixed Thieves' Tools and Thieves' Cant grants retain class sources.
 - Criminal grants Sleight of Hand, Stealth and Thieves' Tools with background sources.
 - Every character knows Common and chooses two distinct other standard languages.
@@ -21,7 +22,7 @@ completion of missing choices in existing saves remains in #189.
   proficiency reject. Both sources of an overlapping class/background proficiency
   persist; overlap supplies no second bonus or automatic replacement choice.
 
-Other class/background proficiency packages, feats (including Criminal's Alert),
+Other tool/background packages and later class proficiency features, feats (including Criminal's Alert),
 starting equipment, higher-level Rogue features and campaign uses of skills remain
 in their respective plan issues. A completed training selection means only that
 the choices supported by this increment are filled, not that the class is complete.

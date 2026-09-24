@@ -152,7 +152,7 @@ void migration(){
     const auto decline=command(*combat,"decline");check(combat->submit(decline)&&combat->save()==upgrade(fixture("combat-v10-damage-continued.save"),rules->identity()),"Pre-change writer's pending movement continues byte-for-byte apart from identity");
     CampaignParty pending(module());const auto pending_id=pending.add_pc(hero("dwarf","fighter",2));auto waiting=pending.checkpoint();
     waiting.roster[0].vitals=party.member(1).vitals;pending.restore(waiting);
-    pending.complete_training(pending_id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}}});
+    pending.complete_training(pending_id,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}},{"class:fighter:fighting_style",{"archery"}},{"class:fighter",{"athletics","history"}}});
     check(pending.member(pending_id).vitals==waiting.roster[0].vitals,"Completing missing training preserves resistance and the full vital continuation");
     const auto& dwarf=party.member(1);const auto before=dwarf.vitals;rejects([&]{party.complete_training(1,*srd5::character_rules(),{{"origin:languages",{"elvish","orc"}}});});
     check(party.member(1).vitals==before,"Repeated completed training cannot change a resistant character");
@@ -188,12 +188,14 @@ void damage_rolls(){
 }
 void gwf_prior_continuation(){
     auto rules=module();const auto root=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures";
+    auto current=[&](std::string bytes){const auto at=bytes.find("0.6.29");check(at!=bytes.npos,"Prior writer identity exists");bytes.replace(at,6,rules->identity().version);return bytes;};
     const auto campaign=read(root/"campaign-v11-gwf-before.ogs");CampaignParty party(module());party.restore(decode_campaign(campaign,*srd5::character_rules(),*rules,"gwf-fixture",nullptr).party);
-    check(encode_campaign(party,nullptr,"gwf-fixture")==campaign,"Extracted roller preserves the actual previous writer's campaign exactly");
-    auto combat=rules->restore(read(root/"combat-v14-gwf-first.save"));check(combat->save()==read(root/"combat-v14-gwf-first.save"),"Actual critical first-roll choice restores exactly");
+    auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};
+    check(body(encode_campaign(party,nullptr,"gwf-fixture"))==body(current(campaign)),"Prior campaign changes only module identity");
+    auto combat=rules->restore(read(root/"combat-v14-gwf-first.save"));check(combat->save()==current(read(root/"combat-v14-gwf-first.save")),"Actual critical first-roll choice restores exactly");
     auto act=[&](std::string_view verb){for(const auto& c:combat->legal_commands())if(c.verb==verb){check(combat->submit(c),"Prior continuation command accepted");return;}throw std::runtime_error("Missing continuation command");};
-    act("savage_use");check(combat->save()==read(root/"combat-v14-gwf-second.save"),"Second critical damage roll matches the pre-extraction writer's RNG and result");
-    combat=rules->restore(combat->save());act("savage_second");check(combat->save()==read(root/"combat-v14-gwf-resolved.save"),"Applying the saved roll matches prior HP, action and Savage expenditure");
+    act("savage_use");check(combat->save()==current(read(root/"combat-v14-gwf-second.save")),"Second critical damage roll matches the pre-extraction writer's RNG and result");
+    combat=rules->restore(combat->save());act("savage_second");check(combat->save()==current(read(root/"combat-v14-gwf-resolved.save")),"Applying the saved roll matches prior HP, action and Savage expenditure");
 }
 void freeze_gwf(){
     auto rules=module();check(rules->identity().version=="0.6.29","Requires the actual pre-Great Weapon Fighting writer");

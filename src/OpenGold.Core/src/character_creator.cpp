@@ -31,6 +31,17 @@ void CharacterCreator::select(CreationField field,std::string_view id)
     case CreationField::alignment:candidate.alignment=id;break;
     case CreationField::background:candidate.background=id;candidate.adjustment=0;break;
     }
+    if(field==CreationField::character_class&&candidate.character_class!=draft_.character_class){
+        const auto previous=rules_->training_options(draft_),next=rules_->training_options(candidate);
+        for(const auto& old:previous){
+            if(old.continuity_id.empty())continue;
+            const auto values=candidate.training.find(old.id);
+            const auto group=std::find_if(next.begin(),next.end(),[&](const auto& g){return g.continuity_id==old.continuity_id;});
+            if(values!=candidate.training.end()&&group!=next.end()&&group->id!=old.id){
+                candidate.training[group->id]=std::move(values->second);candidate.training.erase(values);
+            }
+        }
+    }
     const auto cantrips=rules_->cantrip_options(candidate);
     if(!candidate.cantrips)candidate.cantrips.emplace();
     std::erase_if(*candidate.cantrips,[&](const auto& id){return std::none_of(cantrips.options.begin(),cantrips.options.end(),[&](const auto& o){return o.id==id;});});

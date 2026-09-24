@@ -22,7 +22,7 @@ and fixed damage. Actual rules 0.6.29 files from `88c2649` preserve a wounded
 Fighter with starting Defense, level-four Archery and Soldier Savage Attacker.
 The combat files record a critical Greatsword hit before the Savage decision,
 after the second roll and after accepting it. Current combat reproduces these
-files exactly, including action expenditure, HP, grants and random state.
+files apart from module identity on later writers, including action expenditure, HP, grants and random state.
 
 ## Remaining integration
 

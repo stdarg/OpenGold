@@ -8,27 +8,30 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. #80 Great Weapon Fighting has a shared damage-roll foundation;
-see [evidence and remaining integration](GREAT-WEAPON-FIGHTING.md). Combat uses
-the normal rule; the feat is not yet selectable/applied. Independent tests prove
-per-die replacement without rerolls, critical dice with one flat modifier and
-successive Savage rolls. Actual 0.6.29 files from `88c2649` reproduce a critical
-Greatsword/Savage sequence exactly. No format/module version changed.
+Branch `main`. #213 completes starting class skill choices for all twelve classes
+through the existing Training groups and sourced sheet display. Exact SRD lists
+include Fighter Persuasion and Wizard Nature; Bard/Ranger choose three, Rogue
+four, others two. Presets fill choices deterministically. Old saves retain missing
+choices as pending, while Rogue keeps its prior selections. See
+[class skills](CLASS-SKILLS.md). This does not close full class packages or #29/#52.
 
-**Q23 is pending:** automatic beneficial replacement, or an optional choice on
-each eligible hit. Do not enable either combat behavior until answered. Meanwhile
-other independently actionable backlog work is authorized. For full #80, add
-eligibility/grants, both starting and advancement selectors, reactions/current
-continuation validation, spell/unarmed/thrown exclusions and class routes.
-`damage_roll.h`, `srd5.cpp` and `damage_tests.cpp` are the foundation entry points.
+Rules 0.6.30 / PC19 / FX2; campaign 11 / combat 13–15 unchanged. Actual 0.6.29
+fixtures from `8da4565` preserve twelve classes, recorded training, supported
+advancement, wounds and spent resources. New class grants reject under old
+identities. Reused checkbox callbacks are rebound to the current class source;
+controls retain focus and catalog order. Compatible skill choices transfer on
+class changes through rules-owned continuity metadata; all 144 class pairs are
+verified without putting SRD class names in Core. Main/demo share that implementation.
+Entry points: `training.*`, `srd5.cpp`, `training_control.h`, training native/UI
+tests and the actual fixtures. Full-party Wizard fixtures clear Fighter training
+when temporarily changing class for the untrained-shield test.
 
-Fighter starting Archery/Defense (#85, approved Q22) is delivered in `88c2649`:
-required dropdown above languages, keyboard access, Back preservation, generated
-presets and old pending choices. Rules 0.6.29 / PC18 / FX2; campaign 11 / combat
-13–15. See [Fighter styles](FIGHTER-STYLES.md). #85 remains open for other styles,
-replacement on Fighter level-up and mastery; #78/#79 retain class routes.
-Replacement is not pending-training completion: that API preserves chosen
-selections. Any new level-up control layout requires a numbered question.
+**Next: resume #80 if Q23 is answered; otherwise continue independent class
+training or passive-trait work.** Q23 remains pending: automatic Great Weapon
+Fighting replacement or an optional choice per hit. Do not enable either behavior
+without the answer. The [damage-roll foundation](GREAT-WEAPON-FIGHTING.md) is in
+`8da4565`; the feat is not selectable/applied. Other styles, Fighter level-up
+replacement and mastery remain #85. Q22 approves only the starting style selector.
 
 ## Next work and pending questions
 
@@ -82,8 +85,9 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-Starting-style verification remains in FIGHTER-STYLES.md. For the damage-roll
-foundation, all 41 native/tool checks pass; main/demo builds and the combat/Savage
-Godot checks (plus native prerequisite) pass. No new UI or localization changes.
-Logs: `/tmp/opengold-gwf-regression.log`, `/tmp/opengold-gwf-godot.log` and
-`/tmp/opengold-gwf-demo.log`. No live build/test processes remain.
+#213 verification is recorded in CLASS-SKILLS.md: 41 native/tool regression checks pass,
+including all 144 class-to-class preservation cases. All 16 Godot runtime checks and seven native prerequisites
+pass. All-class Training, Wizard/Cleric creation, main/demo creation and full party
+flows pass. Main/demo builds and 777-message localization validate. English/Spanish
+Bard/Wizard lists inspected at both sizes: `/tmp/opengold-class-skills-renders`.
+No live build/test processes remain. Prior feature evidence stays in its documents.

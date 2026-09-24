@@ -130,7 +130,7 @@ void creation_tests()
     check(selected,"Fixture has a qualified class");creator.next();
     check(creator.step()==CreationStep::training,"Class advances to Training regardless of future target eligibility");
     rejects([&]{creator.next();},"Required training blocks Name");
-    creator.training_choice("origin:languages","elvish",true);creator.training_choice("origin:languages","dwarvish",true);creator.next();
+    creator.training_choice("origin:languages","elvish",true);creator.training_choice("origin:languages","dwarvish",true);creator.training_choice("class:cleric","medicine",true);creator.training_choice("class:cleric","persuasion",true);creator.next();
     check(creator.draft().character_class=="cleric"&&creator.step()==CreationStep::spell_choices,"Completed Cleric training advances to Spell Choices");
     creator.cantrip_choice("sacred_flame",true);creator.next();
     check(creator.step()==CreationStep::name,"Spell Choices advances to Name");rejects([&]{creator.next();},"Name required before portrait");

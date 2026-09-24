@@ -416,3 +416,16 @@ spent Second Wind. Seed zero produces a critical Greatsword hit; the combat
 files capture the first Savage Attacker decision, second rolled result and its
 application. Files are unedited. The foundation checks exact campaign bytes and
 both real command transitions, including RNG, HP and action/feat expenditure.
+
+### All-class skill choices prior writer (rules 0.6.29)
+
+`campaign-v11-class-skills-before.ogs` and
+`combat-v14-class-skills-before.save` were written by the actual 0.6.29 libraries
+at `8da4565`, before the class skill catalog changed. `freeze_class_skills()` in
+training_tests.cpp requires that writer. All twelve classes have recorded
+languages; Rogue has skills/Expertise and Fighter has Archery. Fighter, Cleric
+and Wizard have level-four histories; everyone has wounds, with spent resources
+for the supported classes. Campaign members are in reserve to fit the existing
+six active-PC limit; the combat fixture includes all twelve participants.
+The files are unedited. Migration preserves all data except module identity and
+campaign checksum, leaving the newly supported selections pending.
