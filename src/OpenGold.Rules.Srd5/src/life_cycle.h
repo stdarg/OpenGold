@@ -1,5 +1,6 @@
 #ifndef OPENGOLD_SRD5_LIFE_CYCLE_H
 #define OPENGOLD_SRD5_LIFE_CYCLE_H
+#include "opengold/rules.h"
 #include <cstdint>
 
 namespace opengold::srd5::detail {
@@ -13,15 +14,20 @@ struct LifeState {
     int hp{}, successes{}, failures{};
     bool stable{}, dead{};
     RecoveryClock recovery;
+    rules::TemporaryHitPoints temporary_hp;
     bool operator==(const LifeState&) const = default;
 };
 void validate_recovery(const LifeState& state);
+void validate_temporary_hp(const rules::TemporaryHitPoints& pool);
+void grant_temporary_hp(LifeState&,const rules::TemporaryHitPoints&,rules::TemporaryHpChoice);
 // Earlier saves have no timing history. Initialization never rolls or invents
 // elapsed time. A Stable delay of zero means its one recovery roll is pending.
 void initialize_legacy_recovery(LifeState& state);
 void stabilize(LifeState& state,std::uint64_t& rng);
 [[nodiscard]] int death_save(LifeState& state,std::uint64_t& rng);
 void damage_life(LifeState& state,int amount,int maximum_hp,bool critical=false,bool dies_at_zero=false);
+// Original script assignments change actual HP, bypassing the damage buffer.
+void set_life_hit_points(LifeState& state,int hit_points,int maximum_hp);
 [[nodiscard]] int heal_life(LifeState& state,int amount,int maximum_hp);
 void start_stable_recovery(LifeState& state,std::uint64_t& rng);
 // Combat rolls death saves at turn entry; this only retains its remaining

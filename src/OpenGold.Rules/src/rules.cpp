@@ -21,6 +21,8 @@ RestPolicy RulesModule::short_rest_policy() const
 { throw std::runtime_error("This rules module does not support Short Rests"); }
 RecoveryInfo RulesModule::recovery_info(const CharacterSheet&,const VitalState&) const
 { throw std::runtime_error("This rules module does not support recovery information"); }
+void RulesModule::grant_temporary_hit_points(VitalState&,const CharacterSheet&,const TemporaryHitPoints&,TemporaryHpChoice) const
+{ throw std::runtime_error("This rules module does not support Temporary Hit Points"); }
 void RulesModule::recover_short_rest(VitalState&,const CharacterSheet&) const
 { throw std::runtime_error("This rules module does not support Short Rests"); }
 HitDieResult RulesModule::spend_hit_die(VitalState&,const CharacterSheet&,std::uint64_t&) const

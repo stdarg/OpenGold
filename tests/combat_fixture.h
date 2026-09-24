@@ -12,7 +12,7 @@
 
 namespace opengold::test {
 // Independent expected transformation for frozen format-eight files: replace
-// identity/format and append the known Hit Dice and recovery clocks to each actor row. Every
+// identity/format and append the known Hit Dice and recovery clocks and an empty Temporary HP pool to each actor row. Every
 // other byte (including recipes, RNG, turn state, effects and queues) is retained.
 inline std::string with_hit_dice(std::string_view bytes,const rules::Identity& identity,const std::map<unsigned,unsigned>& counts,const std::map<unsigned,unsigned>& death_clocks={})
 {
@@ -22,11 +22,11 @@ inline std::string with_hit_dice(std::string_view bytes,const rules::Identity& i
     std::istringstream header(rows[0]);std::string magic,module,previous,content;unsigned format{};
     header>>magic>>format>>std::quoted(module)>>std::quoted(previous)>>std::quoted(content);
     if(!header||magic!="OGCOMBAT"||format!=8)throw std::runtime_error("Expected frozen format eight");
-    std::ostringstream next;next<<"OGCOMBAT 10 "<<std::quoted(module)<<' '<<std::quoted(identity.version)<<' '<<std::quoted(identity.content);rows[0]=next.str();
+    std::ostringstream next;next<<"OGCOMBAT 11 "<<std::quoted(module)<<' '<<std::quoted(identity.version)<<' '<<std::quoted(identity.content);rows[0]=next.str();
     std::istringstream state(rows[3]);std::uint64_t value{};for(unsigned i=0;i<5;++i)state>>value;
     unsigned size{};state>>size;
     if(!state||rows.size()<4+size||size!=counts.size())throw std::runtime_error("Unexpected frozen actor count");
-    for(unsigned i=0;i<size;++i){std::istringstream actor(rows[4+i]);unsigned id{};actor>>id;rows[4+i]+=' '+std::to_string(counts.at(id))+' '+std::to_string(death_clocks.contains(id)?death_clocks.at(id):0)+" 0";}
+    for(unsigned i=0;i<size;++i){std::istringstream actor(rows[4+i]);unsigned id{};actor>>id;rows[4+i]+=' '+std::to_string(counts.at(id))+' '+std::to_string(death_clocks.contains(id)?death_clocks.at(id):0)+" 0 0 \"\"";}
     std::string result;for(const auto& row:rows)result+=row+'\n';return result;
 }
 }

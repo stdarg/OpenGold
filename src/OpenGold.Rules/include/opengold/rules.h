@@ -53,6 +53,12 @@ struct VitalState {
     std::string description;
     bool operator==(const VitalState&) const = default;
 };
+struct TemporaryHitPoints {
+    int amount{};
+    std::string source_id;
+    bool operator==(const TemporaryHitPoints&) const = default;
+};
+enum class TemporaryHpChoice { keep_current, use_new };
 struct RestPolicy {
     unsigned duration_minutes{}, wait_after_rest_minutes{};
 };
@@ -65,6 +71,7 @@ struct RecoveryInfo {
     unsigned hit_die{}, hit_dice{}, hit_dice_max{};
     bool can_rest{};
     std::vector<ResourcePool> resources;
+    TemporaryHitPoints temporary_hp;
 };
 struct HitDieResult {
     unsigned die{};
@@ -111,6 +118,7 @@ struct CombatantView {
     bool ranged_attack_available{};
     EquipmentState equipment;
     std::vector<GripOption> grips;
+    TemporaryHitPoints temporary_hp;
 };
 struct Snapshot {
     Identity identity;
@@ -163,6 +171,9 @@ public:
     virtual bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const;
     virtual void recover(VitalState& state, const CharacterSheet& sheet) const;
     [[nodiscard]] virtual RecoveryInfo recovery_info(const CharacterSheet&,const VitalState&) const;
+    // A granting feature must establish entitlement and spend its costs before
+    // calling this operation. The choice is explicit; pools never stack.
+    virtual void grant_temporary_hit_points(VitalState&,const CharacterSheet&,const TemporaryHitPoints&,TemporaryHpChoice) const;
     // The campaign must establish completed-rest eligibility before invoking
     // these resource operations. Each spend commits one die and its RNG draw.
     virtual void recover_short_rest(VitalState&,const CharacterSheet&) const;

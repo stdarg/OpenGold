@@ -266,7 +266,10 @@ interruption/resumption state machine before closing #30. See [rest resources](R
 for the implemented boundary and verification.
 F04a and F04c complete #31. Help/Medicine controls and checks remain #32.
 F05 #33 supplies [typed damage and Dwarf Poison resistance](DAMAGE.md).
-Temporary HP and replacement choices remain F05b #34.
+F05b #34 is split into #196 (native Temporary HP state, absorption, expiry and
+persistence) and #197 (Orc Adrenaline Rush and the reviewed HP/replacement controls).
+Keep #34 open until its ordinary gameplay and campaign acceptance are complete.
+See [Temporary HP](TEMPORARY-HP.md).
 The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

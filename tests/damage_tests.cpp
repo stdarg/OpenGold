@@ -123,7 +123,12 @@ void weapons_and_spells(){
     check(instances==3&&1000-unit(*resisted,2).hit_points==expected,"Each Magic Missile dart rounds separately before summing HP loss");
 }
 std::string fixture(const char* name){return read(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name);}
-std::string upgrade(std::string bytes,const Identity& identity){const auto end=bytes.find('\n');std::ostringstream header;header<<"OGCOMBAT 10 "<<std::quoted(identity.module)<<' '<<std::quoted(identity.version)<<' '<<std::quoted(identity.content);bytes.replace(0,end,header.str());return bytes;}
+std::string upgrade(std::string bytes,const Identity& identity){
+    std::istringstream in(bytes);std::vector<std::string> rows;for(std::string row;std::getline(in,row);)rows.push_back(row);
+    std::ostringstream header;header<<"OGCOMBAT 11 "<<std::quoted(identity.module)<<' '<<std::quoted(identity.version)<<' '<<std::quoted(identity.content);rows[0]=header.str();
+    for(unsigned i=4;i<8;++i)rows[i]+=" 0 \"\"";
+    std::string result;for(const auto& row:rows)result+=row+'\n';return result;
+}
 void migration(){
     auto rules=module();const auto old=fixture("campaign-v10-damage.ogs");const auto disk=decode_campaign(old,*srd5::character_rules(),*rules,"damage-fixture",nullptr);
     CampaignParty party(module());party.restore(disk.party);

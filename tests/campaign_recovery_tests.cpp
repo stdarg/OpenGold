@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 using namespace opengold;
 using namespace opengold::rules;
@@ -88,8 +89,12 @@ void combat_handoff(){
     auto state=party.checkpoint();state.random_state=17;state.roster[1].vitals=stable(10000);state.roster[2].vitals=unstable();party.restore(state);
     auto actors=party.participants();actors.push_back({999,"bandit","Enemy",1,{7,7}});
     auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},42);
-    auto old_combat=combat->save();old_combat.replace(old_combat.find(rules->identity().version),rules->identity().version.size(),"0.6.11");
-    check(rules->restore(old_combat)->save()==combat->save(),"Previous module's unchanged combat schema migrates without a roll or timing change");
+    std::istringstream old_input(combat->save());std::vector<std::string> old_rows;
+    for(std::string row;std::getline(old_input,row);)old_rows.push_back(row);
+    old_rows[0].replace(9,2,"10");old_rows[0].replace(old_rows[0].find(rules->identity().version),rules->identity().version.size(),"0.6.11");
+    for(std::size_t i=4;i<4+combat->snapshot().combatants.size();++i)for(unsigned field=0;field<2;++field)old_rows[i].resize(old_rows[i].find_last_of(' '));
+    std::string old_combat;for(const auto& row:old_rows)old_combat+=row+'\n';
+    check(rules->restore(old_combat)->save()==combat->save(),"Previous module's combat gains only empty Temporary HP without a roll or timing change");
     auto old_identity=rules->identity();old_identity.version="0.6.11";
     check(rules->accepts_campaign_identity(old_identity),"Previous campaign module remains accepted");
     auto direct=loaded(saved(party));party.begin_combat();party.apply_combat(combat->snapshot());

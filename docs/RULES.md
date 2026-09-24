@@ -127,10 +127,10 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
-Rules module **0.6.13** writes **OGCOMBAT 10**, including selected weapon grip, an
-involuntary shared-space marker, remaining Hit Dice and recovery clocks. Combat migration accepts **0.6.4**, format 5,
+Rules module **0.6.14** writes **OGCOMBAT 11**, including selected weapon grip, an
+involuntary shared-space marker, remaining Hit Dice, recovery clocks and sourced Temporary HP. Combat migration accepts **0.6.4**, format 5,
 **0.6.5**, format 6, **0.6.6**, format 7, **0.6.7/0.6.8/0.6.9**, format 8,
-**0.6.10**, format 9, and **0.6.11/0.6.12**, format 10,
+**0.6.10**, format 9, and **0.6.11/0.6.12/0.6.13**, format 10,
 with matching module/content IDs or the verified preceding pack before damage metadata.
 A valid saved facing-only queue is canceled; the attacker resumes with the same
 HP, movement, spent resources, RNG and clock. The command revision changes to
@@ -296,3 +296,6 @@ Reference content and attribution are recorded in
 Rules 0.6.13 introduces [typed damage](DAMAGE.md), creature damage/defense metadata
 and Dwarf Poison resistance. PC8 requires its fixed sourced grant; PC1–PC7 remain
 readable without inventing selections. Campaign and combat stay at format 10.
+
+Rules 0.6.14 adds the [Temporary HP native foundation](TEMPORARY-HP.md), combat
+format 11 and SRD6. Playable granting features and replacement controls remain #197.

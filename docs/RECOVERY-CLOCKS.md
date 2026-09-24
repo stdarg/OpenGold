@@ -62,7 +62,7 @@ snapshots and failed original events cannot partially advance recovery.
 
 ## Persistence and migration
 
-Rules **0.6.13** writes **OGCOMBAT 10**. Each actor row adds the remaining death-save
+Rules **0.6.14** writes **OGCOMBAT 11**. Each actor row adds the remaining death-save
 and Stable-recovery milliseconds after its Hit Dice count. **SRD5** vital
 continuation carries both clocks alongside existing pools, counters, Hit Dice
 and FX1 effects for living zero-HP characters. Healthy/dead actors retain the
@@ -74,7 +74,7 @@ creatures have no death-save timer, and unstable creatures have no Stable timer.
 Death-save intervals cannot exceed six seconds and a Stable countdown cannot
 exceed four hours. Malformed clocks reject before replacing live state.
 
-Earlier supported campaign formats and combat modules through **0.6.12** retain
+Earlier supported campaign formats and combat modules through **0.6.13** retain
 wounds, counters, spent resources, effects, equipment, RNG and pending movement.
 Module 0.6.11 clocks retain their exact timing. Formats predating clocks have
 unknown timer history, which is never backdated. Legacy unstable campaign
@@ -121,3 +121,7 @@ warning on exit; its acceptance assertions and the node-ownership check pass.
 Scope review confirms C++20/RAII, borrowed synchronous views and unchanged UI
 controls/layout. Rules module 0.6.11 compatibility is tested without changing
 save schemas or introducing load-time recovery.
+
+Combat 11 appends sourced Temporary HP after the recovery clocks; SRD6 carries
+both. Natural recovery and death-save healing retain the pool. See
+[Temporary HP](TEMPORARY-HP.md).

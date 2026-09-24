@@ -62,6 +62,9 @@ Poison damage or an invented hazard conversion.
 
 ## Saves
 
+The following records F05 at delivery. The later [Temporary HP foundation](TEMPORARY-HP.md)
+uses module 0.6.14, combat 11 and SRD6 while retaining the same damage/profile rules.
+
 Rules **0.6.13** writes **PC8** recipes that require the new sourced resistance.
 PC1–PC7 remain readable: their declared Dwarf species supplies the fixed trait
 without fabricated player selections, and their old grant schema is validated.

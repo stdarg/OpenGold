@@ -4,6 +4,21 @@
 #include <stdexcept>
 
 namespace opengold::srd5::detail {
+void validate_temporary_hp(const rules::TemporaryHitPoints& pool)
+{
+    if(pool.amount<0||(pool.amount==0)!=pool.source_id.empty()||pool.source_id.size()>128||
+        std::any_of(pool.source_id.begin(),pool.source_id.end(),[](unsigned char c){
+            return !((c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c==':'||c=='/'||c=='_'||c=='-'||c=='.');
+        }))throw std::runtime_error("Invalid Temporary Hit Points");
+}
+void grant_temporary_hp(LifeState& state,const rules::TemporaryHitPoints& offered,rules::TemporaryHpChoice choice)
+{
+    validate_temporary_hp(state.temporary_hp);validate_temporary_hp(offered);
+    if(state.dead||!offered.amount)throw std::runtime_error("Temporary Hit Points require a living recipient and a positive grant");
+    if(choice==rules::TemporaryHpChoice::use_new)state.temporary_hp=offered;
+    else if(choice!=rules::TemporaryHpChoice::keep_current||!state.temporary_hp.amount)
+        throw std::runtime_error("Invalid Temporary Hit Point choice");
+}
 void validate_recovery(const LifeState& state)
 {
     const auto& clock=state.recovery;
@@ -39,17 +54,36 @@ int death_save(LifeState& state,std::uint64_t& rng)
     else if(state.successes>=3)stabilize(state,rng);
     return natural;
 }
-void damage_life(LifeState& state,int amount,int maximum_hp,bool critical,bool dies_at_zero)
+namespace {
+void apply_damage(LifeState& state,int damage,int hp_loss,int maximum_hp,bool critical,bool dies_at_zero)
 {
-    if(amount<0||maximum_hp<1||state.hp<0||state.hp>maximum_hp)throw std::runtime_error("Invalid damage");
-    if(!amount||state.dead)return;
     const bool was_zero=state.hp==0;
-    const int remaining=amount-state.hp;state.hp=std::max(0,state.hp-amount);
+    // A buffer prevents HP loss, not taking damage. At zero HP the original
+    // resolved damage still ends Stable, causes failures and may kill outright.
+    const int remaining=was_zero?damage:hp_loss-state.hp;state.hp=std::max(0,state.hp-hp_loss);
     if(state.hp)return;
     state.stable=false;state.recovery={death_turn_ms,0};
     if(was_zero)state.failures+=critical?2:1;
     else state.successes=state.failures=0;
     if(dies_at_zero||remaining>=maximum_hp||state.failures>=3){state.dead=true;state.recovery={};}
+}
+}
+void damage_life(LifeState& state,int amount,int maximum_hp,bool critical,bool dies_at_zero)
+{
+    if(amount<0||maximum_hp<1||state.hp<0||state.hp>maximum_hp)throw std::runtime_error("Invalid damage");
+    validate_temporary_hp(state.temporary_hp);
+    if(!amount||state.dead)return;
+    const int absorbed=std::min(amount,state.temporary_hp.amount);
+    state.temporary_hp.amount-=absorbed;if(!state.temporary_hp.amount)state.temporary_hp.source_id.clear();
+    apply_damage(state,amount,amount-absorbed,maximum_hp,critical,dies_at_zero);
+}
+void set_life_hit_points(LifeState& state,int hp,int maximum_hp)
+{
+    if(hp<0||hp>maximum_hp||maximum_hp<1||state.hp<0||state.hp>maximum_hp||(state.dead&&hp))
+        throw std::runtime_error("Invalid HP assignment");
+    if(hp==state.hp)return;
+    if(hp>state.hp)(void)heal_life(state,hp-state.hp,maximum_hp);
+    else apply_damage(state,state.hp-hp,state.hp-hp,maximum_hp,false,false);
 }
 int heal_life(LifeState& state,int amount,int maximum_hp)
 {

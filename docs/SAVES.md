@@ -77,9 +77,9 @@ original feature/feat scope before reconstruction. See [training support](TRAINI
 Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
 HP calculation while preserving wounds, zero-HP/dead state and spent resources.
 Rules 0.6.4 also accepts 0.6.3 campaigns without reapplying HP repairs.
-Rules 0.6.13 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12 campaigns. Standalone combat checkpoints
+Rules 0.6.14 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13 campaigns. Standalone combat checkpoints
 retain the post-attack action, Bonus Action, movement and spell usage; the
-[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12 combat migrations](RULES.md#library-boundary) cancel facing-only queues
+[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12/0.6.13 combat migrations](RULES.md#library-boundary) cancel facing-only queues
 and preserve genuine movement reactions. Format 7 also records involuntary
 shared spaces after an allied-transit interruption; healing and recovery retain
 valid checkpoints without moving actors or replenishing resources. Other combat module versions reject.
@@ -170,3 +170,6 @@ Rules 0.6.13 validates the previous grant schema before adding Dwarf Poison
 resistance. PC8 makes that grant mandatory for new Dwarf combat recipes. The
 exact preceding content pack migrates across additive damage metadata; wounds,
 spent resources, RNG and mortality timing remain intact. See [damage](DAMAGE.md).
+
+Rules 0.6.14 adds [Temporary HP](TEMPORARY-HP.md) in combat format 11 and SRD6
+vital state. Campaign format 10 and PC8 remain unchanged; old saves gain no pool.
