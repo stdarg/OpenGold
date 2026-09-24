@@ -1,3 +1,4 @@
+#include "training_control.h"
 #include "godot_nodes.h"
 #include "hp_presentation.h"
 #include "game_resources.h"
@@ -84,6 +85,7 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     text+="\n\n[b]"+i18n::utf8("Inventory")+"[/b]";
     if(character.inventory().empty())text+="\n"+i18n::utf8("Empty");
     for(const auto& item:character.inventory().items())text+="\n"+literal(i18n::utf8(item.name))+" x"+std::to_string(item.quantity);
+    text+=presentation::training_summary(s.training,[](std::string_view source){return i18n::text(source);}).utf8().get_data();
     return gs(text);
 }
 void CharacterCreationView::show_modifiers()

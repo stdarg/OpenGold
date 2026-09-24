@@ -77,6 +77,15 @@ std::vector<Character> character_pool(const rules::CharacterRules& rules,const p
         d.background=primary==0?"soldier":primary==1?"criminal":primary==3?"sage":"acolyte";
         const auto bonuses=rules.adjustments(d.background);
         for(unsigned a=0;a<bonuses.size();++a)if(bonuses[a].bonuses[primary]==2){d.adjustment=a;if(bonuses[a].bonuses[secondary])break;}
+        // Presets include deterministic authored choices. Refresh each group's
+        // options after its prerequisites, including skills before Expertise.
+        const auto groups=rules.training_options(d);
+        for(const auto& requested:groups){
+            const auto current=rules.training_options(d);
+            const auto group=std::find_if(current.begin(),current.end(),[&](const auto& g){return g.id==requested.id;});
+            if(group==current.end()||group->options.size()<group->count)throw std::runtime_error("Incomplete preset training options");
+            for(unsigned n=0;n<group->count;++n)d.training[group->id].push_back(group->options[(name_index+n)%group->options.size()].id);
+        }
         por::CharacterAppearance appearance;
         appearance.portrait_head=por::matching_portrait_head(d.race,d.gender).value_or(art.heads.begin()->first);
         if(!art.heads.contains(appearance.portrait_head))appearance.portrait_head=art.heads.begin()->first;

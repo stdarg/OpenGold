@@ -1,3 +1,4 @@
+#include "training_control.h"
 #include "godot_images.h"
 #include "application_settings.h"
 #include "character_creation_view.h"
@@ -35,7 +36,7 @@ using namespace opengold;
 using namespace opengold::rules;
 namespace {
 String gs(std::string_view s){return String::utf8(s.data(),static_cast<int64_t>(s.size()));}
-const std::array<const char*,7> steps{N_("Race & Gender"),N_("Alignment"),N_("Attributes"),N_("Class"),N_("Name"),N_("Combat appearance"),N_("Character sheet")};
+const std::array<const char*,8> steps{N_("Race & Gender"),N_("Alignment"),N_("Attributes"),N_("Class"),N_("Training"),N_("Name"),N_("Combat appearance"),N_("Character sheet")};
 CreationField choice_field(CreationStep step)
 {
     switch(step){case CreationStep::race:return CreationField::race;
@@ -69,6 +70,7 @@ void CharacterCreationView::_ready()
 {
     i18n::prepare_ui(*this);
     get_node<Label>("PreviewName")->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
+    presentation::setup_training_controls(*this);
     ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);
     // All node pointers here and below are borrowed from the owning scene tree.
     get_node<Button>("Next")->connect("pressed",callable_mp(this,&CharacterCreationView::next));
@@ -188,6 +190,8 @@ void CharacterCreationView::layout()
         place("SwapHint",Rect2(x+202,y+ph-56,pw-222,42));
         get_node<Label>("SwapHint")->add_theme_font_size_override("font_size",13);
     }
+    place("TrainingFixed",Rect2(x+20,y+116,pw-40,126));
+    place("Training",Rect2(x+20,y+250,pw-40,ph-270));
     place("Name",Rect2(x+20,y+138,pw-40,46));
     for(const auto& stem:{std::string("CombatHead"),std::string("Weapon")}) {
         const int row=stem=="CombatHead"?0:1;
@@ -291,6 +295,7 @@ void CharacterCreationView::refresh()
     for(unsigned i=0;i<6;++i)show(gs("Warning"+std::to_string(i)),stats&&creator_->rules().unmet_targets(d)[i]);
     for(const auto* n:{"BaseHeader","BonusHeader","TotalHeader"})show(n,false);
     show("Name",step==CreationStep::name);
+    show("TrainingFixed",step==CreationStep::training);show("Training",step==CreationStep::training);
     for(const auto* n:{"PortraitPrevious","PortraitNext","PortraitSelect","PortraitGender","PortraitClass","PortraitRace"})show(n,true);
     for(const auto* n:{"PortraitPrevious","PortraitNext","PortraitSelect","PortraitGender","PortraitClass","PortraitRace"})get_node<Button>(n)->set_disabled(added_to_party_);
     for(const auto* n:{"CombatHeadPrevious","CombatHeadNext","CombatHeadLabel","WeaponPrevious","WeaponNext","WeaponLabel","Size","ColorTitle","Color1Title","Color2Title","PaletteHint"})show(n,icon);
@@ -310,7 +315,7 @@ void CharacterCreationView::refresh()
     show("Next",step!=CreationStep::sheet);
     if(campaign_)get_node<Button>("AddParty")->set_visible(step==CreationStep::sheet&&!added_to_party_);
     get_node<Button>("Next")->set_text(i18n::text(icon?N_("Show character sheet"):N_("Next")));
-    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::character_class&&!creator_->rules().class_eligible(d,d.character_class))||(step==CreationStep::name&&d.name.empty()));
+    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::character_class&&!creator_->rules().class_eligible(d,d.character_class))||(step==CreationStep::training&&!creator_->training_complete())||(step==CreationStep::name&&d.name.empty()));
     get_node<Label>("Status")->set_text(error_);
     std::string instructions;
     if(choosing) {
@@ -379,6 +384,10 @@ void CharacterCreationView::refresh()
         get_node<Label>(gs("BonusScore"+std::to_string(i)))->set_text(gs(modifier));
         get_node<Label>(gs("TotalScore"+std::to_string(i)))->set_text(s?gs(std::to_string(s->scores[i])):String("--"));
     }
+    if(step==CreationStep::training){
+        presentation::refresh_training_controls(*this,*creator_,callable_mp(this,&CharacterCreationView::training_toggled),[](std::string_view source){return i18n::text(source);});
+        instructions=N_("Choose the required training options. Back preserves your selections.");
+    }
     if(step==CreationStep::name)instructions=N_("Choose a name for your character (up to 40 characters).");
     if(icon)instructions=N_("Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.");
     refresh_portraits();
@@ -442,6 +451,8 @@ void CharacterCreationView::perform(const std::function<void()>& action)
 }
 void CharacterCreationView::target_toggled(bool selected,int index)
 {if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
+void CharacterCreationView::training_toggled(bool selected,String group,String option)
+{if(refreshing_||!creator_||creator_->step()!=CreationStep::training)return;perform([&]{creator_->training_choice(group.utf8().get_data(),option.utf8().get_data(),selected);});}
 void CharacterCreationView::next(){perform([&]{creator_->next();if(creator_->step()==CreationStep::sheet)completed_=creator_->create_character();selected_score_=-1;});}
 void CharacterCreationView::back(){perform([&]{creator_->back();completed_.reset();selected_score_=-1;});}
 void CharacterCreationView::restart(){perform([&]{creator_->restart();completed_.reset();added_to_party_=false;portrait_chosen_=false;recommend_portrait();get_node<LineEdit>("Name")->set_text("");selected_score_=-1;});}
@@ -616,7 +627,10 @@ void CharacterCreationView::check_run()
         capture("character-attributes.png");press("Next");break;
     case 8:if(creator_->step()!=CreationStep::character_class)throw std::runtime_error("Attributes must advance to Class");
         choose(CreationField::character_class,"fighter");press("Next");
-        if(creator_->step()!=CreationStep::name)throw std::runtime_error("Qualified Fighter must advance to Name");break;
+        if(creator_->step()!=CreationStep::training||!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Qualified Fighter must complete Training before Name");
+        get_node<CheckBox>("Training/Rows/Group0/elvish")->set_pressed(true);
+        get_node<CheckBox>("Training/Rows/Group0/dwarvish")->set_pressed(true);press("Next");
+        if(creator_->step()!=CreationStep::name)throw std::runtime_error("Completed training must advance to Name");break;
     case 9:if(!get_node<Button>("Next")->is_disabled())throw std::runtime_error("Empty name accepted");
         get_node<LineEdit>("Name")->grab_focus();
         for(char c:std::string("Mira Stoneward"))for(bool pressed:{true,false}){Ref<InputEventKey> event;event.instantiate();event->set_unicode(c);

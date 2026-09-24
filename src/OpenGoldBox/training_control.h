@@ -1,0 +1,97 @@
+#ifndef OPENGOLDBOX_TRAINING_CONTROL_H
+#define OPENGOLDBOX_TRAINING_CONTROL_H
+#include "godot_nodes.h"
+#include "opengold/character_creator.h"
+#include <godot_cpp/classes/check_box.hpp>
+#include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/rich_text_label.hpp>
+#include <godot_cpp/classes/scroll_container.hpp>
+#include <godot_cpp/classes/v_box_container.hpp>
+#include <godot_cpp/classes/style_box_flat.hpp>
+#include <algorithm>
+#ifndef N_
+#define N_(message) message
+#endif
+
+namespace presentation {
+inline godot::String training_string(std::string_view s){return godot::String::utf8(s.data(),s.size());}
+template<class Translate> godot::String training_source(std::string_view id,const Translate& tr){
+    if(id=="origin:languages")return tr(N_("Starting languages"));
+    if(id=="class:rogue")return tr(N_("Rogue class"));
+    if(id=="class:rogue:expertise")return tr(N_("Rogue Expertise"));
+    if(id=="class:rogue:thieves_cant")return tr(N_("Rogue / Thieves' Cant"));
+    if(id=="background:criminal")return tr(N_("Criminal background"));
+    return training_string(id);
+}
+template<class Translate> godot::String training_sources(const std::vector<opengold::rules::FeatureGrant>& grants,const Translate& tr){
+    godot::String result;for(const auto& g:grants){if(!result.is_empty())result+=", ";result+=training_source(g.source_id,tr);}return result;
+}
+template<class Translate> godot::String training_summary(const opengold::rules::TrainingProfile& profile,const Translate& tr,bool fixed=false){
+    godot::String text;
+    if(!fixed)text="\n\n[b]"+tr(N_("Training"))+"[/b]\n"+tr(profile.complete?N_("Supported training choices complete"):N_("Training choices pending"))+"\n";
+    for(const auto& s:profile.skills){
+        if(fixed&&!s.proficient)continue;
+        text+=tr(s.label);
+        if(!fixed){text+=" "+godot::String(s.bonus>=0?"+":"")+godot::String::num_int64(s.bonus);
+            if(s.expertise)text+=" / "+tr(N_("Expertise"));else if(s.proficient)text+=" / "+tr(N_("Proficient"));}
+        const auto sources=training_sources(s.sources,tr);if(!sources.is_empty())text+=" ("+sources+")";text+="\n";
+    }
+    for(const auto& t:profile.tools)text+=tr(t.label)+" ("+training_sources(t.sources,tr)+")\n";
+    for(const auto& l:profile.languages)text+=tr(l.label)+" ("+training_sources(l.sources,tr)+")\n";
+    return text;
+}
+inline void setup_training_controls(godot::Node& parent){
+    auto* fixed=add_control<godot::RichTextLabel>(parent,"TrainingFixed",{});
+    fixed->set_use_bbcode(true);fixed->set_auto_translate_mode(godot::Node::AUTO_TRANSLATE_MODE_DISABLED);
+    fixed->add_theme_font_size_override("normal_font_size",14);
+    auto* scroll=add_control<godot::ScrollContainer>(parent,"Training",{});
+    scroll->set_horizontal_scroll_mode(godot::ScrollContainer::SCROLL_MODE_DISABLED);scroll->set_follow_focus(true);
+    auto owned=make_node<godot::VBoxContainer>();owned->set_name("Rows");
+    owned->set_h_size_flags(godot::Control::SIZE_EXPAND_FILL);owned->add_theme_constant_override("separation",12);
+    attach_child(*scroll,std::move(owned));
+}
+// The scene owns every node. Reuse controls across refreshes so toggling does
+// not destroy the focused checkbox or its keyboard navigation position.
+template<class Translate> void refresh_training_controls(godot::Node& parent,const opengold::CharacterCreator& creator,
+    const godot::Callable& toggled,const Translate& tr){
+    using namespace godot;
+    auto* rows=parent.get_node<VBoxContainer>("Training/Rows");
+    auto fixed=creator.draft();fixed.training.clear();
+    parent.get_node<RichTextLabel>("TrainingFixed")->set_text("[b]"+tr(N_("Fixed training"))+"[/b]\n"+training_summary(creator.rules().evaluate(fixed,false).training,tr,true));
+    const auto groups=creator.rules().training_options(creator.draft());
+    for(int i=groups.size();i<rows->get_child_count();++i)Object::cast_to<Control>(rows->get_child(i))->hide();
+    for(unsigned i=0;i<groups.size();++i){
+        const auto& group=groups[i];const auto name=String("Group")+String::num_uint64(i);
+        auto* box=Object::cast_to<VBoxContainer>(rows->get_node_or_null(name));
+        if(!box){auto owned=make_node<VBoxContainer>();owned->set_name(name);box=attach_child(*rows,std::move(owned));
+            box->add_theme_constant_override("separation",5);auto label=make_node<Label>();label->set_name("Title");attach_child(*box,std::move(label));}
+        box->show();const auto found=creator.draft().training.find(group.id);
+        const std::vector<std::string> empty;const auto& picked=found==creator.draft().training.end()?empty:found->second;
+        auto* title=box->get_node<Label>("Title");title->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
+        title->set_text(tr(group.label)+" ("+String::num_uint64(picked.size())+" / "+String::num_uint64(group.count)+")");
+        for(int j=0;j<box->get_child_count();++j)if(auto* check=Object::cast_to<CheckBox>(box->get_child(j))){
+            if(std::none_of(group.options.begin(),group.options.end(),[&](const auto& o){return training_string(o.id)==String(check->get_name());})){
+                check->hide();check->set_disabled(true);
+            }
+        }
+        for(const auto& option:group.options){
+            const auto node_name=training_string(option.id);auto* check=Object::cast_to<CheckBox>(box->get_node_or_null(node_name));
+            if(!check){auto owned=make_node<CheckBox>();owned->set_name(node_name);check=attach_child(*box,std::move(owned));
+                check->set_focus_mode(Control::FOCUS_ALL);check->set_custom_minimum_size(Vector2(0,34));
+                check->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED);
+                check->connect("toggled",toggled.bind(training_string(group.id),node_name));
+                for(const char* state:{"normal","hover","pressed","hover_pressed","disabled","focus"}){
+                    Ref<StyleBoxFlat> style;style.instantiate();style->set_bg_color(Color(state==std::string_view("pressed")||state==std::string_view("hover_pressed")?"304851":"19262e"));
+                    style->set_border_color(Color(state==std::string_view("focus")?"ebcb80":state==std::string_view("hover")?"b0c5cc":"506570"));
+                    style->set_border_width_all(state==std::string_view("focus")?2:1);style->set_corner_radius_all(3);style->set_content_margin_all(7);
+                    if(state==std::string_view("focus"))style->set_draw_center(false);check->add_theme_stylebox_override(state,style);
+                }
+            }
+            const bool selected=std::find(picked.begin(),picked.end(),option.id)!=picked.end();
+            check->set_text(tr(option.label));check->set_pressed_no_signal(selected);check->set_disabled(!selected&&picked.size()>=group.count);check->show();
+            check->set_tooltip_text(training_source(group.id,tr));
+        }
+    }
+}
+}
+#endif

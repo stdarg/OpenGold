@@ -1,3 +1,4 @@
+#include "../../../src/OpenGoldBox/training_control.h"
 #include "character_creation_view.h"
 #include "opengold/srd5.h"
 #include <godot_cpp/classes/button.hpp>
@@ -79,6 +80,7 @@ String CharacterCreationView::sheet_text(const Character& character,const PartyM
     text+="\n\n[b]Inventory[/b]";
     if(character.inventory().empty())text+="\nEmpty";
     for(const auto& item:character.inventory().items())text+="\n"+literal(item.name)+" x"+std::to_string(item.quantity);
+    text+=presentation::training_summary(s.training,[](std::string_view source){return gs(source);}).utf8().get_data();
     return gs(text);
 }
 void CharacterCreationView::show_modifiers()

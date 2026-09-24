@@ -17,8 +17,9 @@ completed work and verification. I01–I08 are delivered in
 F02 is split into [rules and persistence (#187)](https://github.com/stdarg/OpenGold/issues/187),
 [creation controls (#188)](https://github.com/stdarg/OpenGold/issues/188), and
 [missing-choice review (#189)](https://github.com/stdarg/OpenGold/issues/189).
-The rules/persistence child is delivered. See [training support](TRAINING.md) for
-the first Rogue/Criminal package and boundaries; the UI children remain open.
+The rules/persistence and creation-control children are delivered. See [training
+support](TRAINING.md) for the first Rogue/Criminal package and boundaries;
+Review Training for existing saved characters remains open.
 F03 is split into [resource rules and persistence (#190)](https://github.com/stdarg/OpenGold/issues/190),
 [campaign rest transactions (#191)](https://github.com/stdarg/OpenGold/issues/191),
 [rest controls (#192)](https://github.com/stdarg/OpenGold/issues/192), and
@@ -26,7 +27,7 @@ F03 is split into [resource rules and persistence (#190)](https://github.com/std
 The resource rules and campaign transaction children are delivered; the controls
 and interruption children remain open. Hit Dice spending must allow a decision after each
 roll, rather than requiring every die to be committed beforehand. The first
-resource rules are independent of the pending F02 UI layout decisions.
+resource rules are independent of the remaining F02 saved-choice controls.
 
 F04 is split into [recovery clocks (#194)](https://github.com/stdarg/OpenGold/issues/194)
 and [campaign scheduling (#195)](https://github.com/stdarg/OpenGold/issues/195).

@@ -1,4 +1,6 @@
 #include "opengold/campaign_save.h"
+#include "opengold/character_creator.h"
+#include "opengold/character_pool.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
 #include <algorithm>
@@ -28,6 +30,70 @@ std::string corrupt(std::string bytes,std::string_view from,std::string_view to)
     auto body=bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);replace(body,from,to);
     std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
     return bytes.substr(0,bytes.find('\n')+1)+std::to_string(hash)+'\n'+body;
+}
+void creation_controls(){
+    CharacterCreator creator(srd5::character_rules(),42);
+    creator.select(CreationField::character_class,"rogue");creator.select(CreationField::background,"criminal");
+    creator.next();creator.next();
+    for(unsigned tries=0;;++tries){
+        check(tries<100,"Roll a qualified Rogue fixture");creator.roll();for(unsigned i=0;i<6;++i)creator.assign_roll(i,i);
+        if(creator.rules().class_eligible(creator.draft(),"rogue"))break;
+    }
+    creator.next();creator.next();
+    check(creator.step()==CreationStep::training&&!creator.training_complete(),"Training follows Class and starts incomplete");
+    rejects([&]{creator.next();});rejects([&]{creator.training_choice("unknown","elvish",true);});
+    rejects([&]{creator.training_choice("origin:languages","abyssal",true);});
+    rejects([&]{creator.training_choice("class:rogue:expertise","arcana",true);});
+    // Independent, authored choices exercise dependent groups in UI order.
+    const auto selected=choices();
+    for(const auto* group:{"origin:languages","class:rogue","class:rogue:expertise","class:rogue:thieves_cant"})
+        for(const auto& value:selected.at(group))creator.training_choice(group,value,true);
+    check(creator.training_complete()&&creator.sheet().training.complete,"Every required choice permits completion");
+    const auto before=creator.draft().training;
+    creator.training_choice("origin:languages","elvish",true);
+    rejects([&]{creator.training_choice("origin:languages","orc",true);});
+    check(creator.draft().training==before,"Duplicate selection is idempotent; excessive selection rejects atomically");
+    creator.next();creator.back();check(creator.draft().training==before,"Back preserves selected training");
+    creator.training_choice("class:rogue","perception",false);
+    check(creator.draft().training.at("class:rogue:expertise")==std::vector<std::string>{"stealth"},"Removing a skill removes only its dependent Expertise");
+    creator.training_choice("class:rogue","perception",true);creator.training_choice("class:rogue:expertise","perception",true);
+    creator.back();creator.back();creator.select(CreationField::background,"sage");
+    check(creator.draft().training.at("class:rogue:expertise")==std::vector<std::string>{"perception"},"Changing background removes only lost proficiency's Expertise");
+    check(std::is_permutation(creator.draft().training.at("class:rogue").begin(),creator.draft().training.at("class:rogue").end(),selected.at("class:rogue").begin(),selected.at("class:rogue").end()),"Changing background preserves valid skill choices");
+    creator.select(CreationField::background,"criminal");creator.training_choice("class:rogue:expertise","stealth",true);
+    creator.training_choice("class:rogue:thieves_cant","undercommon",false);creator.training_choice("class:rogue:thieves_cant","orc",true);
+    creator.training_choice("origin:languages","dwarvish",false);creator.training_choice("origin:languages","orc",true);
+    check(!creator.draft().training.contains("class:rogue:thieves_cant"),"Moving a language into starting choices invalidates only the duplicate Rogue choice");
+    creator.training_choice("class:rogue:thieves_cant","undercommon",true);
+    creator.select(CreationField::character_class,"fighter");
+    check(creator.draft().training.size()==1&&creator.draft().training.at("origin:languages")==std::vector<std::string>({"elvish","orc"}),"Class change preserves starting languages and clears Rogue groups");
+    creator.select(CreationField::character_class,"rogue");
+    check(!creator.training_complete(),"Returning to Rogue does not invent cleared choices");
+    for(const auto* group:{"class:rogue","class:rogue:expertise","class:rogue:thieves_cant"})
+        for(const auto& value:selected.at(group))creator.training_choice(group,value,true);
+    creator.next();creator.next();creator.next();creator.name("Created Rogue");creator.next();creator.next();
+    const auto finished=creator.create_character();check(finished.sheet().training.complete,"Finished character retains the training selected through the creator");
+    CampaignParty party(module());const auto id=party.add_pc(finished);const auto encoded=encode_campaign(party,nullptr,"creator");
+    auto loaded=decode_campaign(encoded,creator.rules(),*module(),"creator",nullptr);CampaignParty restored(module());restored.restore(std::move(loaded.party));
+    check(restored.member(id).character.creation_data().training==finished.creation_data().training,"Manually selected training survives party save/load");
+    rejects([&]{creator.training_choice("origin:languages","elvish",false);});
+    creator.restart();check(creator.draft().training.empty()&&!creator.training_complete(),"Restart clears training selections");
+}
+void preset_training(){
+    por::CharacterArt art;Image head;head.width=88;head.height=40;head.rgba.assign(88*40*4,128);
+    Image body;body.width=88;body.height=48;body.rgba.assign(88*48*4,128);
+    art.heads.emplace(1,por::PortraitPart{"fixture",head});art.bodies.emplace(1,por::PortraitPart{"fixture",body});
+    auto creation=srd5::character_rules();const auto pool=character_pool(*creation,art),again=character_pool(*creation,art);
+    check(pool.size()==48,"Pool contains four presets for all twelve classes");std::map<std::string,unsigned> classes;
+    for(unsigned i=0;i<pool.size();++i){
+        const auto& c=pool[i];++classes[c.creation_data().character_class];
+        check(c.sheet().training.complete&&c.creation_data().training==again[i].creation_data().training,"Preset training is complete and deterministic");
+        check(c.sheet().training.languages.size()==(c.creation_data().character_class=="rogue"?5u:3u),"Preset languages are distinct and include all fixed and selected grants");
+        CampaignParty party(module());const auto id=party.add_pc(c);const auto bytes=encode_campaign(party,nullptr,"preset");
+        auto decoded=decode_campaign(bytes,*creation,*module(),"preset",nullptr);party.restore(std::move(decoded.party));
+        check(party.member(id).character.creation_data().training==c.creation_data().training&&party.member(id).character.sheet().training.complete,"Preset training remains complete after adding and saving");
+    }
+    check(classes.size()==12&&std::all_of(classes.begin(),classes.end(),[](const auto& c){return c.second==4;}),"Every class has four completed presets");
 }
 void grants_and_checks(){
     auto creation=srd5::character_rules();auto d=draft();auto sheet=hero(d).sheet();
@@ -182,4 +248,4 @@ void complete_saved_training(){
     check(incomplete.member(id).vitals==unconscious.roster[0].vitals,"Training completion does not stabilize or heal an unconscious character");
 }
 }
-int main(){try{grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{creation_controls();preset_training();grants_and_checks();invalid_choices();persistence();complete_saved_training();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -45,21 +45,27 @@ launcher opens `demos/godot/scenes/character_creation.tscn`. Art loads from the
    to the initial class is the requested OpenGoldBox house rule, not an SRD
    level-one restriction. Background bonuses count toward eligibility.
    Return to Attributes to change assignments or bonuses if needed.
-5. Enter a name, up to 40 characters. There is no separate HP step.
+5. Complete **Training**: fixed grants appear above scrollable labeled checkbox
+   groups for starting languages and, for Rogue, skills, Expertise and an additional
+   language. Counts show progress and Next requires every supported choice.
+   Back preserves choices; class/background edits clear only invalid choices and
+   their dependencies. The full first package and limits are in [TRAINING.md](TRAINING.md).
+6. Enter a name, up to 40 characters. There is no separate HP step.
    Choose a complete portrait with the dropdown or Previous/Next buttons.
    Optional gender, class, and in-game race filters combine to narrow the list;
    All clears each filter. Filters never change character data or the current
    portrait. An empty result disables selection and navigation. Any portrait may
    be selected regardless of the character's traits. Initial recommendations favor
    race, then gender, then class; manual choices persist through later edits.
-6. Customize combat head and weapon/body parts, tall/short art, and all twelve
+7. Customize combat head and weapon/body parts, tall/short art, and all twelve
    region colors. Select a region's Color-1 or Color-2 button, then a palette
    swatch. Enlarged ready and action previews update immediately, recoloring
    only that part, with the complete portrait visible above both
    poses. Controls show **Not present** when the selected parts omit
    that region in both poses. Its saved colors return when the part is present.
-7. Show the character sheet: race, gender, class, level, background, six scores,
-    saving throws, Hit Dice, HP and inventory (initially empty). Saving throws
+8. Show the character sheet: race, gender, class, level, background, six scores,
+    saving throws, Hit Dice, HP and inventory (initially empty), plus skill bonuses,
+    Expertise, tools, languages and their grant sources. Saving throws
     include the class's level-one proficiency bonus where applicable.
     A note explains that SRD 5.2.1 uses the maximum class Hit Die plus applicable
     modifiers at level one. Only the HP numbers are colored: yellow for a

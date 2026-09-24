@@ -4,8 +4,8 @@ F02 is split into the [rules/persistence layer (#187)](https://github.com/stdarg
 [creation controls (#188)](https://github.com/stdarg/OpenGold/issues/188), and
 [completion of missing saved choices (#189)](https://github.com/stdarg/OpenGold/issues/189).
 The parent [#29](https://github.com/stdarg/OpenGold/issues/29) remains open until
-all three are delivered. This document describes the shared rules layer;
-player-facing training selection is not yet integrated.
+all three are delivered. The rules layer and creation controls are delivered;
+completion of missing choices in existing saves remains in #189.
 
 ## First supported package
 
@@ -35,6 +35,28 @@ Advantage without adding proficiency again. Tool checks can use the governing
 ability required by the situation. The shared query reports the numeric modifier,
 Expertise, tool-derived Advantage and all contributing sources; it does not roll
 dice, advance time, consume resources or resolve campaign interactions.
+
+## Creation and presets
+
+The game and legacy demo share a Training step after Class and before Name.
+Fixed grants appear above scrollable checkbox groups with selected/required
+counts. Every required selection must be complete before Next is enabled.
+Standard control states and keyboard focus remain visible; focusing a later
+choice scrolls it into view. Expertise offers only currently proficient skills.
+
+Back retains choices. Changing class or background retains legal selections and
+removes only choices that become invalid, including dependent Expertise. Moving
+an additional Rogue language into the starting-language group clears the now
+duplicate additional choice. Re-selecting a class does not invent cleared choices.
+Start over clears all selections. Completed sheets show all eighteen skill bonuses,
+proficiency/Expertise and the sources of skill, tool and language grants.
+
+All 48 presets (four per class) now come with deterministic, complete choices
+for the supported training packages. Adding a preset keeps the existing direct
+Add to party action; it does not open a training dialog. This follows the user's
+approved Training layout and explicit requirement that preset choices be
+pre-generated. Existing saved characters remain pending until Review Training;
+opening or loading them does not apply preset generation.
 
 ## Data and validation
 
@@ -99,7 +121,25 @@ spent spell slots, a reserve Rogue, and an unconscious character. They verify
 preview isolation, rejected-operation atomicity, preserved prior selections,
 advancement replay and campaign/next-combat persistence.
 Existing advancement, feature-grant, character, party, save and combat regressions
-remain required. The UI children carry their own rendered integration checks.
+remain required. Creator tests exercise transitions, invalid-choice atomicity,
+dependent pruning, restart, and manual/preset party save round trips. All 48
+presets are validated, covering all twelve classes.
+
+`tests/training_view_tests.gd` drives the actual game and demo controls with
+user-supplied original files. It checks keyboard Space/Tab, focus retention,
+scrolling, counts, selection limits, dynamic Expertise, Back, class/background
+changes, the sheet and party handoff at the minimum 1120×800 size. The existing
+`--character-check` and `--party-check` paths also cover Training, and
+`tests/localization_tests.gd` checks Spanish training labels and sources.
+Example (replace the original-file path for your installation):
+
+```sh
+OPENGOLD_GAME_DIR=/path/to/POOLRAD OPENGOLD_LANG=en godot --headless \
+  --path src/OpenGoldBox/godot --script "$PWD/tests/training_view_tests.gd"
+```
+
+Use `--path demos/godot` for the same check against the demo. Omit `--headless`
+and append `-- --training-capture=/tmp/opengold-training` for rendered captures.
 
 SRD6 adds [sourced Temporary HP](TEMPORARY-HP.md); completing pending training
 preserves that pool and all prior vital continuation.

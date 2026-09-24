@@ -23,13 +23,53 @@ void CharacterCreator::select(CreationField field,std::string_view id)
     if(std::none_of(choices.begin(),choices.end(),[&](const auto& c){return c.id==id;}))throw std::runtime_error("Unknown character choice");
     if(field==CreationField::character_class&&step_>=CreationStep::character_class&&!rules_->class_eligible(draft_,id))
         throw std::runtime_error("This class requires "+rules_->class_requirements(id).description+".");
+    auto candidate=draft_;
     switch(field) {
-    case CreationField::race:draft_.race=id;break;
-    case CreationField::gender:draft_.gender=id;break;
-    case CreationField::character_class:draft_.character_class=id;break;
-    case CreationField::alignment:draft_.alignment=id;break;
-    case CreationField::background:draft_.background=id;draft_.adjustment=0;break;
+    case CreationField::race:candidate.race=id;break;
+    case CreationField::gender:candidate.gender=id;break;
+    case CreationField::character_class:candidate.character_class=id;break;
+    case CreationField::alignment:candidate.alignment=id;break;
+    case CreationField::background:candidate.background=id;candidate.adjustment=0;break;
     }
+    prune_training(candidate);draft_=std::move(candidate);
+}
+void CharacterCreator::prune_training(CharacterDraft& candidate) const
+{
+    // Removing a parent selection can invalidate a dependent group. Query the
+    // rules again until stable; this only removes choices, never invents them.
+    for(;;){
+        const auto before=candidate.training;const auto groups=rules_->training_options(candidate);
+        for(auto it=candidate.training.begin();it!=candidate.training.end();){
+            const auto group=std::find_if(groups.begin(),groups.end(),[&](const auto& g){return g.id==it->first;});
+            if(group==groups.end()){it=candidate.training.erase(it);continue;}
+            auto& values=it->second;
+            std::erase_if(values,[&](const auto& value){return std::none_of(group->options.begin(),group->options.end(),[&](const auto& o){return o.id==value;});});
+            if(values.size()>group->count)values.resize(group->count);
+            if(values.empty())it=candidate.training.erase(it);else ++it;
+        }
+        if(before==candidate.training)return;
+    }
+}
+void CharacterCreator::training_choice(std::string_view id,std::string_view option,bool selected)
+{
+    require_editable();auto candidate=draft_;const auto groups=rules_->training_options(candidate);
+    const auto group=std::find_if(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;});
+    if(group==groups.end()||std::none_of(group->options.begin(),group->options.end(),[&](const auto& o){return o.id==option;}))
+        throw std::runtime_error("Unknown training choice");
+    auto& values=candidate.training[std::string(id)];const auto found=std::find(values.begin(),values.end(),option);
+    if(selected&&found==values.end()){
+        if(values.size()>=group->count)throw std::runtime_error("Training selection limit reached");
+        values.emplace_back(option);
+    }else if(!selected&&found!=values.end())values.erase(found);
+    prune_training(candidate);draft_=std::move(candidate);
+}
+bool CharacterCreator::training_complete() const
+{
+    for(const auto& group:rules_->training_options(draft_)){
+        const auto found=draft_.training.find(group.id);
+        if(group.count&&(found==draft_.training.end()||found->second.size()!=group.count))return false;
+    }
+    return true;
 }
 void CharacterCreator::target_class(std::string_view id,bool selected)
 {
@@ -70,12 +110,14 @@ CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,s
 Character CharacterCreator::create_character() const
 {
     if(step_!=CreationStep::sheet)throw std::runtime_error("Finish character creation before exporting the character");
+    if(!training_complete())throw std::runtime_error("Complete the required training choices.");
     if(!rules_->class_eligible(draft_,draft_.character_class))throw std::runtime_error("Starting class prerequisites are not met.");
     return Character(*rules_,draft_,appearance_);
 }
 void CharacterCreator::next()
 {
     if(step_==CreationStep::sheet)return;
+    if(step_>=CreationStep::training&&!training_complete())throw std::runtime_error("Complete the required training choices.");
     if(step_>=CreationStep::attributes)(void)rules_->evaluate(draft_,step_>=CreationStep::name);
     if(step_>=CreationStep::character_class&&!rules_->class_eligible(draft_,draft_.character_class))
         throw std::runtime_error("Choose a qualified starting class. Requires "+rules_->class_requirements(draft_.character_class).description+".");

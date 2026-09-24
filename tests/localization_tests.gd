@@ -109,6 +109,13 @@ func run_checks() -> void:
 	choices.item_selected.emit(eligible)
 	await settle()
 	await press("Next")
+	require(current_scene.get_node("PageTitle").text == "Entrenamiento", "Training page not translated")
+	require(current_scene.get_node("TrainingFixed").text.contains("Idiomas iniciales"), "Training sources not translated")
+	require(current_scene.get_node("Next").disabled, "Missing languages must block Next")
+	current_scene.get_node("Training/Rows/Group0/elvish").set_pressed(true)
+	current_scene.get_node("Training/Rows/Group0/dwarvish").set_pressed(true)
+	await capture("spanish-training")
+	await press("Next")
 	var name: LineEdit = current_scene.get_node("Name")
 	name.text = "Fighter"
 	name.text_changed.emit(name.text)
@@ -120,6 +127,7 @@ func run_checks() -> void:
 	var sheet: String = current_scene.get_node("Description").text
 	require(sheet.contains("Mira {level} [lb]b]"), "Name braces or BBCode were interpreted")
 	require(sheet.contains("Nivel 1") and sheet.contains("Dados de Golpe") and sheet.contains("Salvación"), "Character sheet not translated")
+	require(sheet.contains("Entrenamiento") and sheet.contains("Élfico") and sheet.contains("Acrobacias"), "Sheet training not translated")
 	await capture("spanish-sheet")
 	await press("Modifiers")
 	var modifiers: String = current_scene.get_node("ModifiersModal/Text").text

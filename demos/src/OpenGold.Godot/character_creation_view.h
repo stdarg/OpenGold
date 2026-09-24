@@ -51,6 +51,7 @@ private:
     void background_selected(std::int64_t index);
     void target_toggled(bool selected,int index);
     void bonus_selected(std::int64_t index);
+    void training_toggled(bool selected,godot::String group,godot::String option);
     void roll();
     void score_selected(int index);
     godot::Variant drag_roll(godot::Vector2 position,int index);

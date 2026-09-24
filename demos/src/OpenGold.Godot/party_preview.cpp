@@ -1,3 +1,4 @@
+#include <godot_cpp/classes/check_box.hpp>
 #include "character_creation_view.h"
 #include "combat_view.h"
 #include "rolf_tour_view.h"
@@ -182,6 +183,7 @@ void CharacterCreationView::party_check()
             std::map<std::string,unsigned> classes;std::set<std::string> names;
             for(unsigned i=0;i<pool_.size();++i){const auto& c=pool_[i];const auto& s=c.sheet();++classes[s.character_class];names.insert(s.name);
                 if(s.level!=1||*std::min_element(s.scores.begin(),s.scores.end())<13||*std::max_element(s.scores.begin(),s.scores.end())>20)throw std::runtime_error("Invalid pool ability range");
+                if(!s.training.complete)throw std::runtime_error("Preset training must be complete");
                 art_->validate(c.appearance());pool_selected(i);
             }
             if(names.size()!=48||classes.size()!=12||std::any_of(classes.begin(),classes.end(),[](const auto& c){return c.second!=4;}))throw std::runtime_error("Pool class counts or names invalid");
@@ -204,7 +206,12 @@ void CharacterCreationView::party_check()
             creator_->roll();for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
         }
         while(creator_->step()!=CreationStep::sheet){
-            const auto before=creator_->step();next();
+            const auto before=creator_->step();
+            if(before==CreationStep::training){
+                get_node<CheckBox>("Training/Rows/Group0/elvish")->set_pressed(true);
+                get_node<CheckBox>("Training/Rows/Group0/dwarvish")->set_pressed(true);
+            }
+            next();
             if(creator_->step()==before)throw std::runtime_error("Party-check creation did not advance");
         }
         press("PortraitNext");const auto chosen=completed_->appearance();
