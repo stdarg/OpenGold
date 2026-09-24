@@ -3,6 +3,8 @@
 #include <numeric>
 #include <stdexcept>
 namespace opengold::rules {
+AbilityCheckModifier CharacterRules::ability_check(const CharacterSheet&,unsigned,std::string_view,std::string_view) const
+{throw std::runtime_error("Ability checks are unsupported by this rules module");}
 bool CharacterRules::class_eligible(const CharacterDraft& d,std::string_view id) const
 {
     const auto r=class_requirements(id);

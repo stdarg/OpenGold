@@ -14,7 +14,11 @@ completed work and verification. I01–I08 are delivered in
 [#26](https://github.com/stdarg/OpenGold/issues/26) and
 [#27](https://github.com/stdarg/OpenGold/issues/27).
 [F01, feature and feat provenance](https://github.com/stdarg/OpenGold/issues/28) is also delivered;
-the next increment is [F02, skill/tool/language grants](https://github.com/stdarg/OpenGold/issues/29).
+F02 is split into [rules and persistence (#187)](https://github.com/stdarg/OpenGold/issues/187),
+[creation controls (#188)](https://github.com/stdarg/OpenGold/issues/188), and
+[missing-choice review (#189)](https://github.com/stdarg/OpenGold/issues/189).
+The rules/persistence child is delivered. See [training support](TRAINING.md) for
+the first Rogue/Criminal package and boundaries; the UI children remain open.
 
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,
@@ -238,7 +242,9 @@ multiclass interactions; targeted checks remain attached to their rules.
 
 ## Recommended next execution
 
-I01–I08 and F01 are complete. Continue with **F02: skill, tool and language grants**.
+I01–I08, F01 and F02a are complete. Complete the two F02 UI children (#188–#189)
+before closing #29. Creation layout confirmation is required; the user has
+approved keeping old choices pending for completion through Review Training.
 The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

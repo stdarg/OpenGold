@@ -50,6 +50,20 @@ void remove_v7_grip(std::string& body,const std::string& party_save)
     body.erase(grants_begin,grants_size);prefix.erase(grants_begin,grants_size);
     check(prefix.ends_with("\" 0 0 ")&&body.starts_with(prefix.substr(0,prefix.size()-2)),"Single-member fixture ends in creation source, grip, town flag");
     body.erase(prefix.size()-4,2);
+    // The version-nine draft adds a training-choice map. This legacy fixture
+    // predates those choices and therefore has an empty map.
+    std::istringstream in(body);std::string text;std::uint64_t value{},count{};
+    for(unsigned i=0;i<4;++i)in>>std::quoted(text); // identity and assets
+    for(unsigned i=0;i<12;++i)in>>value; // party slots and scalar state
+    in>>count;for(unsigned i=0;i<count;++i)in>>std::quoted(text); // rewards
+    in>>value>>value>>count;for(unsigned i=0;i<count;++i)in>>value>>value; // clock/rest
+    in>>value; // roster size
+    for(unsigned i=0;i<6;++i)in>>std::quoted(text); // draft identities/name
+    in>>count;for(unsigned i=0;i<count;++i)in>>std::quoted(text); // class goals
+    for(unsigned i=0;i<38;++i)in>>value; // six rolls, assignments, adjustment, rolled
+    const auto begin=in.tellg();in>>count;const auto end=in.tellg();
+    check(bool(in)&&count==0,"Legacy draft has no chosen training");
+    body.erase(static_cast<std::size_t>(begin),static_cast<std::size_t>(end-begin));
 }
 // Versions 1-5 had no sub-minute clock or encounter-scope fields.
 void remove_v6_clock(std::string& body)
@@ -179,8 +193,8 @@ void roundtrip(const std::filesystem::path& directory){
     // Version 3 encoded the same appearance fields without the new filename.
     auto legacy_body=old_save.substr(old_save.find('\n',old_save.find('\n')+1)+1);
     const std::string portrait_field="\"human-male-fighter-01.png\" ";
-    const auto portrait_position=legacy_body.find(portrait_field);check(portrait_position!=legacy_body.npos,"Portrait filename is serialized");
     remove_v7_grip(legacy_body,old_save);
+    const auto portrait_position=legacy_body.find(portrait_field);check(portrait_position!=legacy_body.npos,"Portrait filename is serialized");
     legacy_body.erase(portrait_position,portrait_field.size());
     remove_v6_clock(legacy_body);
     std::uint64_t legacy_hash=14695981039346656037ULL;for(unsigned char c:legacy_body){legacy_hash^=c;legacy_hash*=1099511628211ULL;}
@@ -222,7 +236,7 @@ void roundtrip(const std::filesystem::path& directory){
 #ifdef _WIN32
     {std::ifstream held(path,std::ios::binary);rejects([&]{write_campaign_file(path,next);});check(read_campaign_file(path)==saved,"Failed file replacement preserves existing save");}
 #endif
-    auto version=saved;version[18]='9';rejects([&]{(void)decode_campaign(version,*srd5::character_rules(),*rules,"fixture-v1",&base);});
+    auto version=saved;version.replace(18,1,"99");rejects([&]{(void)decode_campaign(version,*srd5::character_rules(),*rules,"fixture-v1",&base);});
     auto invalid=party->checkpoint();invalid.roster[0].vitals.resources="SRD1 999 0 0 0 0";party->restore(invalid);auto malformed=encode_campaign(*party,nullptr,"fixture-v1");rejects([&]{(void)decode_campaign(malformed,*srd5::character_rules(),*rules,"fixture-v1",nullptr);});
     party->begin_combat();rejects([&]{(void)encode_campaign(*party,nullptr,"fixture-v1");});party->end_combat();
     auto busy=prototype();rejects([&]{(void)encode_campaign(*party,&busy,"fixture-v1");});

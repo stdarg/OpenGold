@@ -34,6 +34,33 @@ struct FeatureGrant {
     std::map<std::string,std::string> choices;
     bool operator==(const FeatureGrant&) const = default;
 };
+using TrainingChoices = std::map<std::string,std::vector<std::string>>;
+struct TrainingChoiceGroup {
+    std::string id, label;
+    unsigned count{};
+    std::vector<CreationChoice> options;
+};
+struct SkillTraining {
+    std::string id, label;
+    unsigned ability{};
+    int bonus{};
+    bool proficient{}, expertise{};
+    std::vector<FeatureGrant> sources;
+};
+struct TrainingEntry {
+    std::string id, label;
+    std::vector<FeatureGrant> sources;
+};
+struct TrainingProfile {
+    bool complete{};
+    std::vector<SkillTraining> skills;
+    std::vector<TrainingEntry> tools, languages;
+};
+struct AbilityCheckModifier {
+    int ability_modifier{}, proficiency{}, total{};
+    bool expertise{}, tool_advantage{};
+    std::vector<FeatureGrant> sources;
+};
 struct ClassRequirements {
     std::vector<unsigned> abilities;
     bool any{};
@@ -48,6 +75,7 @@ struct CharacterDraft {
     std::array<unsigned,6> assignment{0,1,2,3,4,5};
     unsigned adjustment{};
     bool rolled{};
+    TrainingChoices training;
 };
 struct CharacterSheet {
     Identity identity;
@@ -61,6 +89,7 @@ struct CharacterSheet {
     // Derived presentation messages; not character identity or save-file keys.
     std::vector<Message> hp_messages, racial_messages, class_messages, background_messages;
     std::vector<FeatureGrant> grants;
+    TrainingProfile training;
     std::vector<std::string> prepared_spells;
     // Constitution modifier after each attained level, rebuilt from choices.
     // Keeps minimum-one HP gains separate from retroactive modifier changes.
@@ -81,6 +110,9 @@ public:
     [[nodiscard]] bool class_eligible(const CharacterDraft& draft,std::string_view id) const;
     [[nodiscard]] std::array<bool,6> unmet_targets(const CharacterDraft& draft) const;
     [[nodiscard]] virtual CharacterSheet evaluate(const CharacterDraft& draft, bool require_name) const = 0;
+    [[nodiscard]] virtual std::vector<TrainingChoiceGroup> training_options(const CharacterDraft&) const {return {};}
+    [[nodiscard]] virtual AbilityCheckModifier ability_check(const CharacterSheet&,unsigned ability,
+        std::string_view skill={},std::string_view tool={}) const;
 };
 }
 #endif

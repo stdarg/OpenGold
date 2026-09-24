@@ -14,7 +14,7 @@ std::uint64_t fingerprint(std::string_view data){std::uint64_t n=146959810393466
 // Explicit field encoding: no pointers, native object layouts or derived sheets.
 struct SaveCodec {
     bool reading{};
-    unsigned version{8};
+    unsigned version{9};
     std::stringstream stream;
     const rules::CharacterRules* creation{};
     const rules::RulesModule* module{};
@@ -39,7 +39,7 @@ struct SaveCodec {
     void field(rules::AbilityRoll& v){fields(v.dice,v.discarded);}
     void field(rules::FeatureGrant& v){fields(v.id,v.source_id,v.level,v.choices);}
     void field(rules::AdvancementChoice& v){fields(v.feat,v.abilities,v.spells);}
-    void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);}
+    void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);if(version>=9)field(v.training);}
     void field(por::CharacterAppearance& v){fields(v.portrait_head,v.portrait_body,v.combat_head,v.combat_body,v.tall,v.colors);if(version>=4)field(v.portrait);}
     void field(InventoryItem& v){fields(v.id,v.definition_id,v.name,v.quantity,v.original_type);}
     void field(Inventory& v){fields(v.next_id_,v.items_);if(reading){std::set<std::uint64_t> ids;require(v.next_id_!=0,"Invalid next inventory ID");for(const auto& i:v.items_)require(i.id&&i.id<v.next_id_&&ids.insert(i.id).second&&i.quantity&&!i.definition_id.empty()&&!i.name.empty(),"Invalid inventory entry");}}
@@ -54,7 +54,8 @@ struct SaveCodec {
         if(version>=7)field(v.equipment.weapon_hands);
         if(version>=8){
             auto grants=v.character.sheet().grants;field(grants);
-            require(grants==v.character.sheet().grants,"Saved grants disagree with creation or advancement choices");
+            if(reading&&version==8)module->validate_saved_grants(saved_identity,v.character.sheet(),grants);
+            else require(grants==v.character.sheet().grants,"Saved grants disagree with creation or advancement choices");
         }
         // Older releases stored ordinary weapons as unsupported. Migrate only
         // the exact old key backed by matching original item provenance.
@@ -159,7 +160,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 8\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN 9\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -177,8 +178,8 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 }
 }
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
-    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 8\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");const bool third=bytes.starts_with("OPENGOLD-CAMPAIGN 3\n"),fourth=bytes.starts_with("OPENGOLD-CAMPAIGN 4\n");const bool fifth=bytes.starts_with("OPENGOLD-CAMPAIGN 5\n");const bool sixth=bytes.starts_with("OPENGOLD-CAMPAIGN 6\n");const bool seventh=bytes.starts_with("OPENGOLD-CAMPAIGN 7\n");require(old||second||third||fourth||fifth||sixth||seventh||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
-    SaveCodec in(body);in.version=old?1:second?2:third?3:fourth?4:fifth?5:sixth?6:seventh?7:8;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");in.saved_identity=identity;SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
+    require(bytes.size()<=limit,"Campaign save too large");constexpr std::string_view header="OPENGOLD-CAMPAIGN 9\n",old_header="OPENGOLD-CAMPAIGN 1\n";const bool old=bytes.starts_with(old_header),second=bytes.starts_with("OPENGOLD-CAMPAIGN 2\n");const bool third=bytes.starts_with("OPENGOLD-CAMPAIGN 3\n"),fourth=bytes.starts_with("OPENGOLD-CAMPAIGN 4\n");const bool fifth=bytes.starts_with("OPENGOLD-CAMPAIGN 5\n");const bool sixth=bytes.starts_with("OPENGOLD-CAMPAIGN 6\n");const bool seventh=bytes.starts_with("OPENGOLD-CAMPAIGN 7\n");const bool eighth=bytes.starts_with("OPENGOLD-CAMPAIGN 8\n");require(old||second||third||fourth||fifth||sixth||seventh||eighth||bytes.starts_with(header),"Unsupported campaign save version");auto end=bytes.find('\n',header.size());require(end!=bytes.npos,"Truncated campaign save");auto body=bytes.substr(end+1);require(bytes.substr(header.size(),end-header.size())==std::to_string(fingerprint(body)),"Campaign save checksum mismatch");
+    SaveCodec in(body);in.version=old?1:second?2:third?3:fourth?4:fifth?5:sixth?6:seventh?7:eighth?8:9;in.creation=&creation;in.module=&module;rules::Identity identity;std::string asset;in.fields(identity,asset);require(module.accepts_campaign_identity(identity),"Campaign rules/content version mismatch");require(asset==assets,"Campaign original asset identity mismatch");in.saved_identity=identity;SavedCampaign result;in.field(result.party);CampaignParty::validate(result.party);for(const auto& m:result.party.roster)validate_saved_member(m,module);bool has_town{};in.field(has_town);if(has_town){require(town_template!=nullptr,"This save requires town resources");result.town=*town_template;in.town(*result.town);}in.stream>>std::ws;require(in.stream.eof(),"Trailing campaign save data");return result;
 }
 std::string read_campaign_file(const std::filesystem::path& path)
 {return read_save_file(path,limit);}

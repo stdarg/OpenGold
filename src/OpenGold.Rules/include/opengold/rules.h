@@ -13,6 +13,7 @@
 
 namespace opengold::rules {
 struct CharacterSheet;
+struct FeatureGrant;
 struct AdvancementChoice {
     std::string feat;
     std::array<unsigned,6> abilities{};
@@ -149,6 +150,7 @@ public:
     // Advances module-owned lasting effects for a group in deterministic order.
     virtual void elapse(std::span<Participant>, std::uint64_t, std::uint64_t&) const {}
     virtual void validate_character_state(const CharacterSheet&, const VitalState&) const;
+    virtual void validate_saved_grants(const Identity&,const CharacterSheet&,std::span<const FeatureGrant>) const;
     // Called after replaying saved creation/advancement under the current rules.
     // Edition-specific migration preserves wounds and opaque resource state.
     virtual void migrate_character_state(const Identity&, const CharacterSheet& sheet, VitalState& state) const

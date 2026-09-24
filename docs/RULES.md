@@ -127,9 +127,9 @@ Deterministic SplitMix64 dice and stable initiative tie ordering make a seed plu
 the same accepted command sequence reproducible. Checkpoints include the RNG,
 turn budgets, HP, slots, death saves and unfinished opportunity reactions.
 
-Rules module **0.6.8** writes **OGCOMBAT 8**, including selected weapon grip and an
+Rules module **0.6.9** writes **OGCOMBAT 8**, including selected weapon grip and an
 involuntary shared-space marker. Combat migration accepts **0.6.4**, format 5,
-**0.6.5**, format 6, **0.6.6**, format 7, and **0.6.7**, format 8,
+**0.6.5**, format 6, **0.6.6**, format 7, and **0.6.7/0.6.8**, format 8,
 with identical module/content IDs.
 A valid saved facing-only queue is canceled; the attacker resumes with the same
 HP, movement, spent resources, RNG and clock. The command revision changes to
@@ -150,6 +150,12 @@ before deriving combat effects. PC1–PC5 remain readable. Old combat recipes la
 the original background and complete advancement history, so they retain their
 validated legacy effects without inventing source records. Campaign migration
 has that history and reconstructs exact grants. See [advancement](ADVANCEMENT.md).
+
+PC7 extends the ledger with skill, tool, Expertise and language sources. Its
+training choices and entitlements are validated before combat; PC1–PC6 remain
+readable without manufacturing missing selections. Campaign format 9 persists
+the selected choice groups and preserves unresolved choices from older saves.
+See [training support](TRAINING.md) for the Rogue/Criminal package and limits.
 
 A reaction may pause an accepted route while the mover shares an allied space.
 The remaining path must still lead to a free cell within the movement budget.

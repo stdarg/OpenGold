@@ -7,8 +7,8 @@ The `OPENGOLD-CAMPAIGN` format identifier is unchanged for compatibility.
 The shared character/party/New Phlan flow supports manual named campaign saves.
 The first Slums expedition also supports saving during idle exploration, including
 its district map, script continuation and deferred original loot. Format version
-seven retains version-one through version-six loading. It adds weapon grip to
-the existing exploration knowledge, active rules effects, sub-minute game time,
+nine retains version-one through version-eight loading. It adds training choices
+and grants to the existing exploration knowledge, active rules effects, sub-minute game time,
 precise rest-completion times and encounter identities. See [status effects](STATUS-EFFECTS.md).
 Adding the supported roaming creature
 profiles preserves compatibility with the preceding rules content pack; unrelated
@@ -33,9 +33,10 @@ mid-combat campaign saves or original DOS saves are
 implemented. The standalone tour and combat research demos retain their existing
 behavior; these campaign controls belong to the shared party flow.
 
-Format **OPENGOLD-CAMPAIGN 8** stores:
+Format **OPENGOLD-CAMPAIGN 9** stores:
 
-- Finished character drafts, appearances, levels, advancement choices and acquired feature/feat grants,
+- Finished character drafts, appearances, levels, advancement choices, training
+  selections and acquired feature/feat/training grants,
   stable member and inventory IDs,
   inventory and original item provenance, equipment and selected grip, purses, NPC identities/morale,
   active/reserve membership, selected slot and character-pool candidate identities.
@@ -66,13 +67,16 @@ On load, those records must agree with the validated creation/advancement histor
 missing, duplicate, forged or inconsistent records reject before replacing live state.
 Formats 1–7 reconstruct the grant records from their existing history. No extra
 feat is awarded and no resource is refilled. Equipment and roster state are also
-validated before replacement.
+validated before replacement. Format 9 adds skill, tool, Expertise and language
+selections and source grants. Older saves reconstruct fixed training grants while
+leaving optional selections pending. Version 8 grants are validated against their
+original feature/feat scope before reconstruction. See [training support](TRAINING.md).
 Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
 HP calculation while preserving wounds, zero-HP/dead state and spent resources.
 Rules 0.6.4 also accepts 0.6.3 campaigns without reapplying HP repairs.
-Rules 0.6.8 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7 campaigns. Standalone combat checkpoints
+Rules 0.6.9 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8 campaigns. Standalone combat checkpoints
 retain the post-attack action, Bonus Action, movement and spell usage; the
-[0.6.4/0.6.5/0.6.6/0.6.7 combat migrations](RULES.md#library-boundary) cancel facing-only queues
+[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8 combat migrations](RULES.md#library-boundary) cancel facing-only queues
 and preserve genuine movement reactions. Format 7 also records involuntary
 shared spaces after an allied-transit interruption; healing and recovery retain
 valid checkpoints without moving actors or replenishing resources. Other combat module versions reject.

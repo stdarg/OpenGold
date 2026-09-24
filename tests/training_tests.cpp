@@ -1,0 +1,120 @@
+#include "opengold/campaign_save.h"
+#include "opengold/srd5.h"
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
+using namespace opengold;
+using namespace opengold::rules;
+namespace {
+void check(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
+template<class F>void rejects(F f){bool caught=false;try{f();}catch(const std::exception&){caught=true;}check(caught,"Invalid training must reject");}
+auto module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
+CharacterDraft draft(std::string klass="rogue",std::string background="criminal"){
+    CharacterDraft d;d.race="human";d.gender="female";d.character_class=klass;d.background=background;
+    d.alignment="neutral_good";d.name="Training tester";d.rolled=true;for(auto& r:d.rolls)r={{6,5,4,1},3};return d;
+}
+TrainingChoices choices(){return {{"origin:languages",{"elvish","dwarvish"}},
+    {"class:rogue",{"acrobatics","investigation","perception","persuasion"}},
+    {"class:rogue:expertise",{"stealth","perception"}},{"class:rogue:thieves_cant",{"undercommon"}}};}
+Character hero(const CharacterDraft& d){return Character(*srd5::character_rules(),d,{});}
+const SkillTraining& skill(const CharacterSheet& sheet,std::string_view id){
+    const auto found=std::find_if(sheet.training.skills.begin(),sheet.training.skills.end(),[&](const auto& s){return s.id==id;});check(found!=sheet.training.skills.end(),"Skill exists");return *found;
+}
+std::string fixture(const char* name){std::ifstream in(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name);check(bool(in),"Frozen fixture exists");return {std::istreambuf_iterator<char>(in),{}};}
+void replace(std::string& text,std::string_view from,std::string_view to){const auto pos=text.find(from);check(pos!=text.npos,"Fixture field exists");text.replace(pos,from.size(),to);}
+std::string corrupt(std::string bytes,std::string_view from,std::string_view to){
+    auto body=bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);replace(body,from,to);
+    std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
+    return bytes.substr(0,bytes.find('\n')+1)+std::to_string(hash)+'\n'+body;
+}
+void grants_and_checks(){
+    auto creation=srd5::character_rules();auto d=draft();auto sheet=hero(d).sheet();
+    check(!sheet.training.complete&&sheet.training.skills.size()==18,"Missing choices stay pending while all ordinary skill modifiers are available");
+    check(sheet.training.languages.size()==2&&sheet.training.tools.size()==1,"Common, Thieves' Cant and Thieves' Tools are fixed grants");
+    check(sheet.training.tools[0].sources.size()==2,"Rogue and Criminal tool grants retain both sources");
+    check(skill(sheet,"stealth").bonus==5&&!skill(sheet,"stealth").expertise,"Criminal grants Dexterity +3 plus proficiency +2 without inventing Expertise");
+    d.training=choices();sheet=hero(d).sheet();
+    check(sheet.training.complete&&sheet.training.languages.size()==5,"Two standard languages and a distinct Rogue language complete the fixed language grants");
+    check(skill(sheet,"stealth").bonus==7&&skill(sheet,"perception").bonus==6,"Expertise adds doubled +2 proficiency to the governing ability");
+    check(skill(sheet,"investigation").bonus==4&&skill(sheet,"arcana").bonus==2,"Proficient and untrained skills use different bonuses");
+    check(skill(sheet,"stealth").sources.size()==2,"Expertise and background proficiency have separate provenance");
+    auto result=creation->ability_check(sheet,1,{},"thieves_tools");
+    check(result.ability_modifier==3&&result.proficiency==2&&result.total==5&&!result.tool_advantage&&result.sources.size()==2,"Duplicate tool grants add proficiency only once");
+    result=creation->ability_check(sheet,1,"sleight_of_hand","thieves_tools");
+    check(result.total==5&&result.tool_advantage&&!result.expertise,"Using a proficient skill and tool grants advantage without stacking proficiency");
+    result=creation->ability_check(sheet,1,"stealth","thieves_tools");
+    check(result.total==7&&result.tool_advantage&&result.expertise,"Tool proficiency does not add again on top of Expertise");
+    result=creation->ability_check(sheet,0,"stealth",{});check(result.total==6,"A rule can choose another governing ability without changing training");
+    rejects([&]{creation->ability_check(sheet,6,"stealth",{});});rejects([&]{creation->ability_check(sheet,1,"unknown",{});});
+    rejects([&]{creation->ability_check(sheet,1,{},"unknown");});
+    // Independent proficiency table boundaries. This query is shared math,
+    // not a claim that Rogue advancement beyond level one is integrated.
+    for(const auto [level,bonus]:{std::pair{1,2},std::pair{4,2},std::pair{5,3},std::pair{9,4},std::pair{13,5},std::pair{17,6},std::pair{20,6}}){
+        auto later=sheet;later.level=level;check(creation->ability_check(later,1,"stealth",{}).total==3+2*bonus,"Expertise uses the character-level proficiency table");
+    }
+    d.training["class:rogue"]={"stealth","investigation","perception","persuasion"};sheet=hero(d).sheet();
+    check(skill(sheet,"stealth").sources.size()==3&&skill(sheet,"stealth").bonus==7,"Overlapping class/background skill and Expertise grants do not stack bonuses");
+    for(const auto& klass:creation->choices(CreationField::character_class)){
+        auto other=draft(klass.id,"sage");other.training={{"origin:languages",{"common_sign_language","orc"}}};
+        const auto s=hero(other).sheet();check(s.training.languages.size()==(klass.id=="rogue"?4u:3u),"Starting languages are available for every class");
+    }
+}
+void invalid_choices(){
+    const auto valid=[](){auto d=draft();d.training=choices();return d;};
+    const std::vector<std::pair<std::string,std::vector<std::string>>> bad{
+        {"origin:languages",{"elvish","elvish"}},{"origin:languages",{"common","elvish"}},
+        {"origin:languages",{"abyssal","elvish"}},{"origin:languages",{"elvish","dwarvish","orc"}},
+        {"class:rogue",{"acrobatics","arcana","perception","persuasion"}},
+        {"class:rogue",{"acrobatics","acrobatics","perception","persuasion"}},
+        {"class:rogue:expertise",{"arcana","stealth"}},{"class:rogue:expertise",{"thieves_tools","stealth"}},
+        {"class:rogue:expertise",{"stealth","stealth"}},{"class:rogue:thieves_cant",{"elvish"}},
+        {"class:rogue:thieves_cant",{"thieves_cant"}},{"class:rogue:thieves_cant",{"unknown"}},
+        {"class:rogue:expertise",{"stealth","perception","persuasion"}},{"unknown",{"elvish"}}};
+    for(const auto& [group,values]:bad){auto d=valid();d.training[group]=values;rejects([&]{(void)hero(d);});}
+    auto d=valid();d.character_class="fighter";rejects([&]{(void)hero(d);});
+    d=valid();d.training["class:rogue"].erase(d.training["class:rogue"].begin()+2);
+    rejects([&]{(void)hero(d);}); // Cannot retain Perception Expertise after losing its proficiency.
+    d=valid();d.training.erase("class:rogue:expertise");check(!hero(d).sheet().training.complete,"Incomplete selections remain explicitly pending");
+    auto sheet=hero(valid()).sheet();auto rules=module();
+    for(const auto& grant:std::vector<FeatureGrant>{{"skill:arcana","class:rogue",1,{}},{"expertise:stealth","class:rogue:expertise",1,{}},
+            {"tool:thieves_tools","background:criminal",1,{}},{"language:abyssal","origin:languages",1,{}}}){
+        auto invalid=sheet;invalid.grants.push_back(grant);rejects([&]{(void)rules->character_profile(invalid,{});});
+    }
+    auto invalid=sheet;std::erase_if(invalid.grants,[](const auto& g){return g.id=="language:common";});
+    rejects([&]{(void)rules->character_profile(invalid,{});});
+}
+void persistence(){
+    auto d=draft();d.training=choices();CampaignParty party(module());const auto id=party.add_pc(hero(d));
+    auto state=party.checkpoint();state.roster[0].vitals.hit_points-=2;party.restore(state);
+    const auto bytes=encode_campaign(party,nullptr,"training-fixture");
+    auto loaded=decode_campaign(bytes,*srd5::character_rules(),*module(),"training-fixture",nullptr);
+    CampaignParty restored(module());restored.restore(std::move(loaded.party));
+    check(encode_campaign(restored,nullptr,"training-fixture")==bytes&&restored.member(id).character.creation_data().training==d.training,"Choice order, source grants and wounded state round trip exactly");
+    for(const auto& bad:{corrupt(bytes,"\"elvish\"","\"abyssal\""),corrupt(bytes,"\"tool:thieves_tools\"","\"tool:unknown\"")})
+        rejects([&]{(void)decode_campaign(bad,*srd5::character_rules(),*module(),"training-fixture",nullptr);});
+    check(encode_campaign(party,nullptr,"training-fixture")==bytes,"Failed load does not replace live state");
+    auto rules=module();auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{5,1}});
+    auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);const auto checkpoint=combat->save();
+    check(checkpoint.find("expertise:stealth")!=checkpoint.npos&&rules->restore(checkpoint)->save()==checkpoint,"Combat recipes retain training and Expertise provenance");
+    auto invalid=checkpoint;replace(invalid,"class:rogue:expertise","class:rogue:invalid");rejects([&]{(void)rules->restore(invalid);});
+    auto old=decode_campaign(fixture("campaign-v8-training.ogs"),*srd5::character_rules(),*rules,"training-fixture",nullptr);
+    CampaignParty migrated(module());migrated.restore(std::move(old.party));
+    for(unsigned n=1;n<=4;++n){const auto& m=migrated.member(n);
+        check(m.character.creation_data().training.empty()&&!m.character.sheet().training.complete,"Old saves do not receive invented training choices");
+        check(m.vitals.hit_points==m.character.sheet().hit_points-2,"Training migration preserves wounds");
+    }
+    check(migrated.member(3).vitals.resources=="SRD1 1 0 0 0 0"&&migrated.member(4).vitals.resources=="SRD2 0 1 1 0 0 0","Migration preserves spent feat/class resources");
+    check(migrated.member(1).character.sheet().training.tools.front().sources.size()==2,"Older Rogue/Criminal gains the two known fixed tool sources");
+    const auto pending=encode_campaign(migrated,nullptr,"training-fixture");
+    auto again=decode_campaign(pending,*srd5::character_rules(),*rules,"training-fixture",nullptr);CampaignParty twice(module());twice.restore(std::move(again.party));
+    check(encode_campaign(twice,nullptr,"training-fixture")==pending,"Unresolved choices remain pending across repeated saves");
+    auto old_combat=fixture("combat-v8-training.save");auto migrated_combat=rules->restore(old_combat);replace(old_combat,"0.6.8",rules->identity().version);
+    check(migrated_combat->save()==old_combat,"Legacy combat retains every old recipe, RNG, wound and resource without injecting new choices");
+    auto fighter=draft("fighter");fighter.training={{"origin:languages",{"elvish","orc"}}};CampaignParty growing(module());const auto f=growing.add_pc(hero(fighter));
+    growing.award_experience(2700,"training-xp");for(unsigned level=2;level<=3;++level)growing.advance(f,growing.default_advancement(f));
+    auto choice=growing.default_advancement(f);choice.abilities={};choice.abilities[1]=2;growing.advance(f,choice);
+    check(skill(growing.member(f).character.sheet(),"stealth").bonus==6,"Level-up rebuilds skill totals after an ability modifier changes");
+}
+}
+int main(){try{grants_and_checks();invalid_choices();persistence();std::cout<<"Training grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

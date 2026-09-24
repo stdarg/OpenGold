@@ -1,0 +1,121 @@
+#include "training.h"
+#include <algorithm>
+#include <set>
+#include <stdexcept>
+#include <tuple>
+
+namespace opengold::srd5::detail {
+using namespace rules;
+namespace {
+struct Skill {std::string_view id,label;unsigned ability;};
+// SRD 5.2.1 p. 9. The query also accepts another governing ability when a rule
+// calls for it; these are the ordinary character-sheet associations.
+constexpr std::array skills{
+    Skill{"acrobatics","Acrobatics",1},Skill{"animal_handling","Animal Handling",4},
+    Skill{"arcana","Arcana",3},Skill{"athletics","Athletics",0},Skill{"deception","Deception",5},
+    Skill{"history","History",3},Skill{"insight","Insight",4},Skill{"intimidation","Intimidation",5},
+    Skill{"investigation","Investigation",3},Skill{"medicine","Medicine",4},Skill{"nature","Nature",3},
+    Skill{"perception","Perception",4},Skill{"performance","Performance",5},Skill{"persuasion","Persuasion",5},
+    Skill{"religion","Religion",3},Skill{"sleight_of_hand","Sleight of Hand",1},Skill{"stealth","Stealth",1},Skill{"survival","Survival",4}};
+constexpr std::array<std::string_view,10> rogue_skills{"acrobatics","athletics","deception","insight","intimidation","investigation","perception","persuasion","sleight_of_hand","stealth"};
+struct Language {std::string_view id,label;bool standard;};
+constexpr std::array languages{
+    Language{"common","Common",true},Language{"common_sign_language","Common Sign Language",true},
+    Language{"draconic","Draconic",true},Language{"dwarvish","Dwarvish",true},Language{"elvish","Elvish",true},
+    Language{"giant","Giant",true},Language{"gnomish","Gnomish",true},Language{"goblin","Goblin",true},
+    Language{"halfling","Halfling",true},Language{"orc","Orc",true},Language{"abyssal","Abyssal",false},
+    Language{"celestial","Celestial",false},Language{"deep_speech","Deep Speech",false},Language{"druidic","Druidic",false},
+    Language{"infernal","Infernal",false},Language{"primordial","Primordial",false},Language{"sylvan","Sylvan",false},
+    Language{"thieves_cant","Thieves' Cant",false},Language{"undercommon","Undercommon",false}};
+constexpr std::string_view origin="origin:languages",rogue="class:rogue",expertise="class:rogue:expertise",cant="class:rogue:thieves_cant";
+void require(bool ok){if(!ok)throw std::runtime_error("Invalid training choices or grant sources");}
+int modifier(int score){return score<10?(score-11)/2:(score-10)/2;}
+int proficiency(unsigned level){require(level>=1&&level<=20);return 2+int((level-1)/4);}
+bool source(std::span<const FeatureGrant> grants,std::string_view id){return std::any_of(grants.begin(),grants.end(),[&](const auto& g){return g.id==id;});}
+std::vector<FeatureGrant> fixed(std::string_view klass,std::string_view background){
+    std::vector<FeatureGrant> result{{"language:common",std::string(origin),1,{}}};
+    if(background=="criminal")for(const auto id:{"skill:sleight_of_hand","skill:stealth","tool:thieves_tools"})result.push_back({id,"background:criminal",1,{}});
+    if(klass=="rogue"){
+        result.push_back({"tool:thieves_tools",std::string(rogue),1,{}});
+        result.push_back({"language:thieves_cant",std::string(cant),1,{}});
+    }
+    return result;
+}
+const std::vector<std::string>& selected(const TrainingChoices& choices,std::string_view id){
+    static const std::vector<std::string> empty;const auto found=choices.find(std::string(id));return found==choices.end()?empty:found->second;
+}
+std::vector<CreationChoice> language_options(bool rare){
+    std::vector<CreationChoice> result;for(const auto& l:languages)if(l.id!="common"&&l.id!="thieves_cant"&&(rare||l.standard))result.push_back({std::string(l.id),std::string(l.label),{}});return result;
+}
+void add_choices(std::vector<FeatureGrant>& grants,const TrainingChoices& choices,const TrainingChoiceGroup& group,std::string_view prefix){
+    const auto& values=selected(choices,group.id);require(values.size()<=group.count);std::set<std::string> seen;
+    for(const auto& value:values){require(seen.insert(value).second&&std::any_of(group.options.begin(),group.options.end(),[&](const auto& o){return o.id==value;}));
+        grants.push_back({std::string(prefix)+value,group.id,1,{}});}
+}
+std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view background,const TrainingChoices& choices){
+    std::vector<TrainingChoiceGroup> result{{std::string(origin),"Starting languages",2,language_options(false)}};
+    if(klass=="rogue"){
+        TrainingChoiceGroup group{std::string(rogue),"Rogue skills",4,{}};
+        for(const auto& s:skills)if(std::find(rogue_skills.begin(),rogue_skills.end(),s.id)!=rogue_skills.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
+        result.push_back(std::move(group));group={std::string(expertise),"Rogue Expertise",2,{}};
+        const auto known=fixed(klass,background);const auto& picked=selected(choices,rogue);
+        for(const auto& s:skills)if(source(known,"skill:"+std::string(s.id))||std::find(picked.begin(),picked.end(),s.id)!=picked.end())group.options.push_back({std::string(s.id),std::string(s.label),{}});
+        result.push_back(std::move(group));group={std::string(cant),"Additional Rogue language",1,language_options(true)};
+        const auto& starting=selected(choices,origin);
+        std::erase_if(group.options,[&](const auto& o){return std::find(starting.begin(),starting.end(),o.id)!=starting.end();});
+        result.push_back(std::move(group));
+    }
+    return result;
+}
+std::vector<FeatureGrant> matching(std::span<const FeatureGrant> grants,std::string_view id,std::string_view extra={}){
+    std::vector<FeatureGrant> result;for(const auto& g:grants)if(g.id==id||(!extra.empty()&&g.id==extra))result.push_back(g);return result;
+}
+AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const std::array<int,6>& scores,unsigned level,unsigned ability,std::string_view skill,std::string_view tool){
+    require(ability<6&&std::all_of(scores.begin(),scores.end(),[](int score){return score>=3&&score<=20;}));const auto pb=proficiency(level);
+    require(skill.empty()||std::any_of(skills.begin(),skills.end(),[&](const auto& s){return s.id==skill;}));
+    require(tool.empty()||tool=="thieves_tools");
+    const auto skill_id="skill:"+std::string(skill),expert_id="expertise:"+std::string(skill),tool_id="tool:"+std::string(tool);
+    const bool trained_skill=!skill.empty()&&source(grants,skill_id),trained_tool=!tool.empty()&&source(grants,tool_id);
+    AbilityCheckModifier result;result.ability_modifier=modifier(scores[ability]);result.expertise=trained_skill&&source(grants,expert_id);
+    result.proficiency=result.expertise?pb*2:(trained_skill||trained_tool)?pb:0;result.total=result.ability_modifier+result.proficiency;
+    result.tool_advantage=trained_skill&&trained_tool;
+    for(const auto& g:grants)if((!skill.empty()&&(g.id==skill_id||g.id==expert_id))||(!tool.empty()&&g.id==tool_id))result.sources.push_back(g);
+    return result;
+}
+}
+bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
+std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training);}
+std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices){
+    auto result=fixed(klass,background);const auto groups=options(klass,background,choices);
+    for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());
+    for(const auto& group:groups)add_choices(result,choices,group,group.id==rogue?"skill:":group.id==expertise?"expertise:":"language:");
+    return result;
+}
+TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background){
+    auto required=fixed(klass,background);TrainingChoices choices;std::vector<FeatureGrant> actual;
+    for(const auto& grant:grants)if(is_training_grant(grant)){
+        require(grant.level==1&&grant.choices.empty());actual.push_back(grant);
+        const auto found=std::find(required.begin(),required.end(),grant);
+        if(found!=required.end()){required.erase(found);continue;}
+        const auto prefix=grant.source_id==rogue?"skill:":grant.source_id==expertise?"expertise:":"language:";
+        require(grant.id.starts_with(prefix));choices[grant.source_id].push_back(grant.id.substr(std::string_view(prefix).size()));
+    }
+    require(required.empty());auto expected=training_grants(klass,background,choices);
+    const auto order=[](const FeatureGrant& a,const FeatureGrant& b){return std::tie(a.id,a.source_id,a.level)<std::tie(b.id,b.source_id,b.level);};
+    std::sort(actual.begin(),actual.end(),order);std::sort(expected.begin(),expected.end(),order);require(actual==expected);return choices;
+}
+TrainingProfile training_profile(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,const std::array<int,6>& scores){
+    const auto choices=training_choices(grants,klass,background);const auto groups=options(klass,background,choices);TrainingProfile result;result.complete=true;
+    for(const auto& group:groups)result.complete&=selected(choices,group.id).size()==group.count;
+    for(const auto& s:skills){const auto bonus=check_modifier(grants,scores,level,s.ability,s.id,{});
+        result.skills.push_back({std::string(s.id),std::string(s.label),s.ability,bonus.total,source(grants,"skill:"+std::string(s.id)),bonus.expertise,bonus.sources});}
+    if(source(grants,"tool:thieves_tools"))result.tools.push_back({"thieves_tools","Thieves' Tools",matching(grants,"tool:thieves_tools")});
+    for(const auto& l:languages)if(source(grants,"language:"+std::string(l.id)))result.languages.push_back({std::string(l.id),std::string(l.label),matching(grants,"language:"+std::string(l.id))});
+    return result;
+}
+AbilityCheckModifier ability_check(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,
+    const std::array<int,6>& scores,unsigned ability,std::string_view skill,std::string_view tool){
+    (void)training_choices(grants,klass,background);return check_modifier(grants,scores,level,ability,skill,tool);
+}
+}

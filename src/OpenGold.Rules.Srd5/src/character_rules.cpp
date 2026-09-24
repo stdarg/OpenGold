@@ -1,5 +1,6 @@
 #include "dice.h"
 #include "feature_grants.h"
+#include "training.h"
 #include "opengold/srd5.h"
 #include "status_effects.h"
 #include <algorithm>
@@ -35,6 +36,10 @@ public:
     std::array<AbilityRoll,6> roll(std::uint64_t& state) const override;
     std::optional<int> ability_score(const CharacterDraft& draft,unsigned ability) const override;
     CharacterSheet evaluate(const CharacterDraft& draft,bool require_name) const override;
+    std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft) const override {return detail::training_options(draft);}
+    AbilityCheckModifier ability_check(const CharacterSheet& sheet,unsigned ability,std::string_view skill,std::string_view tool) const override {
+        return detail::ability_check(sheet.grants,detail::grant_source_id(sheet.character_class),detail::grant_source_id(sheet.background),sheet.level,sheet.scores,ability,skill,tool);
+    }
 };
 std::vector<CreationChoice> CreatorRules::choices(CreationField field) const
 {
@@ -125,6 +130,8 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     s.character_class=label(CreationField::character_class,d.character_class);
     s.alignment=label(CreationField::alignment,d.alignment);s.background=label(CreationField::background,d.background);
     s.grants=detail::starting_grants(d.character_class,d.race,d.background);
+    const auto training=detail::training_grants(d.character_class,d.background,d.training);
+    s.grants.insert(s.grants.end(),training.begin(),training.end());
     if(require_name && (d.name.empty()||d.name.size()>160 || d.name.find_first_not_of(" \t\r\n")==std::string::npos ||
         std::any_of(d.name.begin(),d.name.end(),[](unsigned char c){return c<32||c==127;})))
         throw std::runtime_error("Enter a name before finishing your character.");
@@ -170,6 +177,7 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     s.hp_explanation=std::to_string(s.hit_die)+" (maximum d"+std::to_string(s.hit_die)+") "+
         (s.modifiers[2]<0?"- ":"+ ")+std::to_string(std::abs(s.modifiers[2]))+" (Constitution)"+
         (racial_hp?" + 1 (Dwarven Toughness)":"")+" = "+std::to_string(s.hit_points)+" HP";
+    s.training=detail::training_profile(s.grants,d.character_class,d.background,s.level,s.scores);
     return s;
 }
 }

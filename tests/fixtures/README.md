@@ -79,3 +79,16 @@ commands, choosing the first legal melee attack or otherwise End Turn. Migration
 must preserve the exact resulting damage, per-turn feat usage, resource/turn
 budgets, RNG and log. Campaign history identifies the grants' sources; the older
 combat recipes only encode effects and must not acquire fabricated provenance.
+
+## Training migration
+
+`campaign-v8-training.ogs` and `combat-v8-training.save` were written by rules
+**0.6.8** from commit `58e8955`, before training choices existed. The original
+headers and compiled libraries produced these files; do not regenerate them with
+the current writer. The authored campaign uses asset identity `training-fixture`.
+Its four Human characters are Rogue/Criminal level 1, Rogue/Soldier level 1,
+Fighter/Soldier level 4 with Defense, and Wizard/Sage level 4 with +2 Constitution.
+All are wounded by 2 HP; the Fighter has one Second Wind and the Wizard has one
+slot at each spell level remaining. Combat seed 42 retains their original PC6
+recipes and state. Migration must not invent optional training choices, heal
+wounds, refill resources or rewrite the paused combat recipes.

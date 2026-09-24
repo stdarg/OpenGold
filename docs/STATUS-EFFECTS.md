@@ -82,7 +82,7 @@ are prepared in an owned candidate before replacing live campaign state.
 
 ## Persistence and boundaries
 
-- Rules module **0.6.8** writes **OGCOMBAT 8** checkpoints containing source scope,
+- Rules module **0.6.9** writes **OGCOMBAT 8** checkpoints containing source scope,
   elapsed time and each actor's effect collection. The checkpoint byte limit is
   4 MiB; each creature supports at most 128 simultaneous applications. A full
   collection offers no further Blindness command.
@@ -93,11 +93,13 @@ are prepared in an owned candidate before replacing live campaign state.
   the next encounter scope. Versions 1–5 migrate with zero sub-minute offsets
   and no effects. Supported preceding content packs migrate; unrelated identities
   still reject. The [combat migration](RULES.md#library-boundary) accepts module
-  0.6.4/0.6.5/0.6.6/0.6.7 with matching content; other old combat identities require their original module.
+  0.6.4/0.6.5/0.6.6/0.6.7/0.6.8 with matching content; other old combat identities require their original module.
 - Campaign format 7 adds weapon grip separately from the opaque effect/resource
   continuation; combat format 8 retains grip changes during pending reactions.
 - Campaign format 8 and PC6 profiles add acquired feature/feat provenance and
   choices, separately from spent resources and timed effects.
+- Campaign format 9 and PC7 add training choices and sources while preserving
+  effects, wounds and resources; see [training support](TRAINING.md).
 - PCs and recruited NPCs carry effects through campaign handoff, reserve status,
   healing, advancement, saves and subsequent encounters. Current encounter-only
   monsters retain effects for their encounter and its checkpoints.

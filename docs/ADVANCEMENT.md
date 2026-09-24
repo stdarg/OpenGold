@@ -60,10 +60,10 @@ attribution applies; original game resources are loaded locally.
 
 ## Saves and verification
 
-Campaign formats 3–8 record each confirmed choice and reconstruct the resulting
+Campaign formats 3–9 record each confirmed choice and reconstruct the resulting
 sheet and Constitution history through the rules module. Formats 1 and 2 migrate
-their existing levels using the previous default choices. Rules module 0.6.8
-accepts the supported 0.3.0–0.6.7 campaign identities; unrelated content identities
+their existing levels using the previous default choices. Rules module 0.6.9
+accepts the supported 0.3.0–0.6.8 campaign identities; unrelated content identities
 still reject. Loading an affected older campaign corrects maximum HP and preserves
 the living character's HP deficit. Unconscious/dead characters stay at zero, and
 spent resources and death-save counters persist. The correction applies once;
@@ -76,6 +76,10 @@ Savage Attacker. Ability Score Improvement records each chosen ability and amoun
 A source can only spend its entitlement once; nonrepeatable feats cannot be
 acquired twice. Defense requires the recorded Fighting Style feature. ASI is
 repeatable under the SRD, but the current level cap provides only one entitlement.
+
+Campaign format 9 and PC7 add skill, tool, Expertise and language grants.
+Advancement refreshes skill totals after ability changes; training choices and
+missing-choice migration are described in [training support](TRAINING.md).
 
 Existing Second Wind, Spellcasting, Unarmored Defense, Dwarven Toughness and
 Goliath speed have source records. Fighting Style records the existing Defense
@@ -92,7 +96,7 @@ and ability amounts. This presentation correction introduced no profile or campa
 Standalone combat checkpoints use version 8 to retain second-level slots,
 per-turn spell/feat usage, timed effects, presentation facing, pending movement
 reactions, involuntary overlap during allied transit, and weapon grip.
-Modules 0.6.4/0.6.5/0.6.6/0.6.7 have specific [combat migrations](RULES.md#library-boundary)
+Modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8 have specific [combat migrations](RULES.md#library-boundary)
 that retain movement queues and cancel obsolete facing reactions without
 refunding resources. Other old
 combat identities are not migrated.
