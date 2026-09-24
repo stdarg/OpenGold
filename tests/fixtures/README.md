@@ -322,3 +322,20 @@ Missile book entry, three wounds, equipped Wand, 37 gold, a spent slot, and
 records an actual Fire Bolt cast. Campaign migration adds an absent cantrip
 field and updates module identity; combat migration updates identity only.
 No Poison Spray grant is invented and the continuation must remain exact.
+
+## Explicit Cleric cantrip migration
+
+`campaign-v11-sacred.ogs`, `combat-v13-sacred.save` and
+`combat-v13-sacred-continued.save` were generated using actual **0.6.22**
+libraries from commit **ab65076**, before production rules were changed.
+The `freeze()` path in `sacred_flame_tests.cpp` refuses to run under the current
+writer. Do not regenerate these fixtures. Asset identity is `sacred`; no
+original game assets are included.
+
+An authored level-three Orc Sage Cleric carries a Mace and starts at one HP.
+An actual self-targeted Cure Wounds spends one slot and partially heals the
+character. The campaign retains 37 gold, RNG 789 and 123 minutes plus 456
+milliseconds before combat handoff. The combat pair records the following
+Cleric turn, before and after a second actual Cure Wounds cast. Migration must
+change module identity only, preserving PC11 access, wounds, resources,
+equipment, grants, RNG and clocks. No Sacred Flame selection is invented.

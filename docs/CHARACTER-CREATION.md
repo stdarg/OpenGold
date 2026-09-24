@@ -50,10 +50,13 @@ launcher opens `demos/godot/scenes/character_creation.tscn`. Art loads from the
    language. Counts show progress and Next requires every supported choice.
    Back preserves choices; class/background edits clear only invalid choices and
    their dependencies. The full first package and limits are in [TRAINING.md](TRAINING.md).
-6. Wizards choose supported cantrips in **Spell Choices**, after Training. Fire
-   Bolt and Poison Spray have labeled checkboxes, counts and keyboard access.
+6. Wizards and Clerics choose supported cantrips in **Spell Choices**, after
+   Training. Wizard Fire Bolt/Poison Spray and Cleric Sacred Flame have labeled
+   checkboxes, counts and keyboard access.
    Back preserves selections; unfilled SRD choices remain explicitly pending.
-   Preset Wizards receive both available cantrips. See [spell choices](POISON-SPRAY.md).
+   Class changes clear invalid choices and hide their controls. Presets receive
+   their supported class cantrips; old saves retain recorded choices. See
+   [Wizard spell choices](POISON-SPRAY.md) and [Cleric spell choices](SACRED-FLAME.md).
 7. Enter a name, up to 40 characters. There is no separate HP step.
    Choose a complete portrait with the dropdown or Previous/Next buttons.
    Optional gender, class, and in-game race filters combine to narrow the list;

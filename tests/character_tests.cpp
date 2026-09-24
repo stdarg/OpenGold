@@ -131,7 +131,9 @@ void creation_tests()
     check(creator.step()==CreationStep::training,"Class advances to Training regardless of future target eligibility");
     rejects([&]{creator.next();},"Required training blocks Name");
     creator.training_choice("origin:languages","elvish",true);creator.training_choice("origin:languages","dwarvish",true);creator.next();
-    check(creator.step()==CreationStep::name,"Completed training advances to Name");rejects([&]{creator.next();},"Name required before portrait");
+    check(creator.draft().character_class=="cleric"&&creator.step()==CreationStep::spell_choices,"Completed Cleric training advances to Spell Choices");
+    creator.cantrip_choice("sacred_flame",true);creator.next();
+    check(creator.step()==CreationStep::name,"Spell Choices advances to Name");rejects([&]{creator.next();},"Name required before portrait");
     creator.name("  Mira Stoneward  ");creator.next();check(creator.step()==CreationStep::combat_icon,"Name advances directly to combat appearance");
     auto appearance=creator.appearance();appearance.portrait_head=261;appearance.combat_head=9;appearance.colors[1][5]=0;creator.appearance(appearance);creator.next();
     check(creator.step()==CreationStep::sheet&&creator.sheet().name=="Mira Stoneward","Completed sheet retains trimmed name");
@@ -144,7 +146,7 @@ void creation_tests()
     check(finished.inventory().empty()&&finished.appearance()==appearance,"Finished character owns appearance and an empty inventory");
     rejects([&]{creator.roll();},"Completed sheet cannot be silently rerolled");
     creator.back();creator.next();check(creator.appearance()==appearance,"Review retains both appearance banks");
-    creator.back();creator.back();creator.back();creator.back();creator.back();
+    creator.back();creator.back();creator.back();creator.back();creator.back();creator.back();
     check(creator.step()==CreationStep::attributes,"Back navigation reaches attributes");
     creator.select(CreationField::race,"dwarf");creator.select(CreationField::character_class,"barbarian");
     check(creator.sheet().hit_points==13+creator.sheet().modifiers[2],"HP recalculates after earlier edits");

@@ -311,3 +311,9 @@ Rules 0.6.22 adds [Poison Spray and explicit Wizard cantrip choices](POISON-SPRA
 with the approved creation and main combat controls. Campaign 11 stores choices;
 PC11 validates their grants. Combat 13 and existing resource formats remain.
 Full spell selection, speech blocking and other granting sources remain open.
+
+Rules 0.6.23 adds [Sacred Flame and Cleric cantrip choices](SACRED-FLAME.md),
+with PC12 grant validation and the approved creation/combat controls. Shared
+spell saves now automatically fail Strength/Dexterity at zero HP. Campaign 11,
+combat 13 and resource formats remain. Partial cover, speech blockers and other
+grant routes keep #203 open.

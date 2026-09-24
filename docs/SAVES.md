@@ -236,3 +236,9 @@ historical preset; an explicit empty list remains empty. Replay validates
 cantrip source, acquisition level and capacity alongside the existing ledger.
 Combat 13/SRD1–7 remain. Frozen 0.6.21 files prove old choices, spent resources,
 clock/RNG and actual Fire Bolt continuation. See [Poison Spray](POISON-SPRAY.md).
+
+Rules 0.6.23 writes PC12 recipes, validating sourced Cleric cantrip access.
+PC11 and earlier retain their recorded spells and cannot acquire Sacred Flame
+by relabeling a new recipe. Campaign 11/combat 13/SRD1–7 remain unchanged.
+Actual 0.6.22 fixtures verify exact campaign preservation and Cure Wounds
+continuation without inventing Cleric choices. See [Sacred Flame](SACRED-FLAME.md).

@@ -139,6 +139,11 @@ spell command query. Component definitions remain in the SRD library; Core and
 Godot do not duplicate hand rules or spell requirements. Existing saved equipment
 and attack grips are retained. Speech-blocking sources remain separate work.
 
+Rules 0.6.23 adds [Sacred Flame](SACRED-FLAME.md) through the shared spell-access,
+saving-throw and typed-damage services. The class-driven Godot cantrip control
+now supports Clerics and hides stale choices when the class changes. PC12
+validates the grant/casting mask; Core remains independent of spell mechanics.
+
 ### Why This Stack
 
 `C/C++` fits the project because it supports a portable native engine with direct integration into Godot:

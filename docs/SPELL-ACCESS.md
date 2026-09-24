@@ -38,9 +38,17 @@ level, with spell level checked at acquisition. Existing Modifiers text shows
 known cantrips, book entries/acquisition levels, and pending counts in English
 and Spanish. It does not select missing spells on the player's behalf.
 
+## Cleric extension
+
+Rules 0.6.23 adds a sourced starting Sacred Flame choice using the same control.
+Cleric grants use `class:cleric:spellcasting`; the base cantrip entitlement is
+3 through level 3 and 4 at level 4. Presets receive the supported choice, while
+old saves retain their recorded spells. Leveled preparation, Divine Order and
+level-up replacement remain #91. See [Sacred Flame](SACRED-FLAME.md).
+
 ## Persistence
 
-Module **0.6.22** writes **PC11** combat recipes; the existing grant section
+Module **0.6.23** writes **PC12** combat recipes; the existing grant section
 contains the spell sources and the casting mask must agree with them. Campaign
 format **11** stores explicit starting cantrip choices. Combat format **13** and
 vital-state formats **SRD1–7** remain. PC10 reads retain their historical grants.

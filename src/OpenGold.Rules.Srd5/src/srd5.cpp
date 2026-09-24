@@ -168,14 +168,15 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_cantrips=magic=="PC11";
+    const bool with_cleric_cantrips=magic=="PC12";
+    const bool with_cantrips=magic=="PC11"||with_cleric_cantrips;
     const bool with_spells=magic=="PC10"||with_cantrips;
     const bool with_training=magic=="PC7"||magic=="PC8"||magic=="PC9"||with_spells;
     const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5"||magic=="PC6"||with_training;
     if(magic=="PC2"||selected)in>>level;
     if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
-    if(!in||(magic!="PC1"&&magic!="PC2"&&!selected)||level<1||level>(selected?4u:2u)||features>3||selected_spells>(with_cantrips?127u:63u)||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
+    if(!in||(magic!="PC1"&&magic!="PC2"&&!selected)||level<1||level>(selected?4u:2u)||features>3||selected_spells>(with_cleric_cantrips?255u:with_cantrips?127u:63u)||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
     if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard")throw std::runtime_error("Advancement is unsupported for this class");
     const auto races=character_rules()->choices(CreationField::race);
@@ -198,11 +199,11 @@ Definition character_definition(std::string_view bytes)
     d.slots2=(klass=="Cleric"||klass=="Wizard")&&level>=3?(level==3?2:3):0;
     d.casting=2+ability_modifier(scores[klass=="Cleric"?4:3]);d.spells=klass=="Cleric"?2:klass=="Wizard"?5:0;
     if(selected){
-        const unsigned allowed=klass=="Cleric"?(level>=3?42:10):klass=="Wizard"?((level>=3?53u:5u)|(with_cantrips?64u:0u)):0;
+        const unsigned allowed=klass=="Cleric"?((level>=3?42u:10u)|(with_cleric_cantrips?128u:0u)):klass=="Wizard"?((level>=3?53u:5u)|(with_cantrips?64u:0u)):0;
         if(selected_spells&~allowed||(features&1)&&klass!="Fighter")throw std::runtime_error("Invalid prepared spells or feat prerequisites");
         d.spells=selected_spells;d.savage=(features&2)!=0;
     }
-    d.known_cantrips=d.spells&65;
+    d.known_cantrips=d.spells&193;
     bool weapon=false,armor=false,shield=false;unsigned hands=0;
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(const auto* item=detail::weapon(key)){
@@ -241,6 +242,8 @@ Definition character_definition(std::string_view bytes)
                 if(selected_spells&32)prepared.push_back("blindness");
             }
             const auto access=detail::spell_access(grants,klass,level,prepared);
+            if(klass=="Cleric"&&((!with_cleric_cantrips&&!access.cantrips.empty())||detail::known_cantrip_mask(access)!=(selected_spells&128u)))
+                throw std::runtime_error("Character cantrip access disagrees with Cleric grants");
             if(!with_cantrips&&klass=="Wizard"&&
                 (std::any_of(access.cantrips.begin(),access.cantrips.end(),[](const auto& c){return c.id!="fire_bolt";})||
                  std::none_of(access.cantrips.begin(),access.cantrips.end(),[](const auto& c){return c.id=="fire_bolt"&&c.acquired_level==1;})))
@@ -317,7 +320,7 @@ bool same_command(const Command& a,const Command& b)
 { return a.revision==b.revision && a.actor==b.actor && a.target==b.target && a.verb==b.verb && a.destination==b.destination; }
 bool turns_to_attack(std::string_view verb)
 {
-    return verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="poison_spray"||verb=="magic_missile"||
+    return verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="poison_spray"||verb=="sacred_flame"||verb=="magic_missile"||
         verb=="magic_missile_2"||verb=="scorching_ray"||verb=="blindness";
 }
 class Session final : public CombatSession {
@@ -403,6 +406,7 @@ private:
     unsigned next_turn_ms(const Actor& target) const;
     void advance_turn_time();
     void log_save(const Actor& target,const detail::SaveResult& result);
+    bool saving_throw_succeeds(const Actor& target,detail::Ability ability,int dc);
     detail::MovementGrid movement_grid(const Actor& mover) const;
     std::vector<Cell> path_to(const Actor& a,Cell destination) const;
     EntityId pending() const {return reactor_index_<reactors_.size()?reactors_[reactor_index_]:0;}
@@ -464,6 +468,7 @@ Snapshot Session::snapshot() const
         auto& view=s.combatants.back();view.temporary_hp=a.temporary_hp;
         if(def(a).known_cantrips&1)view.known_cantrips.push_back("fire_bolt");
         if(def(a).known_cantrips&64)view.known_cantrips.push_back("poison_spray");
+        if(def(a).known_cantrips&128)view.known_cantrips.push_back("sacred_flame");
         if(def(a).rushes)view.resources.push_back({"adrenaline_rush",{"Adrenaline Rush",{}},unsigned(a.rushes),unsigned(def(a).rushes),unsigned(def(a).rushes)});
         if(def(a).hit_die){
             view.hp_messages.push_back({"Maximum HP includes level {level}, d{die} Hit Die and Constitution modifier {modifier}.",{{"level",std::to_string(def(a).level)},{"die",std::to_string(def(a).hit_die)},{"modifier",std::to_string(def(a).constitution)}}});
@@ -533,6 +538,8 @@ std::vector<Command> Session::legal_commands() const
         for(const auto& other:actors_) {
             if(other.dead || !line_of_sight(a.source.cell,other.source.cell))continue;
             const int feet=distance(a.source.cell,other.source.cell);
+            if((d.spells&128)&&can_gesture("sacred_flame")&&feet<=60&&can_see(a,other))
+                add(id,"sacred_flame","Sacred Flame",other.source.id);
             if((d.spells&64)&&can_gesture("poison_spray")&&feet<=30)
                 add(id,"poison_spray","Poison Spray",other.source.id);
             if(other.source.side!=a.source.side && other.hp>0) {
@@ -700,12 +707,31 @@ unsigned Session::next_save_ms(EntityId target) const
 }
 void Session::log_save(const Actor& target,const detail::SaveResult& result)
 {
-    const std::string outcome=result.success?"success":"failure";
-    log(target.source.name+" Constitution save: d20 "+std::to_string(result.natural)+" + "+std::to_string(result.bonus)+
+    constexpr std::array names{"Strength","Dexterity","Constitution","Intelligence","Wisdom","Charisma"};
+    constexpr std::array messages{
+        "{name} Strength save: d20 {roll} + {bonus} vs DC {dc} ({result}).",
+        "{name} Dexterity save: d20 {roll} + {bonus} vs DC {dc} ({result}).",
+        "{name} Constitution save: d20 {roll} + {bonus} vs DC {dc} ({result}).",
+        "{name} Intelligence save: d20 {roll} + {bonus} vs DC {dc} ({result}).",
+        "{name} Wisdom save: d20 {roll} + {bonus} vs DC {dc} ({result}).",
+        "{name} Charisma save: d20 {roll} + {bonus} vs DC {dc} ({result})."};
+    const auto ability=static_cast<unsigned>(result.ability);const std::string outcome=result.success?"success":"failure";
+    log(target.source.name+" "+names[ability]+" save: d20 "+std::to_string(result.natural)+" + "+std::to_string(result.bonus)+
         " vs DC "+std::to_string(result.dc)+" ("+outcome+").",
-        {"{name} Constitution save: d20 {roll} + {bonus} vs DC {dc} ({result}).",
-         {{"name",target.source.name},{"roll",std::to_string(result.natural)},{"bonus",std::to_string(result.bonus)},
+        {messages[ability],{{"name",target.source.name},{"roll",std::to_string(result.natural)},{"bonus",std::to_string(result.bonus)},
           {"dc",std::to_string(result.dc)},{"result",outcome,true}}});
+}
+bool Session::saving_throw_succeeds(const Actor& target,detail::Ability ability,int dc)
+{
+    if(target.hp==0&&(ability==detail::Ability::strength||ability==detail::Ability::dexterity)){
+        const std::string name=ability==detail::Ability::strength?"Strength":"Dexterity";
+        log(target.source.name+" automatically fails the "+name+" save while Unconscious.",
+            {"{name} automatically fails the {ability} save while Unconscious.",{{"name",target.source.name},{"ability",name,true}}});
+        return false;
+    }
+    const auto result=detail::saving_throw(ability,def(target).saves[static_cast<unsigned>(ability)],dc,
+        detail::saving_modifiers(ability,def(target).str_dex_disadvantage,target.dodge),rng_);
+    log_save(target,result);return result.success;
 }
 void Session::advance_turn_time()
 {
@@ -815,11 +841,18 @@ bool Session::submit(const Command& command)
             damage(target,total);
         } else if(command.verb=="blindness"){
             spend();auto& target=actor(command.target);
-            const auto result=detail::saving_throw(detail::Ability::constitution,def(target).saves[2],8+d.casting,detail::saving_modifiers(detail::Ability::constitution,def(target).str_dex_disadvantage,target.dodge),rng_);
-            log_save(target,result);
-            if(!result.success){
-                detail::apply_blindness(target.effects,scope_,a.source.id,a.source.name,result.dc,next_save_ms(target.source.id));
+            const int dc=8+d.casting;
+            if(!saving_throw_succeeds(target,detail::Ability::constitution,dc)){
+                detail::apply_blindness(target.effects,scope_,a.source.id,a.source.name,dc,next_save_ms(target.source.id));
                 log(target.source.name+" is Blinded.",{"{name} is Blinded.",{{"name",target.source.name}}});
+            }
+        } else if(command.verb=="sacred_flame"){
+            auto& target=actor(command.target);
+            log(a.source.name+" casts Sacred Flame at "+target.source.name+".",{"{name} casts Sacred Flame at {target}.",{{"name",a.source.name},{"target",target.source.name}}});
+            if(!saving_throw_succeeds(target,detail::Ability::dexterity,8+d.casting)){
+                const int amount=resolved_damage(target,detail::DamageType::radiant,roll(8));
+                log(target.source.name+" takes "+std::to_string(amount)+" Radiant damage.",{"{name} takes {damage} Radiant damage.",{{"name",target.source.name},{"damage",std::to_string(amount)}}});
+                damage(target,amount);
             }
         } else if(command.verb=="scorching_ray"){
             spend();for(unsigned ray=0;ray<3&&actor(command.target).hp>0;++ray)attack(a,actor(command.target),true,true,{2,6,0});
@@ -1070,7 +1103,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 13 ||
@@ -1143,11 +1176,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","poison_spray","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1392,7 +1425,7 @@ public:
             if(sheet.bonuses[i]!=bonuses||sheet.scores[i]!=sheet.base[i]+bonuses)
                 throw std::runtime_error("Ability totals disagree with acquired choices");
         }
-        unsigned spells=sheet.character_class=="Wizard"?detail::wizard_casting_mask(access):0;std::set<std::string> selected;
+        unsigned spells=sheet.character_class=="Wizard"?detail::wizard_casting_mask(access):detail::known_cantrip_mask(access);std::set<std::string> selected;
         if(sheet.prepared_spells.empty()&&sheet.character_class=="Cleric")spells|=2;
         for(const auto& spell:sheet.prepared_spells){
             if(!selected.insert(spell).second)throw std::runtime_error("Duplicate prepared spell");
@@ -1403,7 +1436,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC11 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC12 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1492,11 +1525,17 @@ public:
         if(d.str_dex_disadvantage)result.spell_messages.push_back({"Cannot cast spells while wearing untrained armor.",{}});
         if(sheet.character_class=="Wizard")result.spell_messages.push_back({"Source: Fire Bolt and Wizard spellcasting, Intelligence score {score}. Attack: Intelligence modifier +2 level-one proficiency = {attack}. Magic Missile has no ability modifier to damage.",{{"score",std::to_string(sheet.scores[3])},{"attack",std::to_string(d.casting)}}});
         if(sheet.character_class=="Cleric")result.spell_messages.push_back({"Source: Cure Wounds and Cleric spellcasting, Wisdom score {score}. Healing: 2d8 + Wisdom modifier ({modifier}).",{{"score",std::to_string(sheet.scores[4])},{"modifier",std::to_string(d.casting-2)}}});
-        if(sheet.character_class=="Wizard"){
+        if(sheet.character_class=="Wizard"||sheet.character_class=="Cleric"){
             for(const auto& spell:access.cantrips){
                 result.spell_modifiers+="\nKnown cantrip: "+spell.label+".";
                 result.spell_messages.push_back({"Known cantrip: {spell}.",{{"spell",spell.label,true}}});
             }
+        }
+        if(sheet.character_class=="Cleric"){
+            result.spell_modifiers+="\nPending Cleric cantrip choices: "+std::to_string(access.cantrip_choices-access.cantrips.size())+".";
+            result.spell_messages.push_back({"Pending Cleric cantrip choices: {cantrips}.",{{"cantrips",std::to_string(access.cantrip_choices-access.cantrips.size())}}});
+        }
+        if(sheet.character_class=="Wizard"){
             for(const auto& spell:access.spellbook){
                 result.spell_modifiers+="\nSpellbook: "+spell.label+" (learned at Wizard level "+std::to_string(spell.acquired_level)+").";
                 result.spell_messages.push_back({"Spellbook: {spell} (learned at Wizard level {level}).",{{"spell",spell.label,true},{"level",std::to_string(spell.acquired_level)}}});
@@ -1531,7 +1570,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.22",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.23",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
@@ -1602,7 +1641,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
         }
         row>>d.ac>>d.hp>>d.initiative>>d.speed>>d.melee_bonus>>d.melee.count>>d.melee.sides>>d.melee.bonus
             >>d.ranged_bonus>>d.ranged.count>>d.ranged.sides>>d.ranged.bonus>>d.range>>d.long_range>>d.winds>>d.slots>>d.casting>>d.level>>d.spells;
-        d.known_cantrips=d.spells&65;
+        d.known_cantrips=d.spells&193;
         const bool ranged_none=d.range==0&&d.long_range==0&&d.ranged_bonus==0&&
             d.ranged.count==0&&d.ranged.sides==0&&d.ranged.bonus==0;
         const bool ranged_weapon=d.range>=5&&d.long_range>=d.range&&d.long_range<=600&&
