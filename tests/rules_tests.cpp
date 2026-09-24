@@ -410,14 +410,14 @@ void death_save_turn_entry_tests()
                 if(first)check(combat->snapshot().elapsed_milliseconds==0,"Natural-20 recovery does not skip the first initiative slot");
             }else if(roll>=10){
                 success=true;
-                check(hero.hit_points==0&&!hero.dead&&hero.persistent.resources=="SRD1 1 0 0 0 1","Third success stabilizes and resets successes and failures");
+                check(hero.hit_points==0&&!hero.dead&&hero.persistent.resources.starts_with("SRD5 1 0 0 0 0 1 0 "),"Third success stabilizes and resets successes and failures");
                 check(combat->snapshot().actor!=1,"Stable unconscious actors cannot act");
             }else if(roll==1){
                 natural_one=true;
                 check(hero.dead&&hero.persistent.resources=="SRD1 1 0 2 3 0","Natural 1 adds two failures and reaches death at three");
             }else{
                 failure=true;
-                check(!hero.dead&&hero.persistent.resources=="SRD1 1 0 2 2 0","Ordinary failure adds one and retains prior successes");
+                check(!hero.dead&&hero.persistent.resources.starts_with("SRD5 1 0 0 2 2 0 0 "),"Ordinary failure adds one and retains prior successes");
             }
             const auto saved=combat->save();auto restored=module->restore(saved);
             check(restored->save()==saved&&death_rolls(*restored)==rolls,"Checkpoint restore does not replay a turn-entry save");
@@ -441,7 +441,7 @@ void death_save_turn_entry_tests()
     }
     auto legacy=encounter;legacy.participants[0].state=VitalState{0,false,"SRD1 1 0 3 2 1"};
     auto migrated=module->create(legacy,first_seed);
-    check(death_rolls(*migrated).empty()&&unit(*migrated,1).persistent.resources=="SRD1 1 0 0 0 1",
+    check(death_rolls(*migrated).empty()&&unit(*migrated,1).persistent.resources.starts_with("SRD5 1 0 0 0 0 1 0 "),
         "Older stable resource state is normalized without rolling or refilling resources");
 }
 void allied_transit_tests()
@@ -539,8 +539,8 @@ void opportunity_migration_tests()
         std::string bytes;for(const auto& row:rows)bytes+=row+'\n';return bytes;
     };
     const auto upgraded=[&](const std::string& bytes){
-        auto rows=lines(bytes);rows[0].replace(9,1,"9");
-        for(std::size_t i=4;i<8;++i)rows[i]+=" 0 0 0";
+        auto rows=lines(bytes);rows[0].replace(9,1,"10");
+        for(std::size_t i=4;i<8;++i)rows[i]+=" 0 0 0 0 0";
         rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);rows.pop_back();return rows;
     };
     const auto facing=fixture("combat-v5-facing.save");
@@ -669,16 +669,18 @@ void checkpoint_validation_tests()
     }
 
     auto previous = lines;
-    previous[0].replace(9,1,"6");
+    previous[0].replace(9,2,"6");
     previous[0].replace(previous[0].find(module->identity().version),module->identity().version.size(),"0.6.5");
-    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<3;++field)previous[actor].resize(previous[actor].find_last_of(' '));
+    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<5;++field)previous[actor].resize(previous[actor].find_last_of(' '));
     check(module->restore(encode(previous))->save()==checkpoint,"Pre-transit 0.6.5 movement checkpoint upgrades without changing its continuation");
-    auto invalid_overlap=lines[4];const auto grip_separator=invalid_overlap.rfind(' ',invalid_overlap.find_last_of(' ')-1);
+    auto invalid_overlap=lines[4];auto no_clocks=invalid_overlap;
+    for(unsigned n=0;n<2;++n)no_clocks.resize(no_clocks.find_last_of(' '));
+    const auto grip_separator=no_clocks.rfind(' ',no_clocks.find_last_of(' ')-1);
     invalid_overlap[grip_separator-1]='1';reject_changes({{4,invalid_overlap}});
 
     previous = lines;
-    previous[0].replace(9,1,"4");
-    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<3;++field)previous[actor].resize(previous[actor].find_last_of(' ')); // No Hit Dice, grip or overlap marker before v7.
+    previous[0].replace(9,2,"4");
+    for(std::size_t actor=4;actor<path_header;++actor)for(unsigned field=0;field<5;++field)previous[actor].resize(previous[actor].find_last_of(' ')); // No recovery clocks, Hit Dice, grip or overlap marker before v7.
     for(std::size_t actor=4;actor<path_header;++actor)
         previous[actor].resize(previous[actor].find_last_of(' ')); // Version 4 has no facing field.
     check(module->restore(encode(previous))->save()==checkpoint,"Version 4 checkpoint migrates to facing right");
@@ -687,7 +689,7 @@ void checkpoint_validation_tests()
     // second-level slot/feat flags (v1/v2). Their defaults must still round trip.
     for (const unsigned version : {1u,2u}) {
         auto legacy = lines;
-        legacy[0].replace(9,1,std::to_string(version));
+        legacy[0].replace(9,2,std::to_string(version));
         legacy.resize(legacy.size()-3); // v4 scope/clock and two effect collections.
         for (std::size_t actor = 4; actor < path_header; ++actor) {
             const auto profile = legacy[actor].rfind("\"\"");

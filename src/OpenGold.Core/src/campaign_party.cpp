@@ -281,7 +281,8 @@ void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
     auto& m=edit(state_.slots[slot]);const auto hp=vm.variable(0x6C19);
     if(hp>m.character.sheet().hit_points||(m.vitals.dead&&hp))throw std::runtime_error("Unsupported script HP change");
     std::array<std::uint16_t,7> wealth;for(unsigned n=0;n<7;++n)wealth[n]=vm.variable(money[n]);
-    m.wealth=wealth;m.vitals.hit_points=hp;
+    auto vitals=m.vitals;rules_->set_hit_points(vitals,m.character.sheet(),hp);
+    m.wealth=wealth;m.vitals=std::move(vitals);
 }
 void CampaignParty::validate(const PartyState& state)
 {

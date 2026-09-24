@@ -177,6 +177,7 @@ public:
     {validate_character_state(sheet,state);}
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     [[nodiscard]] virtual RestPolicy short_rest_policy() const;
+    virtual void set_hit_points(VitalState&,const CharacterSheet&,int) const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };
 }

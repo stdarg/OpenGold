@@ -114,7 +114,7 @@ void profiles_and_migration(){
         if(command==commands.end())command=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
         check(command!=commands.end(),"Legacy encounter can continue");check(legacy->submit(*command)&&continued->submit(*command),"Both continuations accept identical commands");
     }
-    auto reference=test::with_hit_dice(fixture("combat-v8-grants-continued.save"),rules->identity().version,{{1,1},{2,4},{3,4},{4,4},{5,4},{6,3},{99,0}});
+    auto reference=test::with_hit_dice(fixture("combat-v8-grants-continued.save"),rules->identity().version,{{1,1},{2,4},{3,4},{4,4},{5,4},{6,3},{99,0}},{{1,5143}});
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
 }

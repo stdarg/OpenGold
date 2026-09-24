@@ -28,6 +28,12 @@ and interruption children remain open. Hit Dice spending must allow a decision a
 roll, rather than requiring every die to be committed beforehand. The first
 resource rules are independent of the pending F02 UI layout decisions.
 
+F04 is split into [recovery clocks (#194)](https://github.com/stdarg/OpenGold/issues/194)
+and [campaign scheduling (#195)](https://github.com/stdarg/OpenGold/issues/195).
+The clocks/persistence child is delivered; campaign scheduling and the separate
+[Help/Medicine follow-up (#32)](https://github.com/stdarg/OpenGold/issues/32) remain
+open. See [recovery clock support](RECOVERY-CLOCKS.md).
+
 This breaks the [SRD audit](audits/srd-5.2.1-rules.md) into bounded changes.
 The target includes all twelve SRD classes, all nine species, backgrounds,
 feats, spells, progression and recovery. The first complete class milestone is
@@ -258,6 +264,7 @@ existing choices and resources; its player-facing controls remain pending.
 F03a and F03b are complete. Complete #192's reviewed rest controls and #193's
 interruption/resumption state machine before closing #30. See [rest resources](REST-RESOURCES.md)
 for the implemented boundary and verification.
+F04a is complete; continue #195 before closing parent #31.
 The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

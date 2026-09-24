@@ -123,6 +123,12 @@ turns/checkpoints and campaign handoff. Migration preserves existing wounds,
 resources, training, initiative, RNG and time. Earlier facing/grip/overlap
 migrations retain their established behavior.
 
+Rules 0.6.11 subsequently adds SRD5 for living zero-HP characters and combat 10
+mortality clocks. They retain the same Hit Dice/pool fields; ordinary healing
+cancels mortality timing without restoring expenditure. Campaign format 10 is
+unchanged. [Recovery clocks](RECOVERY-CLOCKS.md) describes that later increment
+and the still-pending outside-combat scheduler.
+
 ## Verification
 
 `opengold_rest_resource_tests` covers all twelve starting classes, fixed RNG

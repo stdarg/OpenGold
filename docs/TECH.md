@@ -103,9 +103,9 @@ rest-completion precision. Effect processing orders simultaneous events by entit
 and application ID so different time-update sizes preserve RNG continuation.
 
 Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
-Combat checkpoint version 9 stores all effect applications, timers, presentation
-facing, pending movement reactions, involuntary allied overlap, weapon grip and remaining Hit Dice. Rules 0.6.10
-migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9 format-5/6/7/8 checkpoints, validating then canceling
+Combat checkpoint version 10 stores all effect applications, timers, presentation
+facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice and mortality recovery clocks. Rules 0.6.11
+migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10 format-5/6/7/8/9 checkpoints, validating then canceling
 obsolete facing-only queues without changing spent resources, HP or time.
 Genuine movement queues retain exact continuation; campaign
 version 9 stores the clock, encounter scopes, rules-owned effect state, grip and
@@ -115,7 +115,7 @@ formats 1–8 migrate, preserving missing selections as pending. Campaign versio
 10 adds completed Short Rest spending tickets and individual eligibility records;
 formats 1–9 migrate without inventing a spending session. Core owns rest timing
 and transactional commits; the rules module owns resource arithmetic. See [training](TRAINING.md),
-[rest resources](REST-RESOURCES.md) and [status effects](STATUS-EFFECTS.md) for
+[rest resources](REST-RESOURCES.md), [recovery clocks](RECOVERY-CLOCKS.md) and [status effects](STATUS-EFFECTS.md) for
 mechanics, scope, persistence and tests.
 
 ### Why This Stack

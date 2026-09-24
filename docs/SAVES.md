@@ -77,9 +77,9 @@ original feature/feat scope before reconstruction. See [training support](TRAINI
 Rules 0.6.3 replays Constitution/HP history and repairs the older low-Constitution
 HP calculation while preserving wounds, zero-HP/dead state and spent resources.
 Rules 0.6.4 also accepts 0.6.3 campaigns without reapplying HP repairs.
-Rules 0.6.10 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9 campaigns. Standalone combat checkpoints
+Rules 0.6.11 additionally accepts 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10 campaigns. Standalone combat checkpoints
 retain the post-attack action, Bonus Action, movement and spell usage; the
-[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9 combat migrations](RULES.md#library-boundary) cancel facing-only queues
+[0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10 combat migrations](RULES.md#library-boundary) cancel facing-only queues
 and preserve genuine movement reactions. Format 7 also records involuntary
 shared spaces after an allied-transit interruption; healing and recovery retain
 valid checkpoints without moving actors or replenishing resources. Other combat module versions reject.
@@ -94,7 +94,10 @@ Rules 0.6.10 preserves remaining Hit Dice in SRD4 vital continuations and combat
 format 9. Older characters start with unspent dice because previous modules had
 no spending operation. Campaign format 10 adds the spending continuation; formats
 1–9 migrate with no pending entitlement. [Rest resources](REST-RESOURCES.md)
-details the compatibility and currently supported scope.
+details the compatibility and currently supported scope. Rules 0.6.11 adds SRD5
+and combat 10 mortality clocks without changing the campaign schema. Load never
+rolls a recovery delay or invents elapsed recovery from old saves; see
+[recovery clocks](RECOVERY-CLOCKS.md).
 
 ## File safety and compatibility
 

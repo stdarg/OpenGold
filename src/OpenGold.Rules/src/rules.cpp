@@ -25,6 +25,8 @@ void RulesModule::recover_short_rest(VitalState&,const CharacterSheet&) const
 { throw std::runtime_error("This rules module does not support Short Rests"); }
 HitDieResult RulesModule::spend_hit_die(VitalState&,const CharacterSheet&,std::uint64_t&) const
 { throw std::runtime_error("This rules module does not support Hit Dice"); }
+void RulesModule::set_hit_points(VitalState&,const CharacterSheet&,int) const
+{throw std::runtime_error("This rules module does not support script HP changes");}
 void RulesModule::temple_heal(VitalState&, const CharacterSheet&, std::uint64_t&) const
 { throw std::runtime_error("This rules module does not support temple healing"); }
 bool Battlefield::contains(Cell p) const noexcept

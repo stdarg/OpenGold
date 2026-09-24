@@ -119,14 +119,17 @@ void persistence_and_advancement(){
     check(rules->recovery_info(party.member(id).character.sheet(),healed).hit_dice==1,"Spell healing preserves Hit Dice");
     auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{5,1}});
     auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);const auto checkpoint=combat->save();
-    check(checkpoint.starts_with("OGCOMBAT 9 ")&&rules->restore(checkpoint)->save()==checkpoint,"Combat checkpoint stores remaining dice exactly");
+    check(checkpoint.starts_with("OGCOMBAT 10 ")&&rules->restore(checkpoint)->save()==checkpoint,"Combat checkpoint stores remaining dice exactly");
     auto copy=rules->restore(checkpoint);
     for(unsigned turn=0;turn<6;++turn){const auto end=command(*combat,"end");check(combat->submit(end)&&copy->submit(end)&&combat->save()==copy->save(),"Spent dice and effects continue deterministically through combat turns");}
     party.begin_combat();party.apply_combat(combat->snapshot());party.end_combat();
     check(rules->recovery_info(party.member(id).character.sheet(),party.member(id).vitals).hit_dice==1,"Campaign combat handoff preserves expenditure");
     // Corrupt only the appended count for the character; all other checkpoint data remains valid.
     std::istringstream in(checkpoint);std::vector<std::string> rows;for(std::string row;std::getline(in,row);)rows.push_back(row);
-    for(unsigned i=4;i<6;++i)if(rows[i].starts_with("1 "))rows[i].replace(rows[i].rfind(' ')+1,std::string::npos,"3");
+    for(unsigned i=4;i<6;++i)if(rows[i].starts_with("1 ")){
+        const auto clocks=rows[i].rfind(' ',rows[i].rfind(' ')-1),dice=rows[i].rfind(' ',clocks-1);
+        rows[i].replace(dice+1,clocks-dice-1,"3");
+    }
     std::string bad;for(const auto& row:rows)bad+=row+'\n';rejects([&]{(void)rules->restore(bad);});
     check(copy->save()==combat->save(),"Malformed Hit Dice cannot mutate an existing combat");
 }

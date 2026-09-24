@@ -89,7 +89,7 @@ void hp_history(){
         }
         const auto& member=party.member(id);const int maximum=example.hp[3]+(dwarf?4:0);
         check(member.vitals.hit_points==(unconscious?0:maximum-2),"Constitution advancement preserves wounds and does not wake an unconscious character");
-        check(member.vitals.resources==(unconscious?"SRD2 0 1 2 1 2 0":"SRD2 0 1 2 0 0 0"),"HP growth preserves death saves and existing spell expenditure");
+        check(member.vitals.resources==(unconscious?"SRD5 0 1 2 1 2 0 4 6000 0 FX1 1 0":"SRD2 0 1 2 0 0 0"),"HP growth preserves death saves and existing spell expenditure");
         auto malformed=member.character.sheet();++malformed.hit_points;
         rejects([&]{(void)module()->character_profile(malformed,{});});
         malformed=member.character.sheet();malformed.hit_point_modifiers.pop_back();

@@ -109,3 +109,23 @@ are nonzero. The combat starts with the Fighter's departure from the enemy's
 reach; the second file resolves that pending opportunity attack using the old
 writer. Migration must preserve every original field and outcome while adding
 only unspent Hit Dice to format-nine combat actors.
+
+## Recovery-clock migration
+
+`campaign-v10-recovery.ogs`, `combat-v9-recovery.save` and
+`combat-v9-recovery-continued.save` come from commit `1adfc63`, module **0.6.10**.
+A frozen copy of that commit's headers, content and built libraries generated
+these files; do not regenerate them with the current writer. Asset identity is
+`recovery-fixture`. Five authored level-two Human PCs include a Stable Fighter
+with one spent Hit Die/Second Wind, an unstable Wizard with two successes/one
+failure and Blinded/spent slots, a dead Fighter, a conscious Fighter and an
+unstable reserve. Campaign time is 1234 minutes plus 5678 ms, with a prior rest
+completion on the Stable Fighter. All language choices are completed.
+
+The combat contains the three living active PCs and an authored enemy. Initiative
+order is IDs 4, 1, 99, 2. It pauses on Fighter 4's departure from enemy reach; the
+second file declines the reaction without elapsed time. Old data has no recovery
+clocks. Migration adds a known 4500 ms until Wizard 2's next initiative slot and
+a deferred legacy recovery roll for Stable Fighter 1, preserving every other
+field and the old writer's pending-movement continuation. Campaign migration
+retains its original opaque states without a load-time roll.

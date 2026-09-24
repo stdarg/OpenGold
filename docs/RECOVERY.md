@@ -10,8 +10,10 @@ complete original campaign service coverage.
   including the initial initiative slot. A natural 20 restores 1 HP and permits
   that turn; becoming Stable clears both death-save counters. Combat checkpoint
   restoration adds no roll, and campaign handoff preserves stabilization and
-  spent resources. Death saves and natural recovery outside combat remain
-  [open work](https://github.com/stdarg/OpenGold/issues/31).
+  spent resources. Stable status now records its one rolled recovery delay;
+  combat time counts it down and restores 1 HP. [Recovery clocks](RECOVERY-CLOCKS.md)
+  also survive healing, damage and save/load. Advancing them outside combat remains
+  [#195](https://github.com/stdarg/OpenGold/issues/195), so parent #31 stays open.
 - The authored party Bandit preview grants **300 XP per living active member**
   on its first victory. Its reward key is `preview:bandit:v1`; reopening the scene,
   restarting it or using a different seed cannot award it again. The original
@@ -80,8 +82,8 @@ campaign scheduling, quest rewards and non-shop treasure conversion remain open.
 
 `PartyState` native checkpoints retain XP, claimed reward IDs, HP/resources,
 purses, recovery timers, clock and RNG for rollback. [Campaign file save/load](SAVES.md) now persists this supported state at the party/idle-town boundaries, with fresh-process restart verification.
-Combat checkpoint format is version 9 and the combat module identity is
-**0.6.10**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9
+Combat checkpoint format is version 10 and the combat module identity is
+**0.6.11**. Supported older campaign saves migrate. Combat saves from modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10
 have a specific [pending-reaction migration](RULES.md#library-boundary); other
 incompatible combat saves reject.
 

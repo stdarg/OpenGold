@@ -49,6 +49,7 @@ add_library(opengold_rules_srd5 STATIC
     src/OpenGold.Rules.Srd5/src/training.cpp
     src/OpenGold.Rules.Srd5/src/combat_grid.cpp
     src/OpenGold.Rules.Srd5/src/status_effects.cpp
+    src/OpenGold.Rules.Srd5/src/life_cycle.cpp
 )
 target_include_directories(opengold_rules_srd5 PUBLIC src/OpenGold.Rules.Srd5/include)
 target_link_libraries(opengold_rules_srd5 PUBLIC opengold_rules)
@@ -150,6 +151,11 @@ if(OPENGOLD_BUILD_TESTS)
     target_link_libraries(opengold_rest_resource_tests PRIVATE opengold_core opengold_rules_srd5)
     target_compile_definitions(opengold_rest_resource_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     add_test(NAME opengold_rest_resource_tests COMMAND opengold_rest_resource_tests)
+    add_executable(opengold_recovery_clock_tests tests/recovery_clock_tests.cpp)
+    target_include_directories(opengold_recovery_clock_tests PRIVATE src/OpenGold.Rules.Srd5/src)
+    target_link_libraries(opengold_recovery_clock_tests PRIVATE opengold_core opengold_rules_srd5)
+    target_compile_definitions(opengold_recovery_clock_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+    add_test(NAME opengold_recovery_clock_tests COMMAND opengold_recovery_clock_tests)
     add_executable(opengold_campaign_rest_tests tests/campaign_rest_tests.cpp)
     target_link_libraries(opengold_campaign_rest_tests PRIVATE opengold_core opengold_rules_srd5)
     target_compile_definitions(opengold_campaign_rest_tests PRIVATE OPENGOLD_SOURCE_DIR="${PROJECT_SOURCE_DIR}")

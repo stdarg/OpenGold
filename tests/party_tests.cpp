@@ -362,7 +362,7 @@ void stabilization_handoff()
             const auto actor=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==hero;});
             check(actor!=snapshot.combatants.end(),"Campaign actor remains in combat");
             if(actor->hit_points>0||actor->dead)break;
-            if(actor->persistent.resources=="SRD1 1 0 0 0 1"){stable=std::move(candidate);break;}
+            if(actor->persistent.resources.starts_with("SRD5 1 0 0 0 0 1 1 0 ")){stable=std::move(candidate);break;}
             const auto commands=candidate->legal_commands();
             const auto end=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
             check(end!=commands.end()&&candidate->submit(*end),"Advance a conscious actor while waiting for stabilization");
@@ -370,7 +370,7 @@ void stabilization_handoff()
     }
     check(bool(stable),"Third death-save success stabilizes the campaign character");
     party.begin_combat();party.apply_combat(stable->snapshot());party.end_combat();
-    check(party.member(hero).vitals.resources=="SRD1 1 0 0 0 1","Combat handoff preserves Stable with zero counters and one spent Second Wind");
+    check(party.member(hero).vitals.resources.starts_with("SRD5 1 0 0 0 0 1 1 0 "),"Combat handoff preserves Stable with zero counters and one spent Second Wind");
     const auto saved=encode_campaign(party,nullptr,"stabilization");
     auto loaded=decode_campaign(saved,*srd5::character_rules(),*rules,"stabilization",nullptr);
     CampaignParty restored(module());restored.restore(std::move(loaded.party));
