@@ -1,10 +1,21 @@
 # SRD handoff
 
-Updated 2026-09-24. **Pause requested after #228:** close all `SRD_improvements` issues, with
+Updated 2026-09-24. **Goal paused after #228:** close all `SRD_improvements` issues, with
 all twelve classes through level 4, then level 20 and multiclassing. Work one
 bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 [Index](https://github.com/stdarg/OpenGold/issues/186), [plan](SRD-IMPLEMENTATION.md),
 [coverage](SRD-COVERAGE.md). Query GitHub for counts; old snapshots are stale.
+
+## Current review — implementation remains paused
+
+The user requested backlog grouping and an efficiency proposal after discussing
+slow completion and issue growth. Read [SRD-BATCHING-REVIEW.md](SRD-BATCHING-REVIEW.md)
+before proposing the next implementation step. It maps all 168 open issues once
+into 24 work families plus 10 cross-cutting trackers, identifies consolidation
+candidates, and specifies a durable batch workflow. That workflow is **proposed**;
+it does not yet replace AGENTS.md/SRD-WORKFLOW.md or authorize resuming coding.
+No issues were closed or removed by the review. Next action is user discussion
+of the grouping, consolidations and proposed first delivery/checkpoint.
 
 ## Current increment
 
@@ -16,9 +27,9 @@ selections. [Scope/evidence](SORCERER-CANTRIPS.md). Rules 0.6.40 / PC28;
 campaign 11, combat 13–15 and FX1–3 stay unchanged. Actual 0.6.39 writer fixtures
 at `6988432` retain old choices, spent resources and exact turn continuation.
 
-**User requested pausing after #228 for a progress discussion.** Implementation
-and checks are complete; commit/push and issue closure are the final delivery steps
-before the goal is paused. Do not start another issue until the user resumes. Sorcerer #132 remains open for the complete catalog,
+**Goal paused at the user’s request after #228.** Implementation was committed
+and pushed in `8429158`; #228 is closed. Do not start another implementation
+issue until the user resumes. Sorcerer #132 remains open for the complete catalog,
 leveled spells/slots, Innate Sorcery and later levels/replacements. Fire Bolt's
 existing enemy-only targeting gap is recorded on #166; source access does not
 close full spell conformance.
