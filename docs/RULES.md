@@ -328,3 +328,9 @@ explicit Pact Magic cantrip grants and the approved shared selection/casting
 controls. PC25 validates access and uses Charisma; campaign/combat formats stay
 unchanged. Old missing choices remain pending. Object targets, later Warlock
 levels, slots, invocations and general speech blockers remain separate work.
+
+Rules 0.6.38 adds [Wizard Shocking Grasp](SHOCKING-GRASP.md) at levels 1–4.
+The shared value-owned effect model records sourced Opportunity Attack
+suppression; combat uses it when forming and validating movement interruptions.
+Reaction budgets are unchanged. PC26 validates access, FX3 encodes the new effect,
+and existing campaign/combat schemas and old choices remain compatible.

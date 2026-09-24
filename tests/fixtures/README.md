@@ -509,3 +509,13 @@ The old Sage/Orc Warlock has missing cantrip choices, wounds, equipment and weal
 the combat spent Dash and Adrenaline Rush before the saved End Turn continuation.
 The generator rejects newer writers. Tests preserve bytes except module identity
 (and campaign checksum), never synthesizing old files with the new serializer.
+
+## Pre-Shocking Grasp fixtures
+
+`campaign-v11-shocking-before.ogs`, `combat-v15-shocking-before.save`, and
+`combat-v15-shocking-continued.save` come from actual rules 0.6.37 at `310319e`,
+captured before production edits using the Shocking Grasp test's guarded freeze
+entry point. The level-three Wizard knows Ray of Frost. Saved combat retains its
+hit's FX2 state, spent Action/Adrenaline Rush, and continuation across both turns.
+Tests compare every byte except module identity and campaign checksum, preserving
+missing Shocking Grasp access rather than inventing a new selection.

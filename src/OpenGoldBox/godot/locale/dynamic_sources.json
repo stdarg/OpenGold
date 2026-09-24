@@ -255,5 +255,10 @@
   "Eldritch Blast",
   "Warlock cantrips",
   "Ranged spell attack: 1d10 Force damage, 120 feet; creature targets currently supported.",
-  "Pact Magic cantrips: Charisma score {score}; spell attack bonus {attack}; pending choices {cantrips}."
+  "Pact Magic cantrips: Charisma score {score}; spell attack bonus {attack}; pending choices {cantrips}.",
+  "Shocking Grasp",
+  "Melee spell attack: 1d8 Lightning damage, Touch; prevents Opportunity Attacks until the target’s next turn.",
+  "Shocking Grasp: cannot make Opportunity Attacks.",
+  "{name} cannot make Opportunity Attacks until its next turn.",
+  "{name} loses a Shocking Grasp effect."
 ]

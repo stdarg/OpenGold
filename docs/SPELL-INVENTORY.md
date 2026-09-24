@@ -6,7 +6,8 @@ claim that the listed spells are implemented. Current delivery adds the
 [0.6.22 Wizard Poison Spray path](POISON-SPRAY.md) and
 [0.6.23 Cleric Sacred Flame path](SACRED-FLAME.md), and
 [0.6.25 Wizard Ray of Frost path](RAY-OF-FROST.md), and
-[0.6.37 level-one Warlock Eldritch Blast path](ELDRITCH-BLAST.md) below.
+[0.6.37 level-one Warlock Eldritch Blast path](ELDRITCH-BLAST.md), and
+[0.6.38 Wizard Shocking Grasp path](SHOCKING-GRASP.md) below.
 
 ## Scope and counting
 
@@ -18,7 +19,8 @@ playable paths and 133 missing spells**. With 0.6.22 this becomes **seven partia
 playable paths and 132 missing spells**. With 0.6.23 there are **eight partial
 playable paths and 131 missing spells**. With 0.6.25 there are **nine partial
 playable paths and 130 missing spells**. With 0.6.37 there are **ten partial
-playable paths and 129 missing spells**; no complete spell conformance is claimed.
+playable paths and 129 missing spells**. With 0.6.38 there are **eleven partial
+playable paths and 128 missing spells**; no complete spell conformance is claimed.
 
 Authority: [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 Each spell name below links to its description page. Class-list membership is
@@ -149,6 +151,7 @@ complete its still-pending class/species/feat integrations.
 
 | Partial spell | Implementation | Existing evidence | Remaining spell issue |
 | --- | --- | --- | --- |
+| Shocking Grasp | [scope](SHOCKING-GRASP.md), [rules](../src/OpenGold.Rules.Srd5/src/srd5.cpp) | [native](../tests/shocking_grasp_tests.cpp), [creator](../tests/shocking_cantrip_view_tests.gd), [combat UI](../tests/shocking_view_tests.gd) | [#223](https://github.com/stdarg/OpenGold/issues/223): remaining granting routes and speech blockers |
 | Eldritch Blast | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](ELDRITCH-BLAST.md) | [native](../tests/eldritch_blast_tests.cpp), [creator](../tests/warlock_cantrip_view_tests.gd), [combat UI](../tests/eldritch_view_tests.gd) | [#204](https://github.com/stdarg/OpenGold/issues/204): objects, levels 2–4, Tome, speech blocking |
 | Sacred Flame | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](SACRED-FLAME.md) | [native](../tests/sacred_flame_tests.cpp), [creator](../tests/cleric_cantrip_view_tests.gd), [combat UI](../tests/sacred_view_tests.gd) | [#203](https://github.com/stdarg/OpenGold/issues/203): partial-cover exception, speech blocking and remaining sources |
 | Poison Spray | [srd5.cpp](../src/OpenGold.Rules.Srd5/src/srd5.cpp), [scope](POISON-SPRAY.md) | [native](../tests/poison_spray_tests.cpp), [creator](../tests/cantrip_view_tests.gd), [combat UI](../tests/poison_view_tests.gd) | [#202](https://github.com/stdarg/OpenGold/issues/202): speech blocking and remaining source integrations; native prerequisite #206 |
@@ -187,7 +190,7 @@ are evidence of partial behavior, not certification of the full spell.
 | [Resistance](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=158) (p. 158) | C, D | MI, Tome, Thaum, Blessed, Magician, DruidicWarrior | [#38](https://github.com/stdarg/OpenGold/issues/38) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Sacred Flame](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=159) (p. 159) | C | MI, Tome, Thaum, Blessed | Partial-cover model; [#39](https://github.com/stdarg/OpenGold/issues/39) | Partial Cleric path; [#203](https://github.com/stdarg/OpenGold/issues/203) |
 | [Shillelagh](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=162) (p. 162) | D | MI, Tome, Magician, DruidicWarrior | — | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
-| [Shocking Grasp](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=162) (p. 162) | S, W | MI, Tome, High, Temperate | [#35](https://github.com/stdarg/OpenGold/issues/35) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
+| [Shocking Grasp](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=162) (p. 162) | S, W | MI, Tome, High, Temperate | [#39](https://github.com/stdarg/OpenGold/issues/39) | Partial Wizard path; [#223](https://github.com/stdarg/OpenGold/issues/223) |
 | [Sorcerous Burst](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=163) (p. 163) | S | Tome | — | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Spare the Dying](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=163) (p. 163) | C, D | MI, Tome, Thaum, Blessed, Magician, DruidicWarrior | [#32](https://github.com/stdarg/OpenGold/issues/32) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Starry Wisp](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=165) (p. 165) | B, D | MI, Tome, Magician, DruidicWarrior | [#46](https://github.com/stdarg/OpenGold/issues/46) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |

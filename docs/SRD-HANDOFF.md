@@ -8,20 +8,22 @@ bounded issue at a time using [SRD-WORKFLOW.md](SRD-WORKFLOW.md).
 
 ## Current increment
 
-Branch `main`. Completed increment: [#224](https://github.com/stdarg/OpenGold/issues/224),
-level-one Warlock Eldritch Blast creature casting, under #160/#204. **Q26 approved:**
-reuse the existing Spell Choices pattern, two owed cantrips, second pending until
-supported, pre-generated presets, old selections retained, shared Spell/Cast.
-Rules 0.6.37 / PC25 implements explicit Pact Magic cantrip grants and Charisma
-attacks. [Scope and evidence](ELDRITCH-BLAST.md). Objects are a separate prerequisite
-[#225](https://github.com/stdarg/OpenGold/issues/225); levels 2–4, full Pact Magic,
-Tome/invocations and speech blockers remain open. Do not close #204 from this child.
-Shocking Grasp [#223](https://github.com/stdarg/OpenGold/issues/223) is queued;
-no implementation landed. It can reuse approved shared cantrip controls.
+Branch `main`. Completed [Wizard Shocking Grasp #226](https://github.com/stdarg/OpenGold/issues/226)
+under #223. Rules 0.6.38 / PC26 / FX3 supports ordinary Wizard levels 1–4,
+Intelligence melee spell attacks and Opportunity Attack suppression until the
+**target's** next turn. Reaction budgets remain intact. Uses approved Spell Choices
+and Spell/Cast controls. [Scope/evidence](SHOCKING-GRASP.md). #223 remains open for
+other class/species/feat grants and speech blockers; campaign 11/combat 13–15 stay.
+Actual prior 0.6.37 writer fixtures at `310319e` retain exact choices/continuation.
 
-Previous increment: [Unconscious transit #222](https://github.com/stdarg/OpenGold/issues/222)
-is complete in `15fcda5`; see [scope](UNCONSCIOUS-TRANSIT.md). Its existing saved
-state and Dash continuation remain preserved.
+Previous: [Warlock Eldritch Blast #224](https://github.com/stdarg/OpenGold/issues/224)
+completed in `310319e`. **Q26 approved** Warlock shared Spell Choices, preset choices,
+pending unsupported choices, old selections retained, shared Spell/Cast.
+[Scope](ELDRITCH-BLAST.md); objects #225 and later Pact Magic/levels #160 remain.
+Next useful grant integration: Poison Spray already has mechanics and is on the
+Warlock list (SRD p.75; inventory #202). Add its explicit Warlock source through
+the approved pattern, enabling two available cantrips while preserving old choices.
+Inspect #202/#160 and split a bounded child before implementation; no code started.
 
 [Sneak Attack #220](https://github.com/stdarg/OpenGold/issues/220) remains pending
 Q25; its tested eligibility/progression helper and real 0.6.35 baseline fixtures
@@ -94,16 +96,16 @@ native/localization changes; see workflow for fixture exclusion and test command
 Finished creation training appears in `Description`, not `ModifiersModal`.
 Refresh locale-dependent creator text with Back/Next after changing locale.
 
-#224 verification: all 42 native/tool checks, final focused Eldritch checks,
-all 18 headless Godot checks plus nine native prerequisites, and asset-backed
-Warlock creator checks passed. Main/demo builds and 820-message localization
-pass. English/Spanish creation/combat renders cover 1120×800 and 1920×1080.
-Localized Cast follows the dropdown's actual width to avoid overlap.
-Logs: `/tmp/eb-regression.log`, `/tmp/eb-final-checks.log`, `/tmp/eb-creator.log`,
-`/tmp/eb-combat-render.log`; renders `/tmp/opengold-eldritch-renders`.
+#226 verification: all 43 native/tool checks and 19 headless Godot checks plus
+ten native prerequisites pass. Main/demo builds and 825-message localization pass.
+Asset-backed Shocking Grasp and existing Wizard creator checks pass. English/Spanish
+creation/combat renders cover 1120×800 and 1920×1080.
+Logs: `/tmp/shocking-regression.log`, `/tmp/shocking-creator.log`,
+`/tmp/shocking-existing-creator.log`, `/tmp/shocking-combat-render.log`;
+renders `/tmp/opengold-shocking-renders`.
 Creator checks require `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD`; they are not
-registered in the asset-free headless suite. See the feature doc for scope.
+registered in the asset-free headless suite. No live processes remain.
 
-Next: resume #220 if Q25 arrives; otherwise Shocking Grasp #223 can reuse the
-approved Spell/Cast controls. Preserve pending #80/#208/#209/#189 questions.
-Do not close parent trackers from narrow child evidence. No live processes remain.
+Next: resume #220 if Q25 arrives; otherwise the Warlock Poison Spray grant route
+above is independent. Preserve pending #80/#208/#209/#189 questions.
+Do not close parent trackers from narrow child evidence.
