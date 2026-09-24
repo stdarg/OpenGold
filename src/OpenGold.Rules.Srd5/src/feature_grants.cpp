@@ -25,7 +25,7 @@ std::vector<rules::FeatureGrant> starting_grants(std::string_view klass,std::str
     }
     if(klass=="barbarian"||klass=="monk")result.push_back({"feature:unarmored_defense","class:"+std::string(klass),1,{}});
     if(klass=="cleric"||klass=="wizard")result.push_back({"feature:spellcasting","class:"+std::string(klass),1,{}});
-    if(race=="dwarf")result.push_back({"trait:dwarven_toughness","species:dwarf",1,{}});
+    if(race=="dwarf"){result.push_back({"trait:dwarven_toughness","species:dwarf",1,{}});result.push_back({"trait:dwarven_resilience","species:dwarf",1,{}});}
     if(race=="goliath")result.push_back({"trait:speed","species:goliath",1,{}});
     return result;
 }
@@ -38,10 +38,11 @@ bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
+    if(!damage_traits)std::erase_if(required,[](const auto& g){return g.id=="trait:dwarven_resilience";});
     std::set<std::string> nonrepeatable;
     std::set<std::pair<std::string,unsigned>> entitlements;
     GrantEffects effects;unsigned advancement_count=0;

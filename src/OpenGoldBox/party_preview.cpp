@@ -358,8 +358,8 @@ void CharacterCreationView::party_check()
     }
     switch(party_check_stage_){
     case 0:{
-        creator_->select(rules::CreationField::race,"human");creator_->select(rules::CreationField::character_class,"fighter");
-        recommend_portrait();creator_->roll();creator_->name("Party check fighter");
+        creator_->select(rules::CreationField::race,"dwarf");creator_->select(rules::CreationField::character_class,"fighter");
+        recommend_portrait();creator_->roll();creator_->name("Party check Dwarf fighter");
         for(unsigned i=0;i<6;++i)creator_->assign_roll(i,i);
         for(unsigned attempt=0;!creator_->rules().class_eligible(creator_->draft(),"fighter");++attempt){
             if(attempt==100)throw std::runtime_error("Could not roll qualified party-check fixture");
@@ -386,6 +386,7 @@ void CharacterCreationView::party_check()
         if(!get_node<RichTextLabel>("PartyPanel/Sheet")->get_text().contains("Saving throw"))throw std::runtime_error("Party selection did not display the character sheet");
         press("PartyPanel/Modifiers");
         if(!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Shield: +2 AC"))throw std::runtime_error("Party modifiers omitted equipped shield");
+        if(!get_node<RichTextLabel>("ModifiersModal/Text")->get_text().contains("Resistance to Poison damage"))throw std::runtime_error("Created Dwarf is missing its sourced damage resistance");
         press("ModifiersModal/Close");
         press("PartyPanel/SavingThrows");
         if(!get_node<Label>("SavingThrowsModal/Title")->get_text().contains(gs(campaign_->state().roster.at(roster_index_).character.sheet().name))||!get_node<RichTextLabel>("SavingThrowsModal/Text")->get_text().contains("saving throw proficiency"))throw std::runtime_error("Party saving throws did not use selected character");

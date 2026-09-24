@@ -57,7 +57,7 @@ struct SaveCodec {
         if(version>=7)field(v.equipment.weapon_hands);
         if(version>=8){
             auto grants=v.character.sheet().grants;field(grants);
-            if(reading&&version==8)module->validate_saved_grants(saved_identity,v.character.sheet(),grants);
+            if(reading)module->validate_saved_grants(saved_identity,v.character.sheet(),grants);
             else require(grants==v.character.sheet().grants,"Saved grants disagree with creation or advancement choices");
         }
         // Older releases stored ordinary weapons as unsupported. Migrate only

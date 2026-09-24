@@ -541,7 +541,9 @@ void opportunity_migration_tests()
     const auto upgraded=[&](const std::string& bytes){
         auto rows=lines(bytes);rows[0].replace(9,1,"10");
         for(std::size_t i=4;i<8;++i)rows[i]+=" 0 0 0 0 0";
-        rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);rows.pop_back();return rows;
+        rows[0].replace(rows[0].find("0.6.4"),5,module->identity().version);
+        const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
+        rows[0].replace(rows[0].find(old_content),old_content.size(),module->identity().content);rows.pop_back();return rows;
     };
     const auto facing=fixture("combat-v5-facing.save");
     auto session=module->restore(facing);

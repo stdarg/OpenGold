@@ -104,8 +104,8 @@ and application ID so different time-update sizes preserve RNG continuation.
 
 Rules 0.5.0 adds Blinded through the blindness option of Blindness/Deafness.
 Combat checkpoint version 10 stores all effect applications, timers, presentation
-facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice and mortality recovery clocks. Rules 0.6.12
-migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11 format-5/6/7/8/9/10 checkpoints, validating then canceling
+facing, pending movement reactions, involuntary allied overlap, weapon grip, remaining Hit Dice and mortality recovery clocks. Rules 0.6.13
+migrates modules 0.6.4/0.6.5/0.6.6/0.6.7/0.6.8/0.6.9/0.6.10/0.6.11/0.6.12 format-5/6/7/8/9/10 checkpoints, validating then canceling
 obsolete facing-only queues without changing spent resources, HP or time.
 Genuine movement queues retain exact continuation; campaign
 version 9 stores the clock, encounter scopes, rules-owned effect state, grip and

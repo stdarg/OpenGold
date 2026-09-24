@@ -71,6 +71,8 @@ struct Definition {
     int versatile_sides{};
     bool shield{};
     int hit_die{},constitution{};
+    detail::DamageType melee_type{detail::DamageType::bludgeoning},ranged_type{detail::DamageType::bludgeoning};
+    std::vector<detail::DamageAffinity> affinities;
 };
 bool legacy_two_hands(std::string_view key)
 {return key=="quarterstaff"||key=="spear"||key=="battleaxe"||key=="trident";}
@@ -132,7 +134,8 @@ Definition character_definition(std::string_view bytes)
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5"||magic=="PC6"||magic=="PC7";
+    const bool with_training=magic=="PC7"||magic=="PC8";
+    const bool selected=magic=="PC3"||magic=="PC4"||magic=="PC5"||magic=="PC6"||with_training;
     if(magic=="PC2"||selected)in>>level;
     if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
@@ -143,7 +146,7 @@ Definition character_definition(std::string_view bytes)
     if(std::none_of(races.begin(),races.end(),[&](const auto& r){return r.label==race;}))throw std::runtime_error("Unknown species");
     const int str=ability_modifier(scores[0]),dex=ability_modifier(scores[1]),con=ability_modifier(scores[2]);
     std::vector<int> hp_modifiers(level,con);
-    if(magic=="PC4"||magic=="PC5"||magic=="PC6"||magic=="PC7")for(auto& modifier:hp_modifiers)in>>modifier;
+    if(magic=="PC4"||magic=="PC5"||magic=="PC6"||with_training)for(auto& modifier:hp_modifiers)in>>modifier;
     in>>count;
     if(!in||count>3||hp_modifiers.back()!=con||((features&1)&&hp_modifiers.front()!=con))
         throw std::runtime_error("Invalid character HP history or equipment count");
@@ -167,12 +170,12 @@ Definition character_definition(std::string_view bytes)
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
         if(const auto* item=detail::weapon(key)){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;
-            d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&legacy_two_hands(key)?2:item->hands;
+            d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&magic!="PC8"&&legacy_two_hands(key)?2:item->hands;
             d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
-            if(item->dice&&!item->ranged){d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.reach=item->reach;}
-            if(item->range){d.ranged_bonus=bonus;d.ranged={item->dice,item->sides,modifier};d.range=item->range;d.long_range=item->long_range;}
+            if(item->dice&&!item->ranged){d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.melee_type=item->type;d.reach=item->reach;}
+            if(item->range){d.ranged_bonus=bonus;d.ranged={item->dice,item->sides,modifier};d.ranged_type=item->type;d.range=item->range;d.long_range=item->long_range;}
         }else if(key=="leather"||key=="chain_mail"){
             if(armor)throw std::runtime_error("Only one armor may be equipped");
             if(!trained(klass,key)){d.str_dex_disadvantage=true;d.spells=0;}
@@ -183,22 +186,23 @@ Definition character_definition(std::string_view bytes)
         }else throw std::runtime_error("Unsupported equipment conversion: "+key);
     }
     d.shield=shield;
-    if(magic=="PC5"||magic=="PC6"||magic=="PC7"){
+    if(magic=="PC5"||magic=="PC6"||with_training){
         unsigned requested{};in>>requested;
         if(!in)throw std::runtime_error("Invalid character grip");
         if(requested){validate_grip(d,requested);hands=hands-d.weapon_hands+requested;d.weapon_hands=requested;}
     }
-    if(magic=="PC6"||magic=="PC7"){
+    if(magic=="PC6"||with_training){
         std::string background;in>>std::quoted(background);
         const auto grants=detail::read_grants(in);
-        if(magic=="PC7")(void)detail::training_profile(grants,detail::grant_source_id(klass),background,level,scores);
-        const auto features_only=magic=="PC7"?detail::without_training(grants):grants;
-        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level);
+        if(with_training)(void)detail::training_profile(grants,detail::grant_source_id(klass),background,level,scores);
+        const auto features_only=with_training?detail::without_training(grants):grants;
+        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8");
         if(effects.feats!=features)throw std::runtime_error("Character effects disagree with acquired grants");
         const int initial_con=ability_modifier(scores[2]-effects.abilities[2]);
         for(unsigned i=0;i<level;++i)if(hp_modifiers[i]!=(i==3?con:initial_con))
             throw std::runtime_error("HP history disagrees with acquired ability choices");
     }
+    if(race=="Dwarf")d.affinities.push_back({detail::AffinityKind::resistance,detail::DamageType::poison,"species:dwarf/trait:dwarven_resilience"});
     if(hands>2)throw std::runtime_error("Not enough free hands. Unequip the shield or two-handed weapon first.");
     if(!armor&&klass=="Barbarian")d.ac=std::max(d.ac,10+dex+con);
     if(!armor&&!shield&&klass=="Monk")d.ac=std::max(d.ac,10+dex+ability_modifier(scores[4]));
@@ -341,6 +345,7 @@ private:
     std::vector<Cell> path_to(const Actor& a,Cell destination) const;
     EntityId pending() const {return reactor_index_<reactors_.size()?reactors_[reactor_index_]:0;}
     void attack(Actor& a,Actor& target,bool ranged,bool spell=false,Dice spell_dice={1,10,0});
+    int resolved_damage(const Actor& target,detail::DamageType type,int amount);
     void damage(Actor& target,int amount,bool critical=false);
     void heal(Actor& target,int amount);
     void update_outcome();
@@ -462,6 +467,17 @@ std::vector<Cell> Session::movement_reach(EntityId id) const
         if(reachable.cost_to({x,y}))cells.push_back({x,y});
     return cells;
 }
+int Session::resolved_damage(const Actor& target,detail::DamageType type,int amount)
+{
+    const std::array parts{detail::DamagePart{type,amount}};
+    const auto result=detail::resolve_damage(parts,def(target).affinities);
+    if(result.total!=amount){
+        const auto name=std::string(detail::damage_name(type));
+        log(target.source.name+": "+name+" damage "+std::to_string(amount)+" -> "+std::to_string(result.total)+".",
+            {"{name}: {type} damage {before} -> {after}.",{{"name",target.source.name},{"type",name,true},{"before",std::to_string(amount)},{"after",std::to_string(result.total)}}});
+    }
+    return result.total;
+}
 void Session::damage(Actor& target,int amount,bool critical)
 {
     if(!amount||target.dead)return;
@@ -505,6 +521,7 @@ void Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
     int amount=dice(damage_dice,natural==20);
     bool savage=false;
     if(!spell&&damage_dice.count&&d.savage&&!a.savage_used){amount=std::max(amount,dice(damage_dice,natural==20));a.savage_used=true;savage=true;message+=" (Savage Attacker)";}
+    amount=resolved_damage(target,spell?detail::DamageType::fire:ranged?d.ranged_type:d.melee_type,amount);
     arguments.push_back({"savage",savage?" (Savage Attacker)":"",true});
     arguments.push_back({"hit",natural==20?"CRITICAL":"hits",true});arguments.push_back({"damage",std::to_string(amount)});
     log(message+(natural==20?" CRITICAL":" hits")+" for "+std::to_string(amount)+" damage.",
@@ -653,9 +670,11 @@ bool Session::submit(const Command& command)
         else if(command.verb=="disengage"){a.disengaged=true;log(a.source.name+" disengages.",{"{name} disengages.",{{"name",a.source.name}}});}
         else if(command.verb=="cure_wounds"||command.verb=="cure_wounds_2"){spend();heal(actor(command.target),dice({second?4:2,8,d.casting-2}));}
         else if(command.verb=="magic_missile"||command.verb=="magic_missile_2") {
-            spend();int total=0;for(int dart=0;dart<(second?4:3);++dart)total+=roll(4)+1;
+            spend();auto& target=actor(command.target);int total=0;
+            for(int dart=0;dart<(second?4:3);++dart)total+=resolved_damage(target,detail::DamageType::force,roll(4)+1);
             log(a.source.name+" casts Magic Missile for "+std::to_string(total)+" force damage.",
-                {"{name} casts Magic Missile for {damage} force damage.",{{"name",a.source.name},{"damage",std::to_string(total)}}});damage(actor(command.target),total);
+                {"{name} casts Magic Missile for {damage} force damage.",{{"name",a.source.name},{"damage",std::to_string(total)}}});
+            damage(target,total);
         } else if(command.verb=="blindness"){
             spend();auto& target=actor(command.target);
             const auto result=detail::saving_throw(detail::Ability::constitution,def(target).saves[2],8+d.casting,detail::saving_modifiers(detail::Ability::constitution,def(target).str_dex_disadvantage,target.dodge),rng_);
@@ -882,7 +901,9 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&identity.version=="0.6.11"))&&compatible_identity==content->identity;
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12")))&&(compatible_identity==content->identity||
+            (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
+             content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 10 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
@@ -943,11 +964,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"initiative","movement","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","fire_bolt","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1036,7 +1057,8 @@ public:
     }
     void validate_saved_grants(const Identity& saved,const CharacterSheet& sheet,std::span<const FeatureGrant> grants) const override {
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported grant migration");
-        const auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
+        auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
+        if(saved.version!=content_->identity.version)std::erase_if(expected,[](const auto& g){return g.id=="trait:dwarven_resilience";});
         if(!std::equal(grants.begin(),grants.end(),expected.begin(),expected.end()))
             throw std::runtime_error("Saved grants disagree with creation or advancement choices");
     }
@@ -1179,7 +1201,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC7 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<"PC8 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1253,16 +1275,22 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.12",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.13",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
         content.previous_campaign_identities.push_back({"opengold.srd5",content.identity.version,revision+"/"+fingerprint});
+    std::string before_damage;
+    {std::istringstream previous(bytes);std::string row;
+        while(std::getline(previous,row))if(!row.starts_with("damage_types ")&&!row.starts_with("affinity "))before_damage+=row+'\n';}
+    std::uint64_t prior_hash=14695981039346656037ULL;for(unsigned char c:before_damage){prior_hash^=c;prior_hash*=1099511628211ULL;}
+    if(revision=="srd-5.2.1-demo.1"&&prior_hash==15052881321234871607ULL)
+        content.previous_campaign_identities.push_back({"opengold.srd5",content.identity.version,revision+"/"+std::to_string(prior_hash)});
     // These additive rows introduce saves and an isolated casting fixture. Old
     // campaign sheets can migrate; combat checkpoints still require exact rules.
     // Reconstruct both supported historical packs without guessing fingerprints.
     for(bool remove_roaming:{false,true}){
-        std::istringstream previous_lines(bytes);std::string previous,line_before;
+        std::istringstream previous_lines(before_damage);std::string previous,line_before;
         const std::array<std::string_view,7> additions{"slums-kobold","slums-goblin","slums-kobold-leader","slums-kobold-leader-sword","slums-goblin-leader","slums-orc-leader","slums-bugbear"};
         while(std::getline(previous_lines,line_before)){
             std::istringstream row(line_before);std::string tag,key;row>>tag>>key;
@@ -1273,10 +1301,33 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
         std::uint64_t previous_hash=14695981039346656037ULL;for(unsigned char c:previous){previous_hash^=c;previous_hash*=1099511628211ULL;}
         if(previous_hash!=hash)content.previous_campaign_identities.push_back({"opengold.srd5",content.identity.version,revision+"/"+std::to_string(previous_hash)});
     }
-    std::set<std::string> save_rows,casting_rows;
+    std::set<std::string> save_rows,casting_rows,damage_rows;
     while(std::getline(lines,line)) {
         if(line.empty()||line[0]=='#'||line=="\r")continue;
         std::istringstream row(line);std::string tag,key;Definition d;row>>tag>>key;
+        if(tag=="damage_types"||tag=="affinity"){
+            const auto found=content.definitions.find(key);
+            if(found==content.definitions.end())throw std::runtime_error("Unknown damage profile: "+key);
+            auto& definition=found->second;std::string first,second;row>>first>>second;
+            if(tag=="damage_types"){
+                if(!damage_rows.insert(key).second)throw std::runtime_error("Duplicate damage type row");
+                definition.melee_type=detail::damage_type(first);definition.ranged_type=detail::damage_type(second);
+            }else{
+                std::string type;row>>type;
+                if(first.empty()||first.size()>128||definition.affinities.size()>=128||
+                    std::any_of(definition.affinities.begin(),definition.affinities.end(),[&](const auto& a){return a.source_id==first;}))
+                    throw std::runtime_error("Invalid damage affinity source");
+                detail::DamageAffinity affinity;affinity.source_id=first;
+                if(second=="resistance")affinity.kind=detail::AffinityKind::resistance;
+                else if(second=="vulnerability")affinity.kind=detail::AffinityKind::vulnerability;
+                else if(second=="immunity")affinity.kind=detail::AffinityKind::immunity;
+                else throw std::runtime_error("Unknown damage affinity");
+                if(type!="all")affinity.type=detail::damage_type(type);
+                definition.affinities.push_back(std::move(affinity));
+            }
+            if(!row)throw std::runtime_error("Truncated damage profile");
+            row>>std::ws;if(!row.eof())throw std::runtime_error("Unknown damage profile fields");continue;
+        }
         if(tag=="saves"||tag=="spellcasting"){
             const auto found=content.definitions.find(key);
             auto& seen=tag=="saves"?save_rows:casting_rows;

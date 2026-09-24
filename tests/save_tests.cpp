@@ -187,7 +187,7 @@ void roundtrip(const std::filesystem::path& directory){
     const auto old_pack=directory/"previous.rules";
     {std::ifstream input(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");std::ofstream output(old_pack,std::ios::binary);std::string line;
         while(std::getline(input,line)){if(!line.empty()&&line.back()=='\r')line.pop_back();
-            if(line.starts_with("saves ")||line.starts_with("spellcasting ")||line.starts_with("creature blindness-adept "))continue;
+            if(line.starts_with("damage_types ")||line.starts_with("affinity ")||line.starts_with("saves ")||line.starts_with("spellcasting ")||line.starts_with("creature blindness-adept "))continue;
             if(line.starts_with("creature slums-")&&!line.starts_with("creature slums-orc "))continue;
             output<<line<<'\n';}}
     CampaignParty previous(srd5::load(old_pack));previous.add_pc(character("fighter"));

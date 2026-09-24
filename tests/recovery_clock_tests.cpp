@@ -67,6 +67,8 @@ std::string join(const std::vector<std::string>& lines){std::string result;for(c
 std::string upgraded(std::string_view bytes){
     auto lines=rows(bytes);check(lines[0].starts_with("OGCOMBAT 9 "),"Frozen writer is combat nine");lines[0].replace(9,1,"10");
     lines[0].replace(lines[0].find("0.6.10"),6,module()->identity().version);
+    const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
+    lines[0].replace(lines[0].find(old_content),old_content.size(),module()->identity().content);
     for(unsigned i=4;i<8;++i)lines[i]+=lines[i].starts_with("2 ")?" 4500 0":" 0 0";
     return join(lines);
 }
@@ -79,6 +81,8 @@ void frozen_saves(){
     const auto old=fixture("campaign-v10-recovery.ogs");auto disk=decode_campaign(old,*srd5::character_rules(),*rules,"recovery-fixture",nullptr);
     CampaignParty party(module());party.restore(disk.party);const auto saved=encode_campaign(party,nullptr,"recovery-fixture");
     auto body=old.substr(old.find('\n',old.find('\n')+1)+1);body.replace(body.find("0.6.10"),6,rules->identity().version);
+    const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
+    body.replace(body.find(old_content),old_content.size(),rules->identity().content);
     check(saved.substr(saved.find('\n',saved.find('\n')+1)+1)==body,"Campaign migration changes only module identity; unknown elapsed recovery is never invented");
     check(party.member(1).vitals.hit_points==0&&party.member(3).vitals.dead&&party.member(5).vitals.hit_points==0,"Stable, dead and reserve fixtures retain vitality");
 }

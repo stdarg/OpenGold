@@ -139,13 +139,15 @@ void old_saves(){
     for(const auto& member:party.state().roster){const auto info=rules->recovery_info(member.character.sheet(),member.vitals);
         check(info.hit_dice==unsigned(member.character.sheet().level)&&member.vitals.hit_points==member.character.sheet().hit_points-5,"Old characters start with unspent dice and retain their wounds");}
     auto expected=old.substr(old.find('\n',old.find('\n')+1)+1);expected.replace(expected.find("0.6.9"),5,rules->identity().version);
+    const std::string old_content="srd-5.2.1-demo.1/15052881321234871607";
+    expected.replace(expected.find(old_content),old_content.size(),rules->identity().content);
     const auto rewritten=encode_campaign(party,nullptr,"rest-fixture");
     check(rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==expected+"1 0 ","Campaign migration adds the empty rest window and module identity, preserving all original training, resources, effects, equipment and timers");
     const std::map<unsigned,unsigned> counts{{1,4},{2,4},{3,4},{4,1},{99,0}};
     auto combat=rules->restore(fixture("combat-v8-rest.save"));
-    check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest.save"),rules->identity().version,counts),"Pending combat migration adds only the unspent Hit Dice counts and format identity");
+    check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest.save"),rules->identity(),counts),"Pending combat migration adds only the unspent Hit Dice counts and format identity");
     check(combat->snapshot().reaction_pending&&combat->submit(command(*combat,"opportunity")),"The old pending movement still resolves its reaction");
-    check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest-continued.save"),rules->identity().version,counts),"Opportunity damage, movement, RNG, effects and spent resources match the prior writer's continuation");
+    check(combat->save()==test::with_hit_dice(fixture("combat-v8-rest-continued.save"),rules->identity(),counts),"Opportunity damage, movement, RNG, effects and spent resources match the prior writer's continuation");
 }
 }
 int main(){try{class_dice_and_recharge();minimum_caps_and_rejection();persistence_and_advancement();old_saves();std::cout<<"Rest resource tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

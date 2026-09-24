@@ -62,18 +62,19 @@ snapshots and failed original events cannot partially advance recovery.
 
 ## Persistence and migration
 
-Rules **0.6.12** writes **OGCOMBAT 10**. Each actor row adds the remaining death-save
+Rules **0.6.13** writes **OGCOMBAT 10**. Each actor row adds the remaining death-save
 and Stable-recovery milliseconds after its Hit Dice count. **SRD5** vital
 continuation carries both clocks alongside existing pools, counters, Hit Dice
 and FX1 effects for living zero-HP characters. Healthy/dead actors retain the
-existing compact resource formats. Campaign format **10** and PC7 are unchanged.
+existing compact resource formats. Campaign format **10** is unchanged. PC8 adds the fixed Dwarf resistance grant;
+see [typed damage](DAMAGE.md).
 
 Clocks must agree with vitality: healthy/dead creatures have none, Stable
 creatures have no death-save timer, and unstable creatures have no Stable timer.
 Death-save intervals cannot exceed six seconds and a Stable countdown cannot
 exceed four hours. Malformed clocks reject before replacing live state.
 
-Earlier supported campaign formats and combat modules through **0.6.11** retain
+Earlier supported campaign formats and combat modules through **0.6.12** retain
 wounds, counters, spent resources, effects, equipment, RNG and pending movement.
 Module 0.6.11 clocks retain their exact timing. Formats predating clocks have
 unknown timer history, which is never backdated. Legacy unstable campaign

@@ -265,6 +265,8 @@ F03a and F03b are complete. Complete #192's reviewed rest controls and #193's
 interruption/resumption state machine before closing #30. See [rest resources](REST-RESOURCES.md)
 for the implemented boundary and verification.
 F04a and F04c complete #31. Help/Medicine controls and checks remain #32.
+F05 #33 supplies [typed damage and Dwarf Poison resistance](DAMAGE.md).
+Temporary HP and replacement choices remain F05b #34.
 The later queues are refined
 into named increments from the verified state after each milestone, without
 changing the all-class completion target.

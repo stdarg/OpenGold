@@ -166,6 +166,10 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     if (racial_hp) s.racial_messages.push_back({"Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1.",{}});
     else if (d.race=="goliath") s.racial_messages.push_back({"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).",{}});
     else s.racial_messages.push_back({"No numeric racial modifiers are currently applied.",{}});
+    if(d.race=="dwarf"){
+        s.racial_modifiers+="\nSource: Dwarf / Dwarven Resilience. Resistance to Poison damage (half, rounded down).";
+        s.racial_messages.push_back({"Source: Dwarf / Dwarven Resilience. Resistance to Poison damage (half, rounded down).",{}});
+    }
     s.racial_messages.push_back({"Other racial traits and conditional effects are not implemented.",{}});
     s.background_messages.push_back({"Source: {background} background, selected ability increases.",{{"background",s.background,true}}});
     for (unsigned i=0;i<6;++i) if (s.bonuses[i])

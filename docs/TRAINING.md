@@ -56,7 +56,8 @@ skill names, proficiency math or grant prefixes. There is no new runtime or UI s
 Rules **0.6.9** introduced **PC7** character recipes and campaign format **9** to
 carry training provenance. The campaign stores the original selections as well as the acquired
 grant records, which must agree on load. PC7 validates grant entitlements and
-choices before creating an actor. Current rules **0.6.12** use **OGCOMBAT 10**, SRD4 for spent Hit Dice and
+choices before creating an actor. PC8 additionally validates the Dwarf resistance
+grant, with no training-choice changes. Current rules **0.6.13** use **OGCOMBAT 10**, SRD4 for spent Hit Dice and
 SRD5 for [mortality recovery clocks](RECOVERY-CLOCKS.md); [rest resources](REST-RESOURCES.md) describes
 that extension. Training completion preserves those resources too.
 

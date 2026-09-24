@@ -82,5 +82,18 @@
   "failure",
   "blindness",
   "Blindness training",
-  "This grip is incompatible with the equipped weapon or shield."
+  "This grip is incompatible with the equipped weapon or shield.",
+  "Acid",
+  "Bludgeoning",
+  "Cold",
+  "Fire",
+  "Force",
+  "Lightning",
+  "Necrotic",
+  "Piercing",
+  "Poison",
+  "Psychic",
+  "Radiant",
+  "Slashing",
+  "Thunder"
 ]
