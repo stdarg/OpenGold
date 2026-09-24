@@ -88,6 +88,17 @@ private:
     void pool_layout();
     void town_member_selected(std::int64_t slot);
     void close_town_sheet();
+    void setup_training_review();
+    void open_training_review();
+    void refresh_training_review();
+    void close_training_review();
+    void apply_training_review();
+    void review_training_toggled(bool selected,godot::String group,godot::String option);
+    void review_training_selected(std::int64_t index,godot::String group);
+    void training_review_input(const godot::Ref<godot::InputEvent>& event);
+    std::unique_ptr<opengold::CharacterCreator> training_review_;
+    opengold::rules::TrainingChoices locked_training_;
+    opengold::MemberId training_member_{};
     void setup_party();
     void setup_advancement();
     void refresh_advancement_arrows();

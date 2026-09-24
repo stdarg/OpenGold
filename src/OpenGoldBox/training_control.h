@@ -81,7 +81,8 @@ inline void setup_training_controls(godot::Node& parent){
 // The scene owns every node. Reuse controls across refreshes so toggling does
 // not destroy the focused checkbox or its keyboard navigation position.
 template<class Translate> void refresh_training_controls(godot::Node& parent,const opengold::CharacterCreator& creator,
-    const godot::Callable& toggled,const godot::Callable& selected,const Translate& tr){
+    const godot::Callable& toggled,const godot::Callable& selected,const Translate& tr,
+    const opengold::rules::TrainingChoices& locked={}){
     using namespace godot;
     auto* rows=parent.get_node<VBoxContainer>("Training/Rows");
     auto fixed=creator.draft();fixed.training.clear();
@@ -89,7 +90,8 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
     const auto groups=creator.rules().training_options(creator.draft());
     for(unsigned i=groups.size();i<static_cast<unsigned>(rows->get_child_count());++i)rows->get_node<Control>(String("Group")+String::num_uint64(i))->hide();
     for(unsigned i=0;i<groups.size();++i){
-        const auto& group=groups[i];const auto name=String("Group")+String::num_uint64(i);
+        const auto& group=groups[i];const auto original=locked.find(group.id);
+        const bool has_locked=original!=locked.end()&&!original->second.empty();const auto name=String("Group")+String::num_uint64(i);
         auto* box=Object::cast_to<VBoxContainer>(rows->get_node_or_null(name));
         if(!box){auto owned=make_node<VBoxContainer>();owned->set_name(name);box=attach_child(*rows,std::move(owned));
             box->add_theme_constant_override("separation",5);auto label=make_node<Label>();label->set_name("Title");attach_child(*box,std::move(label));}
@@ -109,7 +111,7 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
             choice->clear();choice->add_item(tr(N_("Choose an option")));choice->set_item_disabled(0,true);
             int index=0;for(unsigned n=0;n<group.options.size();++n){const auto& option=group.options[n];choice->add_item(tr(option.label));choice->set_item_tooltip(n+1,tr(option.description));
                 if(std::find(picked.begin(),picked.end(),option.id)!=picked.end())index=n+1;}
-            choice->select(index);choice->set_tooltip_text(training_source(group.id,tr));choice->set_disabled(false);choice->show();continue;
+            choice->select(index);choice->set_tooltip_text(training_source(group.id,tr));choice->set_disabled(has_locked);choice->show();continue;
         }
         for(int j=0;j<box->get_child_count();++j)if(auto* check=Object::cast_to<CheckBox>(box->get_child(j))){
             if(std::none_of(group.options.begin(),group.options.end(),[&](const auto& o){return training_string(o.id)==String(check->get_name());})){
@@ -128,7 +130,7 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
             const auto callback=toggled.bind(training_string(group.id),node_name);check->connect("toggled",callback);check->set_meta("training_callback",callback);
             box->move_child(check,option_index++);
             const bool selected=std::find(picked.begin(),picked.end(),option.id)!=picked.end();
-            check->set_text(tr(option.label));check->set_pressed_no_signal(selected);check->set_disabled(!selected&&picked.size()>=group.count);check->show();
+            check->set_text(tr(option.label));check->set_pressed_no_signal(selected);check->set_disabled((has_locked&&std::find(original->second.begin(),original->second.end(),option.id)!=original->second.end())||(!selected&&picked.size()>=group.count));check->show();
             check->set_tooltip_text(training_source(group.id,tr));
         }
     }

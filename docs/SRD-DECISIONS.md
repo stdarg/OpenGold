@@ -10,7 +10,6 @@ A reply resolves only its question and does not resume a paused goal.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
-| Q11 | #189 Review Training layout | Policy is approved: retain missing old choices and let the user complete them. Button/dialog layout remains unanswered; exact original wording is not in this compact record. Retrieve it before implementation; do not silently choose a layout or re-ask an already pending question. |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
 | Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |
@@ -23,7 +22,7 @@ A reply resolves only its question and does not resume a paused goal.
 | --- | --- | --- |
 | Initial four decisions | Preserve remaining turn resources; SRD opportunity triggers without facing reactions; allied transit; Versatile grip/damage/shield behavior | [Implementation plan](SRD-IMPLEMENTATION.md); these do not settle unrelated campaign policies. |
 | Q1 / Grip | Labeled one/two-hand dropdown with actual dice, keyboard, immediate persistence; two hands unavailable with shield | [Implementation plan](SRD-IMPLEMENTATION.md). |
-| Old-save training / Q9–10 | Keep missing choices pending; approved Training step after Class and before Name; Back keeps valid choices, invalid choices pruned; presets pre-generate their training | [Training](TRAINING.md). Q11 layout remains pending. |
+| Old-save training / Q9–10 | Keep missing choices pending; approved Training step after Class and before Name; Back keeps valid choices, invalid choices pruned; presets pre-generate their training | [Training](TRAINING.md). Q11 superseded by approved Q28. |
 | Q5–7 / HP, Adrenaline and saving | HP colors/source tooltips and separate Temporary HP; Adrenaline Rush beside Dash; **player saves only at camp/inn** | [Temporary HP](TEMPORARY-HP.md). Internal combat checkpoint tests permitted; no player combat Save/Load controls. |
 | Q8 | Two-stage Savage Attacker hit/damage-choice dialog, keyboard, action/reaction retained as spent | [Savage Attacker](SAVAGE-ATTACKER.md). Does not approve Sneak Attack's new decision order. |
 | Q12–16 | Wizard/Cleric Spell Choices; supported selections, counts, Back, pending catalog choices, preset choices; approved casting row | [Cantrip controls](CANTRIP-CONTROLS.md), [Sacred Flame](SACRED-FLAME.md). |
@@ -32,8 +31,9 @@ A reply resolves only its question and does not resume a paused goal.
 | Q22 | Fighter starting Fighting Style dropdown in Training, initially Archery/Defense; required selection, Back, keyboard, presets, old missing choice pending | [Fighter styles](FIGHTER-STYLES.md). Not blanket approval of future independent selectors. |
 | Q24 | Rogue level-two Cunning Action row below combat buttons: dropdown and Use Bonus Action; Dash/Disengage initially, keyboard, turn/budget restrictions | [Cunning Action](CUNNING-ACTION.md). Hide requires its actual rule/target behavior. |
 | Q26 | Warlock existing Spell Choices pattern and Spell/Cast; presets, retained old selections | [Eldritch Blast](ELDRITCH-BLAST.md), [Warlock Poison Spray](WARLOCK-POISON-SPRAY.md). |
+| Q28 | #29/#189 Review Training button beside Grip below inventory, visible for missing training; centered dialog reuses checkbox groups and Fighting Style dropdown, fixed grants, counts and keyboard; locks prior choices; Apply requires all supported choices; Cancel/Escape discards; combat blocks edits; preserve wounds/resources/equipment/advancement | Approved; supersedes pending Q11. |
 | Q27 | Sorcerer existing Spell Choices and Spell/Cast with four supported cantrips, Charisma, presets, old selections pending | [Sorcerer cantrips](SORCERER-CANTRIPS.md). |
-| Workflow adoption | User authorized efficiency implementation after backlog review | Batch workflow is active; SRD coding goal remains paused after #228. No authorization to discard save compatibility, create a fresh task or spawn agents. |
+| Workflow adoption | User authorized efficiency implementation after backlog review | Batch workflow is active; SRD goal resumed; current batch is #29/#189. No authorization to discard save compatibility, create a fresh task or spawn agents. |
 
 Before a new question, check this register and the relevant feature doc. Ask a
 numbered question only for a material undecided layout/control/policy choice,

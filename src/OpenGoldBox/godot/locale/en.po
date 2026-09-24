@@ -20,7 +20,7 @@ msgstr "   Gold {gold}   XP {xp}"
 msgid "   Hit Dice: {level}d{die}"
 msgstr "   Hit Dice: {level}d{die}"
 
-#: src/OpenGoldBox/party_preview.cpp:149
+#: src/OpenGoldBox/party_preview.cpp:151
 msgid " (Reserve)"
 msgstr " (Reserve)"
 
@@ -333,6 +333,10 @@ msgstr "Animal Handling"
 msgid "Any d20 roll saves"
 msgstr "Any d20 roll saves"
 
+#: src/OpenGoldBox/training_review_impl.h:33
+msgid "Apply Training"
+msgstr "Apply Training"
+
 #: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 msgid "Arcana"
 msgstr "Arcana"
@@ -566,7 +570,7 @@ msgstr "Campaign loaded."
 msgid "Campaign saved."
 msgstr "Campaign saved."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:56 src/OpenGoldBox/save_slots.cpp:29 src/OpenGoldBox/startup_view.cpp:192
+#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:56 src/OpenGoldBox/save_slots.cpp:29 src/OpenGoldBox/startup_view.cpp:192 src/OpenGoldBox/training_review_impl.h:31
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -685,10 +689,14 @@ msgid "Choose a swatch to recolor this part in the combat preview."
 msgstr "Choose a swatch to recolor this part in the combat preview."
 
 #: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+msgid "Choose an available feat or ability points"
+msgstr "Choose an available feat or ability points"
+
+#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 msgid "Choose an existing folder containing the Pool of Radiance game files."
 msgstr "Choose an existing folder containing the Pool of Radiance game files."
 
-#: src/OpenGoldBox/training_control.h:109
+#: src/OpenGoldBox/training_control.h:111
 msgid "Choose an option"
 msgstr "Choose an option"
 
@@ -809,6 +817,10 @@ msgstr "Common"
 msgid "Common Sign Language"
 msgstr "Common Sign Language"
 
+#: src/OpenGoldBox/training_review_impl.h:23
+msgid "Complete missing training. Existing selections are locked.\nCancel discards your changes."
+msgstr "Complete missing training. Existing selections are locked.\nCancel discards your changes."
+
 #: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 msgid "Complete the required training choices."
 msgstr "Complete the required training choices."
@@ -841,7 +853,7 @@ msgstr "Continue [Enter]"
 msgid "Cook's Utensils"
 msgstr "Cook's Utensils"
 
-#: src/OpenGoldBox/party_preview.cpp:152
+#: src/OpenGoldBox/party_preview.cpp:154
 msgid "Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster."
 msgstr "Create a character, finish its sheet, then Add to party.\n\nSix PC positions and two NPC positions. Removed members remain in the roster."
 
@@ -938,11 +950,11 @@ msgstr "Decrease battlefield zoom by 100 percentage points"
 msgid "Deep Speech"
 msgstr "Deep Speech"
 
-#: src/OpenGoldBox/party_preview.cpp:490
+#: src/OpenGoldBox/party_preview.cpp:495
 msgid "Defeat"
 msgstr "Defeat"
 
-#: src/OpenGoldBox/party_preview.cpp:532
+#: src/OpenGoldBox/party_preview.cpp:537
 msgid "Defeat test"
 msgstr "Defeat test"
 
@@ -1107,7 +1119,7 @@ msgstr "Equip"
 msgid "Equip selected"
 msgstr "Equip selected"
 
-#: src/OpenGoldBox/party_preview.cpp:160 src/OpenGoldBox/rolf_tour_view.cpp:224
+#: src/OpenGoldBox/party_preview.cpp:162 src/OpenGoldBox/rolf_tour_view.cpp:224
 msgid "Equipped / "
 msgstr "Equipped / "
 
@@ -1115,11 +1127,11 @@ msgstr "Equipped / "
 msgid "Equipped weapon or wand and shield occupy both hands. Spells with Somatic components are unavailable."
 msgstr "Equipped weapon or wand and shield occupy both hands. Spells with Somatic components are unavailable."
 
-#: src/OpenGoldBox/party_preview.cpp:317 src/OpenGoldBox/rolf_tour_view.cpp:259
+#: src/OpenGoldBox/party_preview.cpp:322 src/OpenGoldBox/rolf_tour_view.cpp:259
 msgid "Equipped."
 msgstr "Equipped."
 
-#: src/OpenGoldBox/party_preview.cpp:498
+#: src/OpenGoldBox/party_preview.cpp:503
 msgid "Exit to OS"
 msgstr "Exit to OS"
 
@@ -1182,7 +1194,7 @@ msgstr "Fill all six boxes to continue.\nAssigned scores include bonuses."
 msgid "Final score: {score}"
 msgstr "Final score: {score}"
 
-#: src/OpenGoldBox/party_preview.cpp:454
+#: src/OpenGoldBox/party_preview.cpp:459
 msgid "Finish combat, dialogue or shopping before returning to the party."
 msgstr "Finish combat, dialogue or shopping before returning to the party."
 
@@ -1207,7 +1219,7 @@ msgstr "Fire Bolt"
 msgid "First roll: {damage}"
 msgstr "First roll: {damage}"
 
-#: src/OpenGoldBox/training_control.h:88
+#: src/OpenGoldBox/training_control.h:89
 msgid "Fixed training"
 msgstr "Fixed training"
 
@@ -1430,7 +1442,7 @@ msgstr "Infernal"
 msgid "Insight"
 msgstr "Insight"
 
-#: src/OpenGoldBox/party_preview.cpp:454
+#: src/OpenGoldBox/party_preview.cpp:459
 msgid "Inspect your party and equipment."
 msgstr "Inspect your party and equipment."
 
@@ -1613,7 +1625,7 @@ msgstr "Lightning"
 msgid "Load"
 msgstr "Load"
 
-#: src/OpenGoldBox/party_preview.cpp:496
+#: src/OpenGoldBox/party_preview.cpp:501
 msgid "Load a saved game to continue."
 msgstr "Load a saved game to continue."
 
@@ -1788,7 +1800,7 @@ msgstr "Neutral Evil"
 msgid "Neutral Good"
 msgstr "Neutral Good"
 
-#: src/OpenGoldBox/party_preview.cpp:170
+#: src/OpenGoldBox/party_preview.cpp:175
 msgid "New PCs receive 250 gp / Save game stores this campaign on disk."
 msgstr "New PCs receive 250 gp / Save game stores this campaign on disk."
 
@@ -2073,6 +2085,10 @@ msgstr "Prepared spells: {spells}"
 msgid "Previous matching portrait"
 msgstr "Previous matching portrait"
 
+#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+msgid "Previously selected training cannot be replaced"
+msgstr "Previously selected training cannot be replaced"
+
 #: src/OpenGoldBox/rolf_tour_view.cpp:391
 msgid "Prices are per listed item or bundle."
 msgstr "Prices are per listed item or bundle."
@@ -2194,7 +2210,7 @@ msgstr "Rejoin party"
 msgid "Religion"
 msgstr "Religion"
 
-#: src/OpenGoldBox/party_preview.cpp:498
+#: src/OpenGoldBox/party_preview.cpp:503
 msgid "Reload a Saved Game"
 msgstr "Reload a Saved Game"
 
@@ -2234,6 +2250,10 @@ msgstr "Restart with --reset-game-path to choose your Pool of Radiance data fold
 #: src/OpenGoldBox/godot/scenes/character_creation.tscn:414
 msgid "Return to party"
 msgstr "Return to party"
+
+#: src/OpenGoldBox/training_review_impl.h:13 src/OpenGoldBox/training_review_impl.h:16
+msgid "Review Training"
+msgstr "Review Training"
 
 #: src/OpenGoldBox/character_creation_view.cpp:429
 msgid "Review your character and use the portrait controls to choose a complete portrait before adding it to the party."
@@ -3076,7 +3096,7 @@ msgstr "Woodcarver's Tools"
 msgid "Yellow"
 msgstr "Yellow"
 
-#: src/OpenGoldBox/party_preview.cpp:494
+#: src/OpenGoldBox/party_preview.cpp:499
 msgid "Your party has been defeated."
 msgstr "Your party has been defeated."
 
@@ -3243,7 +3263,7 @@ msgstr "{hit}\n{formula}\nFirst damage: {first}\nSecond damage: {second}\n\nKeep
 msgid "{item} / {price} gp"
 msgstr "{item} / {price} gp"
 
-#: src/OpenGoldBox/party_preview.cpp:160 src/OpenGoldBox/rolf_tour_view.cpp:224
+#: src/OpenGoldBox/party_preview.cpp:162 src/OpenGoldBox/rolf_tour_view.cpp:224
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{item} x{quantity}"
 msgstr "{item} x{quantity}"

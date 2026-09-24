@@ -242,18 +242,18 @@ its dependencies before starting. Initial candidates:
 
 | Package | Existing issues worked together | Delivery / stop boundary |
 | --- | --- | --- |
-| A: Finish training review | #29/#189 | Use the existing campaign preview/commit and Training controls to complete missing choices without changing recorded choices, wounds or resources. Requires Q11. Close only after the normal saved-character path passes. |
+| A: Finish training review | #29/#189 | Delivered under Q28; see [canonical coverage](SRD-COVERAGE.md) and [Training evidence](TRAINING.md). Existing native preview/commit and shared controls complete the saved-character path. |
 | B: Finish rest workflow | #30/#192/#193 | Sequential Hit Die choices, interruption/resumption and camp/inn continuation. Resolve controls and exact supported encounter schedules before coding; this is substantial, not a promised two-hour task. |
 | C: Fighting styles and Light attacks | #59/#78–81, style/mastery portions of #60/#85/#140/#147 | Shared eligible-source matrix and attack decisions, ordinary Fighter/Paladin/Ranger acquisition. If ordinary progression is unavailable for a route, record that prerequisite before choosing this as a closure batch. Q23 required. |
 | D: Wizard access plus a real free-cast source | #36/#37/#97/#200/#75, consuming #61/#63 | One source-aware selection/preparation/free-cast path with known/book/prepared distinctions. Retain unsupported spell catalog gaps; this package does not magically complete every class or Magic Initiate list. |
 | E: Silence end to end | #38/#208/#209, relevant #39/#43 | Concentration, area, V restrictions, actual preparation, combat/campaign casting, ritual/time and save continuation. Requires Q19–21; defer unrelated material-component implementation. |
 | F: Complete Fighter class mechanics | #84/#85/#87/#88/#89/#82 with required shared packages | One real 1–4 progression path and acceptance matrix. Report class-mechanics completion separately from all origin combinations and the all-class milestone. Do not call it a complete character ecosystem while those requirements remain. |
 
-**Recommended restart sequence:** one consolidated decision review, then package
-A as the first closure trial because its native foundation exists and its missing
-player path is bounded. Follow with the necessary B/C/B22 capabilities and F.
-If A remains blocked, select one ready package deliberately; do not rotate through
-unrelated partial features merely to stay busy. The full all-class goal stays intact.
+**Recommended next sequence:** A is delivered. Continue with the necessary
+B/C/B22 capabilities and F, resolving each batch's outstanding controls together.
+Do not rotate through unrelated partial features merely to stay busy. The full
+all-class goal stays intact. The 168-issue inventory above remains a dated review
+snapshot; live status and completed work belong in GitHub and the coverage ledger.
 
 For the unimplemented spells under #165, batch by semantics after the needed
 capability is proven: healing (Cure Wounds/Healing Word), targeted attacks and

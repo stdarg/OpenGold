@@ -6,9 +6,15 @@ using namespace rules;
 CharacterCreator::CharacterCreator(std::unique_ptr<CharacterRules> rules,std::uint64_t seed)
     :rules_(std::move(rules)),random_(seed)
 {if(!rules_)throw std::runtime_error("Character creator requires a rules module");restart();}
+CharacterCreator::CharacterCreator(std::unique_ptr<CharacterRules> rules,CharacterDraft draft)
+    :rules_(std::move(rules)),random_(0),draft_(std::move(draft)),step_(CreationStep::training)
+{
+    if(!rules_)throw std::runtime_error("Character creator requires a rules module");
+    (void)rules_->evaluate(draft_,false);locked_training_=draft_.training;
+}
 void CharacterCreator::restart()
 {
-    draft_={};appearance_={};step_=CreationStep::race;
+    draft_={};locked_training_.clear();appearance_={};step_=CreationStep::race;
     for(auto field:{CreationField::race,CreationField::gender,CreationField::character_class,CreationField::alignment,CreationField::background}) {
         const auto options=rules_->choices(field);
         if(options.empty())throw std::runtime_error("Rules module has no character choices");
@@ -91,7 +97,14 @@ void CharacterCreator::training_choice(std::string_view id,std::string_view opti
         if(values.size()>=group->count)throw std::runtime_error("Training selection limit reached");
         values.emplace_back(option);
     }else if(!selected&&found!=values.end())values.erase(found);
-    prune_training(candidate);draft_=std::move(candidate);
+    prune_training(candidate);
+    for(const auto& [group,selected]:locked_training_){
+        const auto found=candidate.training.find(group);
+        if(found==candidate.training.end()||std::any_of(selected.begin(),selected.end(),[&](const auto& value){
+            return std::find(found->second.begin(),found->second.end(),value)==found->second.end();
+        }))throw std::runtime_error("Previously selected training cannot be replaced");
+    }
+    draft_=std::move(candidate);
 }
 bool CharacterCreator::training_complete() const
 {

@@ -6,6 +6,7 @@
 #include "campaign_fixture.h"
 #include <algorithm>
 #include <fstream>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -458,6 +459,50 @@ void persistence(){
     auto choice=growing.default_advancement(f);choice.abilities={};choice.abilities[1]=2;growing.advance(f,choice);
     check(skill(growing.member(f).character.sheet(),"stealth").bonus==6,"Level-up rebuilds skill totals after an ability modifier changes");
 }
+void draft_review_editor(){
+    auto d=draft();d.training={{"origin:languages",{"elvish"}},{"class:rogue",{"perception"}}};
+    const auto original=d;CharacterCreator editor(srd5::character_rules(),d);
+    check(editor.step()==CreationStep::training&&!editor.training_complete(),"Existing draft starts at incomplete Training");
+    rejects([&]{editor.training_choice("origin:languages","elvish",false);});
+    auto conflict=draft();conflict.training={{"class:rogue:thieves_cant",{"elvish"}}};
+    CharacterCreator locked(srd5::character_rules(),conflict);
+    rejects([&]{locked.training_choice("origin:languages","elvish",true);});
+    check(locked.draft().training==conflict.training,"Indirect pruning cannot remove locked language choices");
+    editor.training_choice("origin:languages","dwarvish",true);
+    for(const auto& [group,values]:choices())for(const auto& value:values)editor.training_choice(group,value,true);
+    check(editor.training_complete()&&d.training==original.training,"Draft review fills choices without modifying original");
+    check(editor.draft().name==original.name&&editor.draft().cantrips==original.cantrips&&editor.draft().rolls==original.rolls,"Review retains unrelated creation fields");
+}
+CampaignParty review_fixture(){
+    auto rules=module();auto saved=decode_campaign(fixture("campaign-v8-training.ogs"),*srd5::character_rules(),*rules,"training-fixture",nullptr);
+    CampaignParty party(module());party.restore(std::move(saved.party));party.remove(2);
+    auto state=party.checkpoint();auto& member=state.roster.front();auto d=member.character.creation_data();
+    d.training={{"origin:languages",{"elvish"}},{"class:rogue",{"perception"}},{"class:rogue:expertise",{"stealth"}}};
+    Character partial(*srd5::character_rules(),d,member.character.appearance());
+    partial.inventory()=member.character.inventory();VitalState healthy{partial.sheet().hit_points};
+    for(const auto& choice:member.character.advancements())partial.advance(*rules,healthy,choice);
+    member.character=std::move(partial);party.restore(std::move(state));
+    auto fighter=draft("fighter");fighter.training={{"class:fighter:fighting_style",{"archery"}}};
+    party.add_pc(hero(fighter));return party;
+}
+void write_review_fixture(){
+    const auto* directory=std::getenv("OPENGOLD_GAME_DIR");if(!directory||!*directory)return;
+    auto party=review_fixture();const auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"training-review.ogs";
+    write_campaign_file(path,encode_campaign(party,nullptr,campaign_asset_identity(directory)));
+}
+void verify_review_result(const char* path){
+    const auto* directory=std::getenv("OPENGOLD_GAME_DIR");check(directory&&*directory,"Review verification requires original game directory");
+    const auto assets=campaign_asset_identity(directory);auto rules=module();auto creation=srd5::character_rules();auto original=review_fixture();
+    auto saved=decode_campaign(read_campaign_file(path),*creation,*rules,assets,nullptr);
+    for(const auto& member:saved.party.roster){
+        check(member.character.sheet().training.complete,"UI completed all supported training");
+        original.complete_training(member.id,*creation,member.character.creation_data().training);
+    }
+    // Roster selection is a UI action, independent from training application.
+    auto expected=original.checkpoint();expected.selected=saved.party.selected;
+    original.restore(std::move(expected));CampaignParty actual(module());actual.restore(std::move(saved.party));
+    check(encode_campaign(original,nullptr,assets)==encode_campaign(actual,nullptr,assets),"UI review only changes selected training; wounds, resources, gear, advancement and campaign history survive");
+}
 void complete_saved_training(){
     auto creation=srd5::character_rules();auto rules=module();
     auto loaded=decode_campaign(fixture("campaign-v8-training.ogs"),*creation,*rules,"training-fixture",nullptr);
@@ -903,4 +948,4 @@ void freeze_sage(){
 #include "cunning_checks.h"
 #include "sneak_baseline.h"
 }
-int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-sneak")sneak_baseline::freeze();else if(std::string_view(argv[1])=="--freeze-cunning")freeze_cunning_action();else if(std::string_view(argv[1])=="--freeze-soldier-gaming")freeze_soldier_gaming();else if(std::string_view(argv[1])=="--freeze-druid-herbalism")freeze_druid_herbalism();else if(std::string_view(argv[1])=="--freeze-monk-tools")freeze_monk_tools();else if(std::string_view(argv[1])=="--freeze-bard-instruments")freeze_bard_instruments();else if(std::string_view(argv[1])=="--freeze-class-skills")freeze_class_skills();else if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}auto run=[](auto test,const char* name){try{test();}catch(...){std::cerr<<name<<": ";throw;}};run(sneak_baseline::verify,"Sneak baseline");run(cunning_checks::run,"Cunning Action");run(cunning_prior_writer,"Cunning prior writer");run(soldier_gaming,"Soldier gaming");run(druid_herbalism,"druid_herbalism");run(monk_tools,"monk_tools");run(monk_tool_prior_writer,"monk_tool_prior_writer");run(bard_instruments,"bard_instruments");run(bard_instrument_prior_writer,"bard_instrument_prior_writer");run(all_class_skills,"all_class_skills");run(sage_training,"sage_training");run(remaining_backgrounds,"remaining_backgrounds");run(starting_styles,"starting_styles");run(creation_controls,"creation_controls");run(preset_training,"preset_training");run(grants_and_checks,"grants_and_checks");run(invalid_choices,"invalid_choices");run(persistence,"persistence");run(complete_saved_training,"complete_saved_training");std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==3&&std::string_view(argv[1])=="--verify-review"){verify_review_result(argv[2]);return 0;}if(argc==2){if(std::string_view(argv[1])=="--freeze-sneak")sneak_baseline::freeze();else if(std::string_view(argv[1])=="--freeze-cunning")freeze_cunning_action();else if(std::string_view(argv[1])=="--freeze-soldier-gaming")freeze_soldier_gaming();else if(std::string_view(argv[1])=="--freeze-druid-herbalism")freeze_druid_herbalism();else if(std::string_view(argv[1])=="--freeze-monk-tools")freeze_monk_tools();else if(std::string_view(argv[1])=="--freeze-bard-instruments")freeze_bard_instruments();else if(std::string_view(argv[1])=="--freeze-class-skills")freeze_class_skills();else if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}auto run=[](auto test,const char* name){try{test();}catch(...){std::cerr<<name<<": ";throw;}};run(sneak_baseline::verify,"Sneak baseline");run(cunning_checks::run,"Cunning Action");run(cunning_prior_writer,"Cunning prior writer");run(soldier_gaming,"Soldier gaming");run(druid_herbalism,"druid_herbalism");run(monk_tools,"monk_tools");run(monk_tool_prior_writer,"monk_tool_prior_writer");run(bard_instruments,"bard_instruments");run(bard_instrument_prior_writer,"bard_instrument_prior_writer");run(all_class_skills,"all_class_skills");run(sage_training,"sage_training");run(remaining_backgrounds,"remaining_backgrounds");run(starting_styles,"starting_styles");run(creation_controls,"creation_controls");run(preset_training,"preset_training");run(grants_and_checks,"grants_and_checks");run(invalid_choices,"invalid_choices");run(persistence,"persistence");run(complete_saved_training,"complete_saved_training");run(draft_review_editor,"draft_review_editor");write_review_fixture();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

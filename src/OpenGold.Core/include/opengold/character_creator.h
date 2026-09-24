@@ -6,6 +6,8 @@ enum class CreationStep { race, alignment, attributes, character_class, training
 class CharacterCreator {
 public:
     CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,std::uint64_t seed);
+    // Isolated training editor: existing choices are locked; live characters are unchanged.
+    CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,rules::CharacterDraft draft);
     [[nodiscard]] const rules::CharacterRules& rules() const {return *rules_;}
     [[nodiscard]] const rules::CharacterDraft& draft() const {return draft_;}
     [[nodiscard]] const por::CharacterAppearance& appearance() const {return appearance_;}
@@ -31,6 +33,7 @@ private:
     std::unique_ptr<rules::CharacterRules> rules_;
     std::uint64_t random_;
     rules::CharacterDraft draft_;
+    rules::TrainingChoices locked_training_;
     por::CharacterAppearance appearance_;
     CreationStep step_{CreationStep::race};
     void require_editable() const;

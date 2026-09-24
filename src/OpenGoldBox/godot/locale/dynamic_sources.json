@@ -262,5 +262,7 @@
   "Melee spell attack: 1d8 Lightning damage, Touch; prevents Opportunity Attacks until the target’s next turn.",
   "Shocking Grasp: cannot make Opportunity Attacks.",
   "{name} cannot make Opportunity Attacks until its next turn.",
-  "{name} loses a Shocking Grasp effect."
+  "{name} loses a Shocking Grasp effect.",
+  "Previously selected training cannot be replaced",
+  "Choose an available feat or ability points"
 ]

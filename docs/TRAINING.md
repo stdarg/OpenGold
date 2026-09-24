@@ -3,9 +3,8 @@
 F02 is split into the [rules/persistence layer (#187)](https://github.com/stdarg/OpenGold/issues/187),
 [creation controls (#188)](https://github.com/stdarg/OpenGold/issues/188), and
 [completion of missing saved choices (#189)](https://github.com/stdarg/OpenGold/issues/189).
-The parent [#29](https://github.com/stdarg/OpenGold/issues/29) remains open until
-all three are delivered. The rules layer and creation controls are delivered;
-completion of missing choices in existing saves remains in #189.
+All three layers are now implemented, completing parent [#29](https://github.com/stdarg/OpenGold/issues/29).
+Review Training follows approved Q28 in the [decision register](SRD-DECISIONS.md).
 
 ## First supported package
 
@@ -22,7 +21,9 @@ completion of missing choices in existing saves remains in #189.
   proficiency reject. Both sources of an overlapping class/background proficiency
   persist; overlap supplies no second bonus or automatic replacement choice.
 
-Other tool/background packages and later class proficiency features, feats (including Criminal's Alert),
+Starting class tools and the four supported backgrounds are covered by
+[class skills](CLASS-SKILLS.md), [background training](BACKGROUND-TRAINING.md),
+[Sage](SAGE-TRAINING.md), and the tool packages linked below. Later class proficiency features, feats (including Criminal's Alert),
 starting equipment, higher-level Rogue features and campaign uses of skills remain
 in their respective plan issues. A completed training selection means only that
 the choices supported by this increment are filled, not that the class is complete.
@@ -89,7 +90,19 @@ Only deterministic fixed grants are reconstructed; optional skills, Expertise an
 languages are not invented. Version 8's feature/feat ledger is validated against
 its original scope before adding training records. Formats 1–7 continue their
 existing reconstruction. Pending choices survive another save/load unchanged.
-The Review Training button remains tracked in #189, pending layout confirmation.
+The Review Training button appears beside Grip below party inventory when the
+selected member has missing training. Its centered dialog shares the creation
+checkbox groups and Fighting Style dropdown, with fixed grants, counts, scrolling
+and keyboard focus. Existing selections stay locked, including when another
+choice would indirectly prune them. Cancel, Escape and window close discard the
+isolated draft. Combat blocks opening, editing and applying.
+
+Apply is enabled only after supported choices are complete and the native preview
+can replay the character's existing advancement. A conflict displays an error;
+for example, a Fighter who already acquired Defense at level four must choose a
+different starting style. Successful application refreshes the sheet and hides
+the button. PC, recruited and reserve members use the same path. No automatic
+filling, respec, spell learning or new save controls are introduced.
 
 The campaign completion API is implemented for that flow. `preview_training`
 returns an owned candidate with all supported pending choices filled. It
@@ -164,3 +177,37 @@ Soldiers choose one of four Gaming Set variants through Training, independently
 of class. Class changes retain the choice; leaving Soldier removes it. Presets
 generate choices and old saves keep missing choices pending. See
 [Soldier Gaming Set](SOLDIER-GAMING.md).
+
+## Review Training verification (#29/#189)
+
+`opengold_training_tests` covers direct and indirect replacement rejection in the
+isolated editor and complete campaign invariants, including all twelve starting
+class packages, duplicate sources, Expertise and previous-save migration.
+`tests/training_review_view_tests.gd` loads an actual version-eight save migrated
+by the native fixture builder, adds partial-choice cases, and exercises five
+characters through the real game controls. It checks locked checkboxes/dropdown,
+advancement conflicts, Apply/Cancel/Escape, keyboard focus, combat blocking and
+save/reload. A native comparison of its resulting save permits only completed
+training and roster selection to differ. Existing wounds, resources, equipment,
+advancement and campaign history must match exactly.
+
+Build the game test project and `opengold_training_tests` first. Run the asset-backed
+check with the existing test wrapper (Bash, macOS paths shown):
+
+```bash
+export OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD
+build/mac-check/opengold_training_tests
+cmake -DGODOT=/Applications/Godot_mono.app/Contents/MacOS/Godot \
+  -DPROJECT="$PWD/src/OpenGoldBox/godot" \
+  -DSCRIPT="$PWD/tests/training_review_view_tests.gd" \
+  '-DEXPECTED=Review Training view checks passed' -DTEST_TIMEOUT=120 \
+  "-DARGS=--review-fixture=$PWD/build/mac-check/training-review.ogs;--review-output=/tmp/review-training-result.ogs;--review-capture=/tmp/review-training-captures" \
+  -DGRAPHICAL=ON -P tests/run_godot_test.cmake
+build/mac-check/opengold_training_tests --verify-review /tmp/review-training-result.ogs
+```
+
+The game test covers English/Spanish at 1120×800 and 1920×1080. For the English
+research demo, build `opengold_godot`, use `-DPROJECT="$PWD/demos/godot"` and add
+`;--review-demo` to DARGS. Test-created named saves are restored on completion.
+No save format, rule identity or supported historical compatibility changed.
+Current identity remains rules 0.6.40 / PC28, campaign 11, combat 13–15 / FX1–3.
