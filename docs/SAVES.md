@@ -183,3 +183,8 @@ Campaign format remains 10 and continues to disallow saves during battle.
 Player save policy: save while camping or at an inn. Do not expose saving during
 combat. Combat checkpoint codecs remain internal tools for deterministic testing
 and continuation; their existence does not authorize an in-combat save control.
+
+Rules 0.6.16 derives [Heavy weapon Disadvantage](HEAVY-WEAPONS.md) from existing
+scores and equipment. PC9/combat 12/campaign 10/SRD7 are unchanged. Module
+0.6.15 saves retain all grants, pools and expenditure; loading never rolls dice
+or spends actions. Future affected attacks apply the corrected rule.

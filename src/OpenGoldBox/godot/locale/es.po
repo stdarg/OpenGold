@@ -61,7 +61,7 @@ msgstr "* Salvación con competencia"
 msgid "+0 proficiency: {class} does not grant proficiency in this save."
 msgstr "+0 por competencia: la clase {class} no otorga competencia en esta salvación."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1029
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1031
 msgid "+1 AC while wearing armor. Requires the Fighter's Fighting Style feature."
 msgstr "+1 a la CA al llevar armadura. Requiere el rasgo Estilo de combate del guerrero."
 
@@ -163,7 +163,7 @@ msgstr "CA {ac}"
 msgid "AC {ac}   Speed {speed} ft"
 msgstr "CA {ac}   Velocidad {speed} pies"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1028
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1030
 msgid "Ability points"
 msgstr "Puntos de característica"
 
@@ -199,19 +199,19 @@ msgstr "Acción: un enemigo visible a 120 pies o menos realiza una salvación de
 msgid "Action: three fire rays at one target within 120 feet. Uses a level 2 slot."
 msgstr "Acción: tres rayos de fuego contra un objetivo a 120 pies o menos. Usa un espacio de nivel 2."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1039
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1041
 msgid "Action; 120 feet; three darts at one target."
 msgstr "Acción; 120 pies; tres dardos contra un objetivo."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1040
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1042
 msgid "Action; 120 feet; three spell attacks at one target. Requires level 3."
 msgstr "Acción; 120 pies; tres ataques de conjuro contra un objetivo. Requiere nivel 3."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1034
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1036
 msgid "Action; touch; heals 2d8 + Wisdom modifier."
 msgstr "Acción; toque; cura 2d8 + modificador de Sabiduría."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1303
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1316
 msgid "Active conditions are shown in the character status."
 msgstr "Las condiciones activas se muestran en el estado del personaje."
 
@@ -219,7 +219,7 @@ msgstr "Las condiciones activas se muestran en el estado del personaje."
 msgid "Acts destructively with little regard for rules or others."
 msgstr "Actúa de forma destructiva, sin apenas respetar las normas ni a los demás."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1028
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1030
 msgid "Add 2 to one ability or 1 to two abilities; maximum 20."
 msgstr "Añade 2 a una característica o 1 a dos características; máximo 20."
 
@@ -361,7 +361,7 @@ msgstr "Base"
 msgid "Black"
 msgstr "Negro"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1037
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1039
 msgid "Bless"
 msgstr "Bendecir"
 
@@ -369,7 +369,7 @@ msgstr "Bendecir"
 msgid "Blinded"
 msgstr "Cegado"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1036 src/OpenGold.Rules.Srd5/src/srd5.cpp:1041 src/OpenGoldBox/godot/scenes/combat_demo.tscn:52
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1038 src/OpenGold.Rules.Srd5/src/srd5.cpp:1043 src/OpenGoldBox/godot/scenes/combat_demo.tscn:52
 msgid "Blindness"
 msgstr "Ceguera"
 
@@ -377,7 +377,7 @@ msgstr "Ceguera"
 msgid "Blindness training"
 msgstr "Práctica de ceguera"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1036 src/OpenGold.Rules.Srd5/src/srd5.cpp:1041
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1038 src/OpenGold.Rules.Srd5/src/srd5.cpp:1043
 msgid "Blindness/Deafness (blindness option): Constitution save; repeat at end of turn; up to 1 minute. Level 2 slot."
 msgstr "Ceguera/Sordera (opción de ceguera): salvación de Constitución; se repite al final del turno; hasta 1 minuto. Espacio de nivel 2."
 
@@ -405,7 +405,7 @@ msgstr "Acción adicional: Correr y obtener PG temporales iguales al bonificador
 msgid "Bonus action: heal a visible ally within 60 feet. Uses the selected slot level."
 msgstr "Acción adicional: cura a un aliado visible a 60 pies o menos. Usa el nivel de espacio seleccionado."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1035
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1037
 msgid "Bonus action; 60 feet; heals 2d4 + Wisdom modifier."
 msgstr "Acción adicional; 60 pies; cura 2d4 + modificador de Sabiduría."
 
@@ -465,7 +465,7 @@ msgstr "Cancelar"
 msgid "Cannot capture the current game frame."
 msgstr "No se puede capturar la imagen actual del juego."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1300
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1313
 msgid "Cannot cast spells while wearing untrained armor."
 msgstr "No puedes lanzar conjuros con una armadura para la que no tienes entrenamiento."
 
@@ -676,7 +676,7 @@ msgstr "Crear personaje"
 msgid "Criminal"
 msgstr "Criminal"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1034 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:41
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1036 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:41
 msgid "Cure Wounds"
 msgstr "Curar heridas"
 
@@ -733,11 +733,11 @@ msgstr "Derrota"
 msgid "Defeat test"
 msgstr "Prueba de derrota"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1029
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1031
 msgid "Defense"
 msgstr "Defensa"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1297
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1310
 msgid "Defense feat: +1 AC while wearing armor."
 msgstr "Dote Defensa: +1 a la CA al llevar armadura."
 
@@ -793,7 +793,7 @@ msgstr "Druida"
 msgid "Dwarf"
 msgstr "Enano"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:406
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:407
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Dwarven Toughness: +{hp} maximum HP."
 msgstr "Dureza enana: +{hp} PG máximos."
@@ -966,7 +966,7 @@ msgstr "Gnomo"
 msgid "Goliath"
 msgstr "Goliat"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1031
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1033
 msgid "Grappler"
 msgstr "Apresador"
 
@@ -1020,7 +1020,7 @@ msgstr "Cabeza >"
 msgid "Head {number} / 14"
 msgstr "Cabeza {number} / 14"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1035 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:44
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1037 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:44
 msgid "Healing Word"
 msgstr "Palabra de curación"
 
@@ -1077,7 +1077,7 @@ msgstr "Objetos"
 msgid "Keep current"
 msgstr "Conservar actuales"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:416
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:417
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "L2 slots: {count}"
 msgstr "Esp. N2: {count}"
@@ -1127,17 +1127,17 @@ msgstr "Subir de nivel"
 msgid "Level up {name}"
 msgstr "Subir de nivel: {name}"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1078
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1080
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Level {level} Ability Score Improvement"
 msgstr "Nivel {level}: Mejora de característica"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1090
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1092
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Level {level}: HP and spell-slot advancement applied. Additional class and subclass features remain unavailable."
 msgstr "Nivel {level}: se han aumentado los PG y los espacios de conjuro. Los demás rasgos de clase y subclase aún no están disponibles."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1087
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1089
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Level {level}: {hp} maximum HP; gain {growth}. Fixed-average Hit Die growth includes Constitution and any retroactive Constitution increase."
 msgstr "Nivel {level}: {hp} PG máximos; aumento de {growth}. La media fija del dado de golpe incluye Constitución y sus aumentos retroactivos."
@@ -1146,7 +1146,7 @@ msgstr "Nivel {level}: {hp} PG máximos; aumento de {growth}. La media fija del 
 msgid "Light blue"
 msgstr "Azul claro"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:98
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:99
 msgid "Light crossbow"
 msgstr "Ballesta ligera"
 
@@ -1206,11 +1206,11 @@ msgstr "Maza"
 msgid "Magenta"
 msgstr "Magenta"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1032
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1034
 msgid "Magic Initiate"
 msgstr "Iniciado en la magia"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1039 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1041 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:39
 msgid "Magic Missile"
 msgstr "Proyectil mágico"
 
@@ -1222,7 +1222,7 @@ msgstr "Proyectil mágico (espacio de nivel 2)"
 msgid "Male"
 msgstr "Masculino"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:405
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:406
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Maximum HP includes level {level}, d{die} Hit Die and Constitution modifier {modifier}."
 msgstr "Los PG máximos incluyen el nivel {level}, el Dado de Golpe d{die} y el modificador de Constitución {modifier}."
@@ -1326,7 +1326,7 @@ msgstr "Estas salvaciones no reciben otras bonificaciones de raza, objetos o con
 msgid "No combat artwork assigned"
 msgstr "No se ha asignado una imagen de combate"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1299
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1312
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "No equipment modifiers. Source: unarmed strike rules and Strength score {score}. Attack uses Strength modifier +2 level-one proficiency; damage is 1 + Strength modifier (minimum 0)."
 msgstr "Sin modificadores de equipo. Origen: ataque sin armas y Fuerza {score}. Ataque: modificador de Fuerza +2 por competencia de nivel 1; daño: 1 + modificador de Fuerza (mínimo 0)."
@@ -1375,7 +1375,7 @@ msgstr "OPENGOLDBOX / Crear un personaje"
 msgid "OPENGOLDBOX / Party roster"
 msgstr "OPENGOLDBOX / Miembros del grupo"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:84
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:85
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "One hand — {dice}"
 msgstr "Una mano — {dice}"
@@ -1638,7 +1638,7 @@ msgstr "Tira un d20 y suma la bonificación de salvación. Iguala o supera la CD
 msgid "Roll all six"
 msgstr "Tirar seis dados"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1030
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1032
 msgid "Roll weapon damage twice on the first weapon hit each turn; use the higher result."
 msgstr "Tira el daño del arma dos veces en el primer impacto de cada turno y usa el resultado mayor."
 
@@ -1666,7 +1666,7 @@ msgstr "Asalto {round} / Reacción de {name}\nMovimiento {feet} pies | {action}"
 msgid "Round {round} / {name} turn\nMove {feet} ft | {action}"
 msgstr "Asalto {round} / Turno de {name}\nMovimiento {feet} pies | {action}"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:575
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:577
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Round {round}: {name} acts."
 msgstr "Asalto {round}: actúa {name}."
@@ -1691,11 +1691,11 @@ msgstr "FUE"
 msgid "Sage"
 msgstr "Sabio"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1030
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1032
 msgid "Savage Attacker"
 msgstr "Atacante salvaje"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1298
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1311
 msgid "Savage Attacker: higher of two weapon-damage rolls on the first weapon hit each turn."
 msgstr "Atacante salvaje: usa la mayor de dos tiradas de daño del arma en el primer impacto de cada turno."
 
@@ -1719,11 +1719,11 @@ msgstr "Nombre de la partida"
 msgid "Saving Throws"
 msgstr "Salvaciones"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:98
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:99
 msgid "Scimitar"
 msgstr "Cimitarra"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1040 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:48
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1042 src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/godot/scenes/combat_demo.tscn:48
 msgid "Scorching Ray"
 msgstr "Rayo abrasador"
 
@@ -1744,7 +1744,7 @@ msgstr "Se guardaron las capturas, pero no se pudo escribir el informe de captur
 msgid "Second Wind"
 msgstr "Segundo aliento"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:417
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:418
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Second Wind: {count}"
 msgstr "Segundo aliento: {count}"
@@ -1782,7 +1782,7 @@ msgstr "Elige una opción y continúa."
 msgid "Selected: {action}. Click a highlighted square."
 msgstr "Selección: {action}. Haz clic en una casilla resaltada."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1042 src/OpenGoldBox/character_creation_view.cpp:49 src/OpenGoldBox/godot/scenes/character_creation.tscn:255
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1044 src/OpenGoldBox/character_creation_view.cpp:49 src/OpenGoldBox/godot/scenes/character_creation.tscn:255
 msgid "Shield"
 msgstr "Escudo"
 
@@ -1790,11 +1790,11 @@ msgstr "Escudo"
 msgid "Shop / select an item"
 msgstr "Tienda / elige un objeto"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:96
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:97
 msgid "Short bow"
 msgstr "Arco corto"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:96
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:97
 msgid "Short sword"
 msgstr "Espada corta"
 
@@ -1851,7 +1851,7 @@ msgstr "Soldado"
 msgid "Sorcerer"
 msgstr "Hechicero"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1302
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1315
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Source: Cure Wounds and Cleric spellcasting, Wisdom score {score}. Healing: 2d8 + Wisdom modifier ({modifier})."
 msgstr "Origen: Curar heridas y magia de clérigo, Sabiduría {score}. Curación: 2d8 + modificador de Sabiduría ({modifier})."
@@ -1864,7 +1864,7 @@ msgstr "Fuente: Enano / Resistencia enana. Resistencia al daño de veneno (mitad
 msgid "Source: Dwarf / Dwarven Toughness. +1 maximum HP at level 1."
 msgstr "Origen: Enano / Dureza enana. +1 a los PG máximos en el nivel 1."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1301
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1314
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Source: Fire Bolt and Wizard spellcasting, Intelligence score {score}. Attack: Intelligence modifier +2 level-one proficiency = {attack}. Magic Missile has no ability modifier to damage."
 msgstr "Origen: Descarga de fuego y magia de mago, Inteligencia {score}. Ataque: modificador de Inteligencia +2 por competencia de nivel 1 = {attack}. Proyectil mágico no añade modificadores de característica al daño."
@@ -1873,12 +1873,12 @@ msgstr "Origen: Descarga de fuego y magia de mago, Inteligencia {score}. Ataque:
 msgid "Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default)."
 msgstr "Origen: Goliat / Velocidad. Velocidad de 35 pies (5 pies más de lo normal)."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1290
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1292
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Source: equipped Chain mail. AC becomes 16; speed -10 feet below Strength 13 (current Strength {score})."
 msgstr "Origen: cota de malla equipada. CA 16; velocidad -10 pies con Fuerza inferior a 13 (Fuerza actual: {score})."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1289
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1291
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Source: equipped Leather armor and Dexterity score {score}. AC becomes 11 + Dexterity modifier ({modifier})."
 msgstr "Origen: armadura de cuero equipada y Destreza {score}. La CA pasa a 11 + modificador de Destreza ({modifier})."
@@ -1891,11 +1891,21 @@ msgstr "Origen: escudo equipado: +0 a la CA (sin entrenamiento)."
 msgid "Source: equipped Shield: +2 AC."
 msgstr "Origen: escudo equipado: +2 a la CA."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1291
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1293
 msgid "Source: equipped Wand. Held focus; melee uses unarmed strike."
 msgstr "Fuente: varita equipada. Foco sostenido; en cuerpo a cuerpo se usa un ataque sin armas."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1292
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1305
+#. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
+msgid "Source: equipped {item} (Heavy). Requires {ability} 13; current score {score}. Attacks with this weapon have Disadvantage."
+msgstr "Fuente: {item} equipado (Pesada). Requiere {ability} 13; puntuación actual: {score}. Los ataques con esta arma tienen desventaja."
+
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1306
+#. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
+msgid "Source: equipped {item} (Heavy). Requires {ability} 13; current score {score}. Requirement met."
+msgstr "Fuente: {item} equipado (Pesada). Requiere {ability} 13; puntuación actual: {score}. Requisito cumplido."
+
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1294
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Source: equipped {item} and {class} weapon proficiency. Weapon attack uses {ability} modifier {proficiency}; damage adds that ability modifier."
 msgstr "Fuente: {item} equipado y competencia con armas de {class}. El ataque con arma usa el modificador de {ability} {proficiency}; el daño suma ese modificador de característica."
@@ -1915,7 +1925,7 @@ msgstr "Origen: dado de golpe de {class} y Constitución {score}. PG iniciales: 
 msgid "Source: {class} class, level 1. Saving-throw training adds +2 proficiency to {first} and {second}."
 msgstr "Origen: clase {class}, nivel 1. La competencia en salvaciones añade +2 a {first} y {second}."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:415
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:416
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Spell slots: {count}"
 msgstr "Espacios de conjuro: {count}"
@@ -2046,7 +2056,7 @@ msgstr "Encuentro de entrenamiento: un perfil marcial de prueba y un bandido del
 msgid "Turn →"
 msgstr "Girar →"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:85
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:86
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Two hands — {dice}"
 msgstr "Dos manos — {dice}"
@@ -2063,19 +2073,19 @@ msgstr "No se pudieron cargar las reglas"
 msgid "Unarmed"
 msgstr "Sin armas"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1037
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1039
 msgid "Unavailable: concentration is not implemented."
 msgstr "No disponible: la concentración no está implementada."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1031
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1033
 msgid "Unavailable: grappling is not implemented."
 msgstr "No disponible: los agarres no están implementados."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1032
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1034
 msgid "Unavailable: its complete spell-selection feature is not implemented."
 msgstr "No disponible: la selección completa de conjuros no está implementada."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1042
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1044
 msgid "Unavailable: spell reactions are not implemented."
 msgstr "No disponible: las reacciones con conjuros no están implementadas."
 
@@ -2159,7 +2169,7 @@ msgstr "Arma"
 msgid "Weapon >"
 msgstr "Arma >"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1268
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:1270
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "Weapon grip: {hands} hands; melee damage 1d{sides} + ability modifier."
 msgstr "Agarre del arma: {hands} manos; daño cuerpo a cuerpo 1d{sides} + modificador de característica."
@@ -2289,12 +2299,12 @@ msgstr "{ability} +{bonus}"
 msgid "{ability} {minimum}"
 msgstr "{ability} {minimum}"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:538
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:540
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses."
 msgstr "{actor} -> {target}: d20 {roll} + {bonus} contra CA {ac}{disadvantage}: falla."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:548
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:550
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage}{savage} {hit} for {damage} damage."
 msgstr "{actor} -> {target}: d20 {roll} + {bonus} contra CA {ac}{disadvantage}{savage}: {hit}, {damage} de daño."
@@ -2373,72 +2383,72 @@ msgstr "{name} / Salvaciones"
 msgid "{name} / {class} / {gold} gp"
 msgstr "{name} / {class} / {gold} po"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:596
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:598
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} Constitution save: d20 {roll} + {bonus} vs DC {dc} ({result})."
 msgstr "Salvación de Constitución de {name}: d20 {roll} + {bonus} contra CD {dc} ({result})."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:705
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:707
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} casts Magic Missile for {damage} force damage."
 msgstr "{name} lanza Proyectil mágico e inflige {damage} de daño de fuerza."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:697
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:699
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} dashes."
 msgstr "{name} corre."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:566
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:568
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} death save: {roll}"
 msgstr "Salvación contra muerte de {name}: {roll}"
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:699
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:701
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} disengages."
 msgstr "{name} se destraba."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:698
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:700
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} dodges."
 msgstr "{name} esquiva."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:510 src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:511 src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} falls unconscious."
 msgstr "{name} pierde el conocimiento."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:713
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:715
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} is Blinded."
 msgstr "{name} queda cegado."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:510 src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:511 src/OpenGoldBox/godot/locale/dynamic_sources.json:1
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} is defeated."
 msgstr "{name} cae derrotado."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:617
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:619
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} recovers 1 HP naturally."
 msgstr "{name} recupera 1 PG de forma natural."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:613
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:615
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} recovers from a blindness effect."
 msgstr "{name} se recupera de un efecto de ceguera."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:519
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:520
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} recovers {hp} HP."
 msgstr "{name} recupera {hp} PG."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:679
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:681
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name} uses Adrenaline Rush."
 msgstr "{name} usa Subidón de adrenalina."
 
-#: src/OpenGold.Rules.Srd5/src/srd5.cpp:497
+#: src/OpenGold.Rules.Srd5/src/srd5.cpp:498
 #. Preserve {named} placeholders and any [BBCode] tags; values may be reordered.
 msgid "{name}: {type} damage {before} -> {after}."
 msgstr "{name}: daño de tipo {type}: {before} -> {after}."

@@ -177,3 +177,23 @@ continuation without changing RNG, time, pool, existing resources or Dwarf
 grants. Orc use capacity is new and starts full; the campaign independently
 checks the exact resulting SRD7 state. Do not regenerate these files with the
 current writer.
+
+## Heavy weapon requirements (0.6.15 writer)
+
+`campaign-v10-heavy.ogs`, `combat-v12-heavy.save` and
+`combat-v12-heavy-continued.save` were generated with frozen source and static
+libraries from commit **42a7f6c**, module **0.6.15**, before #55 changes. The
+generator checked that version. Do not regenerate these with the current writer.
+
+The campaign contains a Dwarf Fighter (Strength 12, Dexterity 15, Greatsword)
+and an Orc Wizard (Strength 15, Dexterity 12, Longbow), both authored through
+normal character rules with selected languages. Second Wind, Magic Missile and
+Adrenaline Rush have spent resources; the Orc retained 7 Temporary HP from
+`spell:fixture` through Keep current. Existing PC9 species grants must survive
+migration. Asset identity is `heavy-fixture`.
+
+The combat uses seed 1 and pauses an enemy's movement out of the Dwarf's reach.
+The continued file records Decline. Migration changes only module identity and
+must reproduce that exact continuation. Choosing Opportunity Attack instead
+now correctly selects 11 over 16 with Disadvantage; the old writer omitted that
+penalty. New save/restore continuation must agree on the corrected outcome.

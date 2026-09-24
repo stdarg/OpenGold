@@ -14,6 +14,9 @@ struct Weapon {
     bool light{};
     int versatile_sides{};
     DamageType type{DamageType::bludgeoning};
+    bool heavy{};
+    bool heavy_disadvantage(const std::array<int,6>& scores) const
+    {return heavy&&scores[ranged?1:0]<13;} // SRD 5.2.1 p.89: weapon category determines the ability.
 };
 inline constexpr std::array weapons{
     Weapon{.key="club",.dice=1,.sides=4,.light=true},
@@ -29,17 +32,17 @@ inline constexpr std::array weapons{
     Weapon{.key="shortbow",.dice=1,.sides=6,.hands=2,.ranged=true,.range=80,.long_range=320,.type=DamageType::piercing},
     Weapon{"sling",1,4,1,false,false,true,30,120},
     Weapon{.key="battleaxe",.dice=1,.sides=8,.martial=true,.versatile_sides=10,.type=DamageType::slashing}, Weapon{"flail",1,8,1,true},
-    Weapon{.key="glaive",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::slashing},
-    Weapon{.key="greatsword",.dice=2,.sides=6,.hands=2,.martial=true,.type=DamageType::slashing},
-    Weapon{.key="halberd",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::slashing},
+    Weapon{.key="glaive",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::slashing,.heavy=true},
+    Weapon{.key="greatsword",.dice=2,.sides=6,.hands=2,.martial=true,.type=DamageType::slashing,.heavy=true},
+    Weapon{.key="halberd",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::slashing,.heavy=true},
     Weapon{.key="longsword",.dice=1,.sides=8,.martial=true,.versatile_sides=10,.type=DamageType::slashing}, Weapon{.key="morningstar",.dice=1,.sides=8,.martial=true,.type=DamageType::piercing},
-    Weapon{.key="pike",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::piercing},
+    Weapon{.key="pike",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::piercing,.heavy=true},
     Weapon{.key="scimitar",.dice=1,.sides=6,.martial=true,.finesse=true,.light=true,.type=DamageType::slashing},
     Weapon{.key="shortsword",.dice=1,.sides=6,.martial=true,.finesse=true,.light=true,.type=DamageType::piercing},
     Weapon{.key="trident",.dice=1,.sides=8,.martial=true,.range=20,.long_range=60,.versatile_sides=10,.type=DamageType::piercing},
     Weapon{.key="warhammer",.dice=1,.sides=8,.martial=true,.versatile_sides=10},
     Weapon{.key="war_pick",.dice=1,.sides=8,.martial=true,.versatile_sides=10,.type=DamageType::piercing},
-    Weapon{.key="longbow",.dice=1,.sides=8,.hands=2,.martial=true,.ranged=true,.range=150,.long_range=600,.type=DamageType::piercing},
+    Weapon{.key="longbow",.dice=1,.sides=8,.hands=2,.martial=true,.ranged=true,.range=150,.long_range=600,.type=DamageType::piercing,.heavy=true},
     // A plain wand is a held focus, not a free spell or invented damage profile.
     Weapon{"wand",0,0}
 };

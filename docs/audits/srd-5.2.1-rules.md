@@ -478,9 +478,10 @@ and shield are implemented; Medium armor remains unavailable despite several
 classes' training. Starting class/background packages and spellbooks are not
 awarded. A held plain wand does not establish component/focus enforcement.
 
-Weapon properties are incomplete. There is no Heavy flag or its Strength/
-Dexterity minimum: a Dexterity-based Fighter with Strength below 13 can attack
-with a Greatsword without the required Heavy disadvantage. Ammunition is not
+Weapon properties remain incomplete. [EQ03 / #55](../HEAVY-WEAPONS.md) now
+applies Heavy Disadvantage below Strength 13 (melee category) or Dexterity 13
+(ranged category) to all five existing Heavy weapons. Missing Heavy catalog
+entries remain #54. Ammunition is not
 spent/recovered, thrown weapons are not removed/retrieved, Light extra attacks
 and dual wielding are absent, and Versatile two-handed damage/mastery are absent.
 Forced two-hand policies for several Versatile weapons are separately listed
