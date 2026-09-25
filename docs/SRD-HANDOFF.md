@@ -112,7 +112,7 @@ and multiclassing. Do not treat this completed batch as the full goal.
   Action Surge/Dash continuation. Focused build/test passes; no gameplay change.
   Log `/tmp/mind-baseline-tests.log`. No live processes remain.
 - Next: after Q38/Q39 approval implement the two issues' player flow, with grants,
-  pending decisions and old/new continuations. Full goal remains ACTIVE. No
+  pending decisions and old/new continuations. Current goal status is above. No
   issue closure is claimed for preparation; no repeated-blocker streak yet.
 
 Use [workflow](SRD-WORKFLOW.md) and [model routing](SRD-MODEL-ROUTING.md): classify,
