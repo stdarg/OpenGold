@@ -54,6 +54,12 @@
 - Start with `docs/SRD-HANDOFF.md`, then follow `docs/SRD-WORKFLOW.md`.
   Use `docs/SRD-REPO-MAP.md` for targeted navigation and
   `docs/SRD-DECISIONS.md` for approvals; do not reload the whole history.
+- Follow `docs/SRD-MODEL-ROUTING.md` before each implementation batch and any
+  authorized delegation. Record and visibly announce model/effort and reason;
+  distinguish the requested model from the actual configured model. Re-read
+  the recorded assignment after context resets. Escalate after two unsuccessful
+  fixes of the same failure, or immediately for decisions beyond the assigned
+  tier. Model routing does not authorize delegation, new tasks or scope changes.
 - Keep one delivery batch active, with fixed acceptance criteria and one
   implementation owner per requirement. Batch related issues/source routes;
   preserve their full acceptance. Use the existing backlog grouping in

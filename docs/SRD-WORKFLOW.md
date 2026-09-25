@@ -64,6 +64,9 @@ an execution record, not a requirement to re-approve already authorized work.
 - **Player outcome / issues:** bounded behavior and existing issue IDs.
 - **Acceptance / exclusions:** fixed requirements; explicit deferred boundaries.
 - **Reuse:** existing rules mechanism, components and approval IDs.
+- **Model routing:** requested and actual model/effort, reason, execution mechanism,
+  escalation conditions and failed-attempt count. Apply
+  [the routing policy](SRD-MODEL-ROUTING.md) and announce the selection before work.
 - **Verification:** focused checks and one appropriate final regression pass.
 - **Timing:** observed start, checkpoint (60 minutes; maximum 90), phase times.
 - **Delivery:** completed player requirements / planned requirements; commits,
@@ -166,6 +169,12 @@ See [testing](TESTING.md) for new-machine setup, sanitizers and fuzzing; use tho
 when warranted by the change, not as a repeated gate for documentation or UI text.
 
 ## Reasoning and fresh tasks
+
+The [model routing policy](SRD-MODEL-ROUTING.md) governs assignment: Luna/low
+for bounded repetition, Sol/medium for normal batches, Astra/high for complex
+rules, migrations, architecture and escalations. Record actual execution settings;
+repository prose cannot switch a running model. This policy takes precedence over
+using the project default below as the intended effort for every task.
 
 `.codex/config.toml` selects `low` for routine project work without changing the
 model or global preferences. Use `high` for rule interactions, state machines,

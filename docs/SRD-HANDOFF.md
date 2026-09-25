@@ -12,6 +12,13 @@ Status: **paused**. This workflow-only update does not authorize further SRD wor
 Architecture follow-up is complete (`9526981`, documentation correction `25e9f4c`).
 No implementation batch is active and no checkpoint is running.
 
+Model routing is now a durable rule: read [the policy](SRD-MODEL-ROUTING.md)
+before the next batch, record requested/actual model and effort, and announce the
+selection. Luna/low handles repetition; Sol/medium handles normal implementation;
+Astra/high handles complex work/escalation. Preserve assignment and failed attempts
+across context resets. No model switch, task creation or delegation has occurred
+as part of adopting this policy; the goal remains paused.
+
 After explicit resumption, read AGENTS.md, this handoff and the relevant decision
 register entries. Fill the [compact batch card](SRD-WORKFLOW.md#scope-gate-and-compact-batch-card)
 using the existing backlog grouping. Freeze the outcome and exclusions; reuse

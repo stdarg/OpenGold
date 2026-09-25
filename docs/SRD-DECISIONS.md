@@ -17,6 +17,15 @@ player outcomes and elapsed time at a 60-minute checkpoint (90-minute maximum).
 See [workflow](SRD-WORKFLOW.md) for the batch card and enforcement steps.
 Questions remain numbered, visible in conversation and preceded by sound.
 
+## Model routing adoption
+
+The user explicitly requested a durable model routing policy for this goal.
+[SRD-MODEL-ROUTING.md](SRD-MODEL-ROUTING.md) defines assignments, mandatory visible
+selection, compact work packets, escalation after two unsuccessful fixes and
+measurement of actual delivery cost. Creating the policy does not resume the goal
+or authorize spawning agents/new tasks. Preserve the existing scope and approval
+rules; do not silently change model settings.
+
 ## Rest workflow approval
 
 Q29–31 are approved by the user's “Yes to all. Get to work.” This authorizes the
