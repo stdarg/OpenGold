@@ -31,8 +31,9 @@ remain readable in runtime `79558fd` (0.6.48); all 50 native/tool tests pass and
 three focused checks were rerun successfully after the decision. No UI changes.
 The 17:58:09 batch began before the decision; the 18:58:09 checkpoint was not reset.
 
-#57 is to be resolved as not planned, not as implemented tracking. After its
-verified closure, continue the standing SRD goal with the next frozen batch.
+#57 is verified CLOSED / NOT_PLANNED. Policy commit `085e9da` and runtime
+`79558fd` are pushed to the current branch and main. This is a scope decision,
+not implemented tracking. Continue the standing SRD goal with the next frozen batch.
 No live build or input blocker remains from ammunition. The goal tool's last
 BLOCKED result concerned AMMO-1/AMMO-2, which this answer now resolves; do not
 interpret it as a user pause or require another resume instruction. No tool
