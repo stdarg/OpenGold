@@ -185,3 +185,11 @@ approval wait and builds, before the unchanged 21:33:54 checkpoint. One of one
 frozen original control-workflow requirements delivered; #97's excluded book
 lifecycle work is not claimed complete. Coverage is recorded once in
 [the ledger](SRD-COVERAGE.md#wizard-spell-learning-and-preparation-controls).
+
+
+#37 is verified CLOSED at 21:26:31 UTC: 52m37s from the original start.
+Runtime and evidence are pushed to the feature branch and main. The
+[closure record](https://github.com/stdarg/OpenGold/issues/37#issuecomment-5839861276)
+links this evidence. #97 remains verified OPEN with its
+[remaining scope recorded](https://github.com/stdarg/OpenGold/issues/97#issuecomment-5839864140).
+The overall SRD goal remains active and incomplete.

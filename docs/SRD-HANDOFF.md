@@ -22,8 +22,10 @@ Do not pause or request another resume at this batch boundary.
   One original requirement delivered; no new issues, added spells or scope.
 - Requested Astra/high retained for rules/persistence complexity. Actual
   configuration unverified; no model switch, agents or new tasks.
-- No live build/test remains. Runtime is committed; evidence publication and
-  #37 administrative closure are the remaining delivery steps.
+- Runtime and evidence are pushed to the feature branch and main. #37 is
+  verified CLOSED at 21:26:31 UTC (52m37s from original start); #97 is verified
+  OPEN with its preserved copying/book-lifecycle acceptance. No delivery step
+  or live build/test remains. The full standing goal is still active.
 
 ## Next work / preserved exclusions
 
