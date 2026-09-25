@@ -207,6 +207,10 @@ PartyMember CampaignParty::preview_advancement(MemberId id,const rules::Advancem
 {
     if(!can_advance(id))throw std::runtime_error("This character is not ready to level up");
     auto next=member(id);const auto level=next.character.sheet().level;
+    for(const auto& group:rules_->advancement_options(next.character.sheet()).training){
+        const auto found=choice.training.find(group.id);
+        if(found==choice.training.end()||found->second.size()!=group.count)throw std::runtime_error("Complete required advancement training");
+    }
     if(!next.character.advance(*rules_,next.vitals,choice)||next.character.sheet().level!=level+1)throw std::runtime_error("Unsupported advancement");
     return next;
 }

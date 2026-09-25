@@ -159,6 +159,13 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
 }
 bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
 std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
+TrainingChoiceGroup scholar_options(std::span<const FeatureGrant> grants){
+    TrainingChoiceGroup group{"class:wizard:scholar","Scholar Expertise",1,{}};
+    group.acquired_level=2;
+    for(const auto& skill:skills)if((skill.id=="arcana"||skill.id=="history"||skill.id=="investigation"||skill.id=="medicine"||skill.id=="nature"||skill.id=="religion")&&source(grants,"skill:"+std::string(skill.id)))
+        group.options.push_back({std::string(skill.id),std::string(skill.label),{}});
+    return group;
+}
 std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::soldier_gaming);}
 std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
@@ -170,19 +177,27 @@ TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::strin
     auto required=fixed(klass,background,policy);TrainingChoices choices;std::vector<FeatureGrant> actual;
     // Style selections emit feats; keep them in feature validation as well.
     for(const auto& grant:grants)if(is_training_grant(grant)||grant.source_id=="class:fighter:fighting_style"){
+        if(grant.source_id=="class:wizard:scholar"){
+            require(policy>=TrainingPolicy::scholar&&klass=="wizard"&&grant.level==2&&grant.choices.empty());
+            const auto group=scholar_options(grants);
+            require(std::any_of(group.options.begin(),group.options.end(),[&](const auto& option){return grant.id=="expertise:"+option.id;}));
+            auto& selected=choices[grant.source_id];require(selected.empty());selected.push_back(grant.id.substr(10));continue;
+        }
         require(grant.level==1&&grant.choices.empty());actual.push_back(grant);
         const auto found=std::find(required.begin(),required.end(),grant);
         if(found!=required.end()){required.erase(found);continue;}
         const auto prefix=(grant.source_id==bard_instruments||grant.source_id==monk_tools||grant.source_id==soldier_gaming)?"tool:":grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id=="class:"+std::string(klass)?"skill:":grant.source_id==expertise?"expertise:":"language:";
         require(grant.id.starts_with(prefix));choices[grant.source_id].push_back(grant.id.substr(std::string_view(prefix).size()));
     }
-    require(required.empty());auto expected=training_grants(klass,background,choices,policy);
+    require(required.empty());auto starting=choices;starting.erase("class:wizard:scholar");auto expected=training_grants(klass,background,starting,policy);
     const auto order=[](const FeatureGrant& a,const FeatureGrant& b){return std::tie(a.id,a.source_id,a.level)<std::tie(b.id,b.source_id,b.level);};
     std::sort(actual.begin(),actual.end(),order);std::sort(expected.begin(),expected.end(),order);require(actual==expected);return choices;
 }
 TrainingProfile training_profile(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,const std::array<int,6>& scores,TrainingPolicy policy){
     const auto choices=training_choices(grants,klass,background,policy);const auto groups=options(klass,background,choices,policy);TrainingProfile result;result.complete=true;
     for(const auto& group:groups)result.complete&=selected(choices,group.id).size()==group.count;
+    const auto& scholar=selected(choices,"class:wizard:scholar");require(scholar.empty()||level>=2);
+    if(policy>=TrainingPolicy::scholar&&klass=="wizard"&&level>=2)result.complete&=scholar.size()==1;
     for(const auto& s:skills){const auto bonus=check_modifier(grants,scores,level,s.ability,s.id,{});
         result.skills.push_back({std::string(s.id),std::string(s.label),s.ability,bonus.total,source(grants,"skill:"+std::string(s.id)),bonus.expertise,bonus.sources});}
     for(const auto& [id,label,kind]:tools)
@@ -192,6 +207,6 @@ TrainingProfile training_profile(std::span<const FeatureGrant> grants,std::strin
 }
 AbilityCheckModifier ability_check(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,
     const std::array<int,6>& scores,unsigned ability,std::string_view skill,std::string_view tool){
-    (void)training_choices(grants,klass,background);return check_modifier(grants,scores,level,ability,skill,tool);
+    (void)training_profile(grants,klass,background,level,scores);return check_modifier(grants,scores,level,ability,skill,tool);
 }
 }

@@ -102,7 +102,7 @@ void campaign(){auto rules=module();auto creation=srd5::character_rules();for(bo
     auto actors=p.participants();actors[0].cell={1,1};actors.push_back({99,"vanguard","Enemy",1,{5,1}});auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},13);
     const auto old=unit(*c,id).persistent;check(c->submit(command(*c,"poison_spray",99)),"Ordinary party grants produce actual casting commands");p.begin_combat();p.apply_combat(c->snapshot());p.end_combat();
     check(p.member(id).vitals==old&&p.member(id).equipment.weapon_hands==2,"Cantrip handoff retains wounds, pools and chosen attack grip");
-    const auto saved=encode_campaign(p,nullptr,"poison");check(saved.starts_with("OPENGOLD-CAMPAIGN 11\n"),"Explicit choice has versioned campaign field");CampaignParty restored(module());restored.restore(decode_campaign(saved,*creation,*rules,"poison",nullptr).party);
+    const auto saved=encode_campaign(p,nullptr,"poison");check(saved.starts_with(level==1?"OPENGOLD-CAMPAIGN 11\n":"OPENGOLD-CAMPAIGN 15\n"),"Cantrips retain their field; advancement training uses format 15");CampaignParty restored(module());restored.restore(decode_campaign(saved,*creation,*rules,"poison",nullptr).party);
     check(encode_campaign(restored,nullptr,"poison")==saved&&restored.member(id).character.creation_data().cantrips==p.member(id).character.creation_data().cantrips,"Replay preserves chosen cantrips, history and resources exactly");
     check(restored.member(id).wealth[3]==37&&restored.profile(id).data==p.profile(id).data,"Inventory, wealth, equipment and cast access retained");
 }}

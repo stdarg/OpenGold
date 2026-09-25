@@ -1,6 +1,7 @@
 #ifndef OPENGOLD_CHARACTER_CREATOR_H
 #define OPENGOLD_CHARACTER_CREATOR_H
 #include "opengold/character.h"
+#include <functional>
 namespace opengold {
 enum class CreationStep { race, alignment, attributes, character_class, training, spell_choices, name, combat_icon, sheet };
 class CharacterCreator {
@@ -8,6 +9,8 @@ public:
     CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,std::uint64_t seed);
     // Isolated training editor: existing choices are locked; live characters are unchanged.
     CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,rules::CharacterDraft draft);
+    CharacterCreator(std::unique_ptr<rules::CharacterRules> rules,Character character,const rules::RulesModule& module);
+    [[nodiscard]] std::vector<rules::TrainingChoiceGroup> training_options() const;
     [[nodiscard]] const rules::CharacterRules& rules() const {return *rules_;}
     [[nodiscard]] const rules::CharacterDraft& draft() const {return draft_;}
     [[nodiscard]] const por::CharacterAppearance& appearance() const {return appearance_;}
@@ -34,6 +37,8 @@ private:
     std::uint64_t random_;
     rules::CharacterDraft draft_;
     rules::TrainingChoices locked_training_;
+    std::optional<Character> training_character_;
+    std::optional<std::reference_wrapper<const rules::RulesModule>> training_module_;
     por::CharacterAppearance appearance_;
     CreationStep step_{CreationStep::race};
     void require_editable() const;

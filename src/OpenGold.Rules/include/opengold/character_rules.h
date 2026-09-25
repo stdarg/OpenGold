@@ -7,7 +7,6 @@
 
 namespace opengold::rules {
 enum class CreationField { race, gender, character_class, alignment, background };
-struct CreationChoice { std::string id, label, description; };
 struct AbilityRoll {
     std::array<int,4> dice{};
     unsigned discarded{};
@@ -33,15 +32,6 @@ struct FeatureGrant {
     unsigned level{};
     std::map<std::string,std::string> choices;
     bool operator==(const FeatureGrant&) const = default;
-};
-using TrainingChoices = std::map<std::string,std::vector<std::string>>;
-enum class TrainingChoiceControl { checkboxes, single_selection };
-struct TrainingChoiceGroup {
-    std::string id, label;
-    unsigned count{};
-    std::vector<CreationChoice> options;
-    TrainingChoiceControl control{TrainingChoiceControl::checkboxes};
-    std::string continuity_id; // Same choice purpose across changing source entitlements.
 };
 struct SkillTraining {
     std::string id, label;

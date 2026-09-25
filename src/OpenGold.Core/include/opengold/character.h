@@ -23,7 +23,8 @@ public:
     // Reconstructs a candidate with missing training filled and the same history.
     // Existing selections cannot be replaced; this does not mutate live vitals.
     [[nodiscard]] Character preview_training(const rules::CharacterRules& creation_rules,
-        const rules::RulesModule& rules,const rules::TrainingChoices& choices) const;
+        const rules::RulesModule& rules,const rules::TrainingChoices& choices,bool require_complete=true) const;
+    [[nodiscard]] rules::TrainingChoices training_choices() const;
 private:
     rules::CharacterDraft creation_;
     rules::CharacterSheet sheet_;

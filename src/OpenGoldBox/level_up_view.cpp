@@ -41,6 +41,9 @@ void CharacterCreationView::setup_advancement(){
     presentation::add_control<Label>(*window,"FeatLabel",Rect2(24,122,652,28))->set_text(i18n::text(N_("Feat or ability points")));
     auto* feat=presentation::add_control<OptionButton>(*window,"Feat",Rect2(24,155,652,38));
     feat->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
+    auto* training_label=presentation::add_control<Label>(*window,"AdvancementTrainingLabel",Rect2(24,205,652,25));training_label->hide();
+    auto* training=presentation::add_control<OptionButton>(*window,"AdvancementTraining",Rect2(24,236,652,36));training->hide();
+    training->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     const std::array<const char*,6> abilities{"STR","DEX","CON","INT","WIS","CHA"};
     for(unsigned i=0;i<6;++i){
         presentation::add_control<Label>(*window,String("AbilityLabel")+String::num_uint64(i),Rect2(24+i*110,205,100,25))->set_text(i18n::text(abilities[i]));
@@ -86,6 +89,17 @@ void CharacterCreationView::open_advancement(std::int64_t id){
     if(advancement_options_.feats.empty())feat->add_item(i18n::text(N_("No feat or ability increase at this level")));
     for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feat->add_item(i18n::text(option.label)+(option.available?String():i18n::text(" (Unavailable)")));feat->set_item_disabled(i,!option.available);feat->set_item_tooltip(i,i18n::text(option.description));if(option.id==advancement_choice_.feat)feat->select(i);}
     feat->set_disabled(advancement_options_.feats.empty());
+    const bool has_training=!advancement_options_.training.empty();
+    auto* training=window->get_node<OptionButton>("AdvancementTraining");training->clear();training->set_visible(has_training);
+    window->get_node<Label>("AdvancementTrainingLabel")->set_visible(has_training);
+    for(unsigned i=0;i<6;++i){window->get_node<Control>(String("Ability")+String::num_uint64(i))->set_visible(!has_training);window->get_node<Control>(String("AbilityLabel")+String::num_uint64(i))->set_visible(!has_training);}
+    if(has_training){
+        const auto& group=advancement_options_.training.front();
+        window->get_node<Label>("AdvancementTrainingLabel")->set_text(i18n::text(group.label));
+        training->add_item(i18n::text("Choose a proficient skill"));
+        for(const auto& option:group.options)training->add_item(i18n::text(option.label));
+        training->select(0);advancement_choice_.training.clear();
+    }
     for(unsigned i=0;i<6;++i)window->get_node<OptionButton>(String("Ability")+String::num_uint64(i))->select(advancement_choice_.abilities[i]);
     window->get_node<Label>("SpellLabel")->set_text(i18n::text(advancement_options_.spells.empty()?N_("No spell choices for this class"):N_("Prepared spells: select at least one")));
     for(unsigned i=0;i<4;++i){auto* spell=window->get_node<CheckBox>(String("Spell")+String::num_uint64(i));spell->set_visible(i<advancement_options_.spells.size());if(i>=advancement_options_.spells.size())continue;
@@ -96,6 +110,11 @@ void CharacterCreationView::advancement_spell_changed(bool,int){advancement_chan
 void CharacterCreationView::advancement_changed(std::int64_t){
     if(advancement_refreshing_||!advancing_)return;auto* window=get_node<Window>("LevelUp");
     if(!advancement_options_.feats.empty())advancement_choice_.feat=advancement_options_.feats.at(window->get_node<OptionButton>("Feat")->get_selected()).id;
+    advancement_choice_.training.clear();
+    if(!advancement_options_.training.empty()){
+        const auto& group=advancement_options_.training.front();const auto index=window->get_node<OptionButton>("AdvancementTraining")->get_selected();
+        if(index>0&&static_cast<std::size_t>(index)<=group.options.size())advancement_choice_.training[group.id]={group.options[index-1].id};
+    }
     const bool ability=advancement_choice_.feat=="ability_score_improvement";
     for(unsigned i=0;i<6;++i){auto* points=window->get_node<OptionButton>(String("Ability")+String::num_uint64(i));points->set_disabled(!ability);if(!ability)points->select(0);advancement_choice_.abilities[i]=ability?points->get_selected():0;
         const auto value=campaign_->member(advancing_).character.sheet().scores[i];const std::array<const char*,6> labels{"STR","DEX","CON","INT","WIS","CHA"};

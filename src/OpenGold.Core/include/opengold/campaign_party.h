@@ -152,6 +152,7 @@ public:
     void apply_combat(const rules::Snapshot& snapshot, const rules::SafeRecovery& recovery={});
     void end_combat() noexcept {combat_=false;}
     [[nodiscard]] bool in_combat() const {return combat_;}
+    [[nodiscard]] const rules::RulesModule& rule_module() const {return *rules_;}
     [[nodiscard]] const rules::Identity identity() const {return rules_->identity();}
 private:
     std::unique_ptr<rules::RulesModule> rules_;

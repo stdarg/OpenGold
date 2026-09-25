@@ -86,15 +86,15 @@ once-per-Long-Rest use; Finish/Escape without use preserves it. Keyboard support
 existing camp/inn saves preserve committed state. Applies to shared main/demo
 rest dialog. User approved visible question 1 and instructed continuation on 2026-09-25 at 19:42 UTC. [Frozen packet](ARCANE-RECOVERY.md).
 
-## Pending — do not implement dependent choices
-
-**SCHOLAR-1 — PENDING, #100, 2026-09-25, visible question 1:** reuse the disabled
+**SCHOLAR-1 — APPROVED, #100, 2026-09-25, visible question 1:** reuse the disabled
 ability-points area at Wizard level-two advancement for a labeled Scholar
 Expertise dropdown; require one eligible proficient skill before Confirm.
 Existing level-two through level-four Wizards retain missing choices pending
 in Review Training's existing checkbox groups. Earlier selections remain locked;
 Cancel discards edits; keyboard access, wounds/resources and window dimensions
-remain. [Frozen scope](SCHOLAR.md).
+remain. User replied “1. Approved.” [Frozen scope](SCHOLAR.md).
+
+## Pending — do not implement dependent choices
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |

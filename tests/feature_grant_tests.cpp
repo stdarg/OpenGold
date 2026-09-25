@@ -13,6 +13,7 @@ template<class F>void rejects(F f){bool caught=false;try{f();}catch(const std::e
 auto module(){return srd5::load(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/rules/srd-5.2.1/combat.rules");}
 Character hero(std::string klass="fighter",std::string background="soldier",std::string race="human"){
     CharacterDraft draft;draft.race=race;draft.gender="female";draft.character_class=klass;draft.background=background;
+    if(klass=="wizard")draft.training["class:wizard"]={"medicine","nature"};
     draft.alignment="neutral_good";draft.name="Grant tester";draft.rolled=true;
     for(auto& roll:draft.rolls)roll={{6,5,4,1},3};return Character(*srd5::character_rules(),draft,{});
 }

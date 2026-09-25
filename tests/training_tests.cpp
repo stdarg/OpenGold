@@ -35,6 +35,24 @@ std::string corrupt(std::string bytes,std::string_view from,std::string_view to)
     std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
     return bytes.substr(0,bytes.find('\n')+1)+std::to_string(hash)+'\n'+body;
 }
+// Complete newly owed advancement choices alongside the historical feature under test.
+TrainingChoices with_advancement_training(const Character& character,const CharacterRules& creation,const RulesModule& rules,TrainingChoices choices){
+    for(const auto& advancement:character.advancements())for(const auto& [id,values]:advancement.training)choices.emplace(id,values);
+    const auto candidate=character.preview_training(creation,rules,choices,false);
+    for(const auto& group:rules.training_options(candidate.sheet()))if(!choices.contains(group.id)){
+        check(group.options.size()>=group.count,"Historical training supplies eligible advancement choices");
+        for(unsigned i=0;i<group.count;++i)choices[group.id].push_back(group.options[i].id);
+    }
+    return choices;
+}
+bool preserved_advancement(const Character& after,const Character& before){
+    auto actual=after.advancements();const auto& expected=before.advancements();if(actual.size()!=expected.size())return false;
+    for(unsigned i=0;i<actual.size();++i){
+        for(const auto& [id,values]:expected[i].training)if(!actual[i].training.contains(id)||actual[i].training.at(id)!=values)return false;
+        actual[i].training=expected[i].training;
+    }
+    return actual==expected;
+}
 std::vector<std::string> expected_class_skills(std::string_view klass){
     const std::map<std::string_view,std::string_view> lists{
         {"barbarian","animal_handling athletics intimidation nature perception survival"},
@@ -108,8 +126,8 @@ void all_class_skills(){
         if(klass=="bard")selected["class:bard:instruments"]={"flute","lute","viol"};
         if(klass=="monk")selected["class:monk:tools"]={"flute"};
         if(member.character.creation_data().background=="soldier")selected["background:soldier:gaming_set"]={"dice"};
-        party.complete_training(member.id,*creation,selected);const auto& after=party.member(member.id);
-        check(after.character.sheet().training.complete&&after.vitals==member.vitals&&after.character.advancements()==member.character.advancements()&&after.character.sheet().hit_points==member.character.sheet().hit_points,"Completing class skills preserves exact vitals and advancement");
+        selected=with_advancement_training(member.character,*creation,*rules,std::move(selected));party.complete_training(member.id,*creation,selected);const auto& after=party.member(member.id);
+        check(after.character.sheet().training.complete&&after.vitals==member.vitals&&preserved_advancement(after.character,member.character)&&after.character.sheet().hit_points==member.character.sheet().hit_points,"Completing class skills preserves exact vitals and advancement");
     }
 }
 
@@ -282,8 +300,8 @@ void soldier_gaming(){
     const auto old=party.checkpoint();check(old.roster.size()==12,"Prior gaming fixture covers twelve classes");
     for(const auto& member:old.roster){
         check(!member.character.sheet().training.complete&&!member.character.creation_data().training.contains(group_id),"Old Soldier Gaming Set choices stay pending");
-        auto selected=member.character.creation_data().training;selected[group_id]={"three_dragon_ante"};party.complete_training(member.id,*creation,selected);
-        const auto& after=party.member(member.id);check(after.character.sheet().training.complete&&after.vitals==member.vitals&&after.character.advancements()==member.character.advancements(),"Completing Gaming Set keeps wounds, resources and advancement history");
+        auto selected=member.character.creation_data().training;selected[group_id]={"three_dragon_ante"};selected=with_advancement_training(member.character,*creation,*rules,std::move(selected));party.complete_training(member.id,*creation,selected);
+        const auto& after=party.member(member.id);check(after.character.sheet().training.complete&&after.vitals==member.vitals&&preserved_advancement(after.character,member.character),"Completing Gaming Set keeps wounds, resources and advancement history");
         for(const auto& grant:member.character.sheet().grants)check(std::find(after.character.sheet().grants.begin(),after.character.sheet().grants.end(),grant)!=after.character.sheet().grants.end(),"Completion retains existing feat and training grants");
     }
     const auto completed=encode_campaign(party,nullptr,"soldier-gaming");CampaignParty again(module());again.restore(decode_campaign(completed,*creation,*rules,"soldier-gaming",nullptr).party);
@@ -496,7 +514,7 @@ void verify_review_result(const char* path){
     auto saved=decode_campaign(read_campaign_file(path),*creation,*rules,assets,nullptr);
     for(const auto& member:saved.party.roster){
         check(member.character.sheet().training.complete,"UI completed all supported training");
-        original.complete_training(member.id,*creation,member.character.creation_data().training);
+        original.complete_training(member.id,*creation,member.character.training_choices());
     }
     // Roster selection is a UI action, independent from training application.
     auto expected=original.checkpoint();expected.selected=saved.party.selected;
@@ -532,13 +550,14 @@ void complete_saved_training(){
         if(previous.character.sheet().character_class=="Fighter")selected["class:fighter:fighting_style"]={"archery"};
         if(previous.character.creation_data().character_class!="rogue")selected["class:"+previous.character.creation_data().character_class]=chosen_class_skills(previous.character.creation_data().character_class);
         if(previous.character.creation_data().background=="soldier")selected["background:soldier:gaming_set"]={"dice"};
+        selected=with_advancement_training(previous.character,*creation,*rules,std::move(selected));
         const auto preview=party.preview_training(id,*creation,selected);
         check(encode_campaign(party,nullptr,"training-fixture")==before,"Opening, editing and discarding a preview has no campaign effects");
         const auto& character=preview.character;const auto& old=previous.character;
-        check(character.sheet().training.complete&&character.creation_data().training==selected,"Preview includes the requested complete training");
+        check(character.sheet().training.complete&&character.training_choices()==selected,"Preview includes the requested complete training");
         check(character.sheet().level==old.sheet().level&&character.sheet().scores==old.sheet().scores&&
             character.sheet().hit_point_modifiers==old.sheet().hit_point_modifiers&&character.sheet().hit_points==old.sheet().hit_points&&
-            character.sheet().prepared_spells==old.sheet().prepared_spells&&character.advancements()==old.advancements(),
+            character.sheet().prepared_spells==old.sheet().prepared_spells&&preserved_advancement(character,old),
             "Reconstruction preserves attained levels, ASI, Constitution history, feat and spell choices");
         check(character.appearance()==old.appearance()&&std::equal(character.inventory().items().begin(),character.inventory().items().end(),old.inventory().items().begin(),old.inventory().items().end()),
             "Preview preserves appearance and full item records");
@@ -819,7 +838,7 @@ void monk_tool_prior_writer(){
     const auto old=party.checkpoint();for(const auto& member:old.roster){
         auto selected=member.character.creation_data().training;selected["class:monk:tools"]={"smiths_tools"};
         if(member.character.creation_data().background=="soldier")selected["background:soldier:gaming_set"]={"dice"};
-        party.complete_training(member.id,*creation,selected);
+        selected=with_advancement_training(member.character,*creation,*rules,std::move(selected));party.complete_training(member.id,*creation,selected);
         check(party.member(member.id).character.sheet().training.complete&&party.member(member.id).vitals==member.vitals,"Completing historical Monk choices preserves wounds and resources");
     }
     auto frozen=fixture("combat-v14-monk-tools-before.save");auto migrated=frozen;
@@ -845,7 +864,7 @@ void bard_instrument_prior_writer(){
     const auto old=party.checkpoint();for(const auto& member:old.roster){
         auto selected=member.character.creation_data().training;selected["class:bard:instruments"]={"flute","lute","viol"};
         if(member.character.creation_data().background=="soldier")selected["background:soldier:gaming_set"]={"dice"};
-        party.complete_training(member.id,*creation,selected);
+        selected=with_advancement_training(member.character,*creation,*rules,std::move(selected));party.complete_training(member.id,*creation,selected);
         check(party.member(member.id).character.sheet().training.complete&&party.member(member.id).vitals==member.vitals,"Completing historical Bard choices preserves wounds and resources");
     }
     auto frozen=fixture("combat-v14-bard-instruments-before.save");auto migrated=frozen;
@@ -945,7 +964,8 @@ void freeze_sage(){
     out<<encode_campaign(party,nullptr,"sage-migration");check(bool(out),"Write actual prior-writer fixture");
 }
 
+#include "scholar_checks.h"
 #include "cunning_checks.h"
 #include "sneak_baseline.h"
 }
-int main(int argc,char** argv){try{if(argc==3&&std::string_view(argv[1])=="--verify-review"){verify_review_result(argv[2]);return 0;}if(argc==2){if(std::string_view(argv[1])=="--freeze-sneak")sneak_baseline::freeze();else if(std::string_view(argv[1])=="--freeze-cunning")freeze_cunning_action();else if(std::string_view(argv[1])=="--freeze-soldier-gaming")freeze_soldier_gaming();else if(std::string_view(argv[1])=="--freeze-druid-herbalism")freeze_druid_herbalism();else if(std::string_view(argv[1])=="--freeze-monk-tools")freeze_monk_tools();else if(std::string_view(argv[1])=="--freeze-bard-instruments")freeze_bard_instruments();else if(std::string_view(argv[1])=="--freeze-class-skills")freeze_class_skills();else if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}auto run=[](auto test,const char* name){try{test();}catch(...){std::cerr<<name<<": ";throw;}};run(sneak_baseline::verify,"Sneak baseline");run(cunning_checks::run,"Cunning Action");run(cunning_prior_writer,"Cunning prior writer");run(soldier_gaming,"Soldier gaming");run(druid_herbalism,"druid_herbalism");run(monk_tools,"monk_tools");run(monk_tool_prior_writer,"monk_tool_prior_writer");run(bard_instruments,"bard_instruments");run(bard_instrument_prior_writer,"bard_instrument_prior_writer");run(all_class_skills,"all_class_skills");run(sage_training,"sage_training");run(remaining_backgrounds,"remaining_backgrounds");run(starting_styles,"starting_styles");run(creation_controls,"creation_controls");run(preset_training,"preset_training");run(grants_and_checks,"grants_and_checks");run(invalid_choices,"invalid_choices");run(persistence,"persistence");run(complete_saved_training,"complete_saved_training");run(draft_review_editor,"draft_review_editor");write_review_fixture();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==3&&std::string_view(argv[1])=="--verify-scholar"){scholar_checks::verify_ui(argv[2]);return 0;}if(argc==3&&std::string_view(argv[1])=="--verify-review"){verify_review_result(argv[2]);return 0;}if(argc==2){if(std::string_view(argv[1])=="--freeze-sneak")sneak_baseline::freeze();else if(std::string_view(argv[1])=="--freeze-cunning")freeze_cunning_action();else if(std::string_view(argv[1])=="--freeze-soldier-gaming")freeze_soldier_gaming();else if(std::string_view(argv[1])=="--freeze-druid-herbalism")freeze_druid_herbalism();else if(std::string_view(argv[1])=="--freeze-monk-tools")freeze_monk_tools();else if(std::string_view(argv[1])=="--freeze-bard-instruments")freeze_bard_instruments();else if(std::string_view(argv[1])=="--freeze-class-skills")freeze_class_skills();else if(std::string_view(argv[1])=="--freeze-styles")freeze_styles();else if(std::string_view(argv[1])=="--freeze-backgrounds")freeze_backgrounds();else freeze_sage();return 0;}auto run=[](auto test,const char* name){try{test();}catch(...){std::cerr<<name<<": ";throw;}};run(scholar_checks::run,"Scholar");run(sneak_baseline::verify,"Sneak baseline");run(cunning_checks::run,"Cunning Action");run(cunning_prior_writer,"Cunning prior writer");run(soldier_gaming,"Soldier gaming");run(druid_herbalism,"druid_herbalism");run(monk_tools,"monk_tools");run(monk_tool_prior_writer,"monk_tool_prior_writer");run(bard_instruments,"bard_instruments");run(bard_instrument_prior_writer,"bard_instrument_prior_writer");run(all_class_skills,"all_class_skills");run(sage_training,"sage_training");run(remaining_backgrounds,"remaining_backgrounds");run(starting_styles,"starting_styles");run(creation_controls,"creation_controls");run(preset_training,"preset_training");run(grants_and_checks,"grants_and_checks");run(invalid_choices,"invalid_choices");run(persistence,"persistence");run(complete_saved_training,"complete_saved_training");run(draft_review_editor,"draft_review_editor");write_review_fixture();std::cout<<"Training grant and creation tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -279,5 +279,9 @@
   "One level-one spell slot",
   "Two level-one spell slots",
   "One level-two spell slot",
-  "Arcane Recovery"
+  "Arcane Recovery",
+  "Scholar Expertise",
+  "Choose a proficient skill",
+  "Complete required advancement training",
+  "Invalid advancement training choice"
 ]

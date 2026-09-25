@@ -71,6 +71,32 @@ void capture() {
         write("campaign-arcane-level"+std::to_string(level)+".ogs",encode_campaign(party,nullptr,"arcane-baseline"));
     }
 }
+// Capture with the unmodified 0.6.49 library, before Scholar changes its writer.
+void capture_scholar() {
+    auto rules=module();check(rules->identity().version=="0.6.49","Scholar baseline requires actual 0.6.49 writer");
+    for(unsigned level=2;level<=4;++level) {
+        CampaignParty party(module());auto character=wizard();auto draft=character.creation_data();
+        draft.training["class:wizard"]={"medicine","nature"};
+        const auto id=party.add_pc(Character(*srd5::character_rules(),draft,{}));
+        party.award_experience(2700,"scholar-baseline");
+        for(unsigned n=2;n<=level;++n)party.advance(id,party.default_advancement(id));
+        auto participants=party.participants();participants.front().cell={1,1};
+        participants.push_back({99,"recovery_target","Target",1,{5,1}});
+        auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},participants},13);
+        party.begin_combat();party.apply_combat(combat->snapshot());spend_slots(party,*combat);party.end_combat();
+        (void)party.rest(RestKind::short_rest);
+        (void)party.recover_rest_choice(party.state().short_rest->ticket,id,"arcane_recovery:1:0");
+        write("campaign-scholar-level"+std::to_string(level)+".ogs",encode_campaign(party,nullptr,"scholar-baseline"));
+        if(level==4) {
+            participants=party.participants();participants.front().cell={1,1};
+            participants.push_back({99,"recovery_target","Target",1,{5,1}});
+            combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},participants},13);
+            write("combat-scholar-before.save",combat->save());
+            while(combat->snapshot().actor!=1)act(*combat,"end");act(*combat,"magic_missile");
+            write("combat-scholar-continued.save",combat->save());
+        }
+    }
+}
 std::string identity(std::string bytes,const RulesModule& rules) {
     const auto position=bytes.find("0.6.48");check(position!=bytes.npos,"Fixture contains actual old version");
     bytes.replace(position,6,rules.identity().version);return bytes;
@@ -237,7 +263,8 @@ void combat_and_advancement() {
 }
 int main(int argc,char** argv) {
     try {
-        if(argc==2&&std::string_view(argv[1])=="--capture-prior-writer")capture();
+        if(argc==2&&std::string_view(argv[1])=="--capture-scholar-writer")capture_scholar();
+        else if(argc==2&&std::string_view(argv[1])=="--capture-prior-writer")capture();
         else {check(argc==1,"Unexpected argument");previous_writer();recovery_transactions();eligibility_and_effects();combat_and_advancement();}
         std::cout<<"Arcane Recovery checks passed\n";return 0;
     } catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}

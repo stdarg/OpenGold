@@ -37,8 +37,8 @@ void CharacterCreationView::open_training_review()
     if(!campaign_||campaign_->in_combat()||roster_index_>=campaign_->state().roster.size())return;
     const auto& member=campaign_->state().roster[roster_index_];if(member.character.sheet().training.complete)return;
     try{
-        auto editor=std::make_unique<opengold::CharacterCreator>(opengold::srd5::character_rules(),member.character.creation_data());
-        locked_training_=member.character.creation_data().training;training_member_=member.id;training_review_=std::move(editor);
+        auto editor=std::make_unique<opengold::CharacterCreator>(opengold::srd5::character_rules(),member.character,campaign_->rule_module());
+        locked_training_=member.character.training_choices();training_member_=member.id;training_review_=std::move(editor);
         auto* window=get_node<Window>("TrainingReview");window->get_node<Label>("Error")->set_text({});
         refresh_training_review();window->popup_centered();window->get_node<Button>("Cancel")->grab_focus();
     }catch(const std::exception& e){error_=review_text(e.what());refresh_party();}
@@ -72,7 +72,7 @@ void CharacterCreationView::review_training_selected(std::int64_t index,String g
     if(!training_review_||campaign_->in_combat()||index<=0)return;
     const std::string id=group.utf8().get_data();const auto locked=locked_training_.find(id);
     if(locked!=locked_training_.end()&&!locked->second.empty())return;
-    const auto groups=training_review_->rules().training_options(training_review_->draft());
+    const auto groups=training_review_->training_options();
     const auto found=std::find_if(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;});
     if(found==groups.end()||static_cast<std::size_t>(index)>found->options.size())return;
     review_training_toggled(true,group,presentation::training_string(found->options[index-1].id));

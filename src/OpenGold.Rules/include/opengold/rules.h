@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <map>
 #include <optional>
 #include <span>
 #include <string>
@@ -15,16 +16,29 @@ namespace opengold::rules {
 struct CharacterSheet;
 struct AbilityCheckModifier;
 struct FeatureGrant;
+struct CreationChoice { std::string id, label, description; };
+using TrainingChoices = std::map<std::string,std::vector<std::string>>;
+enum class TrainingChoiceControl { checkboxes, single_selection };
+struct TrainingChoiceGroup {
+    std::string id, label;
+    unsigned count{};
+    std::vector<CreationChoice> options;
+    TrainingChoiceControl control{TrainingChoiceControl::checkboxes};
+    std::string continuity_id; // Same choice purpose across changing source entitlements.
+    unsigned acquired_level{1};
+};
 struct AdvancementChoice {
     std::string feat;
     std::array<unsigned,6> abilities{};
     std::vector<std::string> spells;
+    TrainingChoices training;
     bool operator==(const AdvancementChoice&) const = default;
 };
 struct AdvancementOption {std::string id,label,description;bool available{true};};
 struct AdvancementOptions {
     unsigned level{};
     std::vector<AdvancementOption> feats,spells;
+    std::vector<TrainingChoiceGroup> training;
     std::string description;
 };
 struct LearnedSpell {
@@ -262,6 +276,7 @@ public:
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
     // False means this module's supported advancement ceiling was reached.
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;
+    [[nodiscard]] virtual std::vector<TrainingChoiceGroup> training_options(const CharacterSheet&) const {return {};}
     [[nodiscard]] virtual AdvancementOptions advancement_options(const CharacterSheet&) const {return {};}
     [[nodiscard]] virtual AdvancementChoice default_advancement(const CharacterSheet&) const {return {};}
     virtual bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const;

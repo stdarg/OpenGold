@@ -12,9 +12,28 @@ CharacterCreator::CharacterCreator(std::unique_ptr<CharacterRules> rules,Charact
     if(!rules_)throw std::runtime_error("Character creator requires a rules module");
     (void)rules_->evaluate(draft_,false);locked_training_=draft_.training;
 }
+CharacterCreator::CharacterCreator(std::unique_ptr<CharacterRules> rules,Character character,const RulesModule& module)
+    :CharacterCreator(std::move(rules),character.creation_data()) {
+    // Retain ordinary creation-choice pruning when no advancement choices exist.
+    if(module.training_options(character.sheet()).empty())return;
+    // The campaign owns the module and outlives this isolated review editor.
+    draft_.training=character.training_choices();locked_training_=draft_.training;
+    training_character_=std::move(character);training_module_=std::cref(module);
+}
+std::vector<TrainingChoiceGroup> CharacterCreator::training_options() const {
+    auto draft=draft_;
+    if(training_character_)for(const auto& group:training_module_->get().training_options(training_character_->sheet()))draft.training.erase(group.id);
+    auto groups=rules_->training_options(draft);
+    if(training_character_){
+        const auto candidate=training_character_->preview_training(*rules_,training_module_->get(),draft_.training,false);
+        const auto later=training_module_->get().training_options(candidate.sheet());
+        groups.insert(groups.end(),later.begin(),later.end());
+    }
+    return groups;
+}
 void CharacterCreator::restart()
 {
-    draft_={};locked_training_.clear();appearance_={};step_=CreationStep::race;
+    draft_={};locked_training_.clear();training_character_.reset();training_module_.reset();appearance_={};step_=CreationStep::race;
     for(auto field:{CreationField::race,CreationField::gender,CreationField::character_class,CreationField::alignment,CreationField::background}) {
         const auto options=rules_->choices(field);
         if(options.empty())throw std::runtime_error("Rules module has no character choices");
@@ -85,7 +104,7 @@ void CharacterCreator::prune_training(CharacterDraft& candidate) const
 }
 void CharacterCreator::training_choice(std::string_view id,std::string_view option,bool selected)
 {
-    require_editable();auto candidate=draft_;const auto groups=rules_->training_options(candidate);
+    require_editable();auto candidate=draft_;const auto groups=training_options();
     const auto group=std::find_if(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;});
     if(group==groups.end()||std::none_of(group->options.begin(),group->options.end(),[&](const auto& o){return o.id==option;}))
         throw std::runtime_error("Unknown training choice");
@@ -97,7 +116,10 @@ void CharacterCreator::training_choice(std::string_view id,std::string_view opti
         if(values.size()>=group->count)throw std::runtime_error("Training selection limit reached");
         values.emplace_back(option);
     }else if(!selected&&found!=values.end())values.erase(found);
-    prune_training(candidate);
+    if(training_character_){
+        if(values.empty())candidate.training.erase(std::string(id));
+        (void)training_character_->preview_training(*rules_,training_module_->get(),candidate.training,false);
+    }else prune_training(candidate);
     for(const auto& [group,selected]:locked_training_){
         const auto found=candidate.training.find(group);
         if(found==candidate.training.end()||std::any_of(selected.begin(),selected.end(),[&](const auto& value){
@@ -108,7 +130,7 @@ void CharacterCreator::training_choice(std::string_view id,std::string_view opti
 }
 bool CharacterCreator::training_complete() const
 {
-    for(const auto& group:rules_->training_options(draft_)){
+    for(const auto& group:training_options()){
         const auto found=draft_.training.find(group.id);
         if(group.count&&(found==draft_.training.end()||found->second.size()!=group.count))return false;
     }
@@ -149,7 +171,7 @@ void CharacterCreator::appearance(por::CharacterAppearance value)
     por::validate_character_appearance(value);
     appearance_=value;
 }
-CharacterSheet CharacterCreator::sheet() const {return rules_->evaluate(draft_,step_>=CreationStep::combat_icon);}
+CharacterSheet CharacterCreator::sheet() const {if(training_character_)return training_character_->preview_training(*rules_,training_module_->get(),draft_.training,false).sheet();return rules_->evaluate(draft_,step_>=CreationStep::combat_icon);}
 Character CharacterCreator::create_character() const
 {
     if(step_!=CreationStep::sheet)throw std::runtime_error("Finish character creation before exporting the character");

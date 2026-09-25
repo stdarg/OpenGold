@@ -39,6 +39,7 @@ template<class Translate> godot::String training_source(std::string_view id,cons
     if(id=="background:soldier:gaming_set")return tr(N_("Soldier background"));
     if(id=="background:soldier")return tr(N_("Soldier background"));
     if(id=="background:sage")return tr(N_("Sage background"));
+    if(id=="class:wizard:scholar")return tr(N_("Wizard Scholar"));
     if(id=="background:criminal")return tr(N_("Criminal background"));
     return training_string(id);
 }
@@ -87,7 +88,7 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
     auto* rows=parent.get_node<VBoxContainer>("Training/Rows");
     auto fixed=creator.draft();fixed.training.clear();
     parent.get_node<RichTextLabel>("TrainingFixed")->set_text("[b]"+tr(N_("Fixed training"))+"[/b]\n"+training_summary(creator.rules().evaluate(fixed,false).training,tr,true));
-    const auto groups=creator.rules().training_options(creator.draft());
+    const auto groups=creator.training_options();
     for(unsigned i=groups.size();i<static_cast<unsigned>(rows->get_child_count());++i)rows->get_node<Control>(String("Group")+String::num_uint64(i))->hide();
     for(unsigned i=0;i<groups.size();++i){
         const auto& group=groups[i];const auto original=locked.find(group.id);
