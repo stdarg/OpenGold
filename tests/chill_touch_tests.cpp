@@ -33,7 +33,7 @@ void access(){auto rules=module();for(const auto* klass:{"wizard","sorcerer","wa
         const auto ability=std::string(klass)=="wizard"?3:5;
         check(arg.value==std::to_string(2+(h.sheet().scores[ability]-10)/2),"Class Intelligence/Charisma casting bonus");checked=true;
     }check(checked,"Real attack bonus observed");
-    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with("PC29 "),"New knowledge requires new profile");profile.replace(0,4,"PC28");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{2,1}}}},13);});
+    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with(std::string_view(klass)=="wizard"?"PC32 ":"PC29 "),"New knowledge requires new profile");profile.replace(0,4,"PC28");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{2,1}}}},13);});
     auto old=rules->identity();old.version="0.6.42";rejects([&]{rules->validate_saved_grants(old,h.sheet(),h.sheet().grants);});
     auto draft=h.creation_data();draft.cantrips=std::vector<std::string>{"chill_touch","chill_touch"};rejects([&]{Character invalid(*srd5::character_rules(),draft,{});});
 }

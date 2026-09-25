@@ -124,6 +124,7 @@ public:
     void abandon_rest(RestTicket ticket);
     [[nodiscard]] std::uint64_t remaining_rest_milliseconds() const;
     [[nodiscard]] rules::HitDieResult spend_hit_die(RestTicket ticket,MemberId id);
+    [[nodiscard]] rules::Message recover_rest_choice(RestTicket ticket,MemberId id,std::string_view choice);
     void finish_short_rest(RestTicket ticket);
     void temple_heal(MemberId target);
     void advance_time(unsigned minutes);

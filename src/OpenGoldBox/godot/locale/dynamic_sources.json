@@ -275,5 +275,9 @@
   "Champion: weapon/unarmed criticals on 19–20.\nAdvantage on Initiative and Strength (Athletics).\nCritical hit: optional half-Speed move, no opportunity attacks.",
   "Fixed-average HP growth. Resources gain only their new capacity;\nexisting expenditure remains.",
   "Finish free move",
-  "Free move"
+  "Free move",
+  "One level-one spell slot",
+  "Two level-one spell slots",
+  "One level-two spell slot",
+  "Arcane Recovery"
 ]

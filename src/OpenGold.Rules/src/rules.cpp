@@ -39,6 +39,8 @@ void RulesModule::grant_temporary_hit_points(VitalState&,const CharacterSheet&,c
 { throw std::runtime_error("This rules module does not support Temporary Hit Points"); }
 void RulesModule::recover_short_rest(VitalState&,const CharacterSheet&) const
 { throw std::runtime_error("This rules module does not support Short Rests"); }
+Message RulesModule::recover_rest_choice(VitalState&,const CharacterSheet&,std::string_view) const
+{ throw std::runtime_error("This rules module does not support optional rest recovery"); }
 HitDieResult RulesModule::spend_hit_die(VitalState&,const CharacterSheet&,std::uint64_t&) const
 { throw std::runtime_error("This rules module does not support Hit Dice"); }
 void RulesModule::set_hit_points(VitalState&,const CharacterSheet&,int) const

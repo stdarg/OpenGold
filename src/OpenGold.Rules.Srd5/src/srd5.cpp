@@ -93,7 +93,7 @@ struct Definition {
     unsigned weapon_hands{};
     int versatile_sides{};
     bool shield{};
-    int hit_die{},constitution{},rushes{},surges{};
+    int hit_die{},constitution{},rushes{},surges{},arcane{};
     bool dwarf{},cunning{},tactical_mind{},champion{};
     int medicine{};
     detail::DamageType melee_type{detail::DamageType::bludgeoning},ranged_type{detail::DamageType::bludgeoning};
@@ -139,7 +139,7 @@ struct Actor : detail::LifeState {
     Participant source;
     Definition definition;
     int initiative{}, movement{}, winds{}, slots{},slots2{};
-    int hit_dice{},rushes{},surges{},dashes{};
+    int hit_dice{},rushes{},surges{},dashes{},arcane{};
     bool rush_used{},surge_used{};
     detail::ActionBudget actions;
     bool bonus{true}, reaction{true}, dodge{}, disengaged{};
@@ -151,6 +151,19 @@ struct Actor : detail::LifeState {
 };
 bool unconscious(const Actor& a){return a.hp==0||a.effects.sleeping;}
 bool conscious(const Actor& a){return !a.dead&&!unconscious(a);}
+struct ArcaneAllocation { std::string_view id,label; unsigned first,second; };
+constexpr std::array arcane_allocations{
+    ArcaneAllocation{"arcane_recovery:1:0","One level-one spell slot",1,0},
+    ArcaneAllocation{"arcane_recovery:2:0","Two level-one spell slots",2,0},
+    ArcaneAllocation{"arcane_recovery:0:1","One level-two spell slot",0,1}
+};
+bool can_recover(const Actor& actor,const ArcaneAllocation& choice)
+{
+    const auto& d=actor.definition;
+    return conscious(actor)&&d.arcane&&actor.arcane>0&&
+        choice.first+2*choice.second<=unsigned((d.level+1)/2)&&
+        choice.first<=unsigned(d.slots-actor.slots)&&choice.second<=unsigned(d.slots2-actor.slots2);
+}
 int movement_left(const Actor& a)
 {
     if(!conscious(a))return 0;
@@ -195,7 +208,8 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_champion=magic=="PC31";
+    const bool with_arcane=magic=="PC32";
+    const bool with_champion=magic=="PC31"||with_arcane;
     const bool with_mind=magic=="PC30"||with_champion;
     const bool with_chill=magic=="PC29"||with_mind;
     const bool with_sorcerer=magic=="PC28"||with_chill;
@@ -242,6 +256,7 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     d.ac=10+dex;d.initiative=dex;d.speed=race=="Goliath"?35:30;d.level=level;
     d.melee_bonus=2+str;d.melee={0,0,std::max(0,1+str)};
     d.champion=with_champion&&klass=="Fighter"&&level>=3;
+    d.arcane=with_arcane&&klass=="Wizard"?1:0;
     d.medicine=ability_modifier(scores[4]);d.tactical_mind=with_mind&&klass=="Fighter"&&level>=2;
     d.cunning=with_cunning&&klass=="Rogue"&&level==2;
     d.surges=with_surge&&klass=="Fighter"&&level>=2?1:0;
@@ -310,7 +325,7 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
         }else if(std::any_of(grants.begin(),grants.end(),detail::is_spell_grant))
             throw std::runtime_error("Legacy character recipe cannot contain new spell grants");
         const auto features_only=detail::without_spell_grants(with_training?detail::without_training(grants):grants);
-        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8"||magic=="PC9"||with_spells,magic=="PC9"||with_spells,with_surge,with_archery,with_styles,with_mind,with_champion);
+        const auto effects=detail::validate_grants(features_only,detail::grant_source_id(klass),detail::grant_source_id(race),background,level,magic=="PC8"||magic=="PC9"||with_spells,magic=="PC9"||with_spells,with_surge,with_archery,with_styles,with_mind,with_champion,with_arcane);
         if(effects.feats!=features)throw std::runtime_error("Character effects disagree with acquired grants");
         const int initial_con=ability_modifier(scores[2]-effects.abilities[2]);
         for(unsigned i=0;i<level;++i)if(hp_modifiers[i]!=(i==3?con:initial_con))
@@ -329,17 +344,18 @@ void restore_vitals(Actor& a,const VitalState& state)
     a.hp=state.hit_points;a.dead=state.dead;
     // Prior vital formats predate spendable Hit Dice, so their dice are unspent.
     a.hit_dice=a.definition.hit_die?a.definition.level:0;
-    a.rushes=a.definition.rushes;a.surges=a.definition.surges;
+    a.rushes=a.definition.rushes;a.surges=a.definition.surges;a.arcane=a.definition.arcane;
     bool timed=false,temporary=false;
     if(!state.resources.empty()) {
         std::istringstream in(state.resources);std::string magic;
-        in>>magic>>a.winds>>a.slots;temporary=magic=="SRD6"||magic=="SRD7"||magic=="SRD8";timed=magic=="SRD5"||temporary;if(magic=="SRD2"||magic=="SRD3"||magic=="SRD4"||timed)in>>a.slots2;
+        in>>magic>>a.winds>>a.slots;temporary=magic=="SRD6"||magic=="SRD7"||magic=="SRD8"||magic=="SRD9";timed=magic=="SRD5"||temporary;if(magic=="SRD2"||magic=="SRD3"||magic=="SRD4"||timed)in>>a.slots2;
         in>>a.successes>>a.failures>>a.stable;
         if(magic=="SRD4"||timed)in>>a.hit_dice;
         if(timed){in>>a.recovery.death_save_in_ms>>a.recovery.stable_recovery_in_ms;detail::decode_stable_recovery(a.recovery);}
         if(temporary)in>>a.temporary_hp.amount>>std::quoted(a.temporary_hp.source_id);
-        if(magic=="SRD7"||magic=="SRD8")in>>a.rushes;
-        if(magic=="SRD8")in>>a.surges;
+        if(magic=="SRD7"||magic=="SRD8"||magic=="SRD9")in>>a.rushes;
+        if(magic=="SRD8"||magic=="SRD9")in>>a.surges;
+        if(magic=="SRD9")in>>a.arcane;
         if(!in||(magic!="SRD1"&&magic!="SRD2"&&magic!="SRD3"&&magic!="SRD4"&&!timed))throw std::runtime_error("Invalid character resource state");
         if(magic=="SRD3"||magic=="SRD4"||timed)a.effects=detail::read_effects(in);
         in>>std::ws;if(!in.eof())throw std::runtime_error("Trailing character resource state");
@@ -347,7 +363,7 @@ void restore_vitals(Actor& a,const VitalState& state)
     const auto& d=a.definition;
     if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");
     if(a.hp<0||a.hp>d.hp||(a.dead&&a.hp!=0)||a.winds<0||a.winds>d.winds||a.slots<0||a.slots>d.slots||
-        a.slots2<0||a.slots2>d.slots2||a.surges<0||a.surges>d.surges||a.rushes<0||a.rushes>d.rushes||a.hit_dice<0||a.hit_dice>(d.hit_die?d.level:0)||
+        a.arcane<0||a.arcane>d.arcane||a.slots2<0||a.slots2>d.slots2||a.surges<0||a.surges>d.surges||a.rushes<0||a.rushes>d.rushes||a.hit_dice<0||a.hit_dice>(d.hit_die?d.level:0)||
         a.successes<0||a.successes>3||a.failures<0||a.failures>4)throw std::runtime_error("Invalid character vitals");
     // Earlier campaigns could retain completed counters after stabilization.
     if(a.stable)a.successes=a.failures=0;
@@ -357,22 +373,24 @@ void restore_vitals(Actor& a,const VitalState& state)
 }
 VitalState vitals(const Actor& a)
 {
-    const bool surge=a.surges<a.definition.surges,rush=surge||a.definition.rushes>0,temporary=rush||a.temporary_hp.amount>0,timed=temporary||(a.hp==0&&!a.dead);
+    const bool arcane=a.arcane<a.definition.arcane,surge=arcane||a.surges<a.definition.surges,rush=surge||a.definition.rushes>0,temporary=rush||a.temporary_hp.amount>0,timed=temporary||(a.hp==0&&!a.dead);
     const bool effects=a.effects.next_id!=1||a.effects.prone,spent_dice=a.hit_dice<(a.definition.hit_die?a.definition.level:0);
     // Preserve the compact previous format when every Hit Die is available.
-    std::ostringstream out;out<<(surge?"SRD8 ":rush?"SRD7 ":temporary?"SRD6 ":timed?"SRD5 ":spent_dice?"SRD4 ":effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
+    std::ostringstream out;out<<(arcane?"SRD9 ":surge?"SRD8 ":rush?"SRD7 ":temporary?"SRD6 ":timed?"SRD5 ":spent_dice?"SRD4 ":effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
     if(timed||spent_dice||effects||a.definition.slots2)out<<a.slots2<<' ';out<<a.successes<<' '<<a.failures<<' '<<a.stable;
     if(timed||spent_dice)out<<' '<<a.hit_dice;
     if(timed)out<<' '<<a.recovery.death_save_in_ms<<' '<<detail::encode_stable_recovery(a.recovery);
     if(temporary)out<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id);
     if(rush)out<<' '<<a.rushes;
     if(surge)out<<' '<<a.surges;
+    if(arcane)out<<' '<<a.arcane;
     if(timed||spent_dice||effects){out<<' ';detail::write_effects(out,a.effects);}
     std::string description;
     if(a.definition.slots)description="Level-one spell slots: "+std::to_string(a.slots)+" / "+std::to_string(a.definition.slots);
     if(a.definition.slots2)description+="\nLevel-two spell slots: "+std::to_string(a.slots2)+" / "+std::to_string(a.definition.slots2);
     if(a.definition.winds)description="Second Wind uses: "+std::to_string(a.winds)+" / "+std::to_string(a.definition.winds);
-    if(surge)description+=(description.empty()?"":"\n")+std::string("Action Surge uses: ")+std::to_string(a.surges)+" / "+std::to_string(a.definition.surges);
+    if(a.definition.arcane)description+=(description.empty()?"":"\n")+std::string("Arcane Recovery uses: ")+std::to_string(a.arcane)+" / 1";
+    if(a.definition.surges&&surge)description+=(description.empty()?"":"\n")+std::string("Action Surge uses: ")+std::to_string(a.surges)+" / "+std::to_string(a.definition.surges);
     if(a.hp==0)description+=(description.empty()?"":"\n")+std::string(a.dead?"Dead":a.stable?"Stable, unconscious":"Unconscious; death saves ")+(!a.dead&&!a.stable?std::to_string(a.successes)+" successes, "+std::to_string(a.failures)+" failures":"");
     if(detail::healing_blocked(a.effects))description+="\nChill Touch: cannot regain HP.";
     if(detail::opportunity_blocked(a.effects))description+="\nShocking Grasp: cannot make Opportunity Attacks.";
@@ -405,7 +423,7 @@ public:
                 throw std::runtime_error("Invalid participant or unsupported rules definition: "+p.definition);
             sides.insert(p.side);
             const auto d=p.character_profile.empty()?content_->definitions.at(p.definition):character_definition(p.character_profile);
-            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;a.hit_dice=d.hit_die?d.level:0;a.rushes=d.rushes;a.surges=d.surges;
+            Actor a; a.definition=d;a.weapon_hands=d.weapon_hands;a.source=std::move(p);a.hp=d.hp;a.winds=d.winds;a.slots=d.slots;a.slots2=d.slots2;a.hit_dice=d.hit_die?d.level:0;a.rushes=d.rushes;a.surges=d.surges;a.arcane=d.arcane;
             a.facing_left=a.source.facing_left;
             if(a.source.state)restore_vitals(a,*a.source.state);
             a.initiative=detail::d20({d.champion,d.str_dex_disadvantage||a.source.surprised||a.effects.sleeping},rng_)+d.initiative;a.movement=d.speed;
@@ -1224,14 +1242,14 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    const unsigned format=physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
+    const unsigned format=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.arcane<a.definition.arcane;})?20:physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
     std::ostringstream out;out<<"OGCOMBAT "<<format<<' '<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_){out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
         <<a.actions.normal<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<' '<<a.recovery.death_save_in_ms<<' '<<detail::encode_stable_recovery(a.recovery)<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id)<<' '<<a.rushes<<' '<<a.rush_used;
-        if(format>=14)out<<' '<<a.surges<<' '<<a.surge_used<<' '<<a.actions.surge;if(format>=15)out<<' '<<a.dashes;out<<'\n';}
+        if(format>=14)out<<' '<<a.surges<<' '<<a.surge_used<<' '<<a.actions.surge;if(format>=15)out<<' '<<a.dashes;if(format>=20)out<<' '<<a.arcane;out<<'\n';}
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
@@ -1242,6 +1260,7 @@ std::string Session::save() const
     out<<bool(weapon_hit_)<<'\n';
     if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second;if(format>=19)out<<' '<<h.thrown_item;out<<'\n';}
     if(format>=17)out<<frost_movement_<<' '<<items_active_<<'\n';
+    if(format>=20)out<<physical_inventory_<<'\n';
     if(items_active_){
         out<<items_.size()<<'\n';
         for(const auto& item:items_){out<<item.id<<' ';
@@ -1277,11 +1296,13 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if(version>=12)input>>actor.rushes>>actor.rush_used;
     if(version>=14)input>>actor.surges>>actor.surge_used>>actor.actions.surge;
     if(version>=15)input>>actor.dashes;
+    if(version>=20)input>>actor.arcane;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
+    if(version<20)actor.arcane=definition.arcane;
     if(version<15&&((definition.known_cantrips&256)||definition.cunning))throw std::runtime_error("Movement features require a version-15 checkpoint");
     if(version>=15&&(actor.dashes<0||actor.dashes>int(!actor.actions.normal)+int(actor.rush_used||(definition.cunning&&!actor.bonus))+int(actor.surge_used&&!actor.actions.surge)||actor.movement>definition.speed*(1+actor.dashes)))throw std::runtime_error("Invalid Dash allowance count");
     if(version<14&&definition.surges)throw std::runtime_error("Action Surge requires a version-14 checkpoint");
@@ -1294,7 +1315,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
         // Accepting both extra movement and an unused action lets a later Dash
         // create a state outside the checkpoint's own movement bounds.
         actor.movement < 0 || actor.movement > definition.speed*(1+!actor.actions.normal+int(actor.rush_used||(definition.cunning&&!actor.bonus))+(actor.surge_used&&!actor.actions.surge)) ||
-        actor.surges<0||actor.surges>definition.surges||
+        actor.arcane<0||actor.arcane>definition.arcane||actor.surges<0||actor.surges>definition.surges||
         (actor.surge_used&&(!definition.surges||actor.surges==definition.surges))||
         (actor.actions.surge&&!actor.surge_used)||
         actor.rushes<0||actor.rushes>definition.rushes||
@@ -1537,11 +1558,11 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 19 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 20 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -1554,6 +1575,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::vector<Actor> actors;
     for (unsigned i = 0; i < count; ++i) {
         auto actor = read_checkpoint_actor(input, version, *content);
+        if(module_before(identity,{0,6,49})&&actor.source.character_profile.starts_with("PC32 "))throw std::runtime_error("Legacy checkpoint cannot contain Arcane Recovery profiles");
         if(module_before(identity,{0,6,26})&&(actor.source.character_profile.starts_with("PC15 ")||actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain a Sage-training profile");
         if(module_before(identity,{0,6,27})&&(actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))))
@@ -1623,7 +1645,11 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         input>>session->frost_movement_>>has_items;
         if(!input)throw std::runtime_error("Invalid ability-check checkpoint flags");
     }
-    if(version>=19){
+    if(version>=20){
+        input>>session->physical_inventory_;
+        if(!input||module_before(identity,{0,6,49})||(session->physical_inventory_&&!has_items))throw std::runtime_error("Invalid recovery checkpoint flags");
+        session->items_active_=has_items;
+    }else if(version>=19){
         if(module_before(identity,{0,6,47})||!has_items)throw std::runtime_error("Invalid physical inventory checkpoint flags");
         session->physical_inventory_=true;session->items_active_=true;
     }
@@ -1688,7 +1714,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1813,7 +1839,9 @@ public:
         if(module_before(saved,{0,6,32})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:monk:tools";}))throw std::runtime_error("Legacy campaign cannot contain Monk tool choices");
         if(module_before(saved,{0,6,31})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:bard:instruments";}))throw std::runtime_error("Legacy campaign cannot contain Bard instrument choices");
         if(module_before(saved,{0,6,30})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id.starts_with("skill:")&&g.source_id.starts_with("class:")&&g.source_id!="class:rogue";}))throw std::runtime_error("Legacy campaign cannot contain new class skill choices");
+        if(module_before(saved,{0,6,49})&&detail::has_grant(grants,"feature:arcane_recovery"))throw std::runtime_error("Legacy campaign cannot grant Arcane Recovery");
         auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
+        if(module_before(saved,{0,6,49}))std::erase_if(expected,[](const auto& g){return g.id=="feature:arcane_recovery";});
         if(module_before(saved,{0,6,33}))std::erase_if(expected,[](const auto& g){return g.id=="tool:herbalism_kit"&&g.source_id=="class:druid";});
         if(module_before(saved,{0,6,28})&&detail::has_grant(grants,"feat:archery"))throw std::runtime_error("Legacy campaign cannot contain Archery grants");
         if(module_before(saved,{0,6,27}))std::erase_if(expected,[](const auto& g){return
@@ -1837,6 +1865,7 @@ public:
         if(module_before(saved,{0,6,43})&&state.resources.find("FX5 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Chill Touch");
         if(module_before(saved,{0,6,38})&&state.resources.find("FX3 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Shocking Grasp");
         if(module_before(saved,{0,6,25})&&state.resources.find("FX2 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Ray of Frost");
+        if(module_before(saved,{0,6,49})&&state.resources.starts_with("SRD9 "))throw std::runtime_error("Legacy campaign cannot contain Arcane Recovery expenditure");
         if(module_before(saved,{0,6,24})&&state.resources.starts_with("SRD8 "))throw std::runtime_error("Legacy campaign cannot contain Action Surge expenditure");
         const bool old_hp=saved.version=="0.3.0"||saved.version=="0.4.0"||saved.version=="0.5.0"||
             saved.version=="0.6.0"||saved.version=="0.6.1"||saved.version=="0.6.2";
@@ -1885,7 +1914,7 @@ public:
         std::vector<VitalState> next;next.reserve(actors.size());
         for(const auto& a:actors)next.push_back(vitals(a));
         for(std::size_t i=0;i<participants.size();++i)
-            if(participants[i].state&&((participants[i].state->hit_points==0&&!participants[i].state->dead)||participants[i].state->resources.starts_with("SRD3 ")||participants[i].state->resources.starts_with("SRD4 ")||participants[i].state->resources.starts_with("SRD5 ")||participants[i].state->resources.starts_with("SRD6 ")||participants[i].state->resources.starts_with("SRD7 ")||participants[i].state->resources.starts_with("SRD8 ")))participants[i].state=std::move(next[i]);
+            if(participants[i].state&&((participants[i].state->hit_points==0&&!participants[i].state->dead)||participants[i].state->resources.starts_with("SRD3 ")||participants[i].state->resources.starts_with("SRD4 ")||participants[i].state->resources.starts_with("SRD5 ")||participants[i].state->resources.starts_with("SRD6 ")||participants[i].state->resources.starts_with("SRD7 ")||participants[i].state->resources.starts_with("SRD8 ")||participants[i].state->resources.starts_with("SRD9 ")))participants[i].state=std::move(next[i]);
         random_state=rng;
     }
     void recover(VitalState& state,const CharacterSheet& sheet) const override
@@ -1894,7 +1923,7 @@ public:
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
         actor.effects.sleeping=false;
-        (void)detail::heal_life(actor,d.hp,d.hp,!detail::healing_blocked(actor.effects));actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};actor.temporary_hp={};actor.rushes=d.rushes;actor.surges=d.surges;
+        (void)detail::heal_life(actor,d.hp,d.hp,!detail::healing_blocked(actor.effects));actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};actor.temporary_hp={};actor.rushes=d.rushes;actor.surges=d.surges;actor.arcane=d.arcane;
         state=vitals(actor);
     }
     RecoveryInfo recovery_info(const CharacterSheet& sheet,const VitalState& state) const override
@@ -1907,6 +1936,9 @@ public:
         if(d.winds)result.resources.push_back({"second_wind",{"Second Wind",{}},unsigned(actor.winds),unsigned(d.winds),1});
         if(d.slots)result.resources.push_back({"spell_slot:1",{"Level-one spell slots",{}},unsigned(actor.slots),unsigned(d.slots),0});
         if(d.slots2)result.resources.push_back({"spell_slot:2",{"Level-two spell slots",{}},unsigned(actor.slots2),unsigned(d.slots2),0});
+        if(d.arcane)result.resources.push_back({"arcane_recovery",{"Arcane Recovery",{}},unsigned(actor.arcane),unsigned(d.arcane),0});
+        for(const auto& choice:arcane_allocations)if(can_recover(actor,choice))
+            result.choices.push_back({std::string(choice.id),{std::string(choice.label),{}}});
         return result;
     }
     void grant_temporary_hit_points(VitalState& state,const CharacterSheet& sheet,const TemporaryHitPoints& offered,TemporaryHpChoice choice) const override
@@ -1921,6 +1953,20 @@ public:
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Short rest requires at least one HP at its start");
         actor.winds=std::min(d.winds,actor.winds+1);actor.rushes=d.rushes;actor.surges=d.surges;state=vitals(actor);
+    }
+    Message recover_rest_choice(VitalState& state,const CharacterSheet& sheet,std::string_view choice_id) const override
+    {
+        const auto d=character_definition(character_profile(sheet,{}).data);
+        Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
+        const auto choice=std::find_if(arcane_allocations.begin(),arcane_allocations.end(),
+            [&](const auto& value){return value.id==choice_id;});
+        if(choice==arcane_allocations.end()||!can_recover(actor,*choice))
+            throw std::runtime_error("This rest recovery choice is unavailable");
+        actor.slots+=int(choice->first);actor.slots2+=int(choice->second);--actor.arcane;
+        auto next=vitals(actor);
+        Message result{"Arcane Recovery restored {first} level-one and {second} level-two spell slots.",
+            {{"first",std::to_string(choice->first)},{"second",std::to_string(choice->second)}}};
+        state=std::move(next);return result;
     }
     HitDieResult spend_hit_die(VitalState& state,const CharacterSheet& sheet,std::uint64_t& random_state) const override
     {
@@ -2035,7 +2081,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<(detail::has_grant(sheet.grants,"subclass:champion")?"PC31 ":detail::has_grant(sheet.grants,"feature:tactical_mind")?"PC30 ":(spells&2048)?"PC29 ":"PC28 ")<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<(detail::has_grant(sheet.grants,"feature:arcane_recovery")?"PC32 ":detail::has_grant(sheet.grants,"subclass:champion")?"PC31 ":detail::has_grant(sheet.grants,"feature:tactical_mind")?"PC30 ":(spells&2048)?"PC29 ":"PC28 ")<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -2179,7 +2225,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.48",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.49",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

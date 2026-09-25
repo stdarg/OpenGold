@@ -241,6 +241,20 @@ rules::HitDieResult CampaignParty::spend_hit_die(RestTicket ticket,MemberId id)
     if(next.rest_activity)advance_ticket(next.rest_activity->ticket);
     state_=std::move(next);return result;
 }
+rules::Message CampaignParty::recover_rest_choice(RestTicket ticket,MemberId id,std::string_view choice)
+{
+    require_rest_ticket(ticket);
+    const auto& session=*state_.short_rest;
+    if(std::find(session.members.begin(),session.members.end(),id)==session.members.end())
+        throw std::runtime_error("Member did not complete this Short Rest");
+    if(ticket.revision==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Rest revision exhausted");
+    auto next=state_;
+    auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& value){return value.id==id;});
+    auto result=rules_->recover_rest_choice(member.vitals,member.character.sheet(),choice);
+    ++next.short_rest->ticket.revision;
+    if(next.rest_activity)advance_ticket(next.rest_activity->ticket);
+    state_=std::move(next);return result;
+}
 void CampaignParty::finish_short_rest(RestTicket ticket)
 {
     require_rest_ticket(ticket);auto next=state_;next.short_rest.reset();

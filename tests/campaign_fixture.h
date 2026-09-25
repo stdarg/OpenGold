@@ -7,6 +7,34 @@
 #include <regex>
 #include <stdexcept>
 namespace opengold::test {
+// Independent expected migration: insert the one fixed level-one Wizard grant
+// immediately after Spellcasting, preserving all other serialized bytes.
+inline std::string with_arcane_recovery_grants(std::string body){
+    const std::string marker="\"feature:spellcasting\" \"class:wizard\" 1 0";
+    const std::string soldier="\"feat:savage_attacker\" \"background:soldier\" 1 0 ";
+    std::size_t search=0;
+    while(true){
+        auto at=body.find(marker,search);if(at==std::string::npos)break;
+        if(at>=soldier.size()&&body.substr(at-soldier.size(),soldier.size())==soldier)at-=soldier.size();
+        if(at<3||body[at-1]!=' ')throw std::runtime_error("Missing frozen Wizard grant count");
+        auto begin=at-2;while(begin&&body[begin-1]>='0'&&body[begin-1]<='9')--begin;
+        std::istringstream input(body.substr(begin));unsigned count{};input>>count;
+        if(!input||count>32)throw std::runtime_error("Invalid frozen Wizard grant ledger");
+        std::vector<rules::FeatureGrant> grants;
+        for(unsigned i=0;i<count;++i){rules::FeatureGrant g;unsigned choices{};input>>std::quoted(g.id)>>std::quoted(g.source_id)>>g.level>>choices;
+            if(!input||choices>6)throw std::runtime_error("Invalid frozen Wizard grant");
+            for(unsigned n=0;n<choices;++n){std::string k,v;input>>std::quoted(k)>>std::quoted(v);g.choices.emplace(k,v);}grants.push_back(std::move(g));}
+        if(!input)throw std::runtime_error("Truncated frozen Wizard grants");const auto length=static_cast<std::size_t>(input.tellg());
+        if(std::none_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="feature:arcane_recovery";})){
+            const auto spellcasting=std::find_if(grants.begin(),grants.end(),[](const auto& g){return g.id=="feature:spellcasting";});
+            if(spellcasting==grants.end())throw std::runtime_error("Missing frozen Spellcasting grant");
+            grants.insert(std::next(spellcasting),{"feature:arcane_recovery","class:wizard",1,{}});
+        }
+        std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
+        const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
+    }
+    return body;
+}
 // Add independently specified fixed background packages to authored campaign
 // fixtures. Locate each draft's background and its following grant ledger;
 // never invoke current grant generation or the production save decoder.
@@ -127,7 +155,7 @@ inline std::string with_action_surge_grants(std::string body,std::initializer_li
         std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
         const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
     }
-    if(wanted!=eligible.end())throw std::runtime_error("Missing frozen Fighter ledger");return with_champion_grants(std::move(body));
+    if(wanted!=eligible.end())throw std::runtime_error("Missing frozen Fighter ledger");return with_arcane_recovery_grants(with_champion_grants(std::move(body)));
 }
 // Post-Action-Surge fixtures already carry the level-two eligibility evidence.
 inline std::string with_tactical_mind_grants(std::string body){return with_action_surge_grants(std::move(body),{},true);}
@@ -176,7 +204,7 @@ inline std::string with_initial_wizard_spell_grants(std::string body){
         std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
         const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
     }
-    return with_background_training_grants(with_legacy_cantrip_choices(std::move(body)));
+    return with_arcane_recovery_grants(with_background_training_grants(with_legacy_cantrip_choices(std::move(body))));
 }
 }
 #endif

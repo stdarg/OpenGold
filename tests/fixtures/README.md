@@ -697,3 +697,28 @@ SHA-256:
 - `campaign-v11-ammunition-before.ogs`: `39dc9d8edcc963f9d348caf3dd011c4bfca5c774a4ea0b79fe0bab28c82ffecb`
 - `combat-v19-ammunition-before.save`: `86b6047b71b79d8cf1d3d61bc79c66fd0b03efd62427de51a488486e70c8898d`
 - `combat-v19-ammunition-continued.save`: `e8783194ec041a919b68c7c94bf0785a1d996e1d3d97b2aaa63d1898d3759428`
+
+## Arcane Recovery baseline, actual 0.6.48 writer
+
+Captured with runtime `79558fd`, before Arcane Recovery changes. The guarded
+`opengold_arcane_recovery_tests --capture-prior-writer` uses ordinary Wizard
+creation/advancement to levels 1–4, spends first-level slots through actual Magic
+Missile commands (and a second-level slot at levels 3–4), and completes a Short
+Rest with its spending ticket retained. The test content adds a 1000-HP target
+to the ordinary pack so spell expenditure cannot prematurely end the encounter.
+The fixture reader uses that same deterministic content extension.
+
+The level-four combat capture reloads before saving its baseline, then advances
+the turn and casts another Magic Missile. Full continuation bytes, budgets/time
+and RNG are compared. These records contain no Arcane Recovery grant or use;
+future migration must preserve spent slots and earned rest eligibility. Do not
+regenerate with a new module version.
+
+SHA-256:
+
+- `campaign-arcane-level1.ogs`: `6e970542122b5672e82a41c2600fa10f2b4d0724e55d958bc889f326200df02a`
+- `campaign-arcane-level2.ogs`: `6ed6d09a334b55ca619a96b68f6b43031b9a4394a02f5acf79bbae9cf9e86b5e`
+- `campaign-arcane-level3.ogs`: `b293508cccc895d6aca9317e791d25269e223e3700e776be563e263a2d58e2a8`
+- `campaign-arcane-level4.ogs`: `fa4585d360444045c784dde88b8c7b20dc2198afda64565425aff0b7d42f4f14`
+- `combat-arcane-before.save`: `9147f2acb99105bf987c92e08c7feb9d0f0666af4174d68ea0c09d4ccab26f9f`
+- `combat-arcane-continued.save`: `5b15798e4b110d3eda130982dcfe793219c2047ab8475b4f364f619c8cdcd298`

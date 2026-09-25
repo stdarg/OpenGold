@@ -99,11 +99,13 @@ struct ResourcePool {
     Message label;
     unsigned remaining{}, capacity{}, short_rest_recovery{};
 };
+struct RestRecoveryChoice { std::string id; Message label; };
 struct RecoveryInfo {
     unsigned hit_die{}, hit_dice{}, hit_dice_max{};
     bool can_rest{};
     std::vector<ResourcePool> resources;
     TemporaryHitPoints temporary_hp;
+    std::vector<RestRecoveryChoice> choices;
 };
 struct HitDieResult {
     unsigned die{};
@@ -271,6 +273,7 @@ public:
     // The campaign must establish completed-rest eligibility before invoking
     // these resource operations. Each spend commits one die and its RNG draw.
     virtual void recover_short_rest(VitalState&,const CharacterSheet&) const;
+    [[nodiscard]] virtual Message recover_rest_choice(VitalState&,const CharacterSheet&,std::string_view) const;
     virtual HitDieResult spend_hit_die(VitalState&,const CharacterSheet&,std::uint64_t&) const;
     // Advances module-owned lasting effects for a group in deterministic order.
     virtual void elapse(std::span<Participant>, std::uint64_t, std::uint64_t&) const {}

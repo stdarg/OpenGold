@@ -266,7 +266,7 @@ void soldier_gaming(){
         const auto profile=rules->character_profile(sheet,{}).data;
         Encounter encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Soldier",0,{1,1},profile},{99,"vanguard","Enemy",1,{6,6}}}};
         const auto current=rules->create(encounter,13)->save();check(rules->restore(current)->save()==current,"Gaming Set current combat continuation is canonical");
-        replace(encounter.participants[0].character_profile,"PC28","PC22");rejects([&]{(void)rules->create(encounter,13);});
+        replace(encounter.participants[0].character_profile,klass.id=="wizard"?"PC32":"PC28","PC22");rejects([&]{(void)rules->create(encounter,13);});
         auto wrong=sheet;for(auto& grant:wrong.grants)if(grant.source_id==group_id)grant.source_id="background:criminal";
         rejects([&]{(void)rules->character_profile(wrong,{});});
         for(const std::vector<std::string> bad:{std::vector<std::string>{"dice","dice"},{"dice","dragonchess"},{"flute"},{"thieves_tools"},{"chess"}}){auto broken=d;broken.training[group_id]=bad;rejects([&]{(void)hero(broken);});}
@@ -637,7 +637,7 @@ void remaining_backgrounds(){
             d.training={{"class:rogue",{first,"acrobatics","perception","persuasion"}},{"class:rogue:expertise",{first,second}}};sheet=hero(d).sheet();
             check(skill(sheet,first).bonus==7&&skill(sheet,first).sources.size()==3&&skill(sheet,second).bonus==(acolyte?7:6),"Rogue Expertise accepts background skills; overlapping class and background grants do not stack");
         }
-        auto old=rules->character_profile(sheet,{}).data;replace(old,"PC28","PC15");
+        auto old=rules->character_profile(sheet,{}).data;replace(old,klass.id=="wizard"?"PC32":"PC28","PC15");
         rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
     }
     const auto bytes=fixture("campaign-v11-backgrounds-before.ogs");
