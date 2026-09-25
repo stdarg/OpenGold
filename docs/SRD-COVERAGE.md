@@ -13,6 +13,23 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Wizard Scholar
+
+Runtime `4ce541a` (SRD module 0.6.50) completes
+[#100](https://github.com/stdarg/OpenGold/issues/100) through Wizard levels 2–4:
+choose exactly one proficient skill from the six SRD candidates, gain sourced
+Expertise, and retain it through advancement, combat and persistence. SCHOLAR-1's
+level-two dropdown and old-save Review Training path preserve prior selections,
+wounds and expenditure. Missing historical choices remain pending.
+
+The [delivery packet](SCHOLAR.md) records source/acceptance, actual 0.6.49 writer
+fixtures, conditional campaign15/PC33 compatibility, commands and limitations.
+51 native/tool checks and 26 Godot runtime checks pass; Scholar and existing
+Review Training UI flows pass, as do complete UI-save comparisons. Main EN/ES and
+demo EN renders/input pass at both supported sizes; 907 translations validate.
+Measured freeze-to-verified-runtime-commit: 29m36s, including approval wait/builds.
+Ritual Adept, Evoker and broader Wizard integration remain separate requirements.
+
 ## Wizard Arcane Recovery
 
 Runtime `642c7a1` (SRD module 0.6.49) completes

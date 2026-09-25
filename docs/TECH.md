@@ -882,3 +882,11 @@ checks that Core follows the injected implementation. Existing SRD activity and
 save fixtures verify that this separation preserves game behavior. Original game
 content IDs, art mappings and authored demo parties remain campaign content;
 they are not rules calculations.
+
+
+Wizard Scholar uses generic advancement training groups with acquired-level
+metadata. Core stores those choices in advancement history (conditional campaign
+format 15) and replays isolated candidates for Review Training, preserving live
+vitals. The static SRD module owns eligibility, level-two source validation and
+Expertise arithmetic; PC33 validates combat provenance. Godot presents the
+approved dropdown/checkbox controls without SRD decisions. See [Scholar](SCHOLAR.md).

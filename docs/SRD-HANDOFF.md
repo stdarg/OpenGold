@@ -57,15 +57,23 @@ The user explicitly authorized continuation at 19:42 UTC. The goal tool still
 reports BLOCKED from the resolved AR-1 question; that stale status is not a user
 pause or a reason to request resumption again. Continue authorized work.
 
-## Active batch — #100 Wizard Scholar
+## Latest completed batch — #100 Wizard Scholar
 
-[Scholar packet](SCHOLAR.md) freezes acceptance/exclusions and pending SCHOLAR-1
-(visible question 1). Branch `codex/srd-scholar`; requested Astra/high retained
-for advancement-history and old-save choice migration, actual settings not
-independently verified. No switch/agents/new tasks. Frozen 19:57:47 UTC;
-checkpoint 20:57:47, maximum 21:27:47. No runtime changes or live build yet.
-Next: actual 0.6.49 writer fixtures, rules/Core integration; dependent UI awaits
-the recorded layout decision. The previously completed #99 is not new WIP.
+Runtime `4ce541a`, module 0.6.50, branch `codex/srd-scholar`. SCHOLAR-1 approved
+and implemented. [Coverage](SRD-COVERAGE.md#wizard-scholar) is the completion
+record; [packet](SCHOLAR.md) holds source, acceptance, compatibility, commands,
+limitations and timing. All 51 native/tool and 26 Godot runtime checks pass.
+Main EN/ES/demo EN Scholar flows/renders, existing Review Training flow and exact
+UI-save comparisons pass. 907 translations validate. No live build/test remains.
+Actual 0.6.49 fixtures retained; conditional campaign15/PC33 records only selected
+advancement training. Core remains generic; SRD owns the mechanics.
+
+Frozen 19:57:47 UTC; verified runtime committed 20:27:23 (29m36s including approval
+wait/builds), before the original 20:57:47 checkpoint. One original requirement,
+no new issues/scope/agents/tasks or model switch. Requested Astra/high retained;
+actual settings unverified. Runtime is committed; finish documentation push and
+verify #100 closure before selecting the next frozen batch. The standing goal
+remains authorized; do not independently pause at this issue boundary.
 
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
