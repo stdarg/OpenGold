@@ -13,13 +13,19 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
-## In progress: Wizard Arcane Recovery (#99)
+## Wizard Arcane Recovery
 
-Native rules/Core support is implemented for attained Wizard levels 1–4, with
-51/51 native/tool checks passing. The [delivery packet](ARCANE-RECOVERY.md)
-records exact scope, old-writer fixtures, persistence and test evidence. The new
-Rest controls await AR-1 approval; game/demo UI and rendered verification remain
-incomplete. **#99 remains open; this is not a playable-feature completion.**
+Runtime `642c7a1` (SRD module 0.6.49) completes
+[#99](https://github.com/stdarg/OpenGold/issues/99) through Wizard levels 1–4:
+legal expended-slot allocations after Short Rest, one use per Long Rest, exact
+transactional expenditure and current/historical save continuation. AR-1's
+shared Rest dropdown/button is keyboard accessible and preserves camp/inn saves.
+
+The [delivery packet](ARCANE-RECOVERY.md) contains the source, fixed acceptance,
+prior-writer provenance, architecture and measured timing. Final verification:
+51 native/tool tests; 26 Godot runtime checks (43 entries with prerequisites);
+game EN/ES and demo EN renders at 1120×800 and 1920×1080; 902 translations valid.
+Other Wizard features and later progression remain separate requirements.
 
 ## Approved exception: unlimited ranged ammunition
 

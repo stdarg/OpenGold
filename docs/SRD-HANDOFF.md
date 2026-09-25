@@ -39,22 +39,22 @@ BLOCKED result concerned AMMO-1/AMMO-2, which this answer now resolves; do not
 interpret it as a user pause or require another resume instruction. No tool
 operation can set that tracker active directly. Keep the full goal incomplete.
 
-## Active batch — #99 Arcane Recovery
+## Latest completed batch — #99 Arcane Recovery
 
-Wizard Arcane Recovery native implementation is in progress; ordinary Wizard progression supports
-levels 1–4. [Frozen packet](ARCANE-RECOVERY.md) owns acceptance/exclusions, source,
-checks and pending AR-1 (visible question 1). Branch `codex/srd-arcane-recovery`;
-requested Astra/high retained, no actual switch/agents/new tasks. Start
-2026-09-25 18:57:23 UTC; checkpoint 19:57:23, maximum 20:27:23. Rules/Core implementation and actual 0.6.48 fixtures are present.
-Native runtime/test revision `bc948e7` (module 0.6.49) is committed on the current
-branch. Final native/tool regression passes 51/51; localization validates 901 messages.
-Both game/demo extensions rebuilt successfully; the existing shared rest-control
-runtime checks pass (main CTest 1/1 and demo success marker), completed 19:26:56
-UTC. No build/test handle remains live. AR-1 is the remaining input dependency:
-no dependent UI controls implemented. Next: approved UI integration and EN/ES
-render/input verification before closing #99. The native packet records scope,
-verification and measured timing; this is not a completed playable feature.
-Do not re-investigate the closed #57.
+Runtime/test revision `642c7a1` (SRD module 0.6.49), branch
+`codex/srd-arcane-recovery`. AR-1 approved and implemented. The
+[coverage ledger](SRD-COVERAGE.md#wizard-arcane-recovery) is the completion record;
+[packet](ARCANE-RECOVERY.md) holds acceptance, commands, prior-writer proof,
+limitations and measured timing. 51 native/tool and 26 Godot runtime checks pass;
+all six game/demo locale/size visual runs pass. No live build/test handle remains.
+One original requirement delivered, no new issues or expanded scope. Requested
+Astra/high retained; actual configuration not independently verified, no switch.
+Verification ended 19:52:41 UTC, 55m18s from the original batch start including
+approval wait. Next: push delivery, verify #99 closure, then select the next
+bounded existing batch. Do not ask again for AR-1 or reopen ammunition tracking.
+The user explicitly authorized continuation at 19:42 UTC. The goal tool still
+reports BLOCKED from the resolved AR-1 question; that stale status is not a user
+pause or a reason to request resumption again. Continue authorized work.
 
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and

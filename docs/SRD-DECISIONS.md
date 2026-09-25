@@ -78,15 +78,15 @@ inventory records. This is an intentional SRD exception, not an unfinished
 ammunition simulation. Thrown weapons still use their actual weapon inventory;
 other weapon properties remain separate. See [ammunition](AMMUNITION.md).
 
-## Pending — do not implement dependent choices
-
-**AR-1 — PENDING, #99, 2026-09-25, visible question 1:** add Arcane Recovery
+**AR-1 — APPROVED, #99, 2026-09-25, visible question 1:** add Arcane Recovery
 dropdown and Recover slots in existing Rest dialog above Result, shortening the
 scrollable Info area. Selected eligible Wizard sees legal combinations after
 completed Short Rest. Use immediately commits recovered slots and spends the
 once-per-Long-Rest use; Finish/Escape without use preserves it. Keyboard support,
 existing camp/inn saves preserve committed state. Applies to shared main/demo
-rest dialog. Glass alert played. [Frozen packet](ARCANE-RECOVERY.md).
+rest dialog. User approved visible question 1 and instructed continuation on 2026-09-25 at 19:42 UTC. [Frozen packet](ARCANE-RECOVERY.md).
+
+## Pending — do not implement dependent choices
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |

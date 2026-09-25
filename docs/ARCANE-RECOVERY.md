@@ -1,124 +1,102 @@
-# Arcane Recovery — #99 delivery packet
+# Arcane Recovery — #99
 
-## Frozen batch
+## Delivered outcome
 
-- Authorization: standing SRD goal. One owner/batch, #99 only, branch
-  `codex/srd-arcane-recovery`. No new issues, agents or tasks.
-- Current behavior: Wizards have no Arcane Recovery implementation. Ordinary
-  Wizard creation/advancement already reaches levels 1–4; existing Short Rest
-  recovery controls and camp/inn saves provide the integration path.
-- Player outcome: at a completed Short Rest, an eligible Wizard may choose
-  spent spell slots with combined levels at most half Wizard level rounded up.
-  Spend one Arcane Recovery use only on a valid nonempty choice; restore the use
-  on Long Rest. Preserve resources, wounds, training and equipment otherwise.
-- Acceptance: attained Wizard levels 1–4, fixed source grant, capacities and
-  missing-slot limits, Short Rest eligibility/ticket validation, once-per-Long-Rest
-  use, no partial/repeated transaction exploits, rejected-command atomicity,
-  current/old campaign and combat continuation, rest interruption benefits and
-  save/load. Actual main/demo UI, keyboard, EN/ES at both supported sizes.
-- Exclusions: Scholar, Ritual Adept, Evoker, additional spell catalogs,
-  spellbook/preparation redesign, other classes' recovery features and later
-  level/multiclass progression. No player combat saving.
-- Reuse: Q29–31 rest dialog and transactional Short Rest spending; existing
-  resource pools, SRD grant provenance and opaque vitals. Core owns transactions
-  and clock; statically linked SRD library owns eligibility, selection outcomes
-  and resource arithmetic; shared Godot rest dialog presents choices.
-- Routing: requested `gpt-6-astra` / `high`, retained for rest-state/persistence
-  interactions. Actual configuration not independently verified; no switch.
-  Escalate an out-of-tier decision or two unsuccessful same-failure fixes.
-- Verification: capture actual 0.6.48 writer evidence before runtime changes;
-  focused feature/rest/save checks, final native regression, affected rest UI
-  and rendered main/demo EN/ES. Never regenerate frozen old saves with new code.
-- Timing: investigation began 2026-09-25 18:57:23 UTC; checkpoint 19:57:23,
-  maximum 20:27:23. Retain these times across questions and context resets.
+Runtime/test revision `642c7a1`, SRD module 0.6.49, implements Wizard Arcane
+Recovery through attained levels 1–4. After a completed Short Rest, the selected
+eligible Wizard can recover expended slots using the approved dropdown and
+Recover slots button. A valid nonempty choice spends the entire feature use;
+Long Rest restores it. Finish/Escape without use preserves availability.
 
-## Source
+The standing SRD goal authorized this bounded batch; AR-1 approved its new shared
+game/demo controls on 2026-09-25 at 19:42 UTC. One owner, #99 only, no new issues,
+agents or tasks. No player combat saving. Scholar, Ritual Adept, Evoker, new spell
+catalogs/book/preparation systems, other classes and levels above four remain
+outside this delivery. This is not Wizard class completion or full-goal completion.
+
+## Rules and architecture
 
 [SRD 5.2.1, printed page 78](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf):
-level-one Wizard feature, recovery chosen when a Short Rest finishes; combined
-slot levels at most half Wizard level rounded up, no slot of level six or higher;
-one use per Long Rest. Thus supported levels 1–2 recover at most one level-one
-slot; levels 3–4 may recover one/two level-one slots or one level-two slot.
-Using a smaller legal combination still consumes the feature's use.
+level-one Wizard feature; on finishing a Short Rest, choose expended slots with
+combined levels at most half Wizard level rounded up, never level six or higher;
+one use per Long Rest. Supported levels 1–2 can recover one level-one slot;
+levels 3–4 can recover one/two level-one slots or one level-two slot. Choosing
+less than the available budget still consumes the use.
 
-## Pending control decision — AR-1
+The statically linked SRD library owns fixed grant provenance, eligibility,
+legal opaque choice IDs, slot arithmetic, resource capacity/recharge and encoded
+continuation. Core validates the completed-rest ticket and member eligibility,
+then commits an owned candidate party state atomically. Core contains no Wizard
+or spell-slot arithmetic. Godot displays rules-provided options and submits the
+chosen ID; both applications use `rest_dialog_impl.h`.
 
-Visible question 1 proposes a labeled Arcane Recovery dropdown and Recover slots
-button in the existing Rest window, above Result, shortening the scrollable Info
-area. Show legal combinations for the selected eligible Wizard after Short Rest;
-commit slots/use immediately on Recover slots. Finish/Escape without use preserves
-the use. Keyboard controls and existing camp/inn saving. Current window is 720×640;
-Info occupies y274–482, Result y490–560, action buttons y580–620, so the proposed
-row fits within that existing window by shortening Info. Shared main/demo code.
-This proposal is not approval. Sound played before asking. No dependent UI edits.
+AR-1's row appears above Result, shortening the scrollable Info area only while
+shown. Non-Wizards have no row. No legal allocation or a spent use disables both
+controls. Standard Godot controls preserve keyboard access; the result states
+what was restored. Existing camp/inn saves retain both unused eligibility and
+committed expenditure. There are no combat saving controls.
 
-## Native implementation (UI pending)
+## Persistence and acceptance evidence
 
-The SRD library now supplies the fixed grant, legal opaque recovery choices,
-slot allocation, once-per-Long-Rest resource, and validation. Core validates the
-completed Short Rest ticket and member eligibility, then commits a candidate
-party state atomically. It contains no Wizard or spell-slot arithmetic.
+PC32 adds the fixed grant; SRD9 records spent Arcane Recovery. Combat format 20
+retains the use alongside ordinary or physical inventory mode. Unspent states
+keep previous compact encodings. Old campaigns gain only the justified fixed
+grant; old in-flight combat preserves recorded access and exact continuation.
+Actual 0.6.48 writer fixtures cover earned Wizard levels 1–4 and combat before/
+after spell expenditure. Their bytes were not regenerated by the new writer;
+[fixture provenance and hashes](../tests/fixtures/README.md) are unchanged.
 
-Module 0.6.49 adds PC32 grant provenance, SRD9 spent-use vitality and combat
-format 20. Unspent states preserve previous compact encodings. Real 0.6.48
-campaign fixtures cover attained levels 1–4; actual pre-change combat bytes prove
-unchanged old continuation. Their provenance and hashes are in
-[fixture documentation](../tests/fixtures/README.md). No frozen fixture was
-regenerated with the new writer.
+| Requirement | Evidence |
+| --- | --- |
+| Starting grant and attained levels 1–4 | Feature-grant tests, ordinary advancement, four actual prior-writer campaigns, newly created level-three Wizard in the real UI. |
+| Exact choices/costs/recharge | `arcane_recovery_tests.cpp`: each supported allocation at every level, over-budget/full-pool rejection, whole-use cost, Short/Long Rest differences. |
+| Transaction safety | Stale tickets, nonmembers, invalid IDs, repeated use and sleeping eligibility reject without changing campaign bytes; HP, gear, Hit Dice, time and RNG remain unchanged. |
+| Campaign/combat persistence | Canonical save/reload, ordinary level-four advancement, both combat inventory modes and exact next-cast continuation preserve expenditure. Old identities cannot forge new grants/resources. |
+| Other rest/effect interactions | Qualified interrupted Long Rest benefits work; Ray of Frost still expires in SRD9 without refreshing the feature or consuming RNG. |
+| Player path | Shared runtime check creates/advances a Wizard, completes rest, saves/reloads before and after recovery, uses keyboard dropdown/button, declines with Escape, rejects repeat use, and verifies non-Wizard visibility. |
+| Layout/localization | Game English/Spanish and the existing English demo rendered at 1120×800 and 1920×1080; choices and result states inspected. Demo localization remains its existing English-only presentation. |
 
-`arcane_recovery_tests.cpp` covers legal/over-budget choices, stale tickets,
-nonmembers, duplicate use, full pools, sleeping eligibility, rejected atomicity,
-Long/Short Rest recharge differences, advancement, save/reload, combat with and
-without physical inventory, and interrupted Long Rest benefits. A specific
-regression ensures lasting effects continue to expire in SRD9 vitality without
-refreshing Arcane Recovery. Old identities reject new grants/resource records.
+## Final verification
 
-Initial feature/grant/rest checks passed (3/3); the expanded feature test passed.
-Final native/tool regression passes 51/51; this is not a completed playable delivery.
-AR-1 remains pending: no new UI controls have been implemented and #99 stays open.
+All build inputs were finished before their builds. Final tested revision:
+`642c7a1` (native foundation `bc948e7`).
 
-| Phase | Observed UTC | Evidence |
-| --- | --- | --- |
-| Batch start | 18:57:23 | Frozen scope and pending AR-1; original checkpoint retained. |
-| Native review after context restoration | 19:14:39 onward | Initial checks verified; additional effect-timer regression added and passed. |
-| Native regression build | 19:16–19:21 UTC (minute precision) | All 49 native test targets built. |
-| Regression corrections and verification | 19:21–19:23:42 UTC | Six previous-profile assertions updated; two expected old-save migrations include the exact fixed grant. Final 51/51 pass. |
-
-Earlier capture/implementation phase endpoints were not recorded precisely;
-no reconstructed durations or token-saving claim. The checkpoint remains
-19:57:23 UTC, maximum 20:27:23 UTC.
-
-Verified commands on native runtime/test revision `bc948e7` (module 0.6.49):
-
-- `cmake --build build/mac-check --target <49 native test targets> -j6`
-  (targets selected from CTest executable paths; no Godot packaging).
-- Rebuilt each changed test target after correcting expected profile versions
-  and exact historical grant migrations.
+- Rebuilt all 49 native test targets and `opengoldbox_test_project` in
+  `build/mac-check`; rebuilt `opengold_godot` in `build/sprite-demo`.
 - `ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`
-  — 51/51 pass; final log `/tmp/arcane-native-final.log`, 1.49 seconds.
-- `python3 tools/localization.py --check` — 901 English/Spanish messages valid.
-- `git diff --check` — clean. Fixed old-writer SHA-256 hashes rechecked unchanged.
+  — **51/51 pass**, 13.29 seconds, `/tmp/arcane-integrated-native.log`.
+- `ctest --test-dir build/mac-check --output-on-failure -R '^opengold_godot_' --fixture-exclude-setup godot_project`
+  — **26 runtime checks pass**, 43/43 entries including setup/native prerequisites,
+  38.57 seconds, `/tmp/arcane-integrated-godot.log`.
+- Six graphical runs of the shared `--rest-check`, with game EN/ES and demo EN
+  at both sizes, each returned success and the expected completion marker.
+  Captures: `/tmp/arcane-ui-captures/{game-en,game-es,demo-en}-{1120,1920}/{70,80}.png`;
+  logs: `/tmp/arcane-render-*.log`.
+- `python3 tools/localization.py --check`: **902** English/Spanish messages valid.
+- `git diff --check`: clean. Scope, RAII and static-library boundary reviewed.
 
-Native verification ended 19:23:42 UTC, 26m19s after the original batch start.
-No issue closed; player controls/rendering are still pending AR-1. No live build
-or test handle remains. No model switch, agents, new issues or expanded scope.
+Godot editor import returned success with window/debugger/timer diagnostics;
+subsequent runtime and graphical checks passed. Existing slot-pool labels in the
+Spanish details remain untranslated; new recovery labels/options/result are
+translated. This pre-existing localization gap is not new scope for this batch.
 
-## Existing UI integration check — 2026-09-25 19:25–19:26:56 UTC
+## Timing and routing
 
-Runtime `bc948e7` also builds in both applications. The existing shared rest
-controls pass against the freshly linked extensions:
+Requested `gpt-6-astra` / `high` retained for rest/persistence interactions; actual
+configuration not independently verified, no model change or delegation.
 
-- Main: `cmake --build build/mac-check --target opengoldbox_test_project -j6`,
-  then `ctest --test-dir build/mac-check --output-on-failure -R '^opengold_godot_rest$' --fixture-exclude-setup godot_project`
-  — 1/1 passed, 0.77 seconds.
-- Demo: `cmake --build build/sprite-demo --target opengold_godot -j6`, then
-  `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD OPENGOLD_LANG=en /Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path demos/godot res://scenes/rolf_tour.tscn -- --rest-check`
-  — exit 0 and expected rest-controls success marker.
+| Phase | Observed UTC on 2026-09-25 | Outcome |
+| --- | --- | --- |
+| Batch start | 18:57:23 | Frozen scope and pending AR-1; checkpoint 19:57:23, maximum 20:27:23. |
+| Native verification | By 19:23:42 | 51/51 pass; exact prior-profile/grant expectations updated. Effect-timer omission caught and fixed. |
+| Existing application compatibility | 19:25–19:26:56 | Both builds and previous shared rest controls pass. |
+| Input dependency | Native checks complete until approval at 19:42 | Remaining UI required AR-1; no unrelated batch started. |
+| Approved UI integration | 19:42:20–19:52:41 | Controls, keyboard/save checks, final regressions and six visual runs complete. |
 
-Logs: `/tmp/arcane-main-build.log`, `/tmp/arcane-demo-build.log`,
-`/tmp/arcane-main-rest.log`, `/tmp/arcane-demo-rest.log`. Main editor import
-returned success but emitted window/debugger/timer diagnostics; the subsequent
-runtime rest test passed. No new Arcane Recovery controls or render acceptance
-are claimed by these existing-control checks. No build/test remains live.
-AR-1 is the remaining input dependency; do not begin another batch or implement
-its dependent UI without an answer. The full SRD goal remains active/incomplete.
+Acceptance verification ended 55m18s after the original start, including time
+awaiting approval. Exact earlier capture/implementation phase endpoints were
+not recorded; no invented phase durations or token-saving claim. Keyboard test
+routing needed two corrections: existing popup tests route through the root
+viewport. No production control workaround or reduced acceptance was used.
+One original requirement delivered; no new issues or expanded scope. Continue
+the full SRD goal after delivery rather than treating this issue as completion.
