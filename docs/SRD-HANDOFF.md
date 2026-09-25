@@ -71,9 +71,24 @@ advancement training. Core remains generic; SRD owns the mechanics.
 Frozen 19:57:47 UTC; verified runtime committed 20:27:23 (29m36s including approval
 wait/builds), before the original 20:57:47 checkpoint. One original requirement,
 no new issues/scope/agents/tasks or model switch. Requested Astra/high retained;
-actual settings unverified. Runtime is committed; finish documentation push and
-verify #100 closure before selecting the next frozen batch. The standing goal
-remains authorized; do not independently pause at this issue boundary.
+actual settings unverified. Runtime `4ce541a` and evidence `6668a78` are pushed to
+both the feature branch and main. #100 is verified CLOSED at 20:29:00 UTC
+(31m13s from freeze to closure). The goal tool now confirms ACTIVE; prior BLOCKED
+references above are historical. Do not request another resume or pause at this
+issue boundary.
+
+Next-batch preflight (no new batch or runtime edits yet): B11 Evoker #101 is open.
+Official SRD 5.2.1 p.82 requires Evocation Savant spellbook choices plus Potent
+Cantrip. The current Wizard book catalog in `spell_access.cpp` has only Magic
+Missile, Scorching Ray and Blindness; Magic Missile is an automatic starting entry.
+Do not silently add a spell catalog to #101 or claim its spell grants complete.
+B07 #97/#37 remain open and own spellbook learning/copying/preparation; inspect
+that shared player workflow and primary p.77–78 rules before freezing the next
+batch. Existing cantrip UI approvals do not approve a new full spellbook layout.
+The grouping explicitly says to reuse B07 for Wizard completion. No new issues
+were created during preflight. #168/#170 and #167/#169 also remain open; their
+named source/target/component/campaign gaps prevent treating them as already
+complete from combat damage/healing alone.
 
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
