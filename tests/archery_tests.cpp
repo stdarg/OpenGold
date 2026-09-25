@@ -1,6 +1,7 @@
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
+#include "campaign_fixture.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -88,13 +89,13 @@ void persistence(){
     auto rules=module();auto upgrade=[&](std::string s){replace(s,"0.6.27",rules->identity().version);return s;};
     const auto old=read(root/"tests/fixtures/campaign-v11-archery-before.ogs");CampaignParty p(module());p.restore(decode_campaign(old,*srd5::character_rules(),*rules,"archery",nullptr).party);
     const auto now=encode_campaign(p,nullptr,"archery");auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};
-    check(body(now)==body(upgrade(old)),"Actual prior campaign changes only module identity, preserving choice, wound and resources");
+    check(body(now)==test::with_tactical_mind_grants(body(upgrade(old))),"Actual prior campaign changes only module identity and fixed Tactical Mind grant, preserving choice, wound and resources");
     const auto old_combat=read(root/"tests/fixtures/combat-v13-archery-before.save");check(rules->restore(old_combat)->save()==upgrade(old_combat),"Actual PC16 combat retains exact recipe, state and RNG");
     auto profile=rules->character_profile(leveled().sheet(),std::array<std::string,1>{"shortbow"}).data;
     auto encounter=Encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Archer",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}};
     auto mislabeled=rules->create(encounter,13)->save();replace(mislabeled,rules->identity().version,"0.6.27");rejects([&]{(void)rules->restore(mislabeled);});
-    auto wrong_mask=profile;replace(wrong_mask,"PC28 4 4 ","PC28 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
-    replace(profile,"PC28","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
+    auto wrong_mask=profile;replace(wrong_mask,"PC30 4 4 ","PC30 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
+    replace(profile,"PC30","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
     auto saved_identity=rules->identity();saved_identity.version="0.6.27";const auto sheet=leveled().sheet();rejects([&]{rules->validate_saved_grants(saved_identity,sheet,sheet.grants);});
 }
 void freeze(){

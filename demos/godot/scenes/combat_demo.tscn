@@ -166,3 +166,43 @@ visible = false
 [node name="PickUp" type="Button" parent="."]
 visible = false
 text = "Pick up"
+
+[node name="TacticalMind" type="Window" parent="."]
+title = "Tactical Mind"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(640, 340)
+
+[node name="Background" type="ColorRect" parent="TacticalMind"]
+offset_right = 640.0
+offset_bottom = 340.0
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="Label" parent="TacticalMind"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 616.0
+offset_bottom = 263.0
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Use" type="Button" parent="TacticalMind"]
+offset_left = 24.0
+offset_top = 280.0
+offset_right = 312.0
+offset_bottom = 320.0
+text = "Use Tactical Mind"
+
+[node name="Skip" type="Button" parent="TacticalMind"]
+offset_left = 328.0
+offset_top = 280.0
+offset_right = 616.0
+offset_bottom = 320.0
+text = "Keep failed check"
+
+
+[node name="Stabilize" type="Button" parent="."]
+visible = false
+text = "Stabilize"

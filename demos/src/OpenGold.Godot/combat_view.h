@@ -33,6 +33,7 @@ private:
     std::map<opengold::rules::EntityId,godot::Ref<godot::ImageTexture>> art_;
     godot::Rect2 board_rect_;
     std::string mode_{"move"},error_;
+    opengold::rules::EntityId aid_target_{};
     double ai_delay_{};
     bool ready_{},checking_{},capture_{},captured_{},check_slums_{},checked_input_{};
     bool party_check_{},defeat_check_{},expedition_check_{};

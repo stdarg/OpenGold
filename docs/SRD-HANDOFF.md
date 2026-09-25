@@ -41,12 +41,11 @@ the full objective complete.
 - Earlier safe recovery delivery (#30/#193, #192 already closed) remains recorded
   in [coverage](SRD-COVERAGE.md) and [rest resources](REST-RESOURCES.md).
 
-## Selected next batch — #32 / #87 (awaiting controls)
+## Active batch — #32 / #87
 
 - Medicine stabilization/Tactical Mind packet: [bounded acceptance and audit](MEDICINE-TACTICAL-MIND.md).
-  Q38/Q39 remain PENDING. They were resurfaced with Glass audio and a new widget
-  on goal continuation; the visible final response includes both questions.
-  Do not implement their proposed controls without answers.
+  Q38/Q39 APPROVED in the live reply after the audio/widget refresh. Implementation
+  is active on `codex/srd-medicine-tactical-mind`; no further controls question is pending.
 - Rules/check-path audit and actual prior-writer capture are complete. The
   0.6.42/PC28 `campaign-v11-mind-before.ogs`, `combat-v15-mind-before.save` and
   `combat-v15-mind-continued.save` fixtures and Action Surge regressions preserve
@@ -71,5 +70,5 @@ Questions must be numbered, visible in the conversation, and preceded by
 plain visible final text. Never re-ask recorded approvals. Player saving remains
 camping/inn only, never combat. No pending question remains for Chill Touch.
 
-Current approval wait is new after goal resumption; do not carry forward the old
-Q40 blocked streak. No live build/test, and no new functionality claimed this turn.
+The Q38/Q39 approval wait is resolved. Preserve the original batch clock and
+record implementation/verification phases; do not carry forward the Q40 blocker.

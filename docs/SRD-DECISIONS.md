@@ -52,12 +52,17 @@ question widget, and preceded by the audible Glass alert.
 | --- | --- | --- |
 | Q40 | #165 Chill Touch natural recovery | APPROVED by “40. Yes”: if the already-rolled Stable recovery deadline arrives during healing prevention, defer its 1 HP recovery until prevention expires without another d4-hour roll; damage still cancels Stable/recovery. |
 
+## Medicine and Tactical Mind controls
+
+| ID | Issue / decision | Approved scope |
+| --- | --- | --- |
+| Q38 | #32 Medicine stabilization control | Stabilize beside Wake ally in a compacted Cunning Action row; highlight living unstable creatures at 0 HP within 5 feet/clear path, including enemies; Help Action and DC 10 Wisdom (Medicine), training applies; success stabilizes without healing/waking, failure still spends Action; keyboard, Escape cancel and disabled illegal use. APPROVED 2026-09-25: user answered Yes / Approve Tactical Mind dialog. |
+| Q39 | #87 Tactical Mind decision | centered eligible-failed-check dialog shows roll/modifier/total/DC/Second Wind uses; Use Tactical Mind or Keep failed check; add 1d10, no healing, spend Second Wind only on resulting success; original Action stays spent, other actions wait, keyboard, no combat-save controls. APPROVED 2026-09-25: user answered Yes / Approve Tactical Mind dialog. |
+
 ## Pending — do not implement dependent choices
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
-| Q38 | #32 Medicine stabilization control | Asked with successful audio and visible widget: Stabilize beside Wake ally in a compacted Cunning Action row; highlight living unstable creatures at 0 HP within 5 feet/clear path, including enemies; Help Action and DC 10 Wisdom (Medicine), training applies; success stabilizes without healing/waking, failure still spends Action; keyboard, Escape cancel and disabled illegal use. Pending. |
-| Q39 | #87 Tactical Mind decision | Asked with Q38: centered eligible-failed-check dialog shows roll/modifier/total/DC/Second Wind uses; Use Tactical Mind or Keep failed check; add 1d10, no healing, spend Second Wind only on resulting success; original Action stays spent, other actions wait, keyboard, no combat-save controls. Pending. |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
 | Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |

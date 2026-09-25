@@ -1,4 +1,5 @@
 #include "combat_fixture.h"
+#include "campaign_fixture.h"
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "damage.h"
@@ -209,7 +210,7 @@ void gwf_prior_continuation(){
     auto current=[&](std::string bytes){const auto at=bytes.find("0.6.29");check(at!=bytes.npos,"Prior writer identity exists");bytes.replace(at,6,rules->identity().version);return bytes;};
     const auto campaign=read(root/"campaign-v11-gwf-before.ogs");CampaignParty party(module());party.restore(decode_campaign(campaign,*srd5::character_rules(),*rules,"gwf-fixture",nullptr).party);
     auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};
-    check(body(encode_campaign(party,nullptr,"gwf-fixture"))==body(current(campaign)),"Prior campaign changes only module identity");
+    check(body(encode_campaign(party,nullptr,"gwf-fixture"))==test::with_tactical_mind_grants(body(current(campaign))),"Prior campaign changes only module identity and fixed Tactical Mind grant");
     auto combat=rules->restore(read(root/"combat-v14-gwf-first.save"));check(combat->save()==current(read(root/"combat-v14-gwf-first.save")),"Actual critical first-roll choice restores exactly");
     auto act=[&](std::string_view verb){for(const auto& c:combat->legal_commands())if(c.verb==verb){check(combat->submit(c),"Prior continuation command accepted");return;}throw std::runtime_error("Missing continuation command");};
     act("savage_use");check(combat->save()==current(read(root/"combat-v14-gwf-second.save")),"Second critical damage roll matches the pre-extraction writer's RNG and result");

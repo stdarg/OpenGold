@@ -143,7 +143,7 @@ void death_save_boundary(){
         }
     }
 }
-void persistence(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"chill_touch",2);auto saved=c->save();auto forged=saved;forged.replace(forged.find("0.6.44"),6,"0.6.42");rejects([&]{(void)rules->restore(forged);});check(c->save()==saved,"Invalid restore preserves session");
+void persistence(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"chill_touch",2);auto saved=c->save();auto forged=saved;forged.replace(forged.find("0.6.45"),6,"0.6.42");rejects([&]{(void)rules->restore(forged);});check(c->save()==saved,"Invalid restore preserves session");
     for(const auto* klass:{"wizard","sorcerer","warlock"}){CampaignParty party(module());auto h=hero(klass);const auto id=party.add_pc(h);auto stage=party.checkpoint();stage.roster[0].vitals=blocked_state(*rules,h,1);party.restore(stage);auto bytes=encode_campaign(party,nullptr,"chill");CampaignParty copy(module());copy.restore(decode_campaign(bytes,*srd5::character_rules(),*module(),"chill",nullptr).party);check(encode_campaign(copy,nullptr,"chill")==bytes,"Campaign grant and effect round trip");auto actors=copy.participants();std::uint64_t random=17;rules->elapse(actors,8999,random);check(fx::healing_blocked(effects(*actors[0].state)),"Campaign expiry not early");rules->elapse(actors,1,random);check(!fx::healing_blocked(effects(*actors[0].state))&&random==17,"Exact outside combat expiry, no RNG");(void)id;}
 }
 void earned_lifecycle(){
@@ -202,7 +202,7 @@ void stable_continuation(){
         {{1,"campaign-character","Patient",0,{1,1},rules->character_profile(h.sheet(),{}).data,pending},
          {2,"vanguard","Companion",0,{3,1}},{99,"vanguard","Enemy",1,{6,1}}}},13);
     check(unit(*c).hit_points==0,"Combat retains due recovery while blocked");
-    auto copy=rules->restore(c->save());auto checkpoint=c->save();checkpoint.replace(checkpoint.find("0.6.44"),6,"0.6.43");rejects([&]{(void)rules->restore(checkpoint);});
+    auto copy=rules->restore(c->save());auto checkpoint=c->save();checkpoint.replace(checkpoint.find("0.6.45"),6,"0.6.43");rejects([&]{(void)rules->restore(checkpoint);});
     const auto random=rng(*c);
     for(unsigned turns=0;turns<8&&unit(*c).hit_points==0;++turns){
         act(*c,"end");act(*copy,"end");check(c->save()==copy->save(),"Pending combat recovery continues exactly after reload");

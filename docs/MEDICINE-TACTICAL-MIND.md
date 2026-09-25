@@ -1,8 +1,7 @@
-# Medicine stabilization and Tactical Mind — batch proposal
+# Medicine stabilization and Tactical Mind
 
 Existing issues: [#32](https://github.com/stdarg/OpenGold/issues/32) and
-[#87](https://github.com/stdarg/OpenGold/issues/87). Gameplay implementation has
-not started. Q38/Q39 await UI approval; see [decisions](SRD-DECISIONS.md). The active goal
+[#87](https://github.com/stdarg/OpenGold/issues/87). Gameplay implementation is authorized. Q38/Q39 are approved; see [decisions](SRD-DECISIONS.md). The active goal
 continuation selected this prepared batch on 2026-09-25 at 14:46 UTC after the
 Chill Touch delivery. Existing acceptance and original clock are retained.
 
@@ -30,7 +29,7 @@ claimed as a range printed in the stabilization paragraph.
 | Mortality | Success clears death-save counters, stops death saves and starts the existing Stable recovery clock. Damage resumes the existing dying rules; natural recovery keeps Prone. Failed/declined checks change no target state. |
 | Resource choices | Decline consumes no d10 or Second Wind. A still-failing boosted check retains Second Wind. Success consumes exactly one use. Short/Long Rest recharge uses the existing service. |
 | Continuation | Pending choice, original check, target, action expenditure, resources and RNG survive internal combat checkpoints. Campaign handoff/rest/save preserve final states. No combat-save UI. Capture actual prior-writer fixtures before changing codecs. |
-| Player controls | Q38/Q39, game and demo, keyboard/cancel, clear labels and unavailable states; inspect English/Spanish at 1120×800 and 1920×1080. |
+| Player controls | Q38/Q39, game and demo, keyboard/cancel, clear labels and unavailable states; inspect main-game English/Spanish and the demo’s existing English presentation at 1120×800 and 1920×1080. |
 | Completion | Inventory all existing ability-check execution paths; do not close #87 while another eligible path bypasses Tactical Mind. Full issue acceptance governs closure. |
 
 ## Reuse and boundary
@@ -96,4 +95,79 @@ libraries wrote a level-two Fighter campaign and two consecutive combat states.
 [Fixture provenance and hashes](../tests/fixtures/README.md#tactical-minds-actual-prior-writer)
 record the capture. The rebuilt Action Surge suite passes its new prior-writer
 continuation test (`/tmp/mind-baseline-tests.log`). No gameplay or UI behavior was
-changed. Q38/Q39 remain pending; do not treat this preparation as issue completion.
+changed. Q38/Q39 were approved on 2026-09-25 after the 14:46 UTC continuation. Implementation resumes within this fixed acceptance; prior preparation is not issue completion.
+
+
+## Implementation and verification
+
+Q38/Q39 were approved on 2026-09-25. The rules module now resolves Medicine
+through the validated training profile, grants Tactical Mind through ordinary
+Fighter advancement and suspends an eligible failed check for the user's choice.
+PC30 identifies the new Fighter entitlement; module 0.6.45 validates earlier
+campaign grants before adding it through the existing replay path. Conditional
+combat17 preserves the original failed roll, target and spent Action type along
+with resource/RNG state; checkpoints without a pending check keep their earlier
+shape. Existing 0.6.42 and 0.6.43 writer fixtures are retained unchanged.
+
+The public snapshot exposes check-choice display data. Core's only new branch
+selects the first rule-offered choice for AI; it contains no SRD calculation,
+DC, resource cost or feature decision. New controls are confined to the approved
+game/demo views. Player saving remains camp/inn only.
+
+Focused native checks pass for all twelve starting classes, Fighters 1–4,
+proficient Medicine sources, actual roll extremes, both d10 outcomes, declined
+boosts, conditional resource spending, Action Surge, malformed/stale commands,
+exact pending-check continuation and ordinary campaign handoff/rest/save at each
+eligible Fighter level. Game/demo runtime checks and main EN/ES renders at
+1120×800 and 1920×1080 pass. The first UI check found the newly visible aid row
+needed a full layout refresh; the correction passes. All 47 native/tool regressions subsequently pass. Historical fixture bytes are
+unchanged; expected migrated ledgers explicitly add the fixed Tactical Mind grant.
+The native run initially exposed five stale grant/profile assertions, corrected
+without weakening the old-save comparisons.
+
+Medicine skill totals come from the same validated training profile as other
+skills, including its Expertise arithmetic. Currently supported grants provide
+Medicine proficiency to Bard, Cleric, Druid and Paladin; there is no legal
+Medicine Expertise acquisition route yet (Rogue class skills exclude Medicine,
+and the relevant Skilled/Bard progression remains in its existing backlog).
+Tests do not fabricate a supported route or mark those owning issues complete.
+Generic fixed monster demo profiles lack ability scores/training and do not gain
+an invented Medicine modifier; all actual PC/NPC character profiles can attempt
+stabilization, including on dying opponents.
+
+Observed implementation/build/check progression: 14:46 UTC goal continuation;
+focused native pass by 14:58; both game/demo control checks and rendered views
+by 15:04. New target registration regenerated Godot bindings; those build inputs
+were left unchanged during the build. Original 04:41:34 batch/preflight clock
+is retained rather than restarted after the approval wait. Astra/high routing
+retained; no agents, issue splitting, new scope or model switch.
+
+
+Keyboard stabilization uses Left/Right to select rule-offered targets, Space to
+attempt the check and Escape to cancel. The current target has stronger board
+highlighting. The game displays the target/instructions in its existing footer;
+the demo uses its existing prompt. These complete Q38's keyboard path, including
+when a mouse is unavailable. The modal retains standard keyboard-focus controls.
+Combined Cunning Action/Wake ally/Stabilize rows fit in the supported minimum size.
+
+Final verification commands and logs:
+
+- Build all native targets and `opengoldbox_test_project` in `build/mac-check`;
+  build `opengold_godot` in `build/sprite-demo`.
+- `ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`:
+  47 pass (`/tmp/medicine-native-tests.log`).
+- Godot suite: `-R '^opengold_godot_' -E '^opengold_godot_prepare$'
+  --fixture-exclude-setup godot_project`, after current project preparation:
+  24 runtime checks plus 14 fixture prerequisites (`/tmp/medicine-godot-regression.log`).
+- `tests/run_godot_test.cmake` with `tests/medicine_view_tests.gd`, graphical main
+  EN/ES and demo EN at 1120×800/1920×1080, captures in
+  `/tmp/medicine-{main,demo}-captures`, logs `/tmp/medicine-{main,demo}-final-render.log`.
+- `python3 tools/localization.py --check`: 886 complete EN/ES messages.
+- Scope/architecture/diff review: no new issues, unchanged frozen saves, mechanics
+  in `opengold_rules_srd5`, no player combat saving, no new runtime or framework.
+
+The only rolled ability-check action currently supported is Medicine; future
+ability-check implementations must use the same failed-check decision boundary.
+Attack rolls, saving throws and death saves are excluded. Unsupported Medicine
+Expertise acquisition and generic monster ability-score authoring remain under
+their existing owners, not silently implemented or counted as complete here.

@@ -66,6 +66,7 @@ private:
     double base_tile_{};
     double combat_zoom_{1.0};
     std::string mode_{"move"},error_;
+    opengold::rules::EntityId aid_target_{};
     double ai_delay_{};
     bool ready_{},checking_{},capture_{},captured_{},check_slums_{},checked_input_{};
     bool party_check_{},defeat_check_{},expedition_check_{};

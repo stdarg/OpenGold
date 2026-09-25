@@ -269,5 +269,7 @@
   "Pick up (interaction)",
   "Pick up (Action)",
   "Chill Touch",
-  "Melee spell attack: 1d10 Necrotic damage, Touch; prevents healing until the end of your next turn."
+  "Melee spell attack: 1d10 Necrotic damage, Touch; prevents healing until the end of your next turn.",
+  "Success",
+  "Failure"
 ]

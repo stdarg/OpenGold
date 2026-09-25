@@ -84,7 +84,7 @@ void all_class_skills(){
             auto forged=h.sheet();for(auto& grant:forged.grants)if(grant.source_id=="class:"+klass.id&&grant.id.starts_with("skill:")){grant.level=2;break;}rejects([&]{(void)rules->character_profile(forged,{});});
             CampaignParty party(module());party.add_pc(h);const auto bytes=encode_campaign(party,nullptr,"class-skills-new");CampaignParty copy(module());copy.restore(decode_campaign(bytes,*creation,*rules,"class-skills-new",nullptr).party);
             check(encode_campaign(copy,nullptr,"class-skills-new")==bytes,"All-class skill choices save and reload canonically");
-            if(klass.id!="rogue")rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.44","0.6.29"),*creation,*rules,"class-skills-new",nullptr);});
+            if(klass.id!="rogue")rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.45","0.6.29"),*creation,*rules,"class-skills-new",nullptr);});
         }
     }
     for(const auto& from:creation->choices(CreationField::character_class))for(const auto& to:creation->choices(CreationField::character_class)){
@@ -97,7 +97,7 @@ void all_class_skills(){
         check(from.id==to.id||!creator.draft().training.contains("class:"+from.id),"Preserved choices belong to the new class entitlement");
     }
     const auto prior=fixture("campaign-v11-class-skills-before.ogs");CampaignParty party(module());party.restore(decode_campaign(prior,*creation,*rules,"class-skills",nullptr).party);
-    auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.29",rules->identity().version);
+    auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.29",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
     check(body(encode_campaign(party,nullptr,"class-skills"))==test::with_druid_herbalism_grants(expected),"Prior twelve-class campaign adds only identity and fixed Druid Herbalism Kit; all other state is preserved");
     const auto frozen=fixture("combat-v14-class-skills-before.save");auto migrated=frozen;replace(migrated,"0.6.29",rules->identity().version);check(rules->restore(frozen)->save()==migrated,"Actual prior combat retains every class's recorded profile and state");
     for(const auto& member:party.checkpoint().roster){
@@ -148,7 +148,7 @@ void bard_instruments(){
     }
     replace(profile,"PC28","PC19");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Bard",0,{1,1},profile},{99,"vanguard","Enemy",1,{6,6}}}},13);});
     CampaignParty party(module());party.add_pc(h);const auto bytes=encode_campaign(party,nullptr,"bard-new");
-    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.44","0.6.30"),*creation,*rules,"bard-new",nullptr);});
+    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.45","0.6.30"),*creation,*rules,"bard-new",nullptr);});
     d.character_class="wizard";rejects([&]{(void)hero(d);});
     CharacterCreator creator(srd5::character_rules(),42);creator.select(CreationField::character_class,"bard");
     creator.training_choice(group.id,"flute",true);creator.training_choice(group.id,"lute",true);creator.training_choice(group.id,"viol",true);
@@ -183,7 +183,7 @@ void monk_tools(){
         Encounter encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Monk",0,{1,1},profile},{99,"vanguard","Enemy",1,{6,6}}}};
         const auto saved=rules->create(encounter,13)->save();check(rules->restore(saved)->save()==saved,"Every Monk tool combat profile persists");
         replace(encounter.participants[0].character_profile,"PC28","PC20");rejects([&]{(void)rules->create(encounter,13);});
-        rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.44","0.6.31"),*creation,*rules,"monk-new",nullptr);});
+        rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.45","0.6.31"),*creation,*rules,"monk-new",nullptr);});
         rejects([&]{(void)decode_campaign(corrupt(bytes,"class:monk:tools","class:bard:instruments"),*creation,*rules,"monk-new",nullptr);});
     }
     for(const std::vector<std::string> bad:{std::vector<std::string>{"flute","flute"},{"flute","lute"},{"thieves_tools"},{"herbalism_kit"},{"piano"}}){d.training[group.id]=bad;rejects([&]{(void)hero(d);});}
@@ -221,10 +221,10 @@ void druid_herbalism(){
         const auto current=rules->create(encounter,13)->save();check(rules->restore(current)->save()==current,"Druid's current Herbalism Kit profile round trips");
         replace(encounter.participants[0].character_profile,"PC28","PC21");rejects([&]{(void)rules->create(encounter,13);});
         CampaignParty party(module());party.add_pc(h);const auto bytes=encode_campaign(party,nullptr,"druid-new");
-        rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.44","0.6.32"),*creation,*rules,"druid-new",nullptr);});
+        rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.45","0.6.32"),*creation,*rules,"druid-new",nullptr);});
     }
     const auto prior=fixture("campaign-v11-druid-herbalism-before.ogs");CampaignParty party(module());party.restore(decode_campaign(prior,*creation,*rules,"druid-herbalism",nullptr).party);
-    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.32",rules->identity().version);
+    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.32",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
     const auto current=encode_campaign(party,nullptr,"druid-herbalism");
     check(body(current)==test::with_druid_herbalism_grants(expected),"Every old Druid campaign byte stays except identity/checksum and exactly one fixed grant per Druid");
     for(const auto& member:party.state().roster){
@@ -262,7 +262,7 @@ void soldier_gaming(){
         CampaignParty party(module());party.add_pc(h);const auto bytes=encode_campaign(party,nullptr,"gaming-new");
         CampaignParty restored(module());restored.restore(decode_campaign(bytes,*creation,*rules,"gaming-new",nullptr).party);
         check(encode_campaign(restored,nullptr,"gaming-new")==bytes,"Every class and Gaming Set combination saves canonically");
-        rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.44","0.6.33"),*creation,*rules,"gaming-new",nullptr);});
+        rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.45","0.6.33"),*creation,*rules,"gaming-new",nullptr);});
         const auto profile=rules->character_profile(sheet,{}).data;
         Encounter encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Soldier",0,{1,1},profile},{99,"vanguard","Enemy",1,{6,6}}}};
         const auto current=rules->create(encounter,13)->save();check(rules->restore(current)->save()==current,"Gaming Set current combat continuation is canonical");
@@ -277,8 +277,8 @@ void soldier_gaming(){
     for(const auto& klass:creation->choices(CreationField::character_class)){creator.select(CreationField::character_class,klass.id);check(creator.draft().training.at(group_id)==std::vector<std::string>{"playing_cards"},"All class changes retain Soldier's Gaming Set");}
     creator.select(CreationField::background,"sage");check(!creator.draft().training.contains(group_id),"Background change removes ineligible Gaming Set grant");
     const auto prior=fixture("campaign-v11-soldier-gaming-before.ogs");CampaignParty party(module());party.restore(decode_campaign(prior,*creation,*rules,"soldier-gaming",nullptr).party);
-    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.33",rules->identity().version);
-    check(body(encode_campaign(party,nullptr,"soldier-gaming"))==expected,"All twelve historical Soldiers retain every field except module identity/checksum");
+    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.33",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
+    check(body(encode_campaign(party,nullptr,"soldier-gaming"))==expected,"All twelve historical Soldiers retain every field except module identity/checksum and fixed Tactical Mind grant");
     const auto old=party.checkpoint();check(old.roster.size()==12,"Prior gaming fixture covers twelve classes");
     for(const auto& member:old.roster){
         check(!member.character.sheet().training.complete&&!member.character.creation_data().training.contains(group_id),"Old Soldier Gaming Set choices stay pending");
@@ -590,7 +590,7 @@ void sage_training(){
             const auto original=rules->character_profile(sheet,{}).data;
             auto pc15=original;replace(pc15,"PC28","PC15");
             auto prior=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Prior Sage",0,{1,1},pc15},{2,"vanguard","Enemy",1,{5,1}}}},1);
-            auto checkpoint=prior->save();replace(checkpoint,"0.6.44","0.6.26");
+            auto checkpoint=prior->save();replace(checkpoint,"0.6.45","0.6.26");
             check(rules->restore(checkpoint)->save()==prior->save(),"Valid PC15 Sage Expertise remains accepted under the preceding rules identity");
             auto old=original;replace(old,"PC28","PC14");
             rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},old},{2,"vanguard","Enemy",1,{5,1}}}},1);});
@@ -602,17 +602,17 @@ void sage_training(){
     check(sheet.level==3&&skill(sheet,"arcana").proficient&&skill(sheet,"history").proficient,"Prior-writer campaign receives owed fixed grants at reconstruction");
     check(member.vitals.hit_points==sheet.hit_points-3&&member.vitals.resources=="SRD2 0 1 1 0 0 0","Migration preserves wounds and spent level-one/two slots");
     check(member.character.creation_data().training==TrainingChoices{{"origin:languages",{"elvish","dwarvish"}}}&&member.character.creation_data().cantrips==std::optional(std::vector<std::string>{"fire_bolt","ray_of_frost"}),"Migration preserves explicit choices");
-    auto expected_body=bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);replace(expected_body,"0.6.25",rules->identity().version);
+    auto expected_body=bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);replace(expected_body,"0.6.25",rules->identity().version);expected_body=test::with_tactical_mind_grants(expected_body);
     const auto current=encode_campaign(party,nullptr,"sage-migration");auto again=decode_campaign(current,*creation,*rules,"sage-migration",nullptr);CampaignParty restored(module());restored.restore(std::move(again.party));
     check(encode_campaign(restored,nullptr,"sage-migration")==current,"Current Sage campaign is canonical after reload");
     check(current.substr(current.find('\n',current.find('\n')+1)+1)==test::with_background_training_grants(expected_body),"Every prior campaign byte remains except identity and exactly three fixed Sage grants");
     auto members=party.participants();members[0].cell={1,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
     const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
     check(rules->restore(combat->save())->save()==combat->save(),"New Sage recipe retains combat continuation");
-    auto forged_combat=combat->save();replace(forged_combat,"0.6.44","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
+    auto forged_combat=combat->save();replace(forged_combat,"0.6.45","0.6.25");rejects([&]{(void)rules->restore(forged_combat);});
     party.award_experience(1800,"sage-four");auto choice=party.default_advancement(1);choice.abilities={};choice.abilities[3]=2;party.advance(1,choice);
     check(party.member(1).character.sheet().scores[3]==18&&skill(party.member(1).character.sheet(),"arcana").bonus==6,"Intelligence ASI recomputes Sage skill bonus at level four");
-    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.44","0.6.25")})
+    for(const auto& bad:{corrupt(current,"skill:arcana","skill:nature"),corrupt(current,"0.6.45","0.6.25")})
         rejects([&]{(void)decode_campaign(bad,*creation,*rules,"sage-migration",nullptr);});
 }
 
@@ -649,16 +649,16 @@ void remaining_backgrounds(){
         check(m.vitals.resources==(id==1?"SRD2 0 1 1 0 0 0":"SRD1 1 0 0 0 0"),"Migration retains spent spell/feat resources");
     }
     auto body=[](const auto& b){return b.substr(b.find('\n',b.find('\n')+1)+1);};
-    auto expected=body(bytes);replace(expected,"0.6.26",rules->identity().version);
+    auto expected=body(bytes);replace(expected,"0.6.26",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
     const auto current=encode_campaign(party,nullptr,"backgrounds-migration");
     check(body(current)==test::with_background_training_grants(expected,2),"Every historical campaign byte remains except identity and exactly five owed fixed grants");
     CampaignParty again(module());again.restore(decode_campaign(current,*creation,*rules,"backgrounds-migration",nullptr).party);
     check(encode_campaign(again,nullptr,"backgrounds-migration")==current,"Migrated background campaign round trips canonically");
-    rejects([&]{(void)decode_campaign(corrupt(current,"0.6.44","0.6.26"),*creation,*rules,"backgrounds-migration",nullptr);});
+    rejects([&]{(void)decode_campaign(corrupt(current,"0.6.45","0.6.26"),*creation,*rules,"backgrounds-migration",nullptr);});
     auto members=party.participants();members[0].cell={1,1};members[1].cell={2,1};members.push_back({99,"vanguard","Enemy",1,{6,6}});
     const auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},members},42);
     check(rules->restore(combat->save())->save()==combat->save(),"PC28 preserves combat continuation");
-    auto forged=combat->save();replace(forged,"0.6.44","0.6.26");rejects([&]{(void)rules->restore(forged);});
+    auto forged=combat->save();replace(forged,"0.6.45","0.6.26");rejects([&]{(void)rules->restore(forged);});
     party.award_experience(3600,"backgrounds-four");
     for(MemberId id:{1,2}){auto choice=party.default_advancement(id);choice.abilities={};choice.abilities[id==1?4:0]=2;party.advance(id,choice);}
     check(skill(party.member(1).character.sheet(),"insight").bonus==6&&skill(party.member(2).character.sheet(),"athletics").bonus==6,"Level-four ability improvements recompute fixed skill modifiers");
@@ -689,7 +689,7 @@ void starting_styles(){
         const auto bytes=encode_campaign(p,nullptr,"starting-style");CampaignParty again(module());again.restore(decode_campaign(bytes,*creation,*rules,"starting-style",nullptr).party);check(encode_campaign(again,nullptr,"starting-style")==bytes,"Style plus retroactive Constitution HP history survives reload");
     }
     const auto old=fixture("campaign-v11-styles-before.ogs");CampaignParty p(module());p.restore(decode_campaign(old,*creation,*rules,"style-migration",nullptr).party);
-    auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};auto expected=body(old);replace(expected,"0.6.28",rules->identity().version);
+    auto body=[](const auto& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};auto expected=body(old);replace(expected,"0.6.28",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
     check(body(encode_campaign(p,nullptr,"style-migration"))==expected,"Actual prior campaign retains every choice, grant, wound and resource byte except module identity");
     auto old_combat=fixture("combat-v14-styles-before.save");auto expected_combat=old_combat;replace(expected_combat,"0.6.28",rules->identity().version);check(rules->restore(old_combat)->save()==expected_combat,"Actual PC17 combat retains all recipes and continuation state");
     for(MemberId id:{1,2,3,4}){
@@ -700,7 +700,7 @@ void starting_styles(){
         check(after.character.sheet().training.complete&&after.vitals==before.vitals&&after.character.advancements()==before.character.advancements()&&after.character.sheet().hit_points==before.character.sheet().hit_points,"Completing old style preserves vitals, levels, HP history and previous feat choices");
     }
     const auto bytes=encode_campaign(p,nullptr,"style-migration");CampaignParty again(module());again.restore(decode_campaign(bytes,*creation,*rules,"style-migration",nullptr).party);check(encode_campaign(again,nullptr,"style-migration")==bytes,"Completed historical starting styles save canonically");
-    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.44","0.6.28"),*creation,*rules,"style-migration",nullptr);});
+    rejects([&]{(void)decode_campaign(corrupt(bytes,"0.6.45","0.6.28"),*creation,*rules,"style-migration",nullptr);});
 }
 
 void freeze_cunning_action(){
@@ -728,8 +728,8 @@ void freeze_cunning_action(){
 void cunning_prior_writer(){
     auto rules=module();auto creation=srd5::character_rules();const auto prior=fixture("campaign-v11-cunning-before.ogs");
     CampaignParty party(module());party.restore(decode_campaign(prior,*creation,*rules,"cunning",nullptr).party);
-    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.34",rules->identity().version);
-    check(body(encode_campaign(party,nullptr,"cunning"))==expected,"Prior Rogue campaign retains every field except module identity/checksum");
+    auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.34",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
+    check(body(encode_campaign(party,nullptr,"cunning"))==expected,"Prior Rogue campaign retains every field except module identity/checksum and fixed Tactical Mind grant");
     check(party.state().roster.size()==4,"Cunning baseline covers all four backgrounds");
     for(const auto& member:party.state().roster)check(member.character.sheet().level==1&&member.character.sheet().training.complete&&member.vitals.hit_points==member.character.sheet().hit_points-2,"Prior Rogues retain complete training, level and wounds");
     const auto frozen=fixture("combat-v13-cunning-before.save");auto migrated=frozen;replace(migrated,"0.6.34",rules->identity().version);
@@ -806,7 +806,7 @@ void monk_tool_prior_writer(){
     const auto saved=fixture("campaign-v11-monk-tools-before.ogs");
     CampaignParty party(module());party.restore(decode_campaign(saved,*creation,*rules,"monk-tools",nullptr).party);
     auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};
-    auto expected=body(saved);replace(expected,"0.6.31",rules->identity().version);
+    auto expected=body(saved);replace(expected,"0.6.31",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
     check(body(encode_campaign(party,nullptr,"monk-tools"))==expected,"Prior Monk campaign retains all recorded data except module identity");
     check(party.state().roster.size()==4,"Prior Monk fixture covers all four backgrounds");
     for(const auto& member:party.state().roster){
@@ -832,7 +832,7 @@ void bard_instrument_prior_writer(){
     const auto saved=fixture("campaign-v11-bard-instruments-before.ogs");
     CampaignParty party(module());party.restore(decode_campaign(saved,*creation,*rules,"bard-instruments",nullptr).party);
     auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};
-    auto expected=body(saved);replace(expected,"0.6.30",rules->identity().version);
+    auto expected=body(saved);replace(expected,"0.6.30",rules->identity().version);expected=test::with_tactical_mind_grants(expected);
     check(body(encode_campaign(party,nullptr,"bard-instruments"))==expected,"Prior Bard campaign retains all recorded data except module identity");
     check(party.state().roster.size()==4,"Prior Bard fixture covers all four backgrounds");
     for(const auto& member:party.state().roster){

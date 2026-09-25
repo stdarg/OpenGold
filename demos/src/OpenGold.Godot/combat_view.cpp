@@ -50,6 +50,9 @@ void CombatView::_ready()
     get_node<Button>("Decline")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("decline")));
     get_node<Button>("Training")->connect("pressed",callable_mp(this,&CombatView::training));
     get_node<Button>("Slums")->connect("pressed",callable_mp(this,&CombatView::slums));
+    get_node<Button>("Stabilize")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind("stabilize"));
+    get_node<Button>("TacticalMind/Use")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("mind_use"));
+    get_node<Button>("TacticalMind/Skip")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("mind_skip"));
     get_node<Button>("WakeAlly")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind("wake_ally"));
     get_node<Button>("StandUp")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("stand_up"));
     get_node<OptionButton>("GroundItem")->connect("item_selected",callable_mp(this,&CombatView::ground_selected));
@@ -76,7 +79,7 @@ void CombatView::layout()
 {
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    const bool recovery=get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible();
+    const bool recovery=get_node<Button>("Stabilize")->is_visible()||get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible();
     const double tile=std::min(left_width/board.width,(height-(recovery?324:280))/board.height);
     board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
@@ -92,7 +95,8 @@ void CombatView::layout()
     place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
     place("Help",Rect2(right,686,sidebar,height-732));
     const double top=board_rect_.get_end().y+16;
-    place("WakeAlly",Rect2(24+left_width-180,top,180,36));
+    place("WakeAlly",Rect2(24+left_width-340,top,160,36));
+    place("Stabilize",Rect2(24+left_width-170,top,170,36));
     place("StandUp",Rect2(24,top+44,180,36));
     place("GroundItemLabel",Rect2(214,top+44,100,36));place("GroundItem",Rect2(324,top+44,176,36));place("PickUp",Rect2(510,top+44,204,36));
     place("Log",Rect2(24,top+(recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-(recovery?88:0))));
@@ -176,13 +180,25 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
-    if(get_node<Window>("SavageAttacker")->is_visible())return;
+    if(get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&mode_=="stabilize"&&demo_->has_combat()){
+        const auto state=demo_->combat().snapshot();
+        const auto active=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;});
+        std::vector<Command> targets;for(const auto& command:demo_->combat().legal_commands())if(command.verb=="stabilize")targets.push_back(command);
+        if(active!=state.combatants.end()&&!targets.empty()){
+            const auto found=std::find_if(targets.begin(),targets.end(),[&](const auto& c){return c.target==aid_target_;});
+            const auto index=found==targets.end()?std::size_t{0}:std::size_t(found-targets.begin());
+            const auto code=key->get_keycode();
+            if(code==Key::KEY_LEFT||code==Key::KEY_RIGHT){aid_target_=targets[(index+(code==Key::KEY_RIGHT?1:targets.size()-1))%targets.size()].target;refresh();get_viewport()->set_input_as_handled();return;}
+            if(code==Key::KEY_SPACE){act(targets[index]);get_viewport()->set_input_as_handled();return;}
+        }
+    }
     if(key.is_valid()&&(get_node<OptionButton>("GroundItem")->has_focus()||get_node<OptionButton>("GroundItem")->get_popup()->is_visible()))return;
-    if(key.is_valid()&&(get_node<Button>("PickUp")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("PickUp")->has_focus()||get_node<Button>("Stabilize")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
-    if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&mode_=="wake_ally"){
+    if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&(mode_=="wake_ally"||mode_=="stabilize")){
         mode_="move";refresh();get_viewport()->set_input_as_handled();return;
     }
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
@@ -213,6 +229,12 @@ void CombatView::refresh()
     get_node<Label>("Turn")->set_text(gs(turn));
     std::string roster;for(const auto& a:s.combatants)roster+=(a.id==s.actor?"> ":"  ")+std::to_string(a.id)+" "+a.name+"  "+std::to_string(a.hit_points)+"/"+std::to_string(a.max_hit_points)+" HP  AC "+std::to_string(a.armor_class)+"\n";
     get_node<RichTextLabel>("Roster")->set_text(gs(roster));
+    auto* mind=get_node<Window>("TacticalMind");
+    if(player&&s.ability_check_choice){
+        const auto& check=*s.ability_check_choice;const bool changed=!mind->is_visible();
+        get_node<Label>("TacticalMind/Text")->set_text(gs("Failed Medicine check: d20 "+std::to_string(check.natural)+" + "+std::to_string(check.modifier)+" = "+std::to_string(check.total)+" vs DC "+std::to_string(check.difficulty)+".\nSecond Wind uses: "+std::to_string(check.resource_uses)+"\n\nAdd 1d10. Spend one use only if the check succeeds.\nThe original Action is already spent."));
+        if(changed){mind->popup_centered();get_node<Button>("TacticalMind/Use")->grab_focus();}
+    }else if(mind->is_visible()){mind->hide();get_node<Button>("End")->grab_focus();}
     auto* modal=get_node<Window>("SavageAttacker");
     if(player&&s.savage_attack_choice){
         const auto& hit=*s.savage_attack_choice;const bool second=hit.second_damage.has_value();
@@ -245,6 +267,8 @@ void CombatView::refresh()
     get_node<Button>("PickUp")->set_text(pickup==offered.end()?String("Pick up"):gs(pickup->label));
     get_node<Button>("WakeAlly")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[](const auto& a){return a.side==0&&a.naturally_sleeping;}));
     get_node<Button>("WakeAlly")->set_disabled(!enabled("wake_ally"));
+    get_node<Button>("Stabilize")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[](const auto& a){return !a.dead&&a.hit_points==0;}));
+    get_node<Button>("Stabilize")->set_disabled(!enabled("stabilize"));
     get_node<Button>("StandUp")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor&&a.side==0&&a.prone;}));
     get_node<Button>("StandUp")->set_disabled(!enabled("stand_up"));
     layout();
@@ -260,6 +284,14 @@ void CombatView::refresh()
     std::string log=demo_?demo_->dialogue()+"\n\n":"";for(const auto& entry:s.log)log+=entry+"\n";
     if(!error_.empty())log+="\n"+error_;
     get_node<RichTextLabel>("Log")->set_text(gs(log));get_node<RichTextLabel>("Log")->scroll_to_line(std::max(0,get_node<RichTextLabel>("Log")->get_line_count()-1));
+    if(player&&mode_=="stabilize"){
+        std::vector<Command> targets;for(const auto& command:offered)if(command.verb=="stabilize")targets.push_back(command);
+        if(!targets.empty()){
+            if(std::none_of(targets.begin(),targets.end(),[&](const auto& c){return c.target==aid_target_;}))aid_target_=targets.front().target;
+            const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==aid_target_;});
+            if(target!=s.combatants.end())get_node<Label>("Prompt")->set_text(gs("Stabilize: "+target->name+"\nLeft/Right: target | Space: use"));
+        }
+    }
     queue_redraw();
 }
 void CombatView::_draw()
@@ -276,7 +308,7 @@ void CombatView::_draw()
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
         auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
-        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,.17));
+        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,mode_=="stabilize"&&c.target==aid_target_?.6:.17));
     }
     for(const auto& a:s.combatants) {
         const auto center=board_rect_.position+Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
