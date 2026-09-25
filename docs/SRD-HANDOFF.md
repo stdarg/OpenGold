@@ -1,6 +1,6 @@
 # SRD handoff
 
-Updated 2026-09-25 after Champion delivery. The full goal is ACTIVE: close all
+Updated 2026-09-25 after Champion delivery. The full goal is BLOCKED awaiting Q43/Q44: close all
 `SRD_improvements` issues, all twelve classes through level four, then level
 twenty/multiclassing. A batch delivery is not goal completion.
 
@@ -31,6 +31,11 @@ Preflight began 16:08:35 UTC, checkpoint 17:08:35 and latest 17:38:35.
 Recorded Astra/high retained; no model switch, agents or live builds.
 Actual 0.6.46 prior-writer campaign/combat fixtures and their new focused replay
 test pass; see the packet. No production code changed; Q43/Q44 are still pending.
+On 2026-09-25 at 16:19:15 UTC, the goal tool confirmed BLOCKED after the same
+missing decisions persisted across three consecutive turns. Independent baseline
+preparation is complete and tested in `15d5e09`; no live process remains. The
+full objective is unchanged. Resume with the user’s answers and recorded routing;
+do not restart preflight or regenerate frozen fixtures.
 Refresh only its issues; record acceptance/exclusions, model assignment and timing
 before coding. Do not reopen completed Medicine/Tactical Mind or Champion checks.
 

@@ -101,3 +101,13 @@ Configure was required for the added test target. Logs are
 No build/test remains live. Q43/Q44 remain unanswered; these tests establish
 compatibility preparation, not completion of #58 or permission to implement its
 pending controls/landing policy. The batch clock remains 16:08:35 UTC.
+
+## Blocking-input checkpoint — 16:19:15 UTC
+
+Goal status confirmed BLOCKED after Q43/Q44 remained unanswered across three
+consecutive goal turns (proposal, completed independent baseline, revalidation).
+The baseline turn was PROGRESS; this audit found no remaining independent work
+inside the frozen batch before those decisions. No process is still running.
+Preparation is committed/pushed in `15d5e09`, with focused checks passing. The
+full SRD objective remains unchanged and incomplete. Await user decisions before
+runtime/control implementation; do not rotate into unrelated batches.
