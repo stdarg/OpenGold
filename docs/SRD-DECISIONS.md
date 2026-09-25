@@ -66,20 +66,19 @@ question widget, and preceded by the audible Glass alert.
 | Q41 | #88 Champion acquisition | APPROVED 2026-09-25: existing level-three Fighter confirmation names Champion and grants features on Confirm; old level-three/four Fighters gain the same fixed grants through replay, preserving choices/wounds/equipment/resources. Alternative is explicit subclass selection, including old saves. |
 | Q42 | #88 critical free movement | APPROVED 2026-09-25: battlefield highlights, arrows/clicks, up to half Speed without opportunity attacks or normal movement cost; temporary Finish free move label replaces End Turn, that button/Escape declines remainder; other actions wait, original budgets stay spent and interrupted enemy movement resumes. Game/demo, no combat saving. |
 
+## Unlimited ranged ammunition — approved exception
+
+**AMMO-UNLIMITED, 2026-09-25:** user answered AMMO-1: “Let's do away with
+ammunition for ranged weapons and assume, if they have the weapon, they also
+have the ammunition.” AMMO-2 refers to that answer. Ranged ammunition supply is
+unlimited: no required inventory stock, selection, expenditure, recovery or
+recovery time/dialog. This supersedes #57's original expenditure/recovery scope
+and withdraws AMMO-1/AMMO-2. Preserve current ranged behavior and existing saved
+inventory records. This is an intentional SRD exception, not an unfinished
+ammunition simulation. Thrown weapons still use their actual weapon inventory;
+other weapon properties remain separate. See [ammunition](AMMUNITION.md).
+
 ## Pending — do not implement dependent choices
-
-New visible set (numbered 1–2), 2026-09-25, #57; Glass alert played before asking:
-
-- **AMMO-1 — PENDING:** existing Ranged button automatically consumes first
-  compatible ordinary ammunition stack in inventory order; tooltip displays
-  count/blocking reason; unavailable with no ammunition or required loading hand.
-  Existing targeting and keyboard behavior reused.
-- **AMMO-2 — PENDING:** centered post-victory dialog lists recovery counts with
-  Recover ammunition (1 minute) / Leave ammunition, keyboard access; advance
-  game time once before exploration. Round down half separately per character
-  and ammunition type across that character's stacks; able companions may
-  collect for incapacitated/dead owners using Q37 equipment return policy.
-  This is proposed interpretation of SRD-unspecified rounding/collection details.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |

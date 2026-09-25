@@ -20,38 +20,30 @@ twenty/multiclassing. One batch is not goal completion.
   branch and `main`. #58 is verified CLOSED with evidence. No other issue closed
   and no issues added. This handoff update changes no tested runtime inputs.
 
-## Active batch — #57 ammunition
+## Latest decision — #57 unlimited ammunition
 
-Standing authorization is to continue closing SRD_improvements issues. The
-tracker's stale BLOCKED status is not an instruction to stop after each issue;
-the prior Q43/Q44 blocker was resolved. Continue after deliveries unless the user
-pauses or a concrete approval/dependency blocks further work.
+The user explicitly declined ammunition tracking: owning the ranged weapon
+assumes ammunition. AMMO-1/AMMO-2 are withdrawn, not pending. Preserve unlimited
+ranged behavior; no expenditure, stock requirement or recovery controls.
+[Coverage](SRD-COVERAGE.md#approved-exception-unlimited-ranged-ammunition) and
+[policy/evidence](AMMUNITION.md) record the exception. Existing saved ammo records
+remain readable in runtime `79558fd` (0.6.48); all 50 native/tool tests pass and
+three focused checks were rerun successfully after the decision. No UI changes.
+The 17:58:09 batch began before the decision; the 18:58:09 checkpoint was not reset.
 
-The frozen [ammunition packet](AMMUNITION.md) records acceptance, exclusions,
-model assignment and verification. Branch `codex/srd-ammunition`; current owner
-only. Start 2026-09-25 17:58:09 UTC, checkpoint 18:58:09 (latest 19:28:09).
-Requested Astra/high retained; no actual model switch. AMMO-1/AMMO-2 control and
-recovery decisions are pending. The inventory substep (module 0.6.48) recognizes
-five ordinary ammunition types, converts original arrows/quarrels and migrates
-old inventory with provenance intact. All 50 native/tool tests pass, including
-the genuine 0.6.47 campaign/combat fixtures. See the packet for exact coverage,
-commands and limitations. Expenditure/recovery/controls remain unfinished.
-No live build and no issue closure yet. Continue after the already-visible
-AMMO-1/AMMO-2 answers; do not repeat the verified inventory work or reset time.
-
-## Goal tracker and continuation
-
-The goal tool last reported BLOCKED after unanswered Q43/Q44 across three turns.
-Those inputs are now approved and this batch was directly authorized. The tool
-has no resume operation; do not claim its status changed or mark the whole goal
-complete. The active #57 batch above follows the standing continuation instruction.
+#57 is to be resolved as not planned, not as implemented tracking. After its
+verified closure, continue the standing SRD goal with the next frozen batch.
+No live build or input blocker remains from ammunition. The goal tool's last
+BLOCKED result concerned AMMO-1/AMMO-2, which this answer now resolves; do not
+interpret it as a user pause or require another resume instruction. No tool
+operation can set that tracker active directly. Keep the full goal incomplete.
 
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
 [repository map](SRD-REPO-MAP.md). Freeze one outcome and acceptance before coding.
 Do not reopen completed feature checks without a relevant change.
 Q19–21/Q23/Q25 remain outside this batch; see [decisions](SRD-DECISIONS.md).
-Package C's broader Light/draw-stow, ammunition/mastery, remaining Fighting Styles
+Package C's broader Light/draw-stow, mastery, remaining Fighting Styles
 and later advancement remain separate requirements. No automatic new issues.
 
 No model/runtime change, agents/new tasks or compatibility reduction without

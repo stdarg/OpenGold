@@ -489,13 +489,14 @@ awarded. A held plain wand does not establish component/focus enforcement.
 Weapon properties remain incomplete. [EQ03 / #55](../HEAVY-WEAPONS.md) now
 applies Heavy Disadvantage below Strength 13 (melee category) or Dexterity 13
 (ranged category) to all nine Heavy weapons. Lance remains two-handed until
-mounted companion play (#173) enables its catalogued exception. Ammunition is not
-spent/recovered, thrown weapons are not removed/retrieved, Light extra attacks
+mounted companion play (#173) enables its catalogued exception. Ammunition is deliberately unlimited under the
+[approved #57 exception](../AMMUNITION.md). [Thrown inventory](../THROWN-WEAPONS.md)
+is implemented; Light extra attacks
 and dual wielding are absent, and weapon mastery remains unavailable. I08 / #27
 now supports one- and two-handed Versatile grips, alternate melee damage and
 shield compatibility.
 
-Complete the remaining properties, ammunition/thrown inventory state,
+Complete the remaining properties (excluding the approved unlimited-ammunition exception),
 Light weapon choices, action-time hand requirements,
 weapon mastery, equipment interactions and proficient use from all actual grants. Extend
 original-item conversion separately without treating unconverted magic/curses

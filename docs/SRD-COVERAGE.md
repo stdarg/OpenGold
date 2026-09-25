@@ -13,6 +13,16 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Approved exception: unlimited ranged ammunition
+
+The user explicitly declined ammunition tracking on 2026-09-25. [#57](https://github.com/stdarg/OpenGold/issues/57)
+is no longer planned: a ranged weapon has unlimited ammunition, with no inventory
+prerequisite, expenditure or recovery. This retains existing behavior, not newly
+implemented SRD expenditure/recovery. Existing saved ammunition items remain
+readable; physical Thrown weapons remain distinct. [Policy and evidence](AMMUNITION.md)
+record the decision, runtime `79558fd`, all-class weapon tests and compatibility.
+Do not reopen tracking as a missing SRD feature without explicit approval.
+
 ## Thrown weapon inventory
 
 Runtime `5d7813d` (module 0.6.47) completes [#58](https://github.com/stdarg/OpenGold/issues/58):

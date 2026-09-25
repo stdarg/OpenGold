@@ -1,117 +1,59 @@
-# Ammunition — #57 delivery packet
+# Unlimited ranged ammunition — approved SRD exception
 
-## Frozen batch
+On 2026-09-25 the user explicitly replaced #57's ammunition tracking requirement:
 
-- Authorization: standing SRD goal; one active batch, #57 only. Branch
-  `codex/srd-ammunition`. No new issues, tasks or agents.
-- Outcome: ranged ammunition weapons spend matching inventory ammunition;
-  eligible post-fight recovery returns the permitted amount; campaign saves and
-  supported combat checkpoints preserve quantities and spent resources.
-- Acceptance: all nine catalog ammunition weapons, five ordinary ammunition
-  types (firearm and sling bullets are distinct), one piece per attack hit or
-  miss, free hand for loading a one-handed weapon, empty/wrong-ammunition
-  rejection without mutation, once-only recovery and time advancement.
-  Preserve stack identities and imported provenance. Apply through shared
-  rules to all twelve classes at supported levels and converted NPC equipment.
-- Include ordinary original ammunition conversion through existing inventory
-  acquisition routes. Do not silently convert enchanted/unsupported items.
-- Exclude Loading/Extra Attack (#56), mastery, magic ammunition effects, new
-  shopping/crafting systems and unrelated fighting styles. Existing released
-  saves remain supported; no invented ammunition in old player inventories.
-- Reuse #58 physical inventory transactions, existing Ranged controls, Q37
-  equipment return policy and existing campaign clock/effect advancement.
-  Additional behavior is pending AMMO-1/AMMO-2 in the decision register.
-- Rules outcomes belong to `opengold_rules_srd5`; Core validates/applies generic
-  inventory transactions and time; Godot displays rules-owned options/results.
-- Requested assignment: `gpt-6-astra` / `high`, retained for persistence and
-  recovery interactions. Actual configuration not independently verified; no
-  model/runtime change. Owner: current coordinator. Failed fixes: zero.
-  Escalate unresolved architecture/policy or two unsuccessful same-failure fixes.
-- Verification: actual 0.6.47 writer fixtures before runtime edits; focused
-  ammunition, inventory and save tests; affected native regression; game/demo
-  controls and EN/ES layouts at 1120x800 and 1920x1080 after UI approval.
-- Timing: investigation began 2026-09-25 17:58:09 UTC; checkpoint 18:58:09,
-  latest 19:28:09. Preparation is not a delivered player requirement.
+> Let's do away with ammunition for ranged weapons and assume, if they have the
+> weapon, they also have the ammunition.
 
-## Source and decisions
+Ranged ammunition is therefore unlimited. A character needs the weapon, not a
+matching ammunition stack. Firing does not select or consume inventory ammunition;
+there is no ammunition recovery decision, recovery calculation or recovery time.
+The proposed Ranged feedback changes and recovery dialog are withdrawn. This
+retains existing gameplay rather than introducing an ammunition system.
 
-[SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf),
-printed page 89: matching ammunition, one piece per ranged attack, drawing
-included, free loading hand for one-handed weapons, optional one-minute recovery
-of half ammunition used (rounded down). Page 96 distinguishes arrows, bolts,
-firearm bullets, sling bullets and needles. Page 255 supplies monsters with the
-ammunition their stat blocks need; this does not supply player characters.
+This is a deliberate exception to SRD 5.2.1's expenditure/recovery rules, not a
+claim to implement them. [#57](https://github.com/stdarg/OpenGold/issues/57) is no
+longer planned under the changed requirement. Other weapon properties remain
+separate; [Thrown weapons](THROWN-WEAPONS.md) still consume/drop/recover the actual
+weapon. Existing action costs, attack rolls, damage, range, proficiency, grip
+and shield behavior remain in effect.
 
-AMMO-1 proposes automatic first-compatible ordinary stack selection and Ranged
-availability/count feedback. AMMO-2 proposes a post-victory recovery dialog,
-rounding by character/type across stacks, and collection by able companions.
-These proposals are not approved by this packet. No dependent UI/policy changes
-until the user answers. Scope questions do not pause unrelated authorized work
-inside this batch or the standing goal.
+## Existing saves and verification
 
-## Findings to resolve within this batch
+The prepared inventory work in `79558fd` (module 0.6.48) remains compatible:
+ordinary ammunition records can be read and retained, including original arrows
+and quarrels and their provenance. These records are not prerequisites for firing
+and are not depleted by ranged attacks. Keeping those records avoids deleting
+player inventory or rejecting saves. No expenditure/recovery implementation,
+pending recovery state or new control was added.
 
-- Current physical inventory conserves every unit and rejects quantity loss.
-  Expenditure needs explicit generic accounting, not SRD arithmetic in Core.
-- Resolved in the inventory substep: distinct firearm/sling bullet metadata and
-  ordinary original item conversions for type 28 (Quarrel) and 73 (Arrows).
+- `opengold_weapon_catalog_tests` exercises all 38 weapons, including all nine
+  ammunition weapons, for all twelve classes without supplying ammunition.
+  Normal/critical/miss attacks, range, action expenditure, stale-command rejection
+  and combat save continuation are covered.
+- `opengold_ammunition_tests` checks all five inert ammunition inventory types
+  across all twelve classes, source-backed original conversions, rejected Equip
+  atomicity, and genuine 0.6.47 campaign/combat continuation. Frozen capture
+  provenance and hashes are in [fixtures](../tests/fixtures/README.md#ammunition-baseline-actual-0647-writer).
+- `opengold_thrown_weapon_tests` verifies the distinct physical Thrown behavior.
 
-## Delivery
+All 50 native/tool tests passed on runtime `79558fd`. The three focused tests
+above passed again after the user selected the exception, with unchanged runtime
+inputs: `ctest --test-dir build/mac-check --output-on-failure -R
+'^opengold_(ammunition|weapon_catalog|thrown_weapon)_tests$'`.
+Log: `/tmp/ammunition-policy-checks.log`. No UI changes require new layout approval
+or renders for this policy decision.
 
-No runtime delivery or issue closure yet. Compatibility preparation completed
-2026-09-25 around 18:09 UTC. Actual 0.6.47 campaign/combat captures and a focused
-continuation test pass; [fixture provenance and hashes](../tests/fixtures/README.md#ammunition-baseline-actual-0647-writer).
-Commands: `cmake -S . -B build/mac-check` (new test target),
-`cmake --build build/mac-check --target opengold_ammunition_tests -j6`,
-`build/mac-check/opengold_ammunition_tests --capture-prior-writer`, and
-`ctest --test-dir build/mac-check --output-on-failure -R '^opengold_ammunition_tests$'`.
-Build log: `/tmp/ammunition-baseline-build.log`. Runtime remains `5d7813d`.
+## Execution record
 
-The first campaign fixture experiment used unrecognized authored arrow keys;
-the old reader rejected them. Corrected the capture to acquire original arrows
-and quarrels through the existing purchase/provenance path, then regenerated
-with the same old writer and verified loading before freezing. No production
-codec or compatibility requirement was weakened. One fixture setup correction;
-no repeated failed production fix. AMMO-1/AMMO-2 remain pending.
-
-## Inventory substep — pending full #57 delivery
-
-Module 0.6.48 recognizes five ordinary ammunition keys as carried supplies.
-Core asks the generic equipment interface whether an item is carried rather
-than equipped; ammunition definitions and weapon compatibility remain SRD-owned.
-This enables authored stacks to survive campaign validation and prevents an
-Equip request from displacing a weapon or mutating state.
-
-Ordinary original arrows/quarrels now convert to `arrow`/`bolt` on acquisition.
-The existing provenance-checked migration also updates old unsupported keys,
-preserving IDs, quantities, original records and equipped weapons. Magic, cursed
-and effect-bearing original ammunition remains unsupported, with its provenance
-unchanged. Firearm and sling bullets have separate keys and catalog identities.
-Module 0.6.47 campaign and combat continuation remains accepted; the actual
-prior-writer fixtures are unchanged and the capture command rejects 0.6.48.
-
-Focused checks passed: `opengold_ammunition_tests`,
-`opengold_weapon_catalog_tests`, `opengold_thrown_weapon_tests`.
-The ammunition test covers all twelve classes, five authored ammunition types,
-canonical campaign reload, rejected Equip atomicity, original conversions,
-special-item preservation and actual old campaign/combat continuation.
-Logs: `/tmp/ammunition-inventory-build.log` and
-`/tmp/ammunition-inventory-focused.log`.
-
-All 48 affected native executable targets rebuilt successfully; all 50
-native/tool tests passed (14.51 seconds) on the resulting tree on 2026-09-25
-at approximately 18:18 UTC. Commands: native target list from CTest's JSON
-inventory, `cmake --build build/mac-check --target <native targets> -j6`, then
-`ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`.
-Logs: `/tmp/ammunition-native-build.log`, `/tmp/ammunition-inventory-native.log`.
-Tested tree is this inventory substep commit on `codex/srd-ammunition`, parent
-`1fe531d`; no runtime inputs changed after verification. Existing frozen
-ammunition save hashes match the recorded capture. No UI code was changed or
-new controls implemented; Godot control/render verification belongs to the
-remaining approved UI implementation.
-
-Firing expenditure, free-hand enforcement, recovery and control feedback remain
-unfinished; AMMO-1/AMMO-2 are still pending. No issue closure or complete gameplay
-claim for this substep. Next action: resolve the already-visible decisions and
-continue the same batch, retaining the original 18:58:09 checkpoint. Do not
-restart the clock or repeat this verified inventory work.
+One batch and owner, branch `codex/srd-ammunition`; no new issues/tasks/agents.
+Recorded Astra/high assignment was retained for the save-compatibility work;
+actual settings were not independently verified and no model/runtime switch
+occurred. Preparation began 17:58:09 UTC; prior-writer captures committed in
+`1fe531d`; inventory compatibility committed in `79558fd` around 18:18 UTC.
+Then execution awaited AMMO-1/AMMO-2. The user's explicit requirement change was
+handled around 18:51 UTC, before the original 18:58:09 checkpoint. The initial
+fixture experiment used unsupported authored keys and was corrected to use
+original-item acquisition before freezing; no production codec or compatibility
+check was weakened. Preparation is not counted as delivery of SRD ammunition
+tracking, and administrative closure is not a new implemented feature.

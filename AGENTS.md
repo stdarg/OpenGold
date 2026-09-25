@@ -52,6 +52,11 @@
 
 ## Efficient SRD work
 
+- Ranged weapons assume unlimited ammunition (user decision 2026-09-25). Do not
+  add ammunition stock requirements, selection, expenditure or recovery. Preserve
+  existing saves; Thrown weapons still use physical weapon inventory. See
+  `docs/AMMUNITION.md`. Reintroducing ammunition tracking requires explicit approval.
+
 - Start with `docs/SRD-HANDOFF.md`, then follow `docs/SRD-WORKFLOW.md`.
   Use `docs/SRD-REPO-MAP.md` for targeted navigation and
   `docs/SRD-DECISIONS.md` for approvals; do not reload the whole history.

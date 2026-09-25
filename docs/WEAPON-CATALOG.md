@@ -21,9 +21,10 @@ damage dice to double on a critical or reroll with Savage Attacker (SRD p. 16).
 Its attack roll still uses Dexterity and applicable proficiency.
 
 Catalog metadata does not grant unimplemented property actions. Loading (#56),
-ammunition consumption/loading hands/recovery (#57), thrown inventory (#58),
 Light extra attacks (#59), mastery actions (#60), and starting-package choices
-remain tracked separately. Lance records its one-handed mounted exception;
+remain tracked separately. [Ammunition tracking (#57)](AMMUNITION.md) was explicitly
+declined: ranged ammunition is unlimited. [Thrown inventory (#58)](THROWN-WEAPONS.md)
+remains physical weapon inventory. Lance records its one-handed mounted exception;
 current actors are unmounted and use two hands. Mounted companion state and the
 exception's activation belong to #173 before mounted play is claimed. Missing
 weapon artwork uses the existing fallback; this increment adds no art or UI.

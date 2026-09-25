@@ -76,7 +76,7 @@ Prerequisites / coordination: Rest-control decisions; B01 skill grants are alrea
 
 ### B03: Weapon actions, equipment and fighting styles
 
-Batch #59/#81 with Nick from #60; #56/#57/#58 share attack/inventory accounting; #78/#79/#80 share style grants with #85/#140/#147. Keep Grappler and armor timing as separate packages within this family. Never implement all masteries as one undifferentiated change.
+Batch #59/#81 with Nick from #60; #56/#58 share attack/inventory accounting; #57 tracking was explicitly declined in favor of [unlimited ammunition](AMMUNITION.md); #78/#79/#80 share style grants with #85/#140/#147. Keep Grappler and armor timing as separate packages within this family. Never implement all masteries as one undifferentiated change.
 
 Prerequisites / coordination: Q23 for Great Weapon Fighting; B05 displacement/Prone/grapple geometry; B02 elapsed-time hooks for #198.
 
