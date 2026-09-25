@@ -171,3 +171,11 @@ ability-check implementations must use the same failed-check decision boundary.
 Attack rolls, saving throws and death saves are excluded. Unsupported Medicine
 Expertise acquisition and generic monster ability-score authoring remain under
 their existing owners, not silently implemented or counted as complete here.
+
+
+Tested runtime revision: `ce04673`. Final native regression passed by 15:20 UTC;
+all 24 Godot checks and both graphical paths finished by 15:24:20 UTC on
+2026-09-25. This is approximately 38 minutes after the authorized continuation,
+separate from the original preparation/approval interval. Two original feature
+requirements delivered, no added issues, no scope changes. The completion record
+is [coverage](SRD-COVERAGE.md#medicine-stabilization-and-tactical-mind).

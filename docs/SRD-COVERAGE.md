@@ -13,6 +13,44 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Medicine stabilization and Tactical Mind
+
+Runtime revision `ce04673` (module 0.6.45) completes [#32](https://github.com/stdarg/OpenGold/issues/32)
+and [#87](https://github.com/stdarg/OpenGold/issues/87). All twelve classes at
+currently supported levels can attempt DC 10 Wisdom (Medicine) stabilization;
+Fighters gain Tactical Mind at level 2 and use the existing Second Wind pool
+through level 4. Failed/declined checks spend the original Action, successful
+boosts alone spend Second Wind, and stabilization never heals or wakes.
+[Feature packet](MEDICINE-TACTICAL-MIND.md) records source/level coverage,
+limitations, codecs, commands and the existing-check-path audit.
+
+The approved Q38/Q39 controls work in game/demo with mouse, keyboard targeting,
+Escape cancellation and exclusive failed-check decisions. Main EN/ES and demo EN
+were rendered at 1120×800/1920×1080, including the combined Cunning/Wake/Stabilize
+row. The main footer identifies the keyboard target; no combat-saving controls
+were added. All calculations and resource decisions remain in the STATIC SRD
+library. Core only selects the first rules-offered pending choice for AI.
+
+Verification: all 47 native/tool tests, all 24 Godot runtime tests (38 with
+prerequisites), focused graphical checks in both applications, and localization
+of 886 messages pass on the delivered runtime tree. The last test-script change
+only adds a screenshot and visible-footer assertion, also passing in both apps.
+Actual 0.6.42/0.6.43 writer fixtures remain byte-identical; expected campaign
+migrations add only the legitimate fixed Fighter grant, alongside existing
+migrations. PC30 entitlement and pending combat17 states reject invalid old
+identities and preserve RNG, spent Action type and targets. Existing checkpoint
+shapes remain for states without a pending check. See the feature packet for logs.
+
+Measured continuation: 14:46 UTC start, focused rules passing by 14:58, initial
+renders by 15:04, full native pass by 15:20, final UI/render checks by 15:24:20
+on 2026-09-25 (about 38 minutes since continuation). Implementation/review and
+build phases overlap; no unique-effort sum is inferred. Original preflight start
+04:41:34 and its approval wait remain recorded separately. Two of two selected
+original requirements delivered; no new issues or expanded scope. Routing kept
+the recorded Astra/high assignment, no model switch or delegation. Token/cost
+deltas unavailable. Five old migration/profile expectations and two keyboard/
+presentation gaps were corrected during verification; no repeated-fix escalation.
+
 ## Chill Touch class paths and healing prevention
 
 Rules 0.6.44 completes the bounded class-cantrip increment under #165/#35:
@@ -215,7 +253,7 @@ commit-specific findings as historical evidence.
 | G5: spells/shared casting mechanics | Open | [Spell inventory #165](https://github.com/stdarg/OpenGold/issues/165) and named spell/mechanic issues |
 | G6: full progression/multiclassing | Open | [Higher levels #176](https://github.com/stdarg/OpenGold/issues/176), [multiclassing #179](https://github.com/stdarg/OpenGold/issues/179) and successors |
 | G7: rests/recharge | Open | [F03 #30](https://github.com/stdarg/OpenGold/issues/30) |
-| G8: death/recovery outside combat | Fixed; Help/Medicine remains #32 | [F04 #31](https://github.com/stdarg/OpenGold/issues/31) |
+| G8: death/recovery outside combat | Fixed, including Help/Medicine #32 | [F04 #31](https://github.com/stdarg/OpenGold/issues/31) |
 | G9: equipment/properties | Open; E5 and Versatile corrections delivered | [Equipment #48](https://github.com/stdarg/OpenGold/issues/48), [Versatile I08 #27](https://github.com/stdarg/OpenGold/issues/27) |
 | G10: conditions/effects/creature state | Open | [Conditions #35](https://github.com/stdarg/OpenGold/issues/35), [damage #33](https://github.com/stdarg/OpenGold/issues/33), [size #44](https://github.com/stdarg/OpenGold/issues/44) |
 | G11: precise capability/documentation coverage | In progress: ledger and issue index established | Update with every increment; reconcile remaining support claims at [final closure #185](https://github.com/stdarg/OpenGold/issues/185) |
