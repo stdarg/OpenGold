@@ -642,3 +642,36 @@ The pre-change regression passed in `/tmp/champion-baseline-tests.log` before
 runtime edits. `champion_prior_writer` checks byte-exact combat continuation and
 ordinary campaign migration/canonical reload. Future fixed-grant migration
 expectations must name their additions rather than replacing these captures.
+
+## Pre-Thrown-inventory writer (0.6.46)
+
+The `*-thrown-*` files were captured with the actual **0.6.46** writer from
+runtime `6324a51` / main `74dfb32`, before thrown-inventory gameplay changes.
+`opengold_thrown_weapon_tests --capture-prior-writer` is guarded to that module
+version; do not regenerate these frozen files with a later writer.
+
+The ordinary level-four Soldier Fighter carries three each of all seven Thrown
+weapons, equips Javelin and Shield, retains wounds, wealth 37 and a fixed campaign
+clock/RNG. The combat starts with the shield on the ground, giving a real
+held/ground-item ledger, and spends Second Wind before the first capture.
+The captured sequence reloads the actual format-16 save, makes a critical ranged
+Javelin attack, uses Savage Attacker's second roll, enters Champion free movement,
+declines movement, then uses Action Surge for a second throw. This deliberately
+preserves the old writer's unlimited-throw behavior for in-flight old encounters;
+it is not acceptance evidence for the new inventory semantics.
+
+Capture continuations start after an actual reload. The old format-16 codec
+implicitly enables its movement-format flag on loading; a later format-18
+Champion state exposes that flag. An initial unsaved-constructor continuation
+therefore differed from the loaded sequence. The final captures retain the real
+writer's loaded behavior without editing fixture bytes or production codecs.
+Campaign migration checks compare the complete body and all item identities and
+quantities; combat replay compares complete saves including RNG and budgets.
+
+SHA-256:
+
+- `campaign-v11-thrown-before.ogs`: `c8d5c8538342555863d0aa9dcf2feb677193773cb7ca905806b805e8c4bb7ecf`
+- `combat-v16-thrown-before.save`: `284fa08d2587a831625b7bb185ea7ad496805b8edc82134f382d7de1e885e556`
+- `combat-v16-thrown-choice.save`: `fdba9f4e421ddb605755c4c1248f17d82ca3a483477d4601085f07813ad21df6`
+- `combat-v16-thrown-continued.save`: `54b136fde4c298a2f7a3e5925c6eef3e451c843df2a053006ada042a625f6227`
+- `combat-v18-thrown-free.save`: `5f5cc8504126c476175fc0bc619927550626668737883e14efdb3bfbd738fbbe`

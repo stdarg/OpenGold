@@ -29,6 +29,8 @@ using [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
 Branch `codex/srd-thrown-inventory`; Q43/Q44 await approval before gameplay edits.
 Preflight began 16:08:35 UTC, checkpoint 17:08:35 and latest 17:38:35.
 Recorded Astra/high retained; no model switch, agents or live builds.
+Actual 0.6.46 prior-writer campaign/combat fixtures and their new focused replay
+test pass; see the packet. No production code changed; Q43/Q44 are still pending.
 Refresh only its issues; record acceptance/exclusions, model assignment and timing
 before coding. Do not reopen completed Medicine/Tactical Mind or Champion checks.
 
