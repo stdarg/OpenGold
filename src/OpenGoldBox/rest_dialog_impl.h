@@ -1,6 +1,7 @@
 // One implementation for the game and demo; the host supplies rest_text().
 #include "godot_nodes.h"
 #include <godot_cpp/classes/option_button.hpp>
+#include <godot_cpp/classes/popup_menu.hpp>
 #ifndef N_
 #define N_(message) message
 #endif
@@ -27,6 +28,10 @@ void RolfTourView::setup_rest()
     button("Resume",N_("Resume Long Rest"),Rect2(24,580,220,40),callable_mp(this,&RolfTourView::rest_resume));
     button("Save",N_("Save game"),Rect2(258,580,210,40),callable_mp(this,&RolfTourView::rest_save));
     button("Finish",N_("Cancel"),Rect2(482,580,214,40),callable_mp(this,&RolfTourView::rest_finish));
+    auto* recovery_label=presentation::add_control<Label>(*w,"RecoveryLabel",Rect2(24,412,672,28));
+    recovery_label->set_text(rest_text(N_("Arcane Recovery")));
+    presentation::add_control<OptionButton>(*w,"RecoveryChoice",Rect2(24,446,442,36));
+    button("Recover",N_("Recover slots"),Rect2(482,446,214,36),callable_mp(this,&RolfTourView::rest_recover));
 }
 void RolfTourView::camp()
 {
@@ -50,6 +55,9 @@ void RolfTourView::refresh_rest()
     const auto infos=campaign_->rest_info(selected_kind);auto* list=w->get_node<ItemList>("Members");list->clear();
     if(!rest_member_||std::none_of(infos.begin(),infos.end(),[&](const auto& i){return i.id==rest_member_;}))rest_member_=infos.empty()?0:infos.front().id;
     String details;bool eligible=false,spendable=false;
+    auto* recovery=w->get_node<OptionButton>("RecoveryChoice");
+    const String previous=recovery->get_selected()>=0?String(recovery->get_selected_metadata()):String();
+    recovery->clear();bool recovery_visible=false;
     for(const auto& info:infos){
         const auto& m=campaign_->member(info.id);const auto& r=info.recovery;
         const bool earned=spending&&std::find(state.short_rest->members.begin(),state.short_rest->members.end(),info.id)!=state.short_rest->members.end();
@@ -68,12 +76,23 @@ void RolfTourView::refresh_rest()
         for(const auto& pool:r.resources){details+=rest_text(pool.label.source)+": "+String::num_int64(pool.remaining)+"/"+String::num_int64(pool.capacity)+"   ";
             details+=rest_text(N_("Short Rest"))+" +"+String::num_int64(std::min(pool.short_rest_recovery,pool.capacity-pool.remaining))+"; "+rest_text(N_("Long Rest"))+" "+String::num_int64(pool.capacity)+"\n";}
         spendable=earned&&r.can_rest&&r.hit_dice>0;
+        recovery_visible=earned&&std::any_of(r.resources.begin(),r.resources.end(),[](const auto& pool){return pool.id=="arcane_recovery";});
+        if(recovery_visible)for(const auto& choice:r.choices){
+            const int index=recovery->get_item_count();recovery->add_item(rest_text(choice.label.source));
+            const auto id=String::utf8(choice.id.c_str());recovery->set_item_metadata(index,id);
+            if(id==previous)recovery->select(index);
+        }
     }
     if(retained){const auto& a=*state.rest_activity;
         details=rest_text(N_("Rest progress (minutes):"))+" "+String::num_int64(a.elapsed_milliseconds/60000)+
             "\n"+rest_text(N_("Additional required time (minutes):"))+" "+String::num_int64(a.extension_milliseconds/60000)+
             "\n"+rest_text(N_("Remaining rest (minutes):"))+" "+String::num_int64((campaign_->remaining_rest_milliseconds()+59999)/60000)+"\n\n"+details;}
     w->get_node<RichTextLabel>("Info")->set_text(details);w->get_node<Label>("Result")->set_text(rest_result_);
+    w->get_node<RichTextLabel>("Info")->set_size(Vector2(672,recovery_visible?132:208));
+    w->get_node<Label>("RecoveryLabel")->set_visible(recovery_visible);
+    recovery->set_visible(recovery_visible);recovery->set_disabled(recovery->get_item_count()==0);
+    w->get_node<Button>("Recover")->set_visible(recovery_visible);
+    w->get_node<Button>("Recover")->set_disabled(recovery->get_item_count()==0);
     w->get_node<Button>("Start")->set_visible(!spending&&!retained);w->get_node<Button>("Start")->set_disabled(!eligible);
     w->get_node<Button>("Spend")->set_visible(spending);w->get_node<Button>("Spend")->set_disabled(!spendable);
     w->get_node<Button>("Resume")->set_visible(retained&&!spending);w->get_node<Button>("Resume")->set_disabled(!retained||!state.rest_activity->interrupted);
@@ -95,6 +114,20 @@ void RolfTourView::rest_spend()
         session_->commit_rest_recovery();
         rest_result_=rest_text(N_("Roll:"))+" "+String::num_int64(result.roll)+" + ("+String::num_int64(result.modifier)+")   "+rest_text(N_("HP restored:"))+" "+String::num_int64(result.healing)+"   "+rest_text(N_("Hit Dice remaining:"))+" "+String::num_int64(result.remaining);refresh_rest();}
     catch(const std::exception& e){rest_result_=rest_text(e.what());refresh_rest();}
+}
+void RolfTourView::rest_recover()
+{
+    try{
+        if(!campaign_||!session_||campaign_->in_combat()||!campaign_->state().short_rest)return;
+        auto* choice=get_node<Window>("RestDialog")->get_node<OptionButton>("RecoveryChoice");
+        if(choice->is_disabled()||choice->get_selected()<0)return;
+        const String id=choice->get_selected_metadata();
+        const auto result=campaign_->recover_rest_choice(campaign_->state().short_rest->ticket,rest_member_,id.utf8().get_data());
+        session_->commit_rest_recovery();rest_result_=rest_text(result.source);
+        for(const auto& argument:result.arguments)
+            rest_result_=rest_result_.replace(String::utf8(("{"+argument.name+"}").c_str()),argument.translate?rest_text(argument.value):String::utf8(argument.value.c_str()));
+        refresh_rest();
+    }catch(const std::exception& e){rest_result_=rest_text(e.what());refresh_rest();}
 }
 void RolfTourView::rest_finish()
 {
@@ -204,9 +237,76 @@ void RolfTourView::check_rest_controls()
             check(session_->pending_encounter()&&!campaign_->state().short_rest&&!w->is_visible(),"Finishing recovery releases encounter handoff");
             check(session_->reject_combat("Fixture initialization rejected"),"Reject pending encounter after player choice");
             check(campaign_->member(rest_member_).vitals==spent&&campaign_->state().random_state==rng,"Failed encounter does not undo player recovery");
-            UtilityFunctions::print("Godot rest controls passed: picker, sequential dice, continuation, finish, resume, cooldown and interrupted encounter recovery.");get_tree()->quit();
+        }else if(rest_check_stage_==64){
+            if(campaign_->state().rest_activity)campaign_->abandon_rest(campaign_->state().rest_activity->ticket);
+            opengold::rules::CharacterDraft draft;draft.race="human";draft.gender="female";draft.character_class="wizard";
+            draft.background="sage";draft.alignment="neutral_good";draft.name="Arcane Recovery Wizard";
+            draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};
+            rest_member_=campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));
+            campaign_->award_experience(2700,"arcane-ui");
+            for(unsigned n=0;n<2;++n)campaign_->advance(rest_member_,campaign_->default_advancement(rest_member_));
+            auto state=campaign_->checkpoint();
+            for(auto& member:state.roster)if(member.id==rest_member_)member.vitals.resources="SRD2 0 2 1 0 0 0";
+            campaign_->restore(state);
+            std::vector<std::uint8_t> bytes{0,0};for(int n=0;n<5;++n)bytes.insert(bytes.end(),{1,1,0x15,0x99});bytes.insert(bytes.end(),{0,0});
+            auto program=std::make_shared<const opengold::por::EclProgram>(opengold::por::EclProgram::decode(bytes,"arcane UI camp"));
+            auto resources=std::make_shared<opengold::por::PhlanResources>();resources->programs[0]=program;
+            const opengold::Image pixel{1,1,0,0,{0,0,0,255}};
+            session_.emplace(opengold::por::GeoMap{},program,std::array<opengold::Image,3>{pixel,pixel,pixel},0x9914,opengold::por::WallArtSet{},resources);
+            session_->campaign_party(campaign_);session_->advance(1);camp();
+            auto* kind=w->get_node<OptionButton>("Kind");kind->select(0);kind->emit_signal("item_selected",0);
+            check(!w->get_node<Button>("Recover")->is_visible(),"Arcane Recovery is unavailable before completing the rest");
+            w->get_node<Button>("Start")->emit_signal("pressed");
+            check(w->is_visible()&&w->get_node<OptionButton>("RecoveryChoice")->get_item_count()==3&&
+                !w->get_node<Button>("Recover")->is_disabled(),"Completed Short Rest offers exactly the three legal Wizard allocations");
+            const auto saved=opengold::encode_campaign(*campaign_,nullptr,"arcane-ui");
+            auto rules=opengold::srd5::load(std::filesystem::path(rest_rules_path().utf8().get_data()));
+            campaign_->restore(opengold::decode_campaign(saved,*opengold::srd5::character_rules(),*rules,"arcane-ui",nullptr).party);
+            refresh_rest();check(w->get_node<OptionButton>("RecoveryChoice")->get_item_count()==3,"Reload preserves unused recovery eligibility");
+        }else if(rest_check_stage_==68){
+            Ref<InputEventKey> escape;escape.instantiate();escape->set_keycode(Key::KEY_ESCAPE);escape->set_pressed(true);
+            w->emit_signal("window_input",escape);
+            check(!campaign_->state().short_rest&&!w->is_visible(),"Escape closes an unused recovery opportunity");
+            for(const auto& pool:campaign_->recovery_info(rest_member_).resources)
+                if(pool.id=="arcane_recovery")check(pool.remaining==1,"Declining recovery preserves its use");
+            camp();w->get_node<Button>("Start")->emit_signal("pressed");
+            check(w->get_node<OptionButton>("RecoveryChoice")->get_item_count()==3,"A later Short Rest can use the preserved feature");
+        }else if(rest_check_stage_==72){
+            auto* choices=w->get_node<OptionButton>("RecoveryChoice");choices->grab_focus();
+            for(bool down:{true,false}){Ref<InputEventKey> key;key.instantiate();key->set_keycode(Key::KEY_SPACE);key->set_pressed(down);w->push_input(key,true);}
+        }else if(rest_check_stage_==74){
+            auto* popup=w->get_node<OptionButton>("RecoveryChoice")->get_popup();
+            check(popup->is_visible(),"Keyboard opens the recovery dropdown");
+            popup->set_focused_item(0);
+            for(auto code:{Key::KEY_DOWN,Key::KEY_DOWN,Key::KEY_ENTER})for(bool down:{true,false}){
+                Ref<InputEventKey> key;key.instantiate();key->set_keycode(code);key->set_pressed(down);get_viewport()->push_input(key,true);}
+        }else if(rest_check_stage_==76){
+            auto* choices=w->get_node<OptionButton>("RecoveryChoice");
+            check(String(choices->get_selected_metadata())=="arcane_recovery:0:1",("Keyboard selects a level-two slot; selected index "+std::to_string(choices->get_selected())).c_str());
+            w->get_node<Button>("Recover")->grab_focus();
+            for(bool down:{true,false}){Ref<InputEventKey> key;key.instantiate();key->set_keycode(Key::KEY_SPACE);key->set_pressed(down);w->push_input(key,true);}
+            const auto info=campaign_->recovery_info(rest_member_);
+            for(const auto& pool:info.resources){
+                if(pool.id=="arcane_recovery")check(pool.remaining==0,"Keyboard recovery consumes the feature use");
+                if(pool.id=="spell_slot:2")check(pool.remaining==2,"Keyboard recovery restores the selected spell slot");
+                if(pool.id=="spell_slot:1")check(pool.remaining==2,"Unselected slot pool is unchanged");
+            }
+            check(choices->is_disabled()&&w->get_node<Button>("Recover")->is_disabled()&&
+                !w->get_node<Label>("Result")->get_text().is_empty(),"Used recovery disables controls and displays the result");
+            const auto saved=opengold::encode_campaign(*campaign_,nullptr,"arcane-ui");
+            auto rules=opengold::srd5::load(std::filesystem::path(rest_rules_path().utf8().get_data()));
+            campaign_->restore(opengold::decode_campaign(saved,*opengold::srd5::character_rules(),*rules,"arcane-ui",nullptr).party);
+            refresh_rest();w->get_node<Button>("Recover")->emit_signal("pressed");
+            check(opengold::encode_campaign(*campaign_,nullptr,"arcane-ui")==saved,"Reload and duplicate activation cannot refresh or spend recovery again");
+        }else if(rest_check_stage_==84){
+            w->get_node<Button>("Finish")->emit_signal("pressed");camp();w->get_node<Button>("Start")->emit_signal("pressed");
+            check(w->get_node<Button>("Recover")->is_disabled(),"A second Short Rest does not refresh Arcane Recovery");
+            auto* members=w->get_node<ItemList>("Members");members->select(0);members->emit_signal("item_selected",0);
+            check(!w->get_node<Button>("Recover")->is_visible(),"Non-Wizard selection hides the recovery row");
+            w->get_node<Button>("Finish")->emit_signal("pressed");
+            UtilityFunctions::print("Godot rest controls passed: existing recovery, Arcane Recovery choices, keyboard, rest limits and save continuation.");get_tree()->quit();
         }
-        if(rest_check_stage_==10||rest_check_stage_==22||rest_check_stage_==34){
+        if(rest_check_stage_==10||rest_check_stage_==22||rest_check_stage_==34||rest_check_stage_==70||rest_check_stage_==80){
             for(const auto& arg:OS::get_singleton()->get_cmdline_user_args())if(String(arg).begins_with("--rest-captures=")){
                 const auto directory=String(arg).trim_prefix("--rest-captures=");
                 std::filesystem::create_directories(std::filesystem::path(directory.utf8().get_data()));

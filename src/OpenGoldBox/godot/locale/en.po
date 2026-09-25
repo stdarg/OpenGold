@@ -276,7 +276,7 @@ msgstr "Add to party"
 msgid "Additional Rogue language"
 msgstr "Additional Rogue language"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:74
+#: src/OpenGoldBox/rest_dialog_impl.h:88
 msgid "Additional required time (minutes):"
 msgstr "Additional required time (minutes):"
 
@@ -345,7 +345,7 @@ msgstr "Apply Training"
 msgid "Arcana"
 msgstr "Arcana"
 
-#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/rest_dialog_impl.h:32
 msgid "Arcane Recovery"
 msgstr "Arcane Recovery"
 
@@ -583,7 +583,7 @@ msgstr "Campaign loaded."
 msgid "Campaign saved."
 msgstr "Campaign saved."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:56 src/OpenGoldBox/rest_dialog_impl.h:29 src/OpenGoldBox/rest_dialog_impl.h:81 src/OpenGoldBox/save_slots.cpp:29 src/OpenGoldBox/startup_view.cpp:192 src/OpenGoldBox/training_review_impl.h:31
+#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:56 src/OpenGoldBox/rest_dialog_impl.h:100 src/OpenGoldBox/rest_dialog_impl.h:30 src/OpenGoldBox/save_slots.cpp:29 src/OpenGoldBox/startup_view.cpp:192 src/OpenGoldBox/training_review_impl.h:31
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -1105,7 +1105,7 @@ msgstr "Eldritch Blast"
 msgid "Elf"
 msgstr "Elf"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:64
+#: src/OpenGoldBox/rest_dialog_impl.h:72
 msgid "Eligible to rest."
 msgstr "Eligible to rest."
 
@@ -1117,7 +1117,7 @@ msgstr "Elvish"
 msgid "Empty"
 msgstr "Empty"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:81
+#: src/OpenGoldBox/rest_dialog_impl.h:100
 msgid "End Rest"
 msgstr "End Rest"
 
@@ -1241,7 +1241,7 @@ msgstr "Fill all six boxes to continue.\nAssigned scores include bonuses."
 msgid "Final score: {score}"
 msgstr "Final score: {score}"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:81
+#: src/OpenGoldBox/rest_dialog_impl.h:100
 msgid "Finish"
 msgstr "Finish"
 
@@ -1408,11 +1408,11 @@ msgstr "Guided by compassion, duty, and order."
 msgid "Guided by rules, tradition, or a personal code."
 msgstr "Guided by rules, tradition, or a personal code."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:57
+#: src/OpenGoldBox/rest_dialog_impl.h:65
 msgid "HP"
 msgstr "HP"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:96
+#: src/OpenGoldBox/rest_dialog_impl.h:115
 msgid "HP restored:"
 msgstr "HP restored:"
 
@@ -1494,11 +1494,11 @@ msgstr "Hide Armor"
 msgid "History"
 msgstr "History"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:58
+#: src/OpenGoldBox/rest_dialog_impl.h:66
 msgid "Hit Dice"
 msgstr "Hit Dice"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:96
+#: src/OpenGoldBox/rest_dialog_impl.h:115
 msgid "Hit Dice remaining:"
 msgstr "Hit Dice remaining:"
 
@@ -1733,11 +1733,11 @@ msgstr "Load game"
 msgid "Load this save? Any unsaved campaign progress will be discarded."
 msgstr "Load this save? Any unsaved campaign progress will be discarded."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:17 src/OpenGoldBox/rest_dialog_impl.h:69
+#: src/OpenGoldBox/rest_dialog_impl.h:18 src/OpenGoldBox/rest_dialog_impl.h:77
 msgid "Long Rest"
 msgstr "Long Rest"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:65
+#: src/OpenGoldBox/rest_dialog_impl.h:73
 msgid "Long Rest cooldown remaining (minutes):"
 msgstr "Long Rest cooldown remaining (minutes):"
 
@@ -2334,6 +2334,10 @@ msgstr "Ready"
 msgid "Ready to level up"
 msgstr "Ready to level up"
 
+#: src/OpenGoldBox/rest_dialog_impl.h:34
+msgid "Recover slots"
+msgstr "Recover slots"
+
 #: src/OpenGoldBox/godot/scenes/party_panel.tscn:48
 msgid "Recruit preview guard"
 msgstr "Recruit preview guard"
@@ -2354,7 +2358,7 @@ msgstr "Religion"
 msgid "Reload a Saved Game"
 msgstr "Reload a Saved Game"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:75
+#: src/OpenGoldBox/rest_dialog_impl.h:89
 msgid "Remaining rest (minutes):"
 msgstr "Remaining rest (minutes):"
 
@@ -2379,15 +2383,15 @@ msgstr "Requires {requirements}"
 msgid "Reroll all six"
 msgstr "Reroll all six"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:67
+#: src/OpenGoldBox/rest_dialog_impl.h:75
 msgid "Resource recovery"
 msgstr "Resource recovery"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:10
+#: src/OpenGoldBox/rest_dialog_impl.h:11
 msgid "Rest"
 msgstr "Rest"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:109
+#: src/OpenGoldBox/rest_dialog_impl.h:142
 msgid "Rest could not resume here. Resolve the interruption or end the rest."
 msgstr "Rest could not resume here. Resolve the interruption or end the rest."
 
@@ -2403,15 +2407,15 @@ msgstr "Rest interrupted after five minutes; no recovery granted."
 msgid "Rest is not allowed here."
 msgstr "Rest is not allowed here."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:73
+#: src/OpenGoldBox/rest_dialog_impl.h:87
 msgid "Rest progress (minutes):"
 msgstr "Rest progress (minutes):"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:66
+#: src/OpenGoldBox/rest_dialog_impl.h:74
 msgid "Rest requires at least 1 HP."
 msgstr "Rest requires at least 1 HP."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:15
+#: src/OpenGoldBox/rest_dialog_impl.h:16
 msgid "Rest type"
 msgstr "Rest type"
 
@@ -2427,7 +2431,7 @@ msgstr "Restart test"
 msgid "Restart with --reset-game-path to choose your Pool of Radiance data folder."
 msgstr "Restart with --reset-game-path to choose your Pool of Radiance data folder."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:27
+#: src/OpenGoldBox/rest_dialog_impl.h:28
 msgid "Resume Long Rest"
 msgstr "Resume Long Rest"
 
@@ -2493,7 +2497,7 @@ msgstr "Roll your six attribute scores first."
 msgid "Roll {needed} or higher"
 msgstr "Roll {needed} or higher"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:96
+#: src/OpenGoldBox/rest_dialog_impl.h:115
 msgid "Roll:"
 msgstr "Roll:"
 
@@ -2561,7 +2565,7 @@ msgstr "Save"
 msgid "Save combat"
 msgstr "Save combat"
 
-#: src/OpenGoldBox/campaign_save_view.cpp:33 src/OpenGoldBox/rest_dialog_impl.h:28 src/OpenGoldBox/rolf_tour_view.cpp:78 src/OpenGoldBox/save_slots.cpp:33
+#: src/OpenGoldBox/campaign_save_view.cpp:33 src/OpenGoldBox/rest_dialog_impl.h:29 src/OpenGoldBox/rolf_tour_view.cpp:78 src/OpenGoldBox/save_slots.cpp:33
 msgid "Save game"
 msgstr "Save game"
 
@@ -2665,11 +2669,11 @@ msgstr "Shocking Grasp: cannot make Opportunity Attacks."
 msgid "Shop / select an item"
 msgstr "Shop / select an item"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:17 src/OpenGoldBox/rest_dialog_impl.h:69
+#: src/OpenGoldBox/rest_dialog_impl.h:18 src/OpenGoldBox/rest_dialog_impl.h:77
 msgid "Short Rest"
 msgstr "Short Rest"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:62
+#: src/OpenGoldBox/rest_dialog_impl.h:70
 msgid "Short Rest completed. Choose one die at a time, or finish."
 msgstr "Short Rest completed. Choose one die at a time, or finish."
 
@@ -2903,7 +2907,7 @@ msgstr "Spellbook: {spell} (learned at Wizard level {level})."
 msgid "Spells"
 msgstr "Spells"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:26
+#: src/OpenGoldBox/rest_dialog_impl.h:27
 msgid "Spend 1 Hit Die"
 msgstr "Spend 1 Hit Die"
 
@@ -2928,7 +2932,7 @@ msgstr "Stable, unconscious"
 msgid "Stand up"
 msgstr "Stand up"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:25
+#: src/OpenGoldBox/rest_dialog_impl.h:26
 msgid "Start"
 msgstr "Start"
 
@@ -3026,7 +3030,7 @@ msgstr "Temporary HP"
 msgid "Temporary HP from {source}. Absorbs damage before ordinary HP; does not heal or stack."
 msgstr "Temporary HP from {source}. Absorbs damage before ordinary HP; does not heal or stack."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:63
+#: src/OpenGoldBox/rest_dialog_impl.h:71
 msgid "The Long Rest is interrupted. Resume after resolving the interruption, or end the rest."
 msgstr "The Long Rest is interrupted. Resume after resolving the interruption, or end the rest."
 
@@ -3062,7 +3066,7 @@ msgstr "This armor imposes Disadvantage on Dexterity (Stealth) checks."
 msgid "This grip is incompatible with the equipped weapon or shield."
 msgstr "This grip is incompatible with the equipped weapon or shield."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:62
+#: src/OpenGoldBox/rest_dialog_impl.h:70
 msgid "This member did not complete the rest."
 msgstr "This member did not complete the rest."
 

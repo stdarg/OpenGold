@@ -276,7 +276,7 @@ msgstr "Añadir al grupo"
 msgid "Additional Rogue language"
 msgstr "Idioma adicional de pícaro"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:74
+#: src/OpenGoldBox/rest_dialog_impl.h:88
 msgid "Additional required time (minutes):"
 msgstr "Tiempo adicional necesario (minutos):"
 
@@ -345,7 +345,7 @@ msgstr "Aplicar formación"
 msgid "Arcana"
 msgstr "Conocimiento arcano"
 
-#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1
+#: src/OpenGoldBox/godot/locale/dynamic_sources.json:1 src/OpenGoldBox/rest_dialog_impl.h:32
 msgid "Arcane Recovery"
 msgstr "Recuperación Arcana"
 
@@ -583,7 +583,7 @@ msgstr "Campaña cargada."
 msgid "Campaign saved."
 msgstr "Campaña guardada."
 
-#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:56 src/OpenGoldBox/rest_dialog_impl.h:29 src/OpenGoldBox/rest_dialog_impl.h:81 src/OpenGoldBox/save_slots.cpp:29 src/OpenGoldBox/startup_view.cpp:192 src/OpenGoldBox/training_review_impl.h:31
+#: src/OpenGoldBox/godot/scenes/startup.tscn:155 src/OpenGoldBox/godot/scenes/startup.tscn:92 src/OpenGoldBox/level_up_view.cpp:56 src/OpenGoldBox/rest_dialog_impl.h:100 src/OpenGoldBox/rest_dialog_impl.h:30 src/OpenGoldBox/save_slots.cpp:29 src/OpenGoldBox/startup_view.cpp:192 src/OpenGoldBox/training_review_impl.h:31
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1105,7 +1105,7 @@ msgstr "Descarga sobrenatural"
 msgid "Elf"
 msgstr "Elfo"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:64
+#: src/OpenGoldBox/rest_dialog_impl.h:72
 msgid "Eligible to rest."
 msgstr "Puede descansar."
 
@@ -1117,7 +1117,7 @@ msgstr "Élfico"
 msgid "Empty"
 msgstr "Vacío"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:81
+#: src/OpenGoldBox/rest_dialog_impl.h:100
 msgid "End Rest"
 msgstr "Terminar descanso"
 
@@ -1241,7 +1241,7 @@ msgstr "Completa las seis casillas para continuar.\nLas puntuaciones incluyen bo
 msgid "Final score: {score}"
 msgstr "Puntuación final: {score}"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:81
+#: src/OpenGoldBox/rest_dialog_impl.h:100
 msgid "Finish"
 msgstr "Terminar"
 
@@ -1408,11 +1408,11 @@ msgstr "Se guía por la compasión, el deber y el orden."
 msgid "Guided by rules, tradition, or a personal code."
 msgstr "Se guía por las normas, la tradición o un código personal."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:57
+#: src/OpenGoldBox/rest_dialog_impl.h:65
 msgid "HP"
 msgstr "PG"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:96
+#: src/OpenGoldBox/rest_dialog_impl.h:115
 msgid "HP restored:"
 msgstr "PG recuperados:"
 
@@ -1494,11 +1494,11 @@ msgstr "Armadura de pieles"
 msgid "History"
 msgstr "Historia"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:58
+#: src/OpenGoldBox/rest_dialog_impl.h:66
 msgid "Hit Dice"
 msgstr "Dados de golpe"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:96
+#: src/OpenGoldBox/rest_dialog_impl.h:115
 msgid "Hit Dice remaining:"
 msgstr "Dados de golpe restantes:"
 
@@ -1733,11 +1733,11 @@ msgstr "Cargar partida"
 msgid "Load this save? Any unsaved campaign progress will be discarded."
 msgstr "¿Cargar esta partida? Se perderá todo el progreso de campaña sin guardar."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:17 src/OpenGoldBox/rest_dialog_impl.h:69
+#: src/OpenGoldBox/rest_dialog_impl.h:18 src/OpenGoldBox/rest_dialog_impl.h:77
 msgid "Long Rest"
 msgstr "Descanso largo"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:65
+#: src/OpenGoldBox/rest_dialog_impl.h:73
 msgid "Long Rest cooldown remaining (minutes):"
 msgstr "Espera restante para un descanso largo (minutos):"
 
@@ -2334,6 +2334,10 @@ msgstr "En guardia"
 msgid "Ready to level up"
 msgstr "Listo para subir de nivel"
 
+#: src/OpenGoldBox/rest_dialog_impl.h:34
+msgid "Recover slots"
+msgstr "Recuperar espacios"
+
 #: src/OpenGoldBox/godot/scenes/party_panel.tscn:48
 msgid "Recruit preview guard"
 msgstr "Reclutar guardia de prueba"
@@ -2354,7 +2358,7 @@ msgstr "Religión"
 msgid "Reload a Saved Game"
 msgstr "Cargar una partida"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:75
+#: src/OpenGoldBox/rest_dialog_impl.h:89
 msgid "Remaining rest (minutes):"
 msgstr "Descanso restante (minutos):"
 
@@ -2379,15 +2383,15 @@ msgstr "Requiere {requirements}"
 msgid "Reroll all six"
 msgstr "Volver a tirar"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:67
+#: src/OpenGoldBox/rest_dialog_impl.h:75
 msgid "Resource recovery"
 msgstr "Recuperación de recursos"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:10
+#: src/OpenGoldBox/rest_dialog_impl.h:11
 msgid "Rest"
 msgstr "Descanso"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:109
+#: src/OpenGoldBox/rest_dialog_impl.h:142
 msgid "Rest could not resume here. Resolve the interruption or end the rest."
 msgstr "No se pudo reanudar aquí. Resuelve la interrupción o termina el descanso."
 
@@ -2403,15 +2407,15 @@ msgstr "Descanso interrumpido tras cinco minutos; no se concede recuperación."
 msgid "Rest is not allowed here."
 msgstr "No se permite descansar aquí."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:73
+#: src/OpenGoldBox/rest_dialog_impl.h:87
 msgid "Rest progress (minutes):"
 msgstr "Progreso del descanso (minutos):"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:66
+#: src/OpenGoldBox/rest_dialog_impl.h:74
 msgid "Rest requires at least 1 HP."
 msgstr "Para descansar se necesita al menos 1 PG."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:15
+#: src/OpenGoldBox/rest_dialog_impl.h:16
 msgid "Rest type"
 msgstr "Tipo de descanso"
 
@@ -2427,7 +2431,7 @@ msgstr "Prueba de reinicio"
 msgid "Restart with --reset-game-path to choose your Pool of Radiance data folder."
 msgstr "Reinicia con --reset-game-path para elegir la carpeta de datos de Pool of Radiance."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:27
+#: src/OpenGoldBox/rest_dialog_impl.h:28
 msgid "Resume Long Rest"
 msgstr "Reanudar descanso largo"
 
@@ -2493,7 +2497,7 @@ msgstr "Haz primero las seis tiradas de características."
 msgid "Roll {needed} or higher"
 msgstr "Saca {needed} o más"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:96
+#: src/OpenGoldBox/rest_dialog_impl.h:115
 msgid "Roll:"
 msgstr "Tirada:"
 
@@ -2561,7 +2565,7 @@ msgstr "Guardar"
 msgid "Save combat"
 msgstr "Guardar combate"
 
-#: src/OpenGoldBox/campaign_save_view.cpp:33 src/OpenGoldBox/rest_dialog_impl.h:28 src/OpenGoldBox/rolf_tour_view.cpp:78 src/OpenGoldBox/save_slots.cpp:33
+#: src/OpenGoldBox/campaign_save_view.cpp:33 src/OpenGoldBox/rest_dialog_impl.h:29 src/OpenGoldBox/rolf_tour_view.cpp:78 src/OpenGoldBox/save_slots.cpp:33
 msgid "Save game"
 msgstr "Guardar partida"
 
@@ -2665,11 +2669,11 @@ msgstr "Toque electrizante: no puede realizar ataques de oportunidad."
 msgid "Shop / select an item"
 msgstr "Tienda / elige un objeto"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:17 src/OpenGoldBox/rest_dialog_impl.h:69
+#: src/OpenGoldBox/rest_dialog_impl.h:18 src/OpenGoldBox/rest_dialog_impl.h:77
 msgid "Short Rest"
 msgstr "Descanso corto"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:62
+#: src/OpenGoldBox/rest_dialog_impl.h:70
 msgid "Short Rest completed. Choose one die at a time, or finish."
 msgstr "Descanso corto completado. Elige un dado cada vez o termina."
 
@@ -2903,7 +2907,7 @@ msgstr "Libro de conjuros: {spell} (aprendido en el nivel {level} de Mago)."
 msgid "Spells"
 msgstr "Conjuros"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:26
+#: src/OpenGoldBox/rest_dialog_impl.h:27
 msgid "Spend 1 Hit Die"
 msgstr "Gastar 1 dado de golpe"
 
@@ -2928,7 +2932,7 @@ msgstr "Estable, inconsciente"
 msgid "Stand up"
 msgstr "Levantarse"
 
-#: src/OpenGoldBox/rest_dialog_impl.h:25
+#: src/OpenGoldBox/rest_dialog_impl.h:26
 msgid "Start"
 msgstr "Empezar"
 
@@ -3026,7 +3030,7 @@ msgstr "PG temporales"
 msgid "Temporary HP from {source}. Absorbs damage before ordinary HP; does not heal or stack."
 msgstr "PG temporales de {source}. Absorben el daño antes que los PG normales; no curan ni se acumulan."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:63
+#: src/OpenGoldBox/rest_dialog_impl.h:71
 msgid "The Long Rest is interrupted. Resume after resolving the interruption, or end the rest."
 msgstr "El descanso largo está interrumpido. Reanúdalo tras resolver la interrupción o termina el descanso."
 
@@ -3062,7 +3066,7 @@ msgstr "Esta armadura impone desventaja en las pruebas de Destreza (Sigilo)."
 msgid "This grip is incompatible with the equipped weapon or shield."
 msgstr "Este agarre es incompatible con el arma o escudo equipado."
 
-#: src/OpenGoldBox/rest_dialog_impl.h:62
+#: src/OpenGoldBox/rest_dialog_impl.h:70
 msgid "This member did not complete the rest."
 msgstr "Este miembro no completó el descanso."
 

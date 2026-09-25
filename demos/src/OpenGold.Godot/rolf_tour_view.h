@@ -72,6 +72,7 @@ private:
     void rest_selected(std::int64_t index);
     void rest_start();
     void rest_spend();
+    void rest_recover();
     void rest_finish();
     void rest_resume();
     void rest_save();
