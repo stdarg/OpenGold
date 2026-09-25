@@ -105,6 +105,12 @@ preparation/one-cantrip replacement are approved exactly as described in the
 
 ## Pending — do not implement dependent choices
 
+**ROGUE-1/2/3 — PENDING, #112/#114/#116, 2026-09-25, new visible questions 1–3:**
+Sneak Attack hit dialog (replaces Q25 proposal), Steady Aim in the existing
+Bonus Action row, and ordinary Rogue3/4 advancement using the existing dialog.
+[Exact proposal and preserved exclusions](ROGUE-ATTACKS.md#proposed-controls--pending-approval).
+The earlier three approvals apply to WIZCHOICE-1/2/3; do not reuse them here.
+
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |

@@ -27,7 +27,24 @@ Do not pause or request another resume at this batch boundary.
   OPEN with its preserved copying/book-lifecycle acceptance. No delivery step
   or live build/test remains. The full standing goal is still active.
 
-## Next work / preserved exclusions
+## Active batch — Rogue attacks (#112/#114)
+
+[Frozen packet](ROGUE-ATTACKS.md) covers Sneak Attack through level four and
+Steady Aim at levels three/four, including ordinary Rogue3/4 advancement.
+Branch `codex/srd-rogue-attacks`; one owner, no agents/new tasks/issues.
+#220/#221 share Sneak evidence; #116 remains open for broader class completion.
+Thief, Hide and weapon mastery stay excluded and required in their own issues.
+
+Started 2026-09-25 21:27:56 UTC; checkpoint 22:27:56, maximum 22:57:56.
+Requested Astra/high for hit-state/persistence interactions; actual settings
+unverified, no switch. No failed fixes or gameplay edits. Baseline damage and
+training checks pass at `eef99a3`; existing actual-writer fixtures remain intact.
+ROGUE-1/2/3 require the new visible review questions; the latest numbered
+approvals belong to the already delivered WIZCHOICE-1/2/3, not these controls.
+No live build/test. Continue within the frozen packet after recording answers;
+the standing goal remains active, with dependent UI awaiting approval.
+
+## Preserved exclusions from Wizard delivery
 
 #97 stays open for physical spellbooks, copying costs/time and replacement/loss.
 #165 owns all missing spells; this batch added no spell effects. #98 Ritual
