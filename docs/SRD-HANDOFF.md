@@ -6,17 +6,17 @@ four, then level twenty/multiclassing. A batch delivery is not goal completion.
 
 ## Latest completed batch — #32 / #87
 
-- Runtime `ce04673`, branch `codex/srd-medicine-tactical-mind`; delivery consists
-  of this runtime plus the documentation record. Commit/push and fast-forward
-  to `main` follow the established delivery path. Verify Git state on entry.
+- Runtime `ce04673` and documentation `b8f0e38` were pushed on
+  `codex/srd-medicine-tactical-mind`, fast-forwarded to `main`, and pushed to
+  `origin/main`. Current working branch is `main`.
 - [Coverage](SRD-COVERAGE.md#medicine-stabilization-and-tactical-mind) is the
   completion record; [feature packet](MEDICINE-TACTICAL-MIND.md) holds mechanics,
   accepted scope, limitations, compatibility and exact verification commands.
 - Q38/Q39 approved and implemented. 47 native/tool and 24 Godot runtime checks
   pass; both applications built/rendered, main EN/ES and demo EN at both sizes.
   Localization validates 886 messages. No live build/test handles remain.
-- Complete #32/#87 only after pushed delivery; no other issue is completed by
-  this batch. No new issues. Keep actual historical fixture bytes unchanged.
+- #32/#87 are verified CLOSED with delivery evidence linked on GitHub. No other
+  issue was closed and no issues were added. Historical fixture bytes are unchanged.
 - Model assignment: recorded gpt-6-astra/high for shared checks/save interactions;
   no model/settings change or agents. Re-read routing before selecting next work.
 - Original preparation start 04:41:34 UTC; checkpoint 05:41:34, maximum 06:11:34
