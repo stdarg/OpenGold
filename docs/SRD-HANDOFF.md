@@ -46,7 +46,8 @@ levels 1–4. [Frozen packet](ARCANE-RECOVERY.md) owns acceptance/exclusions, so
 checks and pending AR-1 (visible question 1). Branch `codex/srd-arcane-recovery`;
 requested Astra/high retained, no actual switch/agents/new tasks. Start
 2026-09-25 18:57:23 UTC; checkpoint 19:57:23, maximum 20:27:23. Rules/Core implementation and actual 0.6.48 fixtures are present.
-Final native/tool regression passes 51/51; localization validates 901 messages.
+Native runtime/test revision `bc948e7` (module 0.6.49) is committed on the current
+branch. Final native/tool regression passes 51/51; localization validates 901 messages.
 No live build/test handle remains. AR-1 is still pending: no dependent UI controls
 implemented. Next: approved UI integration, shared game/demo checks and EN/ES
 render/input verification before closing #99. The native packet records scope,

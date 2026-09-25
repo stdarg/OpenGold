@@ -88,7 +88,7 @@ Earlier capture/implementation phase endpoints were not recorded precisely;
 no reconstructed durations or token-saving claim. The checkpoint remains
 19:57:23 UTC, maximum 20:27:23 UTC.
 
-Verified commands on the native implementation tree:
+Verified commands on native runtime/test revision `bc948e7` (module 0.6.49):
 
 - `cmake --build build/mac-check --target <49 native test targets> -j6`
   (targets selected from CTest executable paths; no Godot packaging).
