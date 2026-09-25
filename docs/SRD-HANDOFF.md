@@ -54,7 +54,8 @@ numbered answer; do not implement it under the main-game placement approval.
 The complete training suite now passes with additional malformed pending-hit
 and recruited Rogue handoff checks through all four levels. No live build/test
 remains. The78-check run predates only these added tests, not production edits.
-Commit/push verified work and reconcile #112/#220/#221; #114 and #116 stay open.
+Verified runtime committed as `7f3ab30`; push and reconcile #112/#220/#221.
+#114 and #116 stay open.
 Preserve original22:27:56 checkpoint. Ask ROGUE-DEMO-1 visibly with Glass audio.
 
 ## Preserved exclusions from Wizard delivery

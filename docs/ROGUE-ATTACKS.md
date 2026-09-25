@@ -93,6 +93,9 @@ pass keyboard, exact native-save comparisons and rendered checks at1120×800 and
 checks; demo Steady Aim awaits ROGUE-DEMO-1. No new runtime mechanics were added
 outside the frozen acceptance. No historical fixtures were regenerated.
 
+Tested runtime commit: `7f3ab30` (same production tree as the checks below).
+Final added-test training run passed before this commit.
+
 Final integrated runtime tree: 78/78 checks, 37.53s (`/tmp/rogue-final-tests.log`),
 51native/tool and27Godot. Localization:934 complete EN/ES messages. Build/test
 commands follow workflow, with the current project prepared before excluding

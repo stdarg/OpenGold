@@ -409,7 +409,7 @@ Mechanics and durable tests: [Sneak Attack](SNEAK-ATTACK.md).
 Steady Aim's rules and main-game controls are verified, but #114 remains OPEN
 pending the separately proposed demo Bonus Action placement. #116 remains OPEN
 for full Rogue completion; Thief, Hide and weapon mastery are not delivered.
-The runtime commit is recorded in the linked batch after commit creation.
+Tested runtime commit: `7f3ab30`; evidence-only changes follow separately.
 
 ### Unconscious enemy transit (#222, bounded child of #44)
 
