@@ -80,5 +80,22 @@ func run_checks() -> void:
         require(wake.visible and wake.disabled, "Blocked reach disables wake")
         await load_fixture("offturn")
         require(wake.visible and wake.disabled, "Off-turn wake disabled")
+        await load_fixture("ground")
+        var ground: OptionButton = current_scene.get_node("GroundItem")
+        var pickup: Button = current_scene.get_node("PickUp")
+        require(ground.visible and ground.item_count == 2 and not pickup.disabled, "Dropped gear uses approved ground selector")
+        for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
+            root.size = size; await settle()
+            require(pickup.get_rect().end.x <= root.size.x - 300 and ground.position.y >= stand.position.y, "Ground item controls fit approved row")
+            require(current_scene.get_node("Log").size.y >= 48, "Ground items preserve readable log")
+            if not captures.is_empty():
+                await RenderingServer.frame_post_draw
+                root.get_texture().get_image().save_png(captures.path_join("ground-" + locale + "-" + str(size.x) + ".png"))
+        require(pickup.text == ("Pick up (interaction)" if locale == "en" else "Recoger (interacción)"), "Pickup displays translated interaction cost")
+        pickup.grab_focus(); await key(KEY_SPACE)
+        require(ground.item_count == 1 and not pickup.disabled, "Keyboard pickup removes exactly one ground item")
+        require(pickup.text == ("Pick up (Action)" if locale == "en" else "Recoger (Acción)"), "Shield recovery displays Action cost")
+        await key(KEY_SPACE)
+        require(not ground.visible and not pickup.visible, "Shield pickup clears ground row")
         require(not current_scene.get_node("Save").visible and not current_scene.get_node("Load").visible, "No player combat saving")
     cleanup(); print("Natural sleep controls passed"); quit()

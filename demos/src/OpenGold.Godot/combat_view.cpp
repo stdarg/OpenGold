@@ -1,6 +1,9 @@
 #include "combat_view.h"
 #include "opengold/srd5.h"
+#include "opengold/combat_body_catalog.h"
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/option_button.hpp>
+#include <godot_cpp/classes/popup_menu.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/font.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -49,6 +52,8 @@ void CombatView::_ready()
     get_node<Button>("Slums")->connect("pressed",callable_mp(this,&CombatView::slums));
     get_node<Button>("WakeAlly")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind("wake_ally"));
     get_node<Button>("StandUp")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("stand_up"));
+    get_node<OptionButton>("GroundItem")->connect("item_selected",callable_mp(this,&CombatView::ground_selected));
+    get_node<Button>("PickUp")->connect("pressed",callable_mp(this,&CombatView::pick_up));
     get_node<Button>("Replay")->connect("pressed",callable_mp(this,&CombatView::replay));
     get_node<Button>("Continue")->connect("pressed",callable_mp(this,&CombatView::next));
     get_node<Button>("Revisit")->connect("pressed",callable_mp(this,&CombatView::revisit));
@@ -71,7 +76,7 @@ void CombatView::layout()
 {
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    const bool recovery=get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible();
+    const bool recovery=get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible();
     const double tile=std::min(left_width/board.width,(height-(recovery?324:280))/board.height);
     board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
@@ -89,6 +94,7 @@ void CombatView::layout()
     const double top=board_rect_.get_end().y+16;
     place("WakeAlly",Rect2(24+left_width-180,top,180,36));
     place("StandUp",Rect2(24,top+44,180,36));
+    place("GroundItemLabel",Rect2(214,top+44,100,36));place("GroundItem",Rect2(324,top+44,176,36));place("PickUp",Rect2(510,top+44,204,36));
     place("Log",Rect2(24,top+(recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-(recovery?88:0))));
     place("Footer",Rect2(24,height-34,width-48,24));
 }
@@ -115,6 +121,16 @@ void CombatView::sync_art()
         const auto image=godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels);
         art_[source.entity]=ImageTexture::create_from_image(image);
     }
+    if(campaign_){
+        auto directory=OS::get_singleton()->get_environment("OPENGOLD_GAME_DIR");
+        if(directory.is_empty())directory=ProjectSettings::get_singleton()->get_setting("opengold/game_directory","");
+        const auto originals=por::CharacterArt::load(std::filesystem::u8path(directory.utf8().get_data()));
+        const auto catalog=por::CombatBodyCatalog::load(local_path("res://../../data/art/combat-body-looks.tsv"),local_path("res://../../data/art/combat-weapon-options.tsv"));
+        campaign_art_.clear();for(const auto id:campaign_->state().slots)if(id){
+            const auto resolved=por::resolve_combat_appearance(campaign_->member(id),catalog);
+            campaign_art_.push_back({id,resolved.icon(originals,false),resolved.icon(originals,true),resolved.selection.matched?std::string{}:resolved.selection.label});
+        }
+    }
     for(const auto& source:campaign_art_){PackedByteArray pixels;pixels.resize(source.image.rgba.size());std::copy(source.image.rgba.begin(),source.image.rgba.end(),pixels.ptrw());
         art_[source.entity]=ImageTexture::create_from_image(godot::Image::create_from_data(source.image.width,source.image.height,false,godot::Image::FORMAT_RGBA8,pixels));}
 }
@@ -140,6 +156,11 @@ void CombatView::select_mode(String verb)
 {
     mode_=spell_verb(verb.utf8().get_data(),spell_slot_);if(mode_=="dash"||mode_=="dodge"||mode_=="disengage"){immediate(verb);return;}refresh();
 }
+void CombatView::ground_selected(std::int64_t index){ground_item_=get_node<OptionButton>("GroundItem")->get_item_id(index);refresh();}
+void CombatView::pick_up(){
+    if(!demo_||!demo_->has_combat()||get_node<Button>("PickUp")->is_disabled())return;
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb=="pick_up"&&c.target==ground_item_){act(c);return;}
+}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::immediate(String verb)
 {
@@ -158,7 +179,8 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("SavageAttacker")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
+    if(key.is_valid()&&(get_node<OptionButton>("GroundItem")->has_focus()||get_node<OptionButton>("GroundItem")->get_popup()->is_visible()))return;
+    if(key.is_valid()&&(get_node<Button>("PickUp")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&mode_=="wake_ally"){
         mode_="move";refresh();get_viewport()->set_input_as_handled();return;
@@ -206,6 +228,21 @@ void CombatView::refresh()
     }else if(modal->is_visible())modal->hide();
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
+    std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
+    if(holders!=item_holders_){item_holders_=std::move(holders);if(campaign_)sync_art();}
+    auto* ground=get_node<OptionButton>("GroundItem");ground->set_block_signals(true);ground->clear();
+    for(const auto& item:s.held_items)if(!item.holder)ground->add_item(gs(item.label.source),item.id);
+    int ground_index=-1;for(int i=0;i<ground->get_item_count();++i)if(ground->get_item_id(i)==int(ground_item_))ground_index=i;
+    if(ground_index<0&&ground->get_item_count())ground_index=0;
+    if(ground_index>=0){ground->select(ground_index);ground_item_=ground->get_item_id(ground_index);}else ground_item_=0;
+    ground->set_block_signals(false);
+    const bool show_ground=s.outcome==Outcome::ongoing&&ground->get_item_count()>0;
+    const bool ground_layout_changed=ground->is_visible()!=show_ground;
+    for(const char* name:{"GroundItemLabel","GroundItem","PickUp"})get_node<Control>(name)->set_visible(show_ground);
+    ground->set_disabled(!player);
+    const auto pickup=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="pick_up"&&c.target==ground_item_;});
+    get_node<Button>("PickUp")->set_disabled(!player||pickup==offered.end());
+    get_node<Button>("PickUp")->set_text(pickup==offered.end()?String("Pick up"):gs(pickup->label));
     get_node<Button>("WakeAlly")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[](const auto& a){return a.side==0&&a.naturally_sleeping;}));
     get_node<Button>("WakeAlly")->set_disabled(!enabled("wake_ally"));
     get_node<Button>("StandUp")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor&&a.side==0&&a.prone;}));

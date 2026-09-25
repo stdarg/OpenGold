@@ -345,6 +345,14 @@ void CampaignParty::validate(const PartyState& state)
         std::set<std::uint64_t> equipment;
         for(auto item:m.equipped)if(!m.character.inventory().find(item)||!equipment.insert(item).second)throw std::runtime_error("Invalid equipment checkpoint");
     }
+    std::set<std::pair<std::uint64_t,unsigned>> detached;
+    if(state.detached_items.size()>4096)throw std::runtime_error("Too many detached inventory items");
+    for(const auto& item:state.detached_items){
+        if(!item.scope||item.scope>=state.next_combat_scope||!item.token||!detached.emplace(item.scope,item.token).second||
+            (item.original_owner&&!ids.contains(item.original_owner))||ids.contains(item.holder)||item.cell.x<0||item.cell.y<0||
+            item.item.id||item.item.quantity!=1||item.item.definition_id.empty()||item.item.name.empty())throw std::runtime_error("Invalid detached inventory item");
+        if(item.original&&(item.item.definition_id!=equipment_conversion(*item.original)||item.item.original_type!=item.original->stored.type))throw std::runtime_error("Detached inventory provenance mismatch");
+    }
     if(std::any_of(state.claimed_rewards.begin(),state.claimed_rewards.end(),[](const auto& id){return id.empty()||id.size()>160;})||
        std::set<std::string>(state.claimed_rewards.begin(),state.claimed_rewards.end()).size()!=state.claimed_rewards.size())throw std::runtime_error("Invalid claimed rewards");
     for(unsigned slot=0;slot<8;++slot)if(auto id=state.slots[slot]){
@@ -426,12 +434,58 @@ std::vector<rules::Participant> CampaignParty::participants() const
     }
     if(result.empty())throw std::runtime_error("Add a living combat-ready character first");return result;
 }
-void CampaignParty::begin_combat(){outside_combat();if(state_.rest_activity&&(!state_.rest_activity->interrupted||state_.short_rest))throw std::runtime_error("Resolve rest interruption and Hit Dice choices before combat");if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;}
+void CampaignParty::begin_combat(){outside_combat();if(state_.rest_activity&&(!state_.rest_activity->interrupted||state_.short_rest))throw std::runtime_error("Resolve rest interruption and Hit Dice choices before combat");if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;combat_scope_=state_.next_combat_scope;combat_items_.clear();}
+void CampaignParty::apply_combat_items(PartyState& next,std::vector<CombatInventoryItem>& manifest,const rules::Snapshot& snapshot) const
+{
+    const auto find_member=[&](MemberId id){return std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});};
+    std::set<std::pair<MemberId,unsigned>> sources;
+    if(manifest.empty())for(const auto& item:snapshot.held_items){
+        if(!item.id||!item.origin||item.definition.empty()||!sources.emplace(item.origin,item.equipment_index).second)throw std::runtime_error("Invalid encounter item identity");
+        CombatInventoryItem entry;entry.token=item.id;entry.origin=item.origin;entry.equipment_index=item.equipment_index;entry.holder=item.origin;
+        const auto source_actor=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==item.origin;});
+        if(source_actor==snapshot.combatants.end())throw std::runtime_error("Unknown encounter item source");
+        const auto owner=find_member(item.origin);
+        if(owner!=next.roster.end()&&source_actor->side==0){
+            if(item.equipment_index>=owner->equipped.size())throw std::runtime_error("Encounter item is missing from owner equipment");
+            entry.inventory_id=owner->equipped[item.equipment_index];entry.item=owner->character.inventory().find(entry.inventory_id)->get();entry.original_owner=owner->id;
+            if(entry.item.definition_id!=item.definition)throw std::runtime_error("Encounter item disagrees with inventory provenance");
+            if(const auto source=owner->item_sources.find(entry.inventory_id);source!=owner->item_sources.end())entry.original=source->second;
+        }else{
+            if(std::none_of(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==item.origin&&a.side!=0;}))throw std::runtime_error("Unknown encounter item source");
+            entry.item={0,item.definition,item.label.source,1,-1};
+        }
+        entry.item.id=0;entry.item.quantity=1;manifest.push_back(std::move(entry));
+    }
+    if(manifest.size()!=snapshot.held_items.size())throw std::runtime_error("Encounter item manifest changed size");
+    std::set<unsigned> seen;
+    for(const auto& item:snapshot.held_items){
+        if(!seen.insert(item.id).second)throw std::runtime_error("Duplicate encounter item");
+        const auto entry=std::find_if(manifest.begin(),manifest.end(),[&](const auto& e){return e.token==item.id;});
+        if(entry==manifest.end()||entry->origin!=item.origin||entry->equipment_index!=item.equipment_index||entry->item.definition_id!=item.definition)throw std::runtime_error("Encounter item manifest changed identity");
+        if(item.holder&&std::none_of(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==item.holder&&!a.dead&&a.conscious;}))throw std::runtime_error("Invalid encounter item holder");
+        if(!item.holder&&(!snapshot.battlefield.contains(item.cell)||snapshot.battlefield.at(item.cell)==1))throw std::runtime_error("Invalid encounter item location");
+        if(entry->holder==item.holder)continue;
+        if(const auto owner=find_member(entry->holder);owner!=next.roster.end()){
+            auto& inventory=owner->character.inventory();const auto held=inventory.find(entry->inventory_id);
+            if(!held||held->get().definition_id!=entry->item.definition_id)throw std::runtime_error("Encounter transfer lost its inventory item");
+            inventory.remove(entry->inventory_id);std::erase(owner->equipped,entry->inventory_id);
+            if(!inventory.find(entry->inventory_id))owner->item_sources.erase(entry->inventory_id);
+        }
+        std::erase_if(next.detached_items,[&](const auto& loose){return loose.scope==combat_scope_&&loose.token==item.id;});
+        entry->holder=item.holder;entry->inventory_id=0;
+        if(const auto holder=find_member(item.holder);holder!=next.roster.end()){
+            entry->inventory_id=holder->character.inventory().add(entry->item.definition_id,entry->item.name,1,entry->item.original_type);
+            holder->equipped.push_back(entry->inventory_id);
+            if(entry->original)holder->item_sources.emplace(entry->inventory_id,*entry->original);
+        }else next.detached_items.push_back({combat_scope_,item.id,entry->original_owner,item.holder,item.cell,entry->item,entry->original});
+    }
+}
 void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
 {
     if(!combat_||snapshot.identity!=rules_->identity())throw std::runtime_error("Combat rules identity mismatch");
     if(snapshot.elapsed_milliseconds<combat_elapsed_)throw std::runtime_error("Combat clock moved backward");
-    auto next=state_;
+    auto next=state_;auto items=combat_items_;
+    apply_combat_items(next,items,snapshot);
     std::vector<MemberId> active;for(const auto& actor:snapshot.combatants)if(actor.side==0)active.push_back(actor.id);
     // Combat has already advanced active actors' effects and mortality. Only reserves
     // need campaign-side updates, preventing duplicate recovery rolls.
@@ -449,6 +503,6 @@ void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
         ++next.rest_activity->ticket.revision;
     }
     if(!combat_registered_)++next.next_combat_scope;
-    state_=std::move(next);combat_elapsed_=snapshot.elapsed_milliseconds;combat_registered_=true;
+    state_=std::move(next);combat_items_=std::move(items);combat_elapsed_=snapshot.elapsed_milliseconds;combat_registered_=true;
 }
 }

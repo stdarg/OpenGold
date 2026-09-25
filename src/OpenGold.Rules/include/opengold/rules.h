@@ -119,6 +119,16 @@ struct Battlefield {
     [[nodiscard]] bool contains(Cell p) const noexcept;
     [[nodiscard]] unsigned at(Cell p) const noexcept;
 };
+// Stable encounter item identity references the original participant and equipment
+// ordinal. Campaign adapters map these to inventory identities, never rule code.
+struct HeldItemView {
+    unsigned id{};
+    EntityId origin{}, holder{}; // Holder zero means on the ground.
+    unsigned equipment_index{};
+    std::string definition;
+    Message label;
+    Cell cell;
+};
 struct Participant {
     EntityId id{};
     std::string definition, name;
@@ -182,6 +192,7 @@ struct Snapshot {
     std::uint64_t elapsed_milliseconds{};
     std::optional<TemporaryHpOffer> temporary_hp_offer;
     std::optional<SavageAttackChoice> savage_attack_choice;
+    std::vector<HeldItemView> held_items;
 };
 // Verbs are owned by a module, not an enumeration of edition-specific rules.
 // Presentation submits only currently offered commands. The module revalidates.

@@ -128,6 +128,20 @@ void profiles_and_migration(){
     const auto first_effect=reference.find("\nFX1 1 0\n");
     check(first_effect!=reference.npos,"Frozen effect block exists");
     reference.replace(first_effect+9,7,"FX4 1 0 0 1");
+    // This continuation now drops actor 1's longsword. Extend the old oracle
+    // explicitly with the new ledger/budgets; never regenerate its damage/RNG.
+    std::istringstream frozen_rows(reference);std::vector<std::string> rows;
+    for(std::string row;std::getline(frozen_rows,row);)rows.push_back(row);
+    rows[0].replace(0,11,"OGCOMBAT 16");
+    for(unsigned i=4;i<11;++i){
+        if(rows[i].starts_with("1 ")){
+            auto pos=rows[i].size();for(unsigned n=0;n<8;++n)pos=rows[i].rfind(' ',pos-1);
+            check(rows[i].substr(pos+1,1)=="1","Old writer recorded the held longsword");rows[i].replace(pos+1,1,"0");
+        }
+        rows[i]+=" 0 0 0 0"; // Surge pools/allowance and Dash count, absent in format 13.
+    }
+    reference.clear();for(const auto& row:rows)reference+=row+'\n';
+    reference+="6\n1 0 1 1\n2 2 0 0\n3 3 0 0\n4 4 0 0\n5 5 0 0\n6 6 0 0\n1 1 1 1 1 1 1 \n";
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
 }

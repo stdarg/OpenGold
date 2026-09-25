@@ -82,6 +82,71 @@ void prior_writer(){
     check(battle->submit(command(*battle,"cunning_dash"))&&battle->submit(command(*battle,"dash")),"Continue actual prior writer's actions");
     check(battle->save()==normalized(read("combat-v15-sleep-continued.save")),"Prior writer's next commands/resources/RNG remain byte-exact");
 }
+void held_items(){
+    const auto rules=module();const auto person=hero();VitalState sleep{person.sheet().hit_points};rules->set_rest_work(sleep,person.sheet(),RestWork::sleep);
+    const std::array<std::string,2> gear{"longsword","shield"};
+    auto battle=rules->create({{9,7,std::vector<std::uint8_t>(63)},{{1,"campaign-character","Sleeper",0,{2,2},rules->character_profile(person.sheet(),gear).data,sleep},
+        {2,"campaign-character","Ally",0,{2,3},rules->character_profile(person.sheet(),{}).data},{3,"bandit","Enemy",1,{6,2}}}},37);
+    const auto state=battle->snapshot();check(state.held_items.size()==2&&state.held_items[0].holder==0&&state.held_items[1].holder==0,"Sleep drops both held weapon and shield");
+    check(unit(*battle,1).armor_class==rules->character_profile(person.sheet(),{}).armor_class,"Dropped shield no longer supplies AC");
+    check(battle->save().starts_with("OGCOMBAT 16 ")&&rules->restore(battle->save())->save()==battle->save(),"Dropped equipment and budgets round trip");
+    turn(*battle,2);
+    const auto fixture_path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"sleep-fixtures";
+    {std::ofstream out(fixture_path/"ground.save");out<<battle->save();}
+    check(battle->submit(command(*battle,"wake_ally",1)),"Spend Action waking item owner");
+    const auto pickup=command(*battle,"pick_up",1);check(battle->submit(pickup),"Another character can pick up the owner's weapon with free interaction");
+    check(!unit(*battle,2).action&&battle->snapshot().held_items[0].holder==2,"Pickup does not refund spent Action and records actual holder");
+    const auto saved=battle->save();check(!battle->submit(pickup)&&battle->save()==saved,"Stale pickup cannot duplicate equipment or spend again");
+    battle=rules->restore(saved);check(battle->save()==saved,"Cross-character pickup persists exactly");
+    const auto commands=battle->legal_commands();check(std::none_of(commands.begin(),commands.end(),[](const auto& c){return c.verb=="pick_up";}),"Shield pickup needs available Utilize action");
+    turn(*battle,1);check(battle->submit(command(*battle,"pick_up",2)),"Owner can recover shield with an Action");
+    check(!unit(*battle,1).action&&unit(*battle,1).armor_class==rules->character_profile(person.sheet(),gear).armor_class,"Shield recovery restores only AC and spends Action");
+    check(rules->restore(battle->save())->save()==battle->save(),"Shield recovery reloads exactly");
+    // The serialized equipment ledger cannot create an unknown holder or duplicate token.
+    auto invalid=saved;auto suffix=invalid.rfind("\n2\n1 2 0 0\n");
+    check(suffix!=invalid.npos,"Held-item checkpoint has canonical count and first token");
+    invalid.replace(suffix+5,1,"999");rejects([&]{(void)rules->restore(invalid);});
+    bool witnessed=false;
+    for(unsigned seed=1;seed<100&&!witnessed;++seed){
+        auto hit=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"bandit","Attacker",0,{2,2}},
+            {2,"campaign-character","Wounded",1,{3,2},rules->character_profile(person.sheet(),gear).data,VitalState{1}}}},seed);
+        const auto available=hit->legal_commands();const auto melee=std::find_if(available.begin(),available.end(),[](const auto& c){return c.verb=="melee";});
+        if(melee==available.end())continue;
+        check(hit->submit(*melee),"Damage fixture attack");if(unit(*hit,2).hit_points)continue;
+        witnessed=true;const auto fallen=hit->snapshot();check(fallen.held_items.size()==2&&std::all_of(fallen.held_items.begin(),fallen.held_items.end(),[](const auto& i){return !i.holder;}),"Falling to zero HP drops held gear");
+        check(rules->restore(hit->save())->save()==hit->save(),"Lethal hit and dropped gear preserve continuation");
+    }
+    check(witnessed,"An actual attack dropped equipment at zero HP");
+    std::ifstream old(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures/combat-v8-grants-continued.save");
+    check(bool(old),"Actual prior-writer equipment fixture exists");
+    auto legacy=rules->restore(std::string(std::istreambuf_iterator<char>(old),{}));
+    for(unsigned n=0;n<100&&legacy->snapshot().held_items.empty();++n){
+        const auto available=legacy->legal_commands();
+        const auto attack=std::find_if(available.begin(),available.end(),[](const auto& c){return c.actor==99&&c.verb=="melee"&&c.target==2;});
+        check(legacy->submit(attack!=available.end()?*attack:command(*legacy,"end")),"Continue legacy combat until another holder falls");
+    }
+    const auto migrated=legacy->snapshot();
+    check(!migrated.held_items.empty()&&!unit(*legacy,1).conscious,"Legacy encounter activates equipment ledger with an already-fallen holder");
+    check(std::all_of(migrated.held_items.begin(),migrated.held_items.end(),[](const auto& i){return i.origin!=1||!i.holder;}),"Ledger activation reconciles previously unconscious holders");
+    check(rules->restore(legacy->save())->save()==legacy->save(),"Legacy fall and new drop produce a valid continuation");
+}
+void campaign_item_handoff(){
+    const auto rules=module();auto first=hero();const auto sword=first.inventory().add("longsword","Owned sword");
+    const auto shield=first.inventory().add("shield","Owned shield");
+    CampaignParty party(module());const auto owner=party.add_pc(std::move(first));const auto ally=party.add_pc(hero());party.equip(owner,sword);party.equip(owner,shield);
+    auto sleeping=party.checkpoint();rules->set_rest_work(sleeping.roster[0].vitals,sleeping.roster[0].character.sheet(),RestWork::sleep);party.restore(sleeping);
+    auto people=party.participants();people[0].cell={2,2};people[1].cell={2,3};people.push_back({1000,"bandit","Enemy",1,{6,2}});
+    auto battle=rules->create({{9,7,std::vector<std::uint8_t>(63)},people},37);party.begin_combat();party.apply_combat(battle->snapshot());
+    check(party.member(owner).equipped.empty()&&party.member(owner).character.inventory().empty()&&party.state().detached_items.size()==2,"Dropping moves actual inventory to ground without copies");
+    party.apply_combat(battle->snapshot());check(party.state().detached_items.size()==2,"Repeated snapshot does not duplicate dropped items");
+    turn(*battle,ally);check(battle->submit(command(*battle,"pick_up",1)),"Ally picks up original inventory item");party.apply_combat(battle->snapshot());
+    const auto& acquired=party.member(ally).character.inventory().items();check(acquired.size()==1&&acquired[0].name=="Owned sword"&&party.member(ally).equipped.size()==1&&party.state().detached_items.size()==1,"Cross-character pickup transfers physical item and name exactly once");
+    auto invalid=battle->snapshot();invalid.held_items[0].definition="dagger";const auto before=party.checkpoint();
+    rejects([&]{party.apply_combat(invalid);});check(party.member(ally).character.inventory().items().size()==1&&party.state().random_state==before.random_state&&party.state().detached_items.size()==1,"Rejected manifest preserves inventory and RNG");
+    party.end_combat();const auto bytes=encode_campaign(party,nullptr,"detached-items");check(bytes.starts_with("OPENGOLD-CAMPAIGN 13"),"Detached items use versioned campaign persistence");
+    auto decoded=decode_campaign(bytes,*srd5::character_rules(),*rules,"detached-items",nullptr);CampaignParty copy(module());copy.restore(decoded.party);
+    check(encode_campaign(copy,nullptr,"detached-items")==bytes&&copy.state().detached_items.size()==1,"Uncollected equipment persists without assumed automatic cleanup");
+}
 void recovery_posture(){
     // A legacy zero-HP record gains explicit posture only when it actually recovers.
     for(const bool stable:{false,true}){
@@ -99,4 +164,4 @@ void movement(){
     check(grid.reachable(14).cost_to({3,2})==std::nullopt&&grid.reachable(15).cost_to({3,2})==15,"Crawling reach uses exact weighted path cost");
 }
 }
-int main(){try{codec();combat();damage_and_saves();prior_writer();recovery_posture();movement();std::cout<<"Natural sleep tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{codec();combat();damage_and_saves();prior_writer();held_items();campaign_item_handoff();recovery_posture();movement();std::cout<<"Natural sleep tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

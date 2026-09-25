@@ -364,3 +364,58 @@ The 60-minute report was late (02:49); the 90-minute overrun was reported at
 02:58. No original issue was closed in this increment. Inventory ownership
 investigation and several build/test corrections extended this work. Token/cost
 savings are unmeasured; this record does not claim acceleration.
+
+
+## Combat held-equipment increment (#193, Q35)
+
+Module 0.6.42 drops character-profile weapons and shields on natural sleep or
+zero HP. The SRD static library owns the held-item ledger, resulting attack/AC
+changes, reach and hand-capacity checks, and pickup costs. Weapons use the free
+object interaction, then an Action; recovering and donning a Shield uses an
+Action. The approved Ground item dropdown and Pick up button show the offered
+cost and support keyboard use in both game and demo. Ground markers in the main
+game indicate item location. Equipment sprites refresh after ownership changes.
+
+Core maps the generic encounter item identity to actual inventory identities.
+Drops remove exactly one physical item; cross-character pickup preserves its
+name and original-item provenance. Repeated snapshots cannot duplicate transfers,
+and rejected manifests preserve campaign state and RNG. Uncollected equipment
+is persisted separately, including when carried by an opponent. Combat format 16
+stores holders, ground locations and interaction budgets; campaign format 13
+stores detached inventory. Earlier formats remain readable. Older checkpoints
+keep their initial recorded gear, but the first activation of the new ledger
+reconciles all unconscious holders so subsequent checkpoints remain valid.
+
+Evidence: `natural_sleep_tests.cpp` covers sleep/drop, AC removal, actual lethal
+hits, pickup and budgets, stale commands, malformed checkpoints, ownership
+transfer, idempotence and campaign save/load. An actual v8 checkpoint exercises
+an already-unconscious holder when a second actor falls. The prior-writer feature
+grant oracle changes only the explicit new posture/item fields; its damage,
+resources and RNG sequence remain frozen. `natural_sleep_view_tests.gd` exercises
+keyboard pickup, translated costs, disabled controls and both window sizes.
+
+All 45 native/tool checks and all 23 Godot checks passed before the final legacy
+ledger invariant correction. That correction has its own passing regression;
+eight affected native checks and the Godot sleep check passed after rebuilding.
+The rebuilt demo passed its runtime/visual checks, including a final label-spacing
+correction. All 871 English/Spanish messages validate. No live verification remains.
+Current integrated logs are `/tmp/held-integrated-native.log`,
+`/tmp/held-integrated-godot.log`, `/tmp/held-integrated-demo-ui.log` and
+`/tmp/held-integrated-render.log`. English/Spanish game captures at 1120×800 and
+1920×1080 were inspected in `/tmp/held-integrated-captures`.
+
+This is an incomplete #193 increment. Rest-time drops outside combat and their
+encounter import remain unfinished. Q36 automatic collection after victory/safe
+rest is pending; waking alone does not return gear, and no automatic cleanup is
+implemented. Detached inventory is retained, but outside-combat recovery is not
+yet playable. Static authored monster profiles lack equipment exchange metadata;
+character recipes retain the existing one-weapon/one-shield restriction. Neither
+#193 nor parent #30 is closed, and the full SRD goal is unchanged.
+
+
+Final evidence: `/tmp/held-final-tests.log` (9/9),
+`/tmp/held-demo-spacing-ui.log`, `/tmp/held-final-demo-captures`. Scope review
+confirmed static-library rules ownership, generic Core inventory persistence,
+existing Godot controls, RAII values and no new player saving controls. The held
+increment ran from 03:08 to approximately 03:50 UTC; original batch clock remains
+01:27:34 UTC. No original issue was closed. Token/cost delta was not captured.

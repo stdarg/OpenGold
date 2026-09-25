@@ -77,7 +77,7 @@ private:
     std::optional<std::pair<opengold::rules::EntityId,opengold::rules::Cell>> followed_;
     bool panning_{},check_target_centered_{};
     void grip_selected(std::int64_t index);
-    void layout();void layout_status();void layout_reaction_controls(bool reaction);void refresh();void sync_art();void act(const opengold::rules::Command& command);
+    void layout();void layout_status();void layout_reaction_controls(bool reaction);void refresh();void sync_art(bool preserve_effects=false);void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void select_party(opengold::rules::EntityId id);
     void move_selected(opengold::rules::Cell direction);
@@ -85,6 +85,9 @@ private:
     void cantrip_selected(std::int64_t index);void cast_cantrip();
     std::string cantrip_;
     void spell_slot();
+    void ground_selected(std::int64_t index);void pick_up();
+    unsigned ground_item_{};
+    std::vector<std::pair<unsigned,opengold::rules::EntityId>> item_holders_;
     void adjust_zoom(int percentage_points);
     unsigned spell_slot_{1};
     void training();void slums();void replay();void next();void revisit();void save_game();void load_game();

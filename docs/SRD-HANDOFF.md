@@ -6,65 +6,59 @@ level 4, then level 20 and multiclassing.
 
 ## Active batch — #193 / parent #30
 
-- Authorization: resumed goal; existing #193 acceptance and Q29–35 approvals.
-- Outcome: actual rest interruptions and safe continuation through campaign events
-  and combat, including earned Hit Dice choices and persisted progress.
-- Acceptance: Short/Long interruption rules, sleep/light/exertion boundaries,
-  per-member eligibility, no duplicate recovery, rejection/RNG rollback,
-  save/load/combat continuation, original camp/inn/payment restrictions, normal
-  gameplay and existing approved controls. Sleeping Unconscious behavior remains
-  part of the rest requirement; do not claim closure without verifying it.
-- Exclusions: unresearched probabilistic original profiles; unrelated species
-  features, new spells, controls beyond Q29–35 and unrelated architecture work. Report any
-  new blocking scope before implementation; no automatic child issues.
-- Reuse: static SRD rest transitions, CampaignParty transactions, original ECL
-  host adapters, approved RestDialog and existing save flow.
-- Routing: requested **gpt-6-astra / high**; actual model/effort confirmed from
-  this task's current turn_context as **gpt-6-astra / high**. No delegation.
-  Escalate/report after two unsuccessful fixes of the same failure; no scope
-  expansion. Failed attempts: 0 at batch start.
-- Timing: started 01:27:34 UTC; checkpoint 02:27:34 UTC, latest 02:57:34 UTC.
-- Verification: focused rest/campaign/encounter tests during development; one
-  native regression and relevant Godot rest/party/save checks on final code.
-  Preserve existing save formats and prior-writer fixtures.
-- Status: ECL damage/encounter adapters and committed recovery handoff implemented
-  and verified. #193/#30 remain open for natural sleep and final rest scheduling.
-  Q33–35 approved; implement natural sleep, persistent Prone, standing and
-  held-item recovery using the approved Wake ally and recovery rows. This is the
-  one approved prerequisite, returning directly to rest/combat acceptance.
-  Current turn began 01:59:50 UTC; original checkpoint was 02:27:34 UTC.
-  Checkpoint reported at 02:49 UTC (late): sleep/posture and game controls pass
-  focused checks; held-item recovery remains unfinished. No original issue closed.
-  Investigation of inventory ownership exceeded the intended checkpoint; do not
-  silently reset it or present partial condition support as completed #193.
-  Goal continuation has resumed the scheduler; current goal status is active.
-- Current increment: rules 0.6.41 / FX4 natural sleep, Wake ally, persistent
-  Prone/crawling and Stand up in game/demo. Healing from zero HP retains Prone,
-  including natural-20 and Stable recovery from legacy saves. Q35 approved;
-  ground-item controls/recovery and scheduled rest interruption remain unfinished.
-- Verification: 45 native/tool checks and 23 Godot checks passed (35 entries
-  with fixture prerequisites). Game/demo shared sleep-control checks and final
-  log-space adjustments passed runtime and visual review. No live verification.
-  Build paths: game/native `build/mac-check`, demo `build/sprite-demo`; target
-  `opengold_godot` is only in the latter. Python-only CTest entries are not targets.
-  Game captures inspected at both sizes/locales; 867 complete localized messages.
-  Full mechanics/evidence: [rest increment](REST-RESOURCES.md#natural-sleep-and-posture-increment-193-q3335).
-- Delivery: sleep/posture increment verified 03:07 UTC; commit/push and issue
-  update accompany this handoff. #193/#30 remain open. Continue held-item recovery, then
-  final rest scheduling. No new issue, agents, model switch or approval needed.
-- Verification completed 01:45:36 UTC: 44 native/tool checks, 22 Godot checks
-  (33 entries with prerequisites) and demo rest check passed. Session 61079 exited
-  0; no live verification remains. Full evidence is in REST-RESOURCES.md.
-  Logs: `/tmp/rest193-native-build.log`, `/tmp/rest193-native.log`,
-  `/tmp/rest193-godot.log`, `/tmp/rest193-demo-ui.log`.
-- Observed interval start to verified completion: 18m02s. Investigation,
-  implementation and build phase boundaries were not captured individually.
-  Distinct fixture corrections were needed (event ordering, invalid HP assertion,
-  missing map/image initialization and event settling); no unresolved test failure.
-  Tokens/cost delta unavailable. No new issue or scope added; no issue closed.
+- Goal ACTIVE; both issues OPEN. Full acceptance remains all twelve classes,
+  level 4 then 20 and multiclassing. No agents, new tasks or added issues.
+- Authorization: resumed goal and Q29–35. Q35 is the one approved prerequisite:
+  persistent Prone, dropping held equipment and combat recovery controls.
+  Q36 automatic collection after victory/safe rest is PENDING; do not implement
+  it without an answer. Audio/widget/visible question already delivered.
+- Acceptance: interrupted Short/Long Rest, fresh qualifying segments (Q32),
+  sleep/light/exertion boundaries, per-member eligibility, transactional rejection,
+  saved progress and combat continuation, original camp/inn/payment restrictions.
+  Reuse approved RestDialog, Wake ally and Ground item/Pick up controls.
+- Architecture: SRD decisions stay in `opengold_rules_srd5` STATIC; Core owns
+  generic inventory transactions and persistence; Godot consumes legal commands.
+- Routing: gpt-6-astra/high was verified and announced for this complex rules,
+  inventory and save integration. No model change or delegation. Two failed fixes
+  of the same failure require reporting/escalation under the routing policy.
+- Timing: original batch began 01:27:34 UTC; checkpoint 02:27:34, maximum 02:57:34.
+  Overruns reported at 02:49 and 02:58; do not reset this clock. Held-item increment
+  began 03:08. Previous goal turns made source/test progress, not a blocked streak.
+- Delivered baseline: `1f5b590` on main implements natural sleep, waking,
+  persistent Prone/crawling/standing and the game/demo controls. ECL damage and
+  encounter interruptions landed earlier. #193/#30 are not complete.
+- Current increment: module 0.6.42, conditional combat 16, campaign 13 only when
+  detached equipment exists. Sleep/zero HP drops character-profile weapons and
+  shields. Combat pickup validates reach, equipment capacity and interaction/
+  Action cost. Core transfers real inventory/provenance without duplication;
+  detached items survive camp saves. Main/demo controls and equipment art update.
+  Older saves retain recorded gear on initial load; activating the new ledger
+  reconciles all already-unconscious holders before writing a new checkpoint.
+- Verified before the final legacy edge correction: all 45 native/tool tests,
+  all 23 Godot checks (35 with prerequisites), demo shared control check and
+  English/Spanish game rendering at 1120×800 and 1920×1080. Final legacy regression
+  passes. Logs `/tmp/held-integrated-{native,godot,demo-ui,render}.log`; captures
+  `/tmp/held-integrated-captures`; legacy `/tmp/held-legacy-tests.log`.
+- Final verification complete 03:50 UTC: eight affected native checks and
+  Godot sleep passed after the legacy fix; rebuilt demo runtime/visual checks
+  passed after a label-spacing correction. All 871 English/Spanish messages
+  validate. No live builds/tests remain. Logs `/tmp/held-final-tests.log`,
+  `/tmp/held-demo-spacing-ui.log`; final demo captures
+  `/tmp/held-final-demo-captures`. Localization regeneration changed source
+  references only. Architecture/scope and diff checks passed.
+- Remaining: physical drops during rest outside combat, importing that ground
+  equipment into an interruption encounter, Q36 collection policy, and final
+  rest scheduling acceptance. Uncollected items currently persist but cannot be
+  recovered outside their combat. Do not describe this increment as complete
+  held-item/rest support. Current ledger uses original equipment ordinals and
+  derives gear only from character recipes; authored static monster profiles
+  have no exchange metadata. No inferred monster ability/proficiency data.
+- Delivery: verified combat increment committed/pushed with this handoff; keep
+  issues open. Next continue the existing rest prerequisite, with cleanup dependent
+  on Q36. Preserve old fixtures; no speculative equipment framework or new scope.
 
-Previous goal work delivered #192 and static-library extraction (`9526981`).
-Model policy: [routing](SRD-MODEL-ROUTING.md); execution: [workflow](SRD-WORKFLOW.md).
+Evidence belongs in [rest resources](REST-RESOURCES.md#combat-held-equipment-increment-193-q35).
+Execution: [workflow](SRD-WORKFLOW.md); [routing](SRD-MODEL-ROUTING.md).
 
 ## Delivered: #192 — player rest controls
 

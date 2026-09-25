@@ -55,6 +55,16 @@ struct PartyMember {
     std::string creation_source; // Stable pool candidate identity, empty for authored PCs.
     rules::EquipmentState equipment;
 };
+// Items physically separated from party inventories retain provenance and their
+// encounter location. Cleanup policy is a separate operation, never implicit.
+struct DetachedPartyItem {
+    std::uint64_t scope{};
+    unsigned token{};
+    MemberId original_owner{}, holder{}; // Zero holder means on the ground.
+    rules::Cell cell;
+    InventoryItem item;
+    std::optional<por::Equipment> original;
+};
 struct PartyState {
     std::vector<PartyMember> roster;
     std::array<MemberId,8> slots{};
@@ -67,6 +77,7 @@ struct PartyState {
     std::uint64_t next_rest_session{1};
     std::optional<ShortRestSession> short_rest;
     std::optional<RestActivity> rest_activity;
+    std::vector<DetachedPartyItem> detached_items;
 };
 // One shared campaign value store. Sessions share this owner, never separate PCs.
 // While combat owns mutable vitals, roster/equipment/script mutations are barred.
@@ -143,7 +154,16 @@ private:
     PartyState state_;
     bool combat_{};
     bool combat_registered_{};
-    std::uint64_t combat_elapsed_{};
+    std::uint64_t combat_elapsed_{},combat_scope_{};
+    struct CombatInventoryItem {
+        unsigned token{},equipment_index{};
+        MemberId origin{},holder{},original_owner{};
+        std::uint64_t inventory_id{};
+        InventoryItem item;
+        std::optional<por::Equipment> original;
+    };
+    std::vector<CombatInventoryItem> combat_items_;
+    void apply_combat_items(PartyState&,std::vector<CombatInventoryItem>&,const rules::Snapshot&) const;
     void elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat={}) const;
     void editable() const;
     void rewardable() const;

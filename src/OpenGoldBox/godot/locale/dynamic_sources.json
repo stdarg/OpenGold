@@ -265,5 +265,7 @@
   "{name} loses a Shocking Grasp effect.",
   "Previously selected training cannot be replaced",
   "Choose an available feat or ability points",
-  "Prone"
+  "Prone",
+  "Pick up (interaction)",
+  "Pick up (Action)"
 ]

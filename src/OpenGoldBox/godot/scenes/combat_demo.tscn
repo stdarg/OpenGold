@@ -320,3 +320,14 @@ text = "Wake ally"
 [node name="StandUp" type="Button" parent="."]
 visible = false
 text = "Stand up"
+
+[node name="GroundItemLabel" type="Label" parent="."]
+visible = false
+text = "Ground item"
+
+[node name="GroundItem" type="OptionButton" parent="."]
+visible = false
+
+[node name="PickUp" type="Button" parent="."]
+visible = false
+text = "Pick up"

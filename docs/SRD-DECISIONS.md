@@ -47,6 +47,7 @@ question widget, and preceded by the audible Glass alert.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
+| Q36 | #193 safe dropped-equipment cleanup | Asked 2026-09-25 with audio and visible widget: automatically collect reachable dropped party equipment after victory/safe rest, returning it to original owner or surviving companion if dead. Combat still requires legal pickup and waking alone does not recover gear. Pending; do not implement automatic cleanup. |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
 | Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |

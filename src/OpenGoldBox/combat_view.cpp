@@ -10,6 +10,7 @@
 #include "godot_sound_output.h"
 #include "opengold/srd5.h"
 #include "opengold/character_art.h"
+#include "opengold/combat_body_catalog.h"
 #include "opengold/formats.h"
 #include "opengold/save_file.h"
 #include <godot_cpp/classes/button.hpp>
@@ -145,6 +146,8 @@ void CombatView::_ready()
     get_node<Button>("CastCantrip")->connect("pressed",callable_mp(this,&CombatView::cast_cantrip));
     get_node<Button>("WakeAlly")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind("wake_ally"));
     get_node<Button>("StandUp")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("stand_up"));
+    get_node<OptionButton>("GroundItem")->connect("item_selected",callable_mp(this,&CombatView::ground_selected));
+    get_node<Button>("PickUp")->connect("pressed",callable_mp(this,&CombatView::pick_up));
     get_node<Button>("UseCunningAction")->connect("pressed",callable_mp(this,&CombatView::use_cunning_action));
     get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Dash")));
     get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Disengage")));
@@ -203,7 +206,7 @@ void CombatView::layout()
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
     const double battlefield_height=std::min((height-180)*.85,
-        get_node<Button>("StandUp")->is_visible()?height-304:(height-180)*.85);
+        (get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible())?height-304:(height-180)*.85);
     base_tile_=std::max(left_width/board.width,battlefield_height/board.height);
     board_rect_=Rect2(24,16,left_width,battlefield_height);const double right=width-sidebar-24;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
@@ -255,11 +258,14 @@ void CombatView::layout_reaction_controls(bool show_controls)
     const bool spells=get_node<OptionButton>("Cantrip")->is_visible();
     const bool surge=get_node<Button>("ActionSurge")->is_visible();
     const bool cunning=get_node<OptionButton>("CunningAction")->is_visible();
-    const bool wake=get_node<Button>("WakeAlly")->is_visible(),standing=get_node<Button>("StandUp")->is_visible();
+    const bool wake=get_node<Button>("WakeAlly")->is_visible(),standing=get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible();
     get_node<Button>("WakeAlly")->set_position(Vector2(634,top+88));
     get_node<Button>("WakeAlly")->set_size(Vector2(180,36));
     get_node<Button>("StandUp")->set_position(Vector2(24,top+132));
     get_node<Button>("StandUp")->set_size(Vector2(180,36));
+    get_node<Label>("GroundItemLabel")->set_position(Vector2(214,top+132));get_node<Label>("GroundItemLabel")->set_size(Vector2(100,36));
+    get_node<OptionButton>("GroundItem")->set_position(Vector2(324,top+132));get_node<OptionButton>("GroundItem")->set_size(Vector2(270,36));
+    get_node<Button>("PickUp")->set_position(Vector2(604,top+132));get_node<Button>("PickUp")->set_size(Vector2(210,36));
     const double inset=standing?176:(cunning||wake)?132:(show_controls?44:0)+((rush||spells||surge)?44:0);
     get_node<Label>("CunningActionLabel")->set_position(Vector2(24,top+88));
     get_node<Label>("CunningActionLabel")->set_size(Vector2(180,36));
@@ -313,8 +319,9 @@ void CombatView::slums()
 void CombatView::replay(){if(demo_&&demo_->is_slums())slums();else if(demo_)training();}
 void CombatView::next(){try{if(demo_){demo_->continue_script();sync_art();refresh();}}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::revisit(){try{demo_->revisit();refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
-void CombatView::sync_art()
+void CombatView::sync_art(bool preserve_effects)
 {
+    auto prior_dead=std::move(known_dead_);auto prior_skulls=std::move(skull_seconds_);auto prior_actions=std::move(action_seconds_);
     missing_art_.clear();art_.clear();portraits_.clear();terrain_art_.clear();skull_art_.unref();known_dead_.clear();skull_seconds_.clear();action_seconds_.clear();if(!demo_)return;
     const auto directory=std::filesystem::u8path(settings::game_path().utf8().get_data());
     if(std::filesystem::is_directory(directory)){
@@ -359,6 +366,14 @@ void CombatView::sync_art()
             lying->get_used_rect(),goliath};
     };
     for(const auto& source:demo_->art())install(source,false);
+    if(campaign_){
+        const auto originals=por::CharacterArt::load(directory);
+        const auto catalog=por::CombatBodyCatalog::load(std::filesystem::u8path(game_combat_body_file().utf8().get_data()),std::filesystem::u8path(game_combat_weapon_file().utf8().get_data()));
+        campaign_art_.clear();for(const auto id:campaign_->state().slots)if(id){
+            const auto resolved=por::resolve_combat_appearance(campaign_->member(id),catalog);
+            campaign_art_.push_back({id,resolved.icon(originals,false),resolved.icon(originals,true),resolved.selection.matched?std::string{}:resolved.selection.label});
+        }
+    }
     for(const auto& source:campaign_art_){
         bool goliath=false;
         if(campaign_)for(const auto& member:campaign_->state().roster)
@@ -393,6 +408,7 @@ void CombatView::sync_art()
         portraits_.emplace(id,ImageTexture::create_from_image(image));
     }
     }
+    if(preserve_effects){known_dead_=std::move(prior_dead);skull_seconds_=std::move(prior_skulls);action_seconds_=std::move(prior_actions);}
 }
 void CombatView::save_game()
 {
@@ -427,6 +443,11 @@ void CombatView::cantrip_selected(std::int64_t index)
 }
 void CombatView::use_cunning_action(){immediate(get_node<OptionButton>("CunningAction")->get_selected()==1?"cunning_disengage":"cunning_dash");}
 void CombatView::cast_cantrip(){if(!cantrip_.empty())select_mode(gs(cantrip_));}
+void CombatView::ground_selected(std::int64_t index){ground_item_=get_node<OptionButton>("GroundItem")->get_item_id(index);refresh();}
+void CombatView::pick_up(){
+    if(!demo_||!demo_->has_combat()||get_node<Button>("PickUp")->is_disabled())return;
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb=="pick_up"&&c.target==ground_item_){act(c);return;}
+}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::adjust_zoom(int percentage_points)
 {
@@ -519,7 +540,8 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus()||get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
+    if(key.is_valid()&&(get_node<OptionButton>("GroundItem")->has_focus()||get_node<OptionButton>("GroundItem")->get_popup()->is_visible()))return;
+    if(key.is_valid()&&(get_node<Button>("PickUp")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus()||get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&(get_node<OptionButton>("CunningAction")->has_focus()||get_node<OptionButton>("CunningAction")->get_popup()->is_visible()||get_node<OptionButton>("Cantrip")->has_focus()||get_node<OptionButton>("Cantrip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
@@ -749,6 +771,21 @@ void CombatView::refresh()
     get_node<Button>("End")->set_visible(!get_node<Button>("Continue")->is_visible());
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
+    std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
+    if(holders!=item_holders_){item_holders_=std::move(holders);if(campaign_)sync_art(true);}
+    auto* ground=get_node<OptionButton>("GroundItem");ground->set_block_signals(true);ground->clear();
+    for(const auto& item:s.held_items)if(!item.holder)ground->add_item(i18n::render(item.label),item.id);
+    int ground_index=-1;for(int i=0;i<ground->get_item_count();++i)if(ground->get_item_id(i)==int(ground_item_))ground_index=i;
+    if(ground_index<0&&ground->get_item_count())ground_index=0;
+    if(ground_index>=0){ground->select(ground_index);ground_item_=ground->get_item_id(ground_index);}else ground_item_=0;
+    ground->set_block_signals(false);
+    const bool show_ground=s.outcome==Outcome::ongoing&&ground->get_item_count()>0;
+    const bool ground_layout_changed=ground->is_visible()!=show_ground;
+    for(const char* name:{"GroundItemLabel","GroundItem","PickUp"})get_node<Control>(name)->set_visible(show_ground);
+    ground->set_disabled(!player);
+    const auto pickup=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="pick_up"&&c.target==ground_item_;});
+    get_node<Button>("PickUp")->set_disabled(!player||pickup==offered.end());
+    get_node<Button>("PickUp")->set_text(pickup==offered.end()?i18n::text(N_("Pick up")):i18n::text(pickup->label));
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
     const auto cunning_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==(player?s.actor:selected_);});
     const bool ongoing=s.outcome==Outcome::ongoing;
@@ -758,7 +795,7 @@ void CombatView::refresh()
     const bool posture_layout_changed=get_node<Button>("StandUp")->is_visible()!=show_standing;
     get_node<Button>("StandUp")->set_visible(show_standing);
     get_node<Button>("StandUp")->set_disabled(!enabled("stand_up"));
-    if(posture_layout_changed)layout();
+    if(posture_layout_changed||ground_layout_changed)layout();
     const bool show_cunning=cunning_actor!=s.combatants.end()&&!cunning_actor->bonus_actions.empty()&&s.outcome==Outcome::ongoing;
     for(const char* name:{"CunningActionLabel","CunningAction","UseCunningAction"})get_node<Control>(name)->set_visible(show_cunning);
     const bool cunning_enabled=enabled("cunning_dash")||enabled("cunning_disengage");
@@ -887,6 +924,11 @@ void CombatView::draw_battlefield()
         const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});
         if(target!=s.combatants.end())canvas->draw_rect(Rect2(Vector2(target->cell.x*tile+1,target->cell.y*tile+1),Vector2(tile-2,tile-2)),Color(.4,.8,.75,.23));
     }
+    for(const auto& item:s.held_items)if(!item.holder){
+        const auto cell=Rect2(Vector2(item.cell.x*tile,item.cell.y*tile),Vector2(tile,tile));
+        canvas->draw_rect(Rect2(cell.position+Vector2(4,tile-14),Vector2(10,10)),Color("e7c484"));
+        if(item.id==ground_item_)canvas->draw_rect(cell.grow(-3),Color("e7c484"),false,2.0);
+    }
     for(const auto index:presentation::combat_sprite_draw_order(s.combatants)) {
         const auto& a=s.combatants[index];
         const auto center=Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
@@ -899,11 +941,11 @@ void CombatView::draw_battlefield()
             const auto& art=art_.at(a.id);
             const bool left=a.facing_left;
             const bool acting=action_seconds_.contains(a.id)&&art.action.is_valid();
-            const bool unconscious=a.hit_points==0;
+            const bool unconscious=a.prone||!a.conscious;
             const auto texture=unconscious?art.unconscious:left?(acting?art.left_action:art.left_texture):(acting?art.action:art.texture);
             const auto rect=presentation::combat_sprite_rect(texture->get_size(),unconscious?art.unconscious_visible:left?art.left_visible:art.visible,
                 Rect2(Vector2(a.cell.x*tile,a.cell.y*tile),Vector2(tile,tile)),art.goliath&&!unconscious);
-            canvas->draw_texture_rect(texture,rect,false,unconscious?Color(.65,.65,.65):Color(1,1,1));
+            canvas->draw_texture_rect(texture,rect,false,!a.conscious?Color(.65,.65,.65):Color(1,1,1));
         } else {
             const auto number=std::to_string(a.id);
             auto cursor=center+Vector2(-5.5*number.size(),7);

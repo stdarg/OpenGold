@@ -48,9 +48,10 @@ interrupted rest, save/load and completion; unrelated edits remain locked.
 Original ECL damage and encounter requests now interrupt rests automatically;
 earned recovery choices finish before combat starts, and committed dice survive
 a rejected encounter. [Adapter scope and evidence](REST-RESOURCES.md#193-event-adapter-increment).
-Natural sleep, waking and persistent Prone are implemented; held-item recovery and final rest scheduling remain unfinished. #193/#30 stay open.
+Natural sleep, waking and persistent Prone are implemented. Combat equipment drops, pickup, inventory transfer and saved detached items are implemented; rest-time ground equipment and final rest scheduling remain unfinished. #193/#30 stay open.
 [Sleep/posture scope and evidence](REST-RESOURCES.md#natural-sleep-and-posture-increment-193-q3335).
-Q29–35 are approved; held-item recovery remains unfinished. See the
+[Combat equipment scope and evidence](REST-RESOURCES.md#combat-held-equipment-increment-193-q35).
+Q29–35 are approved; Q36 safe automatic collection is pending. See the
 [register](SRD-DECISIONS.md).
 
 The shared game/demo Rest dialog now delivers Q29–31: Short/Long choice,

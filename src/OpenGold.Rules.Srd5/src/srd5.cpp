@@ -97,6 +97,7 @@ struct Definition {
     bool dwarf{},cunning{};
     detail::DamageType melee_type{detail::DamageType::bludgeoning},ranged_type{detail::DamageType::bludgeoning};
     std::vector<detail::DamageAffinity> affinities;
+    std::vector<std::string> equipment_keys;
 };
 bool legacy_two_hands(std::string_view key)
 {return key=="quarterstaff"||key=="spear"||key=="battleaxe"||key=="trident";}
@@ -145,6 +146,7 @@ struct Actor : detail::LifeState {
     unsigned weapon_hands{};
     bool involuntary_overlap{}; // Interrupted in an occupied space; retained through recovery until separated.
     detail::EffectState effects;
+    bool object_interaction{true};
 };
 bool unconscious(const Actor& a){return a.hp==0||a.effects.sleeping;}
 bool conscious(const Actor& a){return !a.dead&&!unconscious(a);}
@@ -174,7 +176,7 @@ int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
     return hp;
 }
 // Versioned, module-owned character recipe. Original item IDs never enter this layer.
-Definition character_definition(std::string_view bytes)
+Definition character_definition(std::string_view bytes,std::optional<std::span<const std::string>> equipment_override=std::nullopt)
 {
     if(bytes.size()>8192)throw std::runtime_error("Character profile exceeds limit");
     std::istringstream in{std::string(bytes)};
@@ -235,7 +237,9 @@ Definition character_definition(std::string_view bytes)
     }
     d.known_cantrips=d.spells&1985;
     bool weapon=false,armor=false,shield=false;unsigned hands=0;
-    for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);
+    for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);d.equipment_keys.push_back(std::move(key));}
+    if(equipment_override)d.equipment_keys.assign(equipment_override->begin(),equipment_override->end());
+    for(const auto& key:d.equipment_keys){
         if(const auto* item=detail::weapon(key)){
             if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;d.weapon_label=item->label;
             d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&magic!="PC8"&&magic!="PC9"&&!with_spells&&legacy_two_hands(key)?2:item->hands;
@@ -258,6 +262,7 @@ Definition character_definition(std::string_view bytes)
     if(magic=="PC5"||magic=="PC6"||with_training){
         unsigned requested{};in>>requested;
         if(!in)throw std::runtime_error("Invalid character grip");
+        if(equipment_override)requested=0;
         if(requested){validate_grip(d,requested);hands=hands-d.weapon_hands+requested;d.weapon_hands=requested;}
     }
     if(magic=="PC6"||with_training){
@@ -400,6 +405,7 @@ public:
         }
         log("Combat begins. Each square is 5 feet.");update_outcome();
         frost_movement_=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.cunning||(a.definition.known_cantrips&256)||detail::speed_penalty(a.effects);});
+        if(!restoring){for(auto& a:actors_)if(unconscious(a))drop_held(a);}
         if(!restoring&&outcome_==Outcome::ongoing&&!begin_turn())end_turn();
     }
     Snapshot snapshot() const override;
@@ -418,7 +424,12 @@ private:
     Outcome outcome_{Outcome::ongoing};
     std::optional<TemporaryHitPoints> temporary_offer_;
     std::optional<PendingWeaponHit> weapon_hit_;
-    bool frost_movement_{};
+    bool frost_movement_{}, items_active_{};
+    std::vector<HeldItemView> items_;
+    void initialize_items();
+    void drop_held(Actor& a);
+    Definition equipped_definition(const Actor& a,const std::vector<HeldItemView>& items) const;
+    bool can_pick_up(const Actor& a,const HeldItemView& item) const;
     std::vector<std::string> log_;
     std::vector<Message> log_messages_;
     std::vector<Cell> path_;
@@ -476,6 +487,47 @@ private:
     void restore_log(std::istream& input);
 };
 
+void Session::initialize_items()
+{
+    if(items_active_)return;
+    std::vector<const Actor*> ordered;for(const auto& a:actors_)ordered.push_back(&a);
+    std::sort(ordered.begin(),ordered.end(),[](auto a,auto b){return a->source.id<b->source.id;});
+    for(const auto* a:ordered)for(unsigned i=0;i<a->definition.equipment_keys.size();++i){
+        const auto& key=a->definition.equipment_keys[i];
+        if(key!="shield"&&!detail::weapon(key))continue;
+        items_.push_back({unsigned(items_.size()+1),a->source.id,a->source.id,i,key,{key=="shield"?"Shield":std::string(detail::weapon(key)->label),{}},{}});
+    }
+    items_active_=true;
+    // Older checkpoints can contain already-unconscious equipment holders.
+    // Once a drop activates the ledger, reconcile every holder so that the
+    // resulting checkpoint obeys the same invariant as a fresh encounter.
+    for(auto& a:actors_)if(unconscious(a))drop_held(a);
+}
+Definition Session::equipped_definition(const Actor& a,const std::vector<HeldItemView>& items) const
+{
+    if(a.source.character_profile.empty())throw std::runtime_error("Equipment exchange requires a character equipment profile");
+    const auto original=character_definition(a.source.character_profile);
+    std::vector<std::string> keys;
+    for(const auto& key:original.equipment_keys)if(key!="shield"&&!detail::weapon(key))keys.push_back(key);
+    for(const auto& item:items)if(item.holder==a.source.id)keys.push_back(item.definition);
+    return character_definition(a.source.character_profile,std::span<const std::string>(keys));
+}
+void Session::drop_held(Actor& a)
+{
+    if(a.source.character_profile.empty())return;
+    initialize_items();bool changed=false;
+    for(auto& item:items_)if(item.holder==a.source.id){item.holder=0;item.cell=a.source.cell;changed=true;}
+    if(changed){a.definition=equipped_definition(a,items_);a.weapon_hands=a.definition.weapon_hands;}
+}
+bool Session::can_pick_up(const Actor& a,const HeldItemView& item) const
+{
+    if(item.holder||a.source.character_profile.empty()||distance(a.source.cell,item.cell)>5||!line_of_sight(a.source.cell,item.cell))return false;
+    // A Shield requires the Utilize action to don (SRD p.92); other objects
+    // use the turn's free interaction, then a Utilize action for another.
+    if((item.definition=="shield"||!a.object_interaction)&&!a.actions.available())return false;
+    auto next=items_;next[item.id-1].holder=a.source.id;
+    try{(void)equipped_definition(a,next);return true;}catch(const std::runtime_error&){return false;}
+}
 detail::MovementGrid Session::movement_grid(const Actor& mover) const
 {
     std::vector<detail::Occupant> occupants;
@@ -496,7 +548,7 @@ std::vector<Cell> Session::path_to(const Actor& actor, Cell destination) const
 Snapshot Session::snapshot() const
 {
     Snapshot s;s.identity=content_->identity;s.revision=revision_;s.round=round_;s.outcome=outcome_;
-    s.elapsed_milliseconds=elapsed_ms_;
+    s.elapsed_milliseconds=elapsed_ms_;s.held_items=items_;
     s.actor=pending()?pending():actors_[turn_].source.id;s.reaction_pending=pending()!=0;s.battlefield=board_;s.log=log_;s.log_messages=log_messages_;
     if(weapon_hit_){const auto& h=*weapon_hit_;const auto& a=*std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.attacker;});const auto dice=weapon_dice(a,h.ranged);
         s.savage_attack_choice=SavageAttackChoice{h.attacker,h.target,def(a).weapon_label,dice.count*(critical_hit(a,actor(h.target),h.natural)?2:1),dice.sides,dice.bonus,h.first,h.second<0?std::nullopt:std::optional{h.second},critical_hit(a,actor(h.target),h.natural)};}
@@ -574,6 +626,8 @@ std::vector<Command> Session::legal_commands() const
     }
     const auto& a=actors_[turn_];if(!conscious(a))return commands;const auto& d=def(a);const auto id=a.source.id;
     add(id,"end","End turn");add_grips(a);
+    for(const auto& item:items_)if(can_pick_up(a,item))
+        add(id,"pick_up",item.definition=="shield"?"Pick up (Action)":a.object_interaction?"Pick up (interaction)":"Pick up (Action)",item.id);
     const int speed=std::max(0,d.speed-detail::speed_penalty(a.effects));
     if(a.effects.prone&&speed>0&&movement_left(a)>=speed/2)add(id,"stand_up","Stand up");
     if(a.surges>0&&!a.surge_used)add(id,"action_surge","Action Surge",id);
@@ -653,7 +707,7 @@ void Session::damage(Actor& target,int amount,bool critical)
     if(!amount||target.dead)return;
     target.effects.sleeping=false;
     detail::damage_life(target,amount,def(target).hp,critical,target.source.side==1);
-    if(target.hp==0)target.effects.prone=true;
+    if(target.hp==0){target.effects.prone=true;drop_held(target);}
     if(target.hp==0&&!target.dead&&!target.stable)target.recovery.death_save_in_ms=next_turn_ms(target);
     if(target.hp==0) {
         target.dodge=false;
@@ -762,7 +816,7 @@ bool Session::begin_turn()
     }
     for(auto& actor:actors_)actor.savage_used=false;
     a.actions={};a.surge_used=false;a.bonus=a.reaction=true;a.dodge=a.disengaged=false;a.movement=def(a).speed;a.dashes=0;
-    a.spent_slot=false;a.rush_used=false;
+    a.spent_slot=false;a.rush_used=false;a.object_interaction=true;
     log("Round "+std::to_string(round_)+": "+a.source.name+" acts.",{"Round {round}: {name} acts.",{{"round",std::to_string(round_)},{"name",a.source.name}}});
     return true;
 }
@@ -889,6 +943,10 @@ bool Session::submit(const Command& command)
     }else if(command.verb=="temp_hp_keep"||command.verb=="temp_hp_use") {
         detail::grant_temporary_hp(a,*temporary_offer_,command.verb=="temp_hp_keep"?TemporaryHpChoice::keep_current:TemporaryHpChoice::use_new);
         temporary_offer_.reset();
+    } else if(command.verb=="pick_up") {
+        auto& item=items_.at(command.target-1);
+        if(item.definition=="shield"||!a.object_interaction)a.actions.spend();else a.object_interaction=false;
+        item.holder=a.source.id;item.cell={};a.definition=equipped_definition(a,items_);a.weapon_hands=a.definition.weapon_hands;
     } else if(command.verb=="stand_up") {
         a.movement-=std::max(0,d.speed-detail::speed_penalty(a.effects))/2;a.effects.prone=false;
     } else if(command.verb=="wake_ally") {
@@ -974,7 +1032,7 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    const unsigned format=frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
+    const unsigned format=items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
     std::ostringstream out;out<<"OGCOMBAT "<<format<<' '<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
@@ -991,6 +1049,11 @@ std::string Session::save() const
     if(temporary_offer_)out<<temporary_offer_->amount<<' '<<std::quoted(temporary_offer_->source_id)<<'\n';
     out<<bool(weapon_hit_)<<'\n';
     if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second<<'\n';}
+    if(format>=16){
+        out<<items_.size()<<'\n';
+        for(const auto& item:items_)out<<item.id<<' '<<item.holder<<' '<<item.cell.x<<' '<<item.cell.y<<'\n';
+        for(const auto& a:actors_)out<<a.object_interaction<<' ';out<<'\n';
+    }
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -1026,7 +1089,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if(version<12)actor.rushes=definition.rushes;
     if(version<9)actor.hit_dice=definition.hit_die?definition.level:0;
     if(version<8)actor.weapon_hands=definition.weapon_hands;
-    validate_grip(definition,actor.weapon_hands);
+    if(version<16)validate_grip(definition,actor.weapon_hands);
     if (actor.hp < 0 || actor.hp > definition.hp || (actor.dead && actor.hp > 0) ||
         // Dash spends the action before adding a second movement allowance.
         // Accepting both extra movement and an unused action lets a later Dash
@@ -1217,10 +1280,10 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40")))&&(compatible_identity==content->identity||
+        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 15 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 16 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -1292,6 +1355,23 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         if(pending_hit){PendingWeaponHit h;input>>h.attacker>>h.target>>h.ranged>>h.natural>>h.mode>>h.first>>h.second;session->weapon_hit_=h;}
         if(!input)throw std::runtime_error("Invalid Savage Attacker choice checkpoint");
     }
+    if(version>=16){
+        if(module_before(identity,{0,6,42}))throw std::runtime_error("Legacy checkpoint cannot contain held items");
+        session->initialize_items();std::size_t count{};input>>count;
+        if(!input||count!=session->items_.size())throw std::runtime_error("Invalid held item count");
+        for(auto& item:session->items_){
+            unsigned id{};input>>id>>item.holder>>item.cell.x>>item.cell.y;
+            if(!input||id!=item.id)throw std::runtime_error("Invalid held item identity");
+            if(item.holder){
+                const auto holder=std::find_if(session->actors_.begin(),session->actors_.end(),[&](const auto& a){return a.source.id==item.holder;});
+                if(holder==session->actors_.end()||holder->source.character_profile.empty()||unconscious(*holder)||holder->dead||item.cell!=Cell{})throw std::runtime_error("Invalid held item holder");
+            }else if(!session->board_.contains(item.cell)||session->board_.at(item.cell)==1)throw std::runtime_error("Invalid dropped item position");
+        }
+        for(auto& a:session->actors_){unsigned available{};input>>available;if(!input||available>1)throw std::runtime_error("Invalid object interaction budget");a.object_interaction=available;
+            if(!a.source.character_profile.empty())a.definition=session->equipped_definition(a,session->items_);
+            validate_grip(a.definition,a.weapon_hands);
+        }
+    }
     unsigned legacy_facing_reaction{};
     if(version==5){
         input>>legacy_facing_reaction;
@@ -1316,7 +1396,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1780,7 +1860,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.41",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.42",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

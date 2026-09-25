@@ -40,6 +40,9 @@ private:
     void layout();void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void spell_slot();
+    void ground_selected(std::int64_t index);void pick_up();
+    unsigned ground_item_{};
+    std::vector<std::pair<unsigned,opengold::rules::EntityId>> item_holders_;
     unsigned spell_slot_{1};
     void training();void slums();void replay();void next();void revisit();void save_game();void load_game();
     std::filesystem::path local_path(const char* path) const;
