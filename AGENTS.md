@@ -47,7 +47,8 @@
 - Do not perform speculative or unrelated work.
 - Provide commands appropriate to the user's actual shell.
 - Ask numbered questions to confirm UI layout and control behavior before
-  making independent choices about them.
+  making independent choices about them. Restart visible numbering at 1 for each
+  new set of questions; retain topic-specific identifiers in the decision ledger.
 
 ## Efficient SRD work
 

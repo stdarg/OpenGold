@@ -73,8 +73,8 @@ question widget, and preceded by the audible Glass alert.
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
 | Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |
-| Q43 | #58 Thrown controls | Proposed Thrown weapon dropdown/Throw row below Ground item/Pick up; held/carried quantities, legal target highlighting, keyboard/mouse, explicit necessary stowing before confirmation, free cancellation; proper SRD hand/action costs. Pending. |
-| Q44 | #58 landing policy | Proposed target square on hit/miss, no embedding/breakage/scatter; ground item, ordinary pickup and approved Q37 safe recovery. SRD-unspecified policy. Pending. |
+| Q43 | #58 Thrown controls | Proposed Thrown weapon dropdown/Throw row below Ground item/Pick up; held/carried quantities, legal target highlighting, keyboard/mouse, explicit necessary stowing before confirmation, free cancellation; proper SRD hand/action costs. APPROVED 2026-09-25 by “43. Approved.”. |
+| Q44 | #58 landing policy | Proposed target square on hit/miss, no embedding/breakage/scatter; ground item, ordinary pickup and approved Q37 safe recovery. SRD-unspecified policy. APPROVED 2026-09-25 by “44. Approved.”. |
 | Q23 | #80 Great Weapon Fighting | Automatic beneficial replacement of weapon-die 1/2 with 3, versus optional per-hit choice. Helper exists; neither live behavior is approved. |
 | Q25 | #112/#220 Sneak Attack | Proposed centered eligible-hit dialog, target/extra dice, Use or Keep hit/save use. Use spends this turn's use; Savage follows with weapon dice only. Other actions wait, Action/Reaction remain spent; keyboard, no combat-save controls. Pending. |
 
@@ -102,3 +102,5 @@ Before a new question, check this register and the relevant feature doc. Ask a
 numbered question only for a material undecided layout/control/policy choice,
 with concrete options. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`.
 Append new decisions here once; other documents should link to this register.
+
+User instruction 2026-09-25: restart visible question numbering at 1 for each new set. Existing Q identifiers remain historical references; new durable entries use topic-specific identifiers to avoid collisions.

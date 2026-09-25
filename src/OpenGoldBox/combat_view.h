@@ -87,7 +87,8 @@ private:
     std::string cantrip_;
     void spell_slot();
     void ground_selected(std::int64_t index);void pick_up();
-    unsigned ground_item_{};
+    unsigned ground_item_{},thrown_item_{};
+    void thrown_selected(std::int64_t index);void begin_throw();
     std::vector<std::pair<unsigned,opengold::rules::EntityId>> item_holders_;
     void adjust_zoom(int percentage_points);
     unsigned spell_slot_{1};

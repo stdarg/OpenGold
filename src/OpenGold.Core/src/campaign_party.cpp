@@ -446,12 +446,100 @@ std::vector<rules::Participant> CampaignParty::participants() const
         if(m.vitals.dead&&ground.empty())continue;
         const auto p=rules_->character_profile(m.character.sheet(),gear,m.equipment);
         result.push_back({id,"campaign-character",m.character.sheet().name,0,{1+int(slot/4),1+int(slot%4)*2},p.data,m.vitals,false,false,std::move(ground)});
+        for(const auto& item:m.character.inventory().items()){
+            const auto equipped=std::find(m.equipped.begin(),m.equipped.end(),item.id);
+            result.back().inventory.push_back({item.id,item.definition_id,item.quantity,equipped==m.equipped.end()?-1:static_cast<int>(equipped-m.equipped.begin())});
+        }
     }
     if(result.empty())throw std::runtime_error("Add a living combat-ready character first");return result;
 }
 void CampaignParty::begin_combat(){outside_combat();if(state_.rest_activity&&(!state_.rest_activity->interrupted||state_.short_rest))throw std::runtime_error("Resolve rest interruption and Hit Dice choices before combat");if(state_.next_combat_scope==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Combat identity exhausted");combat_=true;combat_registered_=false;combat_elapsed_=0;combat_scope_=state_.next_combat_scope;combat_items_.clear();}
+void CampaignParty::apply_physical_items(PartyState& next,std::vector<CombatInventoryItem>& manifest,const rules::Snapshot& snapshot) const
+{
+    const auto member=[&](MemberId id){return std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});};
+    const auto source=[](MemberId origin,std::uint64_t inventory,unsigned ordinal){return std::tuple{origin,inventory,inventory?0u:ordinal};};
+    const bool initial=manifest.empty();
+    std::set<unsigned> seen;
+    for(const auto& item:snapshot.held_items){
+        if(!item.id||!item.origin||!item.quantity||!seen.insert(item.id).second)throw std::runtime_error("Invalid physical item identity");
+        if(item.holder){
+            if(std::none_of(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==item.holder&&(item.stowed||(!a.dead&&a.conscious));})||item.cell!=rules::Cell{})throw std::runtime_error("Invalid physical item holder");
+        }else if(item.quantity!=1||item.stowed||!snapshot.battlefield.contains(item.cell)||snapshot.battlefield.at(item.cell)==1)throw std::runtime_error("Invalid physical item location");
+        auto found=std::find_if(manifest.begin(),manifest.end(),[&](const auto& e){return e.token==item.id;});
+        if(found==manifest.end()){
+            const auto parent=std::find_if(manifest.begin(),manifest.end(),[&](const auto& e){return source(e.origin,e.source_inventory,e.equipment_index)==source(item.origin,item.inventory_id,item.equipment_index);});
+            CombatInventoryItem entry;
+            if(parent!=manifest.end()){
+                entry=*parent;entry.holder=0;entry.inventory_id=0;entry.item.quantity=0;entry.rest_token=0;entry.stowed=false;
+            }else{
+                if(!initial)throw std::runtime_error("Encounter introduced an unknown item source");
+                entry.origin=item.origin;entry.source_inventory=item.inventory_id;entry.equipment_index=item.equipment_index;entry.holder=item.origin;
+                const auto owner=member(item.origin);
+                const auto actor=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),[&](const auto& a){return a.id==item.origin;});
+                if(actor==snapshot.combatants.end())throw std::runtime_error("Unknown physical item source");
+                if(actor->side==0){
+                    if(owner==next.roster.end())throw std::runtime_error("Unknown party item owner");
+                    entry.original_owner=owner->id;
+                    if(item.inventory_id||item.equipment_index<owner->equipped.size()){
+                        entry.inventory_id=item.inventory_id?item.inventory_id:owner->equipped[item.equipment_index];
+                        const auto actual=owner->character.inventory().find(entry.inventory_id);
+                        if(!actual)throw std::runtime_error("Physical item is absent from inventory");
+                        entry.item=actual->get();
+                        entry.stowed=std::find(owner->equipped.begin(),owner->equipped.end(),entry.inventory_id)==owner->equipped.end();
+                        if(const auto provenance=owner->item_sources.find(entry.inventory_id);provenance!=owner->item_sources.end())entry.original=provenance->second;
+                    }else{
+                        unsigned index=unsigned(owner->equipped.size());const DetachedPartyItem* loose=nullptr;
+                        if(next.rest_activity)for(const auto& candidate:next.detached_items)if(candidate.rest_session==next.rest_activity->ticket.session&&candidate.original_owner==owner->id)
+                            if(index++==item.equipment_index){loose=&candidate;break;}
+                        if(!loose)throw std::runtime_error("Physical item is absent from camp equipment");
+                        entry.rest_token=loose->token;entry.item=loose->item;entry.original=loose->original;
+                    }
+                }else{
+                    std::uint64_t quantity=0;for(const auto& row:snapshot.held_items)if(source(row.origin,row.inventory_id,row.equipment_index)==source(item.origin,item.inventory_id,item.equipment_index))quantity+=row.quantity;
+                    if(quantity>std::numeric_limits<unsigned>::max())throw std::runtime_error("Physical stack exceeds limit");
+                    entry.item={0,item.definition,item.label.source,unsigned(quantity),-1};
+                }
+            }
+            entry.token=item.id;entry.item.id=0;manifest.push_back(std::move(entry));found=std::prev(manifest.end());
+        }
+        if(found->origin!=item.origin||found->source_inventory!=item.inventory_id||found->equipment_index!=item.equipment_index||found->item.definition_id!=item.definition)throw std::runtime_error("Physical item source changed");
+    }
+    if(manifest.size()!=snapshot.held_items.size())throw std::runtime_error("Physical item disappeared");
+    std::map<std::tuple<MemberId,std::uint64_t,unsigned>,std::pair<std::uint64_t,std::uint64_t>> totals;
+    for(const auto& e:manifest)totals[source(e.origin,e.source_inventory,e.equipment_index)].first+=e.item.quantity;
+    for(const auto& i:snapshot.held_items)totals[source(i.origin,i.inventory_id,i.equipment_index)].second+=i.quantity;
+    for(const auto& [key,total]:totals)if(total.first!=total.second)throw std::runtime_error("Physical inventory quantity changed");
+    for(const auto& item:snapshot.held_items){
+        auto& entry=*std::find_if(manifest.begin(),manifest.end(),[&](const auto& e){return e.token==item.id;});
+        if(!entry.rest_token&&entry.holder==item.holder&&entry.item.quantity==item.quantity&&entry.stowed==item.stowed)continue;
+        const auto old_owner=member(entry.holder);
+        const bool retained=entry.holder&&entry.holder==item.holder&&entry.item.quantity>=item.quantity&&!entry.rest_token;
+        if(entry.rest_token){
+            if(!next.rest_activity)throw std::runtime_error("Camp item lost its rest session");
+            const auto session=next.rest_activity->ticket.session;
+            std::erase_if(next.detached_items,[&](const auto& loose){return loose.rest_session==session&&loose.token==entry.rest_token;});entry.rest_token=0;
+        }else if(old_owner!=next.roster.end()&&entry.item.quantity){
+            auto& inventory=old_owner->character.inventory();const auto actual=inventory.find(entry.inventory_id);
+            if(!actual||actual->get().definition_id!=entry.item.definition_id)throw std::runtime_error("Physical transfer lost its source");
+            const auto removed=retained?entry.item.quantity-item.quantity:entry.item.quantity;
+            if(removed)inventory.remove(entry.inventory_id,removed);
+            if(!retained||item.stowed)std::erase(old_owner->equipped,entry.inventory_id);
+            if(!inventory.find(entry.inventory_id))old_owner->item_sources.erase(entry.inventory_id);
+        }
+        std::erase_if(next.detached_items,[&](const auto& loose){return loose.scope==combat_scope_&&loose.token==item.id;});
+        entry.item.quantity=item.quantity;entry.holder=item.holder;entry.stowed=item.stowed;
+        if(const auto holder=member(item.holder);holder!=next.roster.end()){
+            if(!retained)entry.inventory_id=holder->character.inventory().add(entry.item.definition_id,entry.item.name,item.quantity,entry.item.original_type);
+            if(!item.stowed&&std::find(holder->equipped.begin(),holder->equipped.end(),entry.inventory_id)==holder->equipped.end())holder->equipped.push_back(entry.inventory_id);
+            if(entry.original)holder->item_sources.emplace(entry.inventory_id,*entry.original);
+        }else{
+            entry.inventory_id=0;next.detached_items.push_back({combat_scope_,item.id,entry.original_owner,item.holder,item.cell,entry.item,entry.original});
+        }
+    }
+}
 void CampaignParty::apply_combat_items(PartyState& next,std::vector<CombatInventoryItem>& manifest,const rules::Snapshot& snapshot) const
 {
+    if(snapshot.physical_inventory){apply_physical_items(next,manifest,snapshot);return;}
     const auto find_member=[&](MemberId id){return std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});};
     std::set<std::pair<MemberId,unsigned>> sources;
     if(manifest.empty())for(const auto& item:snapshot.held_items){

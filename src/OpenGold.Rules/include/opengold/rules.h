@@ -128,6 +128,15 @@ struct HeldItemView {
     std::string definition;
     Message label;
     Cell cell;
+    std::uint64_t inventory_id{}; // Original source identity; zero for legacy/profile equipment.
+    unsigned quantity{1}; // A held stack means one held unit and the remainder carried.
+    bool stowed{};
+};
+struct CarriedEquipment {
+    std::uint64_t inventory_id{};
+    std::string definition;
+    unsigned quantity{};
+    int equipment_index{-1};
 };
 struct Participant {
     EntityId id{};
@@ -141,6 +150,7 @@ struct Participant {
     // Initial equipment ordinals already on the ground at this participant's
     // encounter position. Combat checkpoints persist their resulting item state.
     std::vector<unsigned> ground_equipment;
+    std::vector<CarriedEquipment> inventory;
 };
 struct Encounter { Battlefield battlefield; std::vector<Participant> participants; std::uint64_t scope{1}; };
 struct Identity {
@@ -148,6 +158,7 @@ struct Identity {
     auto operator<=>(const Identity&) const = default;
 };
 enum class Outcome { ongoing, victory, defeat };
+struct ThrownWeaponOption {unsigned item{}; Message label; bool available{};};
 struct CombatantView {
     EntityId id{};
     std::string name, definition;
@@ -169,6 +180,7 @@ struct CombatantView {
     std::vector<std::string> bonus_actions; // Entitlements remain visible after spending the Bonus Action.
     std::vector<std::string> known_cantrips; // Knowledge persists while casting is unavailable.
     bool naturally_sleeping{}, prone{};
+    std::vector<ThrownWeaponOption> thrown_weapons;
 };
 struct TemporaryHpOffer {
     EntityId recipient{};
@@ -203,6 +215,7 @@ struct Snapshot {
     std::optional<AbilityCheckChoice> ability_check_choice;
     std::optional<FreeMovement> free_movement;
     std::vector<HeldItemView> held_items;
+    bool physical_inventory{};
 };
 // Verbs are owned by a module, not an enumeration of edition-specific rules.
 // Presentation submits only currently offered commands. The module revalidates.
@@ -211,6 +224,7 @@ struct Command {
     EntityId actor{}, target{};
     std::string verb, label;
     Cell destination;
+    unsigned item{};
 };
 // A terminal encounter query; application applies recovery once when leaving combat.
 struct SafeRecovery {

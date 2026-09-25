@@ -172,6 +172,7 @@ struct PendingWeaponHit {
     EntityId attacker{},target{};
     bool ranged{};
     int natural{},mode{},first{},second{-1};
+    unsigned thrown_item{};
 };
 int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
 {
@@ -383,10 +384,10 @@ VitalState vitals(const Actor& a)
 }
 int distance(Cell a,Cell b) { return std::max(std::abs(a.x-b.x),std::abs(a.y-b.y))*5; }
 bool same_command(const Command& a,const Command& b)
-{ return a.revision==b.revision && a.actor==b.actor && a.target==b.target && a.verb==b.verb && a.destination==b.destination; }
+{ return a.revision==b.revision && a.actor==b.actor && a.target==b.target && a.verb==b.verb && a.destination==b.destination && a.item==b.item; }
 bool turns_to_attack(std::string_view verb)
 {
-    return verb=="chill_touch"||verb=="shocking_grasp"||verb=="eldritch_blast"||verb=="ray_of_frost"||verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="poison_spray"||verb=="sacred_flame"||verb=="magic_missile"||
+    return verb=="throw"||verb=="chill_touch"||verb=="shocking_grasp"||verb=="eldritch_blast"||verb=="ray_of_frost"||verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="poison_spray"||verb=="sacred_flame"||verb=="magic_missile"||
         verb=="magic_missile_2"||verb=="scorching_ray"||verb=="blindness";
 }
 class Session final : public CombatSession {
@@ -424,6 +425,13 @@ public:
         }
         log("Combat begins. Each square is 5 feet.");update_outcome();
         frost_movement_=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.cunning||(a.definition.known_cantrips&256)||detail::speed_penalty(a.effects);});
+        if(!restoring){
+            for(const auto& a:actors_){
+                for(const auto& key:a.definition.equipment_keys)if(const auto* w=detail::weapon(key);w&&w->thrown)physical_inventory_=true;
+                for(const auto& item:a.source.inventory)if(const auto* w=detail::weapon(item.definition);w&&w->thrown)physical_inventory_=true;
+            }
+            if(physical_inventory_)initialize_items();
+        }
         if(!restoring)for(auto& a:actors_){
             if(unconscious(a))drop_held(a);
             if(a.source.ground_equipment.empty())continue;
@@ -431,7 +439,7 @@ public:
             for(const auto index:a.source.ground_equipment){
                 const auto item=std::find_if(items_.begin(),items_.end(),[&](const auto& i){return i.origin==a.source.id&&i.equipment_index==index;});
                 if(!seen.insert(index).second||item==items_.end())throw std::runtime_error("Invalid initial ground equipment");
-                item->holder=0;item->cell=a.source.cell;
+                ground_one(item->id,a.source.cell);
             }
             a.definition=equipped_definition(a,items_);a.weapon_hands=a.definition.weapon_hands;
         }
@@ -460,7 +468,12 @@ private:
     void validate_champion_move() const;
     void finish_check(const PendingCheck& check,int boost);
     void validate_check() const;
-    bool frost_movement_{}, items_active_{};
+    bool frost_movement_{}, items_active_{}, physical_inventory_{};
+    Actor thrown_actor(const Actor&,std::string_view weapon) const;
+    Actor hit_actor(const PendingWeaponHit&) const;
+    unsigned ground_one(unsigned item,Cell cell);
+    Message throw_label(const Actor&,const HeldItemView&) const;
+    void throw_weapon(Actor&,Actor&,unsigned item);
     std::vector<HeldItemView> items_;
     void initialize_items();
     void drop_held(Actor& a);
@@ -528,10 +541,20 @@ void Session::initialize_items()
     if(items_active_)return;
     std::vector<const Actor*> ordered;for(const auto& a:actors_)ordered.push_back(&a);
     std::sort(ordered.begin(),ordered.end(),[](auto a,auto b){return a->source.id<b->source.id;});
-    for(const auto* a:ordered)for(unsigned i=0;i<a->definition.equipment_keys.size();++i){
-        const auto& key=a->definition.equipment_keys[i];
-        if(key!="shield"&&!detail::weapon(key))continue;
-        items_.push_back({unsigned(items_.size()+1),a->source.id,a->source.id,i,key,{key=="shield"?"Shield":std::string(detail::weapon(key)->label),{}},{}});
+    for(const auto* a:ordered){
+        std::set<std::uint64_t> ids;
+        for(const auto& source:a->source.inventory)if(!source.inventory_id||!source.quantity||!ids.insert(source.inventory_id).second)throw std::runtime_error("Invalid carried item source");
+        for(unsigned i=0;i<a->definition.equipment_keys.size();++i){
+            const auto& key=a->definition.equipment_keys[i];if(key!="shield"&&!detail::weapon(key))continue;
+            HeldItemView item{unsigned(items_.size()+1),a->source.id,a->source.id,i,key,{key=="shield"?"Shield":std::string(detail::weapon(key)->label),{}},{}};
+            if(physical_inventory_)for(const auto& source:a->source.inventory)if(source.equipment_index==static_cast<int>(i)){
+                if(source.definition!=key||item.inventory_id)throw std::runtime_error("Carried item disagrees with equipped source");
+                item.inventory_id=source.inventory_id;item.quantity=source.quantity;
+            }
+            items_.push_back(std::move(item));
+        }
+        if(physical_inventory_)for(const auto& source:a->source.inventory)if(source.equipment_index<0&&detail::weapon(source.definition))
+            items_.push_back({unsigned(items_.size()+1),a->source.id,a->source.id,0,source.definition,{std::string(detail::weapon(source.definition)->label),{}},{},source.inventory_id,source.quantity,true});
     }
     items_active_=true;
     // Older checkpoints can contain already-unconscious equipment holders.
@@ -545,15 +568,67 @@ Definition Session::equipped_definition(const Actor& a,const std::vector<HeldIte
     const auto original=character_definition(a.source.character_profile);
     std::vector<std::string> keys;
     for(const auto& key:original.equipment_keys)if(key!="shield"&&!detail::weapon(key))keys.push_back(key);
-    for(const auto& item:items)if(item.holder==a.source.id)keys.push_back(item.definition);
+    for(const auto& item:items)if(item.holder==a.source.id&&!item.stowed)keys.push_back(item.definition);
     return character_definition(a.source.character_profile,std::span<const std::string>(keys));
 }
 void Session::drop_held(Actor& a)
 {
     if(a.source.character_profile.empty())return;
     initialize_items();bool changed=false;
-    for(auto& item:items_)if(item.holder==a.source.id){item.holder=0;item.cell=a.source.cell;changed=true;}
+    const auto count=items_.size();for(unsigned i=0;i<count;++i)if(items_[i].holder==a.source.id&&!items_[i].stowed){
+        ground_one(items_[i].id,a.source.cell);changed=true;
+    }
     if(changed){a.definition=equipped_definition(a,items_);a.weapon_hands=a.definition.weapon_hands;}
+}
+Actor Session::thrown_actor(const Actor& a,std::string_view weapon) const
+{
+    auto result=a;std::vector<std::string> keys;
+    for(const auto& key:a.definition.equipment_keys)if(!detail::weapon(key))keys.push_back(key);
+    keys.emplace_back(weapon);
+    result.definition=character_definition(a.source.character_profile,std::span<const std::string>(keys));
+    result.weapon_hands=1;return result;
+}
+Actor Session::hit_actor(const PendingWeaponHit& hit) const
+{
+    const auto& a=actor(hit.attacker);
+    if(!hit.thrown_item)return a;
+    if(!physical_inventory_||hit.thrown_item>items_.size()||!hit.ranged)throw std::runtime_error("Invalid pending thrown item");
+    const auto& item=items_[hit.thrown_item-1];const auto* weapon=detail::weapon(item.definition);
+    if(item.holder||item.quantity!=1||!weapon||!weapon->thrown||item.cell!=actor(hit.target).source.cell)
+        throw std::runtime_error("Invalid pending thrown weapon position");
+    return thrown_actor(a,item.definition);
+}
+unsigned Session::ground_one(unsigned token,Cell cell)
+{
+    auto& item=items_.at(token-1);
+    if(item.quantity>1){
+        auto unit=item;--item.quantity;item.stowed=true;item.cell={};
+        unit.id=unsigned(items_.size()+1);unit.quantity=1;unit.holder=0;unit.stowed=false;unit.cell=cell;
+        items_.push_back(std::move(unit));return unsigned(items_.size());
+    }
+    item.holder=0;item.stowed=false;item.cell=cell;return token;
+}
+Message Session::throw_label(const Actor& a,const HeldItemView& item) const
+{
+    Message label{"{weapon} ×{count}",{{"weapon",item.label.source,true},{"count",std::to_string(item.quantity)}}};
+    const bool shield=std::any_of(items_.begin(),items_.end(),[&](const auto& i){return i.holder==a.source.id&&!i.stowed&&i.definition=="shield";});
+    if(item.stowed&&shield)for(const auto& held:items_)if(held.holder==a.source.id&&!held.stowed&&detail::weapon(held.definition)){
+        label.source="{weapon} ×{count} (stow {held})";label.arguments.push_back({"held",held.label.source,true});break;
+    }
+    return label;
+}
+void Session::throw_weapon(Actor& a,Actor& target,unsigned token)
+{
+    const auto selected=items_.at(token-1);
+    const bool shield=std::any_of(items_.begin(),items_.end(),[&](const auto& i){return i.holder==a.source.id&&!i.stowed&&i.definition=="shield";});
+    if(selected.stowed&&shield)for(auto& held:items_)if(held.holder==a.source.id&&!held.stowed&&detail::weapon(held.definition))held.stowed=true;
+    auto attacker=thrown_actor(a,selected.definition);
+    attack(attacker,target,true,false);
+    const auto ground=ground_one(token,target.source.cell);
+    if(weapon_hit_)weapon_hit_->thrown_item=ground;
+    const auto previous=a.definition.weapon_label;
+    a.definition=equipped_definition(a,items_);
+    if(previous!=a.definition.weapon_label)a.weapon_hands=a.definition.weapon_hands;
 }
 bool Session::can_pick_up(const Actor& a,const HeldItemView& item) const
 {
@@ -607,9 +682,9 @@ std::vector<Cell> Session::path_to(const Actor& actor, Cell destination) const
 Snapshot Session::snapshot() const
 {
     Snapshot s;s.identity=content_->identity;s.revision=revision_;s.round=round_;s.outcome=outcome_;
-    s.elapsed_milliseconds=elapsed_ms_;s.held_items=items_;
+    s.elapsed_milliseconds=elapsed_ms_;s.held_items=items_;s.physical_inventory=physical_inventory_;
     s.actor=champion_move_?champion_move_->actor:pending()?pending():actors_[turn_].source.id;s.reaction_pending=!champion_move_&&pending()!=0;s.battlefield=board_;s.log=log_;s.log_messages=log_messages_;
-    if(weapon_hit_){const auto& h=*weapon_hit_;const auto& a=*std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.attacker;});const auto dice=weapon_dice(a,h.ranged);
+    if(weapon_hit_){const auto& h=*weapon_hit_;const auto a=hit_actor(h);const auto dice=weapon_dice(a,h.ranged);
         s.savage_attack_choice=SavageAttackChoice{h.attacker,h.target,def(a).weapon_label,dice.count*(critical_hit(a,actor(h.target),h.natural)?2:1),dice.sides,dice.bonus,h.first,h.second<0?std::nullopt:std::optional{h.second},critical_hit(a,actor(h.target),h.natural)};}
     if(champion_move_)s.free_movement=FreeMovement{champion_move_->actor,champion_move_->remaining};
     if(check_choice_){const auto& c=*check_choice_;s.ability_check_choice=AbilityCheckChoice{c.actor,c.target,c.natural,def(actor(c.actor)).medicine,c.natural+def(actor(c.actor)).medicine,10,actor(c.actor).winds};}
@@ -624,6 +699,9 @@ Snapshot Session::snapshot() const
         const auto display=combat_display(a.source.definition);
         auto& view=s.combatants.back();view.temporary_hp=a.temporary_hp;
         view.naturally_sleeping=a.effects.sleeping;view.prone=a.effects.prone;
+        if(physical_inventory_)for(const auto& item:items_)if(item.holder==a.source.id)if(const auto* w=detail::weapon(item.definition);w&&w->thrown){
+            const auto offered=legal_commands();view.thrown_weapons.push_back({item.id,throw_label(a,item),std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb=="throw"&&c.item==item.id;})});
+        }
         if(a.effects.sleeping)view.conditions.push_back({"Naturally asleep",{}});
         if(a.effects.prone)view.conditions.push_back({"Prone",{}});
         if(def(a).cunning)view.bonus_actions={"cunning_dash","cunning_disengage"};
@@ -736,6 +814,9 @@ std::vector<Command> Session::legal_commands() const
             if(a.actions.available(true)&&(d.spells&64)&&can_gesture("poison_spray")&&feet<=30)
                 add(id,"poison_spray","Poison Spray",other.source.id);
             if(other.source.side!=a.source.side && other.hp>0) {
+                if(physical_inventory_)for(const auto& item:items_)if(item.holder==id)if(const auto* w=detail::weapon(item.definition);w&&w->thrown&&feet<=w->long_range){
+                    add(id,"throw","Throw",other.source.id);commands.back().item=item.id;
+                }
                 if(feet<=d.reach)add(id,"melee",a.source.definition=="slums-kobold"?"Dagger attack":
                     a.source.definition=="slums-kobold-leader"||a.source.definition=="slums-kobold-leader-sword"?"Short sword attack":"Melee attack",other.source.id);
                 if(d.range>0&&feet<=d.long_range)add(id,"ranged",
@@ -857,7 +938,7 @@ bool Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
 }
 void Session::resolve_weapon_hit(int amount)
 {
-    const auto h=*weapon_hit_;weapon_hit_.reset();auto& a=actor(h.attacker);const auto& d=def(a);
+    const auto h=*weapon_hit_;auto a=hit_actor(h);weapon_hit_.reset();const auto& d=def(a);
     apply_hit(a,actor(h.target),h.natural,h.ranged?d.ranged_bonus:d.melee_bonus,h.mode,amount,h.second>=0,h.ranged?d.ranged_type:d.melee_type);
     if(pending()&&!champion_move_)finish_reaction();
 }
@@ -1035,7 +1116,7 @@ bool Session::submit(const Command& command)
         if(check.natural+d.medicine<10&&d.tactical_mind&&a.winds>0)check_choice_=check;
         else finish_check(check,0);
     }else if(command.verb=="savage_use"){
-        a.savage_used=true;weapon_hit_->second=dice(weapon_dice(a,weapon_hit_->ranged),critical_hit(a,actor(weapon_hit_->target),weapon_hit_->natural));
+        a.savage_used=true;const auto attacker=hit_actor(*weapon_hit_);weapon_hit_->second=dice(weapon_dice(attacker,weapon_hit_->ranged),critical_hit(attacker,actor(weapon_hit_->target),weapon_hit_->natural));
     }else if(command.verb=="savage_skip"||command.verb=="savage_first"||command.verb=="savage_second"){
         resolve_weapon_hit(command.verb=="savage_second"?weapon_hit_->second:weapon_hit_->first);
     }else if(command.verb=="temp_hp_keep"||command.verb=="temp_hp_use") {
@@ -1124,7 +1205,12 @@ bool Session::submit(const Command& command)
             }
         }else if(command.verb=="eldritch_blast")attack(a,actor(command.target),true,true,{1,10,0},detail::DamageType::force);
         else if(command.verb=="poison_spray")attack(a,actor(command.target),true,true,{1,12,0},detail::DamageType::poison);
-        else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
+        else if(command.verb=="throw")throw_weapon(a,actor(command.target),command.item);
+        else {
+            const auto held=std::find_if(items_.begin(),items_.end(),[&](const auto& item){const auto* w=detail::weapon(item.definition);return item.holder==a.source.id&&!item.stowed&&w&&w->thrown;});
+            if(physical_inventory_&&command.verb=="ranged"&&held!=items_.end())throw_weapon(a,actor(command.target),held->id);
+            else attack(a,actor(command.target),command.verb!="melee",command.verb=="fire_bolt");
+        }
     }
     // Revisions are command tickets; zero is reserved for invalid commands.
     // Unsigned wrap is defined, but must skip that reserved value.
@@ -1138,7 +1224,7 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    const unsigned format=champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
+    const unsigned format=physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
     std::ostringstream out;out<<"OGCOMBAT "<<format<<' '<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
@@ -1154,15 +1240,19 @@ std::string Session::save() const
     out<<bool(temporary_offer_)<<'\n';
     if(temporary_offer_)out<<temporary_offer_->amount<<' '<<std::quoted(temporary_offer_->source_id)<<'\n';
     out<<bool(weapon_hit_)<<'\n';
-    if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second<<'\n';}
+    if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second;if(format>=19)out<<' '<<h.thrown_item;out<<'\n';}
     if(format>=17)out<<frost_movement_<<' '<<items_active_<<'\n';
     if(items_active_){
         out<<items_.size()<<'\n';
-        for(const auto& item:items_)out<<item.id<<' '<<item.holder<<' '<<item.cell.x<<' '<<item.cell.y<<'\n';
+        for(const auto& item:items_){out<<item.id<<' ';
+            if(format>=19)out<<item.origin<<' '<<item.equipment_index<<' '<<item.inventory_id<<' '<<std::quoted(item.definition)<<' '<<item.quantity<<' '<<item.stowed<<' ';
+            out<<item.holder<<' '<<item.cell.x<<' '<<item.cell.y<<'\n';}
         for(const auto& a:actors_)out<<a.object_interaction<<' ';out<<'\n';
     }
-    if(format==17){const auto& c=*check_choice_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.surge_spent<<'\n';}
-    if(format==18){const auto& c=*champion_move_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.remaining<<' '<<c.spell<<' '<<c.origin.x<<' '<<c.origin.y<<'\n';}
+    if(format>=19)out<<bool(check_choice_)<<'\n';
+    if(format==17||(format>=19&&check_choice_)){const auto& c=*check_choice_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.surge_spent<<'\n';}
+    if(format>=19)out<<bool(champion_move_)<<'\n';
+    if(format==18||(format>=19&&champion_move_)){const auto& c=*champion_move_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.remaining<<' '<<c.spell<<' '<<c.origin.x<<' '<<c.origin.y<<'\n';}
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -1270,14 +1360,16 @@ void Session::validate_weapon_hit() const
     const auto& h=*weapon_hit_;
     const auto a=std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.attacker;});
     const auto t=std::find_if(actors_.begin(),actors_.end(),[&](const auto& v){return v.source.id==h.target;});
-    if(a==actors_.end()||t==actors_.end()||temporary_offer_||outcome_!=Outcome::ongoing||!conscious(*a)||t->hp<=0||t->dead||a->source.side==t->source.side||!def(*a).savage||
+    if(a==actors_.end()||t==actors_.end())throw std::runtime_error("Unknown pending attacker/target");
+    const auto attacking=hit_actor(h);
+    if(temporary_offer_||outcome_!=Outcome::ongoing||!conscious(*a)||t->hp<=0||t->dead||a->source.side==t->source.side||!def(*a).savage||
         h.natural<2||h.natural>20||h.second< -1||a->savage_used!=(h.second>=0)||
-        (!(def(*a).champion&&h.natural==19)&&!attack_hits(h.natural,h.ranged?def(*a).ranged_bonus:def(*a).melee_bonus,def(*t).ac))||
-        h.mode!=attack_modifiers(*a,*t,h.ranged,false).mode()||!line_of_sight(a->source.cell,t->source.cell)||
-        distance(a->source.cell,t->source.cell)>(h.ranged?def(*a).long_range:def(*a).reach)||
+        (!(def(*a).champion&&h.natural==19)&&!attack_hits(h.natural,h.ranged?def(attacking).ranged_bonus:def(attacking).melee_bonus,def(*t).ac))||
+        h.mode!=attack_modifiers(attacking,*t,h.ranged,false).mode()||!line_of_sight(a->source.cell,t->source.cell)||
+        distance(a->source.cell,t->source.cell)>(h.ranged?def(attacking).long_range:def(attacking).reach)||
         (pending()?(pending()!=h.attacker||h.target!=actors_[turn_].source.id||a->reaction||h.ranged):(h.attacker!=actors_[turn_].source.id||(a->actions.normal&&(!a->surge_used||a->actions.surge)))))
         throw std::runtime_error("Invalid pending Savage Attacker hit");
-    const auto d=weapon_dice(*a,h.ranged);const int count=d.count*(critical_hit(*a,*t,h.natural)?2:1);
+    const auto d=weapon_dice(attacking,h.ranged);const int count=d.count*(critical_hit(*a,*t,h.natural)?2:1);
     const auto valid=[&](int n){return n>=std::max(0,count+d.bonus)&&n<=std::max(0,count*d.sides+d.bonus);};
     if(!count||!valid(h.first)||(h.second>=0&&!valid(h.second)))throw std::runtime_error("Invalid Savage Attacker damage roll");
 }
@@ -1445,11 +1537,11 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 18 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 19 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
     Encounter encounter;
@@ -1522,7 +1614,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     }
     if(version>=13){
         bool pending_hit{};input>>pending_hit;
-        if(pending_hit){PendingWeaponHit h;input>>h.attacker>>h.target>>h.ranged>>h.natural>>h.mode>>h.first>>h.second;session->weapon_hit_=h;}
+        if(pending_hit){PendingWeaponHit h;input>>h.attacker>>h.target>>h.ranged>>h.natural>>h.mode>>h.first>>h.second;if(version>=19)input>>h.thrown_item;session->weapon_hit_=h;}
         if(!input)throw std::runtime_error("Invalid Savage Attacker choice checkpoint");
     }
     bool has_items=version>=16;
@@ -1531,17 +1623,34 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         input>>session->frost_movement_>>has_items;
         if(!input)throw std::runtime_error("Invalid ability-check checkpoint flags");
     }
+    if(version>=19){
+        if(module_before(identity,{0,6,47})||!has_items)throw std::runtime_error("Invalid physical inventory checkpoint flags");
+        session->physical_inventory_=true;session->items_active_=true;
+    }
     if(has_items){
         if(module_before(identity,{0,6,42}))throw std::runtime_error("Legacy checkpoint cannot contain held items");
-        session->initialize_items();std::size_t count{};input>>count;
-        if(!input||count!=session->items_.size())throw std::runtime_error("Invalid held item count");
-        for(auto& item:session->items_){
-            unsigned id{};input>>id>>item.holder>>item.cell.x>>item.cell.y;
+        if(version<19)session->initialize_items();std::size_t count{};input>>count;
+        if(!input||count>100000||(version<19&&count!=session->items_.size()))throw std::runtime_error("Invalid held item count");
+        if(version>=19)session->items_.resize(count);
+        for(unsigned index=0;index<count;++index){
+            auto& item=session->items_[index];unsigned id{};input>>id;
+            if(version>=19){
+                item.id=index+1;input>>item.origin>>item.equipment_index>>item.inventory_id>>std::quoted(item.definition)>>item.quantity>>item.stowed;
+                const auto source=std::find_if(session->actors_.begin(),session->actors_.end(),[&](const auto& a){return a.source.id==item.origin;});
+                const auto* weapon=detail::weapon(item.definition);
+                if(!input||source==session->actors_.end()||source->source.character_profile.empty()||(!weapon&&item.definition!="shield")||!item.quantity)
+                    throw std::runtime_error("Invalid physical inventory source");
+                const auto original=character_definition(source->source.character_profile);
+                if(!item.inventory_id&&(item.equipment_index>=original.equipment_keys.size()||original.equipment_keys[item.equipment_index]!=item.definition))
+                    throw std::runtime_error("Invalid physical equipment source");
+                item.label={weapon?std::string(weapon->label):"Shield",{}};
+            }
+            input>>item.holder>>item.cell.x>>item.cell.y;
             if(!input||id!=item.id)throw std::runtime_error("Invalid held item identity");
             if(item.holder){
                 const auto holder=std::find_if(session->actors_.begin(),session->actors_.end(),[&](const auto& a){return a.source.id==item.holder;});
-                if(holder==session->actors_.end()||holder->source.character_profile.empty()||unconscious(*holder)||holder->dead||item.cell!=Cell{})throw std::runtime_error("Invalid held item holder");
-            }else if(!session->board_.contains(item.cell)||session->board_.at(item.cell)==1)throw std::runtime_error("Invalid dropped item position");
+                if(holder==session->actors_.end()||holder->source.character_profile.empty()||(!item.stowed&&(unconscious(*holder)||holder->dead))||item.cell!=Cell{})throw std::runtime_error("Invalid held item holder");
+            }else if(!session->board_.contains(item.cell)||session->board_.at(item.cell)==1||item.stowed||item.quantity!=1)throw std::runtime_error("Invalid dropped item position");
         }
         for(auto& a:session->actors_){unsigned available{};input>>available;if(!input||available>1)throw std::runtime_error("Invalid object interaction budget");a.object_interaction=available;
             if(!a.source.character_profile.empty())a.definition=session->equipped_definition(a,session->items_);
@@ -1549,8 +1658,12 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         }
     }
     if(version>=17&&!has_items)for(const auto& a:session->actors_)validate_grip(a.definition,a.weapon_hands);
-    if(version==17){PendingCheck c;input>>c.actor>>c.target>>c.natural>>c.surge_spent;if(!input)throw std::runtime_error("Invalid ability-check checkpoint");session->check_choice_=c;}
-    if(version==18){if(module_before(identity,{0,6,46}))throw std::runtime_error("Legacy checkpoint cannot contain Champion movement");ChampionMove c;input>>c.actor>>c.target>>c.natural>>c.remaining>>c.spell>>c.origin.x>>c.origin.y;if(!input)throw std::runtime_error("Invalid Champion movement checkpoint");session->champion_move_=c;}
+    bool pending_check=false,pending_champion=false;
+    if(version>=19)input>>pending_check;
+    if(version==17||pending_check){PendingCheck c;input>>c.actor>>c.target>>c.natural>>c.surge_spent;if(!input)throw std::runtime_error("Invalid ability-check checkpoint");session->check_choice_=c;}
+    if(version>=19)input>>pending_champion;
+    if(version==18||pending_champion){if(module_before(identity,{0,6,46}))throw std::runtime_error("Legacy checkpoint cannot contain Champion movement");ChampionMove c;input>>c.actor>>c.target>>c.natural>>c.remaining>>c.spell>>c.origin.x>>c.origin.y;if(!input)throw std::runtime_error("Invalid Champion movement checkpoint");session->champion_move_=c;}
+    if(!input)throw std::runtime_error("Invalid checkpoint continuation");
     unsigned legacy_facing_reaction{};
     if(version==5){
         input>>legacy_facing_reaction;
@@ -1575,7 +1688,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -2065,7 +2178,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.46",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.47",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

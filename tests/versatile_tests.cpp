@@ -48,6 +48,11 @@ void damage_and_resources(){
         const auto after=unit(*combat,1);
         check(!after.action&&after.bonus_action==before.bonus_action&&after.reaction==before.reaction&&after.movement_feet==before.movement_feet,"Weapon attack spends only its action");
         const auto saved=combat->save();auto restored=rules->restore(saved);check(restored->save()==saved,"Selected grip and attack resources round trip");
+        if(thrown){
+            check(after.grips.empty(),"A thrown-away weapon no longer offers grip changes");
+            const auto state=combat->snapshot();check(state.held_items.size()==1&&!state.held_items[0].holder&&state.held_items[0].cell==Cell{3,1},"Hit and miss both leave the weapon on its target square");
+            continue;
+        }
         const auto change=command(*combat,hands==1?"grip_two":"grip_one");
         check(combat->submit(change)&&restored->submit(change)&&combat->save()==restored->save(),"Grip can change after spending the action and resumes identically");
         const auto changed=unit(*combat,1);

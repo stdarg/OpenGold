@@ -165,8 +165,11 @@ private:
         InventoryItem item;
         std::optional<por::Equipment> original;
         unsigned rest_token{};
+        std::uint64_t source_inventory{};
+        bool stowed{};
     };
     std::vector<CombatInventoryItem> combat_items_;
+    void apply_physical_items(PartyState&,std::vector<CombatInventoryItem>&,const rules::Snapshot&) const;
     void apply_combat_items(PartyState&,std::vector<CombatInventoryItem>&,const rules::Snapshot&) const;
     void release_rest_equipment(PartyState&,PartyMember&) const;
     void recover_camp(PartyState&) const;
