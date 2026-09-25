@@ -1,9 +1,9 @@
 # SRD handoff
 
 Updated 2026-09-25 after verified Wizard spell-choice delivery. The standing goal
-remains ACTIVE and incomplete: close all `SRD_improvements` issues, support all
+is BLOCKED awaiting ROGUE-DEMO-1 and incomplete: close all `SRD_improvements` issues, support all
 twelve classes through level four, then the planned higher levels/multiclassing.
-Do not pause or request another resume at this batch boundary.
+The goal was not user-paused. Its blocked audit is recorded below.
 
 ## Latest delivery — Wizard spell choices (#37; implementation owner #97)
 
@@ -65,7 +65,13 @@ answer has arrived; do not infer approval from automatic goal continuation.
 At22:28 UTC the complete training suite also passes explicit unused-Aim expiry
 and aimed-miss consumption cases (test-only follow-up; runtime unchanged).
 No independent implementation remains in this frozen batch before that answer;
-no live handles remain. Goal stays ACTIVE; do not autonomously pause it.
+no live handles remain. Goal status is now BLOCKED on ROGUE-DEMO-1 after the
+same unanswered approval recurred across three consecutive goal turns. The
+first two turns still delivered implementation/verification; current audit
+confirmed no independent in-scope work remains. No approval was inferred.
+Latest tested follow-up `ff2f989` is pushed; worktree was clean at this audit.
+This is an input dependency, not a user-requested pause or completion. An answer
+to question1 permits the remaining demo implementation under the standing goal.
 
 ## Preserved exclusions from Wizard delivery
 
