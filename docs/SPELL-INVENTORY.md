@@ -11,7 +11,8 @@ claim that the listed spells are implemented. Current delivery adds the
 the [level-one Warlock Poison Spray route](WARLOCK-POISON-SPRAY.md) to an existing
 partial spell; the distinct-spell count is unchanged. Rules 0.6.40 adds
 [level-one Sorcerer access](SORCERER-CANTRIPS.md) to Fire Bolt, Poison Spray, Ray of
-Frost and Shocking Grasp. The count remains eleven partial spells and 128 missing.
+Frost and Shocking Grasp. Rules 0.6.44 adds the [Chill Touch class paths](CHILL-TOUCH.md),
+bringing the count to twelve partial spells and 127 missing.
 
 ## Scope and counting
 
@@ -24,7 +25,8 @@ playable paths and 132 missing spells**. With 0.6.23 there are **eight partial
 playable paths and 131 missing spells**. With 0.6.25 there are **nine partial
 playable paths and 130 missing spells**. With 0.6.37 there are **ten partial
 playable paths and 129 missing spells**. With 0.6.38 there are **eleven partial
-playable paths and 128 missing spells**; no complete spell conformance is claimed.
+playable paths and 128 missing spells**. With 0.6.44 there are **twelve partial
+playable paths and 127 missing spells**; no complete spell conformance is claimed.
 
 Authority: [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 Each spell name below links to its description page. Class-list membership is
@@ -178,7 +180,7 @@ are evidence of partial behavior, not certification of the full spell.
 | Spell / SRD page | Normal lists | Additional routes | Further dependencies | Status / work |
 | --- | --- | --- | --- | --- |
 | [Acid Splash](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=107) (p. 107) | S, W | MI, Tome, High, Tropical | [#43](https://github.com/stdarg/OpenGold/issues/43) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
-| [Chill Touch](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=115) (p. 115) | S, K, W | MI, Tome, High, Chthonic | [#35](https://github.com/stdarg/OpenGold/issues/35) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
+| [Chill Touch](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=115) (p. 115) | S, K, W | MI, Tome, High, Chthonic | [#35](https://github.com/stdarg/OpenGold/issues/35) | Partial: Wizard 1–4, Sorcerer/Warlock 1; creature casting, healing prevention and Q40 earned recovery verified in [Chill Touch](CHILL-TOUCH.md). MI/Tome/species, objects and higher class progression remain open under [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Dancing Lights](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=121) (p. 121) | B, S, W | MI, Tome, High, Drow | [#38](https://github.com/stdarg/OpenGold/issues/38), [#46](https://github.com/stdarg/OpenGold/issues/46) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Druidcraft](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=126) (p. 126) | D | MI, Tome, Magician, DruidicWarrior, Wood | [#174](https://github.com/stdarg/OpenGold/issues/174) | Missing; queue [#165](https://github.com/stdarg/OpenGold/issues/165) |
 | [Eldritch Blast](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf#page=127) (p. 127) | K | Tome | Objects [#225](https://github.com/stdarg/OpenGold/issues/225) | Partial level-one Warlock creatures; [#204](https://github.com/stdarg/OpenGold/issues/204) |

@@ -12,6 +12,8 @@ struct RecoverySubject {
 // Positive elapsed time initializes unknown legacy Stable delays once. Events
 // are ordered by deadline, entity ID, mortality, then effect application ID.
 // Combat continues to roll death saves at initiative entry instead.
-void elapse_recovery(std::span<RecoverySubject> subjects,std::uint64_t milliseconds,std::uint64_t& rng);
+enum class RecoveryMode { campaign, combat };
+void elapse_recovery(std::span<RecoverySubject> subjects,std::uint64_t milliseconds,std::uint64_t& rng,
+                     RecoveryMode mode=RecoveryMode::campaign,const EffectObserver& observe={});
 }
 #endif

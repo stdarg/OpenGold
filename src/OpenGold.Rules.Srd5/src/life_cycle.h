@@ -8,6 +8,7 @@ inline constexpr unsigned death_turn_ms=6000;
 inline constexpr unsigned recovery_hour_ms=3600000;
 struct RecoveryClock {
     unsigned death_save_in_ms{}, stable_recovery_in_ms{};
+    bool stable_recovery_due{};
     bool operator==(const RecoveryClock&) const = default;
 };
 struct LifeState {
@@ -17,6 +18,11 @@ struct LifeState {
     rules::TemporaryHitPoints temporary_hp;
     bool operator==(const LifeState&) const = default;
 };
+// Module 0.6.44 reserves the first value above the maximum 1d4-hour delay
+// for earned recovery waiting on healing prevention. Zero keeps its legacy
+// meaning: the duration has not been rolled. Existing clock bytes are unchanged.
+[[nodiscard]] unsigned encode_stable_recovery(const RecoveryClock& clock);
+void decode_stable_recovery(RecoveryClock& clock);
 void validate_recovery(const LifeState& state);
 void validate_temporary_hp(const rules::TemporaryHitPoints& pool);
 void grant_temporary_hp(LifeState&,const rules::TemporaryHitPoints&,rules::TemporaryHpChoice);
@@ -32,6 +38,6 @@ void set_life_hit_points(LifeState& state,int hit_points,int maximum_hp);
 void start_stable_recovery(LifeState& state,std::uint64_t& rng);
 // Combat rolls death saves at turn entry; this only retains its remaining
 // cadence and advances natural recovery. Campaign event scheduling is separate.
-[[nodiscard]] bool advance_recovery_clock(LifeState& state,std::uint64_t milliseconds);
+[[nodiscard]] bool advance_recovery_clock(LifeState& state,std::uint64_t milliseconds,bool can_heal=true);
 }
 #endif

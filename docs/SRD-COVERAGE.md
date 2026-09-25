@@ -9,9 +9,49 @@ The all-twelve-class level-four milestone is
 
 The [level-four spell inventory](SPELL-INVENTORY.md) records **139 required
 spells**, including source discrepancies between class tables and descriptions.
-Eleven have partial playable paths and 128 are missing. It links grant routes,
+Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
+
+## Chill Touch class paths and healing prevention
+
+Rules 0.6.44 completes the bounded class-cantrip increment under #165/#35:
+Wizard levels 1–4 and level-one Sorcerer/Warlock choices and casting, melee
+Necrotic damage, sourced healing prevention through the end of the caster's next
+turn, and Q40's approved earned Stable recovery. [Mechanics, scope and evidence](CHILL-TOUCH.md)
+include the actual grant routes, damage/action/component checks, all HP recovery
+paths, death saves, overlapping effects, skipped caster turns, deterministic
+campaign/combat continuation and old saves. SRD mechanics remain in the STATIC
+library; Core and public interfaces have no changes. Existing Spell/Cast and
+creator patterns are reused without new controls or combat save buttons.
+
+Verification: the final source tree based on `fba0ca3` plus the Q40 delivery
+commit passes all 46 native/tool checks and all 23 Godot runtime checks (36 with
+prerequisites). The first regression run exposed a stale hard-coded module
+identity in the Cunning Action test header; updating that assertion and rebuilding
+made its native and dependent Godot checks pass. No runtime fix was required.
+Actual frozen 0.6.43 saves were captured before the writer change. Prior EN/ES
+combat and creator renders at 1120×800 and 1920×1080 remain valid because Q40
+changes no layout. Both applications rebuilt; demo sleep and creator checks are
+recorded in the feature packet. Localization validates 876 messages.
+
+Commands/evidence: native targets and `opengoldbox_test_project` built with
+`cmake --build build/mac-check --target ... -j6`; CTest native `-E '^opengold_godot_' -j6`
+and Godot `-R '^opengold_godot_' -E '^opengold_godot_prepare$' --fixture-exclude-setup godot_project`.
+Logs `/tmp/chill-final-native-{build,tests}.log`, `/tmp/chill-q40-godot.log`,
+`/tmp/chill-q40-training-{build,test}.log`, `/tmp/chill-q40-cunning.log` and
+`/tmp/chill-q40-demo-{build,sleep,creator}.log`. Focused checks also cover the
+shared recovery timeline and legacy clocks (`/tmp/chill-earned-{build,tests}.log`).
+
+Delivered one bounded spell increment, no new issues or issue closures. The
+inventory now has twelve partial playable spells and 127 missing; #165 and #35
+remain open for their full acceptance. Object targeting, feat/species access and
+higher class progression are explicitly incomplete. Routing retained the recorded
+Astra/high assignment, no agents/model switch. Original start 04:56:05 UTC;
+independent verification ended 05:28:59, followed by the Q40 approval wait.
+Q40 work resumed 14:23:53; focused implementation/build passed by 14:32,
+final application verification completed by 14:36:55 (13m02s after resumption).
+Documentation/delivery followed. Token/cost deltas unavailable.
 
 ## Workflow maintenance — not SRD functionality
 

@@ -19,12 +19,22 @@ void grant_temporary_hp(LifeState& state,const rules::TemporaryHitPoints& offere
     else if(choice!=rules::TemporaryHpChoice::keep_current||!state.temporary_hp.amount)
         throw std::runtime_error("Invalid Temporary Hit Point choice");
 }
+unsigned encode_stable_recovery(const RecoveryClock& clock)
+{
+    return clock.stable_recovery_due?4*recovery_hour_ms+1:clock.stable_recovery_in_ms;
+}
+void decode_stable_recovery(RecoveryClock& clock)
+{
+    clock.stable_recovery_due=clock.stable_recovery_in_ms==4*recovery_hour_ms+1;
+    if(clock.stable_recovery_due)clock.stable_recovery_in_ms=0;
+}
 void validate_recovery(const LifeState& state)
 {
     const auto& clock=state.recovery;
     if(clock.death_save_in_ms>death_turn_ms||clock.stable_recovery_in_ms>4*recovery_hour_ms||
-        ((state.hp>0||state.dead)&&(clock.death_save_in_ms||clock.stable_recovery_in_ms))||
-        (state.stable&&clock.death_save_in_ms)||(!state.stable&&clock.stable_recovery_in_ms))
+        ((state.hp>0||state.dead)&&(clock.death_save_in_ms||clock.stable_recovery_in_ms||clock.stable_recovery_due))||
+        (state.stable&&clock.death_save_in_ms)||(!state.stable&&(clock.stable_recovery_in_ms||clock.stable_recovery_due))||
+        (clock.stable_recovery_due&&clock.stable_recovery_in_ms))
         throw std::runtime_error("Invalid recovery clock");
 }
 void initialize_legacy_recovery(LifeState& state)
@@ -34,7 +44,7 @@ void initialize_legacy_recovery(LifeState& state)
 }
 void start_stable_recovery(LifeState& state,std::uint64_t& rng)
 {
-    if(state.hp==0&&!state.dead&&state.stable&&!state.recovery.stable_recovery_in_ms)
+    if(state.hp==0&&!state.dead&&state.stable&&!state.recovery.stable_recovery_in_ms&&!state.recovery.stable_recovery_due)
         state.recovery.stable_recovery_in_ms=unsigned(roll_die(rng,4))*recovery_hour_ms;
 }
 void stabilize(LifeState& state,std::uint64_t& rng)
@@ -92,12 +102,15 @@ int heal_life(LifeState& state,int amount,int maximum_hp,bool can_heal)
     if(healed){state.hp+=healed;state.successes=state.failures=0;state.stable=false;state.recovery={};}
     return healed;
 }
-bool advance_recovery_clock(LifeState& state,std::uint64_t milliseconds)
+bool advance_recovery_clock(LifeState& state,std::uint64_t milliseconds,bool can_heal)
 {
     auto& clock=state.recovery;
     clock.death_save_in_ms-=static_cast<unsigned>(std::min<std::uint64_t>(milliseconds,clock.death_save_in_ms));
-    if(!clock.stable_recovery_in_ms)return false;
-    if(milliseconds>=clock.stable_recovery_in_ms){state.hp=1;state.stable=false;state.successes=state.failures=0;clock={};return true;}
-    clock.stable_recovery_in_ms-=static_cast<unsigned>(milliseconds);return false;
+    if(clock.stable_recovery_in_ms){
+        if(milliseconds>=clock.stable_recovery_in_ms){clock.stable_recovery_in_ms=0;clock.stable_recovery_due=true;}
+        else clock.stable_recovery_in_ms-=static_cast<unsigned>(milliseconds);
+    }
+    if(clock.stable_recovery_due&&can_heal){state.hp=1;state.stable=false;state.successes=state.failures=0;clock={};return true;}
+    return false;
 }
 }

@@ -1,127 +1,65 @@
 # SRD handoff
 
-Updated 2026-09-25 during the Chill Touch batch. Branch `codex/srd-chill-touch`; goal BLOCKED awaiting Q40. The full objective is
-all SRD_improvements issues, all twelve classes through level 4, then level 20
-and multiclassing. Do not treat this completed batch as the full goal.
+Updated 2026-09-25 14:36:55 UTC. Q40 is approved and the bounded Chill Touch
+increment is complete and verified. Delivery branch `codex/srd-chill-touch`;
+commit/push and return to main are the remaining delivery operations.
+The goal controller last reported BLOCKED; a decision reply does not itself
+resume the full goal. Do not mark the full objective complete.
 
-## Delivered batch B — #30/#192/#193
+## Latest delivery — Chill Touch under #165/#35
 
-- #192 was already CLOSED. This delivery completes #193 and parent #30;
-  their GitHub closure records link the final commit and verification evidence.
-- Q33–35 deliver natural sleep/waking, persistent Prone, held-equipment dropping,
-  combat pickup and inventory/save handoff. Q37 APPROVED safe standing/collection
-  after victory and safe camp completion/cancellation/obeying city watch;
-  it supersedes Q36. No question remains pending for this batch.
-- Safe recovery stows reachable gear in the living original owner's inventory,
-  or an able survivor's when the owner died. Combat waking/standing/pickup costs
-  stay unchanged. No healing, recharge or RNG draw accompanies safe cleanup.
-- The verified original ECL3.DAX/11 city-watch route now begins/resumes actual
-  rest, spends five minutes, explicitly wakes members, then ends camping on GO.
-  Failed continuation rolls back. Unknown probabilistic profiles/FIGHT remain
-  explicit unsupported boundaries; no new encounter scheduler was invented.
-- Architecture: SRD eligibility, standing and terrain reach stay in the STATIC
-  rules library. Core stages inventory and vitality transactions; no SRD link
-  from Core, new runtime, UI controls or schema changes. Module 0.6.42, PC28,
-  conditional combat16 and campaign14 remain compatible with prior writers.
-- Final checks: 45/45 native/tool tests; 22/22 Godot runtime checks (34 including
-  native prerequisites); rebuilt demo sleep/rest checks; nine original-data
-  save/write/restart states in BOTH game and demo; 871 localized messages valid.
-  Tests cover living/dead owners, blocked paths, repeated collection, save/load,
-  watch rollback, fresh segments, spent resources, mixed eligibility and time.
-- Evidence: [rest resources](REST-RESOURCES.md#safe-recovery-and-city-watch-completion-193-q37),
-  [coverage](SRD-COVERAGE.md). Logs `/tmp/safe-recovery-native.log`,
-  `/tmp/safe-recovery-godot.log`, `/tmp/safe-recovery-game-save-{write,read}.log`,
-  `/tmp/safe-recovery-demo-{sleep,rest,save-write,save-read}.log`.
-- No live builds/tests remain. Full verification finished 04:38 UTC. Original
-  batch start remains 01:27:34 UTC, checkpoint 02:27:34, maximum 02:57:34;
-  previously reported overruns were not reset. Last observed phase checkpoints:
-  focused fixes 04:28; integrated rebuild 04:33; verification done 04:38.
-- Routing: gpt-6-astra/high retained for complex rules/inventory/save integration.
-  One incorrect compact-resource test expectation was corrected from the actual
-  serializer; all checks now pass. No repeated two-fix failure or model switch.
-  No agents, new tasks, added issues or silent scope expansion.
-
-## Current independent batch — Chill Touch under #165
-
-- WIP on `codex/srd-chill-touch`, based on main `0feefe4`; do not merge or close
-  an issue as complete yet. Main retains delivered safe recovery (#30/#193).
-- This turn made PROGRESS: implemented and tested ordinary Wizard/Sorcerer/
-  Warlock access, casting, damage, sourced healing prevention, expiry, saves,
-  healing actions and presentation. Details/evidence: [packet](CHILL-TOUCH.md).
-- Q40 is PENDING: interpretation of a Stable natural recovery deadline reached
-  while healing is blocked. Audio and widget delivered; visible final question
-  must accompany this handoff. Do not infer approval or implement either policy.
-  `advance_recovery_clock` still ignores prevention: this is known incomplete
-  gameplay on the WIP branch, not delivered support. Keep #165/#35 open.
-- Q38/Q39 remain pending; Medicine/Tactical Mind stays deferred. No other batch
-  may silently replace this WIP. No new issues, agents, tasks or model switch.
-- Routing remains gpt-6-astra/high (complex healing/mortality/timeline/save work),
-  inherited verified execution setting. Start 04:56:05, checkpoint 05:56:05,
-  maximum 06:26:05 UTC; do not reset. Implementation/focused integration by
-  05:19, then final independent verification. No two-fix failure escalation.
-- Existing Q18 is MAIN-GAME Spell/Cast approval. Demo shares character creation
-  but explicitly retains its older combat controls (CANTRIP-CONTROLS.md).
-  Do not add demo combat controls under an incorrect shared-layout assumption.
-- Persistence: module 0.6.43; PC29 only when Chill Touch is selected, PC28 otherwise;
-  conditional FX5 for active block plus posture. Actual 0.6.42/PC28 and held-item
-  fixtures remain unchanged and their compatibility tests pass. No Core SRD logic.
-- Independent verification finished 05:23:42 UTC (27m37s elapsed): 46 native/tool
-  checks have passing results; 23/23 Godot runtime checks; rendered combat and
-  main creator EN/ES at both sizes; rebuilt demo creator passes in its existing
-  English-only presentation. No live process remains. Details/logs in packet.
-- Follow-up goal turn made PROGRESS: added and passed actual combat/campaign
-  natural-20 death-save boundary and checkpoint tests, including exact expiry
-  and partitioned time. No runtime changes. Finished 05:28:59 UTC; logs and
-  evidence in the packet. Q40 remains unanswered; no live build/test remains.
-- Blocked audit: the preceding turn was PROGRESS (`a1df856`), not a live-process
-  wait. Q40 remained unanswered when WIP was pushed (`7dce767`), through that
-  follow-up, and at the next audit. The independent work is now exhausted;
-  remaining runtime work depends on the ruling. Goal tool confirmed BLOCKED.
-  This does not reduce the full objective or close any issue. No live process.
-- Preserve this WIP branch until complete; return verified work to main under
-  the existing delivery workflow. No finished coverage row or issue closure yet.
-- Next after Q40: integrate Stable recovery across chronological combat/campaign
-  boundaries; preserve due recovery across save/load if the proposed policy is
-  approved; test exact shared deadlines and partition-invariant RNG. Then verify
-  final integration, update coverage/inventory, and deliver the bounded increment.
-  Species/feat/object/higher-level routes stay explicitly incomplete in #165.
+- Player outcome: Wizard levels 1–4 and level-one Sorcerer/Warlock cantrip choices,
+  creature casting, sourced damage/healing prevention, all actual healing paths,
+  and Q40 earned Stable recovery. [Coverage](SRD-COVERAGE.md#chill-touch-class-paths-and-healing-prevention)
+  is the completion record; [feature packet](CHILL-TOUCH.md) holds mechanics/tests.
+- Q40: already-rolled recovery earned while blocked grants 1 HP at the last block's
+  expiry without another d4 roll; damage cancels Stable/recovery. No new controls.
+- Module 0.6.44, PC29 only for Chill choices, FX5 for prevention; due recovery uses
+  a reserved clock encoding with explicit internal state and old-identity guards.
+  All earlier supported saves remain accepted, including actual 0.6.43 captures.
+  SRD mechanics stay in the STATIC library. Core/public interfaces are unchanged.
+- All 46 native/tool and 23 Godot runtime checks have passing results. Both apps
+  rebuilt; demo sleep/creator checks pass. The stale current-version assertion
+  in a Cunning Action test helper was corrected and its native/dependent Godot
+  checks passed. Demo creator initially lacked its required original-assets
+  environment; rerunning the established graphical invocation passed. No runtime
+  fix was needed for either verification setup issue. 876 localized messages valid.
+- Initial EN/ES main-game combat/creator renders at 1120×800 and 1920×1080 remain
+  applicable. Demo shares creation but retains its older combat controls and
+  English presentation. Do not invent broader Q18 approval for demo controls.
+- #165/#35 stay OPEN: object, feat/species and higher-class-level routes remain
+  incomplete. Twelve partial playable spells, 127 missing. No issues added/closed.
+- Routing: recorded gpt-6-astra/high retained for timing/save interactions; no
+  settings change or delegation. No two-fix failure escalation occurred.
+- Original start 04:56:05, checkpoint 05:56:05, maximum 06:26:05 UTC retained.
+  Independent verification ended 05:28:59; work then awaited Q40. Authorized Q40
+  work resumed 14:23:53; focused checks passed by 14:32; final application checks
+  finished by 14:36:55 (13m02s since resumption). No live builds/tests remain.
+- Earlier safe recovery delivery (#30/#193, #192 already closed) remains recorded
+  in [coverage](SRD-COVERAGE.md) and [rest resources](REST-RESOURCES.md).
 
 ## Deferred batch — #32 / #87
 
-- Previous goal turn: PROGRESS, pushed preflight/approval packet `f7b069f`;
-  the preceding `36e574c` delivery closed #193/#30.
-  Worktree was clean at this turn's entry; no live process remains.
-- Current preflight selected Medicine stabilization and Tactical Mind together;
-  [bounded packet](MEDICINE-TACTICAL-MIND.md) records fixed acceptance, sources,
-  routes, code map, verification and exclusions. No gameplay changes yet.
-- Q38/Q39 are PENDING, delivered with successful Glass audio, async widget and
-  visible final questions. Do not implement the proposed controls until answered.
-- Routing: retained gpt-6-astra/high for shared pending-check, provenance and save
-  integration. No switch or delegation. Original new-batch start 04:41:34 UTC;
-  checkpoint 05:41:34, maximum 06:11:34. Do not reset on the approval wait.
-- Package C preflight found Light attacks require additional two-held-weapon and
-  draw/stow support; style feat closure also needs Paladin/Ranger source routes.
-  Deferred that larger package instead of silently expanding into it. Q23 and
-  other pre-existing questions remain pending; they are not this batch's blockers.
-- Check-path audit and actual prior-writer capture are now complete; see the
-  packet's verified audit. There are modifier queries but no rolled SRD skill
-  actions yet; initiative has no failure DC. Reuse existing d20 and stabilize
-  helpers, keeping original ECL probability branches distinct.
-- `opengold_action_surge_tests` now verifies three frozen 0.6.42/PC28 fixtures:
-  level-two Fighter with spent Second Wind, campaign time/RNG, and exact
-  Action Surge/Dash continuation. Focused build/test passes; no gameplay change.
-  Log `/tmp/mind-baseline-tests.log`. No live processes remain.
-- Next: after Q38/Q39 approval implement the two issues' player flow, with grants,
-  pending decisions and old/new continuations. Current goal status is above. No
-  issue closure is claimed for preparation; no repeated-blocker streak yet.
+- Medicine stabilization/Tactical Mind packet: [bounded acceptance and audit](MEDICINE-TACTICAL-MIND.md).
+  Q38/Q39 remain PENDING. Do not implement their proposed controls without answers.
+- Rules/check-path audit and actual prior-writer capture are complete. The
+  0.6.42/PC28 `campaign-v11-mind-before.ogs`, `combat-v15-mind-before.save` and
+  `combat-v15-mind-continued.save` fixtures and Action Surge regressions preserve
+  wounded Fighter/Second Wind state, RNG and exact continuation. Do not recapture.
+- Original preflight start 04:41:34 UTC, checkpoint 05:41:34, maximum 06:11:34
+  retained. No gameplay implementation or issue closure claimed for preparation.
+- Q19–21/Q23/Q25 remain outside this deferred batch. Package C's broader Light
+  weapon/draw-stow and Paladin/Ranger style routes remain deferred, not authorized
+  prerequisites. No new work silently replaces a pending batch.
 
-Use [workflow](SRD-WORKFLOW.md) and [model routing](SRD-MODEL-ROUTING.md): classify,
-record and visibly announce the next assignment, verify execution settings,
-freeze acceptance and record a new batch clock only when starting a new batch.
-No agents or new tasks without explicit authorization. Commit/push owned changes.
+The full objective is all `SRD_improvements` issues, all twelve classes through
+level four, then level twenty and multiclassing. On explicit goal resumption use
+[workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md),
+[repo map](SRD-REPO-MAP.md) and [decisions](SRD-DECISIONS.md). Freeze one batch;
+record requested versus actual model/effort. No agents/new tasks/scope expansion
+without authorization. Commit/push owned changes after checks.
 
 Questions must be numbered, visible in the conversation, and preceded by
-`/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Use both the async widget and
-plain visible final question. Never re-ask approvals in
-[the decision register](SRD-DECISIONS.md). Q19–21/Q23/Q25 remain outside the
-current Medicine/Tactical Mind batch; Q38/Q39/Q40 await answers. Player saving remains camping/inn only, never combat.
+`/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Use the async widget plus
+plain visible final text. Never re-ask recorded approvals. Player saving remains
+camping/inn only, never combat. No pending question remains for Chill Touch.

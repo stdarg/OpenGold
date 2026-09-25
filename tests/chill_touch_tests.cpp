@@ -1,6 +1,7 @@
 #include "opengold/campaign_save.h"
 #include "opengold/srd5.h"
 #include "life_cycle.h"
+#include "recovery_timeline.h"
 #include "status_effects.h"
 #include <algorithm>
 #include <fstream>
@@ -142,9 +143,111 @@ void death_save_boundary(){
         }
     }
 }
-void persistence(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"chill_touch",2);auto saved=c->save();auto forged=saved;forged.replace(forged.find("0.6.43"),6,"0.6.42");rejects([&]{(void)rules->restore(forged);});check(c->save()==saved,"Invalid restore preserves session");
+void persistence(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"chill_touch",2);auto saved=c->save();auto forged=saved;forged.replace(forged.find("0.6.44"),6,"0.6.42");rejects([&]{(void)rules->restore(forged);});check(c->save()==saved,"Invalid restore preserves session");
     for(const auto* klass:{"wizard","sorcerer","warlock"}){CampaignParty party(module());auto h=hero(klass);const auto id=party.add_pc(h);auto stage=party.checkpoint();stage.roster[0].vitals=blocked_state(*rules,h,1);party.restore(stage);auto bytes=encode_campaign(party,nullptr,"chill");CampaignParty copy(module());copy.restore(decode_campaign(bytes,*srd5::character_rules(),*module(),"chill",nullptr).party);check(encode_campaign(copy,nullptr,"chill")==bytes,"Campaign grant and effect round trip");auto actors=copy.participants();std::uint64_t random=17;rules->elapse(actors,8999,random);check(fx::healing_blocked(effects(*actors[0].state)),"Campaign expiry not early");rules->elapse(actors,1,random);check(!fx::healing_blocked(effects(*actors[0].state))&&random==17,"Exact outside combat expiry, no RNG");(void)id;}
+}
+void earned_lifecycle(){
+    fx::LifeState life{0,0,0,true,false,{0,1000}};
+    check(!fx::advance_recovery_clock(life,1000,false)&&life.recovery.stable_recovery_due,"Blocked deadline retains earned recovery");
+    auto random=std::uint64_t{17};const auto pending=life;
+    fx::stabilize(life,random);fx::start_stable_recovery(life,random);
+    check(life==pending&&random==17,"Earned recovery cannot reroll on repeated stabilization");
+    for(bool buffer:{false,true}){
+        auto damaged=pending;if(buffer)damaged.temporary_hp={5,"test:buffer"};
+        fx::damage_life(damaged,1,20);
+        check(!damaged.stable&&!damaged.recovery.stable_recovery_due&&damaged.failures==1,"Damage cancels earned recovery even through Temporary HP");
+        check(!fx::advance_recovery_clock(damaged,9000)&&damaged.hp==0,"Cancelled recovery cannot heal later");
+    }
+    fx::damage_life(life,0,20);check(life==pending,"Zero resolved damage preserves earned recovery");
+    check(fx::advance_recovery_clock(life,1)&&life.hp==1&&life.recovery==fx::RecoveryClock{},"Earned recovery grants exactly one HP once allowed");
+    for(const auto invalid:std::vector<fx::LifeState>{{1,0,0,true,false,{0,0,true}},{0,0,0,true,true,{0,0,true}},
+        {0,0,0,false,false,{0,0,true}},{0,0,0,true,false,{0,1,true}}})rejects([&]{fx::validate_recovery(invalid);});
+}
+void stable_timeline(){
+    for(auto mode:{fx::RecoveryMode::campaign,fx::RecoveryMode::combat})for(unsigned deadline:{999u,1000u,1001u,3000u,4000u}){
+        fx::LifeState life{0,0,0,true,false,{0,deadline}},other{10};
+        fx::EffectState effect,other_effect;fx::apply_chill_touch(effect,1,99,"First",1000);fx::apply_chill_touch(effect,1,98,"Second",3000);
+        fx::apply_blindness(effect,1,98,"Blind",30,1000);fx::apply_blindness(other_effect,1,99,"Blind",30,1000);
+        auto pieces=life,other_pieces=other;auto piece_effect=effect,other_piece_effect=other_effect;
+        std::vector<fx::RecoverySubject> whole{{{2,other_effect,{}},other},{{1,effect,{}},life}};
+        std::vector<fx::RecoverySubject> chunked{{{2,other_piece_effect,{}},other_pieces},{{1,piece_effect,{}},pieces}};
+        std::uint64_t random=17,piece_random=17;
+        fx::elapse_recovery(whole,2999,random,mode);
+        for(unsigned step:{1u,998u,1u,999u,1000u})fx::elapse_recovery(chunked,step,piece_random,mode);
+        check(life==pieces&&effect==piece_effect&&other_effect==other_piece_effect&&random==piece_random,"Shared effect/deadline ordering and RNG are partition invariant");
+        check(life.hp==0&&life.recovery.stable_recovery_due==(deadline<3000),"No recovery before last blocking source expires");
+        fx::elapse_recovery(whole,1,random,mode);
+        check(life.hp==(deadline<=3000?1:0),"Earned recovery at exact final expiry; future deadline is preserved");
+        fx::elapse_recovery(whole,1000,random,mode);check(life.hp==1,"Recovery eventually occurs at the later boundary");
+    }
+}
+VitalState stable_blocked(unsigned deadline=1000){
+    return {0,false,"SRD7 2 0 0 0 0 1 2 0 "+std::to_string(deadline)+" 0 \"\" 2 FX5 2 1 1 4 5 99 \"Enemy\" 0 9000 0 0 0"};
+}
+void stable_continuation(){
+    auto rules=module();auto h=hero("fighter",2);CampaignParty party(module());const auto id=party.add_pc(h);
+    auto stage=party.checkpoint();stage.roster[0].vitals=stable_blocked();stage.random_state=17;stage.next_combat_scope=6;party.restore(stage);
+    party.advance_time_milliseconds(1000);const auto pending=party.member(id).vitals;
+    check(pending.hit_points==0&&pending.resources.find("14400001")!=pending.resources.npos&&party.state().random_state==17,"Earned recovery stored without additional d4 draw");
+    auto bytes=encode_campaign(party,nullptr,"earned-recovery");CampaignParty loaded(module());
+    loaded.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"earned-recovery",nullptr).party);
+    check(encode_campaign(loaded,nullptr,"earned-recovery")==bytes,"Pending earned recovery round trips exactly");
+    auto old=rules->identity();old.version="0.6.43";auto forged=pending;rejects([&]{rules->migrate_character_state(old,h.sheet(),forged);});
+    auto no_block=pending;no_block.resources.replace(no_block.resources.find("FX5"),std::string::npos,"FX1 1 0");
+    rejects([&]{rules->validate_character_state(h.sheet(),no_block);});
+    loaded.advance_time_milliseconds(7999);check(loaded.member(id).vitals.hit_points==0&&loaded.state().random_state==17,"Deferred recovery waits without reroll");
+    loaded.advance_time_milliseconds(1);party.advance_time_milliseconds(8000);
+    check(loaded.member(id).vitals.hit_points==1&&loaded.state().random_state==17&&encode_campaign(loaded,nullptr,"earned-recovery")==encode_campaign(party,nullptr,"earned-recovery"),"Saved earned recovery resumes at exact expiry");
+    auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},
+        {{1,"campaign-character","Patient",0,{1,1},rules->character_profile(h.sheet(),{}).data,pending},
+         {2,"vanguard","Companion",0,{3,1}},{99,"vanguard","Enemy",1,{6,1}}}},13);
+    check(unit(*c).hit_points==0,"Combat retains due recovery while blocked");
+    auto copy=rules->restore(c->save());auto checkpoint=c->save();checkpoint.replace(checkpoint.find("0.6.44"),6,"0.6.43");rejects([&]{(void)rules->restore(checkpoint);});
+    const auto random=rng(*c);
+    for(unsigned turns=0;turns<8&&unit(*c).hit_points==0;++turns){
+        act(*c,"end");act(*copy,"end");check(c->save()==copy->save(),"Pending combat recovery continues exactly after reload");
+    }
+    check(unit(*c).hit_points==1&&rng(*c)==random,"Combat expiry restores earned HP without RNG");
+}
+void stable_actual_cast(){
+    auto rules=custom("affinity target test immunity necrotic\n");auto h=hero();
+    auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},
+        {{1,"campaign-character","Caster",0,{1,1},rules->character_profile(h.sheet(),{}).data},
+         {2,"target","Patient",0,{2,1},{},VitalState{0,false,"SRD5 0 0 0 0 0 1 0 0 5000 FX1 1 0"}},
+         {99,"vanguard","Enemy",1,{6,1}}}},13);
+    while(c->snapshot().actor!=1)act(*c,"end");check(unit(*c,2).hit_points==0,"Stable before actual cast");
+    act(*c,"chill_touch",2);check(blocked(*c,2)&&unit(*c,2).hit_points==0,"Actual immune target takes zero damage and keeps Stable with prevention");
+    const auto expiry=c->snapshot().elapsed_milliseconds+effects(unit(*c,2).persistent).active[0].remaining_ms;
+    bool saw_due=false;auto random=rng(*c);
+    while(c->snapshot().elapsed_milliseconds<expiry){
+        if(unit(*c,2).persistent.resources.find("14400001")!=std::string::npos){
+            saw_due=true;auto copy=rules->restore(c->save());check(copy->save()==c->save(),"Actual cast creates persistent earned recovery");
+        }
+        act(*c,"end");check(unit(*c,2).hit_points==(c->snapshot().elapsed_milliseconds<expiry?0:1),"Actual Stable target heals only at expiry");
+    }
+    check(saw_due&&rng(*c)==random,"Actual cast delays the existing deadline without another recovery roll");
+}
+void prior_chill_writer(){
+    auto rules=module();auto normalize=[&](std::string bytes){bytes.replace(bytes.find("0.6.43"),6,rules->identity().version);return bytes;};
+    auto c=rules->restore(read(root/"tests/fixtures/combat-chill-0.6.43.save"));
+    check(c->save()==normalize(read(root/"tests/fixtures/combat-chill-0.6.43.save")),"Actual prior Chill writer migration changes only identity");
+    act(*c,"end");act(*c,"end");check(c->save()==normalize(read(root/"tests/fixtures/combat-chill-0.6.43-continued.save")),"Actual prior Chill continuation remains byte exact");
+    CampaignParty party(module());party.restore(decode_campaign(read(root/"tests/fixtures/campaign-chill-0.6.43.ogs"),*srd5::character_rules(),*rules,"chill-baseline",nullptr).party);
+    const auto before=party.member(1).vitals;check(fx::healing_blocked(effects(before)),"Prior campaign retains prevention");
+    party.advance_time_milliseconds(9000);check(!fx::healing_blocked(effects(party.member(1).vitals))&&party.member(1).vitals.hit_points==before.hit_points,"Prior campaign effect expires without invented healing");
+}
+void freeze_chill_baseline(){
+    auto rules=module();check(rules->identity().version=="0.6.43","Freeze requires actual 0.6.43 writer");
+    CampaignParty party(module());auto h=hero("wizard",4);auto id=party.add_pc(h);
+    auto actors=party.participants();actors[0].cell={1,1};actors.push_back({99,"vanguard","Enemy",1,{6,1}});
+    auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},13);
+    while(c->snapshot().actor!=id)act(*c,"end");act(*c,"chill_touch",id);check(blocked(*c,id),"Freeze actual Chill hit");
+    auto write=[](const char* name,const std::string& bytes){std::ofstream out(root/"tests/fixtures"/name);out<<bytes;check(bool(out),"Write baseline");};
+    write("combat-chill-0.6.43.save",c->save());
+    party.begin_combat();party.apply_combat(c->snapshot());party.end_combat();
+    write("campaign-chill-0.6.43.ogs",encode_campaign(party,nullptr,"chill-baseline"));
+    act(*c,"end");act(*c,"end");write("combat-chill-0.6.43-continued.save",c->save());
 }
 void fixtures(){auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"chill-fixtures";std::filesystem::create_directories(path);auto rules=module();for(const auto* klass:{"wizard","sorcerer","warlock"}){auto h=hero(klass);auto profile=rules->character_profile(h.sheet(),{}).data;auto c=rules->create({{12,9,std::vector<std::uint8_t>(108)},{{1,"campaign-character","Caster",0,{1,1},profile},{2,"vanguard","Ally",0,{2,1}},{99,"vanguard","Enemy",1,{5,1}}}},2);while(c->snapshot().actor!=1)act(*c,"end");std::ofstream(path/(std::string(klass)+".save"))<<c->save();act(*c,"chill_touch",2);std::ofstream(path/(std::string(klass)+"-blocked.save"))<<c->save();}}
 }
-int main(){try{access();damage();timing();skipped_caster();campaign_handoff();legality();lifecycle();recovery();healing_spells();combat_death_save();death_save_boundary();persistence();fixtures();std::cout<<"Chill Touch tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-chill-baseline"){freeze_chill_baseline();return 0;}access();damage();timing();skipped_caster();campaign_handoff();legality();lifecycle();recovery();healing_spells();combat_death_save();death_save_boundary();persistence();earned_lifecycle();stable_timeline();stable_continuation();stable_actual_cast();prior_chill_writer();fixtures();std::cout<<"Chill Touch tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

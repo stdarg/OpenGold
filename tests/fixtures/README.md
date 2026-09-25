@@ -604,3 +604,15 @@ SHA-256:
 - `campaign-v11-mind-before.ogs`: `2c97462b62d896f8a77aebb901c38fe4655715d4b1749a880108d33c86aad179`
 - `combat-v15-mind-before.save`: `44d450a76575dc2052ad946ac7cbf2c416e6e603046d25450aebf31e91944086`
 - `combat-v15-mind-continued.save`: `e40bb504963583c4e1c7988e512b4f7f5f5516bec912e848ea089393116dc720`
+
+## Chill Touch prior writer (0.6.43)
+
+`campaign-chill-0.6.43.ogs`, `combat-chill-0.6.43.save`, and
+`combat-chill-0.6.43-continued.save` were captured with the unchanged gameplay
+libraries at `fba0ca3`, using the added
+`opengold_chill_touch_tests --freeze-chill-baseline` driver. It requires exactly
+module 0.6.43; never regenerate these bytes under a later writer. An authored
+level-four Orc Wizard actually casts Chill Touch on herself. The campaign asset
+identity is `chill-baseline`; the continued combat records two End Turn commands.
+The regression requires byte-exact combat migration/continuation except module
+identity, plus campaign persistence and expiry without invented healing.

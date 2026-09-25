@@ -319,7 +319,7 @@ void restore_vitals(Actor& a,const VitalState& state)
         in>>magic>>a.winds>>a.slots;temporary=magic=="SRD6"||magic=="SRD7"||magic=="SRD8";timed=magic=="SRD5"||temporary;if(magic=="SRD2"||magic=="SRD3"||magic=="SRD4"||timed)in>>a.slots2;
         in>>a.successes>>a.failures>>a.stable;
         if(magic=="SRD4"||timed)in>>a.hit_dice;
-        if(timed)in>>a.recovery.death_save_in_ms>>a.recovery.stable_recovery_in_ms;
+        if(timed){in>>a.recovery.death_save_in_ms>>a.recovery.stable_recovery_in_ms;detail::decode_stable_recovery(a.recovery);}
         if(temporary)in>>a.temporary_hp.amount>>std::quoted(a.temporary_hp.source_id);
         if(magic=="SRD7"||magic=="SRD8")in>>a.rushes;
         if(magic=="SRD8")in>>a.surges;
@@ -336,6 +336,7 @@ void restore_vitals(Actor& a,const VitalState& state)
     if(a.stable)a.successes=a.failures=0;
     if(!timed)detail::initialize_legacy_recovery(a);
     detail::validate_recovery(a);detail::validate_temporary_hp(a.temporary_hp);
+    if(a.recovery.stable_recovery_due&&!detail::healing_blocked(a.effects))throw std::runtime_error("Earned recovery requires active healing prevention");
 }
 VitalState vitals(const Actor& a)
 {
@@ -345,7 +346,7 @@ VitalState vitals(const Actor& a)
     std::ostringstream out;out<<(surge?"SRD8 ":rush?"SRD7 ":temporary?"SRD6 ":timed?"SRD5 ":spent_dice?"SRD4 ":effects?"SRD3 ":a.definition.slots2?"SRD2 ":"SRD1 ")<<a.winds<<' '<<a.slots<<' ';
     if(timed||spent_dice||effects||a.definition.slots2)out<<a.slots2<<' ';out<<a.successes<<' '<<a.failures<<' '<<a.stable;
     if(timed||spent_dice)out<<' '<<a.hit_dice;
-    if(timed)out<<' '<<a.recovery.death_save_in_ms<<' '<<a.recovery.stable_recovery_in_ms;
+    if(timed)out<<' '<<a.recovery.death_save_in_ms<<' '<<detail::encode_stable_recovery(a.recovery);
     if(temporary)out<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id);
     if(rush)out<<' '<<a.rushes;
     if(surge)out<<' '<<a.surges;
@@ -911,9 +912,13 @@ void Session::advance_turn_time()
     // Dead/unconscious slots still pass time; menus and repeated snapshots don't.
     const unsigned delta=turn_end_ms(turn_)-(turn_?turn_end_ms(turn_-1):0);
     for(auto& a:actors_)detail::start_stable_recovery(a,rng_);
-    std::vector<detail::EffectSubject> subjects;
-    for(auto& a:actors_)subjects.push_back({a.source.id,a.effects,def(a).saves,a.dead,def(a).str_dex_disadvantage,a.dodge});
-    detail::elapse_effects(subjects,delta,rng_,[&](const detail::EffectEvent& event){
+    std::vector<detail::RecoverySubject> subjects;
+    std::vector<EntityId> unconscious;
+    for(auto& a:actors_){
+        subjects.push_back({{a.source.id,a.effects,def(a).saves,a.dead,def(a).str_dex_disadvantage,a.dodge},a});
+        if(a.hp==0)unconscious.push_back(a.source.id);
+    }
+    detail::elapse_recovery(subjects,delta,rng_,detail::RecoveryMode::combat,[&](const detail::EffectEvent& event){
         const auto& target=actor(event.target);
         if(event.save)log_save(target,*event.save);
         if(event.removed&&event.effect.kind==detail::EffectKind::chill_touch)log(target.source.name+" loses a Chill Touch effect.",{ "{name} loses a Chill Touch effect.",{{"name",target.source.name}}});
@@ -922,7 +927,7 @@ void Session::advance_turn_time()
         if(event.removed&&event.effect.kind==detail::EffectKind::blindness)log(target.source.name+" recovers from a blindness effect.",
             {"{name} recovers from a blindness effect.",{{"name",target.source.name}}});
     });
-    for(auto& a:actors_)if(detail::advance_recovery_clock(a,delta)){
+    for(auto& a:actors_)if(a.hp>0&&std::find(unconscious.begin(),unconscious.end(),a.source.id)!=unconscious.end()){
         a.effects.prone=true;
         if(shares_occupied_space(a))a.involuntary_overlap=true;
         log(a.source.name+" recovers 1 HP naturally.",{"{name} recovers 1 HP naturally.",{{"name",a.source.name}}});
@@ -1090,7 +1095,7 @@ std::string Session::save() const
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_){out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
-        <<a.actions.normal<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<' '<<a.recovery.death_save_in_ms<<' '<<a.recovery.stable_recovery_in_ms<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id)<<' '<<a.rushes<<' '<<a.rush_used;
+        <<a.actions.normal<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<' '<<a.recovery.death_save_in_ms<<' '<<detail::encode_stable_recovery(a.recovery)<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id)<<' '<<a.rushes<<' '<<a.rush_used;
         if(format>=14)out<<' '<<a.surges<<' '<<a.surge_used<<' '<<a.actions.surge;if(format>=15)out<<' '<<a.dashes;out<<'\n';}
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
@@ -1125,7 +1130,7 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if (version >= 7) input >> actor.involuntary_overlap;
     if (version >= 8) input >> actor.weapon_hands;
     if (version >= 9) input >> actor.hit_dice;
-    if (version >= 10) input >> actor.recovery.death_save_in_ms >> actor.recovery.stable_recovery_in_ms;
+    if (version >= 10){input >> actor.recovery.death_save_in_ms >> actor.recovery.stable_recovery_in_ms;detail::decode_stable_recovery(actor.recovery);}
     if (version >= 11) input >> actor.temporary_hp.amount >> std::quoted(actor.temporary_hp.source_id);
     if(version>=12)input>>actor.rushes>>actor.rush_used;
     if(version>=14)input>>actor.surges>>actor.surge_used>>actor.actions.surge;
@@ -1332,7 +1337,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        ((version>=13&&version<=16)&&identity.version=="0.6.42")||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
+        ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 16 ||
@@ -1396,7 +1401,8 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     if(version>=4){
         unsigned effects_count{};input>>session->scope_>>session->elapsed_ms_>>effects_count;
         if(!input||!session->scope_||effects_count!=session->actors_.size())throw std::runtime_error("Invalid checkpoint effect header");
-        for(auto& a:session->actors_){a.effects=detail::read_effects(input);if(module_before(identity,{0,6,43})&&detail::healing_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Chill Touch");if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");if(module_before(identity,{0,6,41})&&a.effects.prone)throw std::runtime_error("Legacy combat cannot contain natural sleep/posture state");if(module_before(identity,{0,6,38})&&detail::opportunity_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Shocking Grasp");if(version<15&&detail::speed_penalty(a.effects))throw std::runtime_error("Legacy combat cannot contain Ray of Frost");}
+        for(auto& a:session->actors_){a.effects=detail::read_effects(input);
+            if(a.recovery.stable_recovery_due&&(module_before(identity,{0,6,44})||!detail::healing_blocked(a.effects)))throw std::runtime_error("Invalid earned recovery checkpoint");if(module_before(identity,{0,6,43})&&detail::healing_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Chill Touch");if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");if(module_before(identity,{0,6,41})&&a.effects.prone)throw std::runtime_error("Legacy combat cannot contain natural sleep/posture state");if(module_before(identity,{0,6,38})&&detail::opportunity_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Shocking Grasp");if(version<15&&detail::speed_penalty(a.effects))throw std::runtime_error("Legacy combat cannot contain Ray of Frost");}
     }
     if(version>=12){
         bool pending_offer{};input>>pending_offer;
@@ -1449,7 +1455,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1607,6 +1613,7 @@ public:
         }
         Actor actor;actor.definition=definition;actor.winds=definition.winds;
         actor.slots=definition.slots;actor.slots2=definition.slots2;restore_vitals(actor,state);
+        if(module_before(saved,{0,6,44})&&actor.recovery.stable_recovery_due)throw std::runtime_error("Legacy campaign cannot contain earned recovery");
         if(module_before(saved,{0,6,41})&&actor.effects.prone)throw std::runtime_error("Legacy campaign cannot contain natural sleep/posture state");
         // Only pre-Adrenaline saves introduce a new resource pool. Later version
         // bumps preserve already-supported Orc state just like other species.
@@ -1934,7 +1941,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.43",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.44",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
