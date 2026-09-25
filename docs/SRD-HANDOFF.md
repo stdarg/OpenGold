@@ -20,12 +20,28 @@ twenty/multiclassing. One batch is not goal completion.
   branch and `main`. #58 is verified CLOSED with evidence. No other issue closed
   and no issues added. This handoff update changes no tested runtime inputs.
 
-## Goal status and next work
+## Active batch — #57 ammunition
+
+Standing authorization is to continue closing SRD_improvements issues. The
+tracker's stale BLOCKED status is not an instruction to stop after each issue;
+the prior Q43/Q44 blocker was resolved. Continue after deliveries unless the user
+pauses or a concrete approval/dependency blocks further work.
+
+The frozen [ammunition packet](AMMUNITION.md) records acceptance, exclusions,
+model assignment and verification. Branch `codex/srd-ammunition`; current owner
+only. Start 2026-09-25 17:58:09 UTC, checkpoint 18:58:09 (latest 19:28:09).
+Requested Astra/high retained; no actual model switch. AMMO-1/AMMO-2 control and
+recovery decisions are pending. Genuine prior-writer fixtures are captured and
+the new `opengold_ammunition_tests` passes campaign and exact combat continuation.
+No runtime changes, no live build, no issue closure yet. Resume from the packet
+and pending decisions; do not repeat the completed baseline investigation.
+
+## Goal tracker and continuation
 
 The goal tool last reported BLOCKED after unanswered Q43/Q44 across three turns.
 Those inputs are now approved and this batch was directly authorized. The tool
 has no resume operation; do not claim its status changed or mark the whole goal
-complete. No new batch is frozen by this decision reply.
+complete. The active #57 batch above follows the standing continuation instruction.
 
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and

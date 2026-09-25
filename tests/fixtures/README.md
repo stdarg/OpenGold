@@ -675,3 +675,25 @@ SHA-256:
 - `combat-v16-thrown-choice.save`: `fdba9f4e421ddb605755c4c1248f17d82ca3a483477d4601085f07813ad21df6`
 - `combat-v16-thrown-continued.save`: `54b136fde4c298a2f7a3e5925c6eef3e451c843df2a053006ada042a625f6227`
 - `combat-v18-thrown-free.save`: `5f5cc8504126c476175fc0bc619927550626668737883e14efdb3bfbd738fbbe`
+
+## Ammunition baseline, actual 0.6.47 writer
+
+Captured before any #57 runtime changes, using the released rules/Core sources
+at `dbf911d` (runtime `5d7813d`), with the new capture-only test harness.
+`opengold_ammunition_tests --capture-prior-writer` requires module **0.6.47**.
+Never regenerate these files with a later writer. The level-four Fighter carries
+two original arrow stacks (7 and 3), five original quarrels and two daggers, and
+equips a longbow. Ammunition enters through the actual purchase conversion and
+retains original provenance; the old writer records it as unsupported equipment.
+The daggers activate the actual format-19 physical ledger. Ammunition is present
+in the campaign inventory but absent from that old ledger; old in-flight combat
+did not expend it. Capture starts after a genuine reload and continues two
+ranged attacks separated by Action Surge. These are compatibility fixtures,
+not evidence that #57 is implemented. Tests compare full combat bytes/RNG/budgets
+and campaign stack identities/quantities after loading.
+
+SHA-256:
+
+- `campaign-v11-ammunition-before.ogs`: `39dc9d8edcc963f9d348caf3dd011c4bfca5c774a4ea0b79fe0bab28c82ffecb`
+- `combat-v19-ammunition-before.save`: `86b6047b71b79d8cf1d3d61bc79c66fd0b03efd62427de51a488486e70c8898d`
+- `combat-v19-ammunition-continued.save`: `e8783194ec041a919b68c7c94bf0785a1d996e1d3d97b2aaa63d1898d3759428`

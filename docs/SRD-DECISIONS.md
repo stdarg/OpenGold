@@ -68,6 +68,19 @@ question widget, and preceded by the audible Glass alert.
 
 ## Pending — do not implement dependent choices
 
+New visible set (numbered 1–2), 2026-09-25, #57; Glass alert played before asking:
+
+- **AMMO-1 — PENDING:** existing Ranged button automatically consumes first
+  compatible ordinary ammunition stack in inventory order; tooltip displays
+  count/blocking reason; unavailable with no ammunition or required loading hand.
+  Existing targeting and keyboard behavior reused.
+- **AMMO-2 — PENDING:** centered post-victory dialog lists recovery counts with
+  Recover ammunition (1 minute) / Leave ammunition, keyboard access; advance
+  game time once before exploration. Round down half separately per character
+  and ammunition type across that character's stacks; able companions may
+  collect for incapacitated/dead owners using Q37 equipment return policy.
+  This is proposed interpretation of SRD-unspecified rounding/collection details.
+
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
