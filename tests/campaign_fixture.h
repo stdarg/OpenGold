@@ -68,8 +68,43 @@ inline std::string with_druid_herbalism_grants(std::string body){
         const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
     }return body;
 }
+// Independently add the three fixed Champion grants to normalized v11+ fixture
+// bodies. Read attained level from the documented draft/appearance prefix, not
+// from production replay or from the current result being compared.
+inline std::string with_champion_grants(std::string body){
+    const std::regex draft(R"re("(?:dragonborn|dwarf|elf|gnome|goliath|halfling|human|orc|tiefling)" "(?:female|male|nonbinary)" "fighter" )re");
+    const std::regex first_grant(R"re("(?:feature:|feat:|trait:|language:)[^"]+" "[^"]+" [0-9]+ [0-9]+)re");
+    std::size_t search=0;std::smatch match;
+    while(search<body.size()){
+        auto rest=body.substr(search);if(!std::regex_search(rest,match,draft))break;
+        const auto start=search+match.position();std::istringstream fields(body.substr(start));std::string text;unsigned count{},n{},level{};
+        for(unsigned i=0;i<6;++i)fields>>std::quoted(text);
+        fields>>count;for(unsigned i=0;i<count;++i)fields>>std::quoted(text);
+        for(unsigned i=0;i<38;++i)fields>>n;
+        fields>>count;for(unsigned i=0;i<count;++i){unsigned choices{};fields>>std::quoted(text)>>choices;for(unsigned j=0;j<choices;++j)fields>>std::quoted(text);}
+        fields>>n;if(n){fields>>count;for(unsigned i=0;i<count;++i)fields>>std::quoted(text);}
+        for(unsigned i=0;i<17;++i)fields>>n;
+        fields>>std::quoted(text)>>level;
+        if(!fields||level<1||level>4)throw std::runtime_error("Malformed frozen Champion draft/level");
+        search=start+static_cast<std::size_t>(fields.tellg());if(level<3)continue;
+        rest=body.substr(search);if(!std::regex_search(rest,match,first_grant))throw std::runtime_error("Missing frozen Champion ledger");
+        const auto first=search+match.position();auto begin=first-2;while(begin&&body[begin-1]>='0'&&body[begin-1]<='9')--begin;
+        std::istringstream input(body.substr(begin));input>>count;
+        if(!input||!count||count>128)throw std::runtime_error("Invalid frozen Champion ledger");
+        std::vector<rules::FeatureGrant> grants;
+        for(unsigned i=0;i<count;++i){rules::FeatureGrant g;unsigned choices{};input>>std::quoted(g.id)>>std::quoted(g.source_id)>>g.level>>choices;
+            if(!input||choices>6)throw std::runtime_error("Malformed frozen Champion grant");
+            for(unsigned j=0;j<choices;++j){std::string key,value;input>>std::quoted(key)>>std::quoted(value);g.choices.emplace(key,value);}grants.push_back(std::move(g));}
+        if(!input)throw std::runtime_error("Truncated frozen Champion ledger");const auto length=static_cast<std::size_t>(input.tellg());
+        if(std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="subclass:champion";}))throw std::runtime_error("Champion fixture already upgraded");
+        const std::vector<rules::FeatureGrant> added{{"subclass:champion","class:fighter",3,{}},{"feature:improved_critical","subclass:fighter:champion",3,{}},{"feature:remarkable_athlete","subclass:fighter:champion",3,{}}};
+        grants.insert(std::find_if(grants.begin(),grants.end(),[](const auto& g){return g.level>3;}),added.begin(),added.end());
+        std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
+        const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
+    }return body;
+}
 // The fixture author supplies one attained-level decision per Fighter ledger.
-// Add only fixed level-two grants, independently of production replay/codecs.
+// Add fixed level-two grants, then independently migrate Champion entitlements.
 inline std::string with_action_surge_grants(std::string body,std::initializer_list<bool> eligible,bool only_tactical=false){
     const std::string marker="\"feature:fighting_style\" \"class:fighter\" 1 0";
     auto wanted=eligible.begin();std::size_t search=0;
@@ -92,7 +127,7 @@ inline std::string with_action_surge_grants(std::string body,std::initializer_li
         std::ostringstream out;out<<grants.size();for(const auto& g:grants){out<<' '<<std::quoted(g.id)<<' '<<std::quoted(g.source_id)<<' '<<g.level<<' '<<g.choices.size();for(const auto& [k,v]:g.choices)out<<' '<<std::quoted(k)<<' '<<std::quoted(v);}
         const auto next=out.str();body.replace(begin,length,next);search=begin+next.size();
     }
-    if(wanted!=eligible.end())throw std::runtime_error("Missing frozen Fighter ledger");return body;
+    if(wanted!=eligible.end())throw std::runtime_error("Missing frozen Fighter ledger");return with_champion_grants(std::move(body));
 }
 // Post-Action-Surge fixtures already carry the level-two eligibility evidence.
 inline std::string with_tactical_mind_grants(std::string body){return with_action_surge_grants(std::move(body),{},true);}

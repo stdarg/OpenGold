@@ -102,7 +102,7 @@ void profiles_and_migration(){
     auto profile=party.profile(2).data;check(profile.find("background:soldier")!=profile.npos&&profile.find("constitution")!=profile.npos,"Combat recipe persists full provenance and selected abilities");
     auto combat=rules->create(encounter(profile),13);check(rules->restore(combat->save())->save()==combat->save(),"Combat checkpoint retains all grant records");
     auto wrong=profile;replace(wrong,"background:soldier","background:sage");rejects([&]{(void)rules->create(encounter(wrong),13);});
-    wrong=profile;replace(wrong,"PC30 4 2 ","PC30 4 0 ");rejects([&]{(void)rules->create(encounter(wrong),13);});
+    wrong=profile;replace(wrong,"PC31 4 2 ","PC31 4 0 ");rejects([&]{(void)rules->create(encounter(wrong),13);});
     wrong=profile;replace(wrong,"\"constitution\" \"2\"","\"strength\" \"2\"");rejects([&]{(void)rules->create(encounter(wrong),13);});
     auto legacy=rules->restore(fixture("combat-v8-grants.save"));auto continued=rules->restore(legacy->save());
     // Older combat recipes lack a background/history; preserve their effects

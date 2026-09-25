@@ -183,6 +183,13 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&demo_->has_combat()&&demo_->combat().snapshot().free_movement){
+        if(key->get_keycode()==Key::KEY_ESCAPE||(key->get_keycode()==Key::KEY_SPACE&&get_node<Button>("End")->has_focus())){immediate("end");get_viewport()->set_input_as_handled();return;}
+        Cell direction{};switch(key->get_keycode()){case Key::KEY_LEFT:direction.x=-1;break;case Key::KEY_RIGHT:direction.x=1;break;case Key::KEY_UP:direction.y=-1;break;case Key::KEY_DOWN:direction.y=1;break;default:break;}
+        if(direction.x||direction.y){const auto state=demo_->combat().snapshot();const auto actor=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;});
+            if(actor!=state.combatants.end())for(const auto& command:demo_->combat().legal_commands())if(command.verb=="move"&&command.destination==Cell{actor->cell.x+direction.x,actor->cell.y+direction.y}){act(command);break;}
+            get_viewport()->set_input_as_handled();return;}
+    }
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&mode_=="stabilize"&&demo_->has_combat()){
         const auto state=demo_->combat().snapshot();
         const auto active=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;});
@@ -248,6 +255,10 @@ void CombatView::refresh()
         get_node<Label>("SavageAttacker/Text")->set_text(gs(text));if(!modal->is_visible())modal->popup_centered();
         if(changed)get_node<Button>(second?"SavageAttacker/First":"SavageAttacker/Use")->grab_focus();
     }else if(modal->is_visible())modal->hide();
+    get_node<Button>("End")->set_text(gs(s.free_movement?"Finish free move":"End turn"));
+    get_node<Button>("End")->set_size(Vector2(s.free_movement?get_node<Button>("Continue")->get_position().x+get_node<Button>("Continue")->get_size().x-get_node<Button>("End")->get_position().x:get_node<Button>("Continue")->get_size().x,36));
+    get_node<Button>("Continue")->set_visible(!s.free_movement);
+    if(s.free_movement)mode_="move";
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
@@ -292,6 +303,7 @@ void CombatView::refresh()
             if(target!=s.combatants.end())get_node<Label>("Prompt")->set_text(gs("Stabilize: "+target->name+"\nLeft/Right: target | Space: use"));
         }
     }
+    if(player&&s.free_movement)get_node<Label>("Prompt")->set_text(gs("Free move: "+std::to_string(s.free_movement->remaining_feet)+" ft\nArrows/click: move | Escape: finish"));
     queue_redraw();
 }
 void CombatView::_draw()

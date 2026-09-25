@@ -83,6 +83,7 @@ void CharacterCreationView::open_advancement(std::int64_t id){
     advancing_=id;advancement_options_=campaign_->advancement_options(id);advancement_choice_=campaign_->default_advancement(id);
     advancement_refreshing_=true;auto* window=get_node<Window>("LevelUp");
     window->get_node<Label>("Title")->set_text(gs(campaign_->member(id).character.sheet().name)+" / Level "+String::num_uint64(advancement_options_.level));
+    window->get_node<Label>("Note")->set_text(gs(advancement_options_.description));
     auto* feat=window->get_node<OptionButton>("Feat");feat->clear();
     if(advancement_options_.feats.empty())feat->add_item("No feat or ability increase at this level");
     for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feat->add_item(gs(option.label)+(option.available?"":" (Unavailable)"));feat->set_item_disabled(i,!option.available);feat->set_item_tooltip(i,gs(option.description));if(option.id==advancement_choice_.feat)feat->select(i);}

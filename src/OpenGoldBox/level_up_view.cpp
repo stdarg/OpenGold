@@ -30,7 +30,7 @@ String gs(std::string_view s){return String::utf8(s.data(),s.size());}
 }
 void CharacterCreationView::setup_advancement(){
     get_node<ItemList>("PartyPanel/Roster")->add_theme_constant_override("v_separation",8);
-    const auto args=OS::get_singleton()->get_cmdline_user_args();advancement_check_=args.has("--advancement-check");advancement_review_=args.has("--level-up-review");
+    const auto args=OS::get_singleton()->get_cmdline_user_args();advancement_check_=args.has("--advancement-check")||args.has("--champion-creator");advancement_review_=args.has("--level-up-review");
     auto owned=presentation::make_node<Window>();owned->set_name("LevelUp");
     owned->set_title(i18n::text(N_("Level up")));owned->set_size(Vector2i(700,670));owned->set_min_size(Vector2i(700,670));
     owned->set_flag(Window::FLAG_RESIZE_DISABLED,true);owned->set_transient(true);owned->set_exclusive(true);
@@ -81,6 +81,7 @@ void CharacterCreationView::open_advancement(std::int64_t id){
     advancing_=id;advancement_options_=campaign_->advancement_options(id);advancement_choice_=campaign_->default_advancement(id);
     advancement_refreshing_=true;auto* window=get_node<Window>("LevelUp");
     window->get_node<Label>("Title")->set_text(i18n::format("{name} / Level {level}",{{"name",gs(campaign_->member(id).character.sheet().name)},{"level",advancement_options_.level}}));
+    window->get_node<Label>("Note")->set_text(i18n::text(advancement_options_.description));
     auto* feat=window->get_node<OptionButton>("Feat");feat->clear();
     if(advancement_options_.feats.empty())feat->add_item(i18n::text(N_("No feat or ability increase at this level")));
     for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feat->add_item(i18n::text(option.label)+(option.available?String():i18n::text(" (Unavailable)")));feat->set_item_disabled(i,!option.available);feat->set_item_tooltip(i,i18n::text(option.description));if(option.id==advancement_choice_.feat)feat->select(i);}
@@ -124,6 +125,11 @@ void CharacterCreationView::advancement_check(){
     const auto id=campaign_->state().roster.empty()?0:campaign_->state().slots[0];
     switch(advancement_stage_){
     case 0:{
+        if(OS::get_singleton()->get_cmdline_user_args().has("--champion-creator")){
+            opengold::rules::CharacterDraft draft;draft.race="human";draft.gender="female";draft.character_class="fighter";draft.background="sage";draft.name="Champion review";draft.alignment="neutral_good";draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};
+            const auto member=campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));campaign_->award_experience(2700,"fixture:champion-review");campaign_->advance(member,campaign_->default_advancement(member));
+            party_action(0);refresh_party();refresh_advancement_arrows();open_advancement(member);advancement_check_=false;advancement_review_=false;return;
+        }
         for(const char* klass:{"wizard","fighter","cleric","fighter"}){opengold::rules::CharacterDraft draft;draft.race=advancement_check_&&std::string_view(klass)=="wizard"?"dwarf":"human";draft.gender="female";draft.character_class=klass;draft.alignment="neutral_good";draft.background=klass==std::string_view("fighter")?"soldier":"sage";draft.name=std::string(klass==std::string_view("wizard")?"Mira":klass==std::string_view("fighter")?"Tessa":"Lena")+" / "+klass;draft.rolled=true;for(auto& roll:draft.rolls)roll={{6,5,4,1},3};campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));}
         campaign_->award_experience(2700,"fixture:level-up-review");const auto slots=campaign_->state().slots;
         for(const auto member:slots)if(member)for(unsigned level=2;level<=3;++level)campaign_->advance(member,campaign_->default_advancement(member));

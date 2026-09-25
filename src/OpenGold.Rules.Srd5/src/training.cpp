@@ -151,6 +151,8 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
     AbilityCheckModifier result;result.ability_modifier=modifier(scores[ability]);result.expertise=trained_skill&&source(grants,expert_id);
     result.proficiency=result.expertise?pb*2:(trained_skill||trained_tool)?pb:0;result.total=result.ability_modifier+result.proficiency;
     result.tool_advantage=trained_skill&&trained_tool;
+    result.advantage=result.tool_advantage;
+    if(ability==0&&skill=="athletics")for(const auto& g:grants)if(g.id=="feature:remarkable_athlete"&&g.source_id=="subclass:fighter:champion"&&g.level==3&&level>=3){result.advantage=true;result.sources.push_back(g);}
     for(const auto& g:grants)if((!skill.empty()&&(g.id==skill_id||g.id==expert_id))||(!tool.empty()&&g.id==tool_id))result.sources.push_back(g);
     return result;
 }

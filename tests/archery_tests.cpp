@@ -24,7 +24,7 @@ Character leveled(std::string feat="archery",std::string background="sage"){
     CampaignParty p(module());auto id=p.add_pc(hero("fighter",background));p.award_experience(2700,"archery");grow(p,id,3);
     auto choice=p.default_advancement(id);choice.feat=feat;choice.abilities={};p.advance(id,choice);return p.member(id).character;
 }
-auto battle(const RulesModule& rules,const Character& h,std::string weapon,Cell target={3,1},unsigned seed=13){
+auto battle(const RulesModule& rules,const Character& h,std::string weapon,Cell target={3,1},unsigned seed=89){
     const auto profile=rules.character_profile(h.sheet(),std::array<std::string,1>{weapon});
     auto c=rules.create({{40,8,std::vector<std::uint8_t>(320)},{{1,"campaign-character","Archer",0,{1,1},profile.data},{99,"target","Target",1,target}}},seed);
     check(c->snapshot().actor==1,"Independent initiative seed starts with archer");return c;
@@ -60,20 +60,21 @@ void attacks(){
     auto rules=srd5::parse_content(content+target);const auto archer=leveled(),baseline=leveled("defense");
     for(const auto weapon:{"dart","light_crossbow","shortbow","sling","blowgun","hand_crossbow","heavy_crossbow","longbow","musket","pistol","dagger","handaxe","javelin","light_hammer","spear","trident"}){
         const bool ranged=std::string_view(weapon)=="dart"||std::string_view(weapon)=="light_crossbow"||std::string_view(weapon)=="shortbow"||std::string_view(weapon)=="sling"||std::string_view(weapon)=="blowgun"||std::string_view(weapon)=="hand_crossbow"||std::string_view(weapon)=="heavy_crossbow"||std::string_view(weapon)=="longbow"||std::string_view(weapon)=="musket"||std::string_view(weapon)=="pistol";
-        for(unsigned seed:{0u,13u,40u}){
+        for(unsigned seed:{72u,89u,11u}){
             auto a=battle(*rules,archer,weapon,{3,1},seed),b=battle(*rules,baseline,weapon,{3,1},seed);auto copy=rules->restore(a->save());
             const auto ticket=command(*a,"ranged");check(a->submit(ticket)&&copy->submit(ticket)&&a->save()==copy->save(),"Archery attack resumes identically from saved profile");
             check(!a->submit(ticket)&&a->save()==copy->save(),"Stale attack cannot change action, RNG or state");check(b->submit(command(*b,"ranged")),"Control attack accepted");
             const auto actual=result(*a),control=result(*b);
             check(arg(actual,"bonus")==std::to_string(ranged?6:4)&&arg(control,"bonus")=="4","Only Ranged weapon category gets Archery, including darts but excluding thrown melee weapons");
-            check(arg(actual,"roll")==std::to_string(seed==0?20:seed==13?17:1)&&arg(actual,"roll")==arg(control,"roll"),"Archery preserves independent natural rolls, criticals and natural-one misses");
-            if(seed!=40)check(arg(actual,"damage")==arg(control,"damage"),"Archery never modifies damage or consumes extra dice");
+            check(arg(actual,"roll")==std::to_string(seed==72?20:seed==89?17:1)&&arg(actual,"roll")==arg(control,"roll"),"Archery preserves independent natural rolls, criticals and natural-one misses");
+            if(seed!=11)check(arg(actual,"damage")==arg(control,"damage"),"Archery never modifies damage or consumes extra dice");
         }
     }
     auto soldier=battle(*rules,leveled("archery","soldier"),"shortbow");
     check(soldier->submit(command(*soldier,"ranged")),"Archery plus Soldier attack starts");
     auto pending=rules->restore(soldier->save());test::choose_savage_damage(*soldier);test::choose_savage_damage(*pending);
     check(soldier->save()==pending->save()&&arg(result(*soldier),"bonus")=="7","Saved Savage Attacker choice retains Archery's attack bonus");
+    if(soldier->snapshot().free_movement)check(soldier->submit(command(*soldier,"end")),"Decline optional Champion movement before Surge");
     check(soldier->submit(command(*soldier,"action_surge"))&&soldier->submit(command(*soldier,"ranged")),"Archery remains usable on the additional non-Magic action");
     check(rules->restore(soldier->save())->save()==soldier->save(),"Spent Surge and Savage state round trip with Archery");
     auto a=battle(*rules,archer,"shortbow",{2,1}),b=battle(*rules,baseline,"shortbow",{2,1});
@@ -94,8 +95,8 @@ void persistence(){
     auto profile=rules->character_profile(leveled().sheet(),std::array<std::string,1>{"shortbow"}).data;
     auto encounter=Encounter{{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Archer",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}};
     auto mislabeled=rules->create(encounter,13)->save();replace(mislabeled,rules->identity().version,"0.6.27");rejects([&]{(void)rules->restore(mislabeled);});
-    auto wrong_mask=profile;replace(wrong_mask,"PC30 4 4 ","PC30 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
-    replace(profile,"PC30","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
+    auto wrong_mask=profile;replace(wrong_mask,"PC31 4 4 ","PC31 4 0 ");encounter.participants[0].character_profile=wrong_mask;rejects([&]{(void)rules->create(encounter,13);});
+    replace(profile,"PC31","PC16");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Target",1,{5,1}}}},13);});
     auto saved_identity=rules->identity();saved_identity.version="0.6.27";const auto sheet=leveled().sheet();rejects([&]{rules->validate_saved_grants(saved_identity,sheet,sheet.grants);});
 }
 void freeze(){

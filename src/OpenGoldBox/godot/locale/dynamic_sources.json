@@ -271,5 +271,9 @@
   "Chill Touch",
   "Melee spell attack: 1d10 Necrotic damage, Touch; prevents healing until the end of your next turn.",
   "Success",
-  "Failure"
+  "Failure",
+  "Champion: weapon/unarmed criticals on 19–20.\nAdvantage on Initiative and Strength (Athletics).\nCritical hit: optional half-Speed move, no opportunity attacks.",
+  "Fixed-average HP growth. Resources gain only their new capacity;\nexisting expenditure remains.",
+  "Finish free move",
+  "Free move"
 ]

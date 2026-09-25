@@ -114,7 +114,7 @@ void campaign(){
     const auto bytes=encode_campaign(party,nullptr,"heavy");CampaignParty copy(module(true));copy.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"heavy",nullptr).party);
     check(encode_campaign(copy,nullptr,"heavy")==bytes,"Campaign reconstruction retains threshold-crossing advancement and spent resources");
     auto actors=copy.participants();actors[0].cell={1,1};actors.push_back({99,"target","Target",1,{2,1}});auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},13);act(*c,"melee");
-    check(argument(attack(*c),"roll")=="17"&&argument(attack(*c),"disadvantage").empty(),"Next campaign encounter uses the advanced score");
+    check(argument(attack(*c),"roll")=="8"&&argument(attack(*c),"disadvantage").empty(),"Next campaign encounter uses the advanced score");
 }
 void legacy(){
     auto rules=module();const auto path=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures";

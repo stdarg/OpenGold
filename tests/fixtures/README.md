@@ -616,3 +616,29 @@ level-four Orc Wizard actually casts Chill Touch on herself. The campaign asset
 identity is `chill-baseline`; the continued combat records two End Turn commands.
 The regression requires byte-exact combat migration/continuation except module
 identity, plus campaign persistence and expiry without invented healing.
+
+### Champion's actual prior writer
+
+Captured before production Champion changes with module 0.6.45 / PC30 from
+runtime `ce04673` (main `2966d25`). The capture-only addition to
+`action_surge_tests.cpp` runs with `--freeze-champion-baseline` and rejects a
+later module identity. Do not regenerate these files with the new implementation.
+
+The campaign contains normally attained Fighter levels 1–4 with wounds,
+equipped swords, wealth and a nonzero campaign clock/RNG. The combat is an
+ordinarily attained level-four Fighter with Savage Attacker: pending weapon
+choice, a subsequent actual critical hit after Action Surge, and resolved
+Savage damage. The original writer offers no Champion movement. All three
+combat captures are format 14; filenames reflect the actual wire header.
+
+SHA-256:
+
+- `campaign-v11-champion-before.ogs`: `e39009d03b4a5b55293d8de804dfab41a46bfa08da1683b8ec09a4b9fd6d2cf8`
+- `combat-v14-champion-before.save`: `323bb4a10d90d1896a81a966673462ed1fb050c92a310a3f8512e7a949ca91bf`
+- `combat-v14-champion-critical.save`: `35f53b2dc97a1d5e6f8d688ec278601077bb310cb730821d4cd7e330f3ef745d`
+- `combat-v14-champion-resolved.save`: `0752aa3333fe099516a7b2649e55c769d7bc060d3f4dbf61dc7f0b589481fdbf`
+
+The pre-change regression passed in `/tmp/champion-baseline-tests.log` before
+runtime edits. `champion_prior_writer` checks byte-exact combat continuation and
+ordinary campaign migration/canonical reload. Future fixed-grant migration
+expectations must name their additions rather than replacing these captures.

@@ -185,6 +185,7 @@ struct AbilityCheckChoice {
     EntityId actor{}, target{};
     int natural{}, modifier{}, total{}, difficulty{}, resource_uses{};
 };
+struct FreeMovement { EntityId actor{}; int remaining_feet{}; };
 struct Snapshot {
     Identity identity;
     std::uint64_t revision{};
@@ -200,6 +201,7 @@ struct Snapshot {
     std::optional<TemporaryHpOffer> temporary_hp_offer;
     std::optional<SavageAttackChoice> savage_attack_choice;
     std::optional<AbilityCheckChoice> ability_check_choice;
+    std::optional<FreeMovement> free_movement;
     std::vector<HeldItemView> held_items;
 };
 // Verbs are owned by a module, not an enumeration of edition-specific rules.

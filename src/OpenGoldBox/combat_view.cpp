@@ -468,6 +468,7 @@ void CombatView::select_party(EntityId id)
 {
     if(!demo_||!demo_->has_combat())return;
     const auto state=demo_->combat().snapshot();
+    if(state.free_movement)return;
     const auto selected=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==id&&a.side==0;});
     if(selected==state.combatants.end())return;
     selected_=id;error_.clear();followed_.reset();center_on(selected->cell);refresh();
@@ -545,6 +546,9 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&demo_->has_combat()&&demo_->combat().snapshot().free_movement){
+        if(key->get_keycode()==Key::KEY_ESCAPE||(key->get_keycode()==Key::KEY_SPACE&&get_node<Button>("End")->has_focus())){immediate("end");get_viewport()->set_input_as_handled();return;}
+    }
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&mode_=="stabilize"&&demo_->has_combat()){
         const auto state=demo_->combat().snapshot();
         const auto active=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;});
@@ -626,7 +630,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    if(mode_!="stabilize"&&mode_!="chill_touch"&&mode_!="wake_ally"&&mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="shocking_grasp"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    if(!s.free_movement&&mode_!="stabilize"&&mode_!="chill_touch"&&mode_!="wake_ally"&&mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="shocking_grasp"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
@@ -715,7 +719,7 @@ void CombatView::refresh()
     }
     if(loaded&&s.outcome!=Outcome::ongoing)turn=i18n::text(s.outcome==Outcome::victory?N_("Victory"):N_("Party incapacitated / defeat"));
     if(player&&last_actor_&&last_actor_!=s.actor)selected_=s.actor;
-    if(!selected_&&player)selected_=s.actor;
+    if((!selected_||s.free_movement)&&player)selected_=s.actor;
     if(loaded)last_actor_=s.actor;
     get_node<Label>("Turn")->set_text(turn);layout_status();
     String roster;for(const auto& a:s.combatants){
@@ -792,6 +796,8 @@ void CombatView::refresh()
     }else if(savage->is_visible()){savage->hide();if(player)get_node<Button>("End")->grab_focus();}
     get_node<Button>("Continue")->set_visible(demo_&&(demo_->waiting()||(loaded&&s.outcome!=Outcome::ongoing)));
     get_node<Button>("End")->set_visible(!get_node<Button>("Continue")->is_visible());
+    get_node<Button>("End")->set_text(i18n::text(s.free_movement?"Finish free move":"End turn"));
+    if(s.free_movement)mode_="move";
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
@@ -846,8 +852,8 @@ void CombatView::refresh()
     const auto grip_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     const bool show_grip=player&&grip_actor!=s.combatants.end()&&!grip_actor->grips.empty();
     get_node<Label>("GripLabel")->set_visible(show_grip);get_node<OptionButton>("Grip")->set_visible(show_grip);
-    get_node<OptionButton>("Grip")->set_disabled(s.ability_check_choice.has_value()||s.savage_attack_choice.has_value()||s.temporary_hp_offer.has_value());
-    if(show_grip)presentation::refresh_grip(*get_node<OptionButton>("Grip"),grip_actor->equipment,grip_actor->grips);
+    get_node<OptionButton>("Grip")->set_disabled(s.free_movement.has_value()||s.ability_check_choice.has_value()||s.savage_attack_choice.has_value()||s.temporary_hp_offer.has_value());
+    if(show_grip)presentation::refresh_grip(*get_node<OptionButton>("Grip"),grip_actor->equipment,grip_actor->grips,!s.free_movement&&!s.ability_check_choice&&!s.savage_attack_choice&&!s.temporary_hp_offer);
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());
     get_node<Button>("Save")->set_disabled(!loaded||demo_->is_slums());get_node<Button>("Load")->set_disabled(!loaded||demo_->is_slums());
     get_node<Button>("Revisit")->set_disabled(!loaded||!demo_->script_complete()||s.outcome!=Outcome::victory);
@@ -874,6 +880,7 @@ void CombatView::refresh()
         }
     }
     get_node<Label>("Footer")->set_text(player&&mode_=="stabilize"?get_node<Label>("Prompt")->get_text().replace("\n"," | ")+" | "+i18n::text("Escape: cancel"):i18n::text("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end"));
+    if(player&&s.free_movement)get_node<Label>("Footer")->set_text(i18n::format("Free move: {feet} ft | Arrows/click: move | Escape or Finish free move: finish",{{"feet",s.free_movement->remaining_feet}}));
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
     // Rebuild one startup notice per missing combination; refreshes never append duplicates.
@@ -891,7 +898,7 @@ void CombatView::refresh()
     log_view->set_text(log);
     if(follow_bottom)log_view->scroll_to_line(std::max(0,log_view->get_line_count()-1));
     else log_scroll->set_value(previous_scroll);
-    get_node<Button>("Continue")->hide();if(!campaign_)get_node<Button>("End")->hide();
+    get_node<Button>("Continue")->hide();if(!campaign_&&!s.free_movement)get_node<Button>("End")->hide();
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
     update_hover(get_viewport()->get_mouse_position());

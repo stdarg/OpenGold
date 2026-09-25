@@ -51,8 +51,8 @@ CombatantView unit(const CombatSession& c,EntityId id=1){for(const auto& a:c.sna
 std::string read(const char* name){std::ifstream in(root/"tests/fixtures"/name);check(bool(in),"Read fixture");return {std::istreambuf_iterator<char>(in),{}};}
 std::uint64_t rng(const CombatSession& c){std::istringstream in(c.save());std::string line;for(unsigned i=0;i<3;++i)std::getline(in,line);std::uint64_t n{};in>>n;return n;}
 unsigned remaining(const Character& h,const VitalState& state){for(const auto& p:module()->recovery_info(h.sheet(),state).resources)if(p.id=="action_surge"){check(p.capacity==1&&p.short_rest_recovery==1,"Independent level-2–4 pool capacity and recharge");return p.remaining;}return 99;}
-auto battle(const Character& h,std::vector<std::string> gear={},std::optional<VitalState> state={}){
-    auto rules=module();auto c=rules->create({{10,8,std::vector<std::uint8_t>(80)},{{1,"campaign-character","Fighter",0,{1,1},rules->character_profile(h.sheet(),gear).data,state},{2,"vanguard","Enemy",1,{2,1}},{3,"vanguard","Enemy 2",1,{8,1}}}},2);
+auto battle(const Character& h,std::vector<std::string> gear={},std::optional<VitalState> state={},unsigned seed=2){
+    auto rules=module();auto c=rules->create({{10,8,std::vector<std::uint8_t>(80)},{{1,"campaign-character","Fighter",0,{1,1},rules->character_profile(h.sheet(),gear).data,state},{2,"vanguard","Enemy",1,{2,1}},{3,"vanguard","Enemy 2",1,{8,1}}}},seed);
     while(c->snapshot().actor!=1)act(*c,"end");return c;
 }
 void budgets(){using opengold::srd5::detail::ActionBudget;
@@ -98,7 +98,7 @@ void attacks_and_malformed(){auto rules=module();auto h=hero(2);auto c=battle(h,
 void savage(){auto rules=module();auto h=hero(4);auto state=VitalState{h.sheet().hit_points};
     // Normal level-four feat entitlement, not a forged combat definition.
     h=hero(3);state={h.sheet().hit_points};AdvancementChoice choice=rules->default_advancement(h.sheet());choice.feat="savage_attacker";choice.abilities={};check(h.advance(*rules,state,choice),"Acquire Savage Attacker");
-    bool exercised=false;for(unsigned trial=0;trial<8&&!exercised;++trial){auto c=battle(h,{"longsword"});for(unsigned i=0;i<trial;++i){act(*c,"end");while(c->snapshot().actor!=1)act(*c,"end");}act(*c,"action_surge");act(*c,"melee",2);if(!c->snapshot().savage_attack_choice)continue;check(unit(*c).action,"Surge attack leaves normal action during pending damage choice");auto copy=rules->restore(c->save());act(*c,"savage_skip");act(*copy,"savage_skip");check(c->save()==copy->save(),"Pending Savage decision resumes with the unused ordinary action");exercised=true;}check(exercised,"Actual extra attack exercises pending damage choice");
+    bool exercised=false;for(unsigned trial=0;trial<100&&!exercised;++trial){auto c=battle(h,{"longsword"},{},trial);act(*c,"action_surge");act(*c,"melee",2);if(!c->snapshot().savage_attack_choice)continue;check(unit(*c).action,"Surge attack leaves normal action during pending damage choice");auto copy=rules->restore(c->save());act(*c,"savage_skip");act(*copy,"savage_skip");check(c->save()==copy->save(),"Pending Savage decision resumes with the unused ordinary action");exercised=true;}check(exercised,"Actual extra attack exercises pending damage choice");
 }
 void recovery(){auto rules=module();auto h=hero(2);auto c=battle(h);act(*c,"action_surge");auto spent=unit(*c).persistent;check(spent.resources.starts_with("SRD8 "),"Spent pool has explicit versioned continuation");
     for(bool long_rest:{false,true}){auto state=spent;if(long_rest)rules->recover(state,h.sheet());else rules->recover_short_rest(state,h.sheet());check(remaining(h,state)==1,"Either completed rest fully recharges one use");}
@@ -134,14 +134,38 @@ void mind_prior_writer(){
     check(encode_campaign(copy,nullptr,"mind-before")==canonical,"Pre-Mind campaign migration is canonical");
 }
 
+// Actual pre-Champion writer, never run against a later module.
+void freeze_champion_baseline(){
+    auto rules=module();check(rules->identity().version=="0.6.45","Champion capture requires actual prior writer");
+    CampaignParty party(module());
+    for(unsigned level=1;level<=4;++level){auto h=hero(level);auto item=h.inventory().add("longsword","Champion baseline sword");auto id=party.add_pc(std::move(h));party.equip(id,item);}
+    auto state=party.checkpoint();for(auto& m:state.roster){m.vitals.hit_points=1;m.wealth[3]=37;}
+    state.time_minutes=123;state.subminute_milliseconds=456;state.random_state=789;party.restore(state);
+    write("campaign-v11-champion-before.ogs",encode_campaign(party,nullptr,"champion-before"));
+    auto h=hero(3);VitalState health{h.sheet().hit_points};auto choice=rules->default_advancement(h.sheet());choice.feat="savage_attacker";choice.abilities={};check(h.advance(*rules,health,choice),"Baseline ordinary feat acquisition");
+    auto c=battle(h,{"longsword"});act(*c,"melee",2);check(bool(c->snapshot().savage_attack_choice),"Baseline pending Savage choice");
+    write("combat-v14-champion-before.save",c->save());act(*c,"savage_skip");act(*c,"action_surge");act(*c,"melee",2);
+    check(c->snapshot().savage_attack_choice&&c->snapshot().savage_attack_choice->critical,"Baseline real critical hit");write("combat-v14-champion-critical.save",c->save());
+    act(*c,"savage_use");act(*c,"savage_second");write("combat-v14-champion-resolved.save",c->save());
+}
+void champion_prior_writer(){
+    auto rules=module();const auto normalize=[&](std::string bytes){const auto pos=bytes.find("0.6.45");check(pos!=bytes.npos,"Frozen Champion identity exists");bytes.replace(pos,6,rules->identity().version);return bytes;};
+    auto c=rules->restore(read("combat-v14-champion-before.save"));check(c->save()==normalize(read("combat-v14-champion-before.save")),"Pre-Champion pending weapon choice round trips exactly");
+    act(*c,"savage_skip");act(*c,"action_surge");act(*c,"melee",2);check(c->save()==normalize(read("combat-v14-champion-critical.save")),"Pre-Champion critical retains prior damage and timing");
+    act(*c,"savage_use");act(*c,"savage_second");check(c->save()==normalize(read("combat-v14-champion-resolved.save")),"Prior writer continues exactly without gaining free movement");
+    CampaignParty party(module());party.restore(decode_campaign(read("campaign-v11-champion-before.ogs"),*srd5::character_rules(),*rules,"champion-before",nullptr).party);
+    for(unsigned id=1;id<=4;++id)check(party.member(id).character.sheet().level==id&&party.member(id).vitals.hit_points==1&&party.member(id).wealth[3]==37,"Prior Fighter levels retain wounds, level and wealth");
+    const auto canonical=encode_campaign(party,nullptr,"champion-before");CampaignParty copy(module());copy.restore(decode_campaign(canonical,*srd5::character_rules(),*rules,"champion-before",nullptr).party);check(encode_campaign(copy,nullptr,"champion-before")==canonical,"Prior Fighter campaign migrates canonically");
+}
+
 void ui_fixtures(){const auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"surge-fixtures";std::filesystem::create_directories(path);
     std::ofstream(path/"level1.save")<<battle(hero(1))->save();
     std::ofstream(path/"cleric.save")<<battle(hero(1,"human","cleric"))->save();
     for(unsigned level=3;level<=4;++level)std::ofstream(path/("level"+std::to_string(level)+".save"))<<battle(hero(level,"orc"),{"longsword"})->save();
     auto h=hero(3);auto state=VitalState{h.sheet().hit_points};auto choice=module()->default_advancement(h.sheet());choice.feat="savage_attacker";choice.abilities={};check(h.advance(*module(),state,choice),"UI feat fixture");
-    auto pending=battle(h,{"longsword"});act(*pending,"melee",2);check(bool(pending->snapshot().savage_attack_choice),"UI pending damage choice");std::ofstream(path/"decision.save")<<pending->save();
+    bool captured=false;for(unsigned seed=0;seed<100&&!captured;++seed){auto pending=battle(h,{"longsword"},{},seed);act(*pending,"melee",2);if(!pending->snapshot().savage_attack_choice)continue;std::ofstream(path/"decision.save")<<pending->save();captured=true;}check(captured,"UI pending damage choice");
     auto c=battle(hero(2),{"longsword"});std::ofstream(path/"available.save")<<c->save();act(*c,"action_surge");std::ofstream(path/"pending.save")<<c->save();
 }
 
 }
-int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-mind-baseline")freeze_mind_baseline();else freeze();return 0;}auto run=[](const char* name,auto test){try{test();}catch(const std::exception& e){throw std::runtime_error(std::string(name)+": "+e.what());}};run("budgets",budgets);run("grants",grants);run("actions",actions);run("attacks and malformed",attacks_and_malformed);run("savage",savage);run("recovery",recovery);run("campaign",campaign);run("legacy",legacy);run("mind prior writer",mind_prior_writer);ui_fixtures();std::cout<<"Action Surge tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-champion-baseline")freeze_champion_baseline();else if(std::string_view(argv[1])=="--freeze-mind-baseline")freeze_mind_baseline();else freeze();return 0;}auto run=[](const char* name,auto test){try{test();}catch(const std::exception& e){throw std::runtime_error(std::string(name)+": "+e.what());}};run("budgets",budgets);run("grants",grants);run("actions",actions);run("attacks and malformed",attacks_and_malformed);run("savage",savage);run("recovery",recovery);run("campaign",campaign);run("legacy",legacy);run("mind prior writer",mind_prior_writer);run("champion prior writer",champion_prior_writer);ui_fixtures();std::cout<<"Action Surge tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

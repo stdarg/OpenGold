@@ -33,19 +33,19 @@ auto battle(const RulesModule& rules,const Character& h,unsigned seed=0,Cell tar
 }
 void grants(){auto rules=module();for(unsigned level=1;level<=4;++level){auto h=hero("fighter",level);const bool mind=level>=2;
     check(srd5::detail::has_grant(h.sheet().grants,"feature:tactical_mind")==mind,"Tactical Mind attained from level two");
-    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with(mind?"PC30 ":"PC28 "),"New feature profile is conditional");
+    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with(level>=3?"PC31 ":mind?"PC30 ":"PC28 "),"New feature profile is conditional");
     if(mind){profile.replace(0,4,"PC29");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{5,5}}}},1);});}
 }}
 void outcomes(){auto rules=custom();constexpr std::uint64_t increment=0x9e3779b97f4a7c15ULL;
     for(unsigned level=1;level<=4;++level){auto h=hero("fighter",level);bool success=false,failure=false,boosted=false,still_failed=false,one=false,twenty=false;
-        for(unsigned seed=0;seed<160;++seed){auto c=battle(*rules,h,seed);const auto before=unit(*c);const auto rng=random(*c);auto original=rules->restore(c->save());const auto ticket=cmd(*c,"stabilize",2);act(*c,"stabilize",2);
+        for(unsigned seed=0;seed<160;++seed){auto c=battle(*rules,h,seed);if(!has(*c,"stabilize"))continue;const auto before=unit(*c);const auto rng=random(*c);auto original=rules->restore(c->save());const auto ticket=cmd(*c,"stabilize",2);act(*c,"stabilize",2);
             check(!unit(*c).action&&unit(*c).bonus_action&&unit(*c).hit_points==before.hit_points,"Help spends Action only and never heals actor");
             const auto check_choice=c->snapshot().ability_check_choice;
             if(check_choice){failure=true;check(level>=2&&c->legal_commands().size()==2&&c->movement_reach(1).empty(),"Only check decisions legal while pending");
                 check(check_choice->modifier==(h.sheet().scores[4]-10)/2&&check_choice->difficulty==10,"Actual Wisdom and fixed DC");
                 auto saved=c->save();check(!c->submit(ticket)&&!c->submit({c->snapshot().revision,1,0,"end"})&&c->save()==saved,"Stale and unrelated commands are atomic while pending");
                 auto malformed=saved;auto tail=malformed.rfind('\n',malformed.size()-2);malformed.replace(tail+1,malformed.size()-tail-1,"1 999 1 0\n");rejects([&]{(void)rules->restore(malformed);});
-                malformed=saved;malformed.replace(malformed.find("0.6.45"),6,"0.6.44");rejects([&]{(void)rules->restore(malformed);});
+                malformed=saved;malformed.replace(malformed.find(module()->identity().version),6,"0.6.44");rejects([&]{(void)rules->restore(malformed);});
                 auto copy=rules->restore(saved);check(copy->save()==saved,"Pending choice round trip is canonical");auto decline=rules->restore(saved);act(*decline,"mind_skip");check(!stable(*decline)&&random(*decline)==rng+increment,"Decline spends no d10, recovery roll or Second Wind");
                 check(unit(*decline,2).persistent==unit(*original,2).persistent,"Decline preserves target mortality and recovery timing exactly");
                 act(*c,"mind_use");act(*copy,"mind_use");check(c->save()==copy->save(),"Boost choice continuation is byte exact");
