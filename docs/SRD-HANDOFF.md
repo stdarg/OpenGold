@@ -1,6 +1,6 @@
 # SRD handoff
 
-Updated 2026-09-25 during the Chill Touch batch. Branch `codex/srd-chill-touch`; goal ACTIVE. The full objective is
+Updated 2026-09-25 during the Chill Touch batch. Branch `codex/srd-chill-touch`; goal BLOCKED awaiting Q40. The full objective is
 all SRD_improvements issues, all twelve classes through level 4, then level 20
 and multiclassing. Do not treat this completed batch as the full goal.
 
@@ -73,6 +73,11 @@ and multiclassing. Do not treat this completed batch as the full goal.
   natural-20 death-save boundary and checkpoint tests, including exact expiry
   and partitioned time. No runtime changes. Finished 05:28:59 UTC; logs and
   evidence in the packet. Q40 remains unanswered; no live build/test remains.
+- Blocked audit: the preceding turn was PROGRESS (`a1df856`), not a live-process
+  wait. Q40 remained unanswered when WIP was pushed (`7dce767`), through that
+  follow-up, and at the next audit. The independent work is now exhausted;
+  remaining runtime work depends on the ruling. Goal tool confirmed BLOCKED.
+  This does not reduce the full objective or close any issue. No live process.
 - Preserve this WIP branch until complete; return verified work to main under
   the existing delivery workflow. No finished coverage row or issue closure yet.
 - Next after Q40: integrate Stable recovery across chronological combat/campaign
