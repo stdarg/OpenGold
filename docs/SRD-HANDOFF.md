@@ -1,6 +1,6 @@
 # SRD handoff
 
-Updated 2026-09-25 04:38 UTC. Branch `main`; goal ACTIVE. The full objective is
+Updated 2026-09-25 after the 04:41 UTC batch preflight. Branch `main`; goal ACTIVE. The full objective is
 all SRD_improvements issues, all twelve classes through level 4, then level 20
 and multiclassing. Do not treat this completed batch as the full goal.
 
@@ -41,16 +41,25 @@ and multiclassing. Do not treat this completed batch as the full goal.
   serializer; all checks now pass. No repeated two-fix failure or model switch.
   No agents, new tasks, added issues or silent scope expansion.
 
-## Next work
+## Current batch — #32 / #87
 
-Consult [batch candidates](SRD-BATCHING-REVIEW.md#concrete-batches-instead-of-another-vague-grouping)
-and the existing issue index #186. Package C (styles/Light attacks) and bounded
-Fighter progression remain candidates; preflight affected issues and missing
-routes before selecting a closure batch. Do not silently implement the entire
-family or create dependencies. Other-class pools/species rest exceptions and
-unverified probabilistic encounter profiles retain their existing boundaries.
-Static monster profiles still lack exchange metadata; older unlocated camp
-records are preserved rather than teleported to a new site.
+- Previous goal turn: PROGRESS, pushed `36e574c` and verified #193/#30 CLOSED.
+  Worktree was clean at this turn's entry; no live process remains.
+- Current preflight selected Medicine stabilization and Tactical Mind together;
+  [bounded packet](MEDICINE-TACTICAL-MIND.md) records fixed acceptance, sources,
+  routes, code map, verification and exclusions. No gameplay changes yet.
+- Q38/Q39 are PENDING, delivered with successful Glass audio, async widget and
+  visible final questions. Do not implement the proposed controls until answered.
+- Routing: retained gpt-6-astra/high for shared pending-check, provenance and save
+  integration. No switch or delegation. Original new-batch start 04:41:34 UTC;
+  checkpoint 05:41:34, maximum 06:11:34. Do not reset on the approval wait.
+- Package C preflight found Light attacks require additional two-held-weapon and
+  draw/stow support; style feat closure also needs Paladin/Ranger source routes.
+  Deferred that larger package instead of silently expanding into it. Q23 and
+  other pre-existing questions remain pending; they are not this batch's blockers.
+- After approval, inventory existing ability-check execution paths, capture any
+  required prior-writer fixture, then implement the two issues' player flow in
+  one bounded batch. Full all-class/level/multiclass goal remains ACTIVE.
 
 Use [workflow](SRD-WORKFLOW.md) and [model routing](SRD-MODEL-ROUTING.md): classify,
 record and visibly announce the next assignment, verify execution settings,
@@ -61,4 +70,4 @@ Questions must be numbered, visible in the conversation, and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Use both the async widget and
 plain visible final question. Never re-ask approvals in
 [the decision register](SRD-DECISIONS.md). Q19–21/Q23/Q25 remain outside the
-completed rest batch. Player saving remains camping/inn only, never combat.
+current Medicine/Tactical Mind batch; Q38/Q39 await answers. Player saving remains camping/inn only, never combat.
