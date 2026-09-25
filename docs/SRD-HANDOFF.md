@@ -4,8 +4,10 @@ Updated 2026-09-25 14:36:55 UTC. Q40 is approved and the bounded Chill Touch
 increment is complete and verified. Runtime delivery `0c76685` was pushed on
 `codex/srd-chill-touch`, fast-forwarded to `main` and pushed to `origin/main`.
 Working branch is now `main`; no implementation or verification remains for this increment.
-The goal controller last reported BLOCKED; a decision reply does not itself
-resume the full goal. Do not mark the full objective complete.
+The goal continuation resumed the full objective; the controller was verified
+ACTIVE on 2026-09-25 at 14:46 UTC. Previous turn classification: PROGRESS
+(Chill Touch committed, verified, pushed and issue records updated). Do not mark
+the full objective complete.
 
 ## Latest delivery — Chill Touch under #165/#35
 
@@ -39,14 +41,18 @@ resume the full goal. Do not mark the full objective complete.
 - Earlier safe recovery delivery (#30/#193, #192 already closed) remains recorded
   in [coverage](SRD-COVERAGE.md) and [rest resources](REST-RESOURCES.md).
 
-## Deferred batch — #32 / #87
+## Selected next batch — #32 / #87 (awaiting controls)
 
 - Medicine stabilization/Tactical Mind packet: [bounded acceptance and audit](MEDICINE-TACTICAL-MIND.md).
-  Q38/Q39 remain PENDING. Do not implement their proposed controls without answers.
+  Q38/Q39 remain PENDING. They were resurfaced with Glass audio and a new widget
+  on goal continuation; the visible final response includes both questions.
+  Do not implement their proposed controls without answers.
 - Rules/check-path audit and actual prior-writer capture are complete. The
   0.6.42/PC28 `campaign-v11-mind-before.ogs`, `combat-v15-mind-before.save` and
   `combat-v15-mind-continued.save` fixtures and Action Surge regressions preserve
   wounded Fighter/Second Wind state, RNG and exact continuation. Do not recapture.
+- Routing remains the recorded gpt-6-astra/high assignment for shared check and
+  save-state integration; no settings change, agents or scope expansion.
 - Original preflight start 04:41:34 UTC, checkpoint 05:41:34, maximum 06:11:34
   retained. No gameplay implementation or issue closure claimed for preparation.
 - Q19–21/Q23/Q25 remain outside this deferred batch. Package C's broader Light
@@ -54,7 +60,7 @@ resume the full goal. Do not mark the full objective complete.
   prerequisites. No new work silently replaces a pending batch.
 
 The full objective is all `SRD_improvements` issues, all twelve classes through
-level four, then level twenty and multiclassing. On explicit goal resumption use
+level four, then level twenty and multiclassing. For the active goal use
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md),
 [repo map](SRD-REPO-MAP.md) and [decisions](SRD-DECISIONS.md). Freeze one batch;
 record requested versus actual model/effort. No agents/new tasks/scope expansion
@@ -64,3 +70,6 @@ Questions must be numbered, visible in the conversation, and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Use the async widget plus
 plain visible final text. Never re-ask recorded approvals. Player saving remains
 camping/inn only, never combat. No pending question remains for Chill Touch.
+
+Current approval wait is new after goal resumption; do not carry forward the old
+Q40 blocked streak. No live build/test, and no new functionality claimed this turn.

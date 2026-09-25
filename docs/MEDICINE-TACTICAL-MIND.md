@@ -2,7 +2,9 @@
 
 Existing issues: [#32](https://github.com/stdarg/OpenGold/issues/32) and
 [#87](https://github.com/stdarg/OpenGold/issues/87). Gameplay implementation has
-not started. Q38/Q39 await UI approval; see [decisions](SRD-DECISIONS.md).
+not started. Q38/Q39 await UI approval; see [decisions](SRD-DECISIONS.md). The active goal
+continuation selected this prepared batch on 2026-09-25 at 14:46 UTC after the
+Chill Touch delivery. Existing acceptance and original clock are retained.
 
 ## Player outcome and authority
 

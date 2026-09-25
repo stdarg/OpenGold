@@ -46,11 +46,16 @@ question widget, and preceded by the audible Glass alert.
 | Q36 | #193 safe cleanup | Superseded by Q37. |
 | Q37 | #193 safe recovery | Approved: after victory or safe camping completion, cancellation, or obeying the city watch, able characters stand and collect reachable dropped party equipment. Return items to original owner, or a surviving companion if dead. Waking during combat retains Prone and ground equipment; normal standing/pickup costs remain. |
 
+## Chill Touch recovery approval
+
+| ID | Issue / decision | Approved scope |
+| --- | --- | --- |
+| Q40 | #165 Chill Touch natural recovery | APPROVED by “40. Yes”: if the already-rolled Stable recovery deadline arrives during healing prevention, defer its 1 HP recovery until prevention expires without another d4-hour roll; damage still cancels Stable/recovery. |
+
 ## Pending — do not implement dependent choices
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
-| Q40 | #165 Chill Touch natural recovery | APPROVED by “40. Yes”: if the already-rolled Stable recovery deadline arrives during healing prevention, defer its 1 HP recovery until prevention expires without another d4-hour roll; damage still cancels Stable/recovery. |
 | Q38 | #32 Medicine stabilization control | Asked with successful audio and visible widget: Stabilize beside Wake ally in a compacted Cunning Action row; highlight living unstable creatures at 0 HP within 5 feet/clear path, including enemies; Help Action and DC 10 Wisdom (Medicine), training applies; success stabilizes without healing/waking, failure still spends Action; keyboard, Escape cancel and disabled illegal use. Pending. |
 | Q39 | #87 Tactical Mind decision | Asked with Q38: centered eligible-failed-check dialog shows roll/modifier/total/DC/Second Wind uses; Use Tactical Mind or Keep failed check; add 1d10, no healing, spend Second Wind only on resulting success; original Action stays spent, other actions wait, keyboard, no combat-save controls. Pending. |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
