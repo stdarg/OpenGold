@@ -305,7 +305,8 @@ fixture in `rejected_combat_handoff` (`tests/party_tests.cpp`) and the shared
 Godot rest-control scenario's pending-encounter stages. These exercise automatic
 adapter calls, persistence, duplicate polling, rejection and actual UI signals.
 This increment does not close #193: natural sleeping actors/wake-up decisions
-(Q33–34) and final rest-scheduling acceptance remain outstanding. Unknown original
+(Q33–34 now approved; missing Prone/dropped-item prerequisite Q35 pending) and
+final rest-scheduling acceptance remain outstanding. Unknown original
 probabilistic profiles remain explicitly unsupported.
 
 Verification of the final event-adapter tree: all 44 native/tool checks and 22

@@ -49,7 +49,7 @@ Original ECL damage and encounter requests now interrupt rests automatically;
 earned recovery choices finish before combat starts, and committed dice survive
 a rejected encounter. [Adapter scope and evidence](REST-RESOURCES.md#193-event-adapter-increment).
 Sleeping actors and final rest scheduling remain unfinished; #193/#30 stay open.
-Q29–32 are approved; wake-up policy/control Q33–34 await answers in the
+Q29–34 are approved; missing Prone/dropped-item prerequisite Q35 awaits approval in the
 [register](SRD-DECISIONS.md).
 
 The shared game/demo Rest dialog now delivers Q29–31: Short/Long choice,

@@ -6,7 +6,7 @@ level 4, then level 20 and multiclassing.
 
 ## Active batch — #193 / parent #30
 
-- Authorization: resumed goal; existing #193 acceptance and Q29–32 approvals.
+- Authorization: resumed goal; existing #193 acceptance and Q29–34 approvals.
 - Outcome: actual rest interruptions and safe continuation through campaign events
   and combat, including earned Hit Dice choices and persisted progress.
 - Acceptance: Short/Long interruption rules, sleep/light/exertion boundaries,
@@ -29,7 +29,14 @@ level 4, then level 20 and multiclassing.
   Preserve existing save formats and prior-writer fixtures.
 - Status: ECL damage/encounter adapters and committed recovery handoff implemented
   and verified. #193/#30 remain open for natural sleep and final rest scheduling.
-  Q33–34 are pending; do not implement dependent choices before an answer.
+  Q33–34 approved on 2026-09-25; do not ask them again.
+  The goal tool still reports blocked; approval itself has not changed scheduler status.
+  Current inspection found an additional prerequisite: Unconscious must leave
+  Prone after waking and drop held items (SRD p.191). Combat currently derives
+  unconsciousness/prone attack modifiers from HP == 0 and has no persistent
+  prone state, stand-up command or dropped-item recovery. No gameplay code was
+  changed after approval; scope/control proposal Q35 needs resolution before
+  expanding these shared mechanics. Preserve the original batch clock.
 - Verification completed 01:45:36 UTC: 44 native/tool checks, 22 Godot checks
   (33 entries with prerequisites) and demo rest check passed. Session 61079 exited
   0; no live verification remains. Full evidence is in REST-RESOURCES.md.
@@ -88,7 +95,7 @@ are unavailable; do not fabricate them. No new issues added for this delivery.
 
 Questions must be numbered, plainly visible in conversation, and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Do not re-ask approved
-Q29–32. Q19–21/Q23/Q25 remain outside this batch. Follow
+Q29–34. Q19–21/Q23/Q25 remain outside this batch. Follow
 [the workflow](SRD-WORKFLOW.md) while continuing this active goal.
 
 
