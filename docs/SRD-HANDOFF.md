@@ -54,9 +54,13 @@ numbered answer; do not implement it under the main-game placement approval.
 The complete training suite now passes with additional malformed pending-hit
 and recruited Rogue handoff checks through all four levels. No live build/test
 remains. The78-check run predates only these added tests, not production edits.
-Verified runtime committed as `7f3ab30`; push and reconcile #112/#220/#221.
-#114 and #116 stay open.
-Preserve original22:27:56 checkpoint. Ask ROGUE-DEMO-1 visibly with Glass audio.
+Verified runtime `7f3ab30` and evidence `0d7f803` are pushed on
+`codex/srd-rogue-attacks`; #112/#220/#221 CLOSED at22:26 UTC. #114 and #116
+remain OPEN. Main has not been advanced during this partial batch delivery.
+Delivery checkpoint at22:26 UTC, about58 minutes after the original start:
+one of two original feature requirements delivered; three corresponding issues
+closed; zero issues added. Remaining work is the demo row and its verification.
+ROGUE-DEMO-1 is the next visible question1, with Glass audio; goal remains ACTIVE.
 
 ## Preserved exclusions from Wizard delivery
 

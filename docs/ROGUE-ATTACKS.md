@@ -129,3 +129,13 @@ Remaining: obtain ROGUE-DEMO-1 approval, implement only that demo row, run its
 input/render/native continuation checks and affected regression. Then deliver
 #114. Full Rogue completion #116 remains separate. The approved Sneak controls
 and advancement require no further permission.
+
+### Delivery checkpoint — 2026-09-25 22:26 UTC
+
+Runtime7f3ab30 and evidence0d7f803 pushed to `codex/srd-rogue-attacks`.
+#220/#221/#112 verified CLOSED; #114/#116 OPEN. One of two original features
+is delivered, three corresponding issues closed, zero added, about58 minutes
+from original preflight. Main is unchanged while this batch's demo placement
+remains pending. Goal stays active. No live build/test remains. ROGUE-DEMO-1 is
+asked as visible question1 with Glass audio; continue the same batch after its
+answer, without resetting its original clock.
