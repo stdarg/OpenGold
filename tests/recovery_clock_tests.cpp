@@ -99,10 +99,10 @@ void combat_and_campaign(){
         auto commands=combat->legal_commands();const auto end=std::find_if(commands.begin(),commands.end(),[](const auto& c){return c.verb=="end";});
         check(end!=commands.end()&&combat->submit(*end)&&copy->submit(*end)&&combat->save()==copy->save(),"Countdown continues identically after a combat checkpoint");
     }
-    check(actor(*combat,1).hit_points==1&&actor(*combat,1).persistent.resources=="SRD4 1 0 0 0 0 0 1 FX1 1 0", "Natural recovery preserves the spent Hit Die and Second Wind use");
+    check(actor(*combat,1).hit_points==1&&actor(*combat,1).persistent.resources=="SRD4 1 0 0 0 0 0 1 FX4 1 0 0 1", "Natural recovery preserves the spent Hit Die and Second Wind use");
     auto state=stable;rules->set_hit_points(state,character.sheet(),4);
-    check(state.hit_points==4&&state.resources=="SRD4 1 0 0 0 0 0 1 FX1 1 0","Script healing clears mortality clocks without restoring resources");
-    rules->set_hit_points(state,character.sheet(),0);check(state.resources=="SRD5 1 0 0 0 0 0 1 6000 0 FX1 1 0","Script loss to zero HP begins a fresh cadence");
+    check(state.hit_points==4&&state.resources=="SRD4 1 0 0 0 0 0 1 FX4 1 0 0 1","Script healing clears mortality clocks without restoring resources");
+    rules->set_hit_points(state,character.sheet(),0);check(state.resources=="SRD5 1 0 0 0 0 0 1 6000 0 FX4 1 0 0 1","Script loss to zero HP begins a fresh cadence");
     const auto fallen=state;rules->set_hit_points(state,character.sheet(),0);check(state==fallen,"Reading unchanged script HP does not restart the timer");
     CampaignParty party(module());const auto id=party.add_pc(character);auto checkpoint=party.checkpoint();checkpoint.roster[0].vitals=stable;party.restore(checkpoint);
     const auto saved=encode_campaign(party,nullptr,"clock");auto disk=decode_campaign(saved,*srd5::character_rules(),*rules,"clock",nullptr);
@@ -112,7 +112,7 @@ void combat_and_campaign(){
     party.award_experience(900,"recovery-xp");party.advance(id,party.default_advancement(id));
     check(party.member(id).vitals.resources=="SRD5 1 0 0 0 0 1 2 0 1000 FX1 1 0","Advancement adds only its new Hit Die and retains the exact Stable deadline");
     auto healed=stable;auto rng=std::uint64_t{42};rules->temple_heal(healed,character.sheet(),rng);
-    check(healed.hit_points>0&&healed.resources=="SRD4 1 0 0 0 0 0 1 FX1 1 0","Temple healing cancels the recovery clock without replenishing pools");
+    check(healed.hit_points>0&&healed.resources=="SRD4 1 0 0 0 0 0 1 FX4 1 0 0 1","Temple healing cancels the recovery clock without replenishing pools");
     for(const auto invalid:{"SRD5 1 0 0 0 0 1 1 1 1000 FX1 1 0","SRD5 1 0 0 0 0 1 1 0 14400001 FX1 1 0",
         "SRD5 1 0 0 0 0 0 1 6001 0 FX1 1 0","SRD5 1 0 0 0 0 0 1 0 1 FX1 1 0","SRD5 1 0 0 0 0 0 1 -1 0 FX1 1 0"})
         rejects([&]{rules->validate_character_state(character.sheet(),{0,false,invalid});});

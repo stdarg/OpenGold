@@ -123,6 +123,11 @@ void profiles_and_migration(){
     std::size_t state=0;for(unsigned row=0;row<3;++row)state=reference.find('\n',state)+1;
     const auto revision=reference.find(' ',state)+1,end=reference.find(' ',revision);
     reference.replace(revision,end-revision,std::to_string(std::stoull(reference.substr(revision,end-revision))+decision_commands));
+    // Actor 1 falls during this continuation. Preserve the frozen oracle except
+    // for its newly explicit Prone condition; all damage, budgets and RNG stay exact.
+    const auto first_effect=reference.find("\nFX1 1 0\n");
+    check(first_effect!=reference.npos,"Frozen effect block exists");
+    reference.replace(first_effect+9,7,"FX4 1 0 0 1");
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
 }

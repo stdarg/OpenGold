@@ -155,6 +155,7 @@ struct CombatantView {
     std::vector<Message> hp_messages;
     std::vector<std::string> bonus_actions; // Entitlements remain visible after spending the Bonus Action.
     std::vector<std::string> known_cantrips; // Knowledge persists while casting is unavailable.
+    bool naturally_sleeping{}, prone{};
 };
 struct TemporaryHpOffer {
     EntityId recipient{};
@@ -246,6 +247,8 @@ public:
     virtual void validate_rest(const RestProgress&) const;
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     [[nodiscard]] virtual RestPolicy short_rest_policy() const;
+    // Rest hosts report an activity; the module owns sleep/condition effects.
+    virtual void set_rest_work(VitalState&,const CharacterSheet&,RestWork) const {}
     virtual void set_hit_points(VitalState&,const CharacterSheet&,int) const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };

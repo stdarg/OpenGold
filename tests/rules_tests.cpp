@@ -405,7 +405,7 @@ void death_save_turn_entry_tests()
             const auto hero=unit(*combat,1);const int roll=rolls.front();
             if(roll==20){
                 natural_twenty=true;
-                check(hero.hit_points==1&&!hero.dead&&hero.persistent.resources=="SRD1 1 0 0 0 0","Natural 20 restores 1 HP and clears both counters without restoring spent resources");
+                check(hero.hit_points==1&&!hero.dead&&hero.prone&&hero.persistent.resources=="SRD3 1 0 0 0 0 0 FX4 1 0 0 1","Natural 20 restores 1 HP and clears both counters without restoring spent resources");
                 check(combat->snapshot().actor==1&&hero.action&&hero.bonus_action&&hero.reaction,"Natural-20 recovery permits the current turn");
                 if(first)check(combat->snapshot().elapsed_milliseconds==0,"Natural-20 recovery does not skip the first initiative slot");
             }else if(roll>=10){

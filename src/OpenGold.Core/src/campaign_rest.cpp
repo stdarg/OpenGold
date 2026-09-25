@@ -65,7 +65,8 @@ std::optional<RestTicket> CampaignParty::begin_rest(RestKind kind)
     activity.started_subminute_milliseconds=state_.subminute_milliseconds;
     for(const auto& info:rest_info(kind))if(info.denial==RestDenial::none)activity.members.push_back(info.id);
     if(activity.members.empty())return std::nullopt;
-    auto next=state_;activity.ticket=new_ticket(next);next.rest_activity=activity;state_=std::move(next);return activity.ticket;
+    auto next=state_;activity.ticket=new_ticket(next);
+    apply_rest_work(next,activity.members,activity.work);next.rest_activity=activity;state_=std::move(next);return activity.ticket;
 }
 void CampaignParty::require_activity_ticket(RestTicket ticket) const
 {
@@ -88,6 +89,21 @@ void CampaignParty::short_rest_benefits(PartyState& state,const std::vector<Memb
     }
     if(!eligible.empty())state.short_rest=ShortRestSession{new_ticket(state),state.time_minutes,state.subminute_milliseconds,std::move(eligible)};
 }
+void CampaignParty::apply_rest_work(PartyState& state,std::span<const MemberId> members,RestWork work) const
+{
+    for(auto id:members){
+        auto found=std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& m){return m.id==id;});
+        if(found==state.roster.end())throw std::runtime_error("Unknown rest member");
+        if(work!=RestWork::sleep||rules_->recovery_info(found->character.sheet(),found->vitals).can_rest)
+            rules_->set_rest_work(found->vitals,found->character.sheet(),work);
+    }
+}
+void CampaignParty::loud_noise(std::span<const MemberId> affected)
+{
+    outside_combat();auto next=state_;apply_rest_work(next,affected,RestWork::light_activity);
+    if(next.rest_activity)advance_ticket(next.rest_activity->ticket);
+    state_=std::move(next);
+}
 void CampaignParty::interrupt_rest_state(PartyState& state,RestInterruption cause) const
 {
     const auto outcome=rules_->interrupt_rest(*state.rest_activity,cause);
@@ -106,6 +122,7 @@ std::optional<RestResult> CampaignParty::advance_rest(RestTicket ticket,std::uin
     if(state_.short_rest)throw std::runtime_error("Resolve Hit Dice choices before advancing rest");
     const auto outcome=rules_->advance_rest(*state_.rest_activity,milliseconds,work);
     auto next=state_;auto& activity=*next.rest_activity;
+    apply_rest_work(next,activity.members,work);
     elapse(next,milliseconds);advance_ticket(activity.ticket);
     RestResult result{activity.kind,outcome.completed_duration_milliseconds/60000,{}};
     if(outcome.benefit==rules::RestBenefit::short_rest){
@@ -117,7 +134,7 @@ std::optional<RestResult> CampaignParty::advance_rest(RestTicket ticket,std::uin
         rules_->recover(member.vitals,member.character.sheet());result.members.push_back(id);member.last_rest_minutes=next.time_minutes;member.last_rest_subminute_milliseconds=next.subminute_milliseconds;
     }
     if(outcome.progress)static_cast<rules::RestProgress&>(activity)=*outcome.progress;
-    else next.rest_activity.reset();
+    else {apply_rest_work(next,activity.members,RestWork::light_activity);next.rest_activity.reset();}
     state_=std::move(next);
     if(outcome.completed_duration_milliseconds)return result;
     return std::nullopt;
@@ -131,11 +148,14 @@ void CampaignParty::resume_rest(RestTicket ticket)
     std::erase_if(activity.members,[&](auto id){const auto& m=member(id);return !rules_->recovery_info(m.character.sheet(),m.vitals).can_rest;});
     if(activity.members.empty())throw std::runtime_error("No eligible member can resume resting");
     static_cast<rules::RestProgress&>(activity)=rules_->resume_rest(activity);
+    apply_rest_work(next,activity.members,activity.work);
     advance_ticket(activity.ticket);state_=std::move(next);
 }
 void CampaignParty::abandon_rest(RestTicket ticket)
 {
-    require_activity_ticket(ticket);state_.rest_activity.reset();state_.short_rest.reset();
+    require_activity_ticket(ticket);auto next=state_;
+    apply_rest_work(next,next.rest_activity->members,RestWork::light_activity);
+    next.rest_activity.reset();next.short_rest.reset();state_=std::move(next);
 }
 bool CampaignParty::prepare_combat()
 {

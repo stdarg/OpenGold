@@ -305,7 +305,7 @@ fixture in `rejected_combat_handoff` (`tests/party_tests.cpp`) and the shared
 Godot rest-control scenario's pending-encounter stages. These exercise automatic
 adapter calls, persistence, duplicate polling, rejection and actual UI signals.
 This increment does not close #193: natural sleeping actors/wake-up decisions
-(Q33–34 now approved; missing Prone/dropped-item prerequisite Q35 pending) and
+(Q33–35 approved; dropped-item recovery remains unfinished) and
 final rest-scheduling acceptance remain outstanding. Unknown original
 probabilistic profiles remain explicitly unsupported.
 
@@ -317,3 +317,50 @@ extensions were rebuilt before runtime checks. Commands: native CTest excluding
 `godot_project` fixture excluded; headless demo `rolf_tour.tscn -- --rest-check`.
 No layout, messages, save formats or module identity changed. Core reports events
 and owns rollback; the static SRD library continues to decide rest outcomes.
+
+
+## Natural sleep and posture increment (#193, Q33–35)
+
+The static SRD library records natural sleep and persistent Prone in FX4, under
+module 0.6.41. Sleep applies Unconscious without reducing HP: no actions,
+movement or perception, disadvantaged initiative, automatic Strength/Dexterity
+save failures and critical hits from attackers within five feet. Damage wakes
+even when Temporary HP absorbs it. Explicit campaign loud noise affects only
+its listed recipients; initiative alone does not wake sleepers. An adjacent ally
+can spend an Action through the approved Wake ally control. Waking retains Prone.
+Stand up spends half Speed; crawling adds its movement cost to Difficult Terrain.
+Healing from zero HP also retains Prone, including prior saves without an explicit
+posture field. Old saved state is not rewritten merely because it is loaded.
+
+Core applies generic rest-work hooks on the injected RulesModule; SRD mechanics
+remain in the static library. Game and demo use the same legal command interface.
+The approved controls support keyboard activation, canceling target selection,
+translated labels and unavailable states. Internal continuation fixtures do not
+add player combat-save controls.
+
+Evidence: `natural_sleep_tests.cpp`, `natural_sleep_view_tests.gd`, recovery-clock
+and campaign-rest checks. Actual 0.6.40 before/after combat fixtures preserve
+previous command, resource and RNG continuation. English/Spanish rendering at
+1120×800 and 1920×1080 exercises the approved rows.
+
+This is partial delivery: held-item dropping/recovery and normal rest scheduling
+are still unfinished. Q35 authorizes that prerequisite; no further approval is
+pending. #193 and parent #30 must remain open until their full acceptance passes.
+
+
+Verification for this increment: all 45 native/tool CTest entries and all 23
+Godot checks passed (35 entries including required native fixtures). Rebuilt
+native targets and `opengoldbox_test_project` in `build/mac-check`; rebuilt
+`opengold_godot` in `build/sprite-demo`. The shared sleep-control script also
+passes in the demo. English/Spanish game and English demo captures were reviewed
+at both supported sizes; demo board space was adjusted to preserve readable logs.
+Localization validates 867 complete messages. Logs: `/tmp/sleep-verified-native.log`,
+`/tmp/sleep-game-layout-tests.log`, `/tmp/sleep-demo-render.log`,
+`/tmp/sleep-game-final-render.log`. The tested source is
+this increment's commit; final documentation does not change executable inputs.
+
+Timing: original batch began 01:27:34 UTC; Q35 implementation began 01:59:50 UTC.
+The 60-minute report was late (02:49); the 90-minute overrun was reported at
+02:58. No original issue was closed in this increment. Inventory ownership
+investigation and several build/test corrections extended this work. Token/cost
+savings are unmeasured; this record does not claim acceleration.

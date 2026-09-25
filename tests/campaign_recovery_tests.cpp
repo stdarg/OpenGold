@@ -26,7 +26,7 @@ Participant patient(EntityId id,VitalState state){return {id,"campaign-character
 void golden_events(){
     auto rules=module();std::vector<Participant> people{patient(1,unstable())};auto rng=std::uint64_t{17};
     rules->elapse(people,5999,rng);check(people[0].state==unstable(1)&&rng==17,"No death save occurs before six seconds");
-    rules->elapse(people,1,rng);check(people[0].state->hit_points==1&&people[0].state->resources=="SRD4 0 0 0 0 0 0 1 FX1 1 0"&&rng==11400714819323198502ULL,
+    rules->elapse(people,1,rng);check(people[0].state->hit_points==1&&people[0].state->resources=="SRD4 0 0 0 0 0 0 1 FX4 1 0 0 1"&&rng==11400714819323198502ULL,
         "Natural 20 at the exact campaign turn restores one HP without replenishing spent pools");
     // At a shared deadline, entity 1 stabilizes (10), rolls two hours (2),
     // succeeds on its Blinded save (18); entity 2 then wakes on natural 20.
@@ -79,7 +79,7 @@ void campaign_continuation(){
     const auto rest=party.rest(RestKind::long_rest);
     check(rest&&rest->members==std::vector<MemberId>{pc}&&party.member(npc).vitals.hit_points==1&&party.member(reserve).vitals.hit_points==1,
         "An eight-hour rest advances natural recovery for ineligible companions and reserves");
-    for(auto id:{npc,reserve})check(!party.member(id).last_rest_minutes&&party.member(id).vitals.resources=="SRD4 0 0 0 0 0 0 1 FX1 1 0",
+    for(auto id:{npc,reserve})check(!party.member(id).last_rest_minutes&&party.member(id).vitals.resources=="SRD4 0 0 0 0 0 0 1 FX4 1 0 0 1",
         "Natural recovery grants neither recharge, Hit Dice nor a rest completion timestamp");
     state=party.checkpoint();state.time_minutes=std::numeric_limits<std::uint64_t>::max();state.roster[1].vitals=unstable();party.restore(state);
     const auto overflow=saved(party);rejects([&]{party.advance_time(1);});check(saved(party)==overflow,"Clock overflow preserves all vitality and RNG");

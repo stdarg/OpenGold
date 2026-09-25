@@ -126,16 +126,17 @@ void elapse_effects(std::span<EffectSubject> subjects, std::uint64_t millisecond
 }
 void write_effects(std::ostream& out, const EffectState& effects)
 {
-    out << (opportunity_blocked(effects)?"FX3 ":speed_penalty(effects)?"FX2 ":"FX1 ") << effects.next_id << ' ' << effects.active.size();
+    out << (effects.sleeping||effects.prone?"FX4 ":opportunity_blocked(effects)?"FX3 ":speed_penalty(effects)?"FX2 ":"FX1 ") << effects.next_id << ' ' << effects.active.size();
     for (const auto& e:effects.active)
         out << ' ' << e.id << ' ' << unsigned(e.kind) << ' ' << e.source_scope << ' ' << e.source_actor
             << ' ' << std::quoted(e.source_name) << ' ' << e.dc << ' ' << e.remaining_ms << ' ' << e.save_in_ms;
+    if(effects.sleeping||effects.prone)out << ' ' << effects.sleeping << ' ' << effects.prone;
 }
 EffectState read_effects(std::istream& in)
 {
     std::string magic;std::size_t count{};EffectState result;
     in >> magic;unsigned_field(in,result.next_id);unsigned_field(in,count);
-    if (!in || (magic!="FX1"&&magic!="FX2"&&magic!="FX3") || !result.next_id || count>effect_limit)
+    if (!in || (magic!="FX1"&&magic!="FX2"&&magic!="FX3"&&magic!="FX4") || !result.next_id || count>effect_limit)
         throw std::runtime_error("Invalid effect state");
     std::uint64_t previous{};
     for (std::size_t n=0;n<count;++n) {
@@ -144,7 +145,7 @@ EffectState read_effects(std::istream& in)
         in >> std::quoted(e.source_name) >> e.dc;
         unsigned_field(in,e.remaining_ms);unsigned_field(in,e.save_in_ms);
         const bool timed=(magic!="FX1"&&kind==unsigned(EffectKind::ray_of_frost))||
-            (magic=="FX3"&&kind==unsigned(EffectKind::shocking_grasp));
+            ((magic=="FX3"||magic=="FX4")&&kind==unsigned(EffectKind::shocking_grasp));
         if (!in || (!timed&&kind!=unsigned(EffectKind::blindness)) || e.id<=previous || e.id>=result.next_id ||
             !e.source_scope || !e.source_actor || e.source_name.empty() || e.source_name.size()>160 ||
             (!timed&&(e.dc < -2 || e.dc > 38 || !e.remaining_ms || e.remaining_ms>60000 ||
@@ -155,6 +156,11 @@ EffectState read_effects(std::istream& in)
     }
     if(magic=="FX3"&&!opportunity_blocked(result))throw std::runtime_error("Noncanonical effect state");
     if(magic=="FX2"&&!speed_penalty(result))throw std::runtime_error("Noncanonical effect state");
+    if(magic=="FX4"){
+        unsigned sleeping{},prone{};unsigned_field(in,sleeping);unsigned_field(in,prone);
+        if(sleeping>1||prone!=1)throw std::runtime_error("Invalid natural sleep/posture state");
+        result.sleeping=sleeping;result.prone=prone;
+    }
     return result;
 }
 }

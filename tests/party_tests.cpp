@@ -671,7 +671,7 @@ void progression_and_services()
     rejects([&]{party.temple_heal(pc);});check(party.member(pc).wealth[3]==50&&party.member(pc).vitals==temple_before,"Rejected temple request is atomic");
     check(party.state().random_state==before.random_state,"Rejected payment preserves random state");
     party.set_wealth(pc,{0,0,0,100,0,0,0});party.temple_heal(pc);
-    check(party.member(pc).vitals.hit_points>0&&party.member(pc).wealth[3]==0&&party.member(pc).vitals.resources=="SRD1 0 0 0 0 0","Healing charges once, clears death saves and preserves spent resources");
+    check(party.member(pc).vitals.hit_points>0&&party.member(pc).wealth[3]==0&&party.member(pc).vitals.resources=="SRD3 0 0 0 0 0 0 FX4 1 0 0 1","Healing charges once, clears death saves and preserves spent resources");
     const auto checkpoint=party.checkpoint();
     CampaignParty restored(module());restored.restore(checkpoint);
     check(restored.member(pc).vitals==party.member(pc).vitals&&restored.time_hours()==32&&restored.member(pc).wealth[3]==0,"Native checkpoint retains recovery, payments and clock");
@@ -694,7 +694,7 @@ void caster_advancement()
         const auto growth=std::max(1,c.sheet().hit_die/2+1+c.sheet().modifiers[2])+1;
         check(m.character.sheet().hit_points==c.sheet().hit_points+growth&&m.vitals.hit_points==m.character.sheet().hit_points-2,"Dwarven growth preserves HP deficit");
         check(m.vitals.resources=="SRD1 0 1 0 0 0","Advancement grants new slot without refilling spent slots");
-        check(party.rest()&&party.member(pc).vitals.resources=="SRD1 0 3 0 0 0","Level-two long rest restores three slots");
+        check(party.rest()&&party.member(pc).vitals.resources=="SRD3 0 3 0 0 0 0 FX4 1 0 0 1","Level-two long rest restores three slots and leaves the sleeper Prone");
         auto participants=party.participants();participants.push_back({1000,"bandit","Bandit",1,{9,4}});
         auto rules=module();auto combat=rules->create({{12,9,std::vector<std::uint8_t>(108)},participants},42);
         const auto saved=combat->save();check(rules->restore(saved)->save()==saved,"Advanced profile and resources round-trip through combat checkpoint");

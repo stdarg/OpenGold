@@ -199,7 +199,7 @@ void effects_once(){
         check(party.state().time_minutes==elapsed.state().time_minutes&&party.state().subminute_milliseconds==4321&&
             party.state().random_state==elapsed.state().random_state&&party.state().random_state!=state.random_state,
             "Rest performs exactly the same timed recovery rolls as one elapsed interval");
-        for(const auto& m:party.state().roster)check(m.vitals.resources.ends_with("FX1 2 0"),"Effects expire for active PCs, NPCs and reserves");
+        for(const auto& m:party.state().roster)check(m.vitals.resources.ends_with(kind==RestKind::long_rest&&m.id!=reserve?"FX4 2 0 0 1":"FX1 2 0"),"Timed effects expire; only sleeping members retain Prone after waking");
         check(party.member(reserve).vitals==elapsed.member(reserve).vitals,"Reserve effects advance without receiving rest recharge");
         if(party.state().short_rest)party.finish_short_rest(party.state().short_rest->ticket);
     }

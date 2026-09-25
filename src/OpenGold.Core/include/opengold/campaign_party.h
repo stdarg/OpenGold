@@ -131,6 +131,8 @@ public:
     // Stage initiative interruption before building combat participants. Pending
     // earned recovery must be resolved before the combat owner takes the lock.
     [[nodiscard]] bool prepare_combat();
+    // Authored environmental event; the rules module decides waking effects.
+    void loud_noise(std::span<const MemberId> affected);
     void begin_combat();
     void apply_combat(const rules::Snapshot& snapshot);
     void end_combat() noexcept {combat_=false;}
@@ -149,6 +151,7 @@ private:
     void outside_combat() const;
     void require_rest_ticket(RestTicket ticket) const;
     void require_activity_ticket(RestTicket ticket) const;
+    void apply_rest_work(PartyState&,std::span<const MemberId>,RestWork) const;
     void interrupt_rest_state(PartyState& state,RestInterruption cause) const;
     void short_rest_benefits(PartyState& state,const std::vector<MemberId>& members) const;
     PartyMember& edit(MemberId id);

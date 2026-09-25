@@ -6,7 +6,7 @@ level 4, then level 20 and multiclassing.
 
 ## Active batch — #193 / parent #30
 
-- Authorization: resumed goal; existing #193 acceptance and Q29–34 approvals.
+- Authorization: resumed goal; existing #193 acceptance and Q29–35 approvals.
 - Outcome: actual rest interruptions and safe continuation through campaign events
   and combat, including earned Hit Dice choices and persisted progress.
 - Acceptance: Short/Long interruption rules, sleep/light/exertion boundaries,
@@ -15,7 +15,7 @@ level 4, then level 20 and multiclassing.
   gameplay and existing approved controls. Sleeping Unconscious behavior remains
   part of the rest requirement; do not claim closure without verifying it.
 - Exclusions: unresearched probabilistic original profiles; unrelated species
-  features, new spells, new controls and unrelated architecture work. Report any
+  features, new spells, controls beyond Q29–35 and unrelated architecture work. Report any
   new blocking scope before implementation; no automatic child issues.
 - Reuse: static SRD rest transitions, CampaignParty transactions, original ECL
   host adapters, approved RestDialog and existing save flow.
@@ -29,14 +29,29 @@ level 4, then level 20 and multiclassing.
   Preserve existing save formats and prior-writer fixtures.
 - Status: ECL damage/encounter adapters and committed recovery handoff implemented
   and verified. #193/#30 remain open for natural sleep and final rest scheduling.
-  Q33–34 approved on 2026-09-25; do not ask them again.
-  The goal tool still reports blocked; approval itself has not changed scheduler status.
-  Current inspection found an additional prerequisite: Unconscious must leave
-  Prone after waking and drop held items (SRD p.191). Combat currently derives
-  unconsciousness/prone attack modifiers from HP == 0 and has no persistent
-  prone state, stand-up command or dropped-item recovery. No gameplay code was
-  changed after approval; scope/control proposal Q35 needs resolution before
-  expanding these shared mechanics. Preserve the original batch clock.
+  Q33–35 approved; implement natural sleep, persistent Prone, standing and
+  held-item recovery using the approved Wake ally and recovery rows. This is the
+  one approved prerequisite, returning directly to rest/combat acceptance.
+  Current turn began 01:59:50 UTC; original checkpoint was 02:27:34 UTC.
+  Checkpoint reported at 02:49 UTC (late): sleep/posture and game controls pass
+  focused checks; held-item recovery remains unfinished. No original issue closed.
+  Investigation of inventory ownership exceeded the intended checkpoint; do not
+  silently reset it or present partial condition support as completed #193.
+  Goal continuation has resumed the scheduler; current goal status is active.
+- Current increment: rules 0.6.41 / FX4 natural sleep, Wake ally, persistent
+  Prone/crawling and Stand up in game/demo. Healing from zero HP retains Prone,
+  including natural-20 and Stable recovery from legacy saves. Q35 approved;
+  ground-item controls/recovery and scheduled rest interruption remain unfinished.
+- Verification: 45 native/tool checks and 23 Godot checks passed (35 entries
+  with fixture prerequisites). Game/demo shared sleep-control checks and final
+  log-space adjustments passed runtime and visual review. No live verification.
+  Build paths: game/native `build/mac-check`, demo `build/sprite-demo`; target
+  `opengold_godot` is only in the latter. Python-only CTest entries are not targets.
+  Game captures inspected at both sizes/locales; 867 complete localized messages.
+  Full mechanics/evidence: [rest increment](REST-RESOURCES.md#natural-sleep-and-posture-increment-193-q3335).
+- Delivery: sleep/posture increment verified 03:07 UTC; commit/push and issue
+  update accompany this handoff. #193/#30 remain open. Continue held-item recovery, then
+  final rest scheduling. No new issue, agents, model switch or approval needed.
 - Verification completed 01:45:36 UTC: 44 native/tool checks, 22 Godot checks
   (33 entries with prerequisites) and demo rest check passed. Session 61079 exited
   0; no live verification remains. Full evidence is in REST-RESOURCES.md.

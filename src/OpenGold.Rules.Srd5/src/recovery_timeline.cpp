@@ -30,8 +30,10 @@ void elapse_recovery(std::span<RecoverySubject> subjects,std::uint64_t milliseco
         milliseconds-=step;
         for(auto& subject:ordered){
             auto& life=subject.life.get();
+            const bool was_unconscious=life.hp==0;
             (void)advance_recovery_clock(life,step);
             if(life.hp==0&&!life.dead&&!life.stable&&!life.recovery.death_save_in_ms)(void)death_save(life,rng);
+            if(was_unconscious&&life.hp>0)subject.effects.effects.get().prone=true;
             // The chosen step reaches at most the first effect boundary, so
             // this shares the existing save/expiry rules without hiding an
             // earlier RNG event. Death at the same deadline suppresses its save.

@@ -55,8 +55,8 @@ bool has_line_of_sight(const Battlefield& board, Cell from, Cell to)
 }
 
 MovementGrid::MovementGrid(const Battlefield& board, Cell origin,
-                           std::span<const Occupant> occupants)
-    : board_(board), origin_(origin)
+                           std::span<const Occupant> occupants, bool crawling)
+    : board_(board), origin_(origin), crawling_(crawling)
 {
     validate_battlefield(board_);
     if (board_.at(origin_) == 1) throw std::runtime_error("Invalid movement origin");
@@ -88,7 +88,7 @@ std::optional<int> MovementGrid::step_cost(Cell from, Cell to) const
         return std::nullopt;
     const auto occupant = occupancy_[index(to)];
     if (occupant == Occupancy::enemy) return std::nullopt;
-    return board_.at(to) == 2 || occupant == Occupancy::incapacitated_enemy ? 10 : 5;
+    return (board_.at(to) == 2 || occupant == Occupancy::incapacitated_enemy ? 10 : 5) + (crawling_ ? 5 : 0);
 }
 
 ReachableCells MovementGrid::reachable(int budget) const

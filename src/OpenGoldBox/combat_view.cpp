@@ -143,6 +143,8 @@ void CombatView::_ready()
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
     get_node<OptionButton>("Cantrip")->connect("item_selected",callable_mp(this,&CombatView::cantrip_selected));
     get_node<Button>("CastCantrip")->connect("pressed",callable_mp(this,&CombatView::cast_cantrip));
+    get_node<Button>("WakeAlly")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind("wake_ally"));
+    get_node<Button>("StandUp")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("stand_up"));
     get_node<Button>("UseCunningAction")->connect("pressed",callable_mp(this,&CombatView::use_cunning_action));
     get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Dash")));
     get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Disengage")));
@@ -200,7 +202,8 @@ void CombatView::layout()
     followed_.reset();
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    const double battlefield_height=(height-180)*.85;
+    const double battlefield_height=std::min((height-180)*.85,
+        get_node<Button>("StandUp")->is_visible()?height-304:(height-180)*.85);
     base_tile_=std::max(left_width/board.width,battlefield_height/board.height);
     board_rect_=Rect2(24,16,left_width,battlefield_height);const double right=width-sidebar-24;
     auto* scroll=get_node<ScrollContainer>("BattlefieldScroll");
@@ -252,13 +255,18 @@ void CombatView::layout_reaction_controls(bool show_controls)
     const bool spells=get_node<OptionButton>("Cantrip")->is_visible();
     const bool surge=get_node<Button>("ActionSurge")->is_visible();
     const bool cunning=get_node<OptionButton>("CunningAction")->is_visible();
-    const double inset=cunning?132:(show_controls?44:0)+((rush||spells||surge)?44:0);
+    const bool wake=get_node<Button>("WakeAlly")->is_visible(),standing=get_node<Button>("StandUp")->is_visible();
+    get_node<Button>("WakeAlly")->set_position(Vector2(634,top+88));
+    get_node<Button>("WakeAlly")->set_size(Vector2(180,36));
+    get_node<Button>("StandUp")->set_position(Vector2(24,top+132));
+    get_node<Button>("StandUp")->set_size(Vector2(180,36));
+    const double inset=standing?176:(cunning||wake)?132:(show_controls?44:0)+((rush||spells||surge)?44:0);
     get_node<Label>("CunningActionLabel")->set_position(Vector2(24,top+88));
     get_node<Label>("CunningActionLabel")->set_size(Vector2(180,36));
     get_node<OptionButton>("CunningAction")->set_position(Vector2(214,top+88));
     get_node<OptionButton>("CunningAction")->set_size(Vector2(200,36));
     get_node<Button>("UseCunningAction")->set_position(Vector2(424,top+88));
-    get_node<Button>("UseCunningAction")->set_size(Vector2(330,36));
+    get_node<Button>("UseCunningAction")->set_size(Vector2(wake?200:330,36));
     get_node<Button>("Dash")->set_position(Vector2(24,top+44));
     get_node<Button>("Dash")->set_size(Vector2(90,36));
     get_node<Button>("AdrenalineRush")->set_position(Vector2(124,top+44));
@@ -511,11 +519,12 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
-    if(key.is_valid()&&(get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus()||get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&(get_node<OptionButton>("CunningAction")->has_focus()||get_node<OptionButton>("CunningAction")->get_popup()->is_visible()||get_node<OptionButton>("Cantrip")->has_focus()||get_node<OptionButton>("Cantrip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
+        if(key->get_keycode()==Key::KEY_ESCAPE&&mode_=="wake_ally"){mode_="move";refresh();get_viewport()->set_input_as_handled();return;}
         if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
             move_selected(*direction);get_viewport()->set_input_as_handled();return;
         }
@@ -530,7 +539,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
         if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
         if(key->get_keycode()==Key::KEY_SPACE){
-            for(const char* verb:{"cunning_dash","cunning_disengage","action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            for(const char* verb:{"stand_up","cunning_dash","cunning_disengage","action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
             const auto offered=demo_->combat().legal_commands();
             const auto target=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==mode_&&c.target==selected_;});
             if(target!=offered.end())act(*target);
@@ -578,7 +587,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    if(mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="shocking_grasp"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    if(mode_!="wake_ally"&&mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="shocking_grasp"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_) {
@@ -742,6 +751,14 @@ void CombatView::refresh()
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
     const auto cunning_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==(player?s.actor:selected_);});
+    const bool ongoing=s.outcome==Outcome::ongoing;
+    get_node<Button>("WakeAlly")->set_visible(ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[](const auto& a){return a.side==0&&a.naturally_sleeping;}));
+    get_node<Button>("WakeAlly")->set_disabled(!enabled("wake_ally"));
+    const bool show_standing=ongoing&&cunning_actor!=s.combatants.end()&&cunning_actor->prone;
+    const bool posture_layout_changed=get_node<Button>("StandUp")->is_visible()!=show_standing;
+    get_node<Button>("StandUp")->set_visible(show_standing);
+    get_node<Button>("StandUp")->set_disabled(!enabled("stand_up"));
+    if(posture_layout_changed)layout();
     const bool show_cunning=cunning_actor!=s.combatants.end()&&!cunning_actor->bonus_actions.empty()&&s.outcome==Outcome::ongoing;
     for(const char* name:{"CunningActionLabel","CunningAction","UseCunningAction"})get_node<Control>(name)->set_visible(show_cunning);
     const bool cunning_enabled=enabled("cunning_dash")||enabled("cunning_disengage");

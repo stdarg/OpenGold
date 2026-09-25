@@ -312,3 +312,11 @@ visible = false
 [node name="UseCunningAction" type="Button" parent="."]
 visible = false
 text = "Use Bonus Action"
+
+[node name="WakeAlly" type="Button" parent="."]
+visible = false
+text = "Wake ally"
+
+[node name="StandUp" type="Button" parent="."]
+visible = false
+text = "Stand up"

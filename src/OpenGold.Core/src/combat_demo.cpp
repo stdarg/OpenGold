@@ -290,13 +290,14 @@ Command choose_demo_command(const CombatSession& session)
         const auto verb=!hit.second_damage?"savage_use":hit.first_damage>=*hit.second_damage?"savage_first":"savage_second";
         for(const auto& command:offered)if(command.verb==verb)return command;
     }
+    for(const auto& command:offered)if(command.verb=="stand_up"||command.verb=="wake_ally")return command;
     // Rank offered destinations by a geometric route around obstacles. Straight
     // distance alone can strand both sides on opposite corners of a wall.
     // This is an AI heuristic; legal movement and its costs remain module-owned.
     const auto& board=state.battlefield;
     const auto index=[&](Cell p){return p.y*board.width+p.x;};
     std::vector<int> routes(board.terrain.size(),10000);std::queue<Cell> frontier;
-    for(const auto& a:state.combatants)if(a.side!=active.side&&a.conscious){routes[index(a.cell)]=0;frontier.push(a.cell);}
+    for(const auto& a:state.combatants)if(a.side!=active.side&&!a.dead&&a.hit_points>0){routes[index(a.cell)]=0;frontier.push(a.cell);}
     while(!frontier.empty()) {
         const auto p=frontier.front();frontier.pop();
         for(int y=-1;y<=1;++y)for(int x=-1;x<=1;++x) {

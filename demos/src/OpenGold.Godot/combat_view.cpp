@@ -47,6 +47,8 @@ void CombatView::_ready()
     get_node<Button>("Decline")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("decline")));
     get_node<Button>("Training")->connect("pressed",callable_mp(this,&CombatView::training));
     get_node<Button>("Slums")->connect("pressed",callable_mp(this,&CombatView::slums));
+    get_node<Button>("WakeAlly")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind("wake_ally"));
+    get_node<Button>("StandUp")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("stand_up"));
     get_node<Button>("Replay")->connect("pressed",callable_mp(this,&CombatView::replay));
     get_node<Button>("Continue")->connect("pressed",callable_mp(this,&CombatView::next));
     get_node<Button>("Revisit")->connect("pressed",callable_mp(this,&CombatView::revisit));
@@ -69,7 +71,8 @@ void CombatView::layout()
 {
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
-    const double tile=std::min(left_width/board.width,(height-280)/board.height);
+    const bool recovery=get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible();
+    const double tile=std::min(left_width/board.width,(height-(recovery?324:280))/board.height);
     board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
@@ -83,7 +86,10 @@ void CombatView::layout()
     place("React",Rect2(right,590,174,36));place("Decline",Rect2(right+184,590,174,36));
     place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
     place("Help",Rect2(right,686,sidebar,height-732));
-    place("Log",Rect2(24,board_rect_.get_end().y+16,left_width,height-board_rect_.get_end().y-64));
+    const double top=board_rect_.get_end().y+16;
+    place("WakeAlly",Rect2(24+left_width-180,top,180,36));
+    place("StandUp",Rect2(24,top+44,180,36));
+    place("Log",Rect2(24,top+(recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-(recovery?88:0))));
     place("Footer",Rect2(24,height-34,width-48,24));
 }
 void CombatView::training(){try{error_.clear();demo_->training();art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
@@ -152,6 +158,11 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("SavageAttacker")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(key.is_valid()&&(get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
+        (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
+    if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&mode_=="wake_ally"){
+        mode_="move";refresh();get_viewport()->set_input_as_handled();return;
+    }
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
         if(demo_->waiting())next();else immediate("end");get_viewport()->set_input_as_handled();return;
     }
@@ -195,6 +206,11 @@ void CombatView::refresh()
     }else if(modal->is_visible())modal->hide();
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
+    get_node<Button>("WakeAlly")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[](const auto& a){return a.side==0&&a.naturally_sleeping;}));
+    get_node<Button>("WakeAlly")->set_disabled(!enabled("wake_ally"));
+    get_node<Button>("StandUp")->set_visible(s.outcome==Outcome::ongoing&&std::any_of(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor&&a.side==0&&a.prone;}));
+    get_node<Button>("StandUp")->set_disabled(!enabled("stand_up"));
+    layout();
     for(const auto& [node,verb]:action_buttons)get_node<Button>(node)->set_disabled(!enabled(spell_verb(verb,spell_slot_)));
     get_node<Button>("SpellSlot")->set_text("Slot level "+String::num_uint64(spell_slot_));
     get_node<Button>("SpellSlot")->set_disabled(!enabled("magic_missile")&&!enabled("magic_missile_2")&&!enabled("cure_wounds")&&!enabled("cure_wounds_2")&&!enabled("healing_word")&&!enabled("healing_word_2"));

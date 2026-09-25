@@ -36,7 +36,7 @@ private:
 class MovementGrid {
 public:
     MovementGrid(const rules::Battlefield& board, rules::Cell origin,
-                 std::span<const Occupant> occupants);
+                 std::span<const Occupant> occupants, bool crawling=false);
     [[nodiscard]] bool can_stop_at(rules::Cell destination) const;
     [[nodiscard]] std::optional<int> step_cost(rules::Cell from, rules::Cell to) const;
     [[nodiscard]] ReachableCells reachable(int budget) const;
@@ -45,6 +45,7 @@ private:
     enum class Occupancy { empty, ally, incapacitated_enemy, enemy };
     rules::Battlefield board_;
     rules::Cell origin_;
+    bool crawling_{};
     std::vector<Occupancy> occupancy_;
     [[nodiscard]] int index(rules::Cell cell) const;
 };

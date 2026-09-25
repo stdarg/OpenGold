@@ -556,3 +556,14 @@ Fighter/Wizard party starts wounded with spent resources, clock 1000 minutes plu
 spending session; the second is the actual next Fighter Hit Die continuation.
 Tests require exact bytes, preserving wounds, resources, tickets, time and RNG.
 Do not regenerate these fixtures using the new engine.
+
+### Natural sleep's actual prior writer
+
+`combat-v15-sleep-before.save` and `combat-v15-sleep-continued.save` were copied
+unchanged from the existing `cunning-fixtures/available.save` and `spent.save`
+written at 2026-09-25 01:44:55 UTC by the pre-sleep rules 0.6.40 binary. They
+record a level-two Rogue before and after Bonus Action Dash followed by ordinary
+Dash. The source files existed before the sleep implementation and were checked
+for their original module identity before copying. `opengold_natural_sleep_tests`
+restores and continues the first, then compares with the second byte-for-byte
+apart from the module identity. Do not regenerate these with the new writer.
