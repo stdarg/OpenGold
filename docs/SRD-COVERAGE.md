@@ -13,6 +13,33 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Fighter Champion through level four
+
+Runtime `6324a51` (module 0.6.46) completes [#88](https://github.com/stdarg/OpenGold/issues/88).
+Ordinary Fighter level-three confirmation grants Champion; level four retains it.
+Weapon and Unarmed Strike attacks critically hit on 19–20, Initiative and
+Strength/Athletics gain Advantage, and each critical permits immediate optional
+half-Speed movement without opportunity attacks or normal movement expenditure.
+The Q41/Q42 game/demo controls preserve spent actions and interrupted movement;
+existing level-three/four campaign saves gain the fixed grants during replay.
+[Champion packet](CHAMPION.md) records acceptance, compatibility, limitations,
+verification commands and timing. No future Athletics actions or spell-access
+sources were added to this batch.
+
+All 48 native/tool tests and 25 Godot runtime checks pass (40 with prerequisites).
+Main EN/ES and demo EN rendered controls pass at 1120×800 and 1920×1080;
+891 localized messages validate. Actual 0.6.45 writer fixtures prove prior combat
+continuation, while campaign comparisons allow only approved fixed-grant additions
+and existing migrations. Historical fixture bytes remain unchanged. Rules remain
+in the statically linked SRD library, with no SRD arithmetic in Core or UI.
+
+Measured start 15:26 UTC, focused checks/render review by 15:50, final native pass
+by 16:04:31 and runtime committed at 16:06:21 on 2026-09-25: about 40 minutes to
+verified runtime. One of one selected original requirements delivered, no added
+issues or scope. Recorded Astra/high retained; no switch or agents. Token/cost
+deltas unavailable. The packet records corrections and limits; the full SRD goal
+remains active and incomplete.
+
 ## Medicine stabilization and Tactical Mind
 
 Runtime revision `ce04673` (module 0.6.45) completes [#32](https://github.com/stdarg/OpenGold/issues/32)

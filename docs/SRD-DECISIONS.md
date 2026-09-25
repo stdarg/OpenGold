@@ -59,6 +59,13 @@ question widget, and preceded by the audible Glass alert.
 | Q38 | #32 Medicine stabilization control | Stabilize beside Wake ally in a compacted Cunning Action row; highlight living unstable creatures at 0 HP within 5 feet/clear path, including enemies; Help Action and DC 10 Wisdom (Medicine), training applies; success stabilizes without healing/waking, failure still spends Action; keyboard, Escape cancel and disabled illegal use. APPROVED 2026-09-25: user answered Yes / Approve Tactical Mind dialog. |
 | Q39 | #87 Tactical Mind decision | centered eligible-failed-check dialog shows roll/modifier/total/DC/Second Wind uses; Use Tactical Mind or Keep failed check; add 1d10, no healing, spend Second Wind only on resulting success; original Action stays spent, other actions wait, keyboard, no combat-save controls. APPROVED 2026-09-25: user answered Yes / Approve Tactical Mind dialog. |
 
+## Champion approvals
+
+| ID | Issue / decision | Approved scope |
+| --- | --- | --- |
+| Q41 | #88 Champion acquisition | APPROVED 2026-09-25: existing level-three Fighter confirmation names Champion and grants features on Confirm; old level-three/four Fighters gain the same fixed grants through replay, preserving choices/wounds/equipment/resources. Alternative is explicit subclass selection, including old saves. |
+| Q42 | #88 critical free movement | APPROVED 2026-09-25: battlefield highlights, arrows/clicks, up to half Speed without opportunity attacks or normal movement cost; temporary Finish free move label replaces End Turn, that button/Escape declines remainder; other actions wait, original budgets stay spent and interrupted enemy movement resumes. Game/demo, no combat saving. |
+
 ## Pending — do not implement dependent choices
 
 | ID | Issue / decision | Recorded scope |
