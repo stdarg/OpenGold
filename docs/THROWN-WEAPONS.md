@@ -9,7 +9,7 @@ for all currently supported class/level routes; do not substitute fixed demo
 actors for ordinary campaign inventory. Preserve ability, range, critical,
 Savage Attacker and Champion behavior, with physical quantities and identity.
 
-Source: [SRD 5.2.1 p.90, Thrown and Attack action](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
+Source: [SRD 5.2.1 pp.90 and 177, Thrown and Attack action](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 Thrown permits drawing as part of the attack and retains a Melee weapon's normal
 ability modifier. The SRD does not prescribe a grid landing square for misses;
 Q44 requests the project policy rather than presenting one as an SRD rule.
