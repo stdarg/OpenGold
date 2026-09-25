@@ -96,6 +96,14 @@ remain. User replied “1. Approved.” [Frozen scope](SCHOLAR.md).
 
 ## Pending — do not implement dependent choices
 
+**WIZCHOICE-1/2/3 — PENDING, #37/#97, 2026-09-25, visible questions 1–3:**
+Wizard creation/advancement spell-choice groups, a Spellbook button and pending
+knowledge dialog, and completed-Long-Rest preparation/one-cantrip replacement.
+Exact layout, behavior, acceptance and exclusions are in the
+[review packet](WIZARD-SPELL-CHOICES.md#layoutcontrol-review--pending-do-not-implement-dependent-ui).
+These are not approvals and do not authorize dependent UI implementation.
+
+
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |

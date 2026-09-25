@@ -722,3 +722,15 @@ SHA-256:
 - `campaign-arcane-level4.ogs`: `fa4585d360444045c784dde88b8c7b20dc2198afda64565425aff0b7d42f4f14`
 - `combat-arcane-before.save`: `9147f2acb99105bf987c92e08c7feb9d0f0666af4174d68ea0c09d4ccab26f9f`
 - `combat-arcane-continued.save`: `5b15798e4b110d3eda130982dcfe793219c2047ab8475b4f364f619c8cdcd298`
+
+
+## Wizard spell-choice workflow baseline (SRD 0.6.50)
+
+`campaign-wizard-choices-level1.ogs` through `level4.ogs` and
+`combat-wizard-choices-before.save` / `combat-wizard-choices-continued.save` were
+captured with the actual 0.6.50 library before spell-choice workflow changes,
+using `opengold_spell_access_tests --capture-wizard-choices` on 2026-09-25.
+They preserve explicit cantrips, acquired Scholar, known but unprepared book
+spells, wounds, spent slots and spent Arcane Recovery. Campaign formats 11/15
+and the combat continuation are old-writer output, not synthetic rewrites.
+See [the frozen packet](../../docs/WIZARD-SPELL-CHOICES.md).

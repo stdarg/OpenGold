@@ -90,6 +90,20 @@ were created during preflight. #168/#170 and #167/#169 also remain open; their
 named source/target/component/campaign gaps prevent treating them as already
 complete from combat damage/healing alone.
 
+## Active batch — Wizard spell choices (#37 / implementation owner #97)
+
+[Packet](WIZARD-SPELL-CHOICES.md) freezes learning/preparation acceptance and
+explicitly preserves #97 copying/book-object work for later; no issue closure
+claimed yet. Branch `codex/srd-wizard-spell-choices`. Requested Astra/high
+retained, actual configuration unverified; no switch or delegation. Started
+20:33:54 UTC, checkpoint 21:33:54, maximum 22:03:54. WIZCHOICE-1/2/3 controls
+need review; do not implement dependent UI before approval. Next independent
+step complete: actual 0.6.50 writer capture and existing spell-access tests pass.
+Four campaign fixtures plus combat before/continued preserve real old choices
+and expenditure. No live process remains. No gameplay/UI changes yet. Next:
+rules/Core choice design within packet, preserving old history; WIZCHOICE-1/2/3
+UI awaits the visible questions/answers. Audio command accompanies that request.
+
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
 [repository map](SRD-REPO-MAP.md). Freeze one outcome and acceptance before coding.

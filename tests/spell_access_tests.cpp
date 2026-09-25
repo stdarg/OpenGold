@@ -80,5 +80,34 @@ void legacy(){auto rules=module();CampaignParty party(module());party.restore(de
     const auto old=read(root/"tests/fixtures/combat-v12-spells.save");auto c=rules->restore(old);auto expected=old;expected.replace(expected.find("0.6.18"),6,rules->identity().version);check(c->save()==test::with_savage_choice(expected),"Old combat preserves its recipe without inventing absent book history");
     check(c->submit(command(*c,"scorching_ray")),"Legacy prepared spell still casts");check(c->save()==rules->restore(read(root/"tests/fixtures/combat-v12-spells-continued.save"))->save(),"Prior-writer spell damage, slots, action state, RNG and clock continue exactly");
 }
+void capture_wizard_choices(){
+    auto rules=module();check(rules->identity().version=="0.6.50","Capture requires actual 0.6.50 writer");
+    const auto write=[](const std::string& name,const std::string& bytes){std::ofstream out(root/"tests/fixtures"/name);out<<bytes;check(bool(out),"Write previous-writer spell-choice fixture");};
+    for(unsigned level=1;level<=4;++level){
+        CampaignParty party(module());auto draft=hero().creation_data();
+        draft.cantrips=std::vector<std::string>{"fire_bolt","ray_of_frost","chill_touch"};
+        draft.training={{"origin:languages",{"elvish","dwarvish"}},{"class:wizard",{"medicine","nature"}}};
+        const auto id=party.add_pc(Character(*srd5::character_rules(),draft,{}));party.award_experience(2700,"choice-baseline");
+        for(unsigned n=2;n<=level;++n){auto choice=party.default_advancement(id);if(n==3)choice.spells={"scorching_ray","blindness"};if(n==4)choice.spells={"magic_missile"};party.advance(id,choice);}
+        auto state=party.checkpoint();state.roster[0].vitals.hit_points-=2;party.restore(std::move(state));
+        auto combat=battle(*rules,party.member(id).character.sheet(),party.member(id).vitals);
+        const auto spell=level==3?"scorching_ray":"magic_missile";
+        check(combat->submit(command(*combat,spell)),"Baseline casts a prepared leveled spell");
+        party.begin_combat();party.apply_combat(combat->snapshot());party.end_combat();
+        (void)party.rest(RestKind::short_rest);
+        (void)party.recover_rest_choice(party.state().short_rest->ticket,id,level==3?"arcane_recovery:0:1":"arcane_recovery:1:0");
+        party.finish_short_rest(party.state().short_rest->ticket);
+        combat=battle(*rules,party.member(id).character.sheet(),party.member(id).vitals);
+        check(combat->submit(command(*combat,spell)),"Baseline spends a slot after Arcane Recovery");
+        party.begin_combat();party.apply_combat(combat->snapshot());party.end_combat();
+        write("campaign-wizard-choices-level"+std::to_string(level)+".ogs",encode_campaign(party,nullptr,"wizard-choices-baseline"));
+        if(level==4){
+            write("combat-wizard-choices-before.save",combat->save());
+            check(combat->submit(command(*combat,"end")),"Baseline ends turn");
+            write("combat-wizard-choices-continued.save",combat->save());
+        }
+    }
 }
-int main(){try{creation();progression();invalid();legacy();std::cout<<"Spell access tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+
+}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--capture-wizard-choices"){capture_wizard_choices();return 0;}check(argc==1,"Unexpected argument");creation();progression();invalid();legacy();std::cout<<"Spell access tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
