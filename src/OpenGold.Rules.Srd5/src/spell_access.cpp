@@ -10,7 +10,7 @@ constexpr std::string_view source="class:wizard:spellcasting";
 struct Spell {std::string_view id,label;unsigned level,mask;};
 // Existing spell implementations only. This is not the complete Wizard list.
 constexpr std::array spells{
-    Spell{"shocking_grasp","Shocking Grasp",0,1024},Spell{"eldritch_blast","Eldritch Blast",0,512},Spell{"ray_of_frost","Ray of Frost",0,256},Spell{"sacred_flame","Sacred Flame",0,128},Spell{"fire_bolt","Fire Bolt",0,1},Spell{"poison_spray","Poison Spray",0,64},Spell{"magic_missile","Magic Missile",1,4},
+    Spell{"chill_touch","Chill Touch",0,2048},Spell{"shocking_grasp","Shocking Grasp",0,1024},Spell{"eldritch_blast","Eldritch Blast",0,512},Spell{"ray_of_frost","Ray of Frost",0,256},Spell{"sacred_flame","Sacred Flame",0,128},Spell{"fire_bolt","Fire Bolt",0,1},Spell{"poison_spray","Poison Spray",0,64},Spell{"magic_missile","Magic Missile",1,4},
     Spell{"scorching_ray","Scorching Ray",2,16},Spell{"blindness","Blindness",2,32}};
 void require(bool ok){if(!ok)throw std::runtime_error("Invalid spell grant, spellbook entry or preparation");}
 const Spell& find(std::string_view id){
@@ -26,7 +26,8 @@ std::vector<FeatureGrant> without_spell_grants(std::span<const FeatureGrant> gra
 TrainingChoiceGroup starting_cantrip_options(std::string_view klass){
     if(klass=="warlock")return {"class:warlock:pact_magic","Warlock cantrips",2,
         {{"eldritch_blast","Eldritch Blast","Ranged spell attack: 1d10 Force damage, 120 feet; creature targets currently supported."},
-         {"poison_spray","Poison Spray","Ranged spell attack: 1d12 Poison damage, 30 feet."}}};
+         {"poison_spray","Poison Spray","Ranged spell attack: 1d12 Poison damage, 30 feet."},
+         {"chill_touch","Chill Touch","Melee spell attack: 1d10 Necrotic damage, Touch; prevents healing until the end of your next turn."}}};
     if(klass=="cleric")return {"class:cleric:spellcasting","Cleric cantrips",3,
         {{"sacred_flame","Sacred Flame","Dexterity save: 1d8 Radiant damage, visible creature within 60 feet."}}};
     if(klass!="wizard"&&klass!="sorcerer")return {};
@@ -34,21 +35,23 @@ TrainingChoiceGroup starting_cantrip_options(std::string_view klass){
         {{"fire_bolt","Fire Bolt","Ranged spell attack: 1d10 Fire damage, 120 feet."},
          {"poison_spray","Poison Spray","Ranged spell attack: 1d12 Poison damage, 30 feet."},
          {"ray_of_frost","Ray of Frost","Ranged spell attack: 1d8 Cold damage, 60 feet; Speed reduced by 10 feet until your next turn."},
-         {"shocking_grasp","Shocking Grasp","Melee spell attack: 1d8 Lightning damage, Touch; prevents Opportunity Attacks until the target’s next turn."}}};
+         {"shocking_grasp","Shocking Grasp","Melee spell attack: 1d8 Lightning damage, Touch; prevents Opportunity Attacks until the target’s next turn."},
+         {"chill_touch","Chill Touch","Melee spell attack: 1d10 Necrotic damage, Touch; prevents healing until the end of your next turn."}}};
 }
 std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std::optional<std::vector<std::string>>& cantrips){
     if(klass=="sorcerer"){
         std::vector<FeatureGrant> result;std::set<std::string> unique;
         const auto chosen=cantrips.value_or(std::vector<std::string>{});require(chosen.size()<=4);
         for(const auto& id:chosen){
-            require((id=="fire_bolt"||id=="poison_spray"||id=="ray_of_frost"||id=="shocking_grasp")&&unique.insert(id).second);
+            require((id=="fire_bolt"||id=="poison_spray"||id=="ray_of_frost"||id=="shocking_grasp"||id=="chill_touch")&&unique.insert(id).second);
             result.push_back(grant(id,1,"class:sorcerer:spellcasting"));
         }return result;
     }
     if(klass=="warlock"){
+        require(!cantrips||cantrips->size()<=2);
         std::vector<FeatureGrant> result;std::set<std::string> unique;
         for(const auto& id:cantrips.value_or(std::vector<std::string>{})){
-            require((id=="eldritch_blast"||id=="poison_spray")&&unique.insert(id).second);result.push_back(grant(id,1,"class:warlock:pact_magic"));
+            require((id=="eldritch_blast"||id=="poison_spray"||id=="chill_touch")&&unique.insert(id).second);result.push_back(grant(id,1,"class:warlock:pact_magic"));
         }return result;
     }
     if(klass=="cleric"){
@@ -60,7 +63,7 @@ std::vector<FeatureGrant> starting_spell_grants(std::string_view klass,const std
     if(klass!="wizard"){require(!cantrips||cantrips->empty());return {};}
     const auto chosen=cantrips.value_or(std::vector<std::string>{"fire_bolt"});
     require(chosen.size()<=3);std::set<std::string> unique;std::vector<FeatureGrant> result;
-    for(const auto& id:chosen){require((id=="fire_bolt"||id=="poison_spray"||id=="ray_of_frost"||id=="shocking_grasp")&&unique.insert(id).second);result.push_back(grant(id,1));}
+    for(const auto& id:chosen){require((id=="fire_bolt"||id=="poison_spray"||id=="ray_of_frost"||id=="shocking_grasp"||id=="chill_touch")&&unique.insert(id).second);result.push_back(grant(id,1));}
     result.push_back(grant("magic_missile",1));return result;
 }
 SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view klass,unsigned level,std::span<const std::string> prepared){
@@ -69,7 +72,7 @@ SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view k
         // Starting cantrips only. Leveled spells, replacement and advancement remain #132.
         require(level==1&&prepared.empty());result.cantrip_choices=4;std::set<std::string> known;
         for(const auto& g:grants)if(is_spell_grant(g)){
-            require(g.id=="spell:fire_bolt"||g.id=="spell:poison_spray"||g.id=="spell:ray_of_frost"||g.id=="spell:shocking_grasp");
+            require(g.id=="spell:fire_bolt"||g.id=="spell:poison_spray"||g.id=="spell:ray_of_frost"||g.id=="spell:shocking_grasp"||g.id=="spell:chill_touch");
             const auto& spell=find(std::string_view(g.id).substr(6));
             require(g==grant(spell.id,1,"class:sorcerer:spellcasting")&&known.insert(g.id).second);
             result.cantrips.push_back({std::string(spell.id),std::string(spell.label),g.source_id,g.level});
@@ -79,11 +82,11 @@ SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view k
         // Cantrip portion of Pact Magic only; slots and advancement remain separate.
         require(level==1&&prepared.empty());result.cantrip_choices=2;std::set<std::string> known;
         for(const auto& g:grants)if(is_spell_grant(g)){
-            require(g.id=="spell:eldritch_blast"||g.id=="spell:poison_spray");
+            require(g.id=="spell:eldritch_blast"||g.id=="spell:poison_spray"||g.id=="spell:chill_touch");
             const auto& spell=find(std::string_view(g.id).substr(6));
             require(g==grant(spell.id,1,"class:warlock:pact_magic")&&known.insert(g.id).second);
             result.cantrips.push_back({std::string(spell.id),std::string(spell.label),g.source_id,g.level});
-        }return result;
+        }require(result.cantrips.size()<=2);return result;
     }
     if(klass=="Cleric"){
         require(level>=1&&level<=4);

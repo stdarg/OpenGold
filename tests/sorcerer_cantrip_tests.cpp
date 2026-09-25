@@ -44,7 +44,7 @@ fx::EffectState effects(const VitalState& state){auto at=state.resources.find("F
 const std::vector<std::string> choices{"fire_bolt","poison_spray","ray_of_frost","shocking_grasp"};
 Character hero(std::vector<std::string> spells=choices){auto d=draft();d.cantrips=std::move(spells);return Character(*srd5::character_rules(),d,{});}
 void access(){auto rules=module();auto creation=srd5::character_rules();auto d=draft();auto options=creation->cantrip_options(d);
-    check(options.count==4&&options.options.size()==4,"Four supported Sorcerer choices");
+    check(options.count==4&&options.options.size()==5,"Five supported Sorcerer options, four choices");
     check(rules->spell_access(creation->evaluate(d,true)).cantrips.empty(),"Missing old selections stay pending");
     const auto h=hero();auto access=rules->spell_access(h.sheet());check(access.cantrip_choices==4&&access.cantrips.size()==4,"Four explicit starting choices");
     for(const auto& spell:access.cantrips)check(spell.source_id=="class:sorcerer:spellcasting"&&spell.acquired_level==1,"Real source and acquisition level");

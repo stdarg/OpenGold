@@ -257,9 +257,11 @@ void prior_equipment_formats(){
     const auto read=[](const char* name){std::ifstream in(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name,std::ios::binary);check(bool(in),"Previous equipment writer fixture exists");return std::string(std::istreambuf_iterator<char>(in),{});};
     const auto campaign=read("campaign-v13-detached.ogs");CampaignParty party(module());
     party.restore(decode_campaign(campaign,*srd5::character_rules(),*rules,"detached-items",nullptr).party);
-    check(encode_campaign(party,nullptr,"detached-items")==campaign,"Actual campaign 13 writer remains byte-exact");
+    const auto normalized=[&](std::string bytes){const auto at=bytes.find("0.6.42");check(at!=bytes.npos,"Prior equipment fixture keeps original identity");bytes.replace(at,6,rules->identity().version);return bytes;};
+    const auto body=[](const std::string& bytes){return bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1);};
+    check(body(encode_campaign(party,nullptr,"detached-items"))==body(normalized(campaign)),"Actual campaign 13 state unchanged apart from identity/checksum");
     const auto combat=read("combat-v16-ground.save");
-    check(rules->restore(combat)->save()==combat,"Actual combat 16 writer remains byte-exact");
+    check(rules->restore(combat)->save()==normalized(combat),"Actual combat 16 writer remains byte-exact");
 }
 
 void movement(){

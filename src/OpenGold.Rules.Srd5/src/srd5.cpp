@@ -182,7 +182,8 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_sorcerer=magic=="PC28";
+    const bool with_chill=magic=="PC29";
+    const bool with_sorcerer=magic=="PC28"||with_chill;
     const bool with_warlock_poison=magic=="PC27"||with_sorcerer;
     const bool with_shocking=magic=="PC26"||with_warlock_poison;
     const bool with_warlock=magic=="PC25"||with_shocking;
@@ -206,7 +207,7 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     if(magic=="PC2"||selected)in>>level;
     if(selected)in>>features>>selected_spells;in>>std::quoted(klass)>>std::quoted(race);
     for(auto& score:scores)in>>score;
-    if(!in||(magic!="PC1"&&magic!="PC2"&&!selected)||level<1||level>(selected?4u:2u)||features>(with_archery?7u:3u)||selected_spells>(with_shocking?2047u:with_warlock?1023u:with_frost?511u:with_cleric_cantrips?255u:with_cantrips?127u:63u)||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
+    if(!in||(magic!="PC1"&&magic!="PC2"&&!selected)||level<1||level>(selected?4u:2u)||features>(with_archery?7u:3u)||selected_spells>(with_chill?4095u:with_shocking?2047u:with_warlock?1023u:with_frost?511u:with_cleric_cantrips?255u:with_cantrips?127u:63u)||std::any_of(scores.begin(),scores.end(),[](int n){return n<3||n>20;}))
         throw std::runtime_error("Invalid character profile");
     if(level>1&&klass!="Fighter"&&klass!="Cleric"&&klass!="Wizard"&&!(with_cunning&&klass=="Rogue"&&level==2))throw std::runtime_error("Advancement is unsupported for this class");
     const auto races=character_rules()->choices(CreationField::race);
@@ -231,11 +232,11 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     d.slots2=(klass=="Cleric"||klass=="Wizard")&&level>=3?(level==3?2:3):0;
     d.casting=2+ability_modifier(scores[klass=="Cleric"?4:(klass=="Warlock"||(with_sorcerer&&klass=="Sorcerer"))?5:3]);d.spells=klass=="Cleric"?2:klass=="Wizard"?5:0;
     if(selected){
-        const unsigned allowed=klass=="Cleric"?((level>=3?42u:10u)|(with_cleric_cantrips?128u:0u)):klass=="Wizard"?((level>=3?53u:5u)|(with_cantrips?64u:0u)|(with_frost?256u:0u)|(with_shocking?1024u:0u)):klass=="Warlock"&&with_warlock?(512u|(with_warlock_poison?64u:0u)):klass=="Sorcerer"&&with_sorcerer?1345u:0;
+        const unsigned allowed=klass=="Cleric"?((level>=3?42u:10u)|(with_cleric_cantrips?128u:0u)):klass=="Wizard"?((level>=3?53u:5u)|(with_cantrips?64u:0u)|(with_frost?256u:0u)|(with_shocking?1024u:0u)|(with_chill?2048u:0u)):klass=="Warlock"&&with_warlock?(512u|(with_warlock_poison?64u:0u)|(with_chill?2048u:0u)):klass=="Sorcerer"&&with_sorcerer?(1345u|(with_chill?2048u:0u)):0;
         if(selected_spells&~allowed||(features&1)&&klass!="Fighter")throw std::runtime_error("Invalid prepared spells or feat prerequisites");
         d.spells=selected_spells;d.savage=(features&2)!=0;
     }
-    d.known_cantrips=d.spells&1985;
+    d.known_cantrips=d.spells&4033;
     bool weapon=false,armor=false,shield=false;unsigned hands=0;
     for(unsigned i=0;i<count;++i){std::string key;in>>std::quoted(key);d.equipment_keys.push_back(std::move(key));}
     if(equipment_override)d.equipment_keys.assign(equipment_override->begin(),equipment_override->end());
@@ -355,6 +356,7 @@ VitalState vitals(const Actor& a)
     if(a.definition.winds)description="Second Wind uses: "+std::to_string(a.winds)+" / "+std::to_string(a.definition.winds);
     if(surge)description+=(description.empty()?"":"\n")+std::string("Action Surge uses: ")+std::to_string(a.surges)+" / "+std::to_string(a.definition.surges);
     if(a.hp==0)description+=(description.empty()?"":"\n")+std::string(a.dead?"Dead":a.stable?"Stable, unconscious":"Unconscious; death saves ")+(!a.dead&&!a.stable?std::to_string(a.successes)+" successes, "+std::to_string(a.failures)+" failures":"");
+    if(detail::healing_blocked(a.effects))description+="\nChill Touch: cannot regain HP.";
     if(detail::opportunity_blocked(a.effects))description+="\nShocking Grasp: cannot make Opportunity Attacks.";
     if(detail::speed_penalty(a.effects))description+="\nRay of Frost: Speed reduced by 10 feet.";
     if(detail::blinded(a.effects))description+="\nBlinded";
@@ -367,7 +369,7 @@ bool same_command(const Command& a,const Command& b)
 { return a.revision==b.revision && a.actor==b.actor && a.target==b.target && a.verb==b.verb && a.destination==b.destination; }
 bool turns_to_attack(std::string_view verb)
 {
-    return verb=="shocking_grasp"||verb=="eldritch_blast"||verb=="ray_of_frost"||verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="poison_spray"||verb=="sacred_flame"||verb=="magic_missile"||
+    return verb=="chill_touch"||verb=="shocking_grasp"||verb=="eldritch_blast"||verb=="ray_of_frost"||verb=="melee"||verb=="ranged"||verb=="fire_bolt"||verb=="poison_spray"||verb=="sacred_flame"||verb=="magic_missile"||
         verb=="magic_missile_2"||verb=="scorching_ray"||verb=="blindness";
 }
 class Session final : public CombatSession {
@@ -602,6 +604,7 @@ Snapshot Session::snapshot() const
         if(def(a).cunning)view.bonus_actions={"cunning_dash","cunning_disengage"};
         if(def(a).surges)view.resources.push_back({"action_surge",{"Action Surge",{}},unsigned(a.surges),unsigned(def(a).surges),unsigned(def(a).surges)});
         if(def(a).known_cantrips&1)view.known_cantrips.push_back("fire_bolt");
+        if(def(a).known_cantrips&2048)view.known_cantrips.push_back("chill_touch");
         if(def(a).known_cantrips&1024)view.known_cantrips.push_back("shocking_grasp");
         if(def(a).known_cantrips&512)view.known_cantrips.push_back("eldritch_blast");
         if(def(a).known_cantrips&64)view.known_cantrips.push_back("poison_spray");
@@ -623,6 +626,10 @@ Snapshot Session::snapshot() const
         if(def(a).slots2)messages.push_back({"L2 slots: {count}",{{"count",std::to_string(a.slots2)}}});
         if(a.actions.surge)messages.push_back({"Action Surge action ready (no Magic).",{}});
         if(def(a).winds)messages.push_back({"Second Wind: {count}",{{"count",std::to_string(a.winds)}}});
+        for(const auto& effect:a.effects.active)if(effect.kind==detail::EffectKind::chill_touch){
+            Message message{"Chill Touch ({source}): cannot regain HP.",{{"source",effect.source_name}}};
+            messages.push_back(message);view.conditions.push_back(std::move(message));
+        }
         if(detail::opportunity_blocked(a.effects)){messages.push_back({"Shocking Grasp: cannot make Opportunity Attacks.",{}});view.conditions.push_back({"Shocking Grasp: cannot make Opportunity Attacks.",{}});}
         if(detail::speed_penalty(a.effects)){messages.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});view.conditions.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});}
         if(detail::blinded(a.effects)){
@@ -687,6 +694,8 @@ std::vector<Command> Session::legal_commands() const
             const int feet=distance(a.source.cell,other.source.cell);
             if(other.source.side==a.source.side&&other.effects.sleeping&&feet<=5)
                 add(id,"wake_ally","Wake ally",other.source.id);
+            if(a.actions.available(true)&&(d.spells&2048)&&can_gesture("chill_touch")&&feet<=5&&detail::can_apply(other.effects))
+                add(id,"chill_touch","Chill Touch",other.source.id);
             if(a.actions.available(true)&&(d.spells&1024)&&can_gesture("shocking_grasp")&&feet<=5&&detail::can_apply(other.effects))
                 add(id,"shocking_grasp","Shocking Grasp",other.source.id);
             if(a.actions.available(true)&&(d.spells&512)&&can_gesture("eldritch_blast")&&feet<=120)
@@ -755,7 +764,7 @@ void Session::heal(Actor& target,int amount)
 {
     if(target.hp==0&&shares_occupied_space(target))target.involuntary_overlap=true;
     const bool was_unconscious=target.hp==0;
-    const int restored=detail::heal_life(target,amount,def(target).hp);
+    const int restored=detail::heal_life(target,amount,def(target).hp,!detail::healing_blocked(target.effects));
     if(was_unconscious&&restored)target.effects.prone=true;
     log(target.source.name+" recovers "+std::to_string(restored)+" HP.",
         {"{name} recovers {hp} HP.",{{"name",target.source.name},{"hp",std::to_string(restored)}}});
@@ -840,10 +849,10 @@ bool Session::begin_turn()
     if(a.dead||a.effects.sleeping)return false;
     if(a.hp==0){
         if(!a.stable){
-            const int result=detail::death_save(a,rng_);
+            const int result=detail::death_save(a,rng_,!detail::healing_blocked(a.effects));
             log(a.source.name+" death save: "+std::to_string(result),
                 {"{name} death save: {roll}",{{"name",a.source.name},{"roll",std::to_string(result)}}});
-            if(result==20){a.effects.prone=true;if(shares_occupied_space(a))a.involuntary_overlap=true;}
+            if(a.hp>0){a.effects.prone=true;if(shares_occupied_space(a))a.involuntary_overlap=true;}
             if(a.dead)clear_departed_overlaps();
         }
         if(a.hp==0)return false;
@@ -907,6 +916,7 @@ void Session::advance_turn_time()
     detail::elapse_effects(subjects,delta,rng_,[&](const detail::EffectEvent& event){
         const auto& target=actor(event.target);
         if(event.save)log_save(target,*event.save);
+        if(event.removed&&event.effect.kind==detail::EffectKind::chill_touch)log(target.source.name+" loses a Chill Touch effect.",{ "{name} loses a Chill Touch effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::shocking_grasp)log(target.source.name+" loses a Shocking Grasp effect.",{"{name} loses a Shocking Grasp effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::ray_of_frost)log(target.source.name+" loses a Ray of Frost effect.",{"{name} loses a Ray of Frost effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::blindness)log(target.source.name+" recovers from a blindness effect.",
@@ -1043,6 +1053,14 @@ bool Session::submit(const Command& command)
             if(attack(a,target,true,true,{1,8,0},detail::DamageType::cold)){
                 detail::apply_ray_of_frost(target.effects,scope_,a.source.id,a.source.name,next_turn_ms(a));
                 log(target.source.name+" is slowed by Ray of Frost.",{"{name} is slowed by Ray of Frost.",{{"name",target.source.name}}});
+            }
+        }else if(command.verb=="chill_touch"){
+            auto& target=actor(command.target);
+            if(attack(a,target,false,true,{1,10,0},detail::DamageType::necrotic)){
+                const unsigned slot=turn_end_ms(turn_)-(turn_?turn_end_ms(turn_-1):0);
+                detail::apply_chill_touch(target.effects,scope_,a.source.id,a.source.name,detail::round_ms+slot);
+                log(target.source.name+" cannot regain HP until the end of the caster's next turn.",
+                    {"{name} cannot regain HP until the end of the caster's next turn.",{{"name",target.source.name}}});
             }
         }else if(command.verb=="shocking_grasp"){
             auto& target=actor(command.target);
@@ -1314,7 +1332,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
     const bool previous_module=((version==5&&identity.version=="0.6.4")||
-        (version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
+        ((version>=13&&version<=16)&&identity.version=="0.6.42")||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
     if (!input || magic != "OGCOMBAT" || version < 1 || version > 16 ||
@@ -1338,6 +1356,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
             throw std::runtime_error("Legacy checkpoint cannot contain an Archery profile");
         if(module_before(identity,{0,6,29})&&(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 "))))))))
             throw std::runtime_error("Legacy checkpoint cannot contain a starting-style profile");
+        if(module_before(identity,{0,6,43})&&actor.source.character_profile.starts_with("PC29 "))throw std::runtime_error("Legacy checkpoint cannot contain Chill Touch profiles");
         if(module_before(identity,{0,6,40})&&actor.source.character_profile.starts_with("PC28 "))throw std::runtime_error("Legacy checkpoint cannot contain Sorcerer cantrip profiles");
         if(module_before(identity,{0,6,39})&&actor.source.character_profile.starts_with("PC27 "))throw std::runtime_error("Legacy checkpoint cannot contain Warlock Poison Spray profiles");
         if(module_before(identity,{0,6,38})&&actor.source.character_profile.starts_with("PC26 "))throw std::runtime_error("Legacy checkpoint cannot contain Shocking Grasp profiles");
@@ -1377,7 +1396,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     if(version>=4){
         unsigned effects_count{};input>>session->scope_>>session->elapsed_ms_>>effects_count;
         if(!input||!session->scope_||effects_count!=session->actors_.size())throw std::runtime_error("Invalid checkpoint effect header");
-        for(auto& a:session->actors_){a.effects=detail::read_effects(input);if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");if(module_before(identity,{0,6,41})&&a.effects.prone)throw std::runtime_error("Legacy combat cannot contain natural sleep/posture state");if(module_before(identity,{0,6,38})&&detail::opportunity_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Shocking Grasp");if(version<15&&detail::speed_penalty(a.effects))throw std::runtime_error("Legacy combat cannot contain Ray of Frost");}
+        for(auto& a:session->actors_){a.effects=detail::read_effects(input);if(module_before(identity,{0,6,43})&&detail::healing_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Chill Touch");if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");if(module_before(identity,{0,6,41})&&a.effects.prone)throw std::runtime_error("Legacy combat cannot contain natural sleep/posture state");if(module_before(identity,{0,6,38})&&detail::opportunity_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Shocking Grasp");if(version<15&&detail::speed_penalty(a.effects))throw std::runtime_error("Legacy combat cannot contain Ray of Frost");}
     }
     if(version>=12){
         bool pending_offer{};input>>pending_offer;
@@ -1430,11 +1449,11 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
-    std::vector<std::string> supported_features() const override{return {"shocking_grasp","eldritch_blast","initiative","movement","unconscious_enemy_transit","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","cunning_dash","cunning_disengage","ray_of_frost","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","archery","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
+    std::vector<std::string> supported_features() const override{return {"chill_touch","shocking_grasp","eldritch_blast","initiative","movement","unconscious_enemy_transit","melee","ranged","critical_hits","dodge","dash","disengage","opportunity_attacks","facing","turn_opportunity_attacks","death_saves","second_wind","action_surge","cunning_dash","cunning_disengage","ray_of_frost","fire_bolt","poison_spray","sacred_flame","cure_wounds","magic_missile","healing_word","scorching_ray","level_two_slots","manual_advancement","ability_score_improvement","defense","archery","savage_attacker","saving_throws","blinded","blindness","timed_effects","versatile","feature_grants","training_grants","rest_resources","hit_dice","recovery_clocks","campaign_recovery","typed_damage","damage_affinities","dwarven_poison_resistance","temporary_hp","adrenaline_rush","heavy_weapons","weapon_catalog","armor_catalog","wizard_spellbook","somatic_components","checkpoint"};}
     std::unique_ptr<CombatSession> create(Encounter e,std::uint64_t seed) const override{return std::make_unique<Session>(content_,std::move(e),seed);}
     std::unique_ptr<CombatSession> restore(std::string_view checkpoint) const override{return Session::restore(content_,checkpoint);}
     unsigned experience_for_level(unsigned level) const override
@@ -1543,6 +1562,7 @@ public:
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported grant migration");
         if(module_before(saved,{0,6,40})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return detail::is_spell_grant(g)&&g.source_id=="class:sorcerer:spellcasting";}))throw std::runtime_error("Legacy campaign cannot grant Sorcerer cantrips");
         if(module_before(saved,{0,6,39})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:poison_spray"&&g.source_id=="class:warlock:pact_magic";}))throw std::runtime_error("Legacy campaign cannot grant Warlock Poison Spray");
+        if(module_before(saved,{0,6,43})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:chill_touch";}))throw std::runtime_error("Legacy campaign cannot grant Chill Touch");
         if(module_before(saved,{0,6,38})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:shocking_grasp";}))throw std::runtime_error("Legacy campaign cannot grant Shocking Grasp");
         if(module_before(saved,{0,6,37})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:eldritch_blast";}))throw std::runtime_error("Legacy campaign cannot grant Eldritch Blast");
         if(module_before(saved,{0,6,25})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:ray_of_frost";}))throw std::runtime_error("Legacy campaign cannot grant Ray of Frost");
@@ -1571,6 +1591,7 @@ public:
         if(module_before(saved,{0,6,35})&&sheet.character_class=="Rogue"&&sheet.level>1)throw std::runtime_error("Legacy campaign cannot contain advanced Rogues");
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported campaign migration");
         auto definition=character_definition(character_profile(sheet,{}).data);
+        if(module_before(saved,{0,6,43})&&state.resources.find("FX5 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Chill Touch");
         if(module_before(saved,{0,6,38})&&state.resources.find("FX3 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Shocking Grasp");
         if(module_before(saved,{0,6,25})&&state.resources.find("FX2 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Ray of Frost");
         if(module_before(saved,{0,6,24})&&state.resources.starts_with("SRD8 "))throw std::runtime_error("Legacy campaign cannot contain Action Surge expenditure");
@@ -1629,7 +1650,7 @@ public:
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1)throw std::runtime_error("Long rest requires at least one HP at its start");
         actor.effects.sleeping=false;
-        actor.hp=d.hp;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};actor.temporary_hp={};actor.rushes=d.rushes;actor.surges=d.surges;
+        (void)detail::heal_life(actor,d.hp,d.hp,!detail::healing_blocked(actor.effects));actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;actor.hit_dice=d.hit_die?d.level:0;actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};actor.temporary_hp={};actor.rushes=d.rushes;actor.surges=d.surges;
         state=vitals(actor);
     }
     RecoveryInfo recovery_info(const CharacterSheet& sheet,const VitalState& state) const override
@@ -1663,8 +1684,8 @@ public:
         Actor actor;actor.definition=d;actor.winds=d.winds;actor.slots=d.slots;actor.slots2=d.slots2;restore_vitals(actor,state);
         if(actor.dead||actor.hp<1||actor.hit_dice<1)throw std::runtime_error("No Hit Die can be spent by this character");
         auto rng=random_state;const int rolled=roll_die(rng,d.hit_die);
-        const int healing=std::min(d.hp-actor.hp,std::max(1,rolled+d.constitution));
-        actor.hp+=healing;--actor.hit_dice;
+        const int healing=detail::heal_life(actor,std::max(1,rolled+d.constitution),d.hp,!detail::healing_blocked(actor.effects));
+        --actor.hit_dice;
         HitDieResult result{unsigned(d.hit_die),rolled,d.constitution,healing,unsigned(actor.hit_dice)};
         auto next=vitals(actor);state=std::move(next);random_state=rng;return result;
     }
@@ -1701,7 +1722,7 @@ public:
         if(hp<0||hp>sheet.hit_points||(state.dead&&hp))throw std::runtime_error("Unsupported script HP change");
         Actor actor;actor.definition=character_definition(character_profile(sheet,{}).data);
         actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
-        if(hp==state.hit_points)return;
+        if(hp==state.hit_points||(hp>state.hit_points&&detail::healing_blocked(actor.effects)))return;
         if(hp<state.hit_points)actor.effects.sleeping=false;
         detail::set_life_hit_points(actor,hp,actor.definition.hp);
         if(hp==0||state.hit_points==0)actor.effects.prone=true;
@@ -1716,7 +1737,7 @@ public:
         auto rng=random_state;int amount=3;
         for(int i=0;i<2;++i)amount+=roll_die(rng,8);
         if(actor.hp==0)actor.effects.prone=true;
-        actor.hp=std::min(d.hp,actor.hp+amount);actor.successes=actor.failures=0;actor.stable=false;actor.recovery={};
+        (void)detail::heal_life(actor,amount,d.hp,!detail::healing_blocked(actor.effects));
         auto next=vitals(actor);state=std::move(next);random_state=rng;
     }
     SpellAccess spell_access(const CharacterSheet& sheet) const override {
@@ -1769,7 +1790,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<"PC28 "<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<((spells&2048)?"PC29 ":"PC28 ")<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -1913,7 +1934,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.42",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.43",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
@@ -1984,7 +2005,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
         }
         row>>d.ac>>d.hp>>d.initiative>>d.speed>>d.melee_bonus>>d.melee.count>>d.melee.sides>>d.melee.bonus
             >>d.ranged_bonus>>d.ranged.count>>d.ranged.sides>>d.ranged.bonus>>d.range>>d.long_range>>d.winds>>d.slots>>d.casting>>d.level>>d.spells;
-        d.known_cantrips=d.spells&1985;
+        d.known_cantrips=d.spells&4033;
         const bool ranged_none=d.range==0&&d.long_range==0&&d.ranged_bonus==0&&
             d.ranged.count==0&&d.ranged.sides==0&&d.ranged.bonus==0;
         const bool ranged_weapon=d.range>=5&&d.long_range>=d.range&&d.long_range<=600&&

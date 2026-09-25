@@ -24,11 +24,11 @@ void grant_temporary_hp(LifeState&,const rules::TemporaryHitPoints&,rules::Tempo
 // elapsed time. A Stable delay of zero means its one recovery roll is pending.
 void initialize_legacy_recovery(LifeState& state);
 void stabilize(LifeState& state,std::uint64_t& rng);
-[[nodiscard]] int death_save(LifeState& state,std::uint64_t& rng);
+[[nodiscard]] int death_save(LifeState& state,std::uint64_t& rng,bool can_heal=true);
 void damage_life(LifeState& state,int amount,int maximum_hp,bool critical=false,bool dies_at_zero=false);
 // Original script assignments change actual HP, bypassing the damage buffer.
 void set_life_hit_points(LifeState& state,int hit_points,int maximum_hp);
-[[nodiscard]] int heal_life(LifeState& state,int amount,int maximum_hp);
+[[nodiscard]] int heal_life(LifeState& state,int amount,int maximum_hp,bool can_heal=true);
 void start_stable_recovery(LifeState& state,std::uint64_t& rng);
 // Combat rolls death saves at turn entry; this only retains its remaining
 // cadence and advances natural recovery. Campaign event scheduling is separate.

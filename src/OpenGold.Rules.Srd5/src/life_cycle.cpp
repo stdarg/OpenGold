@@ -43,11 +43,11 @@ void stabilize(LifeState& state,std::uint64_t& rng)
     state.stable=true;state.successes=state.failures=0;state.recovery.death_save_in_ms=0;
     start_stable_recovery(state,rng);
 }
-int death_save(LifeState& state,std::uint64_t& rng)
+int death_save(LifeState& state,std::uint64_t& rng,bool can_heal)
 {
     if(state.hp!=0||state.dead||state.stable)throw std::runtime_error("Death save requires an unstable living creature at zero HP");
     const int natural=roll_die(rng,20);state.recovery.death_save_in_ms=death_turn_ms;
-    if(natural==20){state.hp=1;state.successes=state.failures=0;state.recovery={};}
+    if(natural==20&&can_heal){state.hp=1;state.successes=state.failures=0;state.recovery={};}
     else if(natural>=10)++state.successes;
     else state.failures+=natural==1?2:1;
     if(state.failures>=3){state.dead=true;state.recovery={};}
@@ -85,10 +85,10 @@ void set_life_hit_points(LifeState& state,int hp,int maximum_hp)
     if(hp>state.hp)(void)heal_life(state,hp-state.hp,maximum_hp);
     else apply_damage(state,state.hp-hp,state.hp-hp,maximum_hp,false,false);
 }
-int heal_life(LifeState& state,int amount,int maximum_hp)
+int heal_life(LifeState& state,int amount,int maximum_hp,bool can_heal)
 {
     if(amount<0||maximum_hp<1||state.hp<0||state.hp>maximum_hp||state.dead)throw std::runtime_error("Invalid healing");
-    const int healed=std::min(amount,maximum_hp-state.hp);
+    const int healed=can_heal?std::min(amount,maximum_hp-state.hp):0;
     if(healed){state.hp+=healed;state.successes=state.failures=0;state.stable=false;state.recovery={};}
     return healed;
 }

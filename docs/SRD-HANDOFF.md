@@ -1,6 +1,6 @@
 # SRD handoff
 
-Updated 2026-09-25 after the 04:41 UTC batch preflight. Branch `main`; goal ACTIVE. The full objective is
+Updated 2026-09-25 during the Chill Touch batch. Branch `codex/srd-chill-touch`; goal ACTIVE. The full objective is
 all SRD_improvements issues, all twelve classes through level 4, then level 20
 and multiclassing. Do not treat this completed batch as the full goal.
 
@@ -41,7 +41,43 @@ and multiclassing. Do not treat this completed batch as the full goal.
   serializer; all checks now pass. No repeated two-fix failure or model switch.
   No agents, new tasks, added issues or silent scope expansion.
 
-## Current batch — #32 / #87
+## Current independent batch — Chill Touch under #165
+
+- WIP on `codex/srd-chill-touch`, based on main `0feefe4`; do not merge or close
+  an issue as complete yet. Main retains delivered safe recovery (#30/#193).
+- This turn made PROGRESS: implemented and tested ordinary Wizard/Sorcerer/
+  Warlock access, casting, damage, sourced healing prevention, expiry, saves,
+  healing actions and presentation. Details/evidence: [packet](CHILL-TOUCH.md).
+- Q40 is PENDING: interpretation of a Stable natural recovery deadline reached
+  while healing is blocked. Audio and widget delivered; visible final question
+  must accompany this handoff. Do not infer approval or implement either policy.
+  `advance_recovery_clock` still ignores prevention: this is known incomplete
+  gameplay on the WIP branch, not delivered support. Keep #165/#35 open.
+- Q38/Q39 remain pending; Medicine/Tactical Mind stays deferred. No other batch
+  may silently replace this WIP. No new issues, agents, tasks or model switch.
+- Routing remains gpt-6-astra/high (complex healing/mortality/timeline/save work),
+  inherited verified execution setting. Start 04:56:05, checkpoint 05:56:05,
+  maximum 06:26:05 UTC; do not reset. Implementation/focused integration by
+  05:19, then final independent verification. No two-fix failure escalation.
+- Existing Q18 is MAIN-GAME Spell/Cast approval. Demo shares character creation
+  but explicitly retains its older combat controls (CANTRIP-CONTROLS.md).
+  Do not add demo combat controls under an incorrect shared-layout assumption.
+- Persistence: module 0.6.43; PC29 only when Chill Touch is selected, PC28 otherwise;
+  conditional FX5 for active block plus posture. Actual 0.6.42/PC28 and held-item
+  fixtures remain unchanged and their compatibility tests pass. No Core SRD logic.
+- Independent verification finished 05:23:42 UTC (27m37s elapsed): 46 native/tool
+  checks have passing results; 23/23 Godot runtime checks; rendered combat and
+  main creator EN/ES at both sizes; rebuilt demo creator passes in its existing
+  English-only presentation. No live process remains. Details/logs in packet.
+- Preserve this WIP branch until complete; return verified work to main under
+  the existing delivery workflow. No finished coverage row or issue closure yet.
+- Next after Q40: integrate Stable recovery across chronological combat/campaign
+  boundaries; preserve due recovery across save/load if the proposed policy is
+  approved; test exact shared deadlines and partition-invariant RNG. Then verify
+  final integration, update coverage/inventory, and deliver the bounded increment.
+  Species/feat/object/higher-level routes stay explicitly incomplete in #165.
+
+## Deferred batch — #32 / #87
 
 - Previous goal turn: PROGRESS, pushed preflight/approval packet `f7b069f`;
   the preceding `36e574c` delivery closed #193/#30.
@@ -79,4 +115,4 @@ Questions must be numbered, visible in the conversation, and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Use both the async widget and
 plain visible final question. Never re-ask approvals in
 [the decision register](SRD-DECISIONS.md). Q19–21/Q23/Q25 remain outside the
-current Medicine/Tactical Mind batch; Q38/Q39 await answers. Player saving remains camping/inn only, never combat.
+current Medicine/Tactical Mind batch; Q38/Q39/Q40 await answers. Player saving remains camping/inn only, never combat.
