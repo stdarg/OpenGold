@@ -1,3 +1,4 @@
+#include "../../../src/OpenGoldBox/spell_choice_controls.h"
 #include "../../../src/OpenGoldBox/cantrip_control.h"
 #include "../../../src/OpenGoldBox/training_control.h"
 #include "character_creation_view.h"
@@ -321,7 +322,7 @@ void CharacterCreationView::refresh()
     show("Next",step!=CreationStep::sheet);
     if(campaign_)get_node<Button>("AddParty")->set_visible(step==CreationStep::sheet&&!added_to_party_);
     get_node<Button>("Next")->set_text(icon?"Show character sheet":"Next");
-    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::character_class&&!creator_->rules().class_eligible(d,d.character_class))||(step==CreationStep::training&&!creator_->training_complete())||(step==CreationStep::name&&d.name.empty()));
+    get_node<Button>("Next")->set_disabled((stats&&!creator_->scores_assigned())||(step==CreationStep::character_class&&!creator_->rules().class_eligible(d,d.character_class))||(step==CreationStep::training&&!creator_->training_complete())||(step==CreationStep::spell_choices&&!creator_->spell_choices_complete())||(step==CreationStep::name&&d.name.empty()));
     get_node<Label>("Status")->set_text(error_);
     std::string instructions;
     if(choosing) {
@@ -396,7 +397,9 @@ void CharacterCreationView::refresh()
     }
     if(step==CreationStep::spell_choices){
         presentation::refresh_cantrip_controls(*this,*creator_,callable_mp(this,&CharacterCreationView::cantrip_toggled),[](std::string_view source){return gs(source);});
-        instructions="Choose your available cantrips. Unfilled choices remain pending; Back preserves your selections.";
+        auto* book=presentation::spell_rows(*get_node<VBoxContainer>("SpellChoices/Rows"),"BookChoices");
+        presentation::refresh_spell_groups(*book,creator_->rules().spell_choice_options(d),d.spells.value_or(opengold::rules::SpellChoices{}),callable_mp(this,&CharacterCreationView::creation_spell_toggled),[](std::string_view source){return gs(source);});
+        instructions=d.spells?"Choose cantrips, spellbook entries and prepared spells. Back preserves your choices.":"Choose your available cantrips. Unfilled choices remain pending; Back preserves your selections.";
     }
     if(step==CreationStep::name)instructions="Choose a name for your character (up to 40 characters).";
     if(icon)instructions="Select a part's Color-1 or Color-2, then a swatch. Watch both poses change. Absent parts are disabled.";
@@ -461,6 +464,8 @@ void CharacterCreationView::perform(const std::function<void()>& action)
 }
 void CharacterCreationView::target_toggled(bool selected,int index)
 {if(refreshing_)return;perform([&]{creator_->target_class(creator_->rules().choices(CreationField::character_class).at(index).id,selected);});}
+void CharacterCreationView::creation_spell_toggled(bool selected,String group,String option)
+{if(refreshing_||!creator_)return;perform([&]{creator_->spell_choice(group.utf8().get_data(),option.utf8().get_data(),selected);});}
 void CharacterCreationView::cantrip_toggled(bool selected,String option)
 {if(refreshing_||!creator_||creator_->step()!=CreationStep::spell_choices)return;perform([&]{creator_->cantrip_choice(option.utf8().get_data(),selected);});}
 void CharacterCreationView::training_selected(std::int64_t index,String group)

@@ -948,7 +948,7 @@ void reward_reentry()
 {
     auto party=std::make_shared<CampaignParty>(module());const auto pc=party->add_pc(character("wizard"));party->recruit("guard",character());
     for(unsigned visit=0;visit<2;++visit){
-        if(visit){party->advance_time(24*60);check(party->rest(),"Recover before second preview");}
+        if(visit){party->advance_time(24*60);check(party->rest(),"Recover before second preview");party->keep_rest_spells(pc);}
         CombatDemo fight(module());fight.campaign_party(party);fight.training();finish(fight);
         check(fight.combat().snapshot().outcome==Outcome::victory,"Representative victory");
         check(party->member(pc).experience==300&&party->state().claimed_rewards.size()==1,"Recreated combat scene cannot duplicate its reward");
@@ -1008,6 +1008,7 @@ void interrupted_rest_victory()
     check(encode_campaign(*restored,nullptr,"rest-victory")==before,"Post-victory rest and XP round-trip exactly");
     restored->resume_rest(restored->state().rest_activity->ticket);
     const auto result=restored->advance_rest(restored->state().rest_activity->ticket,restored->remaining_rest_milliseconds(),RestWork::sleep);
+    check(restored->state().spell_rest.has_value(),"Completed Wizard rest presents spell choices before further advancement");restored->keep_rest_spells(pc);
     check(result&&!restored->state().rest_activity&&restored->member(pc).experience==300&&restored->can_advance(pc),"Rest resumes after victory and preserves earned XP through completion");
 }
 void script_handoff()

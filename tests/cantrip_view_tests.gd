@@ -1,9 +1,11 @@
 extends SceneTree
 
 var captures := ""
+var locales := ["en", "es"]
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
+		if arg == "--cantrip-demo": locales = ["en"]
 		if arg.begins_with("--poison-capture="):
 			captures = arg.trim_prefix("--poison-capture=")
 	call_deferred("run_checks")
@@ -97,7 +99,7 @@ func run_checks() -> void:
 	var fixed: RichTextLabel = current_scene.get_node("TrainingFixed")
 	for label in ["Arcana", "History", "Calligrapher's Supplies"]:
 		require(fixed.get_parsed_text().contains(label), "Sage fixed training is visible: " + label)
-	for locale in ["en", "es"]:
+	for locale in locales:
 		TranslationServer.set_locale(locale)
 		await press("Back")
 		await press("Next")
@@ -127,11 +129,24 @@ func run_checks() -> void:
 	fire.set_pressed(true)
 	await settle()
 	require(current_scene.get_node("SpellChoices/Rows/Count").text.ends_with("(2 / 3)"), "Correct SRD entitlement and selection count")
-	require(not current_scene.get_node("Next").disabled and current_scene.get_node("SpellChoices/Rows/Pending").visible, "Unfilled choices retain the existing pending flow")
+	require(current_scene.get_node("Next").disabled and current_scene.get_node("SpellChoices/Rows/Pending").visible, "Available Wizard choices must be completed")
 	var frost: CheckBox = current_scene.get_node("SpellChoices/Rows/ray_of_frost")
 	frost.grab_focus()
 	await keyboard(KEY_SPACE)
-	require(frost.button_pressed and not current_scene.get_node("Next").disabled, "Keyboard completes the three-cantrip entitlement")
+	require(frost.button_pressed and current_scene.get_node("Next").disabled, "Book and preparation are independent remaining choices")
+	var book: CheckBox = current_scene.get_node("SpellChoices/Rows/BookChoices/spellbook_1/magic_missile")
+	book.set_pressed(true); await settle()
+	var prepared: CheckBox = current_scene.get_node("SpellChoices/Rows/BookChoices/prepared/magic_missile")
+	prepared.grab_focus(); await keyboard(KEY_SPACE)
+	require(not current_scene.get_node("Next").disabled, "Keyboard completes supported independent preparation")
+	book.set_pressed(false); await settle()
+	require(current_scene.get_node("Next").disabled and not prepared.visible, "Removing a book entry clears dependent preparation")
+	book.set_pressed(true); await settle(); prepared.set_pressed(true); await settle()
+	for locale in locales:
+		TranslationServer.set_locale(locale); await press("Back"); await press("Next")
+		for size in [Vector2i(1120,800), Vector2i(1920,1080)]:
+			root.size = size; await settle(); await capture("wizard-creation-%s-%d" % [locale,size.x])
+	TranslationServer.set_locale("en"); await press("Back"); await press("Next")
 	require(not current_scene.get_node("SpellChoices/Rows/Pending").visible, "No missing starting cantrip remains")
 	await capture("cantrip-choices-1120")
 	await press("Next")

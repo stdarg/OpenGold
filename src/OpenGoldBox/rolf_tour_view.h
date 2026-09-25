@@ -74,6 +74,14 @@ private:
     void rest_start();
     void rest_spend();
     void rest_recover();
+    void refresh_rest_spells();
+    void rest_spell_toggled(bool selected,godot::String group,godot::String option);
+    void rest_spell_replaced(std::int64_t index);
+    void rest_spell_apply();
+    void rest_spell_keep();
+    void rest_spell_input(const godot::Ref<godot::InputEvent>& event);
+    opengold::MemberId rest_spell_member_{};
+    opengold::rules::SpellChoices rest_spell_choice_;
     void rest_finish();
     void rest_resume();
     void rest_save();

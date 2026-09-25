@@ -49,6 +49,7 @@ void access(){auto creation=srd5::character_rules();auto rules=module();auto d=d
     art.heads.emplace(1,por::PortraitPart{"fixture",head});art.bodies.emplace(1,por::PortraitPart{"fixture",body});
     unsigned wizards=0;for(const auto& preset:character_pool(*creation,art))if(preset.sheet().character_class=="Wizard"){
         ++wizards;check(preset.creation_data().cantrips==std::optional{std::vector<std::string>{"fire_bolt","poison_spray","ray_of_frost"}}&&rules->spell_access(preset.sheet()).cantrips.size()==3,"Preset Wizards arrive with pre-generated available cantrips");
+        check(preset.creation_data().spells&&preset.creation_data().spells->learning.at("spellbook:1")==std::vector<std::string>{"magic_missile"}&&preset.creation_data().spells->prepared==std::optional{std::vector<std::string>{"magic_missile"}},"Preset Wizards pre-generate independent book and preparation selections");
     }check(wizards>0,"Preset Wizard path exercised");
     const auto original=creation->evaluate(d,true);check(rules->spell_access(original).cantrips.size()==1&&rules->spell_access(original).cantrips[0].id=="fire_bolt","Missing draft choices retain legacy Fire Bolt only");
     d.cantrips.emplace();auto sheet=creation->evaluate(d,true);check(rules->spell_access(sheet).cantrips.empty(),"Explicit empty selection remains pending without silently refilling");
@@ -56,7 +57,7 @@ void access(){auto creation=srd5::character_rules();auto rules=module();auto d=d
     check(access.cantrip_choices==3&&access.cantrips.size()==1&&access.cantrips[0].id=="poison_spray"&&access.cantrips[0].source_id=="class:wizard:spellcasting"&&access.cantrips[0].acquired_level==1,"Actual creation selection has Wizard source and first acquisition level");
     for(auto bad:std::vector<std::vector<std::string>>{{"poison_spray","poison_spray"},{"magic_missile"},{"unknown"},{"poison_spray","fire_bolt","fire_bolt","poison_spray"}}){d.cantrips=bad;rejects([&]{(void)creation->evaluate(d,true);});}
     for(const auto& klass:creation->choices(CreationField::character_class))if(klass.id!="wizard"&&klass.id!="warlock"&&klass.id!="sorcerer"){d=draft();d.character_class=klass.id;d.cantrips=std::vector<std::string>{"poison_spray"};rejects([&]{(void)creation->evaluate(d,true);});}
-    for(unsigned level=1;level<=4;++level){auto h=hero(level);auto current=rules->spell_access(h.sheet());check(current.cantrip_choices==(level==4?4u:3u)&&current.cantrips.size()==2&&current.cantrips[1].acquired_level==1,"Advancement retains chosen cantrips, source and correct entitlement");}
+    for(unsigned level=1;level<=4;++level){auto h=hero(level);auto current=rules->spell_access(h.sheet());check(current.cantrip_choices==(level==4?4u:3u)&&current.cantrips.size()==(level==4?3u:2u)&&current.cantrips[1].acquired_level==1,"Advancement retains chosen cantrips, source and correct entitlement");}
     auto profile=rules->character_profile(hero().sheet(),{}).data;check(profile.starts_with("PC32 1 0 69 "),"Explicit cantrip mask belongs to new recipe");profile.replace(0,4,"PC10");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{3,1}}}},13);});
     auto invalid=hero().sheet();for(auto& g:invalid.grants)if(g.id=="spell:poison_spray")g.source_id="species:tiefling";rejects([&]{(void)rules->character_profile(invalid,{});});
 }
@@ -102,7 +103,7 @@ void campaign(){auto rules=module();auto creation=srd5::character_rules();for(bo
     auto actors=p.participants();actors[0].cell={1,1};actors.push_back({99,"vanguard","Enemy",1,{5,1}});auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},13);
     const auto old=unit(*c,id).persistent;check(c->submit(command(*c,"poison_spray",99)),"Ordinary party grants produce actual casting commands");p.begin_combat();p.apply_combat(c->snapshot());p.end_combat();
     check(p.member(id).vitals==old&&p.member(id).equipment.weapon_hands==2,"Cantrip handoff retains wounds, pools and chosen attack grip");
-    const auto saved=encode_campaign(p,nullptr,"poison");check(saved.starts_with(level==1?"OPENGOLD-CAMPAIGN 11\n":"OPENGOLD-CAMPAIGN 15\n"),"Cantrips retain their field; advancement training uses format 15");CampaignParty restored(module());restored.restore(decode_campaign(saved,*creation,*rules,"poison",nullptr).party);
+    const auto saved=encode_campaign(p,nullptr,"poison");check(saved.starts_with(level==1?"OPENGOLD-CAMPAIGN 11\n":"OPENGOLD-CAMPAIGN 16\n"),"Cantrips retain their field; independent Wizard advancement uses format 16");CampaignParty restored(module());restored.restore(decode_campaign(saved,*creation,*rules,"poison",nullptr).party);
     check(encode_campaign(restored,nullptr,"poison")==saved&&restored.member(id).character.creation_data().cantrips==p.member(id).character.creation_data().cantrips,"Replay preserves chosen cantrips, history and resources exactly");
     check(restored.member(id).wealth[3]==37&&restored.profile(id).data==p.profile(id).data,"Inventory, wealth, equipment and cast access retained");
 }}

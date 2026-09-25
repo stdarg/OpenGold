@@ -51,7 +51,7 @@ void turn_budget_tests()
     for(auto& roll:draft.rolls)roll={{6,5,4,1},3};
     auto sheet=srd5::character_rules()->evaluate(draft,true);VitalState unused;
     for(unsigned level=2;level<=3;++level){auto choice=module->default_advancement(sheet);
-        if(level==3)choice.spells={"magic_missile","scorching_ray"};
+        if(level==3)choice.spells={"magic_missile","scorching_ray","blindness"};
         check(module->advance_character(sheet,unused,choice),"Create a caster with level-two spells");}
     for(const auto verb:{"melee","ranged","fire_bolt","magic_missile","magic_missile_2","scorching_ray"})
     for(const bool move_first:{false,true}){

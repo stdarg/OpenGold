@@ -79,6 +79,7 @@ struct PartyState {
     std::uint64_t next_combat_scope{1};
     std::uint64_t next_rest_session{1};
     std::optional<ShortRestSession> short_rest;
+    std::optional<ShortRestSession> spell_rest; // Completed-rest choices, consumed once per member.
     std::optional<RestActivity> rest_activity;
     std::vector<DetachedPartyItem> detached_items;
 };
@@ -109,6 +110,10 @@ public:
     void advance(MemberId id,const rules::AdvancementChoice& choice);
     [[nodiscard]] PartyMember preview_training(MemberId id,const rules::CharacterRules& creation_rules,
         const rules::TrainingChoices& choices) const;
+    [[nodiscard]] rules::SpellChoiceOptions spell_choice_options(MemberId id,bool after_rest=false) const;
+    [[nodiscard]] PartyMember preview_spell_choices(MemberId id,const rules::SpellChoices&,bool after_rest=false) const;
+    void choose_spells(MemberId id,const rules::SpellChoices&,bool after_rest=false);
+    void keep_rest_spells(MemberId id);
     void complete_training(MemberId id,const rules::CharacterRules& creation_rules,const rules::TrainingChoices& choices);
     // Atomic original loot delivery. A full set of purses leaves it unclaimed.
     bool award_loot(const std::array<unsigned,7>& wealth,const std::vector<por::Equipment>& items,std::string reward_id);

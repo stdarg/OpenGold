@@ -153,7 +153,7 @@ void campaign(){
     const auto npc=party.recruit("test:npc",character("cleric","Companion"),100);
     const auto reserve=party.add_pc(character("fighter","Reserve"));party.remove(reserve);
     party.award_experience(900,"condition-test");
-    for(auto id:{pc,npc})for(unsigned level=2;level<=3;++level){auto choice=party.default_advancement(id);if(level==3)choice.spells={"blindness"};party.advance(id,choice);}
+    for(auto id:{pc,npc})for(unsigned level=2;level<=3;++level){auto choice=party.default_advancement(id);if(level==3&&!choice.spell_learning)choice.spells={"blindness"};party.advance(id,choice);}
     auto actors=party.participants();check(actors.size()==2,"PC and recruited NPC share participants");
     for(std::size_t i=0;i<actors.size();++i)actors[i].cell={int(i),0};actors.push_back({999,"bandit","Enemy",1,{10,0}});
     auto session=rules->create({{12,9,std::vector<std::uint8_t>(108)},actors},3);
@@ -188,13 +188,14 @@ void campaign(){
     const auto rest_save=encode_campaign(restored,nullptr,"conditions");
     CampaignParty rested_copy(module());rested_copy.restore(decode_campaign(rest_save,*srd5::character_rules(),*rules,"conditions",nullptr).party);
     check(encode_campaign(rested_copy,nullptr,"conditions")==rest_save,"Fractional rest completion survives saving");
+    while(restored.state().spell_rest)restored.keep_rest_spells(restored.state().spell_rest->members.front());
     restored.advance_time_milliseconds(960ULL*60000-1);check(!restored.rest(),"Rest cannot become eligible one millisecond early");
     restored.advance_time_milliseconds(1);check(restored.rest(),"Rest is eligible at the exact sixteen-hour boundary");
 }
 void original_encounter_scope(){
     auto party=std::make_shared<CampaignParty>(module());const auto id=party->add_pc(character("wizard","Expedition caster"));
     party->award_experience(900,"scope-test");
-    for(unsigned level=2;level<=3;++level){auto choice=party->default_advancement(id);if(level==3)choice.spells={"blindness"};party->advance(id,choice);}
+    for(unsigned level=2;level<=3;++level){auto choice=party->default_advancement(id);if(level==3&&!choice.spell_learning)choice.spells={"blindness"};party->advance(id,choice);}
     auto state=party->checkpoint();state.next_combat_scope=11;party->restore(state);
     CombatDemo demo(module());demo.campaign_party(party);
     CampaignEncounter encounter;encounter.field.geometry={40,25,std::vector<std::uint8_t>(1000)};

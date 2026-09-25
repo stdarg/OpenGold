@@ -87,6 +87,12 @@ std::vector<Character> character_pool(const rules::CharacterRules& rules,const p
         if(cantrips.count){d.cantrips.emplace();for(const auto& option:cantrips.options){
             if(d.cantrips->size()==cantrips.count)break;d.cantrips->push_back(option.id);
         }}
+        const auto spell_options=rules.spell_choice_options(d);
+        if(spell_options.may_prepare){
+            d.spells=SpellChoices{};
+            for(const auto& group:spell_options.learning)for(const auto& option:group.options){auto& values=d.spells->learning[group.id];if(values.size()==group.count)break;values.push_back(option.id);}
+            d.spells->prepared.emplace();for(const auto& option:rules.spell_choice_options(d).preparation){if(d.spells->prepared->size()==spell_options.prepared_count)break;d.spells->prepared->push_back(option.id);}
+        }
         por::CharacterAppearance appearance;
         appearance.portrait_head=por::matching_portrait_head(d.race,d.gender).value_or(art.heads.begin()->first);
         if(!art.heads.contains(appearance.portrait_head))appearance.portrait_head=art.heads.begin()->first;

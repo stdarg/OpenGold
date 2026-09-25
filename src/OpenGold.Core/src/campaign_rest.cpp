@@ -29,7 +29,7 @@ std::vector<MemberRestInfo> CampaignParty::rest_info(RestKind kind) const
             }
         }
         if(combat_)info.denial=RestDenial::combat;
-        else if(state_.short_rest)info.denial=RestDenial::spending;
+        else if(state_.short_rest||state_.spell_rest)info.denial=RestDenial::spending;
         else if(state_.rest_activity)info.denial=RestDenial::activity;
         else if(!info.recovery.can_rest)info.denial=RestDenial::vitality;
         else if(info.wait_milliseconds)info.denial=RestDenial::cooldown;
@@ -185,7 +185,13 @@ std::optional<RestResult> CampaignParty::advance_rest(RestTicket ticket,std::uin
     }else if(outcome.benefit==rules::RestBenefit::long_rest)for(auto id:activity.members){
         auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});
         if(!rules_->recovery_info(member.character.sheet(),member.vitals).can_rest)continue;
-        rules_->recover(member.vitals,member.character.sheet());result.members.push_back(id);member.last_rest_minutes=next.time_minutes;member.last_rest_subminute_milliseconds=next.subminute_milliseconds;
+        rules_->recover(member.vitals,member.character.sheet());
+        const auto choices=rules_->spell_choice_options(member.character.sheet(),rules::SpellChoiceContext::long_rest);
+        if(choices.may_prepare||choices.may_replace){
+            if(!next.spell_rest)next.spell_rest=ShortRestSession{activity.ticket,next.time_minutes,next.subminute_milliseconds,{}};
+            next.spell_rest->members.push_back(id);
+        }
+        result.members.push_back(id);member.last_rest_minutes=next.time_minutes;member.last_rest_subminute_milliseconds=next.subminute_milliseconds;
     }
     if(outcome.progress)static_cast<rules::RestProgress&>(activity)=*outcome.progress;
     else {apply_rest_work(next,activity.members,RestWork::light_activity);recover_camp(next);next.rest_activity.reset();}
@@ -217,7 +223,7 @@ bool CampaignParty::prepare_combat()
     if(state_.rest_activity&&!state_.rest_activity->interrupted){
         auto next=state_;interrupt_rest_state(next,RestInterruption::initiative);state_=std::move(next);
     }
-    return !state_.short_rest;
+    return !state_.short_rest&&!state_.spell_rest;
 }
 void CampaignParty::require_rest_ticket(RestTicket ticket) const
 {

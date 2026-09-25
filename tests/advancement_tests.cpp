@@ -177,7 +177,7 @@ void spells(){
     for(const char* klass:{"wizard","cleric"}){
         CampaignParty party(module());const auto id=party.add_pc(character(klass));party.award_experience(2700,"xp");
         for(unsigned level=2;level<=4;++level){auto choice=party.default_advancement(id);
-            if(std::string_view(klass)=="cleric")choice.spells={"cure_wounds","healing_word"};else if(level>=3)choice.spells={"magic_missile","scorching_ray"};
+            if(std::string_view(klass)=="cleric")choice.spells={"cure_wounds","healing_word"};else if(level>=3)choice.spells={"magic_missile","scorching_ray","blindness"};
             party.advance(id,choice);}
         auto state=party.checkpoint();state.roster[0].vitals.hit_points-=10;party.restore(std::move(state));
         auto rules=module();auto combat=duel(*rules,party);

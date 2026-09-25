@@ -39,7 +39,7 @@ void creation(){auto rules=module();auto creation=srd5::character_rules();
 }
 void progression(){auto rules=module();CampaignParty party(module());const auto id=party.add_pc(hero());party.award_experience(2700,"spells-xp");
     const int deficit=party.member(id).character.sheet().hit_points-5;auto state=party.checkpoint();state.roster[0].vitals={5,false,"SRD7 0 1 0 0 0 0 1 0 0 7 \"spell:fixture\" 1 FX1 1 0"};party.restore(state);
-    for(unsigned level=2;level<=4;++level){auto choice=party.default_advancement(id);choice.spells=level==2?std::vector<std::string>{"magic_missile"}:level==3?std::vector<std::string>{"scorching_ray","blindness"}:std::vector<std::string>{"magic_missile"};
+    for(unsigned level=2;level<=4;++level){auto choice=party.default_advancement(id);
         const auto before=saved(party);auto bad=choice;bad.spells={"shield"};rejects([&]{party.advance(id,bad);});check(saved(party)==before,"Rejected learning changes no state, RNG, XP or history");
         const auto preview=party.preview_advancement(id,choice);check(saved(party)==before,"Preview is isolated");party.advance(id,choice);
         const auto& member=party.member(id);const auto access=rules->spell_access(member.character.sheet());
@@ -49,7 +49,7 @@ void progression(){auto rules=module();CampaignParty party(module());const auto 
         if(level>=3){check(access.spellbook[1].acquired_level==3&&access.spellbook[2].acquired_level==3,"New entries retain first learning level rather than latest preparation level");}
         check(member.vitals.hit_points==member.character.sheet().hit_points-deficit,"Advancement preserves wounds");const auto info=rules->recovery_info(member.character.sheet(),member.vitals);check(info.temporary_hp.amount==7&&std::any_of(info.resources.begin(),info.resources.end(),[](const auto& r){return r.id=="adrenaline_rush"&&r.remaining==1;}),"Spellbook changes preserve sourced Temporary HP and spent Adrenaline Rush");
         const auto bytes=saved(party);CampaignParty restored(module());restored.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"spell-access",nullptr).party);check(saved(restored)==bytes,"Canonical grant/history reconstruction retains unprepared book entries and resource state");
-        auto c=battle(*rules,restored.member(id).character.sheet(),restored.member(id).vitals);check(has(*c,"fire_bolt")&&has(*c,"magic_missile")== (level!=3)&&has(*c,"scorching_ray")== (level==3)&&has(*c,"blindness")== (level==3),"Actual casting availability comes from known cantrips and current preparation, not all book entries");
+        auto c=battle(*rules,restored.member(id).character.sheet(),restored.member(id).vitals);check(has(*c,"fire_bolt")&&has(*c,"magic_missile")&&has(*c,"scorching_ray")== (level>=3)&&has(*c,"blindness")== (level>=3),"Actual casting availability comes from known cantrips and current preparation, not all book entries");
         auto copy=rules->restore(c->save());const auto ticket=command(*c,level==3?"scorching_ray":"magic_missile");check(c->submit(ticket)&&copy->submit(ticket)&&c->save()==copy->save(),"Chosen spell continues exactly after checkpoint restore");
         const auto after=c->save();check(!c->submit(ticket)&&c->save()==after,"Stale cast preserves slots, actions and RNG");check(!has(*c,"magic_missile")&&!has(*c,"scorching_ray"),"One spell slot per turn remains enforced");
     }
@@ -109,5 +109,6 @@ void capture_wizard_choices(){
     }
 }
 
+#include "wizard_choices_checks.h"
 }
-int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--capture-wizard-choices"){capture_wizard_choices();return 0;}check(argc==1,"Unexpected argument");creation();progression();invalid();legacy();std::cout<<"Spell access tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==3&&std::string_view(argv[1])=="--verify-wizard-ui"){verify_wizard_ui(argv[2]);return 0;}if(argc==2&&std::string_view(argv[1])=="--capture-wizard-choices"){capture_wizard_choices();return 0;}check(argc==1,"Unexpected argument");creation();progression();invalid();legacy();wizard_choices_checks();write_wizard_ui_fixture();std::cout<<"Spell access tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

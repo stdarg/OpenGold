@@ -213,7 +213,7 @@ void roundtrip(const std::filesystem::path& directory){
     }
     auto party=std::make_shared<CampaignParty>(module());auto fighter=party->add_pc(character("fighter"));auto mage=party->add_pc(character("wizard"));auto reserve=party->add_pc(character("bard"));party->remove(reserve);
     party->set_wealth(fighter,{0,0,0,500,0,0,2});por::Equipment sword;sword.stored.type=36;sword.stored.stack_size=1;sword.stored.value=10;party->purchase(fighter,sword);party->equip(fighter,1);
-    party->award_experience(300,"save:encounter");party->advance(fighter,party->default_advancement(fighter));party->advance(mage,party->default_advancement(mage));check(party->rest(),"Initial rest");
+    party->award_experience(300,"save:encounter");party->advance(fighter,party->default_advancement(fighter));party->advance(mage,party->default_advancement(mage));check(party->rest(),"Initial rest");party->keep_rest_spells(mage);
     auto state=party->checkpoint();state.roster[0].vitals.hit_points=1;state.roster[1].vitals.resources="SRD1 0 1 0 0 0";party->restore(state);party->temple_heal(fighter);
     auto town=prototype();town.campaign_party(party);settle(town);town.explore(por::ExplorationCommand::look);settle(town);
     auto path=directory/std::filesystem::u8path("named save ü.ogs");const auto saved=encode_campaign(*party,&town,"fixture-v1");write_campaign_file(path,saved);

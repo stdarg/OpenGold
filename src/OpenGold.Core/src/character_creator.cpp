@@ -57,6 +57,7 @@ void CharacterCreator::select(CreationField field,std::string_view id)
     case CreationField::background:candidate.background=id;candidate.adjustment=0;break;
     }
     if(field==CreationField::character_class&&candidate.character_class!=draft_.character_class){
+        candidate.spells.reset();
         const auto previous=rules_->training_options(draft_),next=rules_->training_options(candidate);
         for(const auto& old:previous){
             if(old.continuity_id.empty())continue;
@@ -84,6 +85,36 @@ void CharacterCreator::cantrip_choice(std::string_view option,bool selected)
         choices.emplace_back(option);
     }else if(!selected&&found!=choices.end())choices.erase(found);
     draft_=std::move(candidate);
+}
+void CharacterCreator::spell_choice(std::string_view group,std::string_view option,bool selected){
+    require_editable();const auto options=rules_->spell_choice_options(draft_);auto next=draft_;if(!next.spells)next.spells.emplace();
+    std::vector<std::string>* values{};unsigned count{};const std::vector<CreationChoice>* available{};
+    if(group=="prepared"){
+        if(!options.may_prepare)throw std::runtime_error("Preparation is unavailable");
+        if(!next.spells->prepared)next.spells->prepared.emplace();values=&*next.spells->prepared;count=options.prepared_count;available=&options.preparation;
+    }else{
+        const auto found=std::find_if(options.learning.begin(),options.learning.end(),[&](const auto& g){return g.id==group;});
+        if(found==options.learning.end())throw std::runtime_error("Unknown spell choice group");
+        values=&next.spells->learning[std::string(group)];count=found->count;available=&found->options;
+    }
+    if(std::none_of(available->begin(),available->end(),[&](const auto& o){return o.id==option;}))throw std::runtime_error("Unknown spell choice");
+    const auto found=std::find(values->begin(),values->end(),option);
+    if(selected&&found==values->end()){if(values->size()>=count)throw std::runtime_error("Spell choice limit reached");values->emplace_back(option);}
+    else if(!selected&&found!=values->end())values->erase(found);
+    if(group!="prepared"&&next.spells->prepared){
+        // A removed book entry cannot remain prepared in a draft.
+        const auto before=*next.spells->prepared;next.spells->prepared->clear();
+        const auto current=rules_->spell_choice_options(next);
+        for(const auto& id:before)if(std::any_of(current.preparation.begin(),current.preparation.end(),[&](const auto& o){return o.id==id;}))next.spells->prepared->push_back(id);
+    }
+    (void)rules_->evaluate(next,false);draft_=std::move(next);
+}
+bool CharacterCreator::spell_choices_complete() const {
+    const auto options=rules_->spell_choice_options(draft_);if(!options.may_prepare)return true;
+    if(!draft_.spells)return false;
+    const auto cantrips=rules_->cantrip_options(draft_);if(!draft_.cantrips||draft_.cantrips->size()!=std::min<std::size_t>(cantrips.count,cantrips.options.size()))return false;
+    for(const auto& group:options.learning){const auto found=draft_.spells->learning.find(group.id);if((found==draft_.spells->learning.end()?0:found->second.size())!=std::min<std::size_t>(group.count,group.options.size()))return false;}
+    return draft_.spells->prepared&&draft_.spells->prepared->size()==std::min<std::size_t>(options.prepared_count,options.preparation.size());
 }
 void CharacterCreator::prune_training(CharacterDraft& candidate) const
 {
@@ -182,12 +213,14 @@ Character CharacterCreator::create_character() const
 void CharacterCreator::next()
 {
     if(step_==CreationStep::sheet)return;
+    if(step_>=CreationStep::spell_choices&&!spell_choices_complete())throw std::runtime_error("Complete available spell choices.");
     if(step_>=CreationStep::training&&!training_complete())throw std::runtime_error("Complete the required training choices.");
     if(step_>=CreationStep::attributes)(void)rules_->evaluate(draft_,step_>=CreationStep::name);
     if(step_>=CreationStep::character_class&&!rules_->class_eligible(draft_,draft_.character_class))
         throw std::runtime_error("Choose a qualified starting class. Requires "+rules_->class_requirements(draft_.character_class).description+".");
     step_=static_cast<CreationStep>(static_cast<unsigned>(step_)+1);
     if(step_==CreationStep::spell_choices&&rules_->cantrip_options(draft_).options.empty())step_=CreationStep::name;
+    if(step_==CreationStep::spell_choices&&!draft_.spells&&rules_->spell_choice_options(draft_).may_prepare)draft_.spells=SpellChoices{};
 }
 void CharacterCreator::back()
 {if(step_!=CreationStep::race)step_=static_cast<CreationStep>(static_cast<unsigned>(step_)-1);

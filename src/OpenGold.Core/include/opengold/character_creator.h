@@ -21,6 +21,8 @@ public:
     void target_class(std::string_view id,bool selected);
     void select_adjustment(unsigned index);
     void training_choice(std::string_view group,std::string_view option,bool selected);
+    void spell_choice(std::string_view group,std::string_view option,bool selected);
+    [[nodiscard]] bool spell_choices_complete() const;
     void cantrip_choice(std::string_view option,bool selected);
     [[nodiscard]] bool training_complete() const;
     void roll();

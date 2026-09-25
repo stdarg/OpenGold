@@ -8,6 +8,12 @@
 namespace opengold {
 // A finished character owns its data. It does not borrow from the creator,
 // rules module, art archives or Godot, and can be copied into a roster later.
+struct SpellChoiceEdit {
+    unsigned level{};
+    std::uint64_t rest_session{}; // Zero is a pending-knowledge completion.
+    rules::SpellChoices choices;
+    bool operator==(const SpellChoiceEdit&) const = default;
+};
 class Character {
 public:
     Character(const rules::CharacterRules& rules,rules::CharacterDraft creation,por::CharacterAppearance appearance);
@@ -19,6 +25,8 @@ public:
     [[nodiscard]] Inventory& inventory() {return inventory_;}
     bool advance(const rules::RulesModule& rules, rules::VitalState& state);
     bool advance(const rules::RulesModule& rules,rules::VitalState& state,const rules::AdvancementChoice& choice);
+    void choose_spells(const rules::RulesModule&,const rules::SpellChoices&,std::uint64_t rest_session=0,bool require_complete=true);
+    [[nodiscard]] const auto& spell_edits() const {return spell_edits_;}
     [[nodiscard]] const auto& advancements() const {return advancements_;}
     // Reconstructs a candidate with missing training filled and the same history.
     // Existing selections cannot be replaced; this does not mutate live vitals.
@@ -31,6 +39,7 @@ private:
     por::CharacterAppearance appearance_;
     Inventory inventory_;
     std::vector<rules::AdvancementChoice> advancements_;
+    std::vector<SpellChoiceEdit> spell_edits_;
 };
 }
 #endif

@@ -27,7 +27,7 @@ void choices_and_sources(){
             const auto check_result=rules->ability_check(sheet,{},trained.ability,name);
             check(trained.expertise&&check_result.expertise&&check_result.proficiency==4&&trained.bonus==sheet.modifiers[trained.ability]+4,"Expertise doubles proficiency exactly once at every supported level");
             check(std::any_of(trained.sources.begin(),trained.sources.end(),[](const auto& grant){return grant.source_id==source&&grant.level==2;}),"Scholar source remains level two");
-            const auto bytes=encode_campaign(party,nullptr,"scholar");check(bytes.starts_with("OPENGOLD-CAMPAIGN 15\n"),"Advancement training selects campaign format 15");
+            const auto bytes=encode_campaign(party,nullptr,"scholar");check(bytes.starts_with("OPENGOLD-CAMPAIGN 16\n"),"Independent Wizard spell history selects campaign format 16");
             CampaignParty restored(module());restored.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"scholar",nullptr).party);
             check(encode_campaign(restored,nullptr,"scholar")==bytes,"Current Scholar campaign round trip is exact");
             auto forged=sheet;for(auto& g:forged.grants)if(g.source_id==source)g.level=1;
@@ -70,7 +70,7 @@ void previous_writer(){
         const auto bytes=encode_campaign(party,nullptr,"scholar-baseline");CampaignParty restored(prior_module());restored.restore(decode_campaign(bytes,editor.rules(),*rules,"scholar-baseline",nullptr).party);
         check(bytes==encode_campaign(restored,nullptr,"scholar-baseline"),"Reviewed legacy character reloads exactly");
     }
-    auto expected=[](std::string bytes){replace(bytes,"0.6.49","0.6.50");return bytes;};
+    auto expected=[&](std::string bytes){replace(bytes,"0.6.49",rules->identity().version);return bytes;};
     auto combat=rules->restore(fixture("combat-scholar-before.save"));
     check(combat->save()==expected(fixture("combat-scholar-before.save")),"Actual old combat round trip is unchanged");
     auto act=[&](std::string_view verb){for(const auto& command:combat->legal_commands())if(command.verb==verb){check(combat->submit(command),"Accept continued command");return;}throw std::runtime_error("Missing continued command");};

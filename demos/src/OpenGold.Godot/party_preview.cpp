@@ -70,7 +70,7 @@ void CharacterCreationView::setup_party()
     get_node<Button>("PartyPanel/Modifiers")->connect("pressed",callable_mp(this,&CharacterCreationView::show_modifiers));
     get_node<Button>("PartyPanel/SavingThrows")->connect("pressed",callable_mp(this,&CharacterCreationView::show_saving_throws));
     get_node<RichTextLabel>("PartyPanel/Sheet")->set_use_bbcode(true);
-    setup_saves();setup_defeat();setup_advancement();setup_training_review();
+    setup_saves();setup_defeat();setup_advancement();setup_training_review();setup_spellbook();
     party_check_=OS::get_singleton()->get_cmdline_user_args().has("--party-check");party_layout();
     expedition_check_=OS::get_singleton()->get_cmdline_user_args().has("--expedition-check");
 }
@@ -89,7 +89,8 @@ void CharacterCreationView::party_layout()
     place("PartyPanel/ReadyLabel",Rect2(w-284,488,120,24));
     place("PartyPanel/ActionLabel",Rect2(w-140,488,120,24));
     place("PartyPanel/Inventory",Rect2(350,h-280,w-374,96));
-    place("PartyPanel/ReviewTraining",Rect2(710,h-176,w-734,36));
+    place("PartyPanel/ReviewTraining",Rect2(610,h-176,w-844,36));
+    place("PartyPanel/Spellbook",Rect2(w-224,h-176,200,36));
     const std::array<const char*,9> buttons{"Create","Remove","Rejoin","Recruit","Equip","Unequip","Explore","Combat","Close"};
     const double bw=(w-64)/5;
     for(unsigned i=0;i<buttons.size();++i)place((std::string("PartyPanel/")+buttons[i]).c_str(),Rect2(24+(i%5)*(bw+4),h-125+(i/5)*44,bw,36));
@@ -131,6 +132,9 @@ void CharacterCreationView::refresh_party()
         }
     }
     if(state.roster.empty())for(const char* name:{"PartyPanel/Portrait","PartyPanel/ReadySprite","PartyPanel/ActionSprite"})get_node<TextureRect>(name)->set_texture({});
+    auto* spellbook=get_node<Button>("PartyPanel/Spellbook");
+    spellbook->set_visible(!state.roster.empty()&&campaign_->rule_module().spell_access(state.roster[roster_index_].character.sheet()).spellbook_choices>0);
+    spellbook->set_disabled(campaign_->in_combat()||state.rest_activity.has_value()||state.short_rest.has_value()||state.spell_rest.has_value());
     auto* review=get_node<Button>("PartyPanel/ReviewTraining");
     review->set_visible(!state.roster.empty()&&!state.roster[roster_index_].character.sheet().training.complete);
     review->set_disabled(campaign_->in_combat());

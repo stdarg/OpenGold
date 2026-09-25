@@ -46,6 +46,15 @@ public:
     std::optional<int> ability_score(const CharacterDraft& draft,unsigned ability) const override;
     CharacterSheet evaluate(const CharacterDraft& draft,bool require_name) const override;
     std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft) const override {return detail::training_options(draft);}
+    SpellChoiceOptions spell_choice_options(const CharacterDraft& draft) const override {
+        if(draft.character_class!="wizard")return {};
+        auto base=draft;base.spells=SpellChoices{};
+        auto sheet=evaluate(base,false);auto options=detail::spell_choice_options(sheet,SpellChoiceContext::advancement);
+        std::erase_if(options.learning,[](const auto& g){return g.id.starts_with("cantrips:");});
+        const auto selected=evaluate(draft,false);
+        options.preparation=detail::spell_choice_options(selected,SpellChoiceContext::advancement).preparation;
+        return options;
+    }
     TrainingChoiceGroup cantrip_options(const CharacterDraft& draft) const override {return detail::starting_cantrip_options(draft.character_class);}
     AbilityCheckModifier ability_check(const CharacterSheet& sheet,unsigned ability,std::string_view skill,std::string_view tool) const override {
         return detail::ability_check(sheet.grants,detail::grant_source_id(sheet.character_class),detail::grant_source_id(sheet.background),sheet.level,sheet.scores,ability,skill,tool);
@@ -196,6 +205,11 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
     const auto spells=detail::starting_spell_grants(d.character_class,d.cantrips);
     s.grants.insert(s.grants.end(),spells.begin(),spells.end());
     if(d.character_class=="wizard")s.prepared_spells={"magic_missile"};
+    if(d.spells){
+        if(d.character_class!="wizard")throw std::runtime_error("Spellbook choices require a Wizard");
+        std::erase_if(s.grants,[](const auto& g){return g.id=="spell:magic_missile";});s.prepared_spells.clear();
+        detail::apply_spell_choices(s,*d.spells,SpellChoiceContext::advancement,false);
+    }
     return s;
 }
 }

@@ -86,6 +86,7 @@ func run_checks() -> void:
         for size in [Vector2i(1120,800), Vector2i(1920,1080)]:
             root.size = size; await settle(); current_scene.get_node("LevelUp").popup_centered(); await settle(); await capture("scholar-level-up-%s-%d" % [locale,size.x])
         await press("LevelUp/Confirm")
+        await press("LevelUp/Confirm") # Wizard spell page follows the Scholar selection.
         require(not current_scene.get_node("LevelUp").visible, "Scholar level-up confirmed")
         for id in [1, 2]:
             list.select(id); list.item_selected.emit(id); await settle()

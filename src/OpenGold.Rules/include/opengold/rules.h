@@ -27,11 +27,26 @@ struct TrainingChoiceGroup {
     std::string continuity_id; // Same choice purpose across changing source entitlements.
     unsigned acquired_level{1};
 };
+enum class SpellChoiceContext { pending, advancement, long_rest };
+struct SpellChoices {
+    TrainingChoices learning;
+    std::optional<std::vector<std::string>> prepared;
+    std::string replace_cantrip, replacement;
+    bool operator==(const SpellChoices&) const = default;
+};
+struct SpellChoiceOptions {
+    std::vector<TrainingChoiceGroup> learning;
+    std::vector<CreationChoice> preparation, replaceable, replacements;
+    std::vector<std::string> locked_prepared;
+    unsigned prepared_count{};
+    bool may_prepare{}, may_replace{};
+};
 struct AdvancementChoice {
     std::string feat;
     std::array<unsigned,6> abilities{};
     std::vector<std::string> spells;
     TrainingChoices training;
+    std::optional<TrainingChoices> spell_learning; // Absent only for historical advancement replay.
     bool operator==(const AdvancementChoice&) const = default;
 };
 struct AdvancementOption {std::string id,label,description;bool available{true};};
@@ -271,6 +286,8 @@ public:
     [[nodiscard]] virtual EquipmentState migrate_equipment(std::span<const std::string>) const {return {};}
     [[nodiscard]] virtual EquipmentInfo equipment_info(std::string_view) const {return {};}
     [[nodiscard]] virtual SpellAccess spell_access(const CharacterSheet&) const {return {};}
+    [[nodiscard]] virtual SpellChoiceOptions spell_choice_options(const CharacterSheet&,SpellChoiceContext) const {return {};}
+    virtual void apply_spell_choices(CharacterSheet&,const SpellChoices&,SpellChoiceContext,bool require_complete=true) const;
     [[nodiscard]] virtual AbilityCheckModifier ability_check(const CharacterSheet&,std::span<const std::string> gear,
         unsigned ability,std::string_view skill={},std::string_view tool={},EquipmentState equipment={}) const;
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;

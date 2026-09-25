@@ -283,5 +283,12 @@
   "Scholar Expertise",
   "Choose a proficient skill",
   "Complete required advancement training",
-  "Invalid advancement training choice"
+  "Invalid advancement training choice",
+  "Complete available spell choices.",
+  "Complete the available spell choices.",
+  "Finish Long Rest spell choices before advancing time",
+  "Finish Long Rest spell choices before changing the party",
+  "Finish Long Rest spell choices before combat",
+  "Independent spell learning choices are required",
+  "No supported missing spell choices."
 ]

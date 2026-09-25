@@ -12,6 +12,8 @@ rules::SpellAccess spell_access(std::span<const rules::FeatureGrant>,std::string
 // Existing advancement selections learn any newly selected book spell and
 // retain every earlier entry. Copying and preparation controls are separate.
 void learn_advancement_spells(rules::CharacterSheet&,std::span<const std::string> selected);
+rules::SpellChoiceOptions spell_choice_options(const rules::CharacterSheet&,rules::SpellChoiceContext);
+void apply_spell_choices(rules::CharacterSheet&,const rules::SpellChoices&,rules::SpellChoiceContext,bool require_complete=true);
 unsigned known_cantrip_mask(const rules::SpellAccess&);
 unsigned wizard_casting_mask(const rules::SpellAccess&);
 }

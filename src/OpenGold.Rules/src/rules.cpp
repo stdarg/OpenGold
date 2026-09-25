@@ -11,6 +11,8 @@ AbilityCheckModifier RulesModule::ability_check(const CharacterSheet&,std::span<
 { throw std::runtime_error("This rules module does not support equipped ability checks"); }
 unsigned RulesModule::experience_for_level(unsigned) const
 { throw std::runtime_error("This rules module does not support advancement"); }
+void RulesModule::apply_spell_choices(CharacterSheet&,const SpellChoices&,SpellChoiceContext,bool) const
+{throw std::runtime_error("Spell choices are not supported");}
 bool RulesModule::advance_character(CharacterSheet&, VitalState&) const
 { throw std::runtime_error("This rules module does not support advancement"); }
 bool RulesModule::advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const

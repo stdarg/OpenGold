@@ -108,16 +108,21 @@ SpellAccess spell_access(std::span<const FeatureGrant> grants,std::string_view k
     for(const auto& g:grants)if(is_spell_grant(g)){
         require(g.source_id==source&&g.level>=1&&g.level<=level&&known.insert(g.id).second);
         const auto& spell=find(std::string_view(g.id).substr(6));require(spell.id!="sacred_flame"&&spell.id!="eldritch_blast");
-        require(g==grant(spell.id,g.level));
+        auto expected=grant(spell.id,g.level);
+        unsigned learned=g.level;
+        if(const auto replacement=g.choices.find("learned_at");replacement!=g.choices.end()){
+            require(spell.level==0);
+            bool valid=false;for(unsigned n=g.level;n<=level;++n)if(replacement->second==std::to_string(n)){learned=n;valid=true;}
+            require(valid);expected.choices.emplace("learned_at",replacement->second);
+        }
+        require(g==expected);
         require(spell.level==0||spell.level<=(g.level>=3?2u:1u));
         auto& list=spell.level?result.spellbook:result.cantrips;
-        list.push_back({std::string(spell.id),std::string(spell.label),g.source_id,g.level});
+        list.push_back({std::string(spell.id),std::string(spell.label),g.source_id,learned});
         if(spell.level)++books[g.level];else ++cantrips[g.level];
     }
     require(books[1]<=6&&cantrips[1]<=3&&cantrips[2]==0&&cantrips[3]==0&&cantrips[4]<=1);
     for(unsigned n=2;n<=level;++n)require(books[n]<=2);
-    // Book selection controls remain separate; cantrips are now explicit.
-    require(std::find(grants.begin(),grants.end(),grant("magic_missile",1))!=grants.end());
     std::set<std::string> selected;
     for(const auto& id:prepared){
         require(selected.insert(id).second&&std::any_of(result.spellbook.begin(),result.spellbook.end(),[&](const auto& s){return s.id==id;}));
@@ -131,6 +136,62 @@ void learn_advancement_spells(CharacterSheet& sheet,std::span<const std::string>
     for(const auto& id:selected){require(find(id).level!=0);
         if(std::none_of(next.begin(),next.end(),[&](const auto& g){return g.id=="spell:"+id;}))next.push_back(grant(id,sheet.level));}
     (void)spell_access(next,sheet.character_class,sheet.level,selected);sheet.grants=std::move(next);
+}
+SpellChoiceOptions spell_choice_options(const CharacterSheet& sheet,SpellChoiceContext context){
+    SpellChoiceOptions result;if(sheet.character_class!="Wizard")return result;
+    const auto access=spell_access(sheet.grants,sheet.character_class,sheet.level,sheet.prepared_spells);
+    auto known=[&](std::string_view id){return std::any_of(sheet.grants.begin(),sheet.grants.end(),[&](const auto& g){return g.id=="spell:"+std::string(id);});};
+    if(context!=SpellChoiceContext::long_rest)for(unsigned level=1;level<=unsigned(sheet.level);++level){
+        if(context==SpellChoiceContext::advancement&&level!=unsigned(sheet.level))continue;
+        for(bool cantrip:{true,false}){
+            const unsigned capacity=cantrip?(level==1?3:level==4?1:0):(level==1?6:2);
+            const unsigned used=std::count_if(sheet.grants.begin(),sheet.grants.end(),[&](const auto& g){return is_spell_grant(g)&&g.level==level&&(find(std::string_view(g.id).substr(6)).level==0)==cantrip;});
+            if(capacity==used)continue;
+            TrainingChoiceGroup group;group.id=std::string(cantrip?"cantrips:":"spellbook:")+std::to_string(level);
+            group.label=cantrip?"Wizard cantrips":"Spellbook";group.count=capacity-used;group.acquired_level=level;
+            for(const auto& spell:spells)if((spell.level==0)==cantrip&&spell.id!="sacred_flame"&&spell.id!="eldritch_blast"&&
+                spell.level<=(level>=3?2u:1u)&&!known(spell.id))group.options.push_back({std::string(spell.id),std::string(spell.label),{}});
+            result.learning.push_back(std::move(group));
+        }
+    }
+    result.prepared_count=access.prepared_choices;
+    result.may_prepare=context!=SpellChoiceContext::pending;
+    for(const auto& spell:access.spellbook)result.preparation.push_back({spell.id,spell.label,{}});
+    if(context==SpellChoiceContext::advancement)result.locked_prepared=sheet.prepared_spells;
+    result.may_replace=context==SpellChoiceContext::long_rest;
+    if(result.may_replace){
+        for(const auto& spell:access.cantrips)result.replaceable.push_back({spell.id,spell.label,{}});
+        for(const auto& choice:starting_cantrip_options("wizard").options)if(!known(choice.id))result.replacements.push_back(choice);
+    }
+    return result;
+}
+void apply_spell_choices(CharacterSheet& sheet,const SpellChoices& choices,SpellChoiceContext context,bool complete){
+    require(sheet.character_class=="Wizard");auto candidate=sheet;
+    if(complete&&context==SpellChoiceContext::pending&&std::none_of(choices.learning.begin(),choices.learning.end(),[](const auto& entry){return !entry.second.empty();}))throw std::runtime_error("No supported missing spell choices.");
+    const auto options=spell_choice_options(sheet,context);
+    for(const auto& [id,values]:choices.learning){
+        const auto group=std::find_if(options.learning.begin(),options.learning.end(),[&](const auto& g){return g.id==id;});
+        require(group!=options.learning.end()&&values.size()<=group->count);
+        for(const auto& value:values){require(std::any_of(group->options.begin(),group->options.end(),[&](const auto& o){return o.id==value;}));candidate.grants.push_back(grant(value,group->acquired_level));}
+    }
+    require(choices.replace_cantrip.empty()==choices.replacement.empty());
+    if(!choices.replace_cantrip.empty()){
+        require(options.may_replace&&std::any_of(options.replaceable.begin(),options.replaceable.end(),[&](const auto& o){return o.id==choices.replace_cantrip;})&&
+            std::any_of(options.replacements.begin(),options.replacements.end(),[&](const auto& o){return o.id==choices.replacement;}));
+        auto existing=std::find_if(candidate.grants.begin(),candidate.grants.end(),[&](const auto& g){return g.id=="spell:"+choices.replace_cantrip;});
+        *existing=grant(choices.replacement,existing->level);existing->choices.emplace("learned_at",std::to_string(sheet.level));
+    }
+    if(choices.prepared){
+        require(options.may_prepare);
+        for(const auto& id:options.locked_prepared)require(std::find(choices.prepared->begin(),choices.prepared->end(),id)!=choices.prepared->end());
+        candidate.prepared_spells=*choices.prepared;
+    }
+    const auto access=spell_access(candidate.grants,candidate.character_class,candidate.level,candidate.prepared_spells);
+    if(complete){
+        for(const auto& group:spell_choice_options(candidate,context).learning)if(!group.options.empty()&&group.count)throw std::runtime_error("Complete the available spell choices.");
+        if(options.may_prepare)require(candidate.prepared_spells.size()==std::min<std::size_t>(access.prepared_choices,access.spellbook.size()));
+    }
+    sheet=std::move(candidate);
 }
 unsigned known_cantrip_mask(const SpellAccess& access){
     unsigned result=0;for(const auto& s:access.cantrips)result|=find(s.id).mask;return result;

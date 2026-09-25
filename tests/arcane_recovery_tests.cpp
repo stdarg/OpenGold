@@ -179,6 +179,7 @@ void recovery_transactions() {
         check(remaining(party.recovery_info(1),"arcane_recovery")==1&&party.recovery_info(1).choices.empty(),
               "Long Rest restores the use and full slots leave no recovery choice");
         rejected(party,[&]{(void)party.recover_rest_choice(ticket,1,choice.id);});
+        party.keep_rest_spells(1);
         (void)party.rest(RestKind::short_rest);
         rejected(party,[&]{(void)party.recover_rest_choice(party.state().short_rest->ticket,1,choice.id);});
         check(remaining(party.recovery_info(1),"arcane_recovery")==1,

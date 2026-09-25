@@ -208,7 +208,8 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_scholar=magic=="PC33";
+    const bool with_choices=magic=="PC34";
+    const bool with_scholar=magic=="PC33"||with_choices;
     const bool with_arcane=magic=="PC32"||with_scholar;
     const bool with_champion=magic=="PC31"||with_arcane;
     const bool with_mind=magic=="PC30"||with_champion;
@@ -310,6 +311,7 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
                 if(selected_spells&16)prepared.push_back("scorching_ray");
                 if(selected_spells&32)prepared.push_back("blindness");
             }
+            if(!with_choices&&klass=="Wizard"&&(std::none_of(grants.begin(),grants.end(),[](const auto& g){return g.id=="spell:magic_missile"&&g.level==1;})||std::any_of(grants.begin(),grants.end(),[](const auto& g){return detail::is_spell_grant(g)&&g.choices.contains("learned_at");})))throw std::runtime_error("Invalid legacy Wizard knowledge");
             const auto access=detail::spell_access(grants,klass,level,prepared);
             if(klass=="Sorcerer"&&((!with_sorcerer&&!access.cantrips.empty())||detail::known_cantrip_mask(access)!=selected_spells))
                 throw std::runtime_error("Character cantrip access disagrees with Sorcerer grants");
@@ -1559,7 +1561,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
@@ -1576,6 +1578,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::vector<Actor> actors;
     for (unsigned i = 0; i < count; ++i) {
         auto actor = read_checkpoint_actor(input, version, *content);
+        if(module_before(identity,{0,6,51})&&actor.source.character_profile.starts_with("PC34 "))throw std::runtime_error("Legacy checkpoint cannot contain spell-choice profiles");
         if(module_before(identity,{0,6,50})&&actor.source.character_profile.starts_with("PC33 "))throw std::runtime_error("Legacy checkpoint cannot contain Scholar profiles");
         if(module_before(identity,{0,6,49})&&actor.source.character_profile.starts_with("PC32 "))throw std::runtime_error("Legacy checkpoint cannot contain Arcane Recovery profiles");
         if(module_before(identity,{0,6,26})&&(actor.source.character_profile.starts_with("PC15 ")||actor.source.character_profile.starts_with("PC16 ")||actor.source.character_profile.starts_with("PC17 ")||(actor.source.character_profile.starts_with("PC18 ")||(actor.source.character_profile.starts_with("PC19 ")||(actor.source.character_profile.starts_with("PC20 ")||(actor.source.character_profile.starts_with("PC21 ")||(actor.source.character_profile.starts_with("PC22 ")||(actor.source.character_profile.starts_with("PC23 ")||actor.source.character_profile.starts_with("PC24 ")))))))))
@@ -1716,7 +1719,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -1763,6 +1766,17 @@ public:
         choice.spells=sheet.prepared_spells;
         for(const auto& group:options.training)if(!group.options.empty())choice.training[group.id]={group.options.front().id};
         if(choice.spells.empty()){if(sheet.character_class=="Cleric")choice.spells={"cure_wounds"};else if(sheet.character_class=="Wizard")choice.spells={"magic_missile"};}
+        if(sheet.character_class=="Wizard"){
+            auto next=sheet;next.level=options.level;choice.spell_learning.emplace();
+            for(const auto& group:detail::spell_choice_options(next,SpellChoiceContext::advancement).learning){
+                auto& values=(*choice.spell_learning)[group.id];
+                for(const auto& option:group.options){if(values.size()==group.count)break;values.push_back(option.id);}
+            }
+            detail::apply_spell_choices(next,SpellChoices{*choice.spell_learning,{}, {},{}},SpellChoiceContext::advancement,false);
+            const auto access=detail::spell_access(next.grants,next.character_class,next.level,next.prepared_spells);
+            choice.spells=sheet.prepared_spells;
+            for(const auto& spell:access.spellbook)if(choice.spells.size()<access.prepared_choices&&std::find(choice.spells.begin(),choice.spells.end(),spell.id)==choice.spells.end())choice.spells.push_back(spell.id);
+        }
         if(options.level==4){
             choice.feat="ability_score_improvement";const unsigned primary=sheet.character_class=="Fighter"?0:sheet.character_class=="Cleric"?4:3;
             unsigned remaining=2;for(unsigned n=0;n<6&&remaining;++n){const auto index=(primary+n)%6;
@@ -1803,7 +1817,10 @@ public:
             next.ability_adjustments.push_back(std::move(adjustment));
         }
         if(!choice.feat.empty())next.grants.push_back(detail::advancement_grant(detail::grant_source_id(sheet.character_class),next.level,choice));next.prepared_spells=choice.spells;
-        detail::learn_advancement_spells(next,choice.spells);
+        if(choice.spell_learning){
+            next.prepared_spells=sheet.prepared_spells;
+            detail::apply_spell_choices(next,SpellChoices{*choice.spell_learning,choice.spells,{},{}},SpellChoiceContext::advancement);
+        }else detail::learn_advancement_spells(next,choice.spells);
         next.training=detail::training_profile(next.grants,detail::grant_source_id(next.character_class),detail::grant_source_id(next.background),next.level,next.scores);
         next.hit_point_modifiers.push_back(next.modifiers[2]);
         next.hit_points=maximum_hit_points(next.hit_die,next.race=="Dwarf",next.hit_point_modifiers);
@@ -1853,6 +1870,7 @@ public:
         if(module_before(saved,{0,6,31})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:bard:instruments";}))throw std::runtime_error("Legacy campaign cannot contain Bard instrument choices");
         if(module_before(saved,{0,6,30})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.id.starts_with("skill:")&&g.source_id.starts_with("class:")&&g.source_id!="class:rogue";}))throw std::runtime_error("Legacy campaign cannot contain new class skill choices");
         if(module_before(saved,{0,6,49})&&detail::has_grant(grants,"feature:arcane_recovery"))throw std::runtime_error("Legacy campaign cannot grant Arcane Recovery");
+        if(module_before(saved,{0,6,51})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return detail::is_spell_grant(g)&&g.choices.contains("learned_at");}))throw std::runtime_error("Legacy campaign cannot contain cantrip replacements");
         if(module_before(saved,{0,6,50})&&std::any_of(grants.begin(),grants.end(),[](const auto& g){return g.source_id=="class:wizard:scholar";}))throw std::runtime_error("Legacy campaign cannot grant Scholar Expertise");
         auto expected=saved.version=="0.6.8"?detail::without_training(sheet.grants):sheet.grants;
         if(module_before(saved,{0,6,49}))std::erase_if(expected,[](const auto& g){return g.id=="feature:arcane_recovery";});
@@ -2044,6 +2062,8 @@ public:
         (void)detail::heal_life(actor,amount,d.hp,!detail::healing_blocked(actor.effects));
         auto next=vitals(actor);state=std::move(next);random_state=rng;
     }
+    SpellChoiceOptions spell_choice_options(const CharacterSheet& sheet,SpellChoiceContext context) const override {return detail::spell_choice_options(sheet,context);}
+    void apply_spell_choices(CharacterSheet& sheet,const SpellChoices& choice,SpellChoiceContext context,bool complete) const override {detail::apply_spell_choices(sheet,choice,context,complete);}
     SpellAccess spell_access(const CharacterSheet& sheet) const override {
         return detail::spell_access(sheet.grants,sheet.character_class,sheet.level,sheet.prepared_spells);
     }
@@ -2095,7 +2115,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<(std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.source_id=="class:wizard:scholar";})?"PC33 ":detail::has_grant(sheet.grants,"feature:arcane_recovery")?"PC32 ":detail::has_grant(sheet.grants,"subclass:champion")?"PC31 ":detail::has_grant(sheet.grants,"feature:tactical_mind")?"PC30 ":(spells&2048)?"PC29 ":"PC28 ")<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<(sheet.character_class=="Wizard"&&(std::none_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.id=="spell:magic_missile"&&g.level==1;})||std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return detail::is_spell_grant(g)&&g.choices.contains("learned_at");}))?"PC34 ":std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.source_id=="class:wizard:scholar";})?"PC33 ":detail::has_grant(sheet.grants,"feature:arcane_recovery")?"PC32 ":detail::has_grant(sheet.grants,"subclass:champion")?"PC31 ":detail::has_grant(sheet.grants,"feature:tactical_mind")?"PC30 ":(spells&2048)?"PC29 ":"PC28 ")<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -2239,7 +2259,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.50",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.51",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

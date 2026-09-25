@@ -1,5 +1,6 @@
 // One implementation for the game and demo; the host supplies rest_text().
 #include "godot_nodes.h"
+#include "spell_choice_controls.h"
 #include <godot_cpp/classes/option_button.hpp>
 #include <godot_cpp/classes/popup_menu.hpp>
 #ifndef N_
@@ -7,6 +8,11 @@
 #endif
 void RolfTourView::setup_rest()
 {
+    auto* spells=presentation::setup_spell_dialog(*this,"RestSpells",callable_mp(this,&RolfTourView::rest_spell_keep),callable_mp(this,&RolfTourView::rest_spell_apply),rest_text);
+    spells->get_node<Button>("Cancel")->set_text(rest_text(N_("Keep current")));
+    spells->get_node<OptionButton>("Replace")->connect("item_selected",callable_mp(this,&RolfTourView::rest_spell_replaced));
+    spells->get_node<OptionButton>("With")->connect("item_selected",callable_mp(this,&RolfTourView::rest_spell_replaced));
+    spells->connect("window_input",callable_mp(this,&RolfTourView::rest_spell_input));
     auto owned=presentation::make_node<Window>();owned->set_name("RestDialog");
     owned->set_title(rest_text(N_("Rest")));owned->set_size(Vector2i(720,640));owned->set_min_size(Vector2i(720,640));
     owned->set_flag(Window::FLAG_RESIZE_DISABLED,true);owned->set_transient(true);owned->set_exclusive(true);owned->hide();
@@ -47,6 +53,8 @@ void RolfTourView::rest_selected(std::int64_t)
 }
 void RolfTourView::refresh_rest()
 {
+    refresh_rest_spells();
+    if(campaign_&&campaign_->state().spell_rest){get_node<Window>("RestDialog")->hide();return;}
     auto* w=get_node<Window>("RestDialog");if(!campaign_||!session_||campaign_->in_combat()||(!session_->can_leave()&&!(session_->pending_encounter()&&campaign_->state().short_rest))){w->hide();return;}
     const auto& state=campaign_->state();const bool spending=state.short_rest.has_value(),retained=state.rest_activity.has_value();
     auto* kind=w->get_node<OptionButton>("Kind");kind->set_disabled(spending||retained);
@@ -304,9 +312,29 @@ void RolfTourView::check_rest_controls()
             auto* members=w->get_node<ItemList>("Members");members->select(0);members->emit_signal("item_selected",0);
             check(!w->get_node<Button>("Recover")->is_visible(),"Non-Wizard selection hides the recovery row");
             w->get_node<Button>("Finish")->emit_signal("pressed");
-            UtilityFunctions::print("Godot rest controls passed: existing recovery, Arcane Recovery choices, keyboard, rest limits and save continuation.");get_tree()->quit();
+        }else if(rest_check_stage_==88){
+            auto draft=campaign_->member(rest_member_).character.creation_data();draft.name="Second Wizard";
+            // The selected non-Wizard from the previous check is not the recovery owner.
+            for(const auto& member:campaign_->state().roster)if(campaign_->rule_module().spell_access(member.character.sheet()).spellbook_choices){draft=member.character.creation_data();break;}
+            draft.name="Second Wizard";campaign_->add_pc(opengold::Character(*opengold::srd5::character_rules(),draft,{}));
+            camp();w->get_node<OptionButton>("Kind")->select(1);w->get_node<OptionButton>("Kind")->emit_signal("item_selected",1);w->get_node<Button>("Start")->emit_signal("pressed");
+            auto* spell=get_node<Window>("RestSpells");check(spell->is_visible()&&campaign_->state().spell_rest&&campaign_->state().spell_rest->members.size()==2,"Completed Long Rest presents each eligible Wizard");
+            const auto bytes=opengold::encode_campaign(*campaign_,nullptr,"spell-rest-ui");auto rules=opengold::srd5::load(std::filesystem::path(rest_rules_path().utf8().get_data()));campaign_->restore(opengold::decode_campaign(bytes,*opengold::srd5::character_rules(),*rules,"spell-rest-ui",nullptr).party);refresh_rest();
+            auto* replace=spell->get_node<OptionButton>("Replace");replace->select(1);replace->emit_signal("item_selected",1);
+            auto* with=spell->get_node<OptionButton>("With");for(int i=0;i<with->get_item_count();++i)if(String(with->get_item_metadata(i))=="ray_of_frost"){with->select(i);with->emit_signal("item_selected",i);break;}
+            check(!spell->get_node<Button>("Apply")->is_disabled(),"Preparation and one replacement are valid after reload");
+        }else if(rest_check_stage_==100){
+            auto* spell=get_node<Window>("RestSpells");const auto id=rest_spell_member_;const auto expected=campaign_->preview_spell_choices(id,rest_spell_choice_,true);
+            spell->get_node<Button>("Apply")->grab_focus();for(bool down:{true,false}){Ref<InputEventKey> key;key.instantiate();key->set_keycode(Key::KEY_SPACE);key->set_pressed(down);spell->push_input(key,true);}
+            check(campaign_->member(id).character.sheet().grants==expected.character.sheet().grants&&campaign_->member(id).vitals==expected.vitals,"Keyboard commits only approved spell changes");
+            check(campaign_->state().spell_rest&&campaign_->state().spell_rest->members.size()==1&&rest_spell_member_!=id&&spell->is_visible(),"Next Wizard receives a separate once-only choice");
+        }else if(rest_check_stage_==104){
+            auto* spell=get_node<Window>("RestSpells");const auto id=rest_spell_member_;const auto before=campaign_->member(id).character.sheet().grants;
+            Ref<InputEventKey> escape;escape.instantiate();escape->set_keycode(Key::KEY_ESCAPE);escape->set_pressed(true);spell->emit_signal("window_input",escape);
+            check(!spell->is_visible()&&!campaign_->state().spell_rest&&campaign_->member(id).character.sheet().grants==before,"Escape keeps current spells and releases exploration after the last Wizard");
+            UtilityFunctions::print("Godot rest controls passed: existing recovery, Arcane Recovery, Wizard preparation/replacement, sequential Wizards, keyboard, limits and save continuation.");get_tree()->quit();
         }
-        if(rest_check_stage_==10||rest_check_stage_==22||rest_check_stage_==34||rest_check_stage_==70||rest_check_stage_==80){
+        if(rest_check_stage_==10||rest_check_stage_==22||rest_check_stage_==34||rest_check_stage_==70||rest_check_stage_==80||rest_check_stage_==94){
             for(const auto& arg:OS::get_singleton()->get_cmdline_user_args())if(String(arg).begins_with("--rest-captures=")){
                 const auto directory=String(arg).trim_prefix("--rest-captures=");
                 std::filesystem::create_directories(std::filesystem::path(directory.utf8().get_data()));
@@ -317,3 +345,30 @@ void RolfTourView::check_rest_controls()
         ++rest_check_stage_;
     }catch(const std::exception& e){UtilityFunctions::printerr("Rest control check failed: ",String::utf8(e.what()));get_tree()->quit(1);}
 }
+
+void RolfTourView::refresh_rest_spells(){
+    auto* w=get_node<Window>("RestSpells");
+    if(!campaign_||!campaign_->state().spell_rest||campaign_->in_combat()){w->hide();rest_spell_member_=0;return;}
+    const auto id=campaign_->state().spell_rest->members.front();
+    const auto& sheet=campaign_->member(id).character.sheet();const auto options=campaign_->spell_choice_options(id,true);
+    if(rest_spell_member_!=id){rest_spell_member_=id;rest_spell_choice_={};rest_spell_choice_.prepared=sheet.prepared_spells;}
+    w->get_node<Label>("Title")->set_text(presentation::training_string(sheet.name)+" / "+rest_text(N_("Long Rest")));
+    presentation::spell_known(*w,campaign_->rule_module().spell_access(sheet),rest_text);
+    presentation::refresh_spell_groups(*w->get_node<VBoxContainer>("Choices/Rows"),options,rest_spell_choice_,callable_mp(this,&RolfTourView::rest_spell_toggled),rest_text);
+    for(bool replacing:{true,false}){auto* dropdown=w->get_node<OptionButton>(replacing?"Replace":"With");dropdown->clear();dropdown->add_item(rest_text(N_("Keep current")));dropdown->set_item_metadata(0,String());
+        const auto& list=replacing?options.replaceable:options.replacements;const auto& selected=replacing?rest_spell_choice_.replace_cantrip:rest_spell_choice_.replacement;
+        for(const auto& option:list){const int index=dropdown->get_item_count();dropdown->add_item(rest_text(option.label));dropdown->set_item_metadata(index,presentation::training_string(option.id));if(selected==option.id)dropdown->select(index);}
+        dropdown->set_disabled(!options.may_replace||list.empty());
+    }
+    try{(void)campaign_->preview_spell_choices(id,rest_spell_choice_,true);w->get_node<Button>("Apply")->set_disabled(false);w->get_node<Label>("Error")->set_text({});}
+    catch(const std::exception& e){w->get_node<Button>("Apply")->set_disabled(true);w->get_node<Label>("Error")->set_text(rest_text(e.what()));}
+    if(!w->is_visible()&&is_visible_in_tree()){get_node<Window>("RestDialog")->hide();w->popup_centered();w->get_node<Button>("Cancel")->grab_focus();}
+}
+void RolfTourView::rest_spell_toggled(bool selected,String group,String option){presentation::toggle_spell(rest_spell_choice_,selected,group.utf8().get_data(),option.utf8().get_data());refresh_rest_spells();}
+void RolfTourView::rest_spell_replaced(std::int64_t){
+    auto* w=get_node<Window>("RestSpells");const String old=w->get_node<OptionButton>("Replace")->get_selected_metadata(),next=w->get_node<OptionButton>("With")->get_selected_metadata();
+    rest_spell_choice_.replace_cantrip=old.utf8().get_data();rest_spell_choice_.replacement=next.utf8().get_data();refresh_rest_spells();
+}
+void RolfTourView::rest_spell_apply(){try{campaign_->choose_spells(rest_spell_member_,rest_spell_choice_,true);rest_spell_member_=0;if(session_)session_->commit_rest_recovery();refresh();}catch(const std::exception& e){get_node<Label>("RestSpells/Error")->set_text(rest_text(e.what()));}}
+void RolfTourView::rest_spell_keep(){try{if(rest_spell_member_)campaign_->keep_rest_spells(rest_spell_member_);rest_spell_member_=0;if(session_)session_->commit_rest_recovery();refresh();}catch(const std::exception& e){get_node<Label>("RestSpells/Error")->set_text(rest_text(e.what()));}}
+void RolfTourView::rest_spell_input(const Ref<InputEvent>& event){const Ref<InputEventKey> key=event;if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==KEY_ESCAPE){get_node<Window>("RestSpells")->set_input_as_handled();rest_spell_keep();}}

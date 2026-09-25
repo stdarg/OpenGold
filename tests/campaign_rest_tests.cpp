@@ -108,6 +108,7 @@ void individual_eligibility(){
     check(party.rest_info(RestKind::long_rest)[1].denial==RestDenial::none,"Eligibility is checked at the next rest start, not granted midway through the previous rest");
     auto copy=loaded(saved(party));const auto later=copy.rest(RestKind::long_rest);
     check(later&&later->members==std::vector<MemberId>{w}&&copy.member(f).last_rest_minutes==1480,"Mixed cooldowns persist across load");
+    copy.keep_rest_spells(w);
     copy.remove(f);copy.advance_time_milliseconds(480ULL*60000-1);copy.rejoin(f);
     auto status=copy.rest_info(RestKind::long_rest);
     const auto found=std::find_if(status.begin(),status.end(),[&](const auto& i){return i.id==f;});

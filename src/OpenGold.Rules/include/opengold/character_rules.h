@@ -74,6 +74,7 @@ struct CharacterDraft {
     // Missing means the historical creation preset. An explicit empty choice
     // means no cantrips selected yet, never an instruction to refill the preset.
     std::optional<std::vector<std::string>> cantrips;
+    std::optional<SpellChoices> spells;
 };
 struct CharacterSheet {
     Identity identity;
@@ -111,6 +112,7 @@ public:
     [[nodiscard]] std::array<bool,6> unmet_targets(const CharacterDraft& draft) const;
     [[nodiscard]] virtual CharacterSheet evaluate(const CharacterDraft& draft, bool require_name) const = 0;
     [[nodiscard]] virtual std::vector<TrainingChoiceGroup> training_options(const CharacterDraft&) const {return {};}
+    [[nodiscard]] virtual SpellChoiceOptions spell_choice_options(const CharacterDraft&) const {return {};}
     [[nodiscard]] virtual TrainingChoiceGroup cantrip_options(const CharacterDraft&) const {return {};}
     [[nodiscard]] virtual AbilityCheckModifier ability_check(const CharacterSheet&,unsigned ability,
         std::string_view skill={},std::string_view tool={}) const;

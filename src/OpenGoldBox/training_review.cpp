@@ -2,3 +2,5 @@
 #include "localization.h"
 namespace { godot::String review_text(std::string_view value){return i18n::text(value);} }
 #include "training_review_impl.h"
+
+#include "spellbook_dialog_impl.h"
