@@ -227,7 +227,7 @@ void RolfTourSession::finish_event()
             if(resuming_camp_){
                 campaign_->resume_rest(campaign_->state().rest_activity->ticket);
                 completed=campaign_->advance_rest(campaign_->state().rest_activity->ticket,
-                    campaign_->remaining_rest_milliseconds(),RestWork::sleep).has_value();
+                    campaign_->remaining_rest_milliseconds(),campaign_->state().rest_activity->work).has_value();
                 if(completed)snapshot_.dialogue+="\nLong rest complete: eligible members recovered HP and supported resources.";
             }else completed=campaign_->rest(camp_kind_).has_value();
             if(completed&&!resuming_camp_)snapshot_.dialogue+=camp_kind_==RestKind::short_rest?

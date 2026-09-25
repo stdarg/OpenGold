@@ -49,7 +49,10 @@ modifier, actual healing and remaining dice. These resource operations do not
 independently authorize resting or spending at any time. `recover` remains the
 Long Rest resource operation.
 
-The SRD module owns arithmetic, capacities, validation and codecs. Core and Godot
+The statically linked SRD module owns arithmetic, capacities, validation and codecs,
+plus rest progress, interruption/resumption decisions and completion benefits.
+Its rest transitions use engine-independent values; Core applies the outcomes
+and owns campaign membership, tickets, clocks and save transactions. Core and Godot
 consume typed queries and preserve the opaque continuation, without interpreting
 SRD resource strings. The C++20/RAII and Godot GDExtension boundaries are unchanged.
 

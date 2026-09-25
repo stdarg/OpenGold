@@ -38,10 +38,6 @@ std::vector<MemberRestInfo> CampaignParty::rest_info(RestKind kind) const
 }
 bool CampaignParty::rest(){return rest(RestKind::long_rest).has_value();}
 namespace {
-std::uint64_t add_rest_time(std::uint64_t left,std::uint64_t right){
-    if(right>std::numeric_limits<std::uint64_t>::max()-left)throw std::runtime_error("Rest clock overflow");
-    return left+right;
-}
 void advance_ticket(RestTicket& ticket){
     if(ticket.revision==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Rest revision exhausted");
     ++ticket.revision;
@@ -58,16 +54,15 @@ std::optional<RestResult> CampaignParty::rest(RestKind kind)
     auto before=state_;
     try{
         const auto ticket=begin_rest(kind);if(!ticket)return std::nullopt;
-        return advance_rest(*ticket,remaining_rest_milliseconds(),kind==RestKind::long_rest?RestWork::sleep:RestWork::light_activity);
+        return advance_rest(*ticket,remaining_rest_milliseconds(),state_.rest_activity->work);
     }catch(...){state_=std::move(before);throw;}
 }
 std::optional<RestTicket> CampaignParty::begin_rest(RestKind kind)
 {
-    editable();const auto timing=policy(*rules_,kind);
-    if(!timing.duration_minutes)throw std::runtime_error("Invalid rules rest duration");
-    RestActivity activity;activity.kind=kind;activity.started_minutes=state_.time_minutes;
+    editable();RestActivity activity;
+    static_cast<rules::RestProgress&>(activity)=rules_->begin_rest(kind);
+    activity.started_minutes=state_.time_minutes;
     activity.started_subminute_milliseconds=state_.subminute_milliseconds;
-    activity.work=kind==RestKind::long_rest?RestWork::sleep:RestWork::light_activity;
     for(const auto& info:rest_info(kind))if(info.denial==RestDenial::none)activity.members.push_back(info.id);
     if(activity.members.empty())return std::nullopt;
     auto next=state_;activity.ticket=new_ticket(next);next.rest_activity=activity;state_=std::move(next);return activity.ticket;
@@ -80,10 +75,7 @@ void CampaignParty::require_activity_ticket(RestTicket ticket) const
 std::uint64_t CampaignParty::remaining_rest_milliseconds() const
 {
     if(!state_.rest_activity)return 0;
-    const auto& activity=*state_.rest_activity;
-    const auto required=add_rest_time(std::uint64_t(policy(*rules_,activity.kind).duration_minutes)*60000,activity.extension_milliseconds);
-    if(activity.elapsed_milliseconds>required)throw std::runtime_error("Invalid rest progress");
-    return required-activity.elapsed_milliseconds;
+    return rules_->remaining_rest(*state_.rest_activity);
 }
 void CampaignParty::short_rest_benefits(PartyState& state,const std::vector<MemberId>& members) const
 {
@@ -98,20 +90,11 @@ void CampaignParty::short_rest_benefits(PartyState& state,const std::vector<Memb
 }
 void CampaignParty::interrupt_rest_state(PartyState& state,RestInterruption cause) const
 {
-    if(cause!=RestInterruption::initiative&&cause!=RestInterruption::spell&&cause!=RestInterruption::damage&&cause!=RestInterruption::exertion)
-        throw std::runtime_error("Invalid rest interruption");
-    auto& activity=*state.rest_activity;
-    if(activity.interrupted)throw std::runtime_error("Rest is already interrupted");
-    if(activity.kind==RestKind::short_rest){state.rest_activity.reset();return;}
-    const auto timing=rules_->long_rest_policy();
-    if(!timing.interruption_extension_minutes)throw std::runtime_error("Rules do not support resumed rests");
-    activity.extension_milliseconds=add_rest_time(activity.extension_milliseconds,std::uint64_t(timing.interruption_extension_minutes)*60000);
-    const auto required=add_rest_time(std::uint64_t(timing.duration_minutes)*60000,activity.extension_milliseconds);(void)required;
-    activity.interrupted=true;activity.interruption=cause;advance_ticket(activity.ticket);
-    // Q32: only the new uninterrupted segment can earn another benefit.
-    if(activity.segment_milliseconds>=std::uint64_t(rules_->short_rest_policy().duration_minutes)*60000)
-        short_rest_benefits(state,activity.members);
-    activity.segment_milliseconds=0;
+    const auto outcome=rules_->interrupt_rest(*state.rest_activity,cause);
+    if(outcome.benefit==rules::RestBenefit::short_rest)short_rest_benefits(state,state.rest_activity->members);
+    if(!outcome.progress){state.rest_activity.reset();return;}
+    static_cast<rules::RestProgress&>(*state.rest_activity)=*outcome.progress;
+    advance_ticket(state.rest_activity->ticket);
 }
 void CampaignParty::interrupt_rest(RestTicket ticket,RestInterruption cause)
 {
@@ -120,43 +103,26 @@ void CampaignParty::interrupt_rest(RestTicket ticket,RestInterruption cause)
 std::optional<RestResult> CampaignParty::advance_rest(RestTicket ticket,std::uint64_t milliseconds,RestWork work)
 {
     require_activity_ticket(ticket);
-    if(!milliseconds||state_.rest_activity->interrupted||state_.short_rest)throw std::runtime_error("Rest is not advancing");
-    if(work!=RestWork::sleep&&work!=RestWork::light_activity&&work!=RestWork::exertion)throw std::runtime_error("Invalid rest activity");
-    auto next=state_;auto& activity=*next.rest_activity;const auto timing=policy(*rules_,activity.kind);
-    activity.work=work;
-    if(work==RestWork::exertion){
-        if(activity.kind==RestKind::short_rest){interrupt_rest_state(next,RestInterruption::exertion);elapse(next,milliseconds);}
-        else{
-            const auto limit=std::uint64_t(timing.exertion_limit_minutes)*60000;
-            if(!limit||activity.exertion_milliseconds>=limit||milliseconds>limit-activity.exertion_milliseconds)
-                throw std::runtime_error("Advance only to the next rest interruption");
-            activity.exertion_milliseconds+=milliseconds;elapse(next,milliseconds);
-            if(activity.exertion_milliseconds==limit)interrupt_rest_state(next,RestInterruption::exertion);
-            else advance_ticket(activity.ticket);
-        }
-        state_=std::move(next);return std::nullopt;
-    }
-    if(milliseconds>remaining_rest_milliseconds())throw std::runtime_error("Advance only to rest completion");
-    if(work==RestWork::light_activity){
-        activity.light_milliseconds=add_rest_time(activity.light_milliseconds,milliseconds);
-        if(activity.kind==RestKind::long_rest&&activity.light_milliseconds>std::uint64_t(timing.maximum_light_minutes)*60000)
-            throw std::runtime_error("Long Rest light activity limit exceeded");
-    }else activity.sleep_milliseconds=add_rest_time(activity.sleep_milliseconds,milliseconds);
-    activity.elapsed_milliseconds=add_rest_time(activity.elapsed_milliseconds,milliseconds);
-    activity.segment_milliseconds=add_rest_time(activity.segment_milliseconds,milliseconds);
+    if(state_.short_rest)throw std::runtime_error("Resolve Hit Dice choices before advancing rest");
+    const auto outcome=rules_->advance_rest(*state_.rest_activity,milliseconds,work);
+    auto next=state_;auto& activity=*next.rest_activity;
     elapse(next,milliseconds);advance_ticket(activity.ticket);
-    const auto required=add_rest_time(std::uint64_t(timing.duration_minutes)*60000,activity.extension_milliseconds);
-    if(activity.elapsed_milliseconds<required){state_=std::move(next);return std::nullopt;}
-    if(activity.sleep_milliseconds<std::uint64_t(timing.minimum_sleep_minutes)*60000)throw std::runtime_error("Long Rest requires more sleep");
-    RestResult result{activity.kind,required/60000,{}};
-    if(activity.kind==RestKind::short_rest){short_rest_benefits(next,activity.members);if(next.short_rest){result.spending=next.short_rest->ticket;result.members=next.short_rest->members;}}
-    else for(auto id:activity.members){
+    RestResult result{activity.kind,outcome.completed_duration_milliseconds/60000,{}};
+    if(outcome.benefit==rules::RestBenefit::short_rest){
+        short_rest_benefits(next,activity.members);
+        if(next.short_rest){result.spending=next.short_rest->ticket;result.members=next.short_rest->members;}
+    }else if(outcome.benefit==rules::RestBenefit::long_rest)for(auto id:activity.members){
         auto& member=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==id;});
         if(!rules_->recovery_info(member.character.sheet(),member.vitals).can_rest)continue;
         rules_->recover(member.vitals,member.character.sheet());result.members.push_back(id);member.last_rest_minutes=next.time_minutes;member.last_rest_subminute_milliseconds=next.subminute_milliseconds;
     }
-    next.rest_activity.reset();state_=std::move(next);return result;
+    if(outcome.progress)static_cast<rules::RestProgress&>(activity)=*outcome.progress;
+    else next.rest_activity.reset();
+    state_=std::move(next);
+    if(outcome.completed_duration_milliseconds)return result;
+    return std::nullopt;
 }
+
 void CampaignParty::resume_rest(RestTicket ticket)
 {
     require_activity_ticket(ticket);
@@ -164,7 +130,7 @@ void CampaignParty::resume_rest(RestTicket ticket)
     auto next=state_;auto& activity=*next.rest_activity;
     std::erase_if(activity.members,[&](auto id){const auto& m=member(id);return !rules_->recovery_info(m.character.sheet(),m.vitals).can_rest;});
     if(activity.members.empty())throw std::runtime_error("No eligible member can resume resting");
-    activity.interrupted=false;activity.segment_milliseconds=0;activity.exertion_milliseconds=0;activity.work=RestWork::sleep;
+    static_cast<rules::RestProgress&>(activity)=rules_->resume_rest(activity);
     advance_ticket(activity.ticket);state_=std::move(next);
 }
 void CampaignParty::abandon_rest(RestTicket ticket)

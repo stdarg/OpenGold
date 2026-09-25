@@ -72,6 +72,24 @@ struct TemporaryHitPoints {
     bool operator==(const TemporaryHitPoints&) const = default;
 };
 enum class TemporaryHpChoice { keep_current, use_new };
+// Engine-independent rest events and continuation. No campaign IDs or UI state.
+enum class RestKind { short_rest, long_rest };
+enum class RestWork { sleep, light_activity, exertion };
+enum class RestInterruption { initiative, spell, damage, exertion };
+struct RestProgress {
+    RestKind kind{};
+    std::uint64_t elapsed_milliseconds{}, segment_milliseconds{}, sleep_milliseconds{}, light_milliseconds{};
+    std::uint64_t exertion_milliseconds{}, extension_milliseconds{};
+    bool interrupted{};
+    RestWork work{RestWork::sleep};
+    RestInterruption interruption{RestInterruption::initiative};
+};
+enum class RestBenefit { none, short_rest, long_rest };
+struct RestTransition {
+    std::optional<RestProgress> progress;
+    RestBenefit benefit{RestBenefit::none};
+    std::uint64_t completed_duration_milliseconds{};
+};
 struct RestPolicy {
     unsigned duration_minutes{}, wait_after_rest_minutes{};
     unsigned minimum_sleep_minutes{}, maximum_light_minutes{}, interruption_extension_minutes{}, exertion_limit_minutes{};
@@ -220,6 +238,12 @@ public:
     // Edition-specific migration preserves wounds and opaque resource state.
     virtual void migrate_character_state(const Identity&, const CharacterSheet& sheet, VitalState& state) const
     {validate_character_state(sheet,state);}
+    [[nodiscard]] virtual RestProgress begin_rest(RestKind) const;
+    [[nodiscard]] virtual RestTransition advance_rest(const RestProgress&,std::uint64_t,RestWork) const;
+    [[nodiscard]] virtual RestTransition interrupt_rest(const RestProgress&,RestInterruption) const;
+    [[nodiscard]] virtual RestProgress resume_rest(const RestProgress&) const;
+    [[nodiscard]] virtual std::uint64_t remaining_rest(const RestProgress&) const;
+    virtual void validate_rest(const RestProgress&) const;
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     [[nodiscard]] virtual RestPolicy short_rest_policy() const;
     virtual void set_hit_points(VitalState&,const CharacterSheet&,int) const;

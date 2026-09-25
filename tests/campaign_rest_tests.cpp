@@ -25,6 +25,43 @@ unsigned winds(const PartyMember& member){
     for(const auto& pool:info.resources)if(pool.id=="second_wind")return pool.remaining;
     throw std::runtime_error("Missing Second Wind pool");
 }
+// Deliberately non-SRD rest behavior proves Core applies module outcomes.
+class AlternateRestRules final : public RulesModule {
+public:
+    Identity identity() const override {return module()->identity();}
+    std::vector<std::string> supported_features() const override {return {};}
+    std::unique_ptr<CombatSession> create(Encounter,std::uint64_t) const override {return {};}
+    std::unique_ptr<CombatSession> restore(std::string_view) const override {return {};}
+    CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState equipment) const override {return module()->character_profile(sheet,gear,equipment);}
+    RecoveryInfo recovery_info(const CharacterSheet&,const VitalState&) const override {RecoveryInfo r;r.can_rest=true;return r;}
+    RestPolicy short_rest_policy() const override {return {2,0};}
+    RestPolicy long_rest_policy() const override {return {3,0};}
+    RestProgress begin_rest(RestKind kind) const override {RestProgress p;p.kind=kind;p.work=RestWork::light_activity;return p;}
+    RestTransition interrupt_rest(const RestProgress& before,RestInterruption cause) const override {
+        if(before.kind==RestKind::long_rest)return {}; // Opposite of SRD: cancellation.
+        auto p=before;p.interrupted=true;p.interruption=cause;return {p};
+    }
+    RestProgress resume_rest(const RestProgress& before) const override {auto p=before;p.interrupted=false;return p;}
+    std::uint64_t remaining_rest(const RestProgress&) const override {return 120000;}
+    RestTransition advance_rest(const RestProgress&,std::uint64_t,RestWork work) const override {
+        check(work==RestWork::light_activity,"Core must use the module's default work");
+        return {std::nullopt,RestBenefit::long_rest,120000};
+    }
+    void recover(VitalState& vitals,const CharacterSheet&) const override {vitals.hit_points=7;}
+};
+void alternate_rules_boundary(){
+    CampaignParty party(std::make_unique<AlternateRestRules>());const auto id=party.add_pc(hero());
+    auto ticket=*party.begin_rest(RestKind::short_rest);party.interrupt_rest(ticket,RestInterruption::damage);
+    check(party.state().rest_activity&&party.state().rest_activity->interrupted&&!party.state().short_rest,
+        "Core permits module-defined Short Rest resumption without SRD benefits");
+    party.resume_rest(party.state().rest_activity->ticket);party.abandon_rest(party.state().rest_activity->ticket);
+    ticket=*party.begin_rest(RestKind::long_rest);party.interrupt_rest(ticket,RestInterruption::damage);
+    check(!party.state().rest_activity,"Core permits module-defined Long Rest cancellation");
+    const auto result=party.rest(RestKind::short_rest);
+    check(result&&result->duration_minutes==2&&party.member(id).vitals.hit_points==7&&
+        !party.state().short_rest&&party.state().time_minutes==2,
+        "Core applies module-defined completion benefits instead of branching on rest kind");
+}
 void freeze_activity_baseline(){
     CampaignParty party(module());auto id=party.add_pc(hero());party.add_pc(hero("wizard"));
     auto state=party.checkpoint();state.time_minutes=1000;state.subminute_milliseconds=4321;state.random_state=29;
@@ -259,4 +296,4 @@ void malformed_continuation(){
 }
 #include "rest_activity_checks.h"
 }
-int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();resumption_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}alternate_rules_boundary();rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();resumption_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

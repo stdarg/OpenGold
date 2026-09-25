@@ -1,4 +1,5 @@
 #include "dice.h"
+#include "rest_activity.h"
 #include "damage_roll.h"
 #include "action_budget.h"
 #include "feature_grants.h"
@@ -1453,8 +1454,14 @@ public:
         auto next=definition.rushes&&introduce_rush?vitals(actor):state;if(next.hit_points>0)next.hit_points+=sheet.hit_points-definition.hp;
         validate_character_state(sheet,next);state=std::move(next);
     }
-    RestPolicy long_rest_policy() const override {return {480,960,360,120,60,60};}
-    RestPolicy short_rest_policy() const override {return {60,0};}
+    RestPolicy long_rest_policy() const override {return rest::policy(RestKind::long_rest);}
+    RestPolicy short_rest_policy() const override {return rest::policy(RestKind::short_rest);}
+    RestProgress begin_rest(RestKind kind) const override {return rest::begin(kind);}
+    RestTransition advance_rest(const RestProgress& p,std::uint64_t ms,RestWork work) const override {return rest::advance(p,ms,work);}
+    RestTransition interrupt_rest(const RestProgress& p,RestInterruption cause) const override {return rest::interrupt(p,cause);}
+    RestProgress resume_rest(const RestProgress& p) const override {return rest::resume(p);}
+    std::uint64_t remaining_rest(const RestProgress& p) const override {return rest::remaining(p);}
+    void validate_rest(const RestProgress& p) const override {rest::validate(p);}
     void elapse(std::span<Participant> participants,std::uint64_t milliseconds,std::uint64_t& random_state) const override
     {
         // Work on owned candidates so malformed state cannot partly advance a

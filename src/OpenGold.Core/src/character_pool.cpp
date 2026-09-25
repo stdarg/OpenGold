@@ -66,11 +66,8 @@ std::vector<Character> character_pool(const rules::CharacterRules& rules,const p
         d.gender=variant%2?"female":"male";d.alignment=alignments[(c+variant*2)%alignments.size()].id;
         const auto name_index=c*4+variant;
         d.name=std::string(first.at(name_index))+" "+surnames.at(name_index);d.rolled=true;
-        const auto& id=d.character_class;
-        const unsigned primary=id=="wizard"?3:(id=="cleric"||id=="druid")?4:(id=="bard"||id=="sorcerer"||id=="warlock")?5:(id=="monk"||id=="ranger"||id=="rogue"||(id=="fighter"&&variant%2))?1:0;
-        const unsigned secondary=(id=="monk"||id=="ranger")?4:id=="paladin"?5:2;
-        std::vector<unsigned> priority{primary,secondary};
-        for(unsigned n:{2u,1u,4u,0u,3u,5u})if(std::find(priority.begin(),priority.end(),n)==priority.end())priority.push_back(n);
+        const auto priority=rules.preset_ability_priority(d.character_class,variant);
+        const auto primary=priority[0],secondary=priority[1];
         for(unsigned rank=0;rank<6;++rank){const int score=18-int(rank)-(variant==3&&rank==0?1:0);
             // Authored, valid 4d6-drop-lowest provenance for each strong score.
             d.rolls[priority[rank]]={{6,score>=17?6:5,score-6-(score>=17?6:5),1},3};}

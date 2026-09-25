@@ -113,6 +113,8 @@ public:
     [[nodiscard]] virtual std::vector<ScoreAdjustment> adjustments(std::string_view background) const = 0;
     [[nodiscard]] virtual std::array<AbilityRoll,6> roll(std::uint64_t& random_state) const = 0;
     [[nodiscard]] virtual std::optional<int> ability_score(const CharacterDraft& draft,unsigned ability) const = 0;
+    [[nodiscard]] virtual std::array<unsigned,6> preset_ability_priority(std::string_view,unsigned) const
+    {return {0,1,2,3,4,5};}
     [[nodiscard]] virtual ClassRequirements class_requirements(std::string_view id) const = 0;
     [[nodiscard]] bool class_eligible(const CharacterDraft& draft,std::string_view id) const;
     [[nodiscard]] std::array<bool,6> unmet_targets(const CharacterDraft& draft) const;

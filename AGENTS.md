@@ -27,6 +27,11 @@
   an implementation approach.
 - Follow OpenGoldBox's established Godot 4.x, C++20, and GDExtension
   architecture and documented language boundaries.
+- Keep SRD mechanics in the statically linked `opengold_rules_srd5` library.
+  Core depends on `opengold_rules` interfaces, never the SRD implementation;
+  the application selects and injects the implementation. Core owns campaign
+  orchestration and transactions; the rules module decides rule outcomes.
+  Do not duplicate SRD calculations or decision branches in Core or UI.
 - Reuse existing components, build tools, and launch conventions.
 - Do not introduce another UI stack, runtime, or framework without
   explicit user approval, including for prototypes and review tools.

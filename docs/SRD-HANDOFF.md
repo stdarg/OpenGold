@@ -1,7 +1,8 @@
 # SRD handoff
 
 Updated 2026-09-24. **Pause after delivery of #192, at the user's explicit request.**
-Do not start #193 or any other issue until the user resumes. The broader goal
+The user subsequently authorized a bounded static-library architecture refactor.
+That refactor does not resume the SRD backlog; do not start #193 or another issue. The broader goal
 remains all SRD_improvements issues, all twelve classes through level 4, then
 level 20 and multiclassing. Branch: `main`.
 
@@ -50,3 +51,21 @@ Questions must be numbered, plainly visible in conversation, and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Do not re-ask approved
 Q29–32. Q19–21/Q23/Q25 remain outside this batch. Follow
 [the workflow](SRD-WORKFLOW.md) after explicit resumption.
+
+
+## Architecture follow-up
+
+Rest decisions and semantic timing validation now live in the statically linked
+SRD library, behind engine-independent rest transition hooks. Core applies
+outcomes and retains transactional campaign state. Preset class ability priorities
+also moved behind CharacterRules. See TECH's static library boundary section.
+No gameplay/UI behavior or save format change is intended; #193 remains open.
+
+Architecture verification: all 44 native/tool checks and 21 Godot checks passed
+(33 entries including prerequisites). The standalone content test links only
+`libopengold_rules_srd5.a` and `libopengold_rules.a`; its rest scenario passes
+without Core/Godot. The alternate-rules campaign test also passes. Archive
+verified as arm64/x86_64 static libraries. Logs: `/tmp/srd-library-native.log`,
+`/tmp/srd-library-godot.log`, `/tmp/srd-library-refresh-results.log`.
+The interface change required rebuilding one stale training test object; the
+fresh build passes. No gameplay issues were opened or closed by this refactor.

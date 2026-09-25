@@ -351,7 +351,6 @@ void CampaignParty::validate(const PartyState& state)
             (rest.started_minutes==state.time_minutes&&rest.started_subminute_milliseconds>state.subminute_milliseconds)||
             rest.members.empty()||rest.members.size()>8||rest.segment_milliseconds>rest.elapsed_milliseconds||
             rest.sleep_milliseconds>rest.elapsed_milliseconds||rest.light_milliseconds!=rest.elapsed_milliseconds-rest.sleep_milliseconds||
-            (rest.interrupted&&(rest.kind!=RestKind::long_rest||rest.segment_milliseconds))||
             (state.short_rest&&(!rest.interrupted||state.short_rest->ticket.session<=rest.ticket.session)))
             throw std::runtime_error("Invalid rest activity checkpoint");
         if(rest.exertion_milliseconds>std::numeric_limits<std::uint64_t>::max()-rest.elapsed_milliseconds)throw std::runtime_error("Rest clock overflow");
@@ -372,27 +371,19 @@ void CampaignParty::validate(const PartyState& state)
             rest.members.empty()||rest.members.size()>8)throw std::runtime_error("Invalid Short Rest checkpoint");
         for(auto id:rest.members){
             if(!active.contains(id)||!members.insert(id).second)throw std::runtime_error("Invalid Short Rest member");
-            const auto& m=*std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& value){return value.id==id;});
-            if(m.vitals.dead||m.vitals.hit_points<1)throw std::runtime_error("Invalid Short Rest vitality");
         }
     }
 }
 void CampaignParty::validate_rest_activity(const PartyState& state,const rules::RulesModule& rules){
     validate(state);
+    if(state.short_rest)for(auto id:state.short_rest->members){
+        const auto& m=*std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& member){return member.id==id;});
+        if(!rules.recovery_info(m.character.sheet(),m.vitals).can_rest)throw std::runtime_error("Invalid Short Rest vitality");
+    }
     if(state.rest_activity){
         const auto& activity=*state.rest_activity;
         const auto timing=activity.kind==RestKind::long_rest?rules.long_rest_policy():rules.short_rest_policy();
-        const auto base=std::uint64_t(timing.duration_minutes)*60000;
-        if(!base||activity.extension_milliseconds>std::numeric_limits<std::uint64_t>::max()-base||
-            activity.elapsed_milliseconds>=base+activity.extension_milliseconds||
-            (activity.kind==RestKind::short_rest&&(activity.extension_milliseconds||activity.exertion_milliseconds))||
-            (activity.kind==RestKind::long_rest&&(!timing.interruption_extension_minutes||
-                activity.extension_milliseconds%(std::uint64_t(timing.interruption_extension_minutes)*60000)||
-                (activity.interrupted&&!activity.extension_milliseconds)||
-                (!activity.extension_milliseconds&&activity.segment_milliseconds!=activity.elapsed_milliseconds)||
-                activity.light_milliseconds>std::uint64_t(timing.maximum_light_minutes)*60000||
-                activity.exertion_milliseconds>std::uint64_t(timing.exertion_limit_minutes)*60000)))
-            throw std::runtime_error("Rest activity disagrees with rules timing");
+        rules.validate_rest(activity);
         if(activity.kind==RestKind::long_rest)for(auto id:activity.members){
             const auto& m=*std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& member){return member.id==id;});
             if(!m.last_rest_minutes)continue;

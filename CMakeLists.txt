@@ -52,6 +52,7 @@ add_library(opengold_rules_srd5 STATIC
     src/OpenGold.Rules.Srd5/src/status_effects.cpp
     src/OpenGold.Rules.Srd5/src/life_cycle.cpp
     src/OpenGold.Rules.Srd5/src/damage.cpp
+    src/OpenGold.Rules.Srd5/src/rest_activity.cpp
     src/OpenGold.Rules.Srd5/src/recovery_timeline.cpp
 )
 target_include_directories(opengold_rules_srd5 PUBLIC src/OpenGold.Rules.Srd5/include)

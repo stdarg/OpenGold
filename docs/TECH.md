@@ -119,8 +119,9 @@ acquired feature/feat grants with source IDs, acquisition levels and choices.
 Version 9 also stores training selections and source grants. Existing campaign
 formats 1–8 migrate, preserving missing selections as pending. Campaign version
 10 adds completed Short Rest spending tickets and individual eligibility records;
-formats 1–9 migrate without inventing a spending session. Core owns rest timing
-and transactional commits; the rules module owns resource arithmetic. Campaign
+formats 1–9 migrate without inventing a spending session. Core owns campaign clock advancement
+and transactional commits; the rules module owns rest qualification, timing,
+interruption/resumption decisions, completion benefits and resource arithmetic. Campaign
 format 12 adds resumable rest activity when present, retaining format 11 for
 ordinary saves; native activity drives the existing atomic camp/inn route, with
 shared game/demo controls delivered and automatic interruption event connections
@@ -857,3 +858,27 @@ source-owned Fire Bolt, Poison Spray, Ray of Frost and Shocking Grasp choices.
 PC28 validates access and Charisma attacks. Existing Spell Choices/Spell/Cast
 controls are reused under Q27; old choices and save schemas remain unchanged.
 Full Sorcerer spellcasting and Innate Sorcery remain #132.
+
+
+## Static SRD library boundary
+
+`opengold_rules_srd5` is a C++20 static library. Its only project-library dependency
+is `opengold_rules`, the engine-independent interface/value types. It does not
+link Core, original game formats, or Godot. `opengold_core` links the interface,
+not the SRD implementation. The application selects/loads SRD at composition time
+and injects a `RulesModule`; presentation calls Core or the rules interfaces.
+
+SRD rest transitions live in `OpenGold.Rules.Srd5/src/rest_activity.cpp`.
+Core supplies progress and events and applies the returned continuation and
+benefits transactionally. Core retains member IDs, tickets, campaign clocks and
+save serialization. Rest progress value types cross the interface without Core
+or Godot types. Save fields and existing SRD behavior remain unchanged. Character
+preset ability priorities are queried from `CharacterRules`, not inferred from
+class names in Core.
+
+`alternate_rules_boundary` in `campaign_rest_tests.cpp` supplies intentionally
+non-SRD cancellation, continuation, default activity and completion benefits. It
+checks that Core follows the injected implementation. Existing SRD activity and
+save fixtures verify that this separation preserves game behavior. Original game
+content IDs, art mappings and authored demo parties remain campaign content;
+they are not rules calculations.

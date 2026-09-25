@@ -30,6 +30,14 @@ constexpr std::array<Class,12> classes{{
 }};
 class CreatorRules final : public CharacterRules {
 public:
+    std::array<unsigned,6> preset_ability_priority(std::string_view id,unsigned variant) const override {
+    const unsigned primary=id=="wizard"?3:(id=="cleric"||id=="druid")?4:(id=="bard"||id=="sorcerer"||id=="warlock")?5:(id=="monk"||id=="ranger"||id=="rogue"||(id=="fighter"&&variant%2))?1:0;
+    const unsigned secondary=(id=="monk"||id=="ranger")?4:id=="paladin"?5:2;
+    std::vector<unsigned> priority{primary,secondary};
+    for(unsigned n:{2u,1u,4u,0u,3u,5u})if(std::find(priority.begin(),priority.end(),n)==priority.end())priority.push_back(n);
+    std::array<unsigned,6> result{};std::copy(priority.begin(),priority.end(),result.begin());return result;
+    }
+
     ClassRequirements class_requirements(std::string_view id) const override;
     Identity identity() const override {return {"srd5","5.2.1","character-creation.1"};}
     std::vector<CreationChoice> choices(CreationField field) const override;

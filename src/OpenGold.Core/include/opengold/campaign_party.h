@@ -6,11 +6,11 @@
 
 namespace opengold {
 using MemberId = rules::EntityId;
-enum class RestKind { short_rest, long_rest };
+using RestKind = rules::RestKind;
 enum class RestDenial { none, vitality, cooldown, combat, spending, activity };
-enum class RestWork { sleep, light_activity, exertion };
+using RestWork = rules::RestWork;
 // spell means a non-cantrip; a cantrip does not interrupt rest.
-enum class RestInterruption { initiative, spell, damage, exertion };
+using RestInterruption = rules::RestInterruption;
 struct MemberRestInfo {
     MemberId id{};
     rules::RecoveryInfo recovery;
@@ -28,16 +28,10 @@ struct ShortRestSession {
     unsigned completed_subminute_milliseconds{};
     std::vector<MemberId> members;
 };
-struct RestActivity {
+struct RestActivity : rules::RestProgress {
     RestTicket ticket;
-    RestKind kind{};
     std::uint64_t started_minutes{};
     unsigned started_subminute_milliseconds{};
-    std::uint64_t elapsed_milliseconds{}, segment_milliseconds{}, sleep_milliseconds{}, light_milliseconds{};
-    std::uint64_t exertion_milliseconds{}, extension_milliseconds{};
-    bool interrupted{};
-    RestWork work{RestWork::sleep};
-    RestInterruption interruption{RestInterruption::initiative};
     std::vector<MemberId> members;
 };
 struct RestResult {

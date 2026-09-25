@@ -23,6 +23,25 @@ std::string row(std::array<int,19> values=definition)
     for(auto value:values)out<<' '<<value;
     return out.str()+'\n';
 }
+// This executable links only the SRD static library (and its rules interface),
+// proving rest mechanics can execute without Core, campaign assets or Godot.
+void standalone_rest_rules()
+{
+    using namespace rules;
+    const auto module=srd5::parse_content(std::string(header)+row());
+    auto progress=module->begin_rest(RestKind::long_rest);
+    auto step=module->advance_rest(progress,70*60000,RestWork::sleep);
+    check(step.progress&&step.benefit==RestBenefit::none,"Sleep advances without early benefits");
+    step=module->interrupt_rest(*step.progress,RestInterruption::damage);
+    check(step.progress&&step.progress->interrupted&&step.benefit==RestBenefit::short_rest&&
+        module->remaining_rest(*step.progress)==470*60000,"SRD library determines interruption and benefits");
+    progress=module->resume_rest(*step.progress);module->validate_rest(progress);
+    step=module->advance_rest(progress,module->remaining_rest(progress),progress.work);
+    check(!step.progress&&step.benefit==RestBenefit::long_rest&&step.completed_duration_milliseconds==540*60000,
+        "Standalone SRD library completes the extended rest");
+    progress=module->begin_rest(RestKind::short_rest);
+    check(!module->interrupt_rest(progress,RestInterruption::initiative).progress,"SRD Short Rest interruption cancels");
+}
 void malformed_content()
 {
     for(const auto* invalid:{"","OPENGOLD_SRD5","OPENGOLD_SRD5 2 synthetic.1\n",
@@ -77,6 +96,6 @@ void identities_and_sessions()
 }
 int main()
 {
-    try {malformed_content();identities_and_sessions();std::cout<<"Rules content tests passed\n";return 0;}
+    try {standalone_rest_rules();malformed_content();identities_and_sessions();std::cout<<"Rules content tests passed\n";return 0;}
     catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }
