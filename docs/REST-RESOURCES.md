@@ -419,3 +419,51 @@ confirmed static-library rules ownership, generic Core inventory persistence,
 existing Godot controls, RAII values and no new player saving controls. The held
 increment ran from 03:08 to approximately 03:50 UTC; original batch clock remains
 01:27:34 UTC. No original issue was closed. Token/cost delta was not captured.
+
+
+## Natural-sleep ground equipment at camp (#193, Q35)
+
+Natural sleep now releases held equipment immediately in the campaign. The
+module's generic `released_equipment` query decides which equipment leaves the
+character; Core transfers physical inventory and preserves stack quantities,
+names and original-item provenance. The SRD implementation leaves worn armor
+in place. An alternate-rules test deliberately releases armor during an awake
+Short Rest to prove that Core does not substitute SRD condition/equipment rules.
+
+Unplaced ground equipment is scoped to its rest session. Loud noise or script
+damage waking a sleeper does not return it to inventory. The encounter adapter
+passes initial ground-equipment ordinals alongside the original equipment recipe;
+the SRD library places those items at the character's starting cell, removes
+their bonuses, and uses the existing combat 16 ledger and pickup commands.
+Applying the first snapshot replaces camp records with positioned encounter
+records exactly once. Camp records from an abandoned rest are retained without
+being teleported into an unrelated battle.
+
+Campaign 14 adds the rest-session location marker only when needed. The actual
+previous campaign 13 and combat 16 writer fixtures from `381b2f8` round-trip
+byte-for-byte. Focused checks also cover a stack losing only its held member,
+remaining stack provenance, worn armor, waking a saved older sleeping record,
+malformed rest IDs/ground ordinals, and ally pickup after camp interruption.
+The native regression passed 44 checks and found one outdated Warlock equipment
+assertion. That test now verifies physical-item conservation across held and ground
+inventory; its casting/wealth expectations remain intact. The corrected test and
+affected save/rest/Godot checks pass (7/7). Remaining registered Godot checks passed.
+A proposed initiative correction was removed after its test disproved the premise
+about untrained shields. Final sleep/native and game checks pass (2/2); rebuilt
+demo sleep and rest checks pass. All 871 localized messages validate.
+Logs: `/tmp/rest-ground-verified-tests.log`,
+`/tmp/rest-ground-final-restore-tests.log`, `/tmp/rest-ground-demo-sleep.log`,
+`/tmp/rest-ground-demo-rest.log`. No live verification remains.
+
+This does not complete #193. Q36 automatic recovery after victory/safe completion
+is pending. Outside-combat retrieval after completing/abandoning rest remains
+unfinished. Script-induced zero HP during an awake Short Rest still releases
+held equipment when combat begins. This increment adds no new controls, no
+world-wide ground-inventory framework, and no automatic collection behavior.
+
+
+Final review retained generic Core inventory/rest-session ownership and SRD
+condition decisions in the static library. No UI controls, save locations,
+frameworks, issues or agents were added. Verification completed 04:13 UTC;
+original batch start remains 01:27:34 UTC. No original issue was closed. The
+rest-import substep start and token/cost delta were not separately captured.

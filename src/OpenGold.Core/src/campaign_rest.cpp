@@ -1,6 +1,7 @@
 #include "opengold/campaign_party.h"
 #include <algorithm>
 #include <limits>
+#include <set>
 
 namespace opengold {
 namespace {
@@ -66,7 +67,7 @@ std::optional<RestTicket> CampaignParty::begin_rest(RestKind kind)
     for(const auto& info:rest_info(kind))if(info.denial==RestDenial::none)activity.members.push_back(info.id);
     if(activity.members.empty())return std::nullopt;
     auto next=state_;activity.ticket=new_ticket(next);
-    apply_rest_work(next,activity.members,activity.work);next.rest_activity=activity;state_=std::move(next);return activity.ticket;
+    next.rest_activity=activity;apply_rest_work(next,activity.members,activity.work);state_=std::move(next);return activity.ticket;
 }
 void CampaignParty::require_activity_ticket(RestTicket ticket) const
 {
@@ -94,9 +95,34 @@ void CampaignParty::apply_rest_work(PartyState& state,std::span<const MemberId> 
     for(auto id:members){
         auto found=std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& m){return m.id==id;});
         if(found==state.roster.end())throw std::runtime_error("Unknown rest member");
+        release_rest_equipment(state,*found);
         if(work!=RestWork::sleep||rules_->recovery_info(found->character.sheet(),found->vitals).can_rest)
             rules_->set_rest_work(found->vitals,found->character.sheet(),work);
+        release_rest_equipment(state,*found);
     }
+}
+void CampaignParty::release_rest_equipment(PartyState& state,PartyMember& member) const
+{
+    if(!state.rest_activity||member.equipped.empty())return;
+    std::vector<std::string> keys;
+    for(const auto id:member.equipped)keys.push_back(member.character.inventory().find(id)->get().definition_id);
+    const auto released=rules_->released_equipment(member.character.sheet(),member.vitals,keys);
+    if(released.empty())return;
+    const auto session=state.rest_activity->ticket.session;
+    unsigned token{};for(const auto& item:state.detached_items)if(item.rest_session==session)token=std::max(token,item.token);
+    if(state.detached_items.size()+released.size()>4096||released.size()>std::numeric_limits<unsigned>::max()-token)throw std::runtime_error("Too many detached inventory items");
+    std::set<unsigned> indices;
+    for(const auto index:released)if(index>=keys.size()||!indices.insert(index).second)throw std::runtime_error("Invalid released equipment ordinal");
+    const auto equipped=member.equipped;
+    for(const auto index:released){
+        const auto id=equipped[index];auto item=member.character.inventory().find(id)->get();item.id=0;item.quantity=1;
+        std::optional<por::Equipment> original;
+        if(const auto source=member.item_sources.find(id);source!=member.item_sources.end())original=source->second;
+        state.detached_items.push_back({0,++token,member.id,0,{},std::move(item),std::move(original),session});
+        member.character.inventory().remove(id);std::erase(member.equipped,id);
+        if(!member.character.inventory().find(id))member.item_sources.erase(id);
+    }
+    member.equipment={};
 }
 void CampaignParty::loud_noise(std::span<const MemberId> affected)
 {

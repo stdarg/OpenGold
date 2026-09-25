@@ -405,7 +405,17 @@ public:
         }
         log("Combat begins. Each square is 5 feet.");update_outcome();
         frost_movement_=std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.cunning||(a.definition.known_cantrips&256)||detail::speed_penalty(a.effects);});
-        if(!restoring){for(auto& a:actors_)if(unconscious(a))drop_held(a);}
+        if(!restoring)for(auto& a:actors_){
+            if(unconscious(a))drop_held(a);
+            if(a.source.ground_equipment.empty())continue;
+            initialize_items();std::set<unsigned> seen;
+            for(const auto index:a.source.ground_equipment){
+                const auto item=std::find_if(items_.begin(),items_.end(),[&](const auto& i){return i.origin==a.source.id&&i.equipment_index==index;});
+                if(!seen.insert(index).second||item==items_.end())throw std::runtime_error("Invalid initial ground equipment");
+                item->holder=0;item->cell=a.source.cell;
+            }
+            a.definition=equipped_definition(a,items_);a.weapon_hands=a.definition.weapon_hands;
+        }
         if(!restoring&&outcome_==Outcome::ongoing&&!begin_turn())end_turn();
     }
     Snapshot snapshot() const override;
@@ -1642,6 +1652,15 @@ public:
         if(work==RestWork::sleep){if(actor.dead||actor.hp==0)throw std::runtime_error("Natural sleep requires a living conscious character");actor.effects.sleeping=actor.effects.prone=true;}
         else actor.effects.sleeping=false;
         state=vitals(actor);
+    }
+    std::vector<unsigned> released_equipment(const CharacterSheet& sheet,const VitalState& state,std::span<const std::string> equipment) const override
+    {
+        Actor actor;actor.definition=character_definition(character_profile(sheet,equipment).data);
+        actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
+        std::vector<unsigned> result;
+        if(unconscious(actor))for(unsigned i=0;i<equipment.size();++i)
+            if(equipment[i]=="shield"||detail::weapon(equipment[i]))result.push_back(i);
+        return result;
     }
     void set_hit_points(VitalState& state,const CharacterSheet& sheet,int hp) const override
     {

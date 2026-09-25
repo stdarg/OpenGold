@@ -144,6 +144,7 @@ void campaign_item_handoff(){
     auto invalid=battle->snapshot();invalid.held_items[0].definition="dagger";const auto before=party.checkpoint();
     rejects([&]{party.apply_combat(invalid);});check(party.member(ally).character.inventory().items().size()==1&&party.state().random_state==before.random_state&&party.state().detached_items.size()==1,"Rejected manifest preserves inventory and RNG");
     party.end_combat();const auto bytes=encode_campaign(party,nullptr,"detached-items");check(bytes.starts_with("OPENGOLD-CAMPAIGN 13"),"Detached items use versioned campaign persistence");
+    {std::ofstream out(std::filesystem::path(OPENGOLD_BINARY_DIR)/"sleep-fixtures/campaign-detached.ogs");out<<bytes;}
     auto decoded=decode_campaign(bytes,*srd5::character_rules(),*rules,"detached-items",nullptr);CampaignParty copy(module());copy.restore(decoded.party);
     check(encode_campaign(copy,nullptr,"detached-items")==bytes&&copy.state().detached_items.size()==1,"Uncollected equipment persists without assumed automatic cleanup");
 }
@@ -158,10 +159,74 @@ void recovery_posture(){
         check(rng==(stable?17:11400714819323198502ULL),"Adding Prone does not alter recovery RNG");
     }
 }
+void rest_ground_equipment(){
+    const auto rules=module();auto character=hero();
+    const auto sword=character.inventory().add("longsword","Camp sword",2,34);
+    const auto shield=character.inventory().add("shield","Camp shield");
+    const auto armor=character.inventory().add("chain_mail","Worn armor");
+    CampaignParty party(module());const auto owner=party.add_pc(std::move(character));const auto ally=party.add_pc(hero());
+    party.equip(owner,sword);party.equip(owner,shield);party.equip(owner,armor);
+    auto original=party.checkpoint();por::Equipment source;source.stored.type=34;source.stored.value=71;source.stored.stack_size=2;
+    original.roster[0].item_sources.emplace(sword,source);party.restore(original);
+    const auto ticket=*party.begin_rest(RestKind::long_rest);
+    auto legacy_sleep=party.checkpoint();legacy_sleep.detached_items.clear();
+    legacy_sleep.roster[0].character=original.roster[0].character;legacy_sleep.roster[0].equipped=original.roster[0].equipped;legacy_sleep.roster[0].item_sources=original.roster[0].item_sources;
+    CampaignParty waking_old_sleep(module());waking_old_sleep.restore(legacy_sleep);
+    const std::array<MemberId,1> wake_owner{owner};waking_old_sleep.loud_noise(wake_owner);
+    check(waking_old_sleep.state().detached_items.size()==2&&waking_old_sleep.member(owner).equipped==std::vector<std::uint64_t>{armor},"Waking an older resting record reconciles held items before removing sleep");
+    CampaignParty damaged_old_sleep(module());damaged_old_sleep.restore(legacy_sleep);
+    std::vector<std::uint8_t> script{0,0};for(unsigned n=0;n<5;++n)script.insert(script.end(),{1,1,0x15,0x99});script.insert(script.end(),{0,0});
+    por::EclMachine vm(std::make_shared<const por::EclProgram>(por::EclProgram::decode(script,"rest item damage")));
+    for(const auto& write:damaged_old_sleep.character_reply(0).writes)vm.bind_variable(write.address,write.value);
+    vm.bind_variable(0x6C19,damaged_old_sleep.member(owner).vitals.hit_points-1);damaged_old_sleep.read_character(0,vm);
+    check(damaged_old_sleep.state().detached_items.size()==2&&damaged_old_sleep.state().rest_activity->interrupted&&damaged_old_sleep.participants()[0].ground_equipment.size()==2,"Script damage retains camp drops when it wakes an older sleeping record");
+    check(party.member(owner).equipped==std::vector<std::uint64_t>{armor}&&party.state().detached_items.size()==2,"Sleep releases held items but keeps worn armor");
+    check(party.member(owner).character.inventory().find(sword)->get().quantity==1&&party.member(owner).item_sources.contains(sword),"Dropping a held stack member retains the remaining inventory and provenance");
+    check(party.state().detached_items[0].rest_session==ticket.session&&party.state().detached_items[0].original->stored.value==71,"Camp ground item retains session and original-item provenance");
+    const std::array<MemberId,2> awake{owner,ally};party.loud_noise(awake);
+    const auto bytes=encode_campaign(party,nullptr,"rest-ground");
+    check(bytes.starts_with("OPENGOLD-CAMPAIGN 14"),"Unplaced camp equipment uses a versioned save extension");
+    auto restored=decode_campaign(bytes,*srd5::character_rules(),*rules,"rest-ground",nullptr);party.restore(restored.party);
+    check(encode_campaign(party,nullptr,"rest-ground")==bytes,"Awake characters and ground camp equipment reload exactly");
+    auto malformed=restored.party;malformed.detached_items[0].rest_session=malformed.next_rest_session;
+    rejects([&]{party.restore(malformed);});check(encode_campaign(party,nullptr,"rest-ground")==bytes,"Invalid camp item identity preserves the live party");
+    malformed=restored.party;malformed.detached_items[1].item.definition_id="invalid:camp-item";
+    rejects([&]{party.restore(malformed);});check(encode_campaign(party,nullptr,"rest-ground")==bytes,"Unknown camp equipment rejects without mutating the live party");
+    CampaignParty abandoned(module());abandoned.restore(restored.party);abandoned.abandon_rest(abandoned.state().rest_activity->ticket);
+    const auto unrelated=abandoned.participants();check(std::all_of(unrelated.begin(),unrelated.end(),[](const auto& p){return p.ground_equipment.empty();}),"Abandoned camp gear does not teleport into another encounter");
+    check(abandoned.state().detached_items.size()==2,"Abandoning a rest does not silently delete or return gear");
+    check(party.prepare_combat(),"Immediate interruption has no unearned Hit Dice choice");
+    auto people=party.participants();people[0].cell={2,2};people[1].cell={2,3};people.push_back({1000,"bandit","Enemy",1,{6,2}});
+    check(people[0].ground_equipment==std::vector<unsigned>{1,2},"Interruption formation carries explicit ground ordinals after worn armor");
+    auto bad_people=people;bad_people[0].ground_equipment.push_back(99);
+    rejects([&]{(void)rules->create({{9,7,std::vector<std::uint8_t>(63)},bad_people},37);});
+    auto battle=rules->create({{9,7,std::vector<std::uint8_t>(63)},people,party.state().next_combat_scope},37);
+    const auto ground=battle->snapshot();
+    check(!unit(*battle,owner).naturally_sleeping&&ground.held_items.size()==2&&
+        std::all_of(ground.held_items.begin(),ground.held_items.end(),[](const auto& i){return !i.holder;}),"Waking before initiative does not re-equip camp ground items");
+    check(unit(*battle,owner).armor_class==party.profile(owner).armor_class,"Initial ground shield supplies no combat AC");
+    check(rules->restore(battle->save())->save()==battle->save(),"Rest-imported ground items use the existing combat continuation format");
+    party.begin_combat();party.apply_combat(battle->snapshot());party.apply_combat(battle->snapshot());
+    check(party.state().detached_items.size()==2&&std::all_of(party.state().detached_items.begin(),party.state().detached_items.end(),[](const auto& i){return i.scope&&!i.rest_session;}),"Rest inventory converts to positioned encounter inventory exactly once");
+    turn(*battle,ally);check(battle->submit(command(*battle,"pick_up",1)),"Ally can pick up the camp weapon after interruption");party.apply_combat(battle->snapshot());
+    const auto acquired=party.member(ally).equipped.front();
+    check(party.member(ally).character.inventory().find(acquired)->get().name=="Camp sword"&&party.member(ally).item_sources.at(acquired).stored.value==71,"Camp-to-combat pickup retains physical item provenance");
+    party.end_combat();
+}
+void prior_equipment_formats(){
+    const auto rules=module();
+    const auto read=[](const char* name){std::ifstream in(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name,std::ios::binary);check(bool(in),"Previous equipment writer fixture exists");return std::string(std::istreambuf_iterator<char>(in),{});};
+    const auto campaign=read("campaign-v13-detached.ogs");CampaignParty party(module());
+    party.restore(decode_campaign(campaign,*srd5::character_rules(),*rules,"detached-items",nullptr).party);
+    check(encode_campaign(party,nullptr,"detached-items")==campaign,"Actual campaign 13 writer remains byte-exact");
+    const auto combat=read("combat-v16-ground.save");
+    check(rules->restore(combat)->save()==combat,"Actual combat 16 writer remains byte-exact");
+}
+
 void movement(){
     Battlefield board{5,5,std::vector<std::uint8_t>(25)};board.terrain[2*5+3]=2;
     fx::MovementGrid grid(board,{2,2},{},true);check(grid.step_cost({2,2},{2,3})==10&&grid.step_cost({2,2},{3,2})==15,"Crawling and difficult terrain add independent movement costs");
     check(grid.reachable(14).cost_to({3,2})==std::nullopt&&grid.reachable(15).cost_to({3,2})==15,"Crawling reach uses exact weighted path cost");
 }
 }
-int main(){try{codec();combat();damage_and_saves();prior_writer();held_items();campaign_item_handoff();recovery_posture();movement();std::cout<<"Natural sleep tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{codec();combat();damage_and_saves();prior_writer();held_items();campaign_item_handoff();recovery_posture();rest_ground_equipment();prior_equipment_formats();movement();std::cout<<"Natural sleep tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

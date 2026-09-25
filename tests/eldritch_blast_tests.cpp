@@ -100,7 +100,10 @@ void campaign(){auto rules=module();auto creation=srd5::character_rules();for(bo
         auto rest=restored.rest(kind);check(bool(rest),"Camp/inn rest accepted");if(restored.state().short_rest)restored.finish_short_rest(restored.state().short_rest->ticket);
         const auto camp=encode_campaign(restored,nullptr,"eldritch");CampaignParty again(module());again.restore(decode_campaign(camp,*creation,*rules,"eldritch",nullptr).party);check(encode_campaign(again,nullptr,"eldritch")==camp&&rules->spell_access(again.member(id).character.sheet()).cantrips.size()==1,"Rest save/reload retains spell choice");
     }
-    check(restored.member(id).wealth[3]==37&&restored.profile(id).data==p.profile(id).data,"Inventory, wealth, equipment and cast access retained");
+    unsigned quarterstaffs{};for(const auto& item:restored.member(id).character.inventory().items())if(item.definition_id=="quarterstaff")quarterstaffs+=item.quantity;
+    for(const auto& item:restored.state().detached_items)if(item.original_owner==id&&item.item.definition_id=="quarterstaff")quarterstaffs+=item.item.quantity;
+    check(quarterstaffs==1&&restored.member(id).wealth[3]==37&&rules->spell_access(restored.member(id).character.sheet()).cantrips.size()==1,
+        "Rest preserves physical equipment, wealth and cast access even when sleep drops the held quarterstaff");
 }}
 void legacy(){auto rules=module();auto creation=srd5::character_rules();auto base=root/"tests/fixtures";
     const auto old=read(base/"campaign-v11-eldritch-before.ogs");CampaignParty p(module());p.restore(decode_campaign(old,*creation,*rules,"eldritch",nullptr).party);

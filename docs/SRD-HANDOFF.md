@@ -46,16 +46,38 @@ level 4, then level 20 and multiclassing.
   `/tmp/held-demo-spacing-ui.log`; final demo captures
   `/tmp/held-final-demo-captures`. Localization regeneration changed source
   references only. Architecture/scope and diff checks passed.
-- Remaining: physical drops during rest outside combat, importing that ground
-  equipment into an interruption encounter, Q36 collection policy, and final
-  rest scheduling acceptance. Uncollected items currently persist but cannot be
-  recovered outside their combat. Do not describe this increment as complete
-  held-item/rest support. Current ledger uses original equipment ordinals and
-  derives gear only from character recipes; authored static monster profiles
-  have no exchange metadata. No inferred monster ability/proficiency data.
-- Delivery: verified combat increment committed/pushed with this handoff; keep
-  issues open. Next continue the existing rest prerequisite, with cleanup dependent
-  on Q36. Preserve old fixtures; no speculative equipment framework or new scope.
+- Verified rest-import increment (committed with this handoff): generic module release query,
+  rest-session ground records (conditional campaign 14), and explicit initial
+  ground ordinals reuse combat 16. Waking before initiative no longer re-equips
+  camp items. Abandoning a rest retains its items without importing them into
+  unrelated encounters. Actual prior campaign 13/combat 16 fixtures captured
+  from `381b2f8`; source bytes are frozen. Initial sleep/rest tests passed.
+- Final rest-import checks complete 04:13 UTC; no live builds/tests. Native
+  regression passed 44/45; the old Warlock oracle assumed a held Quarterstaff
+  stayed equipped through sleep. Its corrected physical-item conservation check
+  passed, along with affected save/rest/spell and Godot checks (7/7). All other
+  registered Godot checks passed; the prior failed prerequisite was rerun.
+  An initiative concern was disproved by its test: shields do not get the
+  untrained-armor penalty. That unnecessary change/test was fully removed;
+  final native sleep and game sleep checks passed (2/2). This was not a repeated
+  unsuccessful fix of the same failure. Logs `/tmp/rest-ground-native.log`,
+  `/tmp/rest-ground-godot.log`, `/tmp/rest-ground-verified-tests.log`,
+  `/tmp/rest-ground-final-restore-tests.log`.
+- Rebuilt demo passes shared sleep and rest controls. Logs
+  `/tmp/rest-ground-demo-sleep.log`, `/tmp/rest-ground-demo-rest.log`.
+  All 871 localized messages validate. This increment changes no control layout.
+- Remaining: Q36 safe automatic collection, camp location/recovery after a rest
+  ends or is abandoned, and final rest scheduling acceptance. Script-induced
+  zero HP during an awake Short Rest still drops gear on combat entry; this
+  increment addresses natural sleep, not a new world-wide ground inventory.
+  Detached gear remains saved, but outside-combat pickup is not playable yet.
+  Next scheduler audit: `phlan_session.cpp` still advances five minutes directly
+  for the guaranteed city-watch route, without beginning a rest activity. Read
+  original event semantics before adapting it; do not invent probabilistic rules.
+  Static monster profiles still lack exchange metadata. #193/#30 remain OPEN.
+- Delivery: rest-import source, tests and prior-writer fixtures committed/pushed
+  after `381b2f8` on main. Continue within Q35; no new issues,
+  delegation, model changes, automatic cleanup or silent scope expansion.
 
 Evidence belongs in [rest resources](REST-RESOURCES.md#combat-held-equipment-increment-193-q35).
 Execution: [workflow](SRD-WORKFLOW.md); [routing](SRD-MODEL-ROUTING.md).

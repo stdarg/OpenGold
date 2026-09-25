@@ -138,6 +138,9 @@ struct Participant {
     std::optional<VitalState> state;
     bool surprised{}; // The rules module determines the mechanical effect.
     bool facing_left{};
+    // Initial equipment ordinals already on the ground at this participant's
+    // encounter position. Combat checkpoints persist their resulting item state.
+    std::vector<unsigned> ground_equipment;
 };
 struct Encounter { Battlefield battlefield; std::vector<Participant> participants; std::uint64_t scope{1}; };
 struct Identity {
@@ -260,6 +263,8 @@ public:
     [[nodiscard]] virtual RestPolicy short_rest_policy() const;
     // Rest hosts report an activity; the module owns sleep/condition effects.
     virtual void set_rest_work(VitalState&,const CharacterSheet&,RestWork) const {}
+    // The module identifies equipment that the current condition releases.
+    [[nodiscard]] virtual std::vector<unsigned> released_equipment(const CharacterSheet&,const VitalState&,std::span<const std::string>) const {return {};}
     virtual void set_hit_points(VitalState&,const CharacterSheet&,int) const;
     virtual void temple_heal(VitalState& state, const CharacterSheet& sheet, std::uint64_t& random_state) const;
 };

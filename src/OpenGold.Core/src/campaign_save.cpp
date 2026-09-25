@@ -56,7 +56,7 @@ struct SaveCodec {
             v.sleep_milliseconds,v.light_milliseconds,v.exertion_milliseconds,v.extension_milliseconds,v.interrupted,work,interruption,v.members);
         if(reading){v.kind=static_cast<RestKind>(kind);v.work=static_cast<RestWork>(work);v.interruption=static_cast<RestInterruption>(interruption);}
     }
-    void field(DetachedPartyItem& v){fields(v.scope,v.token,v.original_owner,v.holder,v.cell.x,v.cell.y,v.item,v.original);}
+    void field(DetachedPartyItem& v){fields(v.scope,v.token,v.original_owner,v.holder,v.cell.x,v.cell.y,v.item,v.original);if(version>=14)field(v.rest_session);}
     void rest(PartyState& v){if(version>=10)fields(v.next_rest_session,v.short_rest);if(version>=12)field(v.rest_activity);if(version>=13)field(v.detached_items);}
     void field(rules::VitalState& v){fields(v.hit_points,v.dead,v.resources,v.description);}
     void member(PartyMember& v){
@@ -170,7 +170,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=!party.state().detached_items.empty()?13:party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=std::any_of(party.state().detached_items.begin(),party.state().detached_items.end(),[](const auto& item){return item.rest_session!=0;})?14:!party.state().detached_items.empty()?13:party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -190,7 +190,7 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
     require(bytes.size()<=limit,"Campaign save too large");
     unsigned version{};std::size_t header_size{};
-    for(unsigned v=1;v<=13;++v){
+    for(unsigned v=1;v<=14;++v){
         const auto header="OPENGOLD-CAMPAIGN "+std::to_string(v)+'\n';
         if(bytes.starts_with(header)){version=v;header_size=header.size();break;}
     }

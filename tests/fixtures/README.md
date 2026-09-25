@@ -567,3 +567,16 @@ Dash. The source files existed before the sleep implementation and were checked
 for their original module identity before copying. `opengold_natural_sleep_tests`
 restores and continues the first, then compares with the second byte-for-byte
 apart from the module identity. Do not regenerate these with the new writer.
+
+
+## Held equipment and rest import
+
+`campaign-v13-detached.ogs` and `combat-v16-ground.save` were written by
+rules 0.6.42 and the Core writer from commit `381b2f8`, before adding rest-session
+ground equipment. They contain only authored data. The campaign asset identity
+is `detached-items`; one party member's original sword has moved to an ally and
+one shield remains detached. The combat has a sleeping owner, an adjacent awake
+ally, and a dropped sword/shield. Preserve these bytes; the new rest import must
+not change their exact save/load continuation. `natural_sleep_tests.cpp` verifies
+both fixtures. They were captured from the built previous libraries, not generated
+by the new campaign 14 writer.

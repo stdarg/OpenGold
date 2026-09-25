@@ -64,6 +64,9 @@ struct DetachedPartyItem {
     rules::Cell cell;
     InventoryItem item;
     std::optional<por::Equipment> original;
+    // Before an interruption battle assigns cells, scope is zero and the item
+    // stays at this rest session's camp, anchored to original_owner's position.
+    std::uint64_t rest_session{};
 };
 struct PartyState {
     std::vector<PartyMember> roster;
@@ -161,9 +164,11 @@ private:
         std::uint64_t inventory_id{};
         InventoryItem item;
         std::optional<por::Equipment> original;
+        unsigned rest_token{};
     };
     std::vector<CombatInventoryItem> combat_items_;
     void apply_combat_items(PartyState&,std::vector<CombatInventoryItem>&,const rules::Snapshot&) const;
+    void release_rest_equipment(PartyState&,PartyMember&) const;
     void elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat={}) const;
     void editable() const;
     void rewardable() const;

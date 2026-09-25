@@ -48,10 +48,16 @@ public:
         return {std::nullopt,RestBenefit::long_rest,120000};
     }
     void recover(VitalState& vitals,const CharacterSheet&) const override {vitals.hit_points=7;}
+    std::vector<unsigned> released_equipment(const CharacterSheet&,const VitalState&,std::span<const std::string> gear) const override
+    {return gear.empty()?std::vector<unsigned>{}:std::vector<unsigned>{0};}
 };
 void alternate_rules_boundary(){
-    CampaignParty party(std::make_unique<AlternateRestRules>());const auto id=party.add_pc(hero());
-    auto ticket=*party.begin_rest(RestKind::short_rest);party.interrupt_rest(ticket,RestInterruption::damage);
+    CampaignParty party(std::make_unique<AlternateRestRules>());auto person=hero();const auto armor=person.inventory().add("chain_mail","Alternate rest armor");
+    const auto id=party.add_pc(std::move(person));party.equip(id,armor);
+    auto ticket=*party.begin_rest(RestKind::short_rest);
+    check(party.member(id).equipped.empty()&&party.state().detached_items.size()==1&&party.state().detached_items[0].item.definition_id=="chain_mail",
+        "Core obeys module equipment releases even for awake Short Rest armor");
+    party.interrupt_rest(ticket,RestInterruption::damage);
     check(party.state().rest_activity&&party.state().rest_activity->interrupted&&!party.state().short_rest,
         "Core permits module-defined Short Rest resumption without SRD benefits");
     party.resume_rest(party.state().rest_activity->ticket);party.abandon_rest(party.state().rest_activity->ticket);
