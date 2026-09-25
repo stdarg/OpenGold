@@ -111,3 +111,21 @@ Observed independent verification complete 2026-09-25 05:23:42 UTC (27m37s since
 batch start, still before the unchanged 05:56:05 checkpoint). No live build/test
 process remains. Q40-dependent implementation and verification remain outstanding.
 No measured token/cost saving is claimed. No two unsuccessful fixes of one failure.
+
+
+### Follow-up death-save boundary verification
+
+At 05:28:59 UTC, the rebuilt feature test also passed actual combat turn-entry
+and CampaignParty death-save paths. Seed 17 independently gives a natural 20.
+A block expiring at 5999/6000/6001 ms respectively allows/allows/prevents the
+6000 ms recovery. Advancing in chunks and serializing at 5999 ms gives exactly
+the same final campaign bytes and one RNG draw as advancing 6000 ms once.
+Expiration does not replay a prevented death-save heal. Actual combat natural
+20 while blocked leaves the actor at zero HP with no actions and preserves exact
+checkpoint continuation. These cases concern death saves, not the still-pending
+Stable 1d4-hour policy in Q40. No runtime code changed in this follow-up.
+
+Commands: `cmake --build build/mac-check --target opengold_chill_touch_tests -j6`
+and the matching focused CTest. Logs `/tmp/chill-death-boundary-{build,test}.log`.
+This is further verification progress; the spell remains unfinished. No live
+process remains, no extra issue was created or closed, and Q40 is unanswered.

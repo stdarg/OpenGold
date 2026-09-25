@@ -87,9 +87,64 @@ void healing_spells(){auto rules=custom();auto cleric=hero("cleric").sheet();cle
         check(std::string(spell)=="cure_wounds"?!unit(*c).action:!unit(*c).bonus_action,"Healing spell spends correct action");
     }
 }
+void combat_death_save(){
+    const auto rules=custom();const auto h=hero("fighter",2);
+    auto vitality=blocked_state(*rules,h,1);rules->set_hit_points(vitality,h.sheet(),0);
+    bool covered=false;
+    for(unsigned seed=0;seed<100&&!covered;++seed){
+        auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},
+            {{1,"campaign-character","Fighter",0,{1,1},rules->character_profile(h.sheet(),{}).data,vitality},
+             {2,"target","Enemy",1,{2,1}},{3,"vanguard","Companion",0,{6,1}}}},seed);
+        for(unsigned turns=0;turns<3&&!covered;++turns){
+            for(const auto& message:c->snapshot().log_messages)if(message.source=="{name} death save: {roll}"){
+                bool fighter=false,natural20=false;
+                for(const auto& arg:message.arguments){fighter|=arg.name=="name"&&arg.value=="Fighter";natural20|=arg.name=="roll"&&arg.value=="20";}
+                if(fighter&&natural20&&blocked(*c,1)){
+                    check(unit(*c).hit_points==0&&!unit(*c).action&&c->snapshot().actor!=1,
+                        "Blocked natural 20 does not wake the combatant or grant its turn's actions");
+                    auto restored=rules->restore(c->save());check(restored->save()==c->save(),"Blocked combat death save retains exact checkpoint");
+                    act(*c,"end");act(*restored,"end");check(c->save()==restored->save(),"Blocked combat death-save continuation is deterministic");
+                    covered=true;break;
+                }
+            }
+            if(!covered)act(*c,"end");
+        }
+    }
+    check(covered,"Actual blocked combat natural 20 exercised");
+}
+void death_save_boundary(){
+    const auto rules=module();const auto fixture_rules=custom();const auto h=hero("fighter",2);
+    for(unsigned duration:{5999u,6000u,6001u}){
+        auto vitality=blocked_state(*fixture_rules,h,1);
+        const auto timer=vitality.resources.find("0 9000 0");check(timer!=std::string::npos,"Known prevention timer");
+        vitality.resources.replace(timer,8,"0 "+std::to_string(duration)+" 0");
+        rules->set_hit_points(vitality,h.sheet(),0); // Real damage path starts the 6000 ms death-save clock.
+        CampaignParty whole(module());const auto id=whole.add_pc(h);auto state=whole.checkpoint();
+        state.roster[0].vitals=vitality;state.random_state=17;state.next_combat_scope=6;
+        whole.restore(state);CampaignParty pieces(module());pieces.restore(state);
+        whole.advance_time_milliseconds(6000);
+        pieces.advance_time_milliseconds(1999);pieces.advance_time_milliseconds(1000);
+        pieces.advance_time_milliseconds(3000);
+        check(pieces.member(id).vitals.hit_points==0&&pieces.state().random_state==17,"No early death save or extra effect RNG");
+        const auto pending=encode_campaign(pieces,nullptr,"chill-death-boundary");
+        CampaignParty loaded(module());loaded.restore(decode_campaign(pending,*srd5::character_rules(),*rules,"chill-death-boundary",nullptr).party);
+        loaded.advance_time_milliseconds(1);
+        check(encode_campaign(loaded,nullptr,"chill-death-boundary")==encode_campaign(whole,nullptr,"chill-death-boundary"),
+            "Partitioning time and saving immediately before death save preserves exact continuation");
+        // Independent SplitMix64 calculation: seed 17's first d20 is 20, one draw.
+        check(whole.state().random_state==17+0x9e3779b97f4a7c15ULL,"Death save uses exactly one roll");
+        check(whole.member(id).vitals.hit_points==(duration>6000?0:1),
+            "Natural 20 heals at/after prevention expiry, remains blocked one millisecond before expiry");
+        if(duration>6000){
+            whole.advance_time_milliseconds(1);
+            check(!fx::healing_blocked(effects(whole.member(id).vitals))&&whole.member(id).vitals.hit_points==0,
+                "Expired prevention does not replay a blocked death-save heal");
+        }
+    }
+}
 void persistence(){auto rules=custom();auto c=battle(*rules,hero());act(*c,"chill_touch",2);auto saved=c->save();auto forged=saved;forged.replace(forged.find("0.6.43"),6,"0.6.42");rejects([&]{(void)rules->restore(forged);});check(c->save()==saved,"Invalid restore preserves session");
     for(const auto* klass:{"wizard","sorcerer","warlock"}){CampaignParty party(module());auto h=hero(klass);const auto id=party.add_pc(h);auto stage=party.checkpoint();stage.roster[0].vitals=blocked_state(*rules,h,1);party.restore(stage);auto bytes=encode_campaign(party,nullptr,"chill");CampaignParty copy(module());copy.restore(decode_campaign(bytes,*srd5::character_rules(),*module(),"chill",nullptr).party);check(encode_campaign(copy,nullptr,"chill")==bytes,"Campaign grant and effect round trip");auto actors=copy.participants();std::uint64_t random=17;rules->elapse(actors,8999,random);check(fx::healing_blocked(effects(*actors[0].state)),"Campaign expiry not early");rules->elapse(actors,1,random);check(!fx::healing_blocked(effects(*actors[0].state))&&random==17,"Exact outside combat expiry, no RNG");(void)id;}
 }
 void fixtures(){auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"chill-fixtures";std::filesystem::create_directories(path);auto rules=module();for(const auto* klass:{"wizard","sorcerer","warlock"}){auto h=hero(klass);auto profile=rules->character_profile(h.sheet(),{}).data;auto c=rules->create({{12,9,std::vector<std::uint8_t>(108)},{{1,"campaign-character","Caster",0,{1,1},profile},{2,"vanguard","Ally",0,{2,1}},{99,"vanguard","Enemy",1,{5,1}}}},2);while(c->snapshot().actor!=1)act(*c,"end");std::ofstream(path/(std::string(klass)+".save"))<<c->save();act(*c,"chill_touch",2);std::ofstream(path/(std::string(klass)+"-blocked.save"))<<c->save();}}
 }
-int main(){try{access();damage();timing();skipped_caster();campaign_handoff();legality();lifecycle();recovery();healing_spells();persistence();fixtures();std::cout<<"Chill Touch tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{access();damage();timing();skipped_caster();campaign_handoff();legality();lifecycle();recovery();healing_spells();combat_death_save();death_save_boundary();persistence();fixtures();std::cout<<"Chill Touch tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

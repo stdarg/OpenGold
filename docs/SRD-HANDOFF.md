@@ -69,6 +69,10 @@ and multiclassing. Do not treat this completed batch as the full goal.
   checks have passing results; 23/23 Godot runtime checks; rendered combat and
   main creator EN/ES at both sizes; rebuilt demo creator passes in its existing
   English-only presentation. No live process remains. Details/logs in packet.
+- Follow-up goal turn made PROGRESS: added and passed actual combat/campaign
+  natural-20 death-save boundary and checkpoint tests, including exact expiry
+  and partitioned time. No runtime changes. Finished 05:28:59 UTC; logs and
+  evidence in the packet. Q40 remains unanswered; no live build/test remains.
 - Preserve this WIP branch until complete; return verified work to main under
   the existing delivery workflow. No finished coverage row or issue closure yet.
 - Next after Q40: integrate Stable recovery across chronological combat/campaign
