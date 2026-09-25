@@ -580,3 +580,27 @@ ally, and a dropped sword/shield. Preserve these bytes; the new rest import must
 not change their exact save/load continuation. `natural_sleep_tests.cpp` verifies
 both fixtures. They were captured from the built previous libraries, not generated
 by the new campaign 14 writer.
+
+
+## Tactical Mind's actual prior writer
+
+`campaign-v11-mind-before.ogs`, `combat-v15-mind-before.save`, and
+`combat-v15-mind-continued.save` were generated before Tactical Mind changes,
+using the rules/Core libraries from `36e574c` (rules 0.6.42, PC28) and
+`opengold_action_surge_tests --freeze-mind-baseline`. Only the capture/test driver
+was added; the gameplay libraries were unchanged. The campaign asset identity
+is `mind-before`. All data is authored, with no original game archive content.
+
+The level-two Fighter begins wounded and actually spends one Second Wind,
+leaving one use. Equipment, 37 gold, campaign clock 123 minutes plus 456 ms and
+campaign RNG 789 remain recorded. The second combat file is the actual result
+of Action Surge followed by Dash from the first. The compatibility regression
+requires byte-exact combat continuation apart from module identity and checks
+campaign resources, equipment, time, RNG and canonical reload. Preserve these
+bytes when the check/feature implementation changes.
+
+SHA-256:
+
+- `campaign-v11-mind-before.ogs`: `2c97462b62d896f8a77aebb901c38fe4655715d4b1749a880108d33c86aad179`
+- `combat-v15-mind-before.save`: `44d450a76575dc2052ad946ac7cbf2c416e6e603046d25450aebf31e91944086`
+- `combat-v15-mind-continued.save`: `e40bb504963583c4e1c7988e512b4f7f5f5516bec912e848ea089393116dc720`

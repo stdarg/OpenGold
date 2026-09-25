@@ -66,3 +66,32 @@ new task or agents. Escalate/report two failed fixes of the same failure.
 Observed batch/preflight start: 2026-09-25 04:41:34 UTC. Review checkpoint
 05:41:34; maximum 06:11:34. Do not reset on approval waits or implementation
 substeps. Q38/Q39 audio completed successfully; approval widget is visible.
+
+
+## Verified pre-implementation audit
+
+The `ability_check` path currently derives modifiers only:
+`training.cpp::check_modifier` → `CharacterRules::ability_check` →
+`RulesModule::ability_check` → `CampaignParty::ability_check`. It preserves
+training/provenance, Expertise, tool advantage and equipment penalties. No game
+or demo action currently executes a rolled SRD skill check. Combat's other d20
+sites are attack rolls, saving throws/death saves and initiative; initiative has
+no failed-check DC, so Tactical Mind cannot boost it. Do not apply Tactical Mind
+to attacks/saves or reinterpret original ECL random branches as SRD skill checks.
+The original surprise adapter in `phlan_session.cpp` uses authored d6 probability
+thresholds, not Wisdom/Medicine or a failed SRD ability check.
+
+Medicine will be the first rolled SRD skill-check action. Reuse
+`status_effects.cpp::d20` with the proper ability-check modifier and separate
+success comparison; do not use attack natural-1/20 rules. Reuse
+`life_cycle.cpp::stabilize`: it clears death-save counters, stops their clock and
+rolls one d4 for natural Stable recovery without healing. No second stabilization
+roll or new recovery timeline is needed. Source/level validation must preserve
+old profile access and add only legitimately attained Tactical Mind grants.
+
+Compatibility preparation is complete: the unchanged 0.6.42/PC28 gameplay
+libraries wrote a level-two Fighter campaign and two consecutive combat states.
+[Fixture provenance and hashes](../tests/fixtures/README.md#tactical-minds-actual-prior-writer)
+record the capture. The rebuilt Action Surge suite passes its new prior-writer
+continuation test (`/tmp/mind-baseline-tests.log`). No gameplay or UI behavior was
+changed. Q38/Q39 remain pending; do not treat this preparation as issue completion.

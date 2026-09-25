@@ -43,7 +43,8 @@ and multiclassing. Do not treat this completed batch as the full goal.
 
 ## Current batch — #32 / #87
 
-- Previous goal turn: PROGRESS, pushed `36e574c` and verified #193/#30 CLOSED.
+- Previous goal turn: PROGRESS, pushed preflight/approval packet `f7b069f`;
+  the preceding `36e574c` delivery closed #193/#30.
   Worktree was clean at this turn's entry; no live process remains.
 - Current preflight selected Medicine stabilization and Tactical Mind together;
   [bounded packet](MEDICINE-TACTICAL-MIND.md) records fixed acceptance, sources,
@@ -57,9 +58,17 @@ and multiclassing. Do not treat this completed batch as the full goal.
   draw/stow support; style feat closure also needs Paladin/Ranger source routes.
   Deferred that larger package instead of silently expanding into it. Q23 and
   other pre-existing questions remain pending; they are not this batch's blockers.
-- After approval, inventory existing ability-check execution paths, capture any
-  required prior-writer fixture, then implement the two issues' player flow in
-  one bounded batch. Full all-class/level/multiclass goal remains ACTIVE.
+- Check-path audit and actual prior-writer capture are now complete; see the
+  packet's verified audit. There are modifier queries but no rolled SRD skill
+  actions yet; initiative has no failure DC. Reuse existing d20 and stabilize
+  helpers, keeping original ECL probability branches distinct.
+- `opengold_action_surge_tests` now verifies three frozen 0.6.42/PC28 fixtures:
+  level-two Fighter with spent Second Wind, campaign time/RNG, and exact
+  Action Surge/Dash continuation. Focused build/test passes; no gameplay change.
+  Log `/tmp/mind-baseline-tests.log`. No live processes remain.
+- Next: after Q38/Q39 approval implement the two issues' player flow, with grants,
+  pending decisions and old/new continuations. Full goal remains ACTIVE. No
+  issue closure is claimed for preparation; no repeated-blocker streak yet.
 
 Use [workflow](SRD-WORKFLOW.md) and [model routing](SRD-MODEL-ROUTING.md): classify,
 record and visibly announce the next assignment, verify execution settings,

@@ -26,6 +26,24 @@ void freeze(){auto rules=module();check(rules->identity().version=="0.6.23","Fre
     auto c=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},2);check(c->snapshot().actor==1,"Fighter begins");check(c->submit(command(*c,"second_wind")),"Spend actual Second Wind");p.begin_combat();p.apply_combat(c->snapshot());p.end_combat();
     write("campaign-v11-surge.ogs",encode_campaign(p,nullptr,"surge"));write("combat-v13-surge.save",c->save());check(c->submit(command(*c,"dash")),"Old Dash continuation");write("combat-v13-surge-continued.save",c->save());
 }
+// Capture with the shipped library before adding Tactical Mind/profile changes.
+void freeze_mind_baseline(){
+    auto rules=module();check(rules->identity().version=="0.6.42","Mind baseline requires the actual 0.6.42 writer");
+    CampaignParty party(module());auto person=hero(2);const auto sword=person.inventory().add("longsword","Prior writer sword");
+    const auto id=party.add_pc(std::move(person));party.equip(id,sword);
+    auto state=party.checkpoint();state.roster[0].vitals.hit_points=1;state.roster[0].wealth[3]=37;
+    state.time_minutes=123;state.subminute_milliseconds=456;state.random_state=789;party.restore(state);
+    auto people=party.participants();check(people[0].character_profile.starts_with("PC28 "),"Freeze predates the next profile writer");
+    people[0].cell={1,1};people.push_back({99,"vanguard","Enemy",1,{5,1}});
+    auto combat=rules->create({{8,8,std::vector<std::uint8_t>(64)},people},2);
+    check(combat->snapshot().actor==id&&combat->submit(command(*combat,"second_wind")),"Freeze spends one genuine Second Wind");
+    party.begin_combat();party.apply_combat(combat->snapshot());party.end_combat();
+    check(party.member(id).vitals.resources=="SRD1 1 0 0 0 0","Prior writer retains one Second Wind");
+    write("campaign-v11-mind-before.ogs",encode_campaign(party,nullptr,"mind-before"));
+    write("combat-v15-mind-before.save",combat->save());
+    check(combat->submit(command(*combat,"action_surge"))&&combat->submit(command(*combat,"dash")),"Freeze actual next commands");
+    write("combat-v15-mind-continued.save",combat->save());
+}
 template<class F>void rejects(F f){bool caught=false;try{f();}catch(const std::exception&){caught=true;}check(caught,"Invalid state must reject");}
 bool has(const CombatSession& c,std::string_view verb){for(const auto& v:c.legal_commands())if(v.verb==verb)return true;return false;}
 void act(CombatSession& c,std::string_view verb,EntityId target=0){check(c.submit(command(c,verb,target)),"Submit legal command");}
@@ -102,6 +120,20 @@ void legacy(){auto rules=module();auto creation=srd5::character_rules();auto old
     auto version=[&](std::string bytes){const auto at=bytes.find("0.6.23");check(at!=bytes.npos,"Prior identity exists");bytes.replace(at,6,rules->identity().version);return bytes;};auto c=rules->restore(read("combat-v13-surge.save"));check(c->save()==version(read("combat-v13-surge.save"))&&!has(*c,"action_surge"),"Old in-flight combat retains its recorded feature access without inventing an allowance");act(*c,"dash");check(c->save()==version(read("combat-v13-surge-continued.save")),"Actual old Dash continuation stays byte-exact apart from identity");
 }
 
+void mind_prior_writer(){
+    auto rules=module();const auto normalize=[&](std::string bytes){const auto pos=bytes.find("0.6.42");check(pos!=bytes.npos,"Frozen Mind baseline identity exists");bytes.replace(pos,6,rules->identity().version);return bytes;};
+    auto combat=rules->restore(read("combat-v15-mind-before.save"));
+    check(combat->save()==normalize(read("combat-v15-mind-before.save")),"Pre-Mind combat preserves the actual old writer");
+    act(*combat,"action_surge");act(*combat,"dash");
+    check(combat->save()==normalize(read("combat-v15-mind-continued.save")),"Pre-Mind actions, resources, movement and RNG continue byte-exactly");
+    CampaignParty party(module());party.restore(decode_campaign(read("campaign-v11-mind-before.ogs"),*srd5::character_rules(),*rules,"mind-before",nullptr).party);
+    check(party.member(1).character.sheet().level==2&&party.member(1).vitals.resources=="SRD1 1 0 0 0 0"&&party.member(1).wealth[3]==37&&party.member(1).equipped==std::vector<std::uint64_t>{1},"Pre-Mind campaign retains level, spent resources, wealth and equipment");
+    check(party.state().time_minutes==123&&party.state().subminute_milliseconds==456&&party.state().random_state==789,"Pre-Mind campaign retains its clock and RNG");
+    const auto canonical=encode_campaign(party,nullptr,"mind-before");CampaignParty copy(module());
+    copy.restore(decode_campaign(canonical,*srd5::character_rules(),*rules,"mind-before",nullptr).party);
+    check(encode_campaign(copy,nullptr,"mind-before")==canonical,"Pre-Mind campaign migration is canonical");
+}
+
 void ui_fixtures(){const auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"surge-fixtures";std::filesystem::create_directories(path);
     std::ofstream(path/"level1.save")<<battle(hero(1))->save();
     std::ofstream(path/"cleric.save")<<battle(hero(1,"human","cleric"))->save();
@@ -112,4 +144,4 @@ void ui_fixtures(){const auto path=std::filesystem::path(OPENGOLD_BINARY_DIR)/"s
 }
 
 }
-int main(int argc,char**){try{if(argc==2){freeze();return 0;}auto run=[](const char* name,auto test){try{test();}catch(const std::exception& e){throw std::runtime_error(std::string(name)+": "+e.what());}};run("budgets",budgets);run("grants",grants);run("actions",actions);run("attacks and malformed",attacks_and_malformed);run("savage",savage);run("recovery",recovery);run("campaign",campaign);run("legacy",legacy);ui_fixtures();std::cout<<"Action Surge tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2){if(std::string_view(argv[1])=="--freeze-mind-baseline")freeze_mind_baseline();else freeze();return 0;}auto run=[](const char* name,auto test){try{test();}catch(const std::exception& e){throw std::runtime_error(std::string(name)+": "+e.what());}};run("budgets",budgets);run("grants",grants);run("actions",actions);run("attacks and malformed",attacks_and_malformed);run("savage",savage);run("recovery",recovery);run("campaign",campaign);run("legacy",legacy);run("mind prior writer",mind_prior_writer);ui_fixtures();std::cout<<"Action Surge tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
