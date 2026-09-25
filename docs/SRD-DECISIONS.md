@@ -80,6 +80,14 @@ other weapon properties remain separate. See [ammunition](AMMUNITION.md).
 
 ## Pending — do not implement dependent choices
 
+**AR-1 — PENDING, #99, 2026-09-25, visible question 1:** add Arcane Recovery
+dropdown and Recover slots in existing Rest dialog above Result, shortening the
+scrollable Info area. Selected eligible Wizard sees legal combinations after
+completed Short Rest. Use immediately commits recovered slots and spends the
+once-per-Long-Rest use; Finish/Escape without use preserves it. Keyboard support,
+existing camp/inn saves preserve committed state. Applies to shared main/demo
+rest dialog. Glass alert played. [Frozen packet](ARCANE-RECOVERY.md).
+
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |

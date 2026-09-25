@@ -39,6 +39,16 @@ BLOCKED result concerned AMMO-1/AMMO-2, which this answer now resolves; do not
 interpret it as a user pause or require another resume instruction. No tool
 operation can set that tracker active directly. Keep the full goal incomplete.
 
+## Active batch — #99 Arcane Recovery
+
+Wizard Arcane Recovery is absent; ordinary Wizard progression already supports
+levels 1–4. [Frozen packet](ARCANE-RECOVERY.md) owns acceptance/exclusions, source,
+checks and pending AR-1 (visible question 1). Branch `codex/srd-arcane-recovery`;
+requested Astra/high retained, no actual switch/agents/new tasks. Start
+2026-09-25 18:57:23 UTC; checkpoint 19:57:23, maximum 20:27:23. No runtime edits
+or live build. Next: capture real 0.6.48 baselines, then rules/Core work while
+the new rest control awaits approval. Do not re-investigate the closed #57.
+
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
 [repository map](SRD-REPO-MAP.md). Freeze one outcome and acceptance before coding.
