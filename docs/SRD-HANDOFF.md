@@ -48,8 +48,10 @@ requested Astra/high retained, no actual switch/agents/new tasks. Start
 2026-09-25 18:57:23 UTC; checkpoint 19:57:23, maximum 20:27:23. Rules/Core implementation and actual 0.6.48 fixtures are present.
 Native runtime/test revision `bc948e7` (module 0.6.49) is committed on the current
 branch. Final native/tool regression passes 51/51; localization validates 901 messages.
-No live build/test handle remains. AR-1 is still pending: no dependent UI controls
-implemented. Next: approved UI integration, shared game/demo checks and EN/ES
+Both game/demo extensions rebuilt successfully; the existing shared rest-control
+runtime checks pass (main CTest 1/1 and demo success marker), completed 19:26:56
+UTC. No build/test handle remains live. AR-1 is the remaining input dependency:
+no dependent UI controls implemented. Next: approved UI integration and EN/ES
 render/input verification before closing #99. The native packet records scope,
 verification and measured timing; this is not a completed playable feature.
 Do not re-investigate the closed #57.

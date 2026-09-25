@@ -102,3 +102,23 @@ Verified commands on native runtime/test revision `bc948e7` (module 0.6.49):
 Native verification ended 19:23:42 UTC, 26m19s after the original batch start.
 No issue closed; player controls/rendering are still pending AR-1. No live build
 or test handle remains. No model switch, agents, new issues or expanded scope.
+
+## Existing UI integration check — 2026-09-25 19:25–19:26:56 UTC
+
+Runtime `bc948e7` also builds in both applications. The existing shared rest
+controls pass against the freshly linked extensions:
+
+- Main: `cmake --build build/mac-check --target opengoldbox_test_project -j6`,
+  then `ctest --test-dir build/mac-check --output-on-failure -R '^opengold_godot_rest$' --fixture-exclude-setup godot_project`
+  — 1/1 passed, 0.77 seconds.
+- Demo: `cmake --build build/sprite-demo --target opengold_godot -j6`, then
+  `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD OPENGOLD_LANG=en /Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path demos/godot res://scenes/rolf_tour.tscn -- --rest-check`
+  — exit 0 and expected rest-controls success marker.
+
+Logs: `/tmp/arcane-main-build.log`, `/tmp/arcane-demo-build.log`,
+`/tmp/arcane-main-rest.log`, `/tmp/arcane-demo-rest.log`. Main editor import
+returned success but emitted window/debugger/timer diagnostics; the subsequent
+runtime rest test passed. No new Arcane Recovery controls or render acceptance
+are claimed by these existing-control checks. No build/test remains live.
+AR-1 is the remaining input dependency; do not begin another batch or implement
+its dependent UI without an answer. The full SRD goal remains active/incomplete.
