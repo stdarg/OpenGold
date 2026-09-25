@@ -88,6 +88,14 @@ rest dialog. User approved visible question 1 and instructed continuation on 202
 
 ## Pending — do not implement dependent choices
 
+**SCHOLAR-1 — PENDING, #100, 2026-09-25, visible question 1:** reuse the disabled
+ability-points area at Wizard level-two advancement for a labeled Scholar
+Expertise dropdown; require one eligible proficient skill before Confirm.
+Existing level-two through level-four Wizards retain missing choices pending
+in Review Training's existing checkbox groups. Earlier selections remain locked;
+Cancel discards edits; keyboard access, wounds/resources and window dimensions
+remain. [Frozen scope](SCHOLAR.md).
+
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |

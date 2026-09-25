@@ -50,11 +50,22 @@ all six game/demo locale/size visual runs pass. No live build/test handle remain
 One original requirement delivered, no new issues or expanded scope. Requested
 Astra/high retained; actual configuration not independently verified, no switch.
 Verification ended 19:52:41 UTC, 55m18s from the original batch start including
-approval wait. Next: push delivery, verify #99 closure, then select the next
-bounded existing batch. Do not ask again for AR-1 or reopen ammunition tracking.
+approval wait. Runtime/docs are pushed to the feature branch and main. #99 is
+verified CLOSED at 19:55:10 UTC. Do not ask again for AR-1 or reopen ammunition
+tracking.
 The user explicitly authorized continuation at 19:42 UTC. The goal tool still
 reports BLOCKED from the resolved AR-1 question; that stale status is not a user
 pause or a reason to request resumption again. Continue authorized work.
+
+## Active batch — #100 Wizard Scholar
+
+[Scholar packet](SCHOLAR.md) freezes acceptance/exclusions and pending SCHOLAR-1
+(visible question 1). Branch `codex/srd-scholar`; requested Astra/high retained
+for advancement-history and old-save choice migration, actual settings not
+independently verified. No switch/agents/new tasks. Frozen 19:57:47 UTC;
+checkpoint 20:57:47, maximum 21:27:47. No runtime changes or live build yet.
+Next: actual 0.6.49 writer fixtures, rules/Core integration; dependent UI awaits
+the recorded layout decision. The previously completed #99 is not new WIP.
 
 When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
 [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
