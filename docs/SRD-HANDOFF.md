@@ -61,7 +61,7 @@ outcomes and retains transactional campaign state. Preset class ability prioriti
 also moved behind CharacterRules. See TECH's static library boundary section.
 No gameplay/UI behavior or save format change is intended; #193 remains open.
 
-Architecture verification: all 44 native/tool checks and 21 Godot checks passed
+Architecture verification: all 44 native/tool checks and 22 Godot checks passed
 (33 entries including prerequisites). The standalone content test links only
 `libopengold_rules_srd5.a` and `libopengold_rules.a`; its rest scenario passes
 without Core/Godot. The alternate-rules campaign test also passes. Archive
