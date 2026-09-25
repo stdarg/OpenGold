@@ -1,8 +1,9 @@
 # SRD handoff
 
 Updated 2026-09-25 14:36:55 UTC. Q40 is approved and the bounded Chill Touch
-increment is complete and verified. Delivery branch `codex/srd-chill-touch`;
-commit/push and return to main are the remaining delivery operations.
+increment is complete and verified. Runtime delivery `0c76685` was pushed on
+`codex/srd-chill-touch`, fast-forwarded to `main` and pushed to `origin/main`.
+Working branch is now `main`; no implementation or verification remains for this increment.
 The goal controller last reported BLOCKED; a decision reply does not itself
 resume the full goal. Do not mark the full objective complete.
 

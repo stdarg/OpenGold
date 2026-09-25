@@ -25,8 +25,8 @@ campaign/combat continuation and old saves. SRD mechanics remain in the STATIC
 library; Core and public interfaces have no changes. Existing Spell/Cast and
 creator patterns are reused without new controls or combat save buttons.
 
-Verification: the final source tree based on `fba0ca3` plus the Q40 delivery
-commit passes all 46 native/tool checks and all 23 Godot runtime checks (36 with
+Verification: tested runtime revision `0c76685`, delivered to `origin/main`,
+passes all 46 native/tool checks and all 23 Godot runtime checks (36 with
 prerequisites). The first regression run exposed a stale hard-coded module
 identity in the Cunning Action test header; updating that assertion and rebuilding
 made its native and dependent Godot checks pass. No runtime fix was required.
