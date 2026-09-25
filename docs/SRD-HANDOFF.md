@@ -1,31 +1,48 @@
 # SRD handoff
 
-Updated 2026-09-24. **Pause after delivery of #192, at the user's explicit request.**
-The user subsequently authorized a bounded static-library architecture refactor.
-That refactor does not resume the SRD backlog; do not start #193 or another issue. The broader goal
-remains all SRD_improvements issues, all twelve classes through level 4, then
-level 20 and multiclassing. Branch: `main`.
+Updated 2026-09-25. Goal resumed by the active goal continuation; branch `main`.
+Full objective remains all SRD_improvements issues, all twelve classes through
+level 4, then level 20 and multiclassing.
 
-## Next entry: enforce the agreed workflow
+## Active batch — #193 / parent #30
 
-Status: **paused**. This workflow-only update does not authorize further SRD work.
-Architecture follow-up is complete (`9526981`, documentation correction `25e9f4c`).
-No implementation batch is active and no checkpoint is running.
+- Authorization: resumed goal; existing #193 acceptance and Q29–32 approvals.
+- Outcome: actual rest interruptions and safe continuation through campaign events
+  and combat, including earned Hit Dice choices and persisted progress.
+- Acceptance: Short/Long interruption rules, sleep/light/exertion boundaries,
+  per-member eligibility, no duplicate recovery, rejection/RNG rollback,
+  save/load/combat continuation, original camp/inn/payment restrictions, normal
+  gameplay and existing approved controls. Sleeping Unconscious behavior remains
+  part of the rest requirement; do not claim closure without verifying it.
+- Exclusions: unresearched probabilistic original profiles; unrelated species
+  features, new spells, new controls and unrelated architecture work. Report any
+  new blocking scope before implementation; no automatic child issues.
+- Reuse: static SRD rest transitions, CampaignParty transactions, original ECL
+  host adapters, approved RestDialog and existing save flow.
+- Routing: requested **gpt-6-astra / high**; actual model/effort confirmed from
+  this task's current turn_context as **gpt-6-astra / high**. No delegation.
+  Escalate/report after two unsuccessful fixes of the same failure; no scope
+  expansion. Failed attempts: 0 at batch start.
+- Timing: started 01:27:34 UTC; checkpoint 02:27:34 UTC, latest 02:57:34 UTC.
+- Verification: focused rest/campaign/encounter tests during development; one
+  native regression and relevant Godot rest/party/save checks on final code.
+  Preserve existing save formats and prior-writer fixtures.
+- Status: ECL damage/encounter adapters and committed recovery handoff implemented
+  and verified. #193/#30 remain open for natural sleep and final rest scheduling.
+  Q33–34 are pending; do not implement dependent choices before an answer.
+- Verification completed 01:45:36 UTC: 44 native/tool checks, 22 Godot checks
+  (33 entries with prerequisites) and demo rest check passed. Session 61079 exited
+  0; no live verification remains. Full evidence is in REST-RESOURCES.md.
+  Logs: `/tmp/rest193-native-build.log`, `/tmp/rest193-native.log`,
+  `/tmp/rest193-godot.log`, `/tmp/rest193-demo-ui.log`.
+- Observed interval start to verified completion: 18m02s. Investigation,
+  implementation and build phase boundaries were not captured individually.
+  Distinct fixture corrections were needed (event ordering, invalid HP assertion,
+  missing map/image initialization and event settling); no unresolved test failure.
+  Tokens/cost delta unavailable. No new issue or scope added; no issue closed.
 
-Model routing is now a durable rule: read [the policy](SRD-MODEL-ROUTING.md)
-before the next batch, record requested/actual model and effort, and announce the
-selection. Luna/low handles repetition; Sol/medium handles normal implementation;
-Astra/high handles complex work/escalation. Preserve assignment and failed attempts
-across context resets. No model switch, task creation or delegation has occurred
-as part of adopting this policy; the goal remains paused.
-
-After explicit resumption, read AGENTS.md, this handoff and the relevant decision
-register entries. Fill the [compact batch card](SRD-WORKFLOW.md#scope-gate-and-compact-batch-card)
-using the existing backlog grouping. Freeze the outcome and exclusions; reuse
-approved controls; finish edits before builds; use focused checks and one final
-appropriate regression pass. Report measured delivery at 60 minutes, no later
-than 90. Defer discoveries; obtain approval before implementing any out-of-scope
-blocking dependency. Do not automatically create issues for discoveries.
+Previous goal work delivered #192 and static-library extraction (`9526981`).
+Model policy: [routing](SRD-MODEL-ROUTING.md); execution: [workflow](SRD-WORKFLOW.md).
 
 ## Delivered: #192 — player rest controls
 
@@ -57,9 +74,10 @@ Local evidence: `/tmp/rest-ui-regression.log`,
 
 Native activity/persistence landed in `7f743ee`; paused-rest combat reward
 correction in `d80a3f2`; camping profile guard in `aeeb3b7`.
-Automatic initiative/non-cantrip/damage/exertion event connections, sleeping
-Unconscious actors, and rest scheduling still require #193 work. The controls
-expose retained activity; they do not complete that automatic integration.
+ECL initiative/damage adapters and earned recovery handoff are now verified.
+Sleeping Unconscious actors, remaining event routes and final rest scheduling
+still require #193 work. See the current event-adapter increment in
+[rest evidence](REST-RESOURCES.md#193-event-adapter-increment).
 Do not broadly unlock equipment/training while rest is pending. Unsupported
 original probabilistic camp profiles remain explicit. Resume now reuses the
 original camp permission check without restarting recovery or charging an inn.
@@ -71,7 +89,7 @@ are unavailable; do not fabricate them. No new issues added for this delivery.
 Questions must be numbered, plainly visible in conversation, and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`. Do not re-ask approved
 Q29–32. Q19–21/Q23/Q25 remain outside this batch. Follow
-[the workflow](SRD-WORKFLOW.md) after explicit resumption.
+[the workflow](SRD-WORKFLOW.md) while continuing this active goal.
 
 
 ## Architecture follow-up

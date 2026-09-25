@@ -273,7 +273,7 @@ void CharacterCreationView::update_party_navigation()
     bool allowed=true;
     auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
     auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"));
-    if(!fight&&town&&town->is_visible()&&town->pending_encounter()){
+    if(!fight&&town&&town->is_visible()&&town->pending_encounter()&&!campaign_->state().short_rest){
         std::vector<CombatArt> images;for(const auto& participant:campaign_->participants())
             images.push_back({participant.id,art_->icon(campaign_->member(participant.id).character.appearance(),false)});
         auto owned=scene("res://scenes/combat_demo.tscn");fight=Object::cast_to<CombatView>(owned.get());

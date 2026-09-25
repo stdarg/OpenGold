@@ -102,6 +102,9 @@ public:
     [[nodiscard]] const std::optional<opengold::CampaignEncounter>& pending_encounter() const {return encounter_;}
     bool resolve_combat(const rules::Snapshot& outcome);
     // Reject a pending handoff before combat starts, using the event rollback path.
+    // Commit player recovery choices while an encounter is waiting to start.
+    // A later rendering/initialization failure must not refund spent dice.
+    void commit_rest_recovery();
     bool reject_combat(std::string diagnostic);
 private:
     friend struct opengold::SaveCodec;

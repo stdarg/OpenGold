@@ -105,10 +105,11 @@ Activity checkpoints retain eligible members and progress across save/load and
 explicitly interrupted combat handoff. Physical exertion consumes campaign time
 without increasing resting time; reaching one hour interrupts a Long Rest.
 Initiative, non-cantrip casting and damage have explicit interruption inputs.
-Hosts must resolve earned Hit Dice choices before combat/time advancement, check
-camp permission before resuming and prevent unrelated exploration while a resume
-decision is pending. Automatic event connections, sleeping actors' Unconscious
-behavior and automatic encounter scheduling remain in #193. Reviewed Godot
+The ECL damage and encounter adapters invoke interruption automatically; hosts
+resolve earned Hit Dice choices before combat/time advancement, check camp
+permission before resuming and prevent unrelated exploration while a resume
+decision is pending. Sleeping actors' Unconscious behavior and final encounter
+scheduling acceptance remain in #193. Reviewed Godot
 controls are delivered below. The existing
 five-minute city-watch route remains unchanged; unknown probabilistic profiles
 never silently substitute an uninterrupted rest.
@@ -279,3 +280,39 @@ continuation, resumption and cooldown. `resumption_services` in
 The actual game/demo save restart routes include a ninth `short-rest-spending`
 state: reload through the real campaign host, reopen rest controls, route Save to
 the existing dialog, and spend the next die. English/Spanish catalogs are complete.
+
+
+## #193 event adapter increment
+
+The original ECL combat request now prepares the rest interruption before combat
+participants are constructed. Short Rest ends without benefits. Long Rest retains
+progress and, when earned, opens the approved sequential Hit Dice dialog. Game
+and demo wait for Finish before creating combat; the pending-encounter dialog
+never offers Save. Polling the encounter cannot add another extension or recharge.
+
+Original ECL HP decreases with unchanged wealth now interrupt an active rest
+transactionally. Repeated identical readback is a no-op; healing/wealth edits do
+not gain a general bypass of the rest lock. A victim at zero HP does not gain
+recovery. Further damage during the same interruption does not add another hour.
+
+A player spending a Hit Die or finishing the recovery decision commits that
+choice to the encounter rollback baseline. Later combat initialization failure
+therefore preserves spent dice, healing and RNG. An event failing before those
+choices still rolls back its original transaction.
+
+Evidence is in `host_interruptions` (`tests/rest_activity_checks.h`), the real ECL
+fixture in `rejected_combat_handoff` (`tests/party_tests.cpp`) and the shared
+Godot rest-control scenario's pending-encounter stages. These exercise automatic
+adapter calls, persistence, duplicate polling, rejection and actual UI signals.
+This increment does not close #193: natural sleeping actors/wake-up decisions
+(Q33–34) and final rest-scheduling acceptance remain outstanding. Unknown original
+probabilistic profiles remain explicitly unsupported.
+
+Verification of the final event-adapter tree: all 44 native/tool checks and 22
+Godot checks passed (33 CTest entries including prerequisites), plus the shared
+demo `--rest-check`. Native targets were rebuilt before regression; game and demo
+extensions were rebuilt before runtime checks. Commands: native CTest excluding
+`^opengold_godot_`; Godot CTest selecting that prefix with the already-prepared
+`godot_project` fixture excluded; headless demo `rolf_tour.tscn -- --rest-check`.
+No layout, messages, save formats or module identity changed. Core reports events
+and owns rollback; the static SRD library continues to decide rest outcomes.

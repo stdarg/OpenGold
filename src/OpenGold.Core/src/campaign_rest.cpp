@@ -137,6 +137,14 @@ void CampaignParty::abandon_rest(RestTicket ticket)
 {
     require_activity_ticket(ticket);state_.rest_activity.reset();state_.short_rest.reset();
 }
+bool CampaignParty::prepare_combat()
+{
+    outside_combat();
+    if(state_.rest_activity&&!state_.rest_activity->interrupted){
+        auto next=state_;interrupt_rest_state(next,RestInterruption::initiative);state_=std::move(next);
+    }
+    return !state_.short_rest;
+}
 void CampaignParty::require_rest_ticket(RestTicket ticket) const
 {
     outside_combat();

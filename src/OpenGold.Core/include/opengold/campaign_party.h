@@ -128,6 +128,9 @@ public:
     static void validate(const PartyState& state);
     static void validate_rest_activity(const PartyState& state,const rules::RulesModule& rules);
     [[nodiscard]] std::vector<rules::Participant> participants() const;
+    // Stage initiative interruption before building combat participants. Pending
+    // earned recovery must be resolved before the combat owner takes the lock.
+    [[nodiscard]] bool prepare_combat();
     void begin_combat();
     void apply_combat(const rules::Snapshot& snapshot);
     void end_combat() noexcept {combat_=false;}

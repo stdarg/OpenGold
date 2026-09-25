@@ -314,6 +314,18 @@ void CampaignParty::read_character(unsigned slot,const por::EclMachine& vm)
     // The post-combat script reads back the values just published by the host.
     // Permit that exact no-op without opening a path for script mutations.
     if(state_.rest_activity&&hp==current.vitals.hit_points&&wealth==current.wealth)return;
+    if(state_.rest_activity&&hp<current.vitals.hit_points&&wealth==current.wealth){
+        if(state_.short_rest)throw std::runtime_error("Resolve earned Hit Dice before another script event");
+        auto next=state_;
+        auto& m=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& m){return m.id==current.id;});
+        rules_->set_hit_points(m.vitals,m.character.sheet(),hp);
+        if(!next.rest_activity->interrupted)interrupt_rest_state(next,RestInterruption::damage);
+        else {
+            if(next.rest_activity->ticket.revision==std::numeric_limits<std::uint64_t>::max())throw std::runtime_error("Rest revision exhausted");
+            ++next.rest_activity->ticket.revision;
+        }
+        state_=std::move(next);return;
+    }
     editable();auto& m=edit(state_.slots[slot]);
     auto vitals=m.vitals;rules_->set_hit_points(vitals,m.character.sheet(),hp);
     m.wealth=wealth;m.vitals=std::move(vitals);

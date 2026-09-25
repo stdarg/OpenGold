@@ -45,9 +45,12 @@ retaining prior saves. Safe-camp/inn atomic callers consume the same engine.
 [Mechanics, compatibility and tests](REST-RESOURCES.md#resumable-activity-persistence-and-evidence).
 The complete combat-victory regression additionally preserves XP/loot across the
 interrupted rest, save/load and completion; unrelated edits remain locked.
-Automatic event connections and sleeping actor behavior remain
-unfinished; this is partial delivery, not closure of these issues.
-Q29–31 await user decisions; Q32 (fresh qualifying segments) is approved in the [register](SRD-DECISIONS.md).
+Original ECL damage and encounter requests now interrupt rests automatically;
+earned recovery choices finish before combat starts, and committed dice survive
+a rejected encounter. [Adapter scope and evidence](REST-RESOURCES.md#193-event-adapter-increment).
+Sleeping actors and final rest scheduling remain unfinished; #193/#30 stay open.
+Q29–32 are approved; wake-up policy/control Q33–34 await answers in the
+[register](SRD-DECISIONS.md).
 
 The shared game/demo Rest dialog now delivers Q29–31: Short/Long choice,
 per-member eligibility/resources, sequential committed dice, Finish/Escape,

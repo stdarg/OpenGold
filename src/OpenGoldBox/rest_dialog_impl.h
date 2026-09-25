@@ -42,7 +42,7 @@ void RolfTourView::rest_selected(std::int64_t)
 }
 void RolfTourView::refresh_rest()
 {
-    auto* w=get_node<Window>("RestDialog");if(!campaign_||!session_||campaign_->in_combat()||!session_->can_leave()){w->hide();return;}
+    auto* w=get_node<Window>("RestDialog");if(!campaign_||!session_||campaign_->in_combat()||(!session_->can_leave()&&!(session_->pending_encounter()&&campaign_->state().short_rest))){w->hide();return;}
     const auto& state=campaign_->state();const bool spending=state.short_rest.has_value(),retained=state.rest_activity.has_value();
     auto* kind=w->get_node<OptionButton>("Kind");kind->set_disabled(spending||retained);
     if(retained)kind->select(1);else if(spending)kind->select(0);
@@ -77,7 +77,7 @@ void RolfTourView::refresh_rest()
     w->get_node<Button>("Start")->set_visible(!spending&&!retained);w->get_node<Button>("Start")->set_disabled(!eligible);
     w->get_node<Button>("Spend")->set_visible(spending);w->get_node<Button>("Spend")->set_disabled(!spendable);
     w->get_node<Button>("Resume")->set_visible(retained&&!spending);w->get_node<Button>("Resume")->set_disabled(!retained||!state.rest_activity->interrupted);
-    w->get_node<Button>("Save")->set_visible(embedded_party_&&(spending||retained));
+    w->get_node<Button>("Save")->set_visible(embedded_party_&&session_->can_leave()&&(spending||retained));
     w->get_node<Button>("Finish")->set_text(rest_text(spending?N_("Finish"):retained?N_("End Rest"):N_("Cancel")));
     if((spending||retained)&&!w->is_visible()&&!rest_save_open_&&is_visible_in_tree()){
         w->popup_centered();list->grab_focus();}
@@ -92,6 +92,7 @@ void RolfTourView::rest_spend()
 {
     try{if(!campaign_||!campaign_->state().short_rest)return;
         const auto result=campaign_->spend_hit_die(campaign_->state().short_rest->ticket,rest_member_);
+        session_->commit_rest_recovery();
         rest_result_=rest_text(N_("Roll:"))+" "+String::num_int64(result.roll)+" + ("+String::num_int64(result.modifier)+")   "+rest_text(N_("HP restored:"))+" "+String::num_int64(result.healing)+"   "+rest_text(N_("Hit Dice remaining:"))+" "+String::num_int64(result.remaining);refresh_rest();}
     catch(const std::exception& e){rest_result_=rest_text(e.what());refresh_rest();}
 }
@@ -99,6 +100,7 @@ void RolfTourView::rest_finish()
 {
     try{if(campaign_){if(campaign_->state().short_rest)campaign_->finish_short_rest(campaign_->state().short_rest->ticket);
         else if(campaign_->state().rest_activity)campaign_->abandon_rest(campaign_->state().rest_activity->ticket);}
+        if(session_)session_->commit_rest_recovery();
         get_node<Window>("RestDialog")->hide();rest_save_open_=false;rest_result_=String();refresh();}
     catch(const std::exception& e){rest_result_=rest_text(e.what());refresh_rest();}
 }
@@ -135,7 +137,8 @@ void RolfTourView::check_rest_controls()
             std::vector<std::uint8_t> bytes{0,0};for(int n=0;n<5;++n)bytes.insert(bytes.end(),{1,1,0x15,0x99});bytes.insert(bytes.end(),{0,0});
             auto p=std::make_shared<const opengold::por::EclProgram>(opengold::por::EclProgram::decode(bytes,"rest controls"));
             auto resources=std::make_shared<opengold::por::PhlanResources>();resources->programs[0]=p;
-            session_.emplace(opengold::por::GeoMap{},p,std::array<opengold::Image,3>{},0x9914,opengold::por::WallArtSet{},resources);
+            const opengold::Image placeholder{1,1,0,0,{0,0,0,255}};
+            session_.emplace(opengold::por::GeoMap{},p,std::array<opengold::Image,3>{placeholder,placeholder,placeholder},0x9914,opengold::por::WallArtSet{},resources);
             session_->campaign_party(campaign_);session_->advance(1);camp();
             check(w->is_visible(),"Camp opens the Rest picker");
             w->get_node<OptionButton>("Kind")->select(0);w->get_node<OptionButton>("Kind")->emit_signal("item_selected",0);
@@ -173,7 +176,35 @@ void RolfTourView::check_rest_controls()
             camp();w->get_node<OptionButton>("Kind")->select(1);w->get_node<OptionButton>("Kind")->emit_signal("item_selected",1);
             check(w->get_node<Button>("Start")->is_disabled(),"Long Rest cooldown disables Start");
             w->get_node<Button>("Finish")->emit_signal("pressed");
-            UtilityFunctions::print("Godot rest controls passed: picker, sequential dice, continuation, finish, resume and cooldown.");get_tree()->quit();
+        }else if(rest_check_stage_==48){
+            // A delayed original event reaches the real combat handoff during rest.
+            const auto program=[](std::vector<std::uint8_t> body){
+                std::vector<std::uint8_t> bytes{0,0};for(int n=0;n<5;++n)bytes.insert(bytes.end(),{1,1,0x15,0x99});
+                bytes.push_back(0);bytes.insert(bytes.end(),body.begin(),body.end());
+                return std::make_shared<const opengold::por::EclProgram>(opengold::por::EclProgram::decode(bytes,"rest UI event"));};
+            auto gate=program({32,0,20,0});auto resources=std::make_shared<opengold::por::PhlanResources>();resources->map=opengold::por::GeoMap{};
+            resources->programs[0]=gate;resources->programs[20]=program({58,33,0,20,0,2,0,255,11,0,4,0,1,0,4,36,0});
+            auto district=std::make_shared<opengold::por::PhlanResources>();district->map=opengold::por::GeoMap{};district->encounter_creatures[4].stored.name="Test orc";
+            district->combat_archive={9,0,4,0,0,0,0,25,0,26,0,24};district->combat_archive.resize(37,0);
+            district->combat_archive[12]=1;district->combat_archive[14]=2;district->combat_archive[20]=1;resources->districts[20]=district;
+            const opengold::Image pixel{1,1,0,0,{0,0,0,255}};
+            session_.emplace(opengold::por::GeoMap{},gate,std::array<opengold::Image,3>{pixel,pixel,pixel},0x9914,opengold::por::WallArtSet{},resources);
+            session_->campaign_party(campaign_);session_->advance(1);campaign_->advance_time(960);
+            check(session_->explore(opengold::por::ExplorationCommand::look),"Start delayed encounter");
+            const auto begin=campaign_->begin_rest(opengold::RestKind::long_rest);check(begin.has_value(),"Rest eligible after cooldown");
+            (void)campaign_->advance_rest(*begin,70*60000,opengold::RestWork::sleep);
+            for(unsigned n=0;n<100&&session_->snapshot().phase==opengold::por::TourPhase::running;++n)session_->advance(.5);
+            refresh();
+            check(session_->pending_encounter()&&campaign_->state().short_rest&&w->is_visible(),("Pending encounter presents earned Hit Dice choices: "+session_->snapshot().dialogue+session_->snapshot().diagnostic).c_str());
+            check(!w->get_node<Button>("Save")->is_visible(),"Encounter handoff never offers a combat save");
+        }else if(rest_check_stage_==60){
+            w->get_node<Button>("Spend")->emit_signal("pressed");
+            const auto spent=campaign_->member(rest_member_).vitals;const auto rng=campaign_->state().random_state;
+            w->get_node<Button>("Finish")->emit_signal("pressed");
+            check(session_->pending_encounter()&&!campaign_->state().short_rest&&!w->is_visible(),"Finishing recovery releases encounter handoff");
+            check(session_->reject_combat("Fixture initialization rejected"),"Reject pending encounter after player choice");
+            check(campaign_->member(rest_member_).vitals==spent&&campaign_->state().random_state==rng,"Failed encounter does not undo player recovery");
+            UtilityFunctions::print("Godot rest controls passed: picker, sequential dice, continuation, finish, resume, cooldown and interrupted encounter recovery.");get_tree()->quit();
         }
         if(rest_check_stage_==10||rest_check_stage_==22||rest_check_stage_==34){
             for(const auto& arg:OS::get_singleton()->get_cmdline_user_args())if(String(arg).begins_with("--rest-captures=")){

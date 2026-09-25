@@ -94,5 +94,37 @@ void discard_and_bad_saves(){
     party.abandon_rest(ticket(party));
     check(!party.state().rest_activity&&!party.state().short_rest&&party.member(1).vitals==vitals&&party.state().random_state==rng&&party.state().time_minutes==elapsed,"Ending unfinished rest retains earned healing/recharge, spent dice, time and RNG");
 }
-void run(){prior_writer();segments();boundaries();combat_and_validation();discard_and_bad_saves();}
+void host_interruptions(){
+    for(auto kind:{RestKind::short_rest,RestKind::long_rest})for(auto elapsed:{minute-1,70*minute}){
+        if(kind==RestKind::short_rest&&elapsed>=60*minute)continue;
+        auto party=wounded();(void)party.begin_rest(kind);advance(party,elapsed);
+        const auto rng=party.state().random_state;const auto clock=party.state().time_minutes;
+        const bool ready=party.prepare_combat();
+        check(ready==(kind==RestKind::short_rest||elapsed<60*minute),"Initiative waits only for earned recovery choices");
+        check(party.state().random_state==rng&&party.state().time_minutes==clock,"Preparing initiative does not reroll or advance time");
+        const auto prepared=saved(party);check(party.prepare_combat()==ready&&saved(party)==prepared,"Repeated encounter polling does not extend rest or repeat recharge");
+        if(!ready){rejects([&]{party.begin_combat();});check(saved(party)==prepared,"Combat cannot skip pending Hit Dice");
+            party=loaded(prepared);(void)party.spend_hit_die(party.state().short_rest->ticket,1);finish_spending(party);}
+        check(party.prepare_combat(),"Resolved interruption is ready for combat");
+        party.begin_combat();party.end_combat();
+    }
+    // Actual ECL HP readback, including a zero-HP victim and rejected wealth writes.
+    for(auto kind:{RestKind::short_rest,RestKind::long_rest})for(int hp:{0,1}){
+        CampaignParty party(module());party.add_pc(hero());auto state=party.checkpoint();state.roster[0].vitals.hit_points=5;party.restore(state);
+        (void)party.begin_rest(kind);advance(party,kind==RestKind::short_rest?minute:70*minute);
+        por::EclMachine vm(program({0}));
+        for(const auto& write:party.character_reply(0).writes)vm.bind_variable(write.address,write.value);
+        vm.bind_variable(0x6C19,hp);const auto rng=party.state().random_state;
+        party.read_character(0,vm);
+        check(party.member(1).vitals.hit_points==hp&&party.state().random_state==rng,"Script damage commits exact HP without an extra RNG draw");
+        check(bool(party.state().rest_activity)==(kind==RestKind::long_rest),"Script damage cancels Short Rest and retains interrupted Long Rest");
+        check(bool(party.state().short_rest)==(kind==RestKind::long_rest&&hp>0),"Damage victim must remain eligible to earn recovery");
+        const auto damaged=saved(party);party.read_character(0,vm);check(saved(party)==damaged,"Repeated HP readback cannot duplicate interruption");
+        party=loaded(damaged);check(saved(party)==damaged,"Automatic damage interruption reloads exactly");
+    }
+    auto party=wounded();(void)party.begin_rest(RestKind::long_rest);advance(party,70*minute);
+    auto state=party.checkpoint();state.rest_activity->ticket.revision=std::numeric_limits<std::uint64_t>::max();party.restore(state);
+    const auto before=saved(party);rejects([&]{(void)party.prepare_combat();});check(saved(party)==before,"Failed initiative preparation rolls back recovery and tickets");
+}
+void run(){host_interruptions();prior_writer();segments();boundaries();combat_and_validation();discard_and_bad_saves();}
 }

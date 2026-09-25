@@ -8,8 +8,8 @@ A reply resolves only its question and does not resume a paused goal.
 
 ## Current execution agreement
 
-The SRD goal remains paused. Workflow maintenance is authorized and does not
-resume gameplay work. The user requires no silent scope expansion: defer new
+The SRD goal resumed on 2026-09-25 for #193. Earlier workflow maintenance did
+not itself authorize resumption. The user requires no silent scope expansion: defer new
 work, or obtain explicit approval if an out-of-scope dependency blocks delivery.
 Use fixed batches, approved controls, targeted reads, edits completed before
 builds, focused checks and one appropriate final regression pass. Report actual
@@ -29,8 +29,8 @@ rules; do not silently change model settings.
 ## Rest workflow approval
 
 Q29–31 are approved by the user's “Yes to all. Get to work.” This authorizes the
-rest picker, sequential Hit Die controls and resumption dialog. The later pause
-supersedes the authorization to continue goal work.
+rest picker, sequential Hit Die controls and resumption dialog. Current run status
+is recorded in the handoff; these control approvals remain valid.
 Future questions must be written directly in the conversation, not only in a
 question widget, and preceded by the audible Glass alert.
 
@@ -44,6 +44,8 @@ question widget, and preceded by the audible Glass alert.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
+| Q33 | #193 natural sleep wake-up policy | Damage wakes recipient; adjacent ally may spend an Action to wake; explicit campaign loud-noise event wakes affected sleepers; initiative alone does not wake. Pending user ruling. Audio alert played. |
+| Q34 | #193 Wake ally control | Standard button at right end of existing Cunning Action row; visible for natural sleepers, keyboard/action cycle, highlight adjacent sleeping allies, Action to wake, Escape cancels; disabled off-turn or without Action. Pending layout/control approval. |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
 | Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |

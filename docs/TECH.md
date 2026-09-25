@@ -124,8 +124,8 @@ and transactional commits; the rules module owns rest qualification, timing,
 interruption/resumption decisions, completion benefits and resource arithmetic. Campaign
 format 12 adds resumable rest activity when present, retaining format 11 for
 ordinary saves; native activity drives the existing atomic camp/inn route, with
-shared game/demo controls delivered and automatic interruption event connections
-still pending. See [training](TRAINING.md),
+shared game/demo controls and ECL damage/encounter interruption adapters
+delivered; sleeping actor behavior and final rest scheduling remain pending. See [training](TRAINING.md),
 [rest resources](REST-RESOURCES.md), [recovery clocks](RECOVERY-CLOCKS.md) and [status effects](STATUS-EFFECTS.md) for
 mechanics, scope, persistence and tests.
 

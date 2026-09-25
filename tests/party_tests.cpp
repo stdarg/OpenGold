@@ -827,7 +827,7 @@ void rejected_combat_handoff()
     // Enter a synthetic Slums district, change HP, then request one actual orc.
     // A rejected handoff must restore the entire event, not fabricate a victory.
     auto gate=program({32,0,20,0});
-    auto encounter=program({33,0,20,0,2,0,255,9,0,3,1,0x19,0x6c,11,0,4,0,1,0,4,36,0});
+    auto encounter=program({58,33,0,20,0,2,0,255,9,0,3,1,0x19,0x6c,11,0,4,0,1,0,4,36,0});
     auto resources=std::make_shared<por::PhlanResources>();resources->map=por::GeoMap{};
     resources->programs[0]=gate;resources->programs[20]=encounter;
     auto district=std::make_shared<por::PhlanResources>();district->map=por::GeoMap{};
@@ -867,6 +867,30 @@ void rejected_combat_handoff()
         check(town.choose(town.snapshot().continue_ticket,0)&&town.can_leave(),"Acknowledging the notice restores navigation");
         check(town.explore(por::ExplorationCommand::turn_right),"Exploration accepts commands after the failed encounter");
     }
+    // The same real ECL host boundary interrupts an in-progress Long Rest.
+    // Recovery choices are committed before the UI constructs the combat view.
+    for(bool spend:{false,true}){
+        auto party=std::make_shared<CampaignParty>(module());const auto id=party->add_pc(character("fighter"));
+        por::RolfTourSession town({},gate,{},0x9914,{},resources);town.campaign_party(party);settle(town);
+        const auto before=party->checkpoint();
+        check(town.explore(por::ExplorationCommand::look),"Start delayed original encounter event");
+        auto ticket=party->begin_rest(RestKind::long_rest);check(ticket.has_value(),"Start interrupted ECL rest fixture");
+        (void)party->advance_rest(*ticket,70*60000,RestWork::sleep);
+        settle(town);
+        check(town.pending_encounter()&&party->state().rest_activity->interrupted&&party->state().short_rest,
+            "Original script damage and encounter preparation retain one earned recovery window");
+        check(party->state().rest_activity->extension_milliseconds==60000*60,
+            "Damage followed by initiative during the same interruption adds only one hour");
+        if(spend){(void)party->spend_hit_die(party->state().short_rest->ticket,id);town.commit_rest_recovery();
+            party->finish_short_rest(party->state().short_rest->ticket);town.commit_rest_recovery();}
+        const auto committed=party->checkpoint();
+        check(town.reject_combat("Rest encounter initialization failed"),"Reject staged encounter");
+        const auto& expected=spend?committed:before;
+        check(party->member(id).vitals==expected.roster[0].vitals&&party->state().random_state==expected.random_state&&
+            party->state().time_minutes==expected.time_minutes,
+            "Failed event rolls back until a player commits recovery; committed spending is never refunded");
+    }
+
 }
 void recovery_hosts()
 {
@@ -963,9 +987,9 @@ void interrupted_rest_victory()
     for(const auto& write:party->character_reply(0).writes)vm.bind_variable(write.address,write.value);
     party->read_character(0,vm);
     check(encode_campaign(*party,nullptr,"rest-victory")==before,"Post-combat ECL synchronization preserves the interrupted rest exactly");
-    vm.bind_variable(0x6c19,party->member(pc).vitals.hit_points?0:1);
+    vm.bind_variable(0x6c19,party->member(pc).character.sheet().hit_points+1);
     rejects([&]{party->read_character(0,vm);});
-    check(encode_campaign(*party,nullptr,"rest-victory")==before,"Script mutation cannot bypass the rest lock");
+    check(encode_campaign(*party,nullptr,"rest-victory")==before,"Invalid script healing cannot bypass the rest lock");
     check(party->award_loot({0,0,0,17,0,0,0},{item(8)},"rest-encounter:loot"),"Duplicate loot claim is idempotent");
     rejects([&]{party->award_experience(std::numeric_limits<unsigned>::max(),"rest-overflow");});
     party->award_experience(300,party->state().claimed_rewards.front());

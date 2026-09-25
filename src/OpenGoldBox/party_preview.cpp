@@ -436,7 +436,7 @@ void CharacterCreationView::update_party_navigation()
     bool allowed=true;
     auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
     auto* fight=Object::cast_to<CombatView>(get_node_or_null("CampaignCombat"));
-    if(!fight&&town&&town->is_visible()&&town->pending_encounter()){
+    if(!fight&&town&&town->is_visible()&&town->pending_encounter()&&!campaign_->state().short_rest){
         presentation::NodeOwner<> owned;
         try{owned=combat_scene(campaign_,*art_,*body_catalog_,town->pending_encounter());}
         catch(const std::exception& e){if(!town->reject_combat(e.what()))throw;return;}

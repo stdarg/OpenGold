@@ -151,6 +151,11 @@ void RolfTourSession::claim_loot()
         }else ++it;
     }
 }
+void RolfTourSession::commit_rest_recovery()
+{
+    if(snapshot_.phase==TourPhase::combat&&encounter_&&campaign_&&!campaign_->in_combat()&&saved_campaign_)
+        saved_campaign_=campaign_->checkpoint();
+}
 bool RolfTourSession::reject_combat(std::string diagnostic)
 {
     if(snapshot_.phase!=TourPhase::combat||!encounter_||!combat_request_||!campaign_||campaign_->in_combat())return false;
@@ -469,6 +474,7 @@ bool RolfTourSession::handle_town_host(const EclRequest& request)
         if(current_area_==20&&!staged_enemies_.empty()){
             read_character();const auto p=snapshot_.pose;
             encounter_=opengold::CampaignEncounter{dungeon_battlefield(map_,p.x,p.y),staged_enemies_,staged_art_,area_resources().terrain_art,p.facing,machine_.variable(0x6DCB)};
+            (void)campaign_->prepare_combat();
             combat_request_=request.id;snapshot_.phase=TourPhase::combat;++snapshot_.revision;return true;
         }
         if(machine_.variable(0x6DE2)==1){
