@@ -1,53 +1,43 @@
 # SRD handoff
 
-Updated 2026-09-25 after Champion delivery. The full goal is BLOCKED awaiting Q43/Q44: close all
+Updated 2026-09-25 after #58 delivery. The full goal remains incomplete: close all
 `SRD_improvements` issues, all twelve classes through level four, then level
-twenty/multiclassing. A batch delivery is not goal completion.
+twenty/multiclassing. One batch is not goal completion.
 
-## Latest completed batch — #88 Champion
+## Latest completed batch — #58 Thrown weapon inventory
 
-- Runtime `6324a51`, module 0.6.46, on `codex/srd-champion`. #88 is verified
-  CLOSED with delivery evidence. No other issue closed; no issues added.
-- [Coverage](SRD-COVERAGE.md#fighter-champion-through-level-four) is the completion
-  record; [Champion packet](CHAMPION.md) holds fixed scope, mechanics, compatibility,
-  limitations, commands and measured timing. Q41/Q42 implemented.
-- 48 native/tool tests and 25 Godot runtime checks (40 with prerequisites) pass;
-  game EN/ES and demo EN renders/keyboard/mouse checks pass at both sizes.
-  Localization validates 891 messages. Historical fixture bytes are unchanged.
-  No live build/test handles or unresolved batch questions remain.
-- Start 15:26 UTC; verified runtime committed 16:06:21, about 40 minutes and before
-  the 16:26 checkpoint. Recorded/requested Astra/high retained for critical/reaction
-  state and persistence; no model switch or agents. Token/cost deltas unavailable.
-- Delivery sequence: push runtime and documentation to `codex/srd-champion`,
-  fast-forward `main`, push `origin/main`. Verify Git state on the next turn.
+- Runtime `5d7813d`, module 0.6.47, branch `codex/srd-thrown-inventory`.
+  [Coverage](SRD-COVERAGE.md#thrown-weapon-inventory) is the completion record;
+  [packet](THROWN-WEAPONS.md#verified-delivery--runtime-5d7813d) holds acceptance,
+  compatibility, commands, limitations and measured timing. Q43/Q44 implemented.
+- 49 native/tool tests and 26 Godot runtime checks pass (42 with prerequisites);
+  main EN/ES and demo EN renders/input pass at both sizes. 896 messages validate.
+  Actual prior-writer fixture bytes unchanged. No live build/test process remains.
+- Authorized continuation 17:11:00 UTC; tested runtime committed 17:41:31.
+  Original preparation/wait/checkpoint intervals remain in the packet. Recorded
+  Astra/high retained; no model switch, agents, new issues or expanded scope.
+- Commit/push the final documentation, fast-forward/push main, then close #58
+  with coverage evidence. Verify closure and Git state before ending delivery.
 
-## Next work
+## Goal status and next work
 
-Select one bounded authorized outcome from [batch grouping](SRD-BATCHING-REVIEW.md),
-using [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
-[repository map](SRD-REPO-MAP.md). The next frozen batch is #58 Thrown weapon inventory; see [packet](THROWN-WEAPONS.md).
-Branch `codex/srd-thrown-inventory`; Q43/Q44 await approval before gameplay edits.
-Preflight began 16:08:35 UTC, checkpoint 17:08:35 and latest 17:38:35.
-Recorded Astra/high retained; no model switch, agents or live builds.
-Actual 0.6.46 prior-writer campaign/combat fixtures and their new focused replay
-test pass; see the packet. No production code changed; Q43/Q44 are still pending.
-On 2026-09-25 at 16:19:15 UTC, the goal tool confirmed BLOCKED after the same
-missing decisions persisted across three consecutive turns. Independent baseline
-preparation is complete and tested in `15d5e09`; no live process remains. The
-full objective is unchanged. Resume with the user’s answers and recorded routing;
-do not restart preflight or regenerate frozen fixtures.
-Refresh only its issues; record acceptance/exclusions, model assignment and timing
-before coding. Do not reopen completed Medicine/Tactical Mind or Champion checks.
+The goal tool last reported BLOCKED after unanswered Q43/Q44 across three turns.
+Those inputs are now approved and this batch was directly authorized. The tool
+has no resume operation; do not claim its status changed or mark the whole goal
+complete. No new batch is frozen by this decision reply.
 
-Q19–21/Q23/Q25 remain unresolved outside this batch; see
-[decisions](SRD-DECISIONS.md). Package C's broader Light/draw-stow and Paladin/
-Ranger style paths remain deferred. Champion Athletics queries are implemented;
-new Athletics actions and future Champion spell-access sources remain separate
-requirements. Do not create extra issues or prerequisites without authorization.
+When continuing authorized goal work, use [batch grouping](SRD-BATCHING-REVIEW.md),
+[workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
+[repository map](SRD-REPO-MAP.md). Freeze one outcome and acceptance before coding.
+Do not reopen completed feature checks without a relevant change.
+Q19–21/Q23/Q25 remain outside this batch; see [decisions](SRD-DECISIONS.md).
+Package C's broader Light/draw-stow, ammunition/mastery, remaining Fighting Styles
+and later advancement remain separate requirements. No automatic new issues.
 
 No model/runtime change, agents/new tasks or compatibility reduction without
-explicit authorization. Keep one implementation owner and one frozen batch.
-Questions must be numbered, visible in the conversation, and preceded by
+explicit authorization. Keep one owner and one delivery batch. New visible
+question sets start at 1; use topic-specific ledger IDs, preserving historical Q
+references. Questions must be visible in the conversation and preceded by
 `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`; a widget alone is insufficient.
 A decision reply alone does not resume a paused goal. Saving remains camping/inn
 only, never player combat saving.

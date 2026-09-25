@@ -13,6 +13,25 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Thrown weapon inventory
+
+Runtime `5d7813d` (module 0.6.47) completes [#58](https://github.com/stdarg/OpenGold/issues/58):
+all seven Thrown weapons can be drawn from real carried stacks, thrown once,
+located on the target square on hit/miss, and retrieved through pickup or approved
+safe recovery. The Q43/Q44 game/demo dropdown shows quantities and necessary
+stowing. Core preserves quantities, inventory identities and provenance; the
+static SRD library owns hand timing, rule outcomes and physical item locations.
+[Thrown packet](THROWN-WEAPONS.md) records acceptance, compatibility and evidence.
+
+All 49 native/tool tests and 26 Godot runtime checks pass (42 with prerequisites).
+The matrix covers 154 supported weapon/class/level routes, million-unit stacks,
+companion transfer, recovery, canceled/rejected operations and pending Savage/
+Champion continuation. Main EN/ES and demo EN controls render and pass keyboard/
+mouse checks at 1120×800 and 1920×1080; 896 localized messages validate.
+Actual 0.6.46 fixtures remain unchanged. New physical encounters use combat 19;
+older encounters retain their previous continuation, and campaign 11 is unchanged.
+No other issue or excluded equipment property is claimed complete.
+
 ## Fighter Champion through level four
 
 Runtime `6324a51` (module 0.6.46) completes [#88](https://github.com/stdarg/OpenGold/issues/88).

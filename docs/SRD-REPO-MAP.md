@@ -14,6 +14,7 @@ architecture document or completion ledger. See [TECH](TECH.md) for boundaries.
 | Status lifecycles and codecs | `src/OpenGold.Rules.Srd5/src/status_effects.cpp` | `opengold_status_effect_tests` |
 | Movement/occupancy | `src/OpenGold.Rules.Srd5/src/combat_grid.cpp` | Locate grid/movement targets in root CMakeLists; [transit](UNCONSCIOUS-TRANSIT.md) |
 | Components and weapon/armor rules | `src/OpenGold.Rules.Srd5/src/spell_components.h`; adjacent catalog headers | `opengold_spell_component_tests`, `opengold_weapon_catalog_tests`, `opengold_armor_catalog_tests` |
+| Physical thrown inventory | SRD `Session::throw_weapon`, `ground_one`, combat 19; Core `CampaignParty::apply_physical_items` | `opengold_thrown_weapon_tests`, `opengold_godot_thrown`; [packet](THROWN-WEAPONS.md) |
 | Campaign handoff, resources and saves | `src/OpenGold.Core/src/campaign_party.cpp`, `campaign_rest.cpp`, `campaign_save.cpp`, `combat_demo.cpp` | `opengold_campaign_rest_tests`, `opengold_rest_resource_tests`, `opengold_save_tests` |
 | Creator and training controls | `src/OpenGoldBox/character_creation_view.cpp`, `training_control.h`, `cantrip_control.h` | Asset-backed `tests/*cantrip_view_tests.gd`; [training](TRAINING.md) |
 | Combat UI and decisions | `src/OpenGoldBox/combat_view.cpp` | `tests/*view_tests.gd`; registered targets in `src/OpenGoldBox/CMakeLists.txt` |

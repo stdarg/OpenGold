@@ -37,9 +37,9 @@ Q44 requests the project policy rather than presenting one as an SRD rule.
   #80/#81 style feats, later class advancement, unrelated item/equipment fixes.
   Any additional prerequisite outside this boundary requires explicit approval.
 
-## Decisions awaiting the user
+## Approved decisions
 
-Q43 proposes a labeled Thrown weapon dropdown and Throw button in a new row
+Q43 (approved 2026-09-25) specifies a labeled Thrown weapon dropdown and Throw button in a new row
 immediately below Ground item/Pick up in game/demo. List held/carried Thrown
 weapons with quantities. Throw highlights legal targets; click/keyboard target
 confirmation draws if needed and throws one unit. Where stowing a held weapon
@@ -47,7 +47,7 @@ is needed, show that change before confirmation and apply its proper cost/timing
 Cancel/Escape before target confirmation spends nothing; illegal actions disable.
 Reuse standard styling, keyboard access, existing ground pickup and Q37 recovery.
 
-Q44 proposes placing the thrown weapon on the target's battlefield square on a
+Q44 (approved 2026-09-25) specifies placing the thrown weapon on the target's battlefield square on a
 hit or miss, without embedding/breakage/scatter. It remains a ground item rather
 than automatically joining the target's inventory. Existing pickup and safe
 collection rules decide when it can be retrieved. This is a game policy for an
@@ -111,3 +111,116 @@ inside the frozen batch before those decisions. No process is still running.
 Preparation is committed/pushed in `15d5e09`, with focused checks passing. The
 full SRD objective remains unchanged and incomplete. Await user decisions before
 runtime/control implementation; do not rotate into unrelated batches.
+
+## Authorized continuation — 17:11:00 UTC
+
+User approved Q43 and Q44. Implementation may now proceed within the frozen
+scope. The prior blocker is resolved; the goal tracker still reports blocked
+(it cannot be resumed through `update_goal`), but the user has directly authorized
+this work. Original start/checkpoint remain recorded. Approval-blocked interval:
+16:19:15–17:11:00, 51m45s. The 17:08:35 checkpoint fell during that wait; this
+continuation reports preparation complete, one focused compatibility check green,
+zero gameplay requirements delivered yet. No scope or model change. New visible
+question sets restart at 1 under the user's instruction.
+
+## Implementation and verification in progress
+
+Module 0.6.47 introduces physical combat inventory only for new encounters with
+held/carried Thrown weapons. Combat format 19 carries item source identities,
+stack quantities, held/stowed/ground locations and optional pending damage,
+ability-check and Champion movement states. Formats 1–18 retain their existing
+continuation; actual 0.6.46 fixtures remain byte-exact except module identity.
+Campaign format 11 and the released character-profile history remain unchanged.
+
+The SRD library decides hand availability, attack-time drawing/stowing, damage,
+landing and pickup. Core reconciles conserved quantities and immutable source
+identities transactionally, preserving remaining stack IDs and original item
+provenance. It does not inspect weapon properties. Splitting a stack creates a
+single ground-unit record, without expanding large carried stacks into units.
+
+Focused checks have passed for all seven weapon types across twelve starting
+classes, campaign quantities/pickup/save continuation, and critical Savage/
+Champion continuation. Expanded supported-level checks, all native regressions,
+main/demo builds and rendered controls are in progress. No issue is yet closed.
+
+## Delivery checkpoint — 17:38 UTC
+
+Original preflight was 16:08:35; the approval wait was 51m45s. This report is at
+the original 90-minute outer boundary, without resetting the clock. Since the
+17:11 approval continuation, implementation and verification have taken about
+27 minutes. No original requirement is marked delivered or issue closed yet.
+One batch remains active; no added scope, child tickets, model switch or agents.
+
+All 49 native/tool checks pass, including 154 weapon/class/level routes, large
+stacks, companion pickup, rejected handoff atomicity, victory recovery and the
+frozen historical continuations. Both applications build. New control tests pass
+in main EN/ES and demo EN; graphical runs at both sizes pass. A final sizing
+refinement keeps the new Throw button inside the minimum-width combat column;
+the affected main build and full Godot regression remain before delivery.
+
+Two existing tests needed semantic updates: fresh throws now leave no held grip
+to change, and fresh Rogue/Dagger encounters write format 19. Their original
+resource/damage and malformed-version assertions remain; frozen bytes were not
+changed. The UI harness now explicitly focuses the first popup entry before
+pressing Down; its first attempt assumed a platform-dependent initial focus.
+No production rule failure or compatibility reduction was concealed.
+
+## Verified delivery — runtime `5d7813d`
+
+All frozen acceptance is implemented for the currently supported class/level
+routes. Q43/Q44 are implemented, with no combat saving controls. The tests cover
+154 weapon/class/level combinations; the existing Versatile fixed-seed damage
+oracles also prove one-handed thrown dice for both grip choices, ordinary hits,
+critical hits and misses. Critical thrown hits retain their original weapon
+through Savage Attacker and Champion movement. Normal ranged commands also spend
+a held Thrown weapon. Optional targeting cancellation spends nothing.
+
+The focused test additionally covers a million-unit carried stack without unit
+expansion, drawing while keeping another weapon in a free hand, necessary stowing
+with a shield, one-unit pickup by another party member, metadata/ownership save
+continuation, rejected quantity handoffs and reachable victory recovery. Ground
+items use the existing persistent detached-item representation and pickup/recovery
+rules; uncollected items are not silently returned or deleted.
+
+Final evidence for runtime `5d7813d`:
+
+- All 49 native/tool checks pass: `/tmp/thrown-native-final.log`.
+- All 26 Godot runtime checks pass, 42 with native prerequisites:
+  `/tmp/thrown-godot-final.log`.
+- Both applications build: `/tmp/thrown-integrated-build.log`,
+  `/tmp/thrown-main-final-build.log`, `/tmp/thrown-demo-final-build.log`.
+- Main EN/ES and demo EN rendered controls and mouse/keyboard/cancel/pickup checks
+  pass at both supported sizes: `/tmp/thrown-{main,demo}-final-render.log`.
+  Captures: `/tmp/thrown-{main,demo}-final-captures/`. Visual review corrected the
+  new main button width and the demo log height; layout assertions guard both.
+- `python3 tools/localization.py --check`: 896 complete EN/ES messages.
+- `git diff --check` passes; actual historical fixture bytes are unchanged.
+- Scope/architecture review: SRD remains STATIC and depends only on the rules
+  interface; Core has no new SRD property calculation, and Godot consumes offered
+  commands and rule-owned labels. No compatibility reduction or new framework.
+
+Commands after rebuilding affected targets:
+
+```bash
+ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6
+cmake --build build/mac-check --target opengoldbox_test_project -j6
+cmake --build build/sprite-demo --target opengold_godot -j6
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD ctest --test-dir build/mac-check --output-on-failure -R '^opengold_godot_' -E '^opengold_godot_prepare$' --fixture-exclude-setup godot_project
+python3 tools/localization.py --check
+```
+
+Graphical checks use `tests/run_godot_test.cmake`, `thrown_view_tests.gd`,
+`GRAPHICAL=ON`, `--thrown-fixtures=.../build/mac-check/thrown-fixtures` and
+`--thrown-capture=...`; add `--thrown-demo` for the demo project. The main project
+is `src/OpenGoldBox/godot`; the demo project is `demos/godot`.
+
+Timing: baseline/decisions 16:08:35–16:19:15 (10m40s), approval wait
+16:19:15–17:11:00 (51m45s), authorized implementation/build/verification through
+runtime commit 17:11:00–17:41:31 (30m31s). Total wall time 92m56s, excluding wait
+41m11s. Build and verification subphases were not separately timed; logs hold
+commands/results. Requested/recorded Astra/high retained, no model switch or
+agents; token/cost deltas unavailable. One original equipment requirement delivered,
+no added issues or expanded scope. The full SRD goal remains incomplete.
+
+Deferred observation: existing demo help text mentions training combat saves,
+although saving controls remain hidden. That unrelated wording was not changed.
