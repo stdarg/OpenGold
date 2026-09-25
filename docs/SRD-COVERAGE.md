@@ -13,6 +13,31 @@ Twelve have partial playable paths and 127 are missing. It links grant routes,
 dependencies, current evidence and bounded child issues; inventory work alone
 does not close [#165](https://github.com/stdarg/OpenGold/issues/165).
 
+## Wizard spell learning and preparation controls
+
+Runtime `db864c8` (SRD module 0.6.51) completes
+[#37](https://github.com/stdarg/OpenGold/issues/37) for the implemented Wizard
+catalog through level four. WIZCHOICE-1/2/3 deliver independent creation choices,
+two-page advancement, pending old-save knowledge in Spellbook, and preparation
+plus one optional cantrip replacement after each completed Long Rest. Presets
+receive pre-generated selections. Existing knowledge/preparation, wounds, spent
+resources and equipment survive chronological replay and Review Training.
+
+The [delivery packet](WIZARD-SPELL-CHOICES.md) records SRD source, frozen scope,
+actual 0.6.50 writer fixtures, conditional campaign16/PC34 compatibility and
+reproduction commands. All 51 native/tool and 26 Godot checks pass on the final
+integrated tree. New creator/advancement/book/rest flows, keyboard/cancellation,
+sequential Wizard choices and whole UI-save comparisons pass in main EN/ES and
+demo EN at both supported sizes. 922 translated messages validate. Measured
+preflight-to-verified-runtime-commit: 50m16s including approval wait/builds.
+
+This delivers one original control-workflow requirement. No new issues or spell
+effects were added. [#97](https://github.com/stdarg/OpenGold/issues/97) remains
+open for physical books, copying costs/time and book replacement/loss;
+[#165](https://github.com/stdarg/OpenGold/issues/165) retains missing spells.
+SRD counts remain intact with unsupported selections visibly pending. Other
+classes, Ritual Adept, Evoker and higher levels remain their existing issues.
+
 ## Wizard Scholar
 
 Runtime `4ce541a` (SRD module 0.6.50) completes
@@ -273,7 +298,7 @@ restart tests cover pending spending through the real save/load host.
 
 | [EQ01](https://github.com/stdarg/OpenGold/issues/53): armor catalog and training | SRD 5.2.1 p. 92 and all twelve core class tables. Twelve armor suits and Shield, AC/Dexterity rules, Strength/Stealth penalties and class training. | [armor_catalog_tests.cpp](../tests/armor_catalog_tests.cpp) checks the independent full table, all 156 class/equipment combat combinations, actual initiative/attack/spell restrictions, equipped ability checks, boundary values, shield/hands rejection and campaign/save continuation. Existing Modifiers text and names are localized. | Module 0.6.18; PC9/combat 12/campaign 10/SRD1–7 retained. Frozen 0.6.17 saves preserve existing state and prior-writer continuation. Don/doff and shield Utilize actions remain [#198](https://github.com/stdarg/OpenGold/issues/198); optional class grants, starting packages and unsupported original conversions remain open. [Scope](ARMOR.md). |
 
-| [F07a](https://github.com/stdarg/OpenGold/issues/199): Wizard spell knowledge and preparation | SRD 5.2.1 pp. 77–78. Sourced cantrip/book entries, first acquisition levels, independent preparation and pending entitlements through level 4 for existing spells. | [spell_access_tests.cpp](../tests/spell_access_tests.cpp) verifies knowledge retention, actual casting/slot use, invalid grants, atomic advancement, campaign replay and frozen-writer continuation. Existing Modifiers text is checked through the Godot creation flow in Spanish. | Module 0.6.19 / PC10; campaign 10/combat 12/SRD1–7 retained. Old campaigns recover only preset/history-backed selections; old combat retains its recorded access. Full controls #37, copying #97 and free casts #200 remain open; parent #36 stays open. [Scope](SPELL-ACCESS.md). |
+| [F07a](https://github.com/stdarg/OpenGold/issues/199): Wizard spell knowledge and preparation | SRD 5.2.1 pp. 77–78. Sourced cantrip/book entries, first acquisition levels, independent preparation and pending entitlements through level 4 for existing spells. | [spell_access_tests.cpp](../tests/spell_access_tests.cpp) verifies knowledge retention, actual casting/slot use, invalid grants, atomic advancement, campaign replay and frozen-writer continuation. Existing Modifiers text is checked through the Godot creation flow in Spanish. | Module 0.6.19 / PC10; campaign 10/combat 12/SRD1–7 retained. Old campaigns recover only preset/history-backed selections; old combat retains its recorded access. Controls #37 are delivered above; copying #97 and free casts #200 remain open; parent #36 stays open. [Scope](SPELL-ACCESS.md). |
 
 | [FT03](https://github.com/stdarg/OpenGold/issues/76): Savage Attacker | SRD 5.2.1 p. 87. Nonrepeatable sourced feat, optional once-per-turn weapon damage reroll and either-result choice, including opportunity hits. | [savage_attacker_tests.cpp](../tests/savage_attacker_tests.cpp) checks independent all-class rolls, acquisition, both stages, exclusions, critical/Versatile dice, defenses, atomicity and movement continuation. [savage_view_tests.gd](../tests/savage_view_tests.gd) checks approved controls, keyboard focus and deferred HP. | Module 0.6.20 / combat 13; PC10/campaign 10/SRD1–7 retained. Frozen 0.6.19 saves retain existing state and reproduce prior automatic outcomes when the higher result is explicitly chosen. Human/starting-package choices remain their own issues. [Details](SAVAGE-ATTACKER.md). |
 
@@ -336,7 +361,7 @@ commit-specific findings as historical evidence.
 | G1: complete class features/advancement | Open; all twelve required | [Level-four milestone #8](https://github.com/stdarg/OpenGold/issues/8) and its class issues |
 | G2: species/background grants | Open | [Species #51](https://github.com/stdarg/OpenGold/issues/51), [backgrounds #50](https://github.com/stdarg/OpenGold/issues/50) |
 | G3: feat entitlements/choices | Open | [Feats #49](https://github.com/stdarg/OpenGold/issues/49) |
-| G4: spell access/learning/preparation | Partial: F07a knowledge/preparation foundation | [F07 #36](https://github.com/stdarg/OpenGold/issues/36) and class-specific integration |
+| G4: spell access/learning/preparation | Partial: Wizard ordinary learning/preparation controls delivered; other source/class routes remain | [F07 #36](https://github.com/stdarg/OpenGold/issues/36) and class-specific integration |
 | G5: spells/shared casting mechanics | Open | [Spell inventory #165](https://github.com/stdarg/OpenGold/issues/165) and named spell/mechanic issues |
 | G6: full progression/multiclassing | Open | [Higher levels #176](https://github.com/stdarg/OpenGold/issues/176), [multiclassing #179](https://github.com/stdarg/OpenGold/issues/179) and successors |
 | G7: rests/recharge | Open | [F03 #30](https://github.com/stdarg/OpenGold/issues/30) |

@@ -94,15 +94,16 @@ in Review Training's existing checkbox groups. Earlier selections remain locked;
 Cancel discards edits; keyboard access, wounds/resources and window dimensions
 remain. User replied “1. Approved.” [Frozen scope](SCHOLAR.md).
 
+## Wizard spell choices
+
+**WIZCHOICE-1/2/3 — APPROVED, #37/#97, 2026-09-25, visible questions 1–3:**
+User replied “1. Approved. 2. Approved. 3. Approved.” Creation/advancement spell
+choice groups, Spellbook button/pending knowledge dialog, and completed Long Rest
+preparation/one-cantrip replacement are approved exactly as described in the
+[packet](WIZARD-SPELL-CHOICES.md#approved-layoutcontrol-behavior).
+
+
 ## Pending — do not implement dependent choices
-
-**WIZCHOICE-1/2/3 — PENDING, #37/#97, 2026-09-25, visible questions 1–3:**
-Wizard creation/advancement spell-choice groups, a Spellbook button and pending
-knowledge dialog, and completed-Long-Rest preparation/one-cantrip replacement.
-Exact layout, behavior, acceptance and exclusions are in the
-[review packet](WIZARD-SPELL-CHOICES.md#layoutcontrol-review--pending-do-not-implement-dependent-ui).
-These are not approvals and do not authorize dependent UI implementation.
-
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |

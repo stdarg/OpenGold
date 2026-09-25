@@ -129,6 +129,14 @@ delivered; sleeping actor behavior and final rest scheduling remain pending. See
 [rest resources](REST-RESOURCES.md), [recovery clocks](RECOVERY-CLOCKS.md) and [status effects](STATUS-EFFECTS.md) for
 mechanics, scope, persistence and tests.
 
+Wizard choice history conditionally uses campaign format 16. Core replays spell
+edits at their attained level between advancement records; SRD validates learning,
+preparation and cantrip replacement. A completed Long Rest creates a once-only
+choice window for eligible members before campaign actions resume. PC34 adds
+replacement provenance while retaining earlier combat recipes. See
+[Wizard spell choices](WIZARD-SPELL-CHOICES.md) for the bounded catalog and
+compatibility evidence. Formats 1–15 remain supported.
+
 Rules 0.6.19 derives [Wizard spell access](SPELL-ACCESS.md) from sourced grants,
 separating known cantrips and retained book entries from current preparation.
 New PC10 recipes validate casting access against those grants. Campaign replay
