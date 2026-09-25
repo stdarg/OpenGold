@@ -25,7 +25,10 @@ twenty/multiclassing. A batch delivery is not goal completion.
 
 Select one bounded authorized outcome from [batch grouping](SRD-BATCHING-REVIEW.md),
 using [workflow](SRD-WORKFLOW.md), [model routing](SRD-MODEL-ROUTING.md) and
-[repository map](SRD-REPO-MAP.md). No next implementation batch is frozen yet.
+[repository map](SRD-REPO-MAP.md). The next frozen batch is #58 Thrown weapon inventory; see [packet](THROWN-WEAPONS.md).
+Branch `codex/srd-thrown-inventory`; Q43/Q44 await approval before gameplay edits.
+Preflight began 16:08:35 UTC, checkpoint 17:08:35 and latest 17:38:35.
+Recorded Astra/high retained; no model switch, agents or live builds.
 Refresh only its issues; record acceptance/exclusions, model assignment and timing
 before coding. Do not reopen completed Medicine/Tactical Mind or Champion checks.
 
