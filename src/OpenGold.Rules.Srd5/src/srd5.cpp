@@ -419,6 +419,7 @@ public:
         if(!restoring&&outcome_==Outcome::ongoing&&!begin_turn())end_turn();
     }
     Snapshot snapshot() const override;
+    SafeRecovery safe_recovery() const override;
     std::vector<Command> legal_commands() const override;
     std::vector<Cell> movement_reach(EntityId actor) const override;
     bool submit(const Command& command) override;
@@ -537,6 +538,29 @@ bool Session::can_pick_up(const Actor& a,const HeldItemView& item) const
     if((item.definition=="shield"||!a.object_interaction)&&!a.actions.available())return false;
     auto next=items_;next[item.id-1].holder=a.source.id;
     try{(void)equipped_definition(a,next);return true;}catch(const std::runtime_error&){return false;}
+}
+SafeRecovery Session::safe_recovery() const
+{
+    SafeRecovery result;
+    if(outcome_!=Outcome::victory)return result;
+    std::set<unsigned> reachable_items;
+    for(const auto& a:actors_)if(a.source.side==0&&conscious(a)){
+        result.members.push_back(a.source.id);
+        // Safe exploration has no turn budget; walls and occupied destinations
+        // still constrain reach. Zero Speed permits only nearby collection.
+        const int budget=a.definition.speed>detail::speed_penalty(a.effects)?board_.width*board_.height*15:0;
+        const auto reachable=movement_grid(a).reachable(budget);
+        for(const auto& item:items_)if(!item.holder&&actor(item.origin).source.side==0){
+            bool near=distance(a.source.cell,item.cell)<=5&&line_of_sight(a.source.cell,item.cell);
+            for(int y=item.cell.y-1;!near&&y<=item.cell.y+1;++y)
+                for(int x=item.cell.x-1;!near&&x<=item.cell.x+1;++x){
+                    const Cell cell{x,y};
+                    near=reachable.cost_to(cell).has_value()&&distance(cell,item.cell)<=5&&line_of_sight(cell,item.cell);
+                }
+            if(near)reachable_items.insert(item.id);
+        }
+    }
+    result.items.assign(reachable_items.begin(),reachable_items.end());return result;
 }
 detail::MovementGrid Session::movement_grid(const Actor& mover) const
 {
@@ -1643,6 +1667,16 @@ public:
         actor.hp+=healing;--actor.hit_dice;
         HitDieResult result{unsigned(d.hit_die),rolled,d.constitution,healing,unsigned(actor.hit_dice)};
         auto next=vitals(actor);state=std::move(next);random_state=rng;return result;
+    }
+    bool recover_at_safety(VitalState& state,const CharacterSheet& sheet,std::span<const std::string> equipment) const override
+    {
+        Actor actor;actor.definition=character_definition(character_profile(sheet,equipment).data);
+        actor.winds=actor.definition.winds;actor.slots=actor.definition.slots;actor.slots2=actor.definition.slots2;restore_vitals(actor,state);
+        if(!conscious(actor))return false;
+        if(actor.effects.prone&&actor.definition.speed>detail::speed_penalty(actor.effects)){
+            actor.effects.prone=false;state=vitals(actor);
+        }
+        return true;
     }
     void set_rest_work(VitalState& state,const CharacterSheet& sheet,RestWork work) const override
     {

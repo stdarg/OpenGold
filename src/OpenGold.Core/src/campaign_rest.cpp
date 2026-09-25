@@ -124,6 +124,34 @@ void CampaignParty::release_rest_equipment(PartyState& state,PartyMember& member
     }
     member.equipment={};
 }
+void CampaignParty::collect_equipment(PartyState& state,std::span<const MemberId> collectors,
+    std::uint64_t scope,std::uint64_t rest_session,std::span<const unsigned> tokens) const
+{
+    if(collectors.empty())return;
+    for(auto it=state.detached_items.begin();it!=state.detached_items.end();){
+        if(it->holder||it->scope!=scope||it->rest_session!=rest_session||
+            std::find(tokens.begin(),tokens.end(),it->token)==tokens.end()){++it;continue;}
+        auto owner=std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& m){return m.id==it->original_owner;});
+        if(owner==state.roster.end())throw std::runtime_error("Recovery item has no original owner");
+        if(owner->vitals.dead)owner=std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& m){return m.id==collectors.front();});
+        if(owner==state.roster.end())throw std::runtime_error("Recovery collector is missing");
+        const auto id=owner->character.inventory().add(it->item.definition_id,it->item.name,1,it->item.original_type);
+        if(it->original)owner->item_sources.emplace(id,*it->original);
+        it=state.detached_items.erase(it);
+    }
+}
+void CampaignParty::recover_camp(PartyState& state) const
+{
+    std::vector<MemberId> collectors;
+    for(auto id:state.slots)if(id){
+        auto& m=*std::find_if(state.roster.begin(),state.roster.end(),[&](const auto& member){return member.id==id;});
+        std::vector<std::string> gear;for(auto item:m.equipped)gear.push_back(m.character.inventory().find(item)->get().definition_id);
+        if(rules_->recover_at_safety(m.vitals,m.character.sheet(),gear))collectors.push_back(id);
+    }
+    const auto session=state.rest_activity->ticket.session;
+    std::vector<unsigned> tokens;for(const auto& item:state.detached_items)if(item.rest_session==session)tokens.push_back(item.token);
+    collect_equipment(state,collectors,0,session,tokens);
+}
 void CampaignParty::loud_noise(std::span<const MemberId> affected)
 {
     outside_combat();auto next=state_;apply_rest_work(next,affected,RestWork::light_activity);
@@ -160,7 +188,7 @@ std::optional<RestResult> CampaignParty::advance_rest(RestTicket ticket,std::uin
         rules_->recover(member.vitals,member.character.sheet());result.members.push_back(id);member.last_rest_minutes=next.time_minutes;member.last_rest_subminute_milliseconds=next.subminute_milliseconds;
     }
     if(outcome.progress)static_cast<rules::RestProgress&>(activity)=*outcome.progress;
-    else {apply_rest_work(next,activity.members,RestWork::light_activity);next.rest_activity.reset();}
+    else {apply_rest_work(next,activity.members,RestWork::light_activity);recover_camp(next);next.rest_activity.reset();}
     state_=std::move(next);
     if(outcome.completed_duration_milliseconds)return result;
     return std::nullopt;
@@ -181,7 +209,7 @@ void CampaignParty::abandon_rest(RestTicket ticket)
 {
     require_activity_ticket(ticket);auto next=state_;
     apply_rest_work(next,next.rest_activity->members,RestWork::light_activity);
-    next.rest_activity.reset();next.short_rest.reset();state_=std::move(next);
+    recover_camp(next);next.rest_activity.reset();next.short_rest.reset();state_=std::move(next);
 }
 bool CampaignParty::prepare_combat()
 {

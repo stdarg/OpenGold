@@ -205,6 +205,11 @@ struct Command {
     std::string verb, label;
     Cell destination;
 };
+// A terminal encounter query; application applies recovery once when leaving combat.
+struct SafeRecovery {
+    std::vector<EntityId> members;
+    std::vector<unsigned> items;
+};
 class CombatSession {
 public:
     virtual ~CombatSession() = default;
@@ -213,6 +218,7 @@ public:
     // Preview the remaining movement range of a combatant, including one
     // selected outside its turn. Only legal_commands() can authorize a move.
     [[nodiscard]] virtual std::vector<Cell> movement_reach(EntityId actor) const = 0;
+    [[nodiscard]] virtual SafeRecovery safe_recovery() const {return {};}
     virtual bool submit(const Command& command) = 0;
     [[nodiscard]] virtual std::string save() const = 0;
 };
@@ -262,6 +268,8 @@ public:
     [[nodiscard]] virtual RestPolicy long_rest_policy() const;
     [[nodiscard]] virtual RestPolicy short_rest_policy() const;
     // Rest hosts report an activity; the module owns sleep/condition effects.
+    // Stand when able without restoring HP/resources; report ability to collect.
+    virtual bool recover_at_safety(VitalState&,const CharacterSheet&,std::span<const std::string>) const {return false;}
     virtual void set_rest_work(VitalState&,const CharacterSheet&,RestWork) const {}
     // The module identifies equipment that the current condition releases.
     [[nodiscard]] virtual std::vector<unsigned> released_equipment(const CharacterSheet&,const VitalState&,std::span<const std::string>) const {return {};}

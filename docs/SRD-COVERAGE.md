@@ -33,9 +33,9 @@ earlier investigation timing is unknown, so this is not total task time.
 No token saving or faster feature throughput is claimed yet. No SRD issues closed,
 no compatibility reduction, no agents/new tasks/model changes; goal remains paused.
 
-## Active batch B — rest workflow
+## Delivered batch B — rest workflow
 
-#30/#193 remain open; #192 delivers the reviewed player rest controls. The existing campaign adapter's unverified high-chance
+#30/#193 are delivered with the reviewed #192 player rest controls. The existing campaign adapter's unverified high-chance
 profiles now reject rather than masquerading as guaranteed city-watch events.
 Independent regressions failed before the guard correction and pass afterward;
 [scope and evidence](REST-RESOURCES.md#rest-batch-b-verified-profile-boundary).
@@ -48,11 +48,12 @@ interrupted rest, save/load and completion; unrelated edits remain locked.
 Original ECL damage and encounter requests now interrupt rests automatically;
 earned recovery choices finish before combat starts, and committed dice survive
 a rejected encounter. [Adapter scope and evidence](REST-RESOURCES.md#193-event-adapter-increment).
-Natural sleep, waking and persistent Prone are implemented. Combat equipment drops, pickup, inventory transfer and saved detached items are implemented; natural-sleep camp drops now survive waking and interruption into combat; outside-combat retrieval and final rest scheduling remain unfinished. #193/#30 stay open.
+Natural sleep, waking and persistent Prone are implemented. Combat equipment drops, pickup, inventory transfer and saved detached items are implemented; natural-sleep camp drops now survive waking and interruption into combat; Q37 safe standing/collection and verified city-watch scheduling now complete #193/#30.
 [Sleep/posture scope and evidence](REST-RESOURCES.md#natural-sleep-and-posture-increment-193-q3335).
 [Combat equipment scope and evidence](REST-RESOURCES.md#combat-held-equipment-increment-193-q35).
 [Camp equipment scope and evidence](REST-RESOURCES.md#natural-sleep-ground-equipment-at-camp-193-q35).
-Q29–35 are approved; Q36 safe automatic collection is pending. See the
+[Final safe recovery, city-watch behavior and complete verification](REST-RESOURCES.md#safe-recovery-and-city-watch-completion-193-q37).
+Q29–35 and Q37 are approved; Q37 supersedes Q36. See the
 [register](SRD-DECISIONS.md).
 
 The shared game/demo Rest dialog now delivers Q29–31: Short/Long choice,

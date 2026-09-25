@@ -509,7 +509,7 @@ void CampaignParty::apply_combat_items(PartyState& next,std::vector<CombatInvent
         }else next.detached_items.push_back({combat_scope_,item.id,entry->original_owner,item.holder,item.cell,entry->item,entry->original});
     }
 }
-void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
+void CampaignParty::apply_combat(const rules::Snapshot& snapshot,const rules::SafeRecovery& recovery)
 {
     if(!combat_||snapshot.identity!=rules_->identity())throw std::runtime_error("Combat rules identity mismatch");
     if(snapshot.elapsed_milliseconds<combat_elapsed_)throw std::runtime_error("Combat clock moved backward");
@@ -525,6 +525,19 @@ void CampaignParty::apply_combat(const rules::Snapshot& snapshot)
         std::vector<std::string> gear;for(auto id:it->equipped)gear.push_back(it->character.inventory().find(id)->get().definition_id);
         (void)rules_->character_profile(it->character.sheet(),gear,actor.equipment);
         it->vitals=actor.persistent;it->equipment=actor.equipment;
+    }
+    if(!recovery.members.empty()||!recovery.items.empty()){
+        if(snapshot.outcome!=rules::Outcome::victory)throw std::runtime_error("Recovery requires victory");
+        std::set<MemberId> seen;
+        for(auto id:recovery.members){
+            if(!seen.insert(id).second||std::find(active.begin(),active.end(),id)==active.end())throw std::runtime_error("Invalid recovery member");
+            auto& m=*std::find_if(next.roster.begin(),next.roster.end(),[&](const auto& member){return member.id==id;});
+            std::vector<std::string> gear;for(auto item:m.equipped)gear.push_back(m.character.inventory().find(item)->get().definition_id);
+            if(!rules_->recover_at_safety(m.vitals,m.character.sheet(),gear))throw std::runtime_error("Unable recovery member");
+        }
+        std::set<unsigned> tokens;
+        for(auto token:recovery.items)if(!tokens.insert(token).second||std::none_of(snapshot.held_items.begin(),snapshot.held_items.end(),[&](const auto& item){return item.id==token&&!item.holder&&std::find(active.begin(),active.end(),item.origin)!=active.end();}))throw std::runtime_error("Invalid recovery item");
+        collect_equipment(next,recovery.members,combat_scope_,0,recovery.items);
     }
     next.short_rest.reset();
     if(next.rest_activity){

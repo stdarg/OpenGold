@@ -220,21 +220,25 @@ void RolfTourSession::finish_event()
         if(!campaign_)throw EclError("Rest requires campaign rules");
         const auto interval=machine_.variable(0x6DD2),chance=machine_.variable(0x6DD3);
         if(chance==255)snapshot_.dialogue+="\nRest is not allowed here.";
-        else if(interval&&chance){
-            // Bounded original New Phlan profile: guaranteed city-watch interruption.
-            // Probabilistic interruptions require a campaign encounter scheduler.
-            if(interval!=1||(chance!=100&&chance!=101))throw EclError("Unsupported probabilistic camp interruption");
-            campaign_->advance_time(5);synchronize_clock();event_stage_=5;
-            if(!machine_.start(3))throw EclError("Cannot enter camp interruption script");
-            return;
-        }else{
+        else{
+            const bool watch=interval&&chance;
+            // Only the verified guaranteed New Phlan profile is supported.
+            if(watch&&(interval!=1||(chance!=100&&chance!=101)))throw EclError("Unsupported probabilistic camp interruption");
+            if(resuming_camp_)campaign_->resume_rest(campaign_->state().rest_activity->ticket);
+            else (void)campaign_->begin_rest(camp_kind_);
             bool completed=false;
-            if(resuming_camp_){
-                campaign_->resume_rest(campaign_->state().rest_activity->ticket);
+            if(campaign_->state().rest_activity){
+                const auto duration=campaign_->remaining_rest_milliseconds();
                 completed=campaign_->advance_rest(campaign_->state().rest_activity->ticket,
-                    campaign_->remaining_rest_milliseconds(),campaign_->state().rest_activity->work).has_value();
-                if(completed)snapshot_.dialogue+="\nLong rest complete: eligible members recovered HP and supported resources.";
-            }else completed=campaign_->rest(camp_kind_).has_value();
+                    watch?std::min<std::uint64_t>(duration,5*60000):duration,campaign_->state().rest_activity->work).has_value();
+            }else if(watch)campaign_->advance_time(5);
+            if(watch&&!completed){
+                std::vector<MemberId> affected;for(auto id:campaign_->state().slots)if(id)affected.push_back(id);
+                campaign_->loud_noise(affected);synchronize_clock();event_stage_=5;
+                if(!machine_.start(3))throw EclError("Cannot enter camp interruption script");
+                return;
+            }
+            if(completed&&resuming_camp_)snapshot_.dialogue+="\nLong rest complete: eligible members recovered HP and supported resources.";
             if(completed&&!resuming_camp_)snapshot_.dialogue+=camp_kind_==RestKind::short_rest?
                 "\nShort rest complete: one hour passed; eligible members can spend Hit Dice.":
                 "\nLong rest complete: eight hours passed; eligible members recovered HP and supported resources.";
@@ -244,6 +248,7 @@ void RolfTourSession::finish_event()
         }
     }
     if(event_stage_==5){
+        if(campaign_->state().rest_activity)campaign_->abandon_rest(campaign_->state().rest_activity->ticket);
         snapshot_.dialogue+="\nRest interrupted after five minutes; no recovery granted.";
     }
     checkpoint_.reset();snapshot_.phase=TourPhase::completed;

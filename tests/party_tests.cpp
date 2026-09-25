@@ -694,7 +694,7 @@ void caster_advancement()
         const auto growth=std::max(1,c.sheet().hit_die/2+1+c.sheet().modifiers[2])+1;
         check(m.character.sheet().hit_points==c.sheet().hit_points+growth&&m.vitals.hit_points==m.character.sheet().hit_points-2,"Dwarven growth preserves HP deficit");
         check(m.vitals.resources=="SRD1 0 1 0 0 0","Advancement grants new slot without refilling spent slots");
-        check(party.rest()&&party.member(pc).vitals.resources=="SRD3 0 3 0 0 0 0 FX4 1 0 0 1","Level-two long rest restores three slots and leaves the sleeper Prone");
+        check(party.rest()&&party.member(pc).vitals.resources=="SRD1 0 3 0 0 0","Level-two long rest restores three slots and safely stands the rested character");
         auto participants=party.participants();participants.push_back({1000,"bandit","Bandit",1,{9,4}});
         auto rules=module();auto combat=rules->create({{12,9,std::vector<std::uint8_t>(108)},participants},42);
         const auto saved=combat->save();check(rules->restore(saved)->save()==saved,"Advanced profile and resources round-trip through combat checkpoint");
@@ -957,7 +957,8 @@ void reward_reentry()
 }
 void interrupted_rest_victory()
 {
-    auto party=std::make_shared<CampaignParty>(module());const auto pc=party->add_pc(character("wizard"));party->recruit("guard",character());
+    auto party=std::make_shared<CampaignParty>(module());auto wizard=character("wizard");const auto staff=wizard.inventory().add("quarterstaff","Interrupted camp staff");
+    const auto pc=party->add_pc(std::move(wizard));party->equip(pc,staff);party->recruit("guard",character());
     const auto started=party->begin_rest(RestKind::long_rest);check(started.has_value(),"Start rest before encounter");
     auto protected_state=encode_campaign(*party,nullptr,"rest-victory");
     rejects([&]{party->award_experience(300,"unexpected");});
@@ -973,6 +974,7 @@ void interrupted_rest_victory()
     CombatDemo fight(module());fight.campaign_party(party);fight.training();finish(fight);
     check(fight.combat().snapshot().outcome==Outcome::victory&&!party->in_combat(),"Interrupted rest encounter completes normally");
     check(party->member(pc).experience==300&&party->state().claimed_rewards.size()==1,"Interrupted rest victory awards XP once");
+    check(party->state().detached_items.empty()&&std::any_of(party->member(pc).character.inventory().items().begin(),party->member(pc).character.inventory().items().end(),[](const auto& item){return item.name=="Interrupted camp staff";}),"The real combat host collects reachable sleeping equipment at victory");
     check(party->state().rest_activity&&party->state().rest_activity->interrupted&&
         party->state().rest_activity->elapsed_milliseconds==progress&&
         party->state().rest_activity->extension_milliseconds==60*60000,"Victory retains rest progress and interruption extension");

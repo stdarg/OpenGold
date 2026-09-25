@@ -2,11 +2,10 @@
 
 [F03a #190](https://github.com/stdarg/OpenGold/issues/190) implements Hit Dice and
 supported rest recharge in the rules layer. [F03b #191](https://github.com/stdarg/OpenGold/issues/191)
-adds individual campaign eligibility and a persistent spending session. Parent
-[F03 #30](https://github.com/stdarg/OpenGold/issues/30) remains open until the
-[controls #192](https://github.com/stdarg/OpenGold/issues/192) and
-[interruptions/resumption #193](https://github.com/stdarg/OpenGold/issues/193) are delivered.
-The ordinary game does not yet offer Short Rests or Hit Dice spending controls.
+adds individual campaign eligibility and a persistent spending session. The game and demo provide the [reviewed rest controls #192](https://github.com/stdarg/OpenGold/issues/192).
+The [#193 interruption/resumption](https://github.com/stdarg/OpenGold/issues/193)
+implementation includes natural sleep, combat equipment handoff and Q37 safe
+recovery; final integrated verification is recorded below.
 
 ## Rules and scope
 
@@ -32,9 +31,9 @@ pp. 47–48 (Second Wind), 185 (Long Rest) and 187 (Short Rest).
   level's die without replenishing earlier expenditure.
 
 Other class pools, multiclass die mixtures, exhaustion, maximum-HP reductions,
-species-specific rest features remain their named issues. General interruption
-scheduling and Long Rest resumption are not implemented; the campaign boundaries
-below are explicit. Player-facing spending controls remain #192.
+species-specific rest features remain their named issues. Rest interruptions and
+Long Rest resumption use the explicit campaign boundaries below. Unverified
+original probabilistic encounter schedules remain unsupported.
 
 ## Architecture and API
 
@@ -108,11 +107,10 @@ Initiative, non-cantrip casting and damage have explicit interruption inputs.
 The ECL damage and encounter adapters invoke interruption automatically; hosts
 resolve earned Hit Dice choices before combat/time advancement, check camp
 permission before resuming and prevent unrelated exploration while a resume
-decision is pending. Sleeping actors' Unconscious behavior and final encounter
-scheduling acceptance remain in #193. Reviewed Godot
-controls are delivered below. The existing
-five-minute city-watch route remains unchanged; unknown probabilistic profiles
-never silently substitute an uninterrupted rest.
+decision is pending. Natural sleep applies Unconscious, Prone and equipment
+dropping. The city-watch route now spends its five minutes in the same rest
+engine, explicitly wakes the party and ends camping when the party obeys.
+Unknown probabilistic profiles never silently substitute an uninterrupted rest.
 
 ## Persistence
 
@@ -455,9 +453,8 @@ Logs: `/tmp/rest-ground-verified-tests.log`,
 `/tmp/rest-ground-final-restore-tests.log`, `/tmp/rest-ground-demo-sleep.log`,
 `/tmp/rest-ground-demo-rest.log`. No live verification remains.
 
-This does not complete #193. Q36 automatic recovery after victory/safe completion
-is pending. Outside-combat retrieval after completing/abandoning rest remains
-unfinished. Script-induced zero HP during an awake Short Rest still releases
+At this historical checkpoint #193 remained open. Q36 was subsequently
+superseded by approved Q37; safe recovery is implemented in the section below. Script-induced zero HP during an awake Short Rest still releases
 held equipment when combat begins. This increment adds no new controls, no
 world-wide ground-inventory framework, and no automatic collection behavior.
 
@@ -467,3 +464,55 @@ condition decisions in the static library. No UI controls, save locations,
 frameworks, issues or agents were added. Verification completed 04:13 UTC;
 original batch start remains 01:27:34 UTC. No original issue was closed. The
 rest-import substep start and token/cost delta were not separately captured.
+
+
+## Safe recovery and city-watch completion (#193, Q37)
+
+Q37 authorizes safe standing and collection after victory or camping completion,
+cancellation and obeying the city watch. During combat, waking still leaves
+Prone and dropped equipment; standing and pickup retain their normal costs.
+`CombatSession::safe_recovery` queries eligible party members and reachable ground
+item tokens. The SRD library uses its existing terrain/occupancy/line-of-sight
+rules. Zero Speed permits nearby collection only; unconscious/dead actors do not
+collect. The terminal combat snapshot remains the combat record; Core applies
+the recovery to the campaign before releasing combat ownership.
+
+Core stages standing and inventory transfers in the same transaction as the
+final combat handoff. Camp recovery uses the current campsite's rest-session
+records. Items return to the living original owner's inventory, or to an able
+survivor if that owner died; they are stowed, not automatically equipped. Labels,
+quantity and original item provenance are preserved; returned stacks receive
+new, unique inventory IDs. No
+healing, recharge, RNG draw or extra rest benefit is granted. Unreachable items
+remain saved at their encounter; older unlocated camp records are not teleported.
+
+Original ECL3.DAX/11 entry 3 explicitly rouses campers and offers GO/FIGHT. The
+verified guaranteed five-minute profile now begins/resumes an actual rest,
+advances that interval, explicitly wakes active members, and ends camping after
+successful GO. Failed/unsupported continuation rolls back the complete event.
+Unknown probabilistic profiles and the unsupported city-watch fight remain
+explicit. Camp/inn-only saving and paid-inn rollback stay unchanged.
+
+Evidence: `safe_recovery` and `rest_ground_equipment` in
+`tests/natural_sleep_tests.cpp`; `watch_equipment_and_rollback` and
+`resumption_services` in `tests/campaign_rest_tests.cpp`; and the actual combat
+host path in `interrupted_rest_victory` in `tests/party_tests.cpp`. They cover
+completion/cancellation, dead and living owners, walls, repeated handoff,
+physical item conservation, save/load, spent resources, and failed watch events.
+Existing activity tests cover exact hour thresholds, sleep/light/exertion,
+fresh segments, stale requests, mixed eligibility and retained recovery choices.
+
+No additional UI controls, save schemas, framework, delegation or issues were
+introduced. Verification completed 2026-09-25 04:38 UTC: all 45 native/tool tests,
+all 22 Godot runtime checks (34 entries including native prerequisites), rebuilt
+demo sleep/rest checks, and the nine-state original-data writer/restart route in
+both game and demo passed. All 871 English/Spanish messages validate. The native
+suite includes actual prior-writer fixtures and the alternate-rules boundary.
+Logs: `/tmp/safe-recovery-native.log`, `/tmp/safe-recovery-godot.log`,
+`/tmp/safe-recovery-game-save-{write,read}.log`, and
+`/tmp/safe-recovery-demo-{sleep,rest,save-write,save-read}.log`.
+
+This completes #193's supported rest/interruption acceptance and parent #30's
+resource workflow. Full class catalogs, species rest exceptions and unverified
+original probabilistic encounter profiles remain outside these issues' delivered
+scope. The original batch clock remains 01:27:34 UTC; it was not reset.

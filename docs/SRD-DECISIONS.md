@@ -43,11 +43,13 @@ question widget, and preceded by the audible Glass alert.
 | Q34 | #193 Wake ally control | Standard button at right end of existing Cunning Action row; visible for natural sleepers, keyboard/action cycle, highlight adjacent sleeping allies, Action to wake, Escape cancels; disabled off-turn or without Action. Approved by the user's “34. Yes.” on 2026-09-25. |
 | Q35 | #193 missing Unconscious prerequisites | Approved by the user on 2026-09-25: persistent Prone and held-item dropping/recovery as one prerequisite; new row below Cunning Action/Wake ally with Stand up (half Speed), Ground item dropdown and Pick up (shown object-interaction/action cost), keyboard access and disabled illegal actions. Requires shared combat/save-state changes. Q33–34 remain approved. User reply: “35. Approved.” |
 
+| Q36 | #193 safe cleanup | Superseded by Q37. |
+| Q37 | #193 safe recovery | Approved: after victory or safe camping completion, cancellation, or obeying the city watch, able characters stand and collect reachable dropped party equipment. Return items to original owner, or a surviving companion if dead. Waking during combat retains Prone and ground equipment; normal standing/pickup costs remain. |
+
 ## Pending — do not implement dependent choices
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
-| Q36 | #193 safe dropped-equipment cleanup | Asked 2026-09-25 with audio and visible widget: automatically collect reachable dropped party equipment after victory/safe rest, returning it to original owner or surviving companion if dead. Combat still requires legal pickup and waking alone does not recover gear. Pending; do not implement automatic cleanup. |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |
 | Q20 | #208 Silence controls | Proposed prepared level-two Silence in Spell dropdown; area preview, arrows/Enter/click, free Escape cancel; new End concentration row with duration, free release for selected owner outside its turn. Pending. |
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |

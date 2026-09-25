@@ -205,7 +205,7 @@ void effects_once(){
         check(party.state().time_minutes==elapsed.state().time_minutes&&party.state().subminute_milliseconds==4321&&
             party.state().random_state==elapsed.state().random_state&&party.state().random_state!=state.random_state,
             "Rest performs exactly the same timed recovery rolls as one elapsed interval");
-        for(const auto& m:party.state().roster)check(m.vitals.resources.ends_with(kind==RestKind::long_rest&&m.id!=reserve?"FX4 2 0 0 1":"FX1 2 0"),"Timed effects expire; only sleeping members retain Prone after waking");
+        for(const auto& m:party.state().roster)check(m.vitals.resources.ends_with("FX1 2 0"),"Timed effects expire and safe rest completion stands able sleepers");
         check(party.member(reserve).vitals==elapsed.member(reserve).vitals,"Reserve effects advance without receiving rest recharge");
         if(party.state().short_rest)party.finish_short_rest(party.state().short_rest->ticket);
     }
@@ -252,7 +252,9 @@ void campaign_services(){
         auto script=program({9,0,1,1,0xd2,0x6d,9,0,static_cast<std::uint8_t>(chance),1,0xd3,0x6d,0});
         por::RolfTourSession blocked({},script,{},0x9914,{},resources);blocked.campaign_party(party);settle(blocked);
         check(blocked.camp(kind),"Both kinds enter the original camp checks");settle(blocked);
-        check(!party->state().short_rest&&party->member(id).vitals==state.roster[0].vitals&&party->state().random_state==42&&
+        auto expected=state.roster[0].vitals;
+        if(chance==100||chance==101){module()->set_rest_work(expected,state.roster[0].character.sheet(),RestWork::light_activity);(void)module()->recover_at_safety(expected,state.roster[0].character.sheet(),{});}
+        check(!party->state().short_rest&&party->member(id).vitals==expected&&party->state().random_state==42&&
             party->state().time_minutes==((chance==100||chance==101)?5:0),"Forbidden, unsupported and five-minute interrupted camps grant neither resources nor spending rights");
         if(chance!=255&&chance!=100&&chance!=101)check(!blocked.script_diagnostics().empty(),"Unverified interruption profiles reject explicitly instead of becoming city-watch events");
     }
@@ -262,6 +264,28 @@ void campaign_services(){
     por::RolfTourSession inn({},failed,{},0x9914,{},resources);inn.campaign_party(party);settle(inn);
     const auto before=saved(*party);check(inn.explore(por::ExplorationCommand::look),"Inn rollback fixture starts");settle(inn);
     check(saved(*party)==before&&!inn.script_diagnostics().empty(),"A failed inn continuation rolls back the entire rest transaction");
+}
+void watch_equipment_and_rollback(){
+    for(const bool failure:{false,true}){
+        auto party=std::make_shared<CampaignParty>(module());auto person=hero();
+        const auto sword=person.inventory().add("longsword","Watch camp sword",1,34);
+        const auto owner=party->add_pc(std::move(person));party->equip(owner,sword);
+        auto initial=party->checkpoint();initial.roster[0].vitals={1,false,"SRD1 0 0 0 0 0"};party->restore(initial);
+        Bytes bytes{0,0};for(unsigned n=0;n<5;++n)bytes.insert(bytes.end(),{1,1,0x15,0x99});bytes.push_back(0);
+        const Bytes pre{9,0,1,1,0xd2,0x6d,9,0,101,1,0xd3,0x6d,0};
+        const unsigned arrival=0x9915+pre.size();bytes[16]=arrival&255;bytes[17]=arrival>>8;
+        bytes.insert(bytes.end(),pre.begin(),pre.end());
+        if(failure)bytes.insert(bytes.end(),{56,0,0,0});else bytes.push_back(0);
+        const auto script=std::make_shared<const por::EclProgram>(por::EclProgram::decode(bytes,"watch recovery"));
+        auto resources=std::make_shared<por::PhlanResources>();resources->programs[0]=script;
+        por::RolfTourSession town({},script,{},0x9914,{},resources);town.campaign_party(party);settle(town);
+        const auto before=saved(*party);check(town.camp(RestKind::long_rest),"Start city-watch camp");settle(town);
+        if(failure){check(saved(*party)==before&&!town.script_diagnostics().empty(),"Failed watch continuation rolls back sleep, equipment, time and RNG");continue;}
+        check(party->state().time_minutes==5&&!party->state().rest_activity&&!party->state().short_rest&&party->state().detached_items.empty(),"Obeying watch safely ends the five-minute camp");
+        const auto& member=party->member(owner);const auto items=member.character.inventory().items();
+        check(member.equipped.empty()&&items.size()==1&&items.front().name=="Watch camp sword"&&items.front().id!=sword,"Watch route really drops and recollects the same equipment into inventory");
+        check(member.vitals.hit_points==1&&winds(member)==0&&party->state().random_state==42,"Watch wake and collection grant no recovery or RNG draws");
+    }
 }
 std::string payload(std::string body){
     std::uint64_t hash=14695981039346656037ULL;for(unsigned char c:body){hash^=c;hash*=1099511628211ULL;}
@@ -282,8 +306,8 @@ void resumption_services(){
         check(town.resume_camp(),"Resumption enters original pre-camp checks");settle(town);
         if(chance==0){check(!party->state().rest_activity&&party->state().time_minutes==540&&party->member(1).last_rest_minutes==540,
             "Safe resumption completes retained progress plus one hour exactly");}
-        else if(chance==100){check(party->state().rest_activity&&party->state().rest_activity->interrupted&&party->state().time_minutes==75&&
-            party->state().rest_activity->elapsed_milliseconds==70*60000,"City watch prevents resumption without consuming prior progress");}
+        else if(chance==100){check(!party->state().rest_activity&&party->state().time_minutes==75&&!party->state().short_rest,
+            "City watch ends resumed camping after a fresh five minutes without granting recovery");}
         else check(saved(*party)==before,"Forbidden and unsupported resumption preserve all rest state and RNG");
     }
 }
@@ -302,4 +326,4 @@ void malformed_continuation(){
 }
 #include "rest_activity_checks.h"
 }
-int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}alternate_rules_boundary();rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();resumption_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try{if(argc==2&&std::string_view(argv[1])=="--freeze-rest-activity"){freeze_activity_baseline();return 0;}alternate_rules_boundary();rest_activity_checks::run();individual_eligibility();spending_and_continuation();expiry_and_atomicity();effects_once();campaign_services();watch_equipment_and_rollback();resumption_services();malformed_continuation();std::cout<<"Campaign rest tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

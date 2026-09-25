@@ -148,7 +148,7 @@ public:
     // Authored environmental event; the rules module decides waking effects.
     void loud_noise(std::span<const MemberId> affected);
     void begin_combat();
-    void apply_combat(const rules::Snapshot& snapshot);
+    void apply_combat(const rules::Snapshot& snapshot, const rules::SafeRecovery& recovery={});
     void end_combat() noexcept {combat_=false;}
     [[nodiscard]] bool in_combat() const {return combat_;}
     [[nodiscard]] const rules::Identity identity() const {return rules_->identity();}
@@ -169,6 +169,8 @@ private:
     std::vector<CombatInventoryItem> combat_items_;
     void apply_combat_items(PartyState&,std::vector<CombatInventoryItem>&,const rules::Snapshot&) const;
     void release_rest_equipment(PartyState&,PartyMember&) const;
+    void recover_camp(PartyState&) const;
+    void collect_equipment(PartyState&,std::span<const MemberId>,std::uint64_t scope,std::uint64_t rest_session,std::span<const unsigned>) const;
     void elapse(PartyState& state,std::uint64_t milliseconds,std::span<const MemberId> in_combat={}) const;
     void editable() const;
     void rewardable() const;

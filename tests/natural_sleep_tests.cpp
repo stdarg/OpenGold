@@ -194,7 +194,7 @@ void rest_ground_equipment(){
     rejects([&]{party.restore(malformed);});check(encode_campaign(party,nullptr,"rest-ground")==bytes,"Unknown camp equipment rejects without mutating the live party");
     CampaignParty abandoned(module());abandoned.restore(restored.party);abandoned.abandon_rest(abandoned.state().rest_activity->ticket);
     const auto unrelated=abandoned.participants();check(std::all_of(unrelated.begin(),unrelated.end(),[](const auto& p){return p.ground_equipment.empty();}),"Abandoned camp gear does not teleport into another encounter");
-    check(abandoned.state().detached_items.size()==2,"Abandoning a rest does not silently delete or return gear");
+    check(abandoned.state().detached_items.empty()&&abandoned.member(owner).character.inventory().items().size()==4,"Safe cancellation collects the physical gear into inventory");
     check(party.prepare_combat(),"Immediate interruption has no unearned Hit Dice choice");
     auto people=party.participants();people[0].cell={2,2};people[1].cell={2,3};people.push_back({1000,"bandit","Enemy",1,{6,2}});
     check(people[0].ground_equipment==std::vector<unsigned>{1,2},"Interruption formation carries explicit ground ordinals after worn armor");
@@ -213,6 +213,45 @@ void rest_ground_equipment(){
     check(party.member(ally).character.inventory().find(acquired)->get().name=="Camp sword"&&party.member(ally).item_sources.at(acquired).stored.value==71,"Camp-to-combat pickup retains physical item provenance");
     party.end_combat();
 }
+void safe_recovery(){
+    const auto rules=module();
+    for(const bool complete:{false,true}){
+        CampaignParty party(module());auto person=hero();const auto sword=person.inventory().add("longsword","Recovered sword",1,34);
+        const auto id=party.add_pc(std::move(person));party.equip(id,sword);
+        auto initial=party.checkpoint();initial.roster[0].vitals.hit_points=1;party.restore(initial);
+        const auto ticket=*party.begin_rest(RestKind::long_rest);
+        if(complete)(void)party.advance_rest(ticket,party.remaining_rest_milliseconds(),RestWork::sleep);
+        else party.abandon_rest(ticket);
+        check(party.state().detached_items.empty()&&!party.state().rest_activity,"Both safe camp endings collect ground equipment");
+        auto vitals=party.member(id).vitals;check(rules->recover_at_safety(vitals,party.member(id).character.sheet(),{})&&vitals==party.member(id).vitals,"Safe camp ending already leaves able members standing");
+        check(party.member(id).vitals.hit_points==(complete?party.member(id).character.sheet().hit_points:1)&&party.state().random_state==42,"Cancellation grants no healing or recovery RNG");
+        const auto bytes=encode_campaign(party,nullptr,"safe-camp");
+        party.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"safe-camp",nullptr).party);
+        check(encode_campaign(party,nullptr,"safe-camp")==bytes,"Collected camp inventory saves exactly");
+    }
+    for(const bool wall:{false,true})for(const bool dead:{false,true}){
+        CampaignParty party(module());auto person=hero();const auto sword=person.inventory().add("longsword","Owner sword",1,34);
+        const auto owner=party.add_pc(std::move(person));const auto ally=party.add_pc(hero());party.equip(owner,sword);
+        (void)party.begin_rest(RestKind::long_rest);const std::array<MemberId,1> awake{ally};party.loud_noise(awake);
+        if(dead){auto state=party.checkpoint();state.roster[0].vitals={0,true};party.restore(state);}
+        check(party.prepare_combat(),"Safe recovery fixture interrupts rest");
+        auto people=party.participants();people[0].cell={1,2};people[1].cell={5,2};
+        people.push_back({1000,"bandit","Defeated enemy",1,{6,4},{},VitalState{0,true}});
+        Battlefield board{8,6,std::vector<std::uint8_t>(48)};if(wall)for(int y=0;y<6;++y)board.terrain[y*8+3]=1;
+        auto battle=rules->create({board,people,party.state().next_combat_scope},37);
+        check(battle->snapshot().outcome==Outcome::victory,"Fixture has a terminal victory");
+        const auto before=battle->save();const auto plan=battle->safe_recovery();
+        check(plan.members==std::vector<EntityId>{ally}&&plan.items.size()==(wall?0:1),"Only conscious allies collect equipment reachable around terrain");
+        check(battle->save()==before,"Recovery query leaves combat costs and RNG untouched");
+        party.begin_combat();party.apply_combat(battle->snapshot(),plan);
+        const auto once=party.checkpoint();party.apply_combat(battle->snapshot(),plan);
+        for(unsigned n=0;n<2;++n)check(std::ranges::equal(party.state().roster[n].character.inventory().items(),once.roster[n].character.inventory().items()),"Repeated terminal handoff cannot duplicate recovered gear");party.end_combat();
+        check(party.state().detached_items.size()==(wall?1:0),"Unreachable equipment remains at the encounter");
+        if(!wall){const auto& items=party.member(dead?ally:owner).character.inventory().items();
+            check(items.size()==1&&items.front().name=="Owner sword","Items return to living owner or survivor when owner died");}
+        check(party.member(owner).vitals.hit_points==(dead?0:party.member(owner).character.sheet().hit_points),"Safe collection cannot heal or revive an owner");
+    }
+}
 void prior_equipment_formats(){
     const auto rules=module();
     const auto read=[](const char* name){std::ifstream in(std::filesystem::path(OPENGOLD_SOURCE_DIR)/"tests/fixtures"/name,std::ios::binary);check(bool(in),"Previous equipment writer fixture exists");return std::string(std::istreambuf_iterator<char>(in),{});};
@@ -229,4 +268,4 @@ void movement(){
     check(grid.reachable(14).cost_to({3,2})==std::nullopt&&grid.reachable(15).cost_to({3,2})==15,"Crawling reach uses exact weighted path cost");
 }
 }
-int main(){try{codec();combat();damage_and_saves();prior_writer();held_items();campaign_item_handoff();recovery_posture();rest_ground_equipment();prior_equipment_formats();movement();std::cout<<"Natural sleep tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{codec();combat();damage_and_saves();prior_writer();held_items();campaign_item_handoff();recovery_posture();rest_ground_equipment();prior_equipment_formats();safe_recovery();movement();std::cout<<"Natural sleep tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

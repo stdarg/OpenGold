@@ -91,6 +91,7 @@ void discard_and_bad_saves(){
     advance(party,70*minute);party.interrupt_rest(ticket(party),RestInterruption::damage);
     (void)party.spend_hit_die(party.state().short_rest->ticket,1);
     auto vitals=party.member(1).vitals;module()->set_rest_work(vitals,party.member(1).character.sheet(),RestWork::light_activity);
+    (void)module()->recover_at_safety(vitals,party.member(1).character.sheet(),{});
     const auto rng=party.state().random_state;const auto elapsed=party.state().time_minutes;
     party.abandon_rest(ticket(party));
     check(!party.state().rest_activity&&!party.state().short_rest&&party.member(1).vitals==vitals&&party.state().random_state==rng&&party.state().time_minutes==elapsed,"Ending unfinished rest retains earned healing/recharge, spent dice, time and RNG");

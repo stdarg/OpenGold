@@ -31,8 +31,8 @@ F03 is split into [resource rules and persistence (#190)](https://github.com/std
 [campaign rest transactions (#191)](https://github.com/stdarg/OpenGold/issues/191),
 [rest controls (#192)](https://github.com/stdarg/OpenGold/issues/192), and
 [interruption/resumption (#193)](https://github.com/stdarg/OpenGold/issues/193).
-The resource rules and campaign transaction children are delivered; the controls
-and interruption children remain open. Hit Dice spending must allow a decision after each
+All four children are delivered, including reviewed controls and interruption/
+resumption with Q37 safe recovery. Hit Dice spending must allow a decision after each
 roll, rather than requiring every die to be committed beforehand. The first
 resource rules are independent of the remaining F02 saved-choice controls.
 
@@ -285,8 +285,8 @@ The user has approved keeping old choices pending for completion through Review
 Training; its button/dialog placement awaits confirmation.
 The campaign preview/confirmation API for #189 is implemented and preserves
 existing choices and resources; its player-facing controls remain pending.
-F03a and F03b are complete. Complete #192's reviewed rest controls and #193's
-interruption/resumption state machine before closing #30. See [rest resources](REST-RESOURCES.md)
+F03a–d are complete: #192's reviewed rest controls and #193's interruption/
+resumption, sleep/equipment handoff and Q37 safe recovery complete #30. See [rest resources](REST-RESOURCES.md)
 for the implemented boundary and verification.
 F04a and F04c complete #31. Help/Medicine controls and checks remain #32.
 F05 #33 supplies [typed damage and Dwarf Poison resistance](DAMAGE.md).

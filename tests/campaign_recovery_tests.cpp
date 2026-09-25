@@ -79,7 +79,7 @@ void campaign_continuation(){
     const auto rest=party.rest(RestKind::long_rest);
     check(rest&&rest->members==std::vector<MemberId>{pc}&&party.member(npc).vitals.hit_points==1&&party.member(reserve).vitals.hit_points==1,
         "An eight-hour rest advances natural recovery for ineligible companions and reserves");
-    for(auto id:{npc,reserve})check(!party.member(id).last_rest_minutes&&party.member(id).vitals.resources=="SRD4 0 0 0 0 0 0 1 FX4 1 0 0 1",
+    for(auto id:{npc,reserve})check(!party.member(id).last_rest_minutes&&party.member(id).vitals.resources==(id==npc?"SRD4 0 0 0 0 0 0 1 FX1 1 0":"SRD4 0 0 0 0 0 0 1 FX4 1 0 0 1"),
         "Natural recovery grants neither recharge, Hit Dice nor a rest completion timestamp");
     state=party.checkpoint();state.time_minutes=std::numeric_limits<std::uint64_t>::max();state.roster[1].vitals=unstable();party.restore(state);
     const auto overflow=saved(party);rejects([&]{party.advance_time(1);});check(saved(party)==overflow,"Clock overflow preserves all vitality and RNG");

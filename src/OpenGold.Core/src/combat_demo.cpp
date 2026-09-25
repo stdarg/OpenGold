@@ -45,7 +45,7 @@ void CombatDemo::synchronize_party()
 {
     if(!campaign_combat_)return;
     const auto state=combat_->snapshot();
-    campaign_->apply_combat(state);
+    campaign_->apply_combat(state,combat_->safe_recovery());
     finish_campaign_combat(state.outcome);
 }
 void CombatDemo::finish_campaign_combat(Outcome outcome)
@@ -65,7 +65,7 @@ void CombatDemo::install_combat(std::unique_ptr<CombatSession> next,std::string 
     // session intact. Only a successful handoff transfers the lock to this owner.
     CampaignCombat ownership(campaign_);
     const auto state=next->snapshot();
-    campaign_->apply_combat(state);
+    campaign_->apply_combat(state,next->safe_recovery());
     combat_=std::move(next);
     campaign_combat_.emplace(std::move(ownership));
     reward_id_=std::move(reward_id);
