@@ -56,6 +56,17 @@ void run(){
         auto saved=encode_campaign(recruited,nullptr,"recruited-rogue");CampaignParty restored(rules_module());restored.restore(decode_campaign(saved,*srd5::character_rules(),*rules,"recruited-rogue",nullptr).party);
         check(encode_campaign(restored,nullptr,"recruited-rogue")==saved,"Recruited ownership/history and grants survive campaign reload");
     }
+    // Aim's unused Advantage expires; an ordinary later hit without an ally cannot Sneak.
+    {auto c=battle(*rules,h,"shortbow",false,13,true);act(*c,"steady_aim");act(*c,"end");while(c->snapshot().actor!=1)act(*c,"end");
+     act(*c,"ranged");check(c->snapshot().savage_attack_choice.has_value()&&!c->snapshot().sneak_attack_choice,"Real later hit proves unused Aim expires at turn end");roundtrip(*rules,*c);}
+    // An aimed miss consumes the attack-roll benefit but not its turn-long speed restriction.
+    {auto hard=rules_module("creature hard_target 30 1000 0 30 1 1 4 0 0 0 0 0 0 0 0 0 0 1 0\n");bool checked=false;
+     for(unsigned seed=1;seed<=64&&!checked;++seed){auto c=battle(*hard,h,"shortbow",false,seed,true,"hard_target");act(*c,"steady_aim");act(*c,"ranged");
+        if(unit(*c,99).hit_points!=1000||c->snapshot().sneak_attack_choice||c->snapshot().savage_attack_choice)continue;
+        const auto saved=c->save();const auto start=saved.find("\n1 \"campaign-character\"");check(start!=std::string::npos,"Locate saved aimed actor");const auto end=saved.find('\n',start+1);
+        check(saved.substr(end-8,8)==" 0 1 0 0","Miss clears saved Aim readiness while keeping Speed restriction");
+        check(!unit(*c).action&&!unit(*c).bonus_action&&unit(*c).movement_feet==0&&!has(*c,"steady_aim"),"Miss preserves spent Action/Bonus Action and zero Speed");roundtrip(*hard,*c);checked=true;}
+     check(checked,"Actual aimed miss exercised");}
     auto old_identity=rules->identity();old_identity.version="0.6.51";rejects([&]{auto state=wounds;rules->migrate_character_state(old_identity,h.sheet(),state);});
     check(!rules->advancement_options(h.sheet()).level,"This batch does not enable level five");
     for(const auto& weapon:{"dagger","shortbow","blowgun"}){

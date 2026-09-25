@@ -60,7 +60,12 @@ remain OPEN. Main has not been advanced during this partial batch delivery.
 Delivery checkpoint at22:26 UTC, about58 minutes after the original start:
 one of two original feature requirements delivered; three corresponding issues
 closed; zero issues added. Remaining work is the demo row and its verification.
-ROGUE-DEMO-1 is the next visible question1, with Glass audio; goal remains ACTIVE.
+ROGUE-DEMO-1 was asked visibly as question1 with successful Glass audio. No
+answer has arrived; do not infer approval from automatic goal continuation.
+At22:28 UTC the complete training suite also passes explicit unused-Aim expiry
+and aimed-miss consumption cases (test-only follow-up; runtime unchanged).
+No independent implementation remains in this frozen batch before that answer;
+no live handles remain. Goal stays ACTIVE; do not autonomously pause it.
 
 ## Preserved exclusions from Wizard delivery
 

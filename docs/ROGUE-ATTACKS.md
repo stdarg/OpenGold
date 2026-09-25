@@ -139,3 +139,12 @@ from original preflight. Main is unchanged while this batch's demo placement
 remains pending. Goal stays active. No live build/test remains. ROGUE-DEMO-1 is
 asked as visible question1 with Glass audio; continue the same batch after its
 answer, without resetting its original clock.
+
+### 60-minute follow-up
+
+At22:28 UTC the demo placement answer remained pending. Independent remaining
+Steady Aim acceptance was exercised: unused Advantage expires before the next
+turn's actual hit, and an actual aimed miss clears the saved attack-roll benefit
+while preserving spent Action/Bonus Action and zero Speed. This is verification
+inside the original batch, without new mechanics or UI choices. Native training
+was rebuilt and passed after the final assertion; see `/tmp/rogue-aim-expiry-tests.log`.
