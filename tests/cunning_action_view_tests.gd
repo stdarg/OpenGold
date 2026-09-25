@@ -61,7 +61,7 @@ func run_checks() -> void:
         var choice: OptionButton = current_scene.get_node("CunningAction")
         var button: Button = current_scene.get_node("UseCunningAction")
         require(choice.item_count == 2, "Only implemented Dash and Disengage choices")
-        require(current_scene.get_node("CunningActionLabel").text == ("Cunning Action" if locale == "en" else "Acción astuta"), "Translated Cunning Action label")
+        require(current_scene.get_node("CunningActionLabel").text == ("Bonus Action" if locale == "en" else "Acción adicional"), "Approved translated Bonus Action label")
         require(button.text == ("Use Bonus Action" if locale == "en" else "Usar acción adicional"), "Translated activation control")
         for size in [Vector2i(1120, 800), Vector2i(1920, 1080)]:
             root.size = size; await settle()

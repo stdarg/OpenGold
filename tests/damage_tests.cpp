@@ -203,6 +203,8 @@ void damage_rolls(){
     check(damage::roll_damage(style,{2,6,4},true,DamageDieRule::great_weapon_fighting)==19&&style==17418742259747381416ULL,"A second Savage-style critical roll independently replaces its four dice");
     normal=style=0;
     check(damage::roll_damage(normal,{2,6,-10})==0&&damage::roll_damage(style,{2,6,-10},false,DamageDieRule::great_weapon_fighting)==0,"Negative flat modifiers remain unchanged; total damage cannot be negative");
+    normal=0;const int signed_weapon=damage::roll_damage_component(normal,{2,6,-4});
+    check(signed_weapon==-1&&std::max(0,signed_weapon+4)==3,"Signed weapon modifier applies before adding Sneak dice and flooring attack total");
     style=7;check(damage::roll_damage(style,{0,0,1},true,DamageDieRule::great_weapon_fighting)==1&&style==7,"Fixed damage gets neither extra damage nor random draws");
 }
 void gwf_prior_continuation(){

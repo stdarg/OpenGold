@@ -16,9 +16,9 @@ void run(){
         check(h.sheet().level==2&&h.sheet().hit_die==8&&h.sheet().hit_points==hp+5+h.sheet().modifiers[2]+(d.race=="dwarf")&&state.hit_points==h.sheet().hit_points-2,"Independent d8 fixed-average growth preserves wounds");
         check(h.sheet().training.complete&&h.sheet().hit_point_modifiers.size()==2&&std::equal(grants.begin(),grants.end(),h.sheet().grants.begin()),"Advancement preserves training and grants with Con history");
         check(std::find(h.sheet().grants.begin(),h.sheet().grants.end(),FeatureGrant{"feature:cunning_action","class:rogue",2,{}})!=h.sheet().grants.end(),"Sourced level-two grant");
-        check(!rules->advancement_options(h.sheet()).level&&!h.advance(*rules,state),"Level three remains explicitly unsupported");
+        check(rules->advancement_options(h.sheet()).level==3,"Rogue level three is now available through normal advancement");
         auto bad=h.sheet();std::erase_if(bad.grants,[](const auto& g){return g.id=="feature:cunning_action";});rejects([&]{(void)rules->character_profile(bad,{});});
-        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC28","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
+        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC35","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
         for(bool bonus_first:{false,true}){
             c=battle(h);const int speed=unit(*c).movement_feet;write("available",*c);
             act(*c,bonus_first?"cunning_dash":"dash");check(unit(*c).action==bonus_first&&unit(*c).bonus_action!=bonus_first&&unit(*c).movement_feet==speed*2,"Dash spends exactly its chosen budget");
@@ -40,7 +40,7 @@ void run(){
     auto soldier_draft=draft("rogue","soldier");soldier_draft.training=choices();soldier_draft.training["class:rogue:expertise"]={"investigation","perception"};soldier_draft.training["background:soldier:gaming_set"]={"dice"};auto soldier=hero(soldier_draft);VitalState soldier_state;check(soldier.advance(*rules,soldier_state),"Soldier Rogue advances normally");
     auto hit=battle(soldier);act(*hit,"melee");check(bool(hit->snapshot().savage_attack_choice)&&!has(*hit,"cunning_dash"),"Pending damage decision blocks Cunning Action");
     const auto pending=hit->save();check(!hit->submit({hit->snapshot().revision,1,0,"cunning_dash"})&&pending==hit->save(),"Pending damage attempt rejects atomically");act(*hit,"savage_skip");check(has(*hit,"cunning_dash"),"Completing damage restores access to unspent Bonus Action");
-    auto forged=hit->save();replace(forged,module()->identity().version,"0.6.34");rejects([&]{(void)rules->restore(forged);});forged=hit->save();replace(forged,"OGCOMBAT 19","OGCOMBAT 14");rejects([&]{(void)rules->restore(forged);});
+    auto forged=hit->save();replace(forged,module()->identity().version,"0.6.34");rejects([&]{(void)rules->restore(forged);});forged=hit->save();replace(forged,"OGCOMBAT 21","OGCOMBAT 14");rejects([&]{(void)rules->restore(forged);});
     for(const auto& resource:rules->recovery_info(soldier.sheet(),soldier_state).resources)check(resource.id!="cunning_action","Cunning Action is not a rest-use pool");
     // A real Ray of Frost hit reduces every Dash allowance, including the new one.
     auto d=draft();d.training=choices();auto rogue=hero(d);VitalState vitals;check(rogue.advance(*rules,vitals),"Slow fixture advances normally");

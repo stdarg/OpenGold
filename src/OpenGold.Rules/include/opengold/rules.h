@@ -217,12 +217,18 @@ struct TemporaryHpOffer {
     EntityId recipient{};
     TemporaryHitPoints current, offered;
 };
+struct SneakAttackChoice {
+    EntityId attacker{}, target{};
+    int dice_count{}, dice_sides{};
+    bool critical{};
+};
 struct SavageAttackChoice {
     EntityId attacker{}, target{};
     std::string weapon;
     int dice_count{}, dice_sides{}, modifier{}, first_damage{};
     std::optional<int> second_damage;
     bool critical{};
+    int extra_damage{};
 };
 struct AbilityCheckChoice {
     EntityId actor{}, target{};
@@ -243,6 +249,7 @@ struct Snapshot {
     std::uint64_t elapsed_milliseconds{};
     std::optional<TemporaryHpOffer> temporary_hp_offer;
     std::optional<SavageAttackChoice> savage_attack_choice;
+    std::optional<SneakAttackChoice> sneak_attack_choice;
     std::optional<AbilityCheckChoice> ability_check_choice;
     std::optional<FreeMovement> free_movement;
     std::vector<HeldItemView> held_items;

@@ -389,14 +389,27 @@ parent #113 and later Rogue advancement #116 remain open. Barbarian/Monk Unarmor
 Defense was already present in character AC calculation and existing party tests;
 no duplicate implementation was needed.
 
-### Sneak Attack preparation (#220; parent #112 remains open)
+### Rogue Sneak Attack through level four (#112/#220/#221)
 
-Source-backed eligibility/progression helpers and genuine 0.6.35 Rogue
-campaign/pending-hit baselines are prepared and tested. They are not connected
-to live combat. Optional hit controls await Q25; source grants, per-turn state,
-damage/decision integration, persistence and player-path verification remain.
-Level-three/four acceptance is retained in #221, dependent on #116. See
-[Sneak Attack](SNEAK-ATTACK.md); this foundation does not close a feature issue.
+Rules0.6.52 connects sourced Sneak Attack to ordinary Rogue creation, advancement,
+combat, reactions, rest and campaign reload through all four levels. The approved
+optional dialog works in main EN/ES and demo EN. Extra dice, criticals, ally and
+roll-mode eligibility, signed damage/resistance and separate Savage rolls remain
+SRD-owned. Recruited Rogues and malformed pending-hit fields have explicit cases.
+Old actual-writer fixtures and capabilities are preserved; new Rogues use
+conditional PC35/combat21. No campaign-format bump or combat-saving controls.
+
+Verified integrated runtime: all78 checks (51native/tool,27Godot), main/demo
+asset-backed advancement and exact native-save comparison, both-size rendered
+combat/advancement checks,934-message localization validation. The full training
+suite passed again after the final recruited/malformed-save test additions.
+Commands and limits: [batch evidence](ROGUE-ATTACKS.md#verified-implementation-and-remaining-work).
+Mechanics and durable tests: [Sneak Attack](SNEAK-ATTACK.md).
+
+Steady Aim's rules and main-game controls are verified, but #114 remains OPEN
+pending the separately proposed demo Bonus Action placement. #116 remains OPEN
+for full Rogue completion; Thief, Hide and weapon mastery are not delivered.
+The runtime commit is recorded in the linked batch after commit creation.
 
 ### Unconscious enemy transit (#222, bounded child of #44)
 

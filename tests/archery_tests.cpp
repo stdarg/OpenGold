@@ -33,8 +33,7 @@ void selection(){
     auto rules=module();
     for(const auto& klass:srd5::character_rules()->choices(CreationField::character_class)){
         CampaignParty p(module());auto id=p.add_pc(hero(klass.id));p.award_experience(2700,"archery");
-        if(klass.id!="fighter"&&klass.id!="wizard"&&klass.id!="cleric"){
-            if(klass.id=="rogue"){check(p.can_advance(id),"Rogue level two is supported");p.advance(id,p.default_advancement(id));}
+        if(klass.id!="fighter"&&klass.id!="wizard"&&klass.id!="cleric"&&klass.id!="rogue"){
             check(!p.can_advance(id),"Unsupported later advancement does not invent Fighting Style entitlement");continue;
         }
         grow(p,id,3);auto choice=p.default_advancement(id);choice.feat="archery";choice.abilities={};

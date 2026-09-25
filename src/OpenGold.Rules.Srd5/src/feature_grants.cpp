@@ -25,6 +25,7 @@ std::vector<rules::FeatureGrant> starting_grants(std::string_view klass,std::str
     }
     if(klass=="barbarian"||klass=="monk")result.push_back({"feature:unarmored_defense","class:"+std::string(klass),1,{}});
     if(klass=="cleric"||klass=="wizard")result.push_back({"feature:spellcasting","class:"+std::string(klass),1,{}});
+    if(klass=="rogue")result.push_back({"feature:sneak_attack","class:rogue",1,{}});
     if(klass=="wizard")result.push_back({"feature:arcane_recovery","class:wizard",1,{}});
     if(race=="dwarf"){result.push_back({"trait:dwarven_toughness","species:dwarf",1,{}});result.push_back({"trait:dwarven_resilience","species:dwarf",1,{}});}
     if(race=="orc")result.push_back({"trait:adrenaline_rush","species:orc",1,{}});
@@ -40,10 +41,12 @@ bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles,bool tactical_mind,bool champion,bool arcane_recovery){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles,bool tactical_mind,bool champion,bool arcane_recovery,bool rogue_attacks){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
+    if(!rogue_attacks)std::erase_if(required,[](const auto& g){return g.id=="feature:sneak_attack";});
+    if(rogue_attacks&&klass=="rogue"&&level>=3)required.push_back({"feature:steady_aim","class:rogue",3,{}});
     if(!arcane_recovery)std::erase_if(required,[](const auto& g){return g.id=="feature:arcane_recovery";});
     if(klass=="rogue"&&level>=2)required.push_back({"feature:cunning_action","class:rogue",2,{}});
     if(action_surge&&klass=="fighter"&&level>=2)required.push_back({"feature:action_surge","class:fighter",2,{}});
@@ -66,7 +69,7 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
                 (grant.id=="feat:defense"||grant.id=="feat:archery")&&has_grant(grants,"feature:fighting_style"));
             require(entitlements.emplace(grant.source_id,grant.level).second);
         }else {
-            require((klass=="fighter"||klass=="cleric"||klass=="wizard")&&grant.level==4&&
+            require((klass=="fighter"||klass=="cleric"||klass=="wizard"||(rogue_attacks&&klass=="rogue"))&&grant.level==4&&
                 grant.source_id=="class:"+std::string(klass)+":ability_score_improvement");
             require(entitlements.emplace(grant.source_id,grant.level).second);++advancement_count;
             if(grant.id=="feat:ability_score_improvement"){

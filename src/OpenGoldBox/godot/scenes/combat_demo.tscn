@@ -382,3 +382,39 @@ text = "Keep failed check"
 [node name="Stabilize" type="Button" parent="."]
 visible = false
 text = "Stabilize"
+
+[node name="SneakAttack" type="Window" parent="."]
+title = "Sneak Attack"
+visible = false
+transient = true
+exclusive = true
+unresizable = true
+size = Vector2i(700, 380)
+min_size = Vector2i(700, 380)
+
+[node name="Background" type="ColorRect" parent="SneakAttack"]
+offset_right = 700.0
+offset_bottom = 380.0
+color = Color(0.07, 0.1, 0.125, 1)
+
+[node name="Text" type="Label" parent="SneakAttack"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 676.0
+offset_bottom = 244.0
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="Use" type="Button" parent="SneakAttack"]
+offset_left = 24.0
+offset_top = 260.0
+offset_right = 676.0
+offset_bottom = 304.0
+text = "Use Sneak Attack"
+
+[node name="Skip" type="Button" parent="SneakAttack"]
+offset_left = 24.0
+offset_top = 316.0
+offset_right = 676.0
+offset_bottom = 360.0
+text = "Keep hit; save Sneak Attack"

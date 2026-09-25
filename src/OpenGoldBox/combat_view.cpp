@@ -154,8 +154,10 @@ void CombatView::_ready()
     get_node<OptionButton>("GroundItem")->connect("item_selected",callable_mp(this,&CombatView::ground_selected));
     get_node<Button>("PickUp")->connect("pressed",callable_mp(this,&CombatView::pick_up));
     get_node<Button>("UseCunningAction")->connect("pressed",callable_mp(this,&CombatView::use_cunning_action));
-    get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Dash")));
-    get_node<OptionButton>("CunningAction")->add_item(i18n::text(N_("Disengage")));
+    get_node<OptionButton>("CunningAction")->connect("item_selected",callable_mp(this,&CombatView::cunning_selected));
+    get_node<Button>("SneakAttack/Use")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("sneak_use"));
+    get_node<Button>("SneakAttack/Skip")->connect("pressed",callable_mp(this,&CombatView::immediate).bind("sneak_skip"));
+    get_node<Window>("SneakAttack")->connect("close_requested",callable_mp(this,&CombatView::immediate).bind("sneak_skip"));
     get_node<Button>("ActionSurge")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("action_surge")));
     get_node<Button>("AdrenalineRush")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("adrenaline_rush")));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
@@ -451,7 +453,8 @@ void CombatView::cantrip_selected(std::int64_t index)
     cantrip_=String(choices->get_item_metadata(index)).utf8().get_data();
     mode_="move";refresh();
 }
-void CombatView::use_cunning_action(){immediate(get_node<OptionButton>("CunningAction")->get_selected()==1?"cunning_disengage":"cunning_dash");}
+void CombatView::use_cunning_action(){auto* choices=get_node<OptionButton>("CunningAction");if(choices->get_selected()>=0)immediate(String(choices->get_item_metadata(choices->get_selected())));}
+void CombatView::cunning_selected(std::int64_t){refresh();}
 void CombatView::cast_cantrip(){if(!cantrip_.empty())select_mode(gs(cantrip_));}
 void CombatView::thrown_selected(std::int64_t index){
     auto* choices=get_node<OptionButton>("ThrownWeapon");if(index<0||index>=choices->get_item_count())return;
@@ -534,7 +537,7 @@ void CombatView::act(const Command& command)
             if(command.verb=="melee"||command.verb=="opportunity"){
                 const auto previous=std::find_if(before.combatants.begin(),before.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
                 const auto current=std::find_if(after.combatants.begin(),after.combatants.end(),[&](const auto& actor){return actor.id==command.target;});
-                sound=after.savage_attack_choice||(previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points)?7:9;
+                sound=after.sneak_attack_choice||after.savage_attack_choice||(previous!=before.combatants.end()&&current!=after.combatants.end()&&current->hit_points<previous->hit_points)?7:9;
             } else if((command.verb=="ranged"||command.verb=="throw"))sound=6;
             else if(command.verb=="chill_touch"||command.verb=="shocking_grasp"||command.verb=="eldritch_blast"||command.verb=="ray_of_frost"||command.verb=="fire_bolt"||command.verb=="poison_spray"||command.verb=="sacred_flame"||command.verb=="magic_missile"||command.verb=="magic_missile_2"||command.verb=="scorching_ray"||command.verb=="blindness")sound=2;
             if(sound){
@@ -556,7 +559,7 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
-    if(get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
+    if(get_node<Window>("SneakAttack")->is_visible()||get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&demo_->has_combat()&&demo_->combat().snapshot().free_movement){
@@ -596,7 +599,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
         if(key->get_keycode()==Key::KEY_Z){spell_slot();get_viewport()->set_input_as_handled();return;}
         if(key->get_keycode()==Key::KEY_SPACE){
-            for(const char* verb:{"stand_up","cunning_dash","cunning_disengage","action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
+            for(const char* verb:{"stand_up","cunning_dash","cunning_disengage","steady_aim","action_surge","adrenaline_rush","second_wind","dash","dodge","disengage","opportunity","decline"})if(mode_==verb){immediate(gs(mode_));break;}
             const auto offered=demo_->combat().legal_commands();
             const auto target=std::find_if(offered.begin(),offered.end(),[&](const auto& c){return c.verb==mode_&&(mode_!="throw"||c.item==thrown_item_)&&c.target==selected_;});
             if(target!=offered.end())act(*target);
@@ -793,8 +796,20 @@ void CombatView::refresh()
         get_node<Label>("TacticalMind/Text")->set_text(i18n::format("Failed Medicine check: d20 {roll} + {modifier} = {total} vs DC {dc}.\nSecond Wind uses: {uses}\n\nAdd 1d10. Spend one use only if the check succeeds.\nThe original Action is already spent.",{{"roll",check.natural},{"modifier",check.modifier},{"total",check.total},{"dc",check.difficulty},{"uses",check.resource_uses}}));
         if(changed){mind->popup_centered();get_node<Button>("TacticalMind/Use")->grab_focus();}
     }else if(mind->is_visible()){mind->hide();get_node<Button>("End")->grab_focus();}
+    auto* sneak=get_node<Window>("SneakAttack");
+    if(player&&s.sneak_attack_choice){
+        const auto& hit=*s.sneak_attack_choice;
+        const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==hit.target;});
+        sneak->set_title(i18n::text(N_("Sneak Attack")));
+        get_node<Button>("SneakAttack/Use")->set_text(i18n::text(N_("Use Sneak Attack")));
+        get_node<Button>("SneakAttack/Skip")->set_text(i18n::text(N_("Keep hit; save Sneak Attack")));
+        get_node<Label>("SneakAttack/Text")->set_text(i18n::format("Target: {target}\nExtra damage: {count}d{sides}\n\nUse Sneak Attack once this turn, or keep the hit and save it.\nSavage Attacker can reroll weapon dice afterward.\nThe attack's Action or Reaction is already spent.",{{"target",target==s.combatants.end()?String():gs(target->name)},{"count",hit.dice_count},{"sides",hit.dice_sides}}));
+        if(!sneak->is_visible()){sneak->popup_centered();get_node<Button>("SneakAttack/Use")->grab_focus();}
+    }else if(sneak->is_visible()){sneak->hide();if(player)get_node<Button>("End")->grab_focus();}
     auto* savage=get_node<Window>("SavageAttacker");
     if(player&&s.savage_attack_choice){
+        get_node<Button>("SavageAttacker/Use")->set_text(i18n::text(N_("Use Savage Attacker")));
+        get_node<Button>("SavageAttacker/Skip")->set_text(i18n::text(N_("Keep damage; save feat")));
         const auto& hit=*s.savage_attack_choice;const bool second=hit.second_damage.has_value();
         const bool changed=!savage->is_visible()||get_node<Button>("SavageAttacker/First")->is_visible()!=second;
         get_node<Button>("SavageAttacker/Use")->set_visible(!second);get_node<Button>("SavageAttacker/Skip")->set_visible(!second);
@@ -804,6 +819,7 @@ void CombatView::refresh()
         get_node<Label>("SavageAttacker/Text")->set_text(second?
             i18n::format("{hit}\n{formula}\nFirst damage: {first}\nSecond damage: {second}\n\nKeep either roll. Defenses apply afterward.\nSavage Attacker is spent for this turn.",{{"hit",critical},{"formula",formula},{"first",hit.first_damage},{"second",*hit.second_damage}}):
             i18n::format("{hit}\n{formula}\nFirst damage: {first}\n\nUse Savage Attacker to roll again, or keep this damage and save the feat for another hit this turn.\nThe attack's Action or Reaction is already spent.",{{"hit",critical},{"formula",formula},{"first",hit.first_damage}}));
+        if(hit.extra_damage)get_node<Label>("SavageAttacker/Text")->set_text(get_node<Label>("SavageAttacker/Text")->get_text()+i18n::format("\nSneak Attack adds {damage} to either weapon result.",{{"damage",hit.extra_damage}}));
         if(second){get_node<Button>("SavageAttacker/First")->set_text(i18n::format("First roll: {damage}",{{"damage",hit.first_damage}}));get_node<Button>("SavageAttacker/Second")->set_text(i18n::format("Second roll: {damage}",{{"damage",*hit.second_damage}}));}
         if(!savage->is_visible())savage->popup_centered();
         if(changed)get_node<Button>(second?"SavageAttacker/First":"SavageAttacker/Use")->grab_focus();
@@ -860,9 +876,19 @@ void CombatView::refresh()
     if(aid_layout_changed||posture_layout_changed||ground_layout_changed||thrown_layout_changed)layout();
     const bool show_cunning=cunning_actor!=s.combatants.end()&&!cunning_actor->bonus_actions.empty()&&s.outcome==Outcome::ongoing;
     for(const char* name:{"CunningActionLabel","CunningAction","UseCunningAction"})get_node<Control>(name)->set_visible(show_cunning);
-    const bool cunning_enabled=enabled("cunning_dash")||enabled("cunning_disengage");
-    get_node<OptionButton>("CunningAction")->set_disabled(!cunning_enabled);
-    get_node<Button>("UseCunningAction")->set_disabled(!cunning_enabled);
+    get_node<Button>("UseCunningAction")->set_text(i18n::text(N_("Use Bonus Action")));
+    auto* bonus_choices=get_node<OptionButton>("CunningAction");
+    const String previous=bonus_choices->get_selected()>=0?String(bonus_choices->get_item_metadata(bonus_choices->get_selected())):String();
+    const auto options=show_cunning?cunning_actor->bonus_actions:std::vector<std::string>{};
+    bool bonus_changed=bonus_choices->get_item_count()!=int(options.size());
+    for(unsigned i=0;!bonus_changed&&i<options.size();++i)bonus_changed=String(bonus_choices->get_item_metadata(i))!=gs(options[i]);
+    if(bonus_changed){bonus_choices->clear();for(const auto& option:options){const int index=bonus_choices->get_item_count();bonus_choices->add_item("");bonus_choices->set_item_metadata(index,gs(option));if(gs(option)==previous)bonus_choices->select(index);}}
+    for(unsigned i=0;i<options.size();++i){bonus_choices->set_item_text(i,i18n::text(options[i]=="cunning_dash"?N_("Dash"):options[i]=="cunning_disengage"?N_("Disengage"):N_("Steady Aim")));bonus_choices->set_item_disabled(i,!enabled(options[i]));}
+    get_node<Label>("CunningActionLabel")->set_text(i18n::text(N_("Bonus Action")));
+    const bool cunning_enabled=std::any_of(options.begin(),options.end(),enabled);
+    bonus_choices->set_disabled(!cunning_enabled);
+    const int selected=bonus_choices->get_selected();
+    get_node<Button>("UseCunningAction")->set_disabled(selected<0||selected>=int(options.size())||!enabled(options[selected]));
     get_node<Button>("CastCantrip")->set_disabled(cantrip_.empty()||!enabled(cantrip_));
     get_node<Button>("ActionSurge")->set_disabled(!enabled("action_surge"));
     get_node<Button>("AdrenalineRush")->set_disabled(!enabled("adrenaline_rush"));
@@ -881,8 +907,8 @@ void CombatView::refresh()
     const auto grip_actor=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     const bool show_grip=player&&grip_actor!=s.combatants.end()&&!grip_actor->grips.empty();
     get_node<Label>("GripLabel")->set_visible(show_grip);get_node<OptionButton>("Grip")->set_visible(show_grip);
-    get_node<OptionButton>("Grip")->set_disabled(s.free_movement.has_value()||s.ability_check_choice.has_value()||s.savage_attack_choice.has_value()||s.temporary_hp_offer.has_value());
-    if(show_grip)presentation::refresh_grip(*get_node<OptionButton>("Grip"),grip_actor->equipment,grip_actor->grips,!s.free_movement&&!s.ability_check_choice&&!s.savage_attack_choice&&!s.temporary_hp_offer);
+    get_node<OptionButton>("Grip")->set_disabled(s.free_movement.has_value()||s.ability_check_choice.has_value()||s.sneak_attack_choice.has_value()||s.savage_attack_choice.has_value()||s.temporary_hp_offer.has_value());
+    if(show_grip)presentation::refresh_grip(*get_node<OptionButton>("Grip"),grip_actor->equipment,grip_actor->grips,!s.free_movement&&!s.ability_check_choice&&!s.sneak_attack_choice&&!s.savage_attack_choice&&!s.temporary_hp_offer);
     get_node<Button>("Continue")->set_disabled(!demo_||!demo_->waiting());
     get_node<Button>("Save")->set_disabled(!loaded||demo_->is_slums());get_node<Button>("Load")->set_disabled(!loaded||demo_->is_slums());
     get_node<Button>("Revisit")->set_disabled(!loaded||!demo_->script_complete()||s.outcome!=Outcome::victory);
@@ -1083,6 +1109,7 @@ void CombatView::_process(double delta)
                 checked_input_=true;++check_steps_;return;
             }
         }
+        if((checking_||party_check_)&&active->side==0&&s.sneak_attack_choice){get_node<Button>("SneakAttack/Use")->emit_signal("pressed");return;}
         if((checking_||party_check_)&&active->side==0&&s.savage_attack_choice){
             const auto& hit=*s.savage_attack_choice;
             get_node<Button>(!hit.second_damage?"SavageAttacker/Use":hit.first_damage>=*hit.second_damage?"SavageAttacker/First":"SavageAttacker/Second")->emit_signal("pressed");return;

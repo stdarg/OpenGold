@@ -103,13 +103,20 @@ preparation/one-cantrip replacement are approved exactly as described in the
 [packet](WIZARD-SPELL-CHOICES.md#approved-layoutcontrol-behavior).
 
 
-## Pending — do not implement dependent choices
+## Rogue attacks
 
-**ROGUE-1/2/3 — PENDING, #112/#114/#116, 2026-09-25, new visible questions 1–3:**
+**ROGUE-1/2/3 — APPROVED, #112/#114/#116, 2026-09-25, visible questions 1–3:**
 Sneak Attack hit dialog (replaces Q25 proposal), Steady Aim in the existing
 Bonus Action row, and ordinary Rogue3/4 advancement using the existing dialog.
-[Exact proposal and preserved exclusions](ROGUE-ATTACKS.md#proposed-controls--pending-approval).
-The earlier three approvals apply to WIZCHOICE-1/2/3; do not reuse them here.
+[Exact controls and preserved exclusions](ROGUE-ATTACKS.md#approved-controls).
+User answered the new Rogue questions “1. Approved. 2. Approved. 3. Approved.”
+This supersedes Q25; earlier Wizard approvals remain independently recorded.
+
+## Pending — do not implement dependent choices
+
+**ROGUE-DEMO-1:** New demo Bonus Action row below battlefield and above
+Wake/Stabilize, as specified in [the packet](ROGUE-ATTACKS.md#demo-placement-discovery--rogue-demo-1-pending).
+The main-game row approval does not authorize this new placement.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
@@ -119,7 +126,6 @@ The earlier three approvals apply to WIZCHOICE-1/2/3; do not reuse them here.
 | Q43 | #58 Thrown controls | Proposed Thrown weapon dropdown/Throw row below Ground item/Pick up; held/carried quantities, legal target highlighting, keyboard/mouse, explicit necessary stowing before confirmation, free cancellation; proper SRD hand/action costs. APPROVED 2026-09-25 by “43. Approved.”. |
 | Q44 | #58 landing policy | Proposed target square on hit/miss, no embedding/breakage/scatter; ground item, ordinary pickup and approved Q37 safe recovery. SRD-unspecified policy. APPROVED 2026-09-25 by “44. Approved.”. |
 | Q23 | #80 Great Weapon Fighting | Automatic beneficial replacement of weapon-die 1/2 with 3, versus optional per-hit choice. Helper exists; neither live behavior is approved. |
-| Q25 | #112/#220 Sneak Attack | Proposed centered eligible-hit dialog, target/extra dice, Use or Keep hit/save use. Use spends this turn's use; Savage follows with weapon dice only. Other actions wait, Action/Reaction remain spent; keyboard, no combat-save controls. Pending. |
 
 ## Approved patterns and policies
 

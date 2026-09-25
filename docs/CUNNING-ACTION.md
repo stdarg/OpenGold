@@ -5,8 +5,8 @@ printed pp. 61–62, gives Rogues Cunning Action at level two: on their turn the
 can Dash, Disengage or Hide as a Bonus Action. This increment implements Dash
 and Disengage. Hide and its prerequisite hidden-state rules remain
 [#219](https://github.com/stdarg/OpenGold/issues/219); parent #113 stays open.
-Rogue levels three and four remain #116. Level two does not imply complete
-Rogue support: Sneak Attack and other outstanding class features remain tracked.
+The Rogue attacks batch extends ordinary advancement through level four. Full
+Rogue completion remains #116; see [Rogue attacks](ROGUE-ATTACKS.md).
 
 Source: [official SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf).
 
@@ -17,10 +17,10 @@ At 300 XP use the ordinary level-up control. Fixed-average d8 growth adds
 5 + Constitution modifier, plus Dwarven Toughness where applicable; wounds,
 training, historical Constitution modifiers and resource expenditure survive.
 The sourced grant is `feature:cunning_action`, `class:rogue`, acquired level 2.
-Advancement stops at level two until the subsequent Rogue work is implemented.
+Rules 0.6.52 extends advancement through level four and retains Cunning Action.
 
 Q24 approved a labeled Cunning Action dropdown and Use Bonus Action button
-in a row below the existing combat buttons. The choices are Dash and Disengage;
+in a row below the existing combat buttons. The original choices are Dash and Disengage;
 standard control styling, labels and keyboard focus are retained. Unavailable
 use is disabled, including off-turn, spent Bonus Actions and pending decisions.
 The existing A/Space action cycle also exposes the two commands. No combat save
@@ -61,3 +61,7 @@ reruns), all 17 Godot runtime tests and their eight native prerequisites, main
 and demo builds, and localization validation (816 messages). English/Spanish
 render captures at both sizes were inspected. Archery's existing test was updated
 to distinguish newly supported Rogue level two from unsupported later levels.
+
+ROGUE-2 approves the main-game caption Bonus Action and adds Steady Aim from
+level three, using the same dropdown/button. The legacy demo lacks this row;
+its proposed placement remains ROGUE-DEMO-1, pending separate approval.

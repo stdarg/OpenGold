@@ -182,6 +182,10 @@ CharacterSheet CreatorRules::evaluate(const CharacterDraft& d,bool require_name)
         {{"class",s.character_class,true},{"first",ability_names[trained[0]],true},{"second",ability_names[trained[1]],true}}},
         {"Source: {class} Hit Die and Constitution score {score}. Starting HP: maximum d{die} + Constitution modifier ({modifier}).",
         {{"class",s.character_class,true},{"score",std::to_string(s.scores[2])},{"die",std::to_string(s.hit_die)},{"modifier",std::to_string(s.modifiers[2])}}}};
+    if(d.character_class=="rogue"){
+        s.class_modifiers+="\nSneak Attack: once per turn, extra weapon damage on an eligible hit. See the hit decision for current dice.";
+        s.class_messages.push_back({"Sneak Attack: once per turn, extra weapon damage on an eligible hit. See the hit decision for current dice.",{}});
+    }
     if (racial_hp) s.racial_messages.push_back({"Dwarven Toughness: +{hp} maximum HP.",{{"hp","1"}}});
     else if (d.race=="goliath") s.racial_messages.push_back({"Source: Goliath / Speed trait. Speed is 35 feet (5 feet above the default).",{}});
     else if(d.race=="orc")s.racial_messages.push_back({"Orc / Adrenaline Rush: Bonus Action Dash and Temporary HP equal to proficiency bonus. Uses equal to proficiency bonus; all recover on a Short or Long Rest.",{}});

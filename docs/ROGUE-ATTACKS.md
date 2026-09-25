@@ -37,7 +37,10 @@
 | Transactions | Invalid choices leave state/RNG unchanged. Wounds, equipment, training, resources, party/recruited ownership and rest/campaign handoff remain correct. |
 | UI | Approved controls only; standard visible buttons, keyboard/mouse, proper disabled state, game EN/ES and demo EN input/renders at 1120×800 and 1920×1080. |
 
-## Proposed controls — pending approval
+## Approved controls
+
+ROGUE-1/2/3 approved 2026-09-25: user replied “1. Approved. 2. Approved.
+3. Approved.” Implementation follows these recorded layouts and behaviors.
 
 **ROGUE-1 (supersedes pending Q25):** Centered 700×380 Sneak Attack dialog after
 an eligible hit. Show target and extra dice; use two full-width, stacked buttons:
@@ -64,15 +67,62 @@ unavailable. This does not grant partial Thief or close #116.
 
 ## Evidence / current phase
 
-Preflight only; zero of two original features delivered. No gameplay edits yet.
+### Demo placement discovery — ROGUE-DEMO-1 pending
+
+The legacy demo has no Cunning Action row; it uses a sidebar action grid and
+separate Wake/Stabilize controls below the battlefield. ROGUE-2's assumption of
+an existing dropdown therefore applies to the main game only. Do not silently
+choose a new demo layout. Its Sneak dialog remains covered by ROGUE-1.
+
+Proposed demo adaptation: one 36-pixel-high Bonus Action row below the
+battlefield, above Wake/Stabilize, reserving 44 vertical pixels when shown.
+At the minimum window, label x24/w180, dropdown x214/w200, Use Bonus Action
+x424/w240. Shift existing utility rows down by 44 and reduce the battlefield's
+available height by 44; retain all existing controls and the footer. Use the
+same Dash/Disengage/Steady Aim options, keyboard behavior and rules-driven
+disabled states approved in ROGUE-2. No new mechanics or scope beyond the
+already required demo player path. Await a visible numbered answer for this
+specific placement before implementing it.
+
+### Verified implementation and remaining work
+
+Module0.6.52 implements live Sneak through levels1–4, Steady Aim at3/4 and
+ordinary Rogue advancement through4. Main and demo Sneak dialogs and advancement
+pass keyboard, exact native-save comparisons and rendered checks at1120×800 and
+1920×1080 (main EN/ES, demo EN). The main Bonus Action row passes the same
+checks; demo Steady Aim awaits ROGUE-DEMO-1. No new runtime mechanics were added
+outside the frozen acceptance. No historical fixtures were regenerated.
+
+Final integrated runtime tree: 78/78 checks, 37.53s (`/tmp/rogue-final-tests.log`),
+51native/tool and27Godot. Localization:934 complete EN/ES messages. Build/test
+commands follow workflow, with the current project prepared before excluding
+its fixture setup. Asset-backed advancement uses `rogue_advancement_view_tests.gd`
+and `opengold_training_tests --verify-rogue-ui` on both saved outputs. Captures:
+`/tmp/rogue-combat-main-final`, `/tmp/rogue-demo-captures`,
+`/tmp/rogue-advance-main-final`, `/tmp/rogue-advance-demo-final`.
+
+Native `rogue_attack_checks.h` covers real criticals, opposed roll cancellation,
+incapacitated allies, throws, opportunity attacks/interrupted movement, separate
+Savage dice, resistance, rejected commands, pending-state RNG, campaign/rest and
+XP progression. Final extra tests add malformed fields and recruited ownership
+through all four levels. The old0.6.35 exact-continuation fixtures remain intact.
+
+Observed phases: preflight21:27:56; runtime implementation and focused combat UI
+were present by22:09; final advancement fit and integrated verification complete
+by22:23. Intermediate phase boundaries were not recorded precisely; these are
+observations, not exclusive effort totals. One wrap-only fit fix was insufficient;
+font14 resolved it. Two distinct new test-setup mistakes (content identity and a
+non-party ally in party handoff) were corrected without production changes.
+Requested Astra/high retained; actual model/effort and token delta unavailable.
+
+Preflight baseline (historical; not final feature evidence):
 The existing 0.6.35 actual-writer campaign and pending-Savage fixtures are
 immutable and already cover pre-Sneak capabilities and exact RNG continuation;
 do not regenerate them. Current 0.6.51 baseline at `eef99a3` passes
 `ctest --test-dir build/mac-check --output-on-failure -R '^opengold_(damage|training)_tests$'`
 (2/2, 0.70 seconds, 21:34 UTC). This is baseline evidence, not feature completion.
 
-Next: record answers, implement the frozen rules/advancement/presentation paths,
-rebuild affected targets, run focused feature checks and final native regression
-plus affected Godot checks. Capture a newer actual writer only if a required
-continuation case is not already represented. Record final revision/commands in
-coverage before closing any issue; commit and push owned changes.
+Remaining: obtain ROGUE-DEMO-1 approval, implement only that demo row, run its
+input/render/native continuation checks and affected regression. Then deliver
+#114. Full Rogue completion #116 remains separate. The approved Sneak controls
+and advancement require no further permission.

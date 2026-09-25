@@ -83,6 +83,7 @@ private:
     void select_party(opengold::rules::EntityId id);
     void move_selected(opengold::rules::Cell direction);
     void use_cunning_action();
+    void cunning_selected(std::int64_t);
     void cantrip_selected(std::int64_t index);void cast_cantrip();
     std::string cantrip_;
     void spell_slot();

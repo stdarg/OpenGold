@@ -31,7 +31,7 @@ void creation(){
     for(const auto& klass:creation->choices(CreationField::character_class)){
         const auto sheet=hero(klass.id).sheet();
         check(has(sheet,{"feat:savage_attacker","background:soldier",1,{}}),"Every Soldier acquires the feat at creation, independent of class and advancement");
-        check(rules->character_profile(sheet,{}).data.starts_with(klass.id=="wizard"?"PC32 1 2 ":"PC28 1 2 "),"Creation grant supplies Savage Attacker to combat without a level-four feat");
+        check(rules->character_profile(sheet,{}).data.starts_with(klass.id=="wizard"?"PC32 1 2 ":klass.id=="rogue"?"PC35 1 2 ":"PC28 1 2 "),"Creation grant supplies Savage Attacker to combat without a level-four feat");
         auto invalid=sheet;invalid.grants.push_back(sheet.grants.front());rejects([&]{(void)rules->character_profile(invalid,{});});
         invalid=sheet;invalid.grants.erase(invalid.grants.begin());rejects([&]{(void)rules->character_profile(invalid,{});});
         invalid=sheet;invalid.grants.front().source_id="background:sage";rejects([&]{(void)rules->character_profile(invalid,{});});

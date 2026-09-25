@@ -59,7 +59,7 @@ void CharacterCreationView::setup_advancement(){
     control<Label>(window,"SpellLabel",Rect2(24,292,652,28))->set_text("Prepared spells");
     for(int i=0;i<4;++i){auto* spell=control<CheckBox>(window,String("Spell")+String::num_int64(i),Rect2(24,325+i*38,652,36));
         spell->connect("toggled",callable_mp(this,&CharacterCreationView::advancement_spell_changed).bind(i));}
-    auto* note=control<Label>(window,"Note",Rect2(24,489,652,66));note->set_text("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.");note->add_theme_font_size_override("font_size",15);
+    auto* note=control<Label>(window,"Note",Rect2(24,489,652,66));note->set_text("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.");note->add_theme_font_size_override("font_size",14);note->set("autowrap_mode",3);
     auto* error=control<Label>(window,"Error",Rect2(24,560,652,34));error->add_theme_font_size_override("font_size",15);
     auto* cancel=control<Button>(window,"Cancel",Rect2(386,610,136,40));cancel->set_text("Cancel");cancel->connect("pressed",callable_mp(this,&CharacterCreationView::close_advancement));
     auto* confirm=control<Button>(window,"Confirm",Rect2(536,610,140,40));confirm->set_text("Confirm");confirm->connect("pressed",callable_mp(this,&CharacterCreationView::confirm_advancement));

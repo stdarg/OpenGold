@@ -13,14 +13,20 @@ inline int damage_die_value(int rolled,DamageDieRule rule)
     return rule==DamageDieRule::great_weapon_fighting&&rolled<=2?3:rolled;
 }
 // Dice and modifiers are validated by the owning rules profile. Critical hits
-// double dice, not the flat modifier. The minimum total remains zero.
-inline int roll_damage(std::uint64_t& state,DamageDice dice,bool critical=false,
+// double dice, not the flat modifier. Keep components signed until the whole
+// attack is assembled; the public complete-roll helper retains its zero floor.
+inline int roll_damage_component(std::uint64_t& state,DamageDice dice,bool critical=false,
     DamageDieRule rule=DamageDieRule::normal)
 {
     int total=dice.bonus;
     for(int i=0;i<dice.count*(critical?2:1);++i)
         total+=damage_die_value(roll_die(state,dice.sides),rule);
-    return std::max(0,total);
+    return total;
+}
+inline int roll_damage(std::uint64_t& state,DamageDice dice,bool critical=false,
+    DamageDieRule rule=DamageDieRule::normal)
+{
+    return std::max(0,roll_damage_component(state,dice,critical,rule));
 }
 }
 #endif
