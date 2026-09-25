@@ -27,6 +27,7 @@ std::string equipment_conversion(const por::Equipment& item)
     case 37:return "shortsword";case 38:return "greatsword";case 39:return "trident";
     case 41:case 43:case 45:return "longbow";case 42:case 44:return "shortbow";
     case 46:return "light_crossbow";case 47:return "sling";case 79:return "wand";
+    case 28:return "bolt";case 73:return "arrow";
     case 50:return "leather";case 55:return "chain_mail";case 59:return "shield";
     default:return "por:unsupported:"+std::to_string(raw.type);}
 }
@@ -113,6 +114,7 @@ void CampaignParty::equip(MemberId id,std::uint64_t item)
     if(std::find(next.begin(),next.end(),item)!=next.end())return;
     auto& m=edit(id);const auto found=m.character.inventory().find(item);if(!found)throw std::runtime_error("Unknown item");
     const auto info=rules_->equipment_info(found->get().definition_id);
+    if(info.slot==rules::EquipmentSlot::carried)throw std::runtime_error("This item is carried, not equipped");
     if(info.slot==rules::EquipmentSlot::weapon)
         std::erase_if(next,[&](auto key){return rules_->equipment_info(m.character.inventory().find(key)->get().definition_id).slot==rules::EquipmentSlot::weapon;});
     std::vector<std::string> keys;for(auto key:next)keys.push_back(m.character.inventory().find(key)->get().definition_id);

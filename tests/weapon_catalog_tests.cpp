@@ -39,7 +39,7 @@ auto battle(const RulesModule& rules,const Character& h,const std::string& weapo
     auto profile=rules.character_profile(h.sheet(),std::array{weapon});auto c=rules.create({{64,4,std::vector<std::uint8_t>(256)},{{1,"campaign-character","Hero",0,{1,1},profile.data},{2,"target","Target",1,target}}},seed);check(c->snapshot().actor==1,"Golden seed begins with hero");return c;
 }
 void definitions(){
-    const std::map<std::string,catalog::Ammunition> ammo{{"none",catalog::Ammunition::none},{"arrow",catalog::Ammunition::arrow},{"bolt",catalog::Ammunition::bolt},{"bullet",catalog::Ammunition::bullet},{"needle",catalog::Ammunition::needle}};
+    const std::map<std::string,catalog::Ammunition> ammo{{"none",catalog::Ammunition::none},{"arrow",catalog::Ammunition::arrow},{"bolt",catalog::Ammunition::bolt},{"sling_bullet",catalog::Ammunition::sling_bullet},{"firearm_bullet",catalog::Ammunition::firearm_bullet},{"needle",catalog::Ammunition::needle}};
     const std::map<std::string,catalog::Mastery> masteries{{"cleave",catalog::Mastery::cleave},{"graze",catalog::Mastery::graze},{"nick",catalog::Mastery::nick},{"push",catalog::Mastery::push},{"sap",catalog::Mastery::sap},{"slow",catalog::Mastery::slow},{"topple",catalog::Mastery::topple},{"vex",catalog::Mastery::vex}};
     const std::map<std::string,catalog::DamageType> types{{"bludgeoning",catalog::DamageType::bludgeoning},{"piercing",catalog::DamageType::piercing},{"slashing",catalog::DamageType::slashing}};
     const auto expected=expectations();std::set<std::string> keys;check(expected.size()==38&&catalog::weapons.size()==39,"All 38 SRD weapons plus the existing plain focus");

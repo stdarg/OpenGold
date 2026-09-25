@@ -13,7 +13,7 @@ spear 0 0 1d6 piercing thrown,versatile 20 60 8 none sap 12 100
 dart 0 1 1d4 piercing finesse,thrown 20 60 0 none vex 1 5
 light_crossbow 0 1 1d8 piercing ammunition,loading,two-handed 80 320 0 bolt slow 20 2500
 shortbow 0 1 1d6 piercing ammunition,two-handed 80 320 0 arrow vex 8 2500
-sling 0 1 1d4 bludgeoning ammunition 30 120 0 bullet slow 0 10
+sling 0 1 1d4 bludgeoning ammunition 30 120 0 sling_bullet slow 0 10
 battleaxe 1 0 1d8 slashing versatile 0 0 10 none topple 16 1000
 flail 1 0 1d8 bludgeoning - 0 0 0 none sap 8 1000
 glaive 1 0 1d10 slashing heavy,reach,two-handed 0 0 0 none graze 24 2000
@@ -36,5 +36,5 @@ blowgun 1 1 1 piercing ammunition,loading 25 100 0 needle vex 4 1000
 hand_crossbow 1 1 1d6 piercing ammunition,light,loading 30 120 0 bolt vex 12 7500
 heavy_crossbow 1 1 1d10 piercing ammunition,heavy,loading,two-handed 100 400 0 bolt push 72 5000
 longbow 1 1 1d8 piercing ammunition,heavy,two-handed 150 600 0 arrow slow 8 5000
-musket 1 1 1d12 piercing ammunition,loading,two-handed 40 120 0 bullet slow 40 50000
-pistol 1 1 1d10 piercing ammunition,loading 30 90 0 bullet vex 12 25000
+musket 1 1 1d12 piercing ammunition,loading,two-handed 40 120 0 firearm_bullet slow 40 50000
+pistol 1 1 1d10 piercing ammunition,loading 30 90 0 firearm_bullet vex 12 25000

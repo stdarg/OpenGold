@@ -1,10 +1,10 @@
 #ifndef OPENGOLD_SRD5_WEAPONS_H
 #define OPENGOLD_SRD5_WEAPONS_H
 #include "damage.h"
+#include "ammunition.h"
 #include <array>
 #include <string_view>
 namespace opengold::srd5::detail {
-enum class Ammunition { none,arrow,bolt,bullet,needle };
 enum class Mastery { none,cleave,graze,nick,push,sap,slow,topple,vex };
 // SRD 5.2.1 p.91. Original names are converted by the game adapter.
 // Catalog metadata does not grant mastery or implement ammunition/Loading actions.
@@ -41,7 +41,7 @@ inline constexpr std::array weapons{
     Weapon{.key="dart",.dice=1,.sides=4,.finesse=true,.ranged=true,.range=20,.long_range=60,.type=DamageType::piercing,.thrown=true,.mastery=Mastery::vex,.weight_quarters=1,.cost_cp=5,.label="Dart"},
     Weapon{.key="light_crossbow",.dice=1,.sides=8,.hands=2,.ranged=true,.range=80,.long_range=320,.type=DamageType::piercing,.loading=true,.ammunition=Ammunition::bolt,.mastery=Mastery::slow,.weight_quarters=20,.cost_cp=2500,.label="Light Crossbow"},
     Weapon{.key="shortbow",.dice=1,.sides=6,.hands=2,.ranged=true,.range=80,.long_range=320,.type=DamageType::piercing,.ammunition=Ammunition::arrow,.mastery=Mastery::vex,.weight_quarters=8,.cost_cp=2500,.label="Shortbow"},
-    Weapon{.key="sling",.dice=1,.sides=4,.ranged=true,.range=30,.long_range=120,.ammunition=Ammunition::bullet,.mastery=Mastery::slow,.cost_cp=10,.label="Sling"},
+    Weapon{.key="sling",.dice=1,.sides=4,.ranged=true,.range=30,.long_range=120,.ammunition=Ammunition::sling_bullet,.mastery=Mastery::slow,.cost_cp=10,.label="Sling"},
     Weapon{.key="battleaxe",.dice=1,.sides=8,.martial=true,.versatile_sides=10,.type=DamageType::slashing,.mastery=Mastery::topple,.weight_quarters=16,.cost_cp=1000,.label="Battleaxe"},
     Weapon{.key="flail",.dice=1,.sides=8,.martial=true,.mastery=Mastery::sap,.weight_quarters=8,.cost_cp=1000,.label="Flail"},
     Weapon{.key="glaive",.dice=1,.sides=10,.hands=2,.martial=true,.reach=10,.type=DamageType::slashing,.heavy=true,.mastery=Mastery::graze,.weight_quarters=24,.cost_cp=2000,.label="Glaive"},
@@ -64,8 +64,8 @@ inline constexpr std::array weapons{
     Weapon{.key="hand_crossbow",.dice=1,.sides=6,.martial=true,.ranged=true,.range=30,.long_range=120,.light=true,.type=DamageType::piercing,.loading=true,.ammunition=Ammunition::bolt,.mastery=Mastery::vex,.weight_quarters=12,.cost_cp=7500,.label="Hand Crossbow"},
     Weapon{.key="heavy_crossbow",.dice=1,.sides=10,.hands=2,.martial=true,.ranged=true,.range=100,.long_range=400,.type=DamageType::piercing,.heavy=true,.loading=true,.ammunition=Ammunition::bolt,.mastery=Mastery::push,.weight_quarters=72,.cost_cp=5000,.label="Heavy Crossbow"},
     Weapon{.key="longbow",.dice=1,.sides=8,.hands=2,.martial=true,.ranged=true,.range=150,.long_range=600,.type=DamageType::piercing,.heavy=true,.ammunition=Ammunition::arrow,.mastery=Mastery::slow,.weight_quarters=8,.cost_cp=5000,.label="Longbow"},
-    Weapon{.key="musket",.dice=1,.sides=12,.hands=2,.martial=true,.ranged=true,.range=40,.long_range=120,.type=DamageType::piercing,.loading=true,.ammunition=Ammunition::bullet,.mastery=Mastery::slow,.weight_quarters=40,.cost_cp=50000,.label="Musket"},
-    Weapon{.key="pistol",.dice=1,.sides=10,.martial=true,.ranged=true,.range=30,.long_range=90,.type=DamageType::piercing,.loading=true,.ammunition=Ammunition::bullet,.mastery=Mastery::vex,.weight_quarters=12,.cost_cp=25000,.label="Pistol"},
+    Weapon{.key="musket",.dice=1,.sides=12,.hands=2,.martial=true,.ranged=true,.range=40,.long_range=120,.type=DamageType::piercing,.loading=true,.ammunition=Ammunition::firearm_bullet,.mastery=Mastery::slow,.weight_quarters=40,.cost_cp=50000,.label="Musket"},
+    Weapon{.key="pistol",.dice=1,.sides=10,.martial=true,.ranged=true,.range=30,.long_range=90,.type=DamageType::piercing,.loading=true,.ammunition=Ammunition::firearm_bullet,.mastery=Mastery::vex,.weight_quarters=12,.cost_cp=25000,.label="Pistol"},
     // A plain wand is a held focus, not a free spell or invented damage profile.
     Weapon{.key="wand",.dice=0,.sides=0,.label="Wand"}
 };

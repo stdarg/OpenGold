@@ -53,10 +53,8 @@ inside this batch or the standing goal.
 
 - Current physical inventory conserves every unit and rejects quantity loss.
   Expenditure needs explicit generic accounting, not SRD arithmetic in Core.
-- Existing weapon metadata combines firearm/sling bullets; compatible inventory
-  selection must distinguish the two ordinary types.
-- Original item types 28 (Quarrel) and 73 (Arrows) are recognized by the format
-  catalog but not converted to ordinary ammunition by campaign inventory.
+- Resolved in the inventory substep: distinct firearm/sling bullet metadata and
+  ordinary original item conversions for type 28 (Quarrel) and 73 (Arrows).
 
 ## Delivery
 
@@ -75,3 +73,45 @@ and quarrels through the existing purchase/provenance path, then regenerated
 with the same old writer and verified loading before freezing. No production
 codec or compatibility requirement was weakened. One fixture setup correction;
 no repeated failed production fix. AMMO-1/AMMO-2 remain pending.
+
+## Inventory substep — pending full #57 delivery
+
+Module 0.6.48 recognizes five ordinary ammunition keys as carried supplies.
+Core asks the generic equipment interface whether an item is carried rather
+than equipped; ammunition definitions and weapon compatibility remain SRD-owned.
+This enables authored stacks to survive campaign validation and prevents an
+Equip request from displacing a weapon or mutating state.
+
+Ordinary original arrows/quarrels now convert to `arrow`/`bolt` on acquisition.
+The existing provenance-checked migration also updates old unsupported keys,
+preserving IDs, quantities, original records and equipped weapons. Magic, cursed
+and effect-bearing original ammunition remains unsupported, with its provenance
+unchanged. Firearm and sling bullets have separate keys and catalog identities.
+Module 0.6.47 campaign and combat continuation remains accepted; the actual
+prior-writer fixtures are unchanged and the capture command rejects 0.6.48.
+
+Focused checks passed: `opengold_ammunition_tests`,
+`opengold_weapon_catalog_tests`, `opengold_thrown_weapon_tests`.
+The ammunition test covers all twelve classes, five authored ammunition types,
+canonical campaign reload, rejected Equip atomicity, original conversions,
+special-item preservation and actual old campaign/combat continuation.
+Logs: `/tmp/ammunition-inventory-build.log` and
+`/tmp/ammunition-inventory-focused.log`.
+
+All 48 affected native executable targets rebuilt successfully; all 50
+native/tool tests passed (14.51 seconds) on the resulting tree on 2026-09-25
+at approximately 18:18 UTC. Commands: native target list from CTest's JSON
+inventory, `cmake --build build/mac-check --target <native targets> -j6`, then
+`ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`.
+Logs: `/tmp/ammunition-native-build.log`, `/tmp/ammunition-inventory-native.log`.
+Tested tree is this inventory substep commit on `codex/srd-ammunition`, parent
+`1fe531d`; no runtime inputs changed after verification. Existing frozen
+ammunition save hashes match the recorded capture. No UI code was changed or
+new controls implemented; Godot control/render verification belongs to the
+remaining approved UI implementation.
+
+Firing expenditure, free-hand enforcement, recovery and control feedback remain
+unfinished; AMMO-1/AMMO-2 are still pending. No issue closure or complete gameplay
+claim for this substep. Next action: resolve the already-visible decisions and
+continue the same batch, retaining the original 18:58:09 checkpoint. Do not
+restart the clock or repeat this verified inventory work.

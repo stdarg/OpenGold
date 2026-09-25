@@ -31,10 +31,13 @@ The frozen [ammunition packet](AMMUNITION.md) records acceptance, exclusions,
 model assignment and verification. Branch `codex/srd-ammunition`; current owner
 only. Start 2026-09-25 17:58:09 UTC, checkpoint 18:58:09 (latest 19:28:09).
 Requested Astra/high retained; no actual model switch. AMMO-1/AMMO-2 control and
-recovery decisions are pending. Genuine prior-writer fixtures are captured and
-the new `opengold_ammunition_tests` passes campaign and exact combat continuation.
-No runtime changes, no live build, no issue closure yet. Resume from the packet
-and pending decisions; do not repeat the completed baseline investigation.
+recovery decisions are pending. The inventory substep (module 0.6.48) recognizes
+five ordinary ammunition types, converts original arrows/quarrels and migrates
+old inventory with provenance intact. All 50 native/tool tests pass, including
+the genuine 0.6.47 campaign/combat fixtures. See the packet for exact coverage,
+commands and limitations. Expenditure/recovery/controls remain unfinished.
+No live build and no issue closure yet. Continue after the already-visible
+AMMO-1/AMMO-2 answers; do not repeat the verified inventory work or reset time.
 
 ## Goal tracker and continuation
 

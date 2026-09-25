@@ -56,7 +56,7 @@ struct CharacterProfile {
     EquipmentState equipment;
     std::vector<GripOption> grips;
 };
-enum class EquipmentSlot { unsupported, weapon, armor, shield };
+enum class EquipmentSlot { unsupported, weapon, armor, shield, carried };
 struct EquipmentInfo { EquipmentSlot slot{EquipmentSlot::unsupported}; unsigned hands{}; };
 // Module-owned continuation, separate from encounter turn budgets.
 struct VitalState {

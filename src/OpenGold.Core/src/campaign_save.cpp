@@ -67,7 +67,7 @@ struct SaveCodec {
             if(reading)module->validate_saved_grants(saved_identity,v.character.sheet(),grants);
             else require(grants==v.character.sheet().grants,"Saved grants disagree with creation or advancement choices");
         }
-        // Older releases stored ordinary weapons as unsupported. Migrate only
+        // Older releases stored ordinary equipment as unsupported. Migrate only
         // the exact old key backed by matching original item provenance.
         if(reading)for(auto& item:v.character.inventory().items_) {
             const auto source=v.item_sources.find(item.id);
@@ -180,6 +180,7 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
         require(item.has_value()&&item->get().definition_id==equipment_conversion(source)&&item->get().original_type==source.stored.type,"Saved item provenance mismatch");
     }
     for(const auto& item:member.character.inventory().items())if(!member.item_sources.contains(item.id)){
+        if(module.equipment_info(item.definition_id).slot==rules::EquipmentSlot::carried)continue;
         const std::array<std::string,1> definition{item.definition_id};
         (void)module.character_profile(member.character.sheet(),definition);
     }
