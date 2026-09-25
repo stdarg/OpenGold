@@ -6,10 +6,22 @@ not verbatim transcripts. Preserve question IDs. If exact missing wording matter
 retrieve it before coding; do not reconstruct an approval from a summary.
 A reply resolves only its question and does not resume a paused goal.
 
+## Current execution agreement
+
+The SRD goal remains paused. Workflow maintenance is authorized and does not
+resume gameplay work. The user requires no silent scope expansion: defer new
+work, or obtain explicit approval if an out-of-scope dependency blocks delivery.
+Use fixed batches, approved controls, targeted reads, edits completed before
+builds, focused checks and one appropriate final regression pass. Report actual
+player outcomes and elapsed time at a 60-minute checkpoint (90-minute maximum).
+See [workflow](SRD-WORKFLOW.md) for the batch card and enforcement steps.
+Questions remain numbered, visible in conversation and preceded by sound.
+
 ## Rest workflow approval
 
 Q29–31 are approved by the user's “Yes to all. Get to work.” This authorizes the
-rest picker, sequential Hit Die controls, resumption dialog and continued goal work.
+rest picker, sequential Hit Die controls and resumption dialog. The later pause
+supersedes the authorization to continue goal work.
 Future questions must be written directly in the conversation, not only in a
 question widget, and preceded by the audible Glass alert.
 
@@ -47,7 +59,7 @@ question widget, and preceded by the audible Glass alert.
 | Q32 | Repeated Long Rest interruptions grant Short Rest benefits only for a fresh uninterrupted segment of at least one hour; earlier credited time cannot qualify again. Each interruption adds one required hour. | Approved for #193; 70-minute/10-minute/60-minute example in user reply. |
 | Q28 | #29/#189 Review Training button beside Grip below inventory, visible for missing training; centered dialog reuses checkbox groups and Fighting Style dropdown, fixed grants, counts and keyboard; locks prior choices; Apply requires all supported choices; Cancel/Escape discards; combat blocks edits; preserve wounds/resources/equipment/advancement | Approved; supersedes pending Q11. |
 | Q27 | Sorcerer existing Spell Choices and Spell/Cast with four supported cantrips, Charisma, presets, old selections pending | [Sorcerer cantrips](SORCERER-CANTRIPS.md). |
-| Workflow adoption | User authorized efficiency implementation after backlog review | Batch workflow is active; SRD goal resumed; current batch is #30/#192/#193. No authorization to discard save compatibility, create a fresh task or spawn agents. |
+| Workflow adoption | User authorized efficiency implementation after backlog review | Batch workflow adopted; later pause takes precedence. #192 is closed; #30/#193 remain open. No authorization to discard save compatibility, create a fresh task or spawn agents. |
 
 Before a new question, check this register and the relevant feature doc. Ask a
 numbered question only for a material undecided layout/control/policy choice,

@@ -16,10 +16,16 @@ level/multiclass milestones intact. Efficiency changes execution, not acceptance
    acceptance rows, source/level matrix, real dependencies, decisions and checks.
    Select a bounded package from the batching review, not an entire work family.
    Each requirement has one implementation owner; related tickets share evidence.
+   Freeze included outcomes and exclusions. Prefer several features using an
+   existing rules mechanism and approved controls over a broad infrastructure
+   project. Selecting a batch does not authorize expanding its requirements.
 3. Resolve related UI/policy questions together using the decision register.
    Existing approval is reusable only within its recorded scope. Keep dependent
    work pending when an answer is required; do useful independent work inside
-   the batch. At most one necessary prerequisite may be active with a return path.
+   the batch. A new dependency outside accepted scope requires explicit approval
+   before implementation; otherwise defer it. At most one approved prerequisite
+   may be active with a return path. Do not ask again for routine choices or
+   controls already covered by a recorded approval.
 4. Plan persistence across the batch. Distinguish schema changes, semantic
    changes and data additions. Reuse valid records; version when rejection or
    continuation requires it. Capture actual prior-writer evidence before changing
@@ -27,7 +33,8 @@ level/multiclass milestones intact. Efficiency changes execution, not acceptance
 5. Implement a real player path, including all named grants/routes. No speculative
    helper or abstraction without an immediate consumer. A separate state machine
    may warrant a reviewable substep, not automatically another GitHub issue.
-6. Run focused checks as implementation evolves. Run required broader checks on
+6. Finish the current edits before building; never modify inputs of a running
+   build. Run focused checks as implementation evolves. Run required broader checks on
    the final integrated tree. Repeat after relevant changes/failures or unresolved
    risk, not routinely. Build before testing; record the tested revision/tree and
    commands. Save full logs locally and return concise results/failure excerpts.
@@ -48,6 +55,33 @@ Do not mass-edit historical issues or close consolidation candidates just to
 reduce counts. When an issue enters a batch, reconcile its execution note with
 this policy without removing acceptance criteria.
 
+## Scope gate and compact batch card
+
+Fill this in the handoff before the next authorized implementation batch. It is
+an execution record, not a requirement to re-approve already authorized work.
+
+- **Authorization / status:** user instruction; active or paused.
+- **Player outcome / issues:** bounded behavior and existing issue IDs.
+- **Acceptance / exclusions:** fixed requirements; explicit deferred boundaries.
+- **Reuse:** existing rules mechanism, components and approval IDs.
+- **Verification:** focused checks and one appropriate final regression pass.
+- **Timing:** observed start, checkpoint (60 minutes; maximum 90), phase times.
+- **Delivery:** completed player requirements / planned requirements; commits,
+  issue closures, elapsed time, remaining work and blockers.
+
+Record discoveries as short deferred notes in this card, not new implementation
+or automatic GitHub issues. If an out-of-scope discovery blocks delivery, explain
+what is blocked, the smallest additional work and its cost/uncertainty. Obtain
+explicit approval before that work; continue independent in-scope work meanwhile.
+Do not turn a blocked batch into unrelated work or reset its clock.
+
+At the checkpoint, report the delivered result or the concrete reason for an
+overrun and remaining work. Distinguish playable delivery from infrastructure
+and administrative issue changes. Do not invent token or time savings. The next
+batch after resumption is a measured trial of these rules; its checkpoint must
+compare actual delivery and elapsed time with the fixed card. A checkpoint does
+not automatically pause a goal or authorize scope expansion.
+
 ## Read, build and token discipline
 
 - Use the map, `rg -n` and bounded `sed` ranges rather than whole large files.
@@ -59,6 +93,8 @@ this policy without removing acceptance criteria.
 - Do not reconfigure unchanged CMake or regenerate bindings without a cause.
   Adding a real target can require reconfiguration; measure that cost rather
   than avoiding a necessary test. Never build concurrently in the same directory.
+- Build only the required targets; do not trigger app packaging/export for a
+  rules-only change unless that packaging is part of acceptance.
 - Poll a known live handle with useful waits; do not restart because observation
   timed out. Record handles in handoff before yielding long-running work.
 - Optimize a build bottleneck only after timings identify repeated cost and a
@@ -66,8 +102,8 @@ this policy without removing acceptance criteria.
 
 ## Effort and checkpoint record
 
-Use UTC clock/tool timestamps. Start a new batch with a checkpoint two hours of
-elapsed active work later unless the user specifies otherwise. Exclude user-paused
+Use UTC clock/tool timestamps. Set a delivery checkpoint 60 minutes after starting
+a batch; it must occur no later than 90 minutes unless the user sets another limit. Exclude user-paused
 intervals; label unknown timing rather than reconstructing it from memory.
 Record coarse phase transitions, not per-command bookkeeping:
 

@@ -57,13 +57,21 @@
 - Keep one delivery batch active, with fixed acceptance criteria and one
   implementation owner per requirement. Batch related issues/source routes;
   preserve their full acceptance. Use the existing backlog grouping in
-  `docs/SRD-BATCHING-REVIEW.md`. A checklist is the default; create another issue
-  only for a genuine separate dependency/deliverable, not each grant or level.
+  `docs/SRD-BATCHING-REVIEW.md`. A checklist is the default; report newly
+  discovered work separately rather than automatically creating more issues.
   This execution policy supersedes older mandatory ticket-splitting language;
   it does not supersede feature requirements or review boundaries.
-- Keep at most one necessary prerequisite active with an explicit return path.
-  Build foundations only when the active batch consumes them. Do not rotate
-  through unrelated partial features to avoid a blocker.
+- Freeze the batch's player-visible outcome, included issues, acceptance and
+  exclusions before coding. Never silently expand scope. Defer discoveries
+  outside that boundary; if one blocks delivery, explain the dependency and ask
+  for explicit approval before implementing it. Necessity is not authorization.
+  Routine implementation choices within accepted scope need no repeated approval.
+- Keep at most one explicitly approved out-of-scope prerequisite active, with a
+  return path. No speculative foundations, unrelated fixes or tooling projects.
+- Finish edits to a build's inputs before starting it. Do not edit source,
+  headers or generated inputs consumed by a running build. After a code change,
+  rebuild affected targets before testing; choose targets that avoid unneeded
+  packaging/export work.
 - Search with `rg`, then read bounded sections. Reuse current evidence and
   snapshots; refresh affected issues when their state matters. Keep full logs
   outside conversation and return failures or summaries, not truncated dumps.
@@ -73,7 +81,8 @@
 - Run focused checks during development; broader required checks on the final
   integrated changes. Never use stale binaries or weaken verification. Preserve
   released-save compatibility; no unapproved reduction in supported history.
-- Record phase timings and the next review checkpoint on the handoff batch card.
+- Use the compact batch card in `docs/SRD-WORKFLOW.md`; record phase timings
+  and a checkpoint 60 minutes after starting, no later than 90 minutes.
   Measure delivered original requirements, not child-ticket count. Do not
   fabricate past timings or promise a speedup before measuring it.
 - Batch related UI questions and reuse approved patterns within their recorded

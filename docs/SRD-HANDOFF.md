@@ -6,6 +6,20 @@ That refactor does not resume the SRD backlog; do not start #193 or another issu
 remains all SRD_improvements issues, all twelve classes through level 4, then
 level 20 and multiclassing. Branch: `main`.
 
+## Next entry: enforce the agreed workflow
+
+Status: **paused**. This workflow-only update does not authorize further SRD work.
+Architecture follow-up is complete (`9526981`, documentation correction `25e9f4c`).
+No implementation batch is active and no checkpoint is running.
+
+After explicit resumption, read AGENTS.md, this handoff and the relevant decision
+register entries. Fill the [compact batch card](SRD-WORKFLOW.md#scope-gate-and-compact-batch-card)
+using the existing backlog grouping. Freeze the outcome and exclusions; reuse
+approved controls; finish edits before builds; use focused checks and one final
+appropriate regression pass. Report measured delivery at 60 minutes, no later
+than 90. Defer discoveries; obtain approval before implementing any out-of-scope
+blocking dependency. Do not automatically create issues for discoveries.
+
 ## Delivered: #192 — player rest controls
 
 Q29–32 are approved. Shared game/demo Godot controls now provide Camp Short/Long
