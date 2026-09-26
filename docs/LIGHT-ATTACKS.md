@@ -142,8 +142,8 @@ python3 tools/localization.py --check
 
 Current native/runtime behavior and save formats remain unchanged. The integrated
 run followed a successful current-tree project preparation; fixture setup was
-excluded only to avoid repeating that preparation. Verification completed by
-01:19 UTC. The next player-facing work requires LIGHT-1/2/3; the goal remains
+excluded only to avoid repeating that preparation. Verification was confirmed at
+01:17:53 UTC. The next player-facing work requires LIGHT-1/2/3; the goal remains
 ACTIVE, with these approvals visibly outstanding.
 
 Phase observations: compatibility capture began00:53:12 and was committed at
