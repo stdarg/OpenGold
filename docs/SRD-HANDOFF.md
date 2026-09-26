@@ -1,11 +1,31 @@
 # SRD handoff
 
-Updated2026-09-26. Standing goal **ACTIVE and incomplete**: close all
+Updated2026-09-26. Standing goal **BLOCKED and incomplete**: close all
 `SRD_improvements`, preserving all twelve classes through4 and planned higher
-levels/multiclassing. Do not pause at delivery boundaries or ask for a new resume.
+levels/multiclassing. Blocked2026-09-26 06:29:28 UTC on unanswered MASTERY-5/6/7.
+Do not treat a delivery boundary as permission to pause.
 A decision reply alone never resumes a genuinely paused goal. No agents/new tasks
 or model/runtime setting changes are authorized. **144 open SRD issues**, snapshot
 `/tmp/srd-open-after-asi.json`; no issue closed in the current batch.
+
+## Blocker audit
+
+The same approval dependency persisted across compatibility preparation aa6e3f8,
+independent Slow lifecycle06ae74b and the current backlog recheck. No replies to
+visible questions1–3 have arrived. Native work is committed/pushed and verified;
+no build/test is live. Goal tool returned **blocked** after this third occurrence.
+The full all-SRD objective and mastery acceptance remain unchanged.
+
+The bounded backlog recheck refreshed44/45/34/39/198/205/223/84/89. It did not
+establish another complete batch executable without further control/design
+choices or incomplete source integrations. A proposed44 packet was discarded
+before production edits; no batch switch, issue closure or scope change occurred.
+Do not interpret this as an exhaustive completion audit of all144 issues.
+
+Required input: MASTERY-5 simultaneous-choice dropdown/order; MASTERY-6 Graze
+cap interpretation; MASTERY-7 rest Save control. Full questions remain visible
+and the existing question widget is pending. After user resumption, revalidate
+answers, then implement the approved remaining mastery paths from this record.
 
 ## Active batch — Weapon Mastery
 
