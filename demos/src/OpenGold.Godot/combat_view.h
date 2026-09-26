@@ -42,7 +42,9 @@ private:
     void select_mode(godot::String verb);void immediate(godot::String verb);
     void spell_slot();void bonus_selected(std::int64_t index);void use_bonus_action();
     void ground_selected(std::int64_t index);void pick_up();
-    unsigned ground_item_{},thrown_item_{};
+    unsigned ground_item_{},thrown_item_{},light_item_{};
+    void weapon_selected(std::int64_t index);
+    bool matches_item(const opengold::rules::Command& command) const;
     void thrown_selected(std::int64_t index);void begin_throw();
     std::vector<std::pair<unsigned,opengold::rules::EntityId>> item_holders_;
     unsigned spell_slot_{1};

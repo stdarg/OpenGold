@@ -40,12 +40,13 @@ rules::FeatureGrant advancement_grant(std::string_view klass,unsigned level,cons
 std::vector<rules::AdvancementOption> fighting_styles(){return {
     {"defense","Defense","+1 AC while wearing armor."},
     {"archery","Archery","+2 to attack rolls with Ranged weapons."},
-    {"great_weapon_fighting","Great Weapon Fighting","Treat damage dice showing 1 or 2 as 3 with an eligible Melee weapon held in two hands."}};}
+    {"great_weapon_fighting","Great Weapon Fighting","Treat damage dice showing 1 or 2 as 3 with an eligible Melee weapon held in two hands."},
+    {"two_weapon_fighting","Two-Weapon Fighting","Add your ability modifier to the extra attack granted by the Light property."}};}
 bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles,bool tactical_mind,bool champion,bool arcane_recovery,bool rogue_attacks,bool style_routes){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles,bool tactical_mind,bool champion,bool arcane_recovery,bool rogue_attacks,bool style_routes,bool two_weapon_fighting){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
@@ -71,7 +72,7 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
         if(fixed!=required.end())required.erase(fixed);
         else if(starting_styles&&grant.source_id=="class:"+std::string(klass)+":fighting_style"){
             require(((klass=="fighter"&&(grant.level==1||style_routes))||(style_routes&&(klass=="paladin"||klass=="ranger")&&grant.level==2))&&grant.choices.empty()&&
-                (grant.id=="feat:defense"||grant.id=="feat:archery"||(style_routes&&grant.id=="feat:great_weapon_fighting"))&&has_grant(grants,"feature:fighting_style"));
+                (grant.id=="feat:defense"||grant.id=="feat:archery"||(style_routes&&grant.id=="feat:great_weapon_fighting")||(two_weapon_fighting&&grant.id=="feat:two_weapon_fighting"))&&has_grant(grants,"feature:fighting_style"));
             require(entitlements.emplace(grant.source_id,0).second);
         }else {
             require((klass=="fighter"||klass=="cleric"||klass=="wizard"||(rogue_attacks&&klass=="rogue")||(style_routes&&(klass=="paladin"||klass=="ranger")))&&grant.level==4&&
@@ -87,7 +88,7 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
                 require(points==2);
             }else {
                 require(grant.choices.empty());
-                if(grant.id=="feat:defense"||(archery&&grant.id=="feat:archery")||(style_routes&&grant.id=="feat:great_weapon_fighting"))require(has_grant(grants,"feature:fighting_style"));
+                if(grant.id=="feat:defense"||(archery&&grant.id=="feat:archery")||(style_routes&&grant.id=="feat:great_weapon_fighting")||(two_weapon_fighting&&grant.id=="feat:two_weapon_fighting"))require(has_grant(grants,"feature:fighting_style"));
                 else require(grant.id=="feat:savage_attacker");
             }
         }
@@ -95,6 +96,7 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
         if(grant.id=="feat:savage_attacker")effects.feats|=2;
         if(grant.id=="feat:archery")effects.feats|=4;
         if(grant.id=="feat:great_weapon_fighting")effects.feats|=8;
+        if(grant.id=="feat:two_weapon_fighting")effects.feats|=16;
     }
     if(style_routes&&(klass=="paladin"||klass=="ranger")&&level>=2)require(entitlements.contains({"class:"+std::string(klass)+":fighting_style",0}));
     require(required.empty()&&advancement_count==(level==4?1u:0u));

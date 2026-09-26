@@ -1,4 +1,5 @@
 extends SceneTree
+var light := false
 var fixture := ""
 var klass := "fighter"
 var captures := ""
@@ -9,6 +10,7 @@ const SLOT = "Fighting Style advancement test"
 func _initialize() -> void:
     for arg in OS.get_cmdline_user_args():
         if arg.begins_with("--style-class="): klass = arg.trim_prefix("--style-class=")
+        if arg == "--style-light": light = true
         if arg == "--style-demo": locales = ["en"]
         if arg.begins_with("--style-fixture="): fixture = arg.trim_prefix("--style-fixture=")
         if arg.begins_with("--style-captures="): captures = arg.trim_prefix("--style-captures=")
@@ -71,9 +73,9 @@ func run_checks() -> void:
             require(style.visible == (klass == "fighter" or attained == 2), "Style entitlement controls match actual class/level")
             if style.visible:
                 require(style.focus_mode == Control.FOCUS_ALL, "Style selector supports keyboard focus")
-                var selection := 3 if klass == "fighter" else 2
+                var selection := (4 if klass == "fighter" else 3) if light else (3 if klass == "fighter" else 2)
                 if klass == "fighter" and attained == 3: selection = 2
-                if klass == "fighter" and attained == 4: selection = 1
+                if klass == "fighter" and attained == 4: selection = 4 if light else 1
                 require(not style.is_item_disabled(selection), "Required replacement available")
                 style.select(selection); style.item_selected.emit(selection); await settle()
             if klass == "fighter" and attained == 4:
@@ -89,9 +91,9 @@ func run_checks() -> void:
             require(not level.visible and current_scene.get_node("PartyPanel/Sheet").text == before, "Cancel preserves character")
             await press("PartyPanel/Roster/Advance1")
             if style.visible:
-                var selection := 3 if klass == "fighter" else 2
+                var selection := (4 if klass == "fighter" else 3) if light else (3 if klass == "fighter" else 2)
                 if klass == "fighter" and attained == 3: selection = 2
-                if klass == "fighter" and attained == 4: selection = 1
+                if klass == "fighter" and attained == 4: selection = 4 if light else 1
                 style.select(selection); style.item_selected.emit(selection); await settle()
             if klass == "fighter" and attained == 4:
                 level.get_node("Feat").select(5); level.get_node("Feat").item_selected.emit(5); await settle()

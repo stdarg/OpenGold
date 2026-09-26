@@ -15,7 +15,7 @@ void move(CombatSession& c,Cell to){for(const auto& v:c.legal_commands())if(v.ve
 void reject_hit_field(const RulesModule& rules,const CombatSession& combat,unsigned field,int value){
     auto bytes=combat.save();const auto start=bytes.find("\n1 99 ");check(start!=std::string::npos,"Locate serialized pending hit");
     const auto end=bytes.find('\n',start+1);std::istringstream in(bytes.substr(start+1,end-start-1));std::vector<int> fields;int n;while(in>>n)fields.push_back(n);
-    check(fields.size()==12&&field<fields.size(),"Version-21 pending hit field shape");fields[field]=value;std::ostringstream out;for(unsigned i=0;i<fields.size();++i){if(i)out<<' ';out<<fields[i];}
+    check(fields.size()==(bytes.starts_with("OGCOMBAT 22 ")?14u:12u)&&field<fields.size(),"Versioned pending hit field shape");fields[field]=value;std::ostringstream out;for(unsigned i=0;i<fields.size();++i){if(i)out<<' ';out<<fields[i];}
     bytes.replace(start+1,end-start-1,out.str());rejects([&]{(void)rules.restore(bytes);});
 }
 void run(){

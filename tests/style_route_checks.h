@@ -84,10 +84,10 @@ void run(){
 
 }
 
-void verify_ui(const char* klass,const char* file){
+void verify_ui(const char* klass,const char* file,bool light=false){
     const auto* directory=std::getenv("OPENGOLD_GAME_DIR");check(directory&&*directory,"Style UI comparison requires game assets");auto rules=module();auto creation=srd5::character_rules();const auto assets=campaign_asset_identity(directory);
     CampaignParty expected(module());expected.restore(decode_campaign(read_campaign_file(std::filesystem::path(OPENGOLD_BINARY_DIR)/(std::string("style-")+klass+"-ui.ogs")),*creation,*rules,assets,nullptr).party);
-    for(unsigned level=2;level<=4;++level){auto choice=expected.default_advancement(1);if(level==2)choice.fighting_style="great_weapon_fighting";if(std::string_view(klass)=="fighter"&&level==3)choice.fighting_style="archery";if(std::string_view(klass)=="fighter"&&level==4){choice.fighting_style="defense";choice.feat="archery";choice.abilities={};}expected.advance(1,choice);}
+    for(unsigned level=2;level<=4;++level){auto choice=expected.default_advancement(1);if(level==2)choice.fighting_style=light?"two_weapon_fighting":"great_weapon_fighting";if(std::string_view(klass)=="fighter"&&level==3)choice.fighting_style="archery";if(std::string_view(klass)=="fighter"&&level==4){choice.fighting_style=light?"two_weapon_fighting":"defense";choice.feat="archery";choice.abilities={};}expected.advance(1,choice);}
     CampaignParty actual(module());actual.restore(decode_campaign(read_campaign_file(file),*creation,*rules,assets,nullptr).party);auto state=expected.checkpoint();state.selected=actual.state().selected;expected.restore(std::move(state));check(encode_campaign(actual,nullptr,assets)==encode_campaign(expected,nullptr,assets),"Style UI advancement exactly matches native grants, HP, wounds, resources and history");std::cout<<"Style UI persistence verified\n";
 }
 }

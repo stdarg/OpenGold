@@ -108,6 +108,7 @@ std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view
         result.push_back({"class:fighter:fighting_style","Fighting Style",1,
             {{"defense","Defense","+1 AC while wearing armor."},{"archery","Archery","+2 to attack rolls with Ranged weapons."}},TrainingChoiceControl::single_selection});
     if(klass=="fighter"&&policy>=TrainingPolicy::style_routes)for(auto& group:result)if(group.id=="class:fighter:fighting_style")group.options.push_back({"great_weapon_fighting","Great Weapon Fighting","Treat damage dice showing 1 or 2 as 3 with an eligible Melee weapon held in two hands."});
+    if(klass=="fighter"&&policy>=TrainingPolicy::style_routes)for(auto& group:result)if(group.id=="class:fighter:fighting_style")group.options.push_back({"two_weapon_fighting","Two-Weapon Fighting","Add your ability modifier to the extra attack granted by the Light property."});
     if(klass=="rogue"||(policy>=TrainingPolicy::class_skills&&!klass.empty())){
         const auto data=std::find_if(class_skills.begin(),class_skills.end(),[&](const auto& c){return c.id==klass;});
         require(data!=class_skills.end());TrainingChoiceGroup group{"class:"+std::string(klass),std::string(data->label),data->count,{},TrainingChoiceControl::checkboxes,"class_skills"};

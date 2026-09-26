@@ -201,6 +201,7 @@ struct Identity {
 };
 enum class Outcome { ongoing, victory, defeat };
 struct ThrownWeaponOption {unsigned item{}; Message label; bool available{};};
+struct ItemAttackOption { unsigned item{}; std::string verb; Message label; bool available{}; };
 struct CombatantView {
     EntityId id{};
     std::string name, definition;
@@ -223,6 +224,9 @@ struct CombatantView {
     std::vector<std::string> known_cantrips; // Knowledge persists while casting is unavailable.
     bool naturally_sleeping{}, prone{};
     std::vector<ThrownWeaponOption> thrown_weapons;
+    std::vector<ThrownWeaponOption> weapons;
+    unsigned selected_weapon{};
+    std::vector<ItemAttackOption> light_attacks;
 };
 struct TemporaryHpOffer {
     EntityId recipient{};

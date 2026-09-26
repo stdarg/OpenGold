@@ -88,7 +88,9 @@ private:
     std::string cantrip_;
     void spell_slot();
     void ground_selected(std::int64_t index);void pick_up();
-    unsigned ground_item_{},thrown_item_{};
+    unsigned ground_item_{},thrown_item_{},light_item_{};
+    void weapon_selected(std::int64_t index);
+    bool matches_item(const opengold::rules::Command& command) const;
     void thrown_selected(std::int64_t index);void begin_throw();
     std::vector<std::pair<unsigned,opengold::rules::EntityId>> item_holders_;
     void adjust_zoom(int percentage_points);

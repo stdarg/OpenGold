@@ -1,3 +1,4 @@
+#include "../../../src/OpenGoldBox/combat_weapon_controls.h"
 #include "combat_view.h"
 #include "opengold/srd5.h"
 #include "opengold/combat_body_catalog.h"
@@ -25,6 +26,7 @@
 using namespace godot;using namespace opengold;using namespace opengold::rules;
 namespace {
 String gs(std::string_view text){return String::utf8(text.data(),text.size());}
+String render_weapon_message(const Message& message){auto text=gs(message.source);for(const auto& a:message.arguments)text=text.replace(gs("{"+a.name+"}"),gs(a.value));return text;}
 const std::array<std::pair<const char*,const char*>,10> action_buttons{{{"Melee","melee"},{"Ranged","ranged"},
     {"FireBolt","fire_bolt"},{"MagicMissile","magic_missile"},{"CureWounds","cure_wounds"},
     {"HealingWord","healing_word"},{"ScorchingRay","scorching_ray"},{"Dash","dash"},{"Dodge","dodge"},{"Disengage","disengage"}}};
@@ -36,7 +38,7 @@ std::filesystem::path CombatView::local_path(const char* path) const
 {return std::filesystem::u8path(ProjectSettings::get_singleton()->globalize_path(path).utf8().get_data());}
 void CombatView::_ready()
 {
-    ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
+    presentation::setup_weapon_controls(*this,gs,callable_mp(this,&CombatView::weapon_selected));ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
@@ -87,8 +89,9 @@ void CombatView::layout()
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
     const bool recovery=get_node<Button>("Stabilize")->is_visible()||get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible();
+    const double weapon_height=get_node<OptionButton>("Weapons")->is_visible()?44:0;
     const double bonus_height=get_node<OptionButton>("CunningAction")->is_visible()?44:0;
-    const double tile=std::min(left_width/board.width,(height-bonus_height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?368:recovery?324:280))/board.height);
+    const double tile=std::min(left_width/board.width,(height-weapon_height-bonus_height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?368:recovery?324:280))/board.height);
     board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
@@ -102,7 +105,9 @@ void CombatView::layout()
     place("React",Rect2(right,590,174,36));place("Decline",Rect2(right+184,590,174,36));
     place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
     place("Help",Rect2(right,686,sidebar,height-732));
-    const double bonus_top=board_rect_.get_end().y+16;
+    const double weapon_top=board_rect_.get_end().y+16;
+    place("WeaponLabel",Rect2(24,weapon_top,180,36));place("Weapons",Rect2(214,weapon_top,450,36));
+    const double bonus_top=weapon_top+weapon_height;
     place("CunningActionLabel",Rect2(24,bonus_top,180,36));place("CunningAction",Rect2(214,bonus_top,200,36));place("UseCunningAction",Rect2(424,bonus_top,240,36));
     const double top=bonus_top+bonus_height;
     place("WakeAlly",Rect2(24+left_width-340,top,160,36));
@@ -110,7 +115,7 @@ void CombatView::layout()
     place("StandUp",Rect2(24,top+44,180,36));
     place("GroundItemLabel",Rect2(214,top+44,100,36));place("GroundItem",Rect2(324,top+44,176,36));place("PickUp",Rect2(510,top+44,204,36));
     place("ThrownWeaponLabel",Rect2(24,top+88,190,36));place("ThrownWeapon",Rect2(224,top+88,276,36));place("Throw",Rect2(510,top+88,204,36));
-    place("Log",Rect2(24,top+(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-bonus_height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0))));
+    place("Log",Rect2(24,top+(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-weapon_height-bonus_height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0))));
     place("Footer",Rect2(24,height-34,width-48,24));
 }
 void CombatView::training(){try{error_.clear();demo_->training();art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
@@ -185,7 +190,18 @@ void CombatView::pick_up(){
     for(const auto& c:demo_->combat().legal_commands())if(c.verb=="pick_up"&&c.target==ground_item_){act(c);return;}
 }
 void CombatView::bonus_selected(std::int64_t){refresh();}
-void CombatView::use_bonus_action(){auto* choices=get_node<OptionButton>("CunningAction");if(choices->get_selected()>=0)immediate(String(choices->get_item_metadata(choices->get_selected())));}
+bool CombatView::matches_item(const Command& command) const
+{return (command.verb!="throw"||command.item==thrown_item_)&&(!command.verb.starts_with("light_")||command.item==light_item_);}
+void CombatView::weapon_selected(std::int64_t index){
+    auto* choices=get_node<OptionButton>("Weapons");if(!demo_||!demo_->has_combat()||index<0||index>=choices->get_item_count())return;
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb=="weapon_select"&&c.item==unsigned(choices->get_item_id(index))){act(c);return;}
+}
+void CombatView::use_bonus_action(){
+    auto* choices=get_node<OptionButton>("CunningAction");if(choices->get_selected()<0||get_node<Button>("UseCunningAction")->is_disabled())return;
+    const String key=choices->get_item_metadata(choices->get_selected());const String verb=key.get_slice("#",0);
+    if(verb.begins_with("light_")){light_item_=key.get_slice("#",1).to_int();get_node<Button>("UseCunningAction")->release_focus();select_mode(verb);}
+    else immediate(verb);
+}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::immediate(String verb)
 {
@@ -211,12 +227,13 @@ void CombatView::_input(const Ref<InputEvent>& event)
             if(actor!=state.combatants.end())for(const auto& command:demo_->combat().legal_commands())if(command.verb=="move"&&command.destination==Cell{actor->cell.x+direction.x,actor->cell.y+direction.y}){act(command);break;}
             get_viewport()->set_input_as_handled();return;}
     }
+    if(key.is_valid()&&(get_node<OptionButton>("Weapons")->has_focus()||get_node<OptionButton>("Weapons")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("CunningAction")->has_focus()||get_node<OptionButton>("CunningAction")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("ThrownWeapon")->has_focus()||get_node<OptionButton>("ThrownWeapon")->get_popup()->is_visible()))return;
-    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&(mode_=="stabilize"||mode_=="throw")&&demo_->has_combat()){
+    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))&&demo_->has_combat()){
         const auto state=demo_->combat().snapshot();
         const auto active=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;});
-        std::vector<Command> targets;for(const auto& command:demo_->combat().legal_commands())if(command.verb==mode_&&(mode_!="throw"||command.item==thrown_item_))targets.push_back(command);
+        std::vector<Command> targets;for(const auto& command:demo_->combat().legal_commands())if(command.verb==mode_&&matches_item(command))targets.push_back(command);
         if(active!=state.combatants.end()&&!targets.empty()){
             const auto found=std::find_if(targets.begin(),targets.end(),[&](const auto& c){return c.target==aid_target_;});
             const auto index=found==targets.end()?std::size_t{0}:std::size_t(found-targets.begin());
@@ -228,7 +245,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(key.is_valid()&&(get_node<OptionButton>("GroundItem")->has_focus()||get_node<OptionButton>("GroundItem")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("Throw")->has_focus()||get_node<Button>("PickUp")->has_focus()||get_node<Button>("Stabilize")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
-    if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&(mode_=="wake_ally"||mode_=="stabilize"||mode_=="throw")){
+    if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&(mode_=="wake_ally"||mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))){
         mode_="move";refresh();get_viewport()->set_input_as_handled();return;
     }
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ENTER) {
@@ -240,7 +257,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto s=demo_->combat().snapshot();const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0)return;
     const auto relative=(local-board_rect_.position)/(board_rect_.size.x/demo_->combat().snapshot().battlefield.width);const Cell cell{static_cast<int>(relative.x),static_cast<int>(relative.y)};
-    for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&(mode_!="throw"||c.item==thrown_item_)) {
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)) {
         if(c.verb=="move"&&c.destination==cell){act(c);break;}
         if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
     }
@@ -293,18 +310,10 @@ void CombatView::refresh()
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor&&a.side==0;});
-    const bool show_bonus=active!=s.combatants.end()&&!active->bonus_actions.empty()&&s.outcome==Outcome::ongoing;
-    for(const char* name:{"CunningActionLabel","CunningAction","UseCunningAction"})get_node<Control>(name)->set_visible(show_bonus);
-    auto* choices=get_node<OptionButton>("CunningAction");
-    const String previous=choices->get_selected()>=0?String(choices->get_item_metadata(choices->get_selected())):String();
-    const auto options=show_bonus?active->bonus_actions:std::vector<std::string>{};
-    bool changed=choices->get_item_count()!=int(options.size());
-    for(unsigned i=0;!changed&&i<options.size();++i)changed=String(choices->get_item_metadata(i))!=gs(options[i]);
-    if(changed){choices->clear();for(const auto& option:options){const int index=choices->get_item_count();choices->add_item(option=="cunning_dash"?"Dash":option=="cunning_disengage"?"Disengage":"Steady Aim");choices->set_item_metadata(index,gs(option));if(gs(option)==previous)choices->select(index);}}
-    for(unsigned i=0;i<options.size();++i)choices->set_item_disabled(i,!enabled(options[i]));
-    choices->set_disabled(!std::any_of(options.begin(),options.end(),enabled));
-    const int selected=choices->get_selected();
-    get_node<Button>("UseCunningAction")->set_disabled(selected<0||selected>=int(options.size())||!enabled(options[selected]));
+    const auto* choice_actor=active!=s.combatants.end()&&s.outcome==Outcome::ongoing?&*active:nullptr;
+    const bool weapon_layout=presentation::refresh_weapons(*this,choice_actor,player,[](const Message& message){return render_weapon_message(message);});
+    const bool bonus_layout=presentation::refresh_bonus_attacks(*this,choice_actor,offered,player,gs,[](const Message& message){return render_weapon_message(message);});
+    if(weapon_layout||bonus_layout)layout();
     std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
     if(holders!=item_holders_){item_holders_=std::move(holders);if(campaign_)sync_art();}
     auto* thrown=get_node<OptionButton>("ThrownWeapon");thrown->set_block_signals(true);thrown->set_fit_to_longest_item(false);thrown->clear();
@@ -354,8 +363,8 @@ void CombatView::refresh()
     std::string log=demo_?demo_->dialogue()+"\n\n":"";for(const auto& entry:s.log)log+=entry+"\n";
     if(!error_.empty())log+="\n"+error_;
     get_node<RichTextLabel>("Log")->set_text(gs(log));get_node<RichTextLabel>("Log")->scroll_to_line(std::max(0,get_node<RichTextLabel>("Log")->get_line_count()-1));
-    if(player&&(mode_=="stabilize"||mode_=="throw")){
-        std::vector<Command> targets;for(const auto& command:offered)if(command.verb==mode_&&(mode_!="throw"||command.item==thrown_item_))targets.push_back(command);
+    if(player&&(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))){
+        std::vector<Command> targets;for(const auto& command:offered)if(command.verb==mode_&&matches_item(command))targets.push_back(command);
         if(!targets.empty()){
             if(std::none_of(targets.begin(),targets.end(),[&](const auto& c){return c.target==aid_target_;}))aid_target_=targets.front().target;
             const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==aid_target_;});
@@ -377,9 +386,9 @@ void CombatView::_draw()
         else draw_rect(cell,Color("172228"),false);
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
-    if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&(mode_!="throw"||c.item==thrown_item_)) {
+    if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)) {
         auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
-        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,(mode_=="stabilize"||mode_=="throw")&&c.target==aid_target_?.6:.17));
+        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))&&c.target==aid_target_?.6:.17));
     }
     for(const auto& a:s.combatants) {
         const auto center=board_rect_.position+Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);
