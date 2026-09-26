@@ -124,6 +124,10 @@ Training additions and the separate advancement dropdown.
 
 ## Pending — do not implement dependent choices
 
+LIGHT-1/2/3: [Light attacks](LIGHT-ATTACKS.md#proposed-controls--approval-required):
+hand-choice equipment dialog, weapon/Light combat controls and TWF selector/
+automatic benefit. Pending; no dependent implementation.
+
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
 | Q19 | #208 Silence geometry | Proposed flat grid, square center within 120 feet, circular 20-foot radius; whole occupied square determines full containment, walls block spread, preview distinguishes partial/full containment; no height model. Pending. |

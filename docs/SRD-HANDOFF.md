@@ -16,7 +16,7 @@ its old blocked metadata does not prevent the explicitly authorized work.
   across initial run and targeted rerun; main EN/ES and demo EN controls,
   rendering and native comparison of saved choices pass. No old fixtures removed.
 - Delivered three original feats: Archery#78, Defense#79, GWF#80 through actual
-  Fighter/Paladin/Ranger routes1–4. Closing their issues after push. #85/#140/#147
+  Fighter/Paladin/Ranger routes1–4. Their issues are CLOSED after push. #85/#140/#147
   stay open for other styles/mastery/cantrip alternatives. No broader class claim.
 - Preflight00:08:10; verified runtime commit00:44:42 UTC2026-09-26:36m32s elapsed
   including approval wait. Three original outcomes. No new issues or agents.
@@ -26,9 +26,19 @@ its old blocked metadata does not prevent the explicitly authorized work.
   remain related work, with actual hand/item/control prerequisites to preflight.
 - Main remains375f58f; this delivery is on the current branch. Earlier Rogue
   delivery is in [coverage](SRD-COVERAGE.md#rogue-steady-aim-114).
-- No live builds/tests or pending approvals for this batch. Standing goal ACTIVE;
-  do not pause at this delivery boundary. Current backlog snapshot was152 open
-  before closing these three; refresh affected issue states after closing.
+- No live builds/tests or pending approvals for the completed style batch. Standing goal ACTIVE;
+  do not pause at this delivery boundary. 149 open SRD issues remain, verified after closing these three; snapshot
+  `/tmp/srd-open-after-styles.json`.
+
+## Active next batch — Light attacks
+
+[Fixed packet](LIGHT-ATTACKS.md):#59/#81/#56 and bounded style-source integration.
+Preflight00:45:02 UTC2026-09-26; checkpoint01:45:02, maximum02:15:02.
+Requested Astra/high retained; actual unverified. LIGHT-1/2/3 pending: hand-choice
+Equip dialog, weapon/Light combat controls, and TWF catalog/automatic benefit.
+No dependent implementation yet. Questions must be visible and preceded by the
+verified Glass sound. Goal remains ACTIVE; an approval reply should continue this
+active batch. Do not turn waiting into a paused goal.
 
 ## Preserved exclusions
 
