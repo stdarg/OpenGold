@@ -118,6 +118,11 @@ This separate approval authorizes the new placement and shared keyboard/disabled
 
 ## Pending — do not implement dependent choices
 
+STYLE-1/2: [Fighting Style routes](FIGHTING-STYLE-ROUTES.md#proposed-decisions-not-yet-approved).
+STYLE-1 replaces unresolved Q23 with automatic beneficial die replacement.
+STYLE-2 covers exact main/demo creation/advancement controls and source routes.
+No approval yet.
+
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |

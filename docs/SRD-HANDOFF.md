@@ -20,7 +20,7 @@ its old blocked metadata does not prevent the explicitly authorized work.
   and main/demo controls after test additions/demo presentation changes.
   Demo neighboring thrown/pickup checks pass. No old fixture rewritten;
   conditional PC35/combat21, unchanged campaign format. No new save controls.
-- #112/#220/#221 closed; #114 ready for final closure after pushed evidence.
+- #112/#220/#221/#114 CLOSED; complete batch and evidence pushed to main.
   #116 remains open for full Rogue completion; Thief#115, Hide#219 and mastery#60
   remain excluded and required. No live builds/tests or pending Rogue approvals.
 - Started21:27:56 UTC on2026-09-25. Checkpoint22:26 delivered one of two originals.
@@ -30,6 +30,16 @@ its old blocked metadata does not prevent the explicitly authorized work.
 - Requested Astra/high retained for interactions/migration; actual configuration
   unverified. No model change, agents or new tasks. Continue by selecting and
   freezing the next bounded packet from the existing backlog groups.
+
+## Next batch — Fighting Style routes
+
+[Frozen acceptance/proposed controls](FIGHTING-STYLE-ROUTES.md), branch
+`codex/srd-fighting-style-routes`, preflight00:08:10 UTC2026-09-26;
+checkpoint01:08:10, maximum01:38:10. Requested Astra/high; actual unverified.
+#78/#79/#80 plus bounded actual source-route work in#85/#140/#147. STYLE-1/2
+questions pending; no new implementation yet. Main remains verified375f58f.
+Cached open issue snapshot `/tmp/srd-open-20260926.json`:152 open after #114.
+Do not expand into whole Paladin/Ranger classes or remove excluded requirements.
 
 ## Preserved exclusions
 
