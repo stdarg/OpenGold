@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 using namespace opengold;
 using namespace opengold::rules;
@@ -148,5 +149,6 @@ void profiles_and_migration(){
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
 #include "mastery_grant_checks.h"
+#include "mastery_rest_checks.h"
 }
-int main(){try{mastery_grant_checks::run();creation();advancement();profiles_and_migration();std::cout<<"Feature grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{mastery_grant_checks::run();mastery_rest_checks::run();creation();advancement();profiles_and_migration();std::cout<<"Feature grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

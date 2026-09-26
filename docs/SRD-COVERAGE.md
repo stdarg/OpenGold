@@ -515,3 +515,19 @@ acquisition tree is the tested revision; full batch verification is still due.
 replacement transactions/UI remain outstanding. The pure replacement policy is
 unit-tested, not yet a playable rest path. This entry is partial evidence, not a
 claim that #60/#85 or the class issues are complete.
+
+Weapon Mastery Long Rest checkpoint (commit containing this entry): five-class
+PC/NPC replacement, one-use completed-rest windows, original source preservation,
+level/rest history replay and conditional campaign18 are implemented. Interrupted,
+ineligible and reserve members do not gain windows; applying or keeping a choice
+preserves vitals, inventory and advancement. Review Training cannot undo earlier
+replacements. Actual acquisition writer0.6.56/format15 remains byte-identical on
+reload;1–17 compatibility is retained.
+
+Fresh native51/51 passes (4.03s). MainEN/ES and demoEN rest controls pass at both
+sizes, including keyboard/Cancel, sequential members, spell-before-training and
+pending-codec reload; the existing full rest-control suite also passes.976 messages
+validate. See [packet evidence](WEAPON-MASTERY.md#long-rest-implementation-evidence-wip).
+Combat masteries remain unfinished. Saving pending choices is verified in the
+codec, but an accessible Save button in the modal awaits MASTERY-7 approval.
+No issue closure or completed full mastery implementation is claimed.

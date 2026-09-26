@@ -29,7 +29,7 @@ std::vector<MemberRestInfo> CampaignParty::rest_info(RestKind kind) const
             }
         }
         if(combat_)info.denial=RestDenial::combat;
-        else if(state_.short_rest||state_.spell_rest)info.denial=RestDenial::spending;
+        else if(state_.short_rest||state_.spell_rest||state_.training_rest)info.denial=RestDenial::spending;
         else if(state_.rest_activity)info.denial=RestDenial::activity;
         else if(!info.recovery.can_rest)info.denial=RestDenial::vitality;
         else if(info.wait_milliseconds)info.denial=RestDenial::cooldown;
@@ -191,6 +191,10 @@ std::optional<RestResult> CampaignParty::advance_rest(RestTicket ticket,std::uin
             if(!next.spell_rest)next.spell_rest=ShortRestSession{activity.ticket,next.time_minutes,next.subminute_milliseconds,{}};
             next.spell_rest->members.push_back(id);
         }
+        if(rules_->rest_training_options(member.character.sheet())){
+            if(!next.training_rest)next.training_rest=ShortRestSession{activity.ticket,next.time_minutes,next.subminute_milliseconds,{}};
+            next.training_rest->members.push_back(id);
+        }
         result.members.push_back(id);member.last_rest_minutes=next.time_minutes;member.last_rest_subminute_milliseconds=next.subminute_milliseconds;
     }
     if(outcome.progress)static_cast<rules::RestProgress&>(activity)=*outcome.progress;
@@ -223,7 +227,7 @@ bool CampaignParty::prepare_combat()
     if(state_.rest_activity&&!state_.rest_activity->interrupted){
         auto next=state_;interrupt_rest_state(next,RestInterruption::initiative);state_=std::move(next);
     }
-    return !state_.short_rest&&!state_.spell_rest;
+    return !state_.short_rest&&!state_.spell_rest&&!state_.training_rest;
 }
 void CampaignParty::require_rest_ticket(RestTicket ticket) const
 {

@@ -28,6 +28,11 @@ struct TrainingChoiceGroup {
     unsigned acquired_level{1};
 };
 enum class SpellChoiceContext { pending, advancement, long_rest };
+struct TrainingReplacementOptions {
+    TrainingChoiceGroup group;
+    std::vector<std::string> selected;
+    unsigned replacement_limit{};
+};
 struct SpellChoices {
     TrainingChoices learning;
     std::optional<std::vector<std::string>> prepared;
@@ -318,6 +323,9 @@ public:
     [[nodiscard]] virtual unsigned experience_for_level(unsigned level) const;
     // False means this module's supported advancement ceiling was reached.
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;
+    [[nodiscard]] virtual std::optional<TrainingReplacementOptions> rest_training_options(const CharacterSheet&) const {return {};}
+    // Returns the effective source-group selections after applying a legal edit.
+    virtual TrainingChoices replace_rest_training(CharacterSheet&,std::span<const std::string>) const;
     [[nodiscard]] virtual std::vector<TrainingChoiceGroup> training_options(const CharacterSheet&) const {return {};}
     [[nodiscard]] virtual AdvancementOptions advancement_options(const CharacterSheet&) const {return {};}
     [[nodiscard]] virtual AdvancementOptions advancement_options(const CharacterSheet& sheet,const AdvancementChoice&) const {return advancement_options(sheet);}

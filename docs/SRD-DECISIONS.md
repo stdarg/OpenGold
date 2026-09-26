@@ -175,3 +175,8 @@ combat mastery decisions and Nick attack. All four proposals are explicitly appr
 MASTERY-5/6 PENDING: simultaneous Champion/mastery Resolve next selector and
 Graze damage-cap interpretation; see [concrete proposals](WEAPON-MASTERY.md#additional-combat-decisions-pending).
 Neither is covered by MASTERY-1–4 approval. Independent approved work continues.
+
+MASTERY-7 PENDING: add Save game at the bottom left of the approved mastery rest
+dialog, reusing camp/inn saving without consuming a pending choice; see the
+[concrete proposal](WEAPON-MASTERY.md#long-rest-implementation-evidence-wip).
+The exclusive dialog currently covers the existing Save game control.

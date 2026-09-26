@@ -14,6 +14,12 @@ struct SpellChoiceEdit {
     rules::SpellChoices choices;
     bool operator==(const SpellChoiceEdit&) const = default;
 };
+struct TrainingChoiceEdit {
+    unsigned level{};
+    std::uint64_t rest_session{};
+    std::vector<std::string> selections;
+    bool operator==(const TrainingChoiceEdit&) const = default;
+};
 class Character {
 public:
     Character(const rules::CharacterRules& rules,rules::CharacterDraft creation,por::CharacterAppearance appearance);
@@ -26,6 +32,8 @@ public:
     bool advance(const rules::RulesModule& rules, rules::VitalState& state);
     bool advance(const rules::RulesModule& rules,rules::VitalState& state,const rules::AdvancementChoice& choice);
     void choose_spells(const rules::RulesModule&,const rules::SpellChoices&,std::uint64_t rest_session=0,bool require_complete=true);
+    void replace_rest_training(const rules::RulesModule&,std::span<const std::string>,std::uint64_t rest_session);
+    [[nodiscard]] const auto& training_edits() const {return training_edits_;}
     [[nodiscard]] const auto& spell_edits() const {return spell_edits_;}
     [[nodiscard]] const auto& advancements() const {return advancements_;}
     // Reconstructs a candidate with missing training filled and the same history.
@@ -40,6 +48,8 @@ private:
     Inventory inventory_;
     std::vector<rules::AdvancementChoice> advancements_;
     std::vector<SpellChoiceEdit> spell_edits_;
+    std::vector<TrainingChoiceEdit> training_edits_;
+    rules::TrainingChoices replaced_training_; // Derived by replay; not a second persisted authority.
 };
 }
 #endif

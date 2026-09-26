@@ -112,6 +112,10 @@ void campaign(){
     const auto rest=party.rest(RestKind::long_rest);check(rest&&rest->members==std::vector<MemberId>{active,npc},"Only active eligible members finish the Long Rest");
     check(pool(party.member(active).character,party.member(active).vitals).amount==0&&pool(party.member(npc).character,party.member(npc).vitals).amount==0&&pool(party.member(reserve).character,party.member(reserve).vitals).amount==8,"Long Rest expiry is individual and never applies to a reserve");
     copy=loaded(saved(party));check(saved(copy)==saved(party),"Pool expiry remains canonical after reload");
+    if(copy.state().training_rest){
+        rejects([&]{copy.begin_combat();});
+        while(copy.state().training_rest)copy.keep_rest_training(copy.state().training_rest->ticket,copy.state().training_rest->members.front());
+    }
     auto actors=copy.participants();actors.push_back({99,"bandit","Enemy",1,{7,7}});auto battle=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},42);
     copy.begin_combat();copy.apply_combat(battle->snapshot());copy.end_combat();check(pool(copy.member(reserve).character,copy.member(reserve).vitals).amount==8,"Encounter snapshots do not overwrite reserve pools");
 }

@@ -42,6 +42,7 @@ struct SaveCodec {
     void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);if(version>=9)field(v.training);if(version>=11)field(v.cantrips);if(version>=16)field(v.spells);}
     void field(rules::SpellChoices& v){fields(v.learning,v.prepared,v.replace_cantrip,v.replacement);}
     void field(SpellChoiceEdit& v){fields(v.level,v.rest_session,v.choices);}
+    void field(TrainingChoiceEdit& v){fields(v.level,v.rest_session,v.selections);}
     void field(por::CharacterAppearance& v){fields(v.portrait_head,v.portrait_body,v.combat_head,v.combat_body,v.tall,v.colors);if(version>=4)field(v.portrait);}
     void field(InventoryItem& v){fields(v.id,v.definition_id,v.name,v.quantity,v.original_type);}
     void field(Inventory& v){fields(v.next_id_,v.items_);if(reading){std::set<std::uint64_t> ids;require(v.next_id_!=0,"Invalid next inventory ID");for(const auto& i:v.items_)require(i.id&&i.id<v.next_id_&&ids.insert(i.id).second&&i.quantity&&!i.definition_id.empty()&&!i.name.empty(),"Invalid inventory entry");}}
@@ -59,7 +60,7 @@ struct SaveCodec {
         if(reading){v.kind=static_cast<RestKind>(kind);v.work=static_cast<RestWork>(work);v.interruption=static_cast<RestInterruption>(interruption);}
     }
     void field(DetachedPartyItem& v){fields(v.scope,v.token,v.original_owner,v.holder,v.cell.x,v.cell.y,v.item,v.original);if(version>=14)field(v.rest_session);}
-    void rest(PartyState& v){if(version>=10)fields(v.next_rest_session,v.short_rest);if(version>=12)field(v.rest_activity);if(version>=13)field(v.detached_items);if(version>=16)field(v.spell_rest);}
+    void rest(PartyState& v){if(version>=10)fields(v.next_rest_session,v.short_rest);if(version>=12)field(v.rest_activity);if(version>=13)field(v.detached_items);if(version>=16)field(v.spell_rest);if(version>=18)field(v.training_rest);}
     void field(rules::VitalState& v){fields(v.hit_points,v.dead,v.resources,v.description);}
     void member(PartyMember& v){
         fields(v.id,v.npc_source,v.vitals,v.wealth,v.equipped,v.morale,v.experience,v.last_rest_minutes,v.item_sources,v.creation_source);
@@ -92,9 +93,15 @@ struct SaveCodec {
             Character character(*creation,std::move(draft),appearance);rules::VitalState scratch;
             if(version>=3){std::vector<rules::AdvancementChoice> history;field(history);require(history.size()==level-1,"Saved advancement history disagrees with level");
                 std::vector<SpellChoiceEdit> edits;if(version>=16)field(edits);
+                std::vector<TrainingChoiceEdit> training;if(version>=18)field(training);
+                unsigned prior_level=1;std::uint64_t prior_session=0;
+                for(const auto& edit:training){require(edit.level>=prior_level&&edit.level<=unsigned(level)&&edit.rest_session>prior_session,"Invalid training replacement history");prior_level=edit.level;prior_session=edit.rest_session;}
                 unsigned previous=1;std::uint64_t rest=0;
                 for(const auto& edit:edits){require(edit.level>=previous&&edit.level<=unsigned(level),"Invalid spell-choice history level");previous=edit.level;if(edit.rest_session){require(edit.rest_session>rest,"Repeated spell-choice rest");rest=edit.rest_session;}}
-                auto replay=[&]{for(const auto& edit:edits)if(edit.level==unsigned(character.sheet().level))character.choose_spells(*module,edit.choices,edit.rest_session,false);};
+                auto replay=[&]{
+                    for(const auto& edit:edits)if(edit.level==unsigned(character.sheet().level))character.choose_spells(*module,edit.choices,edit.rest_session,false);
+                    for(const auto& edit:training)if(edit.level==unsigned(character.sheet().level))character.replace_rest_training(*module,edit.selections,edit.rest_session);
+                };
                 replay();for(const auto& choice:history){require(character.advance(*module,scratch,choice),"Unsupported saved advancement choice");replay();}}
             else while(character.sheet().level<level){auto choice=module->default_advancement(character.sheet());choice.training.clear();choice.spell_learning.reset();require(character.advance(*module,scratch,choice),"Unsupported saved advancement");}
             field(character.inventory());PartyMember m{0,std::move(character)};member(m);
@@ -108,7 +115,7 @@ struct SaveCodec {
             v.roster.push_back(std::move(m));
         }}
         else for(auto& m:v.roster){auto draft=m.character.creation_data();auto appearance=m.character.appearance();auto level=m.character.sheet().level;
-            fields(draft,appearance,level);auto history=m.character.advancements();field(history);if(version>=16){auto edits=m.character.spell_edits();field(edits);}field(m.character.inventory());member(m);}
+            fields(draft,appearance,level);auto history=m.character.advancements();field(history);if(version>=16){auto edits=m.character.spell_edits();field(edits);}if(version>=18){auto edits=m.character.training_edits();field(edits);}field(m.character.inventory());member(m);}
         if(reading)for(const auto& [id,offset]:rest_offsets){
             auto member=std::find_if(v.roster.begin(),v.roster.end(),[&](const auto& m){return m.id==id;});
             require(member!=v.roster.end()&&member->last_rest_minutes&&offset<60000,"Invalid rest time offset");
@@ -176,7 +183,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.fighting_style.has_value();});})?17:party.state().spell_rest||std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return member.character.creation_data().spells.has_value()||!member.character.spell_edits().empty()||std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.spell_learning.has_value();});})?16:std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return !choice.training.empty();});})?15:std::any_of(party.state().detached_items.begin(),party.state().detached_items.end(),[](const auto& item){return item.rest_session!=0;})?14:!party.state().detached_items.empty()?13:party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=party.state().training_rest||std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return !member.character.training_edits().empty();})?18:std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.fighting_style.has_value();});})?17:party.state().spell_rest||std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return member.character.creation_data().spells.has_value()||!member.character.spell_edits().empty()||std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.spell_learning.has_value();});})?16:std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return !choice.training.empty();});})?15:std::any_of(party.state().detached_items.begin(),party.state().detached_items.end(),[](const auto& item){return item.rest_session!=0;})?14:!party.state().detached_items.empty()?13:party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -197,7 +204,7 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
     require(bytes.size()<=limit,"Campaign save too large");
     unsigned version{};std::size_t header_size{};
-    for(unsigned v=1;v<=17;++v){
+    for(unsigned v=1;v<=18;++v){
         const auto header="OPENGOLD-CAMPAIGN "+std::to_string(v)+'\n';
         if(bytes.starts_with(header)){version=v;header_size=header.size();break;}
     }

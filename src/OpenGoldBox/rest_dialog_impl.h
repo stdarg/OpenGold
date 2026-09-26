@@ -1,6 +1,7 @@
 // One implementation for the game and demo; the host supplies rest_text().
 #include "godot_nodes.h"
 #include "spell_choice_controls.h"
+#include "training_replacement_controls.h"
 #include <godot_cpp/classes/option_button.hpp>
 #include <godot_cpp/classes/popup_menu.hpp>
 #ifndef N_
@@ -13,6 +14,8 @@ void RolfTourView::setup_rest()
     spells->get_node<OptionButton>("Replace")->connect("item_selected",callable_mp(this,&RolfTourView::rest_spell_replaced));
     spells->get_node<OptionButton>("With")->connect("item_selected",callable_mp(this,&RolfTourView::rest_spell_replaced));
     spells->connect("window_input",callable_mp(this,&RolfTourView::rest_spell_input));
+    auto* training=presentation::setup_training_replacement(*this,callable_mp(this,&RolfTourView::rest_training_keep),callable_mp(this,&RolfTourView::rest_training_apply),rest_text);
+    training->connect("window_input",callable_mp(this,&RolfTourView::rest_training_input));
     auto owned=presentation::make_node<Window>();owned->set_name("RestDialog");
     owned->set_title(rest_text(N_("Rest")));owned->set_size(Vector2i(720,640));owned->set_min_size(Vector2i(720,640));
     owned->set_flag(Window::FLAG_RESIZE_DISABLED,true);owned->set_transient(true);owned->set_exclusive(true);owned->hide();
@@ -53,8 +56,8 @@ void RolfTourView::rest_selected(std::int64_t)
 }
 void RolfTourView::refresh_rest()
 {
-    refresh_rest_spells();
-    if(campaign_&&campaign_->state().spell_rest){get_node<Window>("RestDialog")->hide();return;}
+    refresh_rest_spells();refresh_rest_training();
+    if(campaign_&&(campaign_->state().spell_rest||campaign_->state().training_rest)){get_node<Window>("RestDialog")->hide();return;}
     auto* w=get_node<Window>("RestDialog");if(!campaign_||!session_||campaign_->in_combat()||(!session_->can_leave()&&!(session_->pending_encounter()&&campaign_->state().short_rest))){w->hide();return;}
     const auto& state=campaign_->state();const bool spending=state.short_rest.has_value(),retained=state.rest_activity.has_value();
     auto* kind=w->get_node<OptionButton>("Kind");kind->set_disabled(spending||retained);
@@ -372,3 +375,27 @@ void RolfTourView::rest_spell_replaced(std::int64_t){
 void RolfTourView::rest_spell_apply(){try{campaign_->choose_spells(rest_spell_member_,rest_spell_choice_,true);rest_spell_member_=0;if(session_)session_->commit_rest_recovery();refresh();}catch(const std::exception& e){get_node<Label>("RestSpells/Error")->set_text(rest_text(e.what()));}}
 void RolfTourView::rest_spell_keep(){try{if(rest_spell_member_)campaign_->keep_rest_spells(rest_spell_member_);rest_spell_member_=0;if(session_)session_->commit_rest_recovery();refresh();}catch(const std::exception& e){get_node<Label>("RestSpells/Error")->set_text(rest_text(e.what()));}}
 void RolfTourView::rest_spell_input(const Ref<InputEvent>& event){const Ref<InputEventKey> key=event;if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==KEY_ESCAPE){get_node<Window>("RestSpells")->set_input_as_handled();rest_spell_keep();}}
+
+void RolfTourView::refresh_rest_training(){
+    auto* w=get_node<Window>("RestTraining");
+    if(!campaign_||campaign_->in_combat()||campaign_->state().spell_rest||!campaign_->state().training_rest){w->hide();rest_training_member_=0;return;}
+    const auto& rest=*campaign_->state().training_rest;const auto id=rest.members.front();
+    const auto& sheet=campaign_->member(id).character.sheet();const auto options=campaign_->rule_module().rest_training_options(sheet);
+    if(!options)throw std::runtime_error("Missing rest training options");
+    if(rest_training_member_!=id||rest_training_ticket_!=rest.ticket){rest_training_member_=id;rest_training_ticket_=rest.ticket;rest_training_choice_=options->selected;}
+    w->set_title(rest_text(options->group.label));w->get_node<Label>("Title")->set_text(presentation::training_string(sheet.name)+" / "+rest_text(options->group.label));
+    presentation::refresh_training_replacement(*w,*options,rest_training_choice_,callable_mp(this,&RolfTourView::rest_training_toggled),rest_text);
+    try{(void)campaign_->preview_rest_training(rest.ticket,id,rest_training_choice_);w->get_node<Button>("Apply")->set_disabled(false);w->get_node<Label>("Error")->set_text({});}
+    catch(const std::exception& e){w->get_node<Button>("Apply")->set_disabled(true);w->get_node<Label>("Error")->set_text(rest_text(e.what()));}
+    if(!w->is_visible()&&is_visible_in_tree()){get_node<Window>("RestDialog")->hide();w->popup_centered();w->get_node<Button>("Cancel")->grab_focus();}
+}
+void RolfTourView::rest_training_toggled(bool selected,String option){
+    const std::string id=option.utf8().get_data();
+    if(selected){if(std::find(rest_training_choice_.begin(),rest_training_choice_.end(),id)==rest_training_choice_.end())rest_training_choice_.push_back(id);}else std::erase(rest_training_choice_,id);
+    refresh_rest_training();
+}
+void RolfTourView::rest_training_apply(){try{campaign_->replace_rest_training(rest_training_ticket_,rest_training_member_,rest_training_choice_);rest_training_member_=0;if(session_)session_->commit_rest_recovery();refresh();}catch(const std::exception& e){get_node<Label>("RestTraining/Error")->set_text(rest_text(e.what()));}}
+void RolfTourView::rest_training_keep(){try{if(rest_training_member_)campaign_->keep_rest_training(rest_training_ticket_,rest_training_member_);rest_training_member_=0;if(session_)session_->commit_rest_recovery();refresh();}catch(const std::exception& e){get_node<Label>("RestTraining/Error")->set_text(rest_text(e.what()));}}
+void RolfTourView::rest_training_input(const Ref<InputEvent>& event){const Ref<InputEventKey> key=event;if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==KEY_ESCAPE){get_node<Window>("RestTraining")->set_input_as_handled();rest_training_keep();}}
+
+#include "mastery_rest_view_checks.h"

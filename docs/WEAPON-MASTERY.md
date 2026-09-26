@@ -169,3 +169,64 @@ this proposal as approval.
 
 Sources: SRD5.2.1 p90 (Graze) and official
 [Simultaneous Effects](https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary#SimultaneousEffects).
+
+### 60-minute checkpoint —04:56:24 UTC
+
+Elapsed60m21s from03:56:03. Acquisition committed/pushed as `5b978df`; no original
+issue closed. Rest replacement transaction, history replay, conditional campaign18
+and approved dialog implemented in WIP. Native five-class PC/NPC tests pass,
+including exact prior acquisition-writer replay and later training/advancement.
+Combat effects remain unimplemented; MASTERY-5/6 await answers. No scope added.
+Live dialog verification exposed checkbox focus loss during list refresh; one
+test-timing adjustment did not fix it. The identified cause is hiding/re-showing
+all checkboxes during refresh; fix only hides obsolete options. Rebuild and
+keyboard verification next. Native API change necessitates final integrated
+rebuild; current rest build logs `/tmp/mastery-rest-*-build.log`. No measured
+token/cost savings claimed; no new agents/tasks or changed model settings.
+
+### Long Rest implementation evidence (WIP)
+
+Generic RulesModule replacement options/outcomes now drive per-member completed
+rest windows. SRD owns eligible kinds, capacity, source preservation and limits.
+Core records level/rest-session edits, replays them between advancement records,
+and blocks exploration until choices finish. Campaign18 is conditional on a
+pending training window or replacement history; older1–17 formats remain accepted.
+Review Training adds missing unrelated choices without reverting replacements.
+Keeping current consumes the same one-use window and is recorded in history.
+
+Native `mastery_rest_checks.h` passes for all five class routes and PC/NPC owners:
+Short/interrupted/ineligible/dead/reserve exclusions, stale/duplicate/invalid
+commands, atomic previews, preservation, repeated rests, level1-to4 replay and
+Review Training after replacement. The actual prior acquisition writer fixture
+round-trips byte-for-byte; see fixture provenance. Final native regression awaits
+the50-target rebuild, `/tmp/mastery-rest-native-build.log`.
+
+The shared700×670 dialog and `mastery_rest_view_tests.gd` pass mainEN/ES and demoEN
+at1120×800 and1920×1080. Five eligible members follow Wizard spell choices;
+keyboard selection/Apply/Escape, sequential windows and pending-codec reload pass.
+Screenshots are `/tmp/mastery-rest-{main,demo}-{en,es}-{1120,1920}/`; only main has
+Spanish runs. Initial runs exposed a checkbox focus bug (fixed by retaining
+visible controls) and test-startup overrides of locale/size (fixed in the script).
+Corrected minimum-size Spanish screenshot was inspected; dimensions verified.
+Existing full rest-control acceptance passes (`/tmp/mastery-rest-neighbor.log`).
+976 localized messages and diff validation pass. These tests verify pending save
+serialization, not yet an accessible Save button inside the modal.
+
+**MASTERY-7 (pending control approval).** The approved exclusive modal covers the
+existing Save game control. To make unresolved choices saveable through the
+player UI, place a standard Save game button at its bottom left (x24,y614,w234,
+h40), beside Keep current/Apply. Reuse the existing camp/inn save dialog; return
+to the same pending mastery choice after saving or Cancel, with keyboard access.
+Saving must not apply or discard the choice; loading retains its entitlement.
+No combat saving. This is needed to complete acceptance row10 and MASTERY-2's
+pending-save behavior; await approval before adding this control.
+
+Rest verification recorded05:04:27 UTC. Final rebuilt native suite **51/51 PASS**,
+4.03s, `/tmp/mastery-rest-native-final.log`. The only initial native regression
+failure was the Temporary HP test attempting combat while a new rest choice was
+pending; it now verifies rejection, explicitly keeps training, then completes its
+original pool-preservation assertions. No production behavior weakened. Corrected
+UI runs and existing rest controls pass as described above. Scope/architecture
+review confirms rule outcomes stay in the static SRD implementation and Core/UI
+only orchestrate/present them. Checkpoint commits do not close #60/#85; combat and
+pending Save control approval remain outstanding.

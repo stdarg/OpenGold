@@ -15,6 +15,8 @@ unsigned RulesModule::experience_for_level(unsigned) const
 { throw std::runtime_error("This rules module does not support advancement"); }
 void RulesModule::apply_spell_choices(CharacterSheet&,const SpellChoices&,SpellChoiceContext,bool) const
 {throw std::runtime_error("Spell choices are not supported");}
+TrainingChoices RulesModule::replace_rest_training(CharacterSheet&,std::span<const std::string>) const
+{throw std::runtime_error("Long Rest training replacement is not supported");}
 bool RulesModule::advance_character(CharacterSheet&, VitalState&) const
 { throw std::runtime_error("This rules module does not support advancement"); }
 bool RulesModule::advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const

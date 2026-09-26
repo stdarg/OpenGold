@@ -175,7 +175,7 @@ void CharacterCreationView::refresh_party()
     if(state.roster.empty())for(const char* name:{"PartyPanel/Portrait","PartyPanel/ReadySprite","PartyPanel/ActionSprite"})get_node<TextureRect>(name)->set_texture({});
     auto* spellbook=get_node<Button>("PartyPanel/Spellbook");
     spellbook->set_visible(!state.roster.empty()&&campaign_->rule_module().spell_access(state.roster[roster_index_].character.sheet()).spellbook_choices>0);
-    spellbook->set_disabled(campaign_->in_combat()||state.rest_activity.has_value()||state.short_rest.has_value()||state.spell_rest.has_value());
+    spellbook->set_disabled(campaign_->in_combat()||state.rest_activity.has_value()||state.short_rest.has_value()||state.spell_rest.has_value()||state.training_rest.has_value());
     auto* review=get_node<Button>("PartyPanel/ReviewTraining");
     review->set_visible(!state.roster.empty()&&!state.roster[roster_index_].character.sheet().training.complete);
     review->set_disabled(campaign_->in_combat());

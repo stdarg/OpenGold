@@ -1942,6 +1942,24 @@ public:
         if(sheet.character_class=="Fighter"&&sheet.level>=4)return {detail::mastery_options("fighter",4,sheet.grants)};
         return {};
     }
+    std::optional<TrainingReplacementOptions> rest_training_options(const CharacterSheet& sheet) const override {
+        const auto klass=detail::grant_source_id(sheet.character_class);
+        auto group=detail::mastery_options(klass,1);if(!group.count)return {};
+        if(sheet.level>=4)group.count+=detail::mastery_options(klass,4).count;
+        const auto choices=detail::mastery_choices(sheet.grants,klass,sheet.level);
+        std::vector<std::string> selected;for(const auto& [source,values]:choices)selected.insert(selected.end(),values.begin(),values.end());
+        if(selected.size()!=group.count)return {}; // Missing historical choices stay pending for Review Training.
+        group.id="weapon_mastery";
+        return TrainingReplacementOptions{std::move(group),std::move(selected),detail::mastery_replacements(klass)};
+    }
+    TrainingChoices replace_rest_training(CharacterSheet& sheet,std::span<const std::string> selected) const override {
+        if(!rest_training_options(sheet))throw std::runtime_error("No completed Weapon Mastery training to replace");
+        const auto klass=detail::grant_source_id(sheet.character_class);auto candidate=sheet;
+        candidate.grants=detail::replace_masteries(sheet.grants,klass,sheet.level,selected);
+        candidate.training=detail::training_profile(candidate.grants,klass,detail::grant_source_id(candidate.background),candidate.level,candidate.scores);
+        auto choices=detail::mastery_choices(candidate.grants,klass,candidate.level);
+        (void)character_profile(candidate,{});sheet=std::move(candidate);return choices;
+    }
     AdvancementOptions advancement_options(const CharacterSheet& sheet) const override
     {
         if(sheet.level>=4||(sheet.character_class!="Fighter"&&sheet.character_class!="Cleric"&&sheet.character_class!="Wizard"&&sheet.character_class!="Rogue"&&sheet.character_class!="Paladin"&&sheet.character_class!="Ranger"))return {};

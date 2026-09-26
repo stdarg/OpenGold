@@ -808,3 +808,17 @@ No new mastery behavior is claimed.
 | `combat-v22-mastery-light-qualified.save` | `679f703fb77b89d6605ad1a2f76b2fe4dc04b23d3e014a6158ec02d61841f5d0` |
 | `combat-v22-mastery-light-second.save` | `f1602842a8d4a35a99a713d2dfce4bef3e660838e7fd606e2f6370a2e9a47a24` |
 | `combat-v22-mastery-light-settled.save` | `9e5f26067519e30523607b39db1fdec55bd0224d6fffd20fe203232843a661eb` |
+
+### Mastery acquisition before rest replacement — actual 0.6.56 writer
+
+`campaign-v15-mastery-acquired-before.ogs` is the unchanged main-game Review
+Training output `/tmp/mastery-review-main.ogs`, captured during acquisition
+verification before Long Rest replacement edits. Its production writer is the
+acquisition tree committed as `5b978df`; that commit's later regression changes
+only adjusted tests. MainEN/ES/demoEN UI outputs were independently compared with
+native results before this fixture was retained. No current replacement writer
+was used to synthesize an older format.
+
+SHA-256: `182d59edb78ae4e61d32033a8e24b13baf7177991a3324cc1f22e65deaf63431`.
+`mastery_rest_checks.h` verifies exact canonical re-encoding with no invented
+replacement history/window, including acquired masteries and prior advancement.
