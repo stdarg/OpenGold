@@ -96,7 +96,8 @@ public:
     MemberId recruit(std::string source,Character converted,unsigned morale=100);
     void rejoin(MemberId id);
     void remove(MemberId id);
-    void equip(MemberId id,std::uint64_t item);
+    [[nodiscard]] std::vector<rules::EquipmentChoice> equipment_choices(MemberId id,std::uint64_t item) const;
+    void equip(MemberId id,std::uint64_t item,rules::EquipmentOperation operation=rules::EquipmentOperation::equip);
     void unequip(MemberId id,std::uint64_t item);
     void set_grip(MemberId id,unsigned hands);
     [[nodiscard]] rules::EquipmentInfo equipment_info(MemberId id,std::uint64_t item) const;

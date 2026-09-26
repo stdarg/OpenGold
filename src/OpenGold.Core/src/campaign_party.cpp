@@ -109,8 +109,20 @@ rules::AbilityCheckModifier CampaignParty::ability_check(MemberId id,unsigned ab
         if(!item)throw std::runtime_error("Equipped item is missing");keys.push_back(item->get().definition_id);}
     return rules_->ability_check(m.character.sheet(),keys,ability,skill,tool,m.equipment);
 }
-void CampaignParty::equip(MemberId id,std::uint64_t item)
-{change_equipment(id,item,rules::EquipmentOperation::equip);}
+std::vector<rules::EquipmentChoice> CampaignParty::equipment_choices(MemberId id,std::uint64_t item) const
+{
+    const auto& m=member(id);const auto selected=m.character.inventory().find(item);
+    if(!selected)throw std::runtime_error("Unknown item");
+    if(selected->get().quantity==1&&std::find(m.equipped.begin(),m.equipped.end(),item)!=m.equipped.end())return {};
+    std::vector<std::string> keys;for(auto key:m.equipped)keys.push_back(m.character.inventory().find(key)->get().definition_id);
+    keys.push_back(selected->get().definition_id);
+    return rules_->equipment_choices(m.character.sheet(),keys,m.equipment,keys.size()-1);
+}
+void CampaignParty::equip(MemberId id,std::uint64_t item,rules::EquipmentOperation operation)
+{
+    if(operation==rules::EquipmentOperation::unequip)throw std::runtime_error("Invalid equip operation");
+    change_equipment(id,item,operation);
+}
 void CampaignParty::unequip(MemberId id,std::uint64_t item)
 {change_equipment(id,item,rules::EquipmentOperation::unequip);}
 void CampaignParty::change_equipment(MemberId id,std::uint64_t item,rules::EquipmentOperation operation)
@@ -119,19 +131,26 @@ void CampaignParty::change_equipment(MemberId id,std::uint64_t item,rules::Equip
     const auto found=std::find(candidates.begin(),candidates.end(),item);
     if(operation==rules::EquipmentOperation::equip&&found!=candidates.end())return;
     if(operation==rules::EquipmentOperation::unequip&&found==candidates.end())return;
-    const unsigned selected=operation==rules::EquipmentOperation::equip?candidates.size():found-candidates.begin();
-    if(operation==rules::EquipmentOperation::equip)candidates.push_back(item);
+    const unsigned selected=operation!=rules::EquipmentOperation::unequip?candidates.size():found-candidates.begin();
+    if(operation!=rules::EquipmentOperation::unequip)candidates.push_back(item);
     std::vector<std::string> keys;
     for(auto id:candidates){const auto entry=before.character.inventory().find(id);
         if(!entry)throw std::runtime_error("Unknown item");keys.push_back(entry->get().definition_id);}
     const auto plan=rules_->equipment_change(before.character.sheet(),keys,before.equipment,selected,operation);
+    auto inventory=before.character.inventory();auto sources=before.item_sources;bool inventory_changed=false;
+    if(plan.separate_selected_unit){
+        const auto unit=inventory.find(item)->get();
+        if(unit.quantity>1){inventory_changed=true;inventory.remove(item,1);candidates[selected]=inventory.add(unit.definition_id,unit.name,1,unit.original_type);
+            if(const auto source=sources.find(item);source!=sources.end())sources.emplace(candidates[selected],source->second);
+        }
+    }
     std::vector<std::uint64_t> next;next.reserve(plan.indices.size());
     for(auto index:plan.indices){
         if(index>=candidates.size()||std::find(next.begin(),next.end(),candidates[index])!=next.end())
             throw std::runtime_error("Invalid equipment result from rules module");
         next.push_back(candidates[index]);
     }
-    auto& target=edit(id);target.equipped=std::move(next);target.equipment=plan.equipment;
+    auto& target=edit(id);if(inventory_changed){target.character.inventory()=std::move(inventory);target.item_sources=std::move(sources);}target.equipped=std::move(next);target.equipment=plan.equipment;
 }
 void CampaignParty::set_grip(MemberId id,unsigned hands)
 {

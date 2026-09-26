@@ -74,12 +74,14 @@ struct EquipmentState {
     unsigned weapon_hands{};
     bool operator==(const EquipmentState&) const = default;
 };
-enum class EquipmentOperation { equip, unequip };
+enum class EquipmentOperation { equip, unequip, equip_main, equip_other };
+struct EquipmentChoice { EquipmentOperation operation; Message label, explanation; bool available{}; };
 // Indices reference the supplied candidates, not inventory IDs. The module
 // determines the resulting loadout; Core maps indices back to owned items.
 struct EquipmentChange {
     std::vector<unsigned> indices;
     EquipmentState equipment;
+    bool separate_selected_unit{};
 };
 struct GripOption { unsigned hands{}; Message label; bool available{true}; };
 struct CharacterProfile {
@@ -88,6 +90,7 @@ struct CharacterProfile {
     std::string description;
     int movement_feet{}, melee_attack_bonus{};
     std::string item_modifiers, spell_modifiers;
+    std::vector<Message> equipment_positions;
     bool strength_dexterity_disadvantage{};
     std::vector<Message> item_messages, spell_messages;
     EquipmentState equipment;
@@ -300,6 +303,7 @@ public:
     [[nodiscard]] virtual CharacterProfile character_profile(const CharacterSheet&, std::span<const std::string>, EquipmentState equipment={}) const;
     [[nodiscard]] virtual EquipmentState migrate_equipment(std::span<const std::string>) const {return {};}
     [[nodiscard]] virtual EquipmentInfo equipment_info(std::string_view) const {return {};}
+    [[nodiscard]] virtual std::vector<EquipmentChoice> equipment_choices(const CharacterSheet&, std::span<const std::string>, EquipmentState, unsigned) const {return {};}
     [[nodiscard]] virtual EquipmentChange equipment_change(const CharacterSheet&,
         std::span<const std::string> candidates, EquipmentState, unsigned selected, EquipmentOperation) const;
     [[nodiscard]] virtual SpellAccess spell_access(const CharacterSheet&) const {return {};}

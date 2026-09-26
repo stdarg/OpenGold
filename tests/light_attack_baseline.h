@@ -118,4 +118,18 @@ void verify() {
         style_route_checks::random_state(*loading) == style_route_checks::random_state(*expected),
         "Separate Loading actions retain actual rolls, HP, resources and unused Bonus Action");
 }
+void write_hands_ui_fixture() {
+    if(const auto* dir=std::getenv("OPENGOLD_GAME_DIR");dir&&*dir){auto baseline=party();CampaignParty p(module());p.restore(baseline.checkpoint());
+        write_campaign_file(std::filesystem::path(OPENGOLD_BINARY_DIR)/"hands-ui.ogs",encode_campaign(p,nullptr,campaign_asset_identity(dir)));}
+}
+void verify_hands_ui(const std::filesystem::path& path) {
+    const auto* dir=std::getenv("OPENGOLD_GAME_DIR");check(dir&&*dir,"Hand UI comparison requires game assets");
+    auto baseline=party();CampaignParty p(module());p.restore(baseline.checkpoint());for(auto id:{1u,2u}){
+        p.equip(id,2,EquipmentOperation::equip_main);p.equip(id,2,EquipmentOperation::equip_other);
+    }
+    const auto assets=campaign_asset_identity(dir);auto rules=module();
+    CampaignParty actual(module());actual.restore(decode_campaign(read_campaign_file(path),*srd5::character_rules(),*rules,assets,nullptr).party);
+    auto expected=p.checkpoint();expected.selected=actual.state().selected;p.restore(std::move(expected));
+    check(encode_campaign(actual,nullptr,assets)==encode_campaign(p,nullptr,assets),"UI hand choices exactly match native equipment, inventory, wounds and resources");
+}
 }

@@ -93,7 +93,7 @@ struct Definition {
     std::array<int,6> saves{};
     unsigned weapon_hands{};
     int versatile_sides{};
-    bool shield{};
+    bool shield{},other_weapon{};
     int hit_die{},constitution{},rushes{},surges{},arcane{};
     bool dwarf{},cunning{},tactical_mind{},champion{},great_weapon_fighting{};
     unsigned sneak_level{};
@@ -109,11 +109,11 @@ std::vector<GripOption> grip_options(const Definition& d)
 {
     if(!d.versatile_sides)return {};
     return {{1,{"One hand — {dice}",{{"dice","1d"+std::to_string(d.melee.sides)}}},true},
-        {2,{"Two hands — {dice}",{{"dice","1d"+std::to_string(d.versatile_sides)}}},!d.shield}};
+        {2,{"Two hands — {dice}",{{"dice","1d"+std::to_string(d.versatile_sides)}}},!d.shield&&!d.other_weapon}};
 }
 void validate_grip(const Definition& d,unsigned hands)
 {
-    if(d.versatile_sides?(hands!=1&&hands!=2)||(hands==2&&d.shield):hands!=d.weapon_hands)
+    if(d.versatile_sides?(hands!=1&&hands!=2)||(hands==2&&(d.shield||d.other_weapon)):hands!=d.weapon_hands)
         throw std::runtime_error("This grip is incompatible with the equipped weapon or shield.");
 }
 struct CombatDisplay {const char* type;const char* melee;const char* ranged;};
@@ -136,7 +136,7 @@ bool somatic_hand(const Definition& d)
     // Two-Handed/Versatile specifies hands when attacking (SRD p.90). A
     // weapon can be held in one hand while gesturing, retaining its attack
     // grip. A separate shield occupies the remaining hand; a wand is held too.
-    return !d.shield||!d.weapon_hands;
+    return (!d.shield&&!d.other_weapon)||!d.weapon_hands;
 }
 struct Actor : detail::LifeState {
     Participant source;
@@ -215,7 +215,8 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     std::istringstream in{std::string(bytes)};
     std::string magic,klass,race;std::array<int,6> scores{};unsigned count{};
     unsigned level=1,features=0,selected_spells=0;in>>magic;
-    const bool with_style_routes=magic=="PC36";
+    const bool with_hands=magic=="PC37";
+    const bool with_style_routes=magic=="PC36"||with_hands;
     const bool with_rogue=magic=="PC35"||with_style_routes;
     const bool with_choices=magic=="PC34"||with_rogue;
     const bool with_scholar=magic=="PC33"||with_choices;
@@ -287,7 +288,10 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
     if(equipment_override)d.equipment_keys.assign(equipment_override->begin(),equipment_override->end());
     for(const auto& key:d.equipment_keys){
         if(const auto* item=detail::weapon(key)){
-            if(weapon)throw std::runtime_error("Only one weapon may be equipped");weapon=true;d.weapon_label=item->label;d.finesse=item->finesse;d.ranged_weapon=item->ranged;
+            if(weapon){
+                if(!with_hands||d.other_weapon)throw std::runtime_error("Only two weapons may be equipped");
+                d.other_weapon=true;hands+=item->hands;continue;
+            }weapon=true;d.weapon_label=item->label;d.finesse=item->finesse;d.ranged_weapon=item->ranged;
             d.weapon_hands=magic!="PC5"&&magic!="PC6"&&magic!="PC7"&&magic!="PC8"&&magic!="PC9"&&!with_spells&&legacy_two_hands(key)?2:item->hands;
             d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
@@ -1620,7 +1624,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
@@ -1637,6 +1641,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     std::vector<Actor> actors;
     for (unsigned i = 0; i < count; ++i) {
         auto actor = read_checkpoint_actor(input, version, *content);
+        if(module_before(identity,{0,6,54})&&actor.source.character_profile.starts_with("PC37 "))throw std::runtime_error("Legacy checkpoint cannot contain two equipped weapons");
         if(module_before(identity,{0,6,53})&&actor.source.character_profile.starts_with("PC36 "))throw std::runtime_error("Legacy checkpoint cannot contain Fighting Style routes");
         if(module_before(identity,{0,6,52})&&(version>=21||actor.source.character_profile.starts_with("PC35 ")))throw std::runtime_error("Legacy checkpoint cannot contain Rogue attack profiles");
         if(module_before(identity,{0,6,51})&&actor.source.character_profile.starts_with("PC34 "))throw std::runtime_error("Legacy checkpoint cannot contain spell-choice profiles");
@@ -1780,7 +1785,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -2181,21 +2186,53 @@ public:
         if(detail::armor(key))return {EquipmentSlot::armor,0};
         return {};
     }
+    std::vector<EquipmentChoice> equipment_choices(const CharacterSheet& sheet,std::span<const std::string> candidates,
+        EquipmentState equipment,unsigned selected) const override
+    {
+        if(selected>=candidates.size())throw std::runtime_error("Unknown equipment candidate");
+        const auto* chosen=detail::weapon(candidates[selected]);
+        if(!chosen||chosen->hands!=1)return {};
+        std::vector<unsigned> held;for(unsigned i=0;i<candidates.size();++i)if(i!=selected&&detail::weapon(candidates[i]))held.push_back(i);
+        if(held.empty())return {};
+        std::vector<EquipmentChoice> result;
+        for(unsigned n=0;n<2;++n){
+            const auto op=n?EquipmentOperation::equip_other:EquipmentOperation::equip_main;
+            EquipmentChoice choice{op,{n?"Other hand — {item}":"Main hand — {item}",{{"item",n<held.size()?weapon_label(candidates[held[n]]):"Empty",true}}},{},true};
+            choice.explanation={"Equip {item} in this hand; replace its current weapon.",{{"item",weapon_label(candidates[selected]),true}}};
+            try{(void)equipment_change(sheet,candidates,equipment,selected,op);}
+            catch(const std::runtime_error& e){choice.available=false;choice.explanation={e.what(),{}};}
+            result.push_back(std::move(choice));
+        }
+        return result;
+    }
     EquipmentChange equipment_change(const CharacterSheet& sheet,std::span<const std::string> candidates,
         EquipmentState equipment,unsigned selected,EquipmentOperation operation) const override
     {
         if(selected>=candidates.size())throw std::runtime_error("Unknown equipment candidate");
         const auto slot=equipment_info(candidates[selected]).slot;
-        if(operation==EquipmentOperation::equip&&slot==EquipmentSlot::carried)
+        if(operation!=EquipmentOperation::unequip&&slot==EquipmentSlot::carried)
             throw std::runtime_error("This item is carried, not equipped");
         EquipmentChange result;result.equipment=slot==EquipmentSlot::weapon?EquipmentState{}:equipment;
-        std::vector<std::string> gear;
-        for(unsigned i=0;i<candidates.size();++i){
+        const bool hand=operation==EquipmentOperation::equip_main||operation==EquipmentOperation::equip_other;
+        if(hand){
+            const auto* weapon=detail::weapon(candidates[selected]);
+            if(!weapon||weapon->hands!=1)throw std::runtime_error("Choose a one-handed weapon");
+            std::vector<unsigned> held;
+            for(unsigned i=0;i<candidates.size();++i)if(i!=selected){
+                if(detail::weapon(candidates[i]))held.push_back(i);else result.indices.push_back(i);
+            }
+            if(held.empty()||held.size()>2)throw std::runtime_error("Invalid equipped hand selection");
+            result.indices.push_back(operation==EquipmentOperation::equip_main?selected:held[0]);
+            if(operation==EquipmentOperation::equip_other)result.indices.push_back(selected);
+            else if(held.size()>1)result.indices.push_back(held[1]);
+            result.separate_selected_unit=true;
+        }else for(unsigned i=0;i<candidates.size();++i){
             if(operation==EquipmentOperation::unequip&&i==selected)continue;
             if(operation==EquipmentOperation::equip&&slot==EquipmentSlot::weapon&&i!=selected&&
                 equipment_info(candidates[i]).slot==EquipmentSlot::weapon)continue;
-            result.indices.push_back(i);gear.push_back(candidates[i]);
+            result.indices.push_back(i);
         }
+        std::vector<std::string> gear;for(auto i:result.indices)gear.push_back(candidates[i]);
         (void)character_profile(sheet,gear,result.equipment);
         return result;
     }
@@ -2240,7 +2277,7 @@ public:
             else if(spell=="blindness"&&(sheet.character_class=="Wizard"||sheet.character_class=="Cleric")&&sheet.level>=3)spells|=32;
             else throw std::runtime_error("Unsupported prepared spell");
         }
-        std::ostringstream out;out<<((features&8)||((sheet.character_class=="Paladin"||sheet.character_class=="Ranger")&&sheet.level>1)||std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.source_id=="class:fighter:fighting_style"&&g.level>1;})?"PC36 ":sheet.character_class=="Rogue"?"PC35 ":sheet.character_class=="Wizard"&&(std::none_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.id=="spell:magic_missile"&&g.level==1;})||std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return detail::is_spell_grant(g)&&g.choices.contains("learned_at");}))?"PC34 ":std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.source_id=="class:wizard:scholar";})?"PC33 ":detail::has_grant(sheet.grants,"feature:arcane_recovery")?"PC32 ":detail::has_grant(sheet.grants,"subclass:champion")?"PC31 ":detail::has_grant(sheet.grants,"feature:tactical_mind")?"PC30 ":(spells&2048)?"PC29 ":"PC28 ")<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
+        std::ostringstream out;out<<(std::count_if(gear.begin(),gear.end(),[](const auto& key){return detail::weapon(key)!=nullptr;})>1?"PC37 ":((features&8)||((sheet.character_class=="Paladin"||sheet.character_class=="Ranger")&&sheet.level>1)||std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.source_id=="class:fighter:fighting_style"&&g.level>1;})?"PC36 ":sheet.character_class=="Rogue"?"PC35 ":sheet.character_class=="Wizard"&&(std::none_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.id=="spell:magic_missile"&&g.level==1;})||std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return detail::is_spell_grant(g)&&g.choices.contains("learned_at");}))?"PC34 ":std::any_of(sheet.grants.begin(),sheet.grants.end(),[](const auto& g){return g.source_id=="class:wizard:scholar";})?"PC33 ":detail::has_grant(sheet.grants,"feature:arcane_recovery")?"PC32 ":detail::has_grant(sheet.grants,"subclass:champion")?"PC31 ":detail::has_grant(sheet.grants,"feature:tactical_mind")?"PC30 ":(spells&2048)?"PC29 ":"PC28 "))<<sheet.level<<' '<<features<<' '<<spells<<' '<<std::quoted(sheet.character_class)<<' '<<std::quoted(sheet.race);
         for(auto score:sheet.scores)out<<' '<<score;
         for(auto modifier:sheet.hit_point_modifiers)out<<' '<<modifier;
         out<<' '<<gear.size();for(const auto& item:gear)out<<' '<<std::quoted(item);
@@ -2251,6 +2288,7 @@ public:
         CharacterProfile result{data,d.hp,d.ac,"Level 1-4 subset: HP, selected feats, supported prepared spells and level-one/two slots. Additional class/subclass and species features remain unavailable.",d.speed,d.melee_bonus};
         result.strength_dexterity_disadvantage=d.str_dex_disadvantage;
         result.equipment={d.weapon_hands};result.grips=grip_options(d);
+        unsigned hand_index=0;for(const auto& key:gear)result.equipment_positions.push_back({detail::weapon(key)?(hand_index++?"Other hand":"Main hand"):"Equipped",{}});
         if(d.versatile_sides){
             const auto sides=d.weapon_hands==2?d.versatile_sides:d.melee.sides;
             result.item_messages.push_back({"Weapon grip: {hands} hands; melee damage 1d{sides} + ability modifier.",{{"hands",std::to_string(d.weapon_hands)},{"sides",std::to_string(sides)}}});
@@ -2386,7 +2424,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.53",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.54",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

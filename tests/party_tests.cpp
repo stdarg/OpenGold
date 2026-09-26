@@ -143,6 +143,45 @@ void equipment_rule_boundary()
     check(party.member(id).equipment.weapon_hands==5&&party.member(id).vitals==vitals,
         "Existing equip/unequip no-ops preserve state");
 }
+void two_weapon_equipment()
+{
+    for(bool recruited:{false,true}){
+        CampaignParty party(module());auto c=character("fighter","Hands");
+        const auto sword=c.inventory().add("longsword","Longsword"),daggers=c.inventory().add("dagger","Dagger",3,8);
+        const auto shield=c.inventory().add("shield","Shield"),great=c.inventory().add("greatsword","Greatsword");
+        const auto id=recruited?party.recruit("hands:npc",c):party.add_pc(c);const auto vitals=party.member(id).vitals;
+        auto sourced=party.checkpoint();auto provenance=item(8);provenance.stored.stack_size=3;
+        sourced.roster.front().item_sources.emplace(daggers,provenance);party.restore(std::move(sourced));
+        party.equip(id,sword);party.set_grip(id,2);
+        const auto unchanged=encode_campaign(party,nullptr,"hands");
+        const auto choices=party.equipment_choices(id,daggers);
+        check(choices.size()==2&&choices[0].available&&choices[1].available,"Both hand choices are rules-provided");
+        check(unchanged==encode_campaign(party,nullptr,"hands"),"Querying hand choices has no effects");
+        party.equip(id,daggers,EquipmentOperation::equip_other);
+        const auto held=party.member(id).equipped;const auto unit=held.back();
+        check(held.size()==2&&held[0]==sword&&unit!=daggers&&party.member(id).character.inventory().find(unit)->get().quantity==1&&
+            party.member(id).character.inventory().find(daggers)->get().quantity==2,"Second hand separates one actual stack unit");
+        check(party.member(id).item_sources.contains(unit)&&party.member(id).item_sources.at(unit).stored.type==8,
+            "A split equipped unit retains the original item provenance");
+        const auto profile=party.profile(id);
+        check(profile.data.starts_with("PC37 ")&&profile.equipment.weapon_hands==1&&!profile.grips[1].available&&
+            profile.equipment_positions[0].source=="Main hand"&&profile.equipment_positions[1].source=="Other hand","Dual weapons use one hand each and report both positions");
+        rejects([&]{party.set_grip(id,2);});rejects([&]{party.equip(id,shield);});
+        check(party.member(id).equipped==held&&party.member(id).vitals==vitals,"Illegal shield/grip preserves loadout and resources");
+        const auto saved=encode_campaign(party,nullptr,"hands");CampaignParty loaded(module());
+        loaded.restore(decode_campaign(saved,*srd5::character_rules(),*module(),"hands",nullptr).party);
+        check(encode_campaign(loaded,nullptr,"hands")==saved,"PC/NPC dual-hand campaign save roundtrips exactly");
+        party.equip(id,daggers,EquipmentOperation::equip_main);
+        check(party.member(id).equipped[0]!=unit&&party.member(id).equipped[1]==unit&&party.member(id).character.inventory().find(daggers)->get().quantity==1,
+            "Identical weapons in separate hands remain distinct physical units");
+        party.equip(id,great);const auto blocked=party.equipment_choices(id,daggers);
+        check(blocked[0].available&&!blocked[1].available,"Other hand is disabled for a two-handed main weapon");
+        const auto before=encode_campaign(party,nullptr,"hands");rejects([&]{party.equip(id,daggers,EquipmentOperation::equip_other);});
+        check(encode_campaign(party,nullptr,"hands")==before,"Failed hand operation does not split or consume inventory");
+        party.equip(id,daggers);party.equip(id,shield);const auto another=party.member(id).character.inventory().items().front().id;
+        check(!party.equipment_choices(id,another)[1].available,"Shield blocks the additional weapon");
+    }
+}
 void party_combat_appearance()
 {
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
@@ -1105,6 +1144,6 @@ void original_loot()
 }
 int main()
 {
-    try{equipment_rule_boundary();combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();interrupted_rest_victory();std::cout<<"Party integration tests passed\n";return 0;}
+    try{two_weapon_equipment();equipment_rule_boundary();combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();interrupted_rest_victory();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

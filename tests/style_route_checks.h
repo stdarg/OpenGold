@@ -67,7 +67,8 @@ void run(){
         for(unsigned level=2;level<=4;++level){auto choice=p.default_advancement(id);if(level==2)choice.fighting_style=std::string_view(klass)=="fighter"&&std::string_view(style)=="defense"?"archery":style;p.advance(id,choice);
             auto actors=p.participants();actors.front().cell={1,1};actors.push_back({99,"target","Target",1,{2,1}});auto fight=rules->create({{8,8,std::vector<std::uint8_t>(64)},actors},13);while(fight->snapshot().actor!=id)act(*fight,"end");act(*fight,"melee");if(fight->snapshot().savage_attack_choice)act(*fight,"savage_skip");if(fight->snapshot().free_movement)act(*fight,"end");p.begin_combat();p.apply_combat(fight->snapshot());p.end_combat();}
         const auto saved=encode_campaign(p,nullptr,"style-routes");check(saved.starts_with("OPENGOLD-CAMPAIGN 17\n"),"Actual style history selects version17");CampaignParty restored(rogue_attack_checks::rules_module());restored.restore(decode_campaign(saved,*creation,*rules,"style-routes",nullptr).party);check(encode_campaign(restored,nullptr,"style-routes")==saved,"All class/ownership histories replay exactly");
-        rejects([&]{(void)decode_campaign(corrupt(saved,"0.6.53","0.6.52"),*creation,*rules,"style-routes",nullptr);});
+        const auto legacy=corrupt(saved,rules->identity().version,"0.6.52");
+        rejects([&]{(void)decode_campaign(legacy,*creation,*rules,"style-routes",nullptr);});
         check(bool(restored.rest(RestKind::short_rest)),"Style character Short Rest");restored.finish_short_rest(restored.state().short_rest->ticket);check(bool(restored.rest(RestKind::long_rest)),"Style character Long Rest");
     }
 

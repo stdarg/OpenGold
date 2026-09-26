@@ -113,7 +113,7 @@ CombatBodySelection CombatBodyCatalog::choose(std::span<const CombatEquipment> e
                 else if(item.definition_id=="longbow")type=43;
                 else if(item.definition_id=="shortbow")type=44;
             }
-            if(std::any_of(options.begin(),options.end(),[&](const auto& option){return option.original_type==type;}))
+            if(!weapon&&std::any_of(options.begin(),options.end(),[&](const auto& option){return option.original_type==type;}))
                 {weapon=&item;weapon_type=type;}
         }
     }

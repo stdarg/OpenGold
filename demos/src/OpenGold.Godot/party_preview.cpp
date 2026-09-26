@@ -124,7 +124,12 @@ void CharacterCreationView::refresh_party()
         roster_index_=std::min(roster_index_,state.roster.size()-1);list->select(roster_index_);
         const auto& m=state.roster[roster_index_];
         sheet=sheet_text(m.character,&m).utf8().get_data();
-        for(const auto& item:m.character.inventory().items())items->add_item(gs(std::string(std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?"Equipped / ":"")+item.name+" x"+std::to_string(item.quantity)));
+        const auto profile=campaign_->profile(m.id);
+        for(const auto& item:m.character.inventory().items()){
+            const auto found=std::find(m.equipped.begin(),m.equipped.end(),item.id);String prefix;
+            if(found!=m.equipped.end())prefix=gs(profile.equipment_positions.at(found-m.equipped.begin()).source)+" / ";
+            items->add_item(prefix+gs(item.name)+" x"+gs(std::to_string(item.quantity)));
+        }
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         for(unsigned pose=0;pose<2;++pose){
             const auto icon=art_->icon(m.character.appearance(),pose!=0);PackedByteArray rgba;rgba.resize(icon.rgba.size());std::copy(icon.rgba.begin(),icon.rgba.end(),rgba.ptrw());
@@ -158,7 +163,7 @@ void CharacterCreationView::party_action(int action)
         if(action==6||action==10){const auto selection=get_node<ItemList>("PartyPanel/Inventory")->get_selected_items();
             if(selection.is_empty())throw std::runtime_error("Select an inventory item first");
             const auto items=campaign_->member(id).character.inventory().items();const auto selected=items[selection[0]].id;
-            if(action==6){campaign_->equip(id,selected);equipment_notice=gs("Equipped. "+srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
+            if(action==6){if(open_equipment_choice(id,selected))return;campaign_->equip(id,selected);equipment_notice=gs("Equipped. "+srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
         if(action==7||action==8){
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));

@@ -160,7 +160,11 @@ void CharacterCreationView::refresh_party()
         sheet=sheet_text(m.character,&m).utf8().get_data();
         const auto profile=campaign_->profile(m.id);
         presentation::refresh_grip(*get_node<OptionButton>("PartyPanel/Grip"),profile.equipment,profile.grips);
-        for(const auto& item:m.character.inventory().items())items->add_item((std::find(m.equipped.begin(),m.equipped.end(),item.id)!=m.equipped.end()?i18n::text("Equipped / "):String())+i18n::format("{item} x{quantity}",{{"item",i18n::text(item.name)},{"quantity",item.quantity}}));
+        for(const auto& item:m.character.inventory().items()){
+            const auto found=std::find(m.equipped.begin(),m.equipped.end(),item.id);String prefix;
+            if(found!=m.equipped.end())prefix=i18n::text(profile.equipment_positions.at(found-m.equipped.begin()).source)+" / ";
+            items->add_item(prefix+i18n::text(item.name)+" x"+gs(std::to_string(item.quantity)));
+        }
         get_node<TextureRect>("PartyPanel/Portrait")->set_texture(portrait_texture(m.character.appearance(),m.character.creation_data()));
         const auto resolved=por::resolve_combat_appearance(m,*body_catalog_);
         for(unsigned pose=0;pose<2;++pose){
@@ -187,7 +191,10 @@ void CharacterCreationView::equipment_art_check()
     const auto press=[&](const char* path){get_node<Button>(path)->emit_signal("pressed");
         if(!error_.is_empty())throw std::runtime_error(error_.utf8().get_data());};
     const auto gear=[&](unsigned index,bool equip){get_node<ItemList>("PartyPanel/Inventory")->select(index);
-        press(equip?"PartyPanel/Equip":"PartyPanel/Unequip");};
+        press(equip?"PartyPanel/Equip":"PartyPanel/Unequip");
+        if(auto* choice=Object::cast_to<Window>(get_node_or_null("EquipmentChoice"));choice&&choice->is_visible()){
+            auto* hand=choice->get_node<OptionButton>("Hand");hand->select(0);hand->emit_signal("item_selected",0);press("EquipmentChoice/Equip");
+        }};
     const auto expected=[&](unsigned member,unsigned body,bool action){
         const auto a=campaign_->state().roster.at(member).character.appearance();
         return presentation::rgba_image(art_->equipped_icon(a,body,action))->get_data();};
@@ -323,7 +330,7 @@ void CharacterCreationView::party_action(int action)
         if(action==6||action==10){const auto selection=get_node<ItemList>("PartyPanel/Inventory")->get_selected_items();
             if(selection.is_empty())throw std::runtime_error("Select an inventory item first");
             const auto items=campaign_->member(id).character.inventory().items();const auto selected=items[selection[0]].id;
-            if(action==6){campaign_->equip(id,selected);equipment_notice=i18n::text("Equipped.")+" "+i18n::text(srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
+            if(action==6){if(open_equipment_choice(id,selected))return;campaign_->equip(id,selected);equipment_notice=i18n::text("Equipped.")+" "+i18n::text(srd5::equipment_note(campaign_->member(id).character.sheet(),items[selection[0]].definition_id));}else campaign_->unequip(id,selected);}
         if(action==7||action==8){
             if(!campaign_->selected())throw std::runtime_error("Add a party member first");
             if(action==7){auto* town=Object::cast_to<RolfTourView>(get_node_or_null("CampaignTown"));
