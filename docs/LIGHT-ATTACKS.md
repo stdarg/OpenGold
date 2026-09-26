@@ -108,3 +108,45 @@ Preflight also confirms that Loading is present in the weapon catalog but the
 current combat implementation permits only one weapon attack per consumed
 Action/Reaction budget. Preserve separate Action Surge actions. The new Light
 Bonus Action route must be verified before claiming the whole #56 boundary.
+
+## Rules-owned equipment transition work
+
+While LIGHT-1/2/3 remain pending, existing Equip/Unequip decisions moved
+from Core into a `RulesModule::equipment_change` operation. It returns candidate
+indices and equipment continuation as values. Core maps those indices to owned
+inventory items and commits atomically, rejecting invalid/duplicate indices.
+The SRD implementation retains current single-weapon replacement and grip
+normalization; this step adds no hand dialog, dual-weapon control or TWF benefit.
+It is a direct consumer of the new rules hook, required before two-weapon
+integration can avoid putting SRD hand/replacement decisions into Core.
+
+The alternate-rules test in `party_tests.cpp` deliberately retains two weapons,
+reorders them and returns non-SRD equipment state. It proves that Core follows
+module outcomes; malformed plans and rule rejections preserve inventory/vitals.
+The rest-boundary test explicitly delegates equipment decisions to its SRD
+fixture implementation. No runtime/save version change is needed for this
+behavior-preserving move. Focused Party/Training/Rest/Versatile checks pass.
+Runtime/test revision `bc4edae` passed all78 integrated checks after rebuilding
+all native targets, main project and demo. The game equipment check also passed
+all47 weapons through actual controls, PC/NPC, both poses, save/load, training
+and campaign. Localization941 messages and `git diff --check` passed. This is
+an architecture prerequisite; no Light/TWF/Loading issue is complete yet.
+
+Verification commands (full logs retained under `/tmp/light-equipment-*`):
+
+```bash
+ctest --test-dir build/mac-check -E '^opengold_godot_prepare$' --fixture-exclude-setup godot_project --output-on-failure
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD OPENGOLD_LANG=en /Applications/Godot_mono.app/Contents/MacOS/Godot --headless --path src/OpenGoldBox/godot res://scenes/character_creation.tscn -- --equipment-art-check
+python3 tools/localization.py --check
+```
+
+Current native/runtime behavior and save formats remain unchanged. The integrated
+run followed a successful current-tree project preparation; fixture setup was
+excluded only to avoid repeating that preparation. Verification completed by
+01:19 UTC. The next player-facing work requires LIGHT-1/2/3; the goal remains
+ACTIVE, with these approvals visibly outstanding.
+
+Phase observations: compatibility capture began00:53:12 and was committed at
+01:00:04 (see d24c146 metadata for exact commit time). Equipment-transition
+implementation began after01:01:39; focused checks passed before01:08:36, when
+the integrated and demo rebuilds started. Original checkpoint remains01:45:02.

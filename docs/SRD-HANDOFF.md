@@ -38,8 +38,15 @@ Requested Astra/high retained; actual unverified. LIGHT-1/2/3 pending: hand-choi
 Equip dialog, weapon/Light combat controls, and TWF catalog/automatic benefit.
 Branch `codex/srd-light-attacks`: seven actual0.6.53 saves plus
 `tests/light_attack_baseline.h` captured and verified with the full Training test.
-Production source unchanged. See fixture provenance linked from the packet.
-No dependent gameplay/control implementation yet. Questions must be visible and preceded by the
+Capture commit d24c146 preserved production source; see fixture provenance.
+Commit `bc4edae` moves existing Equip/Unequip decisions into the SRD module through
+a generic equipment-change result. All78 integrated checks, the game's47-weapon
+equipment flow and localization941 pass after rebuilding main/demo/native targets.
+No hand controls or automatic TWF benefit is implemented. No live build/test.
+Next: obtain LIGHT-1/2/3, then implement the fixed actual dual-weapon/Light path.
+No original issue is closed by this prerequisite;149 remain open.
+Rules-side work independent of layout approval may proceed; new controls and
+automatic TWF behavior remain pending. Questions must be visible and preceded by the
 verified Glass sound. Goal remains ACTIVE; an approval reply should continue this
 active batch. Do not turn waiting into a paused goal.
 

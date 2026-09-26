@@ -449,3 +449,12 @@ sizes; saved results match independent native advancement. Training and Review
 Training exercise GWF; recruited routes, spent resources, wounds, rest and old
 save continuations pass. #85/#140/#147 retain other styles, mastery and cantrip
 alternatives. Whole Paladin/Ranger classes and later levels remain incomplete.
+
+### Light attack prerequisites — incomplete (#59/#81/#56)
+
+Actual0.6.53 compatibility fixtures (`d24c146`) and rules-owned equipment
+transitions (`bc4edae`) are verified. Core applies module results atomically;
+SRD retains existing equipment behavior. All78 integrated checks plus actual
+game47-weapon equipment controls pass. [Packet and commands](LIGHT-ATTACKS.md#rules-owned-equipment-transition-work).
+This does **not** complete Light attacks, Two-Weapon Fighting or Loading acceptance;
+all three issues remain open and their new controls await LIGHT-1/2/3 approval.
