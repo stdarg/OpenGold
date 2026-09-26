@@ -4,7 +4,8 @@
 
 - Standing goal ACTIVE. One owner, no new tasks/agents/issues. Preflight began
   2026-09-26 00:45:02 UTC; checkpoint01:45:02, maximum02:15:02. Preserve this
-  start across approval waits. No implementation yet; LIGHT-1/2/3 pending.
+  start across approval waits. Compatibility capture implemented; LIGHT-1/2/3 pending.
+  No dependent gameplay/control implementation.
 - Original requirements: #59 Light extra attacks, #81 Two-Weapon Fighting,
   #56 Loading action boundaries. Bounded source integration under#85/#140/#147.
   Player outcome: equip and choose two one-handed weapons, earn a legal Light
@@ -93,3 +94,17 @@ Full weapon names remain available in dropdowns/tooltips. No combat saving.
 Review Training and all three classes' advancement selectors. Automatically
 apply its beneficial damage modifier to eligible Light extra attacks; no new
 per-hit decision. Preserve existing source, replacement and separate-feat rules.
+
+## Independent compatibility work while controls await approval
+
+Seven genuine0.6.53 campaign/combat captures and a verifier are now in
+[`light_attack_baseline.h`](../tests/light_attack_baseline.h). Capture provenance
+and SHA-256 hashes are recorded in [fixtures](../tests/fixtures/README.md#lighthand-state-baseline--actual-0653-writer).
+The full training test passes after rebuilding; no runtime source was changed.
+This proves prior-style/weapon/history continuation, not Light/TWF completion.
+No original issue is closed by this preparation.
+
+Preflight also confirms that Loading is present in the weapon catalog but the
+current combat implementation permits only one weapon attack per consumed
+Action/Reaction budget. Preserve separate Action Surge actions. The new Light
+Bonus Action route must be verified before claiming the whole #56 boundary.

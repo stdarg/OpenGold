@@ -734,3 +734,38 @@ They preserve explicit cantrips, acquired Scholar, known but unprepared book
 spells, wounds, spent slots and spent Arcane Recovery. Campaign formats 11/15
 and the combat continuation are old-writer output, not synthetic rewrites.
 See [the frozen packet](../../docs/WIZARD-SPELL-CHOICES.md).
+
+## Light/hand-state baseline — actual 0.6.53 writer
+
+Generated on2026-09-26 before changing the runtime in `bf9ec73`. The only
+capture additions are `tests/light_attack_baseline.h` and its training-test CLI;
+`git diff bf9ec73 -- src demos/src` was empty at capture. The generator rejects
+any writer other than0.6.53. It calls ordinary creation, XP advancement,
+equipment, public combat commands and campaign serialization; no bytes are
+edited to impersonate an older writer. The custom target is loaded by the same
+stable fixture content helper on capture and verification.
+
+The campaign holds a Fighter PC and recruited Paladin/Ranger, all level4, with
+actual GWF/Archery grants, wounds, an equipped Greatsword, three carried Daggers,
+a Hand Crossbow and a Shield. Combat21 captures a real critical hit, both Savage
+Attacker decisions and resolved Champion movement. A second sequence fires a
+Loading Hand Crossbow twice through two distinct actions using Action Surge.
+It preserves unused Bonus Action, spent resources, HP and RNG. Future attacks
+can acquire new Light history; the Loading continuation compares those gameplay
+values independently rather than forbidding newly implemented legal actions.
+Restoring the historical already-spent checkpoint must not invent new history.
+
+Reproduce capture only with the genuine0.6.53 runtime:
+`opengold_training_tests --freeze-light`. Verify with `--light-baseline` or the
+full training test, which now includes these checks. Focused CTest passes after
+rebuilding `opengold_training_tests`; runtime inputs are unchanged.
+
+| File | SHA-256 |
+| --- | --- |
+| `campaign-v17-light-before.ogs` | `8247a44eee1c4e128ca3ceb51ac2ed1f2b3ed5587b5c5e39956804b905dc5bdb` |
+| `combat-v21-light-before-attack.save` | `dee3402f18b691d664b97a687baa9b0d0b87d520b828d53865739811a9b846e7` |
+| `combat-v21-light-before-first.save` | `613969267a8ed9be8e9b218d7ab981fad961b47ffd80dc77933636ff453b0a51` |
+| `combat-v21-light-before-second.save` | `a21b2e6f9deb59d656e2f71275c1140dcf42e0aba2073862b3af7b8b794ac3be` |
+| `combat-v21-light-before-settled.save` | `b258e60c77783ec7727d843f25d799be7a68b2b19aeeb18b4f9acb1ac44f611a` |
+| `combat-v21-loading-before.save` | `b49d73576583173380549120340cdd318343cf81da260641ea3f414446e2e54d` |
+| `combat-v21-loading-two-actions.save` | `e06afeed956b27bd5fbca84c0f44184cda19e9eb01559a6dfbfcb71ea8758a05` |

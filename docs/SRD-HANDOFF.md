@@ -36,7 +36,10 @@ its old blocked metadata does not prevent the explicitly authorized work.
 Preflight00:45:02 UTC2026-09-26; checkpoint01:45:02, maximum02:15:02.
 Requested Astra/high retained; actual unverified. LIGHT-1/2/3 pending: hand-choice
 Equip dialog, weapon/Light combat controls, and TWF catalog/automatic benefit.
-No dependent implementation yet. Questions must be visible and preceded by the
+Branch `codex/srd-light-attacks`: seven actual0.6.53 saves plus
+`tests/light_attack_baseline.h` captured and verified with the full Training test.
+Production source unchanged. See fixture provenance linked from the packet.
+No dependent gameplay/control implementation yet. Questions must be visible and preceded by the
 verified Glass sound. Goal remains ACTIVE; an approval reply should continue this
 active batch. Do not turn waiting into a paused goal.
 
@@ -44,7 +47,7 @@ active batch. Do not turn waiting into a paused goal.
 
 #97 remains physical spellbooks/copying; #165 retains missing spells. #98/#101
 and the full Wizard tracker stay open. Current two Evocation spells cannot
-satisfy all Savant learning. Q19–21/Q23 remain pending; consult decisions.
+satisfy all Savant learning. Q19–21 remain pending; Q23 is superseded by approved STYLE-1. Consult decisions.
 Unlimited ranged ammunition is AMMO-UNLIMITED; do not reopen that choice.
 Do not reduce full class, catalog or compatibility requirements.
 
