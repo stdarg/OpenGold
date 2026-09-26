@@ -457,5 +457,9 @@ transitions (`bc4edae`) are verified. Core applies module results atomically;
 SRD retains existing equipment behavior. All78 integrated checks plus actual
 game47-weapon equipment controls pass. [Packet and commands](LIGHT-ATTACKS.md#rules-owned-equipment-transition-work).
 This does **not** complete Light attacks, Two-Weapon Fighting or Loading acceptance;
-all three issues remain open. LIGHT-2/3 controls are approved; the equipment
-dialog still awaits LIGHT-1.
+all three issues remain open. All LIGHT-1/2/3 controls are now approved;
+[hand-equipment implementation](LIGHT-ATTACKS.md#approved-hand-equipment-implementation)
+at runtime/test commit`c539347` is verified: all78 integrated checks, mainEN/ES
+and demoEN hand UI at both sizes, exact native save comparisons and47-weapon
+art/control checks pass. Rules0.6.54 / conditional PC37. Combat still uses the
+first weapon; Light extra attacks and the TWF benefit are not implemented yet.

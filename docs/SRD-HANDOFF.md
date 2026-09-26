@@ -30,28 +30,30 @@ its old blocked metadata does not prevent the explicitly authorized work.
   do not pause at this delivery boundary. 149 open SRD issues remain, verified after closing these three; snapshot
   `/tmp/srd-open-after-styles.json`.
 
-## Active next batch — Light attacks
+## Active batch — Light attacks
 
 [Fixed packet](LIGHT-ATTACKS.md):#59/#81/#56 and bounded style-source integration.
-Preflight00:45:02 UTC2026-09-26; checkpoint01:45:02, maximum02:15:02.
-Requested Astra/high retained; actual unverified. LIGHT-1 pending: hand-choice
-Equip dialog. LIGHT-2/3 approved by “2. Yes. 3. Yes”: weapon/Light combat controls
-and TWF catalog/automatic benefit.
-Branch `codex/srd-light-attacks`: seven actual0.6.53 saves plus
-`tests/light_attack_baseline.h` captured and verified with the full Training test.
-Capture commit d24c146 preserved production source; see fixture provenance.
-Commit `bc4edae` moves existing Equip/Unequip decisions into the SRD module through
-a generic equipment-change result. All78 integrated checks, the game's47-weapon
-equipment flow and localization941 pass after rebuilding main/demo/native targets.
-No hand controls or automatic TWF benefit is implemented. No live build/test.
-Next: obtain LIGHT-1 for the equipment dialog; LIGHT-2/3 are approved. Complete
-the fixed actual dual-weapon/Light path without re-asking those two questions.
-No original issue is closed by this prerequisite;149 remain open.
-Rules-side work independent of layout approval may proceed; only the new
-equipment dialog remains pending. Weapon/Light controls and automatic TWF
-behavior are approved. Questions must be visible and preceded by the
-verified Glass sound. Goal remains ACTIVE; an approval reply should continue this
-active batch. Do not turn waiting into a paused goal.
+Preflight00:45:02 UTC2026-09-26; checkpoint01:45:02, maximum02:15:02. Do not reset.
+Requested Astra/high retained; actual unverified. All LIGHT-1/2/3 APPROVED:
+“2. Yes. 3. Yes” followed by “1. Yes.” Implementation resumed01:20:09 UTC.
+
+Branch `codex/srd-light-attacks`, hand-equipment runtime/test commit `c539347`,
+rules0.6.54, conditional PC37. Actual two-weapon equipment/dialog works in game
+and demo, with unit splitting, provenance, shield/grip/somatic restrictions,
+hand labels and original main-weapon artwork. All78 integrated checks, hand UI
+mainEN/ES + demoEN, native save comparisons and47-weapon game-control check pass.
+Localization952 passes. [Evidence](LIGHT-ATTACKS.md#approved-hand-equipment-implementation).
+No live build/test and no pending approval. No original issue is complete from
+this substep;149 remain open. Goal ACTIVE.
+
+Next: implement approved combat Weapon dropdown and Light extra attacks, then
+TWF source routes/damage and Loading acceptance. Combat still uses the first
+weapon; no Light extra attack or TWF benefit is implemented yet. Preserve actual
+0.6.54 dual-hand writer evidence before changing its recipe/continuation.
+Earlier genuine0.6.53 fixtures are in `tests/light_attack_baseline.h` (d24c146).
+Rules own mechanics; Core applies generic outcomes; UI presents their choices.
+Use focused checks until the final integrated Light/TWF regression; no repeated
+UI approval, new issue, agent, model switch or scope expansion.
 
 ## Preserved exclusions
 

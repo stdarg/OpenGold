@@ -4,9 +4,7 @@
 
 - Standing goal ACTIVE. One owner, no new tasks/agents/issues. Preflight began
   2026-09-26 00:45:02 UTC; checkpoint01:45:02, maximum02:15:02. Preserve this
-  start across approval waits. Compatibility capture implemented; LIGHT-1 pending.
-  LIGHT-2/3 approved by “2. Yes. 3. Yes”2026-09-26; no equipment-dialog
-  implementation until LIGHT-1 is answered.
+  start across approval waits. All LIGHT-1/2/3 approvals received2026-09-26. Implementation continues.
 - Original requirements: #59 Light extra attacks, #81 Two-Weapon Fighting,
   #56 Loading action boundaries. Bounded source integration under#85/#140/#147.
   Player outcome: equip and choose two one-handed weapons, earn a legal Light
@@ -71,11 +69,10 @@ pp88–90 and177 checked2026-09-26. Light depends on a different weapon; its exa
 of different hands is not an additional restriction. The Attack action's weapon
 interaction and Thrown's draw permission must retain their actual boundaries.
 
-## Proposed controls — approval required
+## Approved controls
 
-Current approval state: LIGHT-2 and LIGHT-3 APPROVED2026-09-26 by the user's
-“2. Yes. 3. Yes.” LIGHT-1 remains unanswered. This reply does not approve the
-equipment dialog. The exact controls below remain the fixed implementation scope.
+LIGHT-2/3 approved by “2. Yes. 3. Yes”; LIGHT-1 subsequently approved by
+“1. Yes”2026-09-26. All exact controls below are authorized.
 
 **LIGHT-1.** In main/demo, when Equip selected would add or replace a second
 one-handed weapon, open a centered660×340 dialog. Show the selected weapon and
@@ -116,7 +113,7 @@ Bonus Action route must be verified before claiming the whole #56 boundary.
 
 ## Rules-owned equipment transition work
 
-While LIGHT-1/2/3 remain pending, existing Equip/Unequip decisions moved
+Before LIGHT-1/2/3 were approved, existing Equip/Unequip decisions moved
 from Core into a `RulesModule::equipment_change` operation. It returns candidate
 indices and equipment continuation as values. Core maps those indices to owned
 inventory items and commits atomically, rejecting invalid/duplicate indices.
@@ -155,3 +152,60 @@ Phase observations: compatibility capture began00:53:12 and was committed at
 01:00:04 (see d24c146 metadata for exact commit time). Equipment-transition
 implementation began after01:01:39; focused checks passed before01:08:36, when
 the integrated and demo rebuilds started. Original checkpoint remains01:45:02.
+
+Implementation resumed01:20:09 UTC after LIGHT-1. Original checkpoint unchanged.
+
+## Approved hand equipment implementation
+
+LIGHT-1 is implemented in the current tree: shared game/demo dialog,
+rules-provided legal hand choices and atomic item splitting. Main/other labels
+appear in inventory and character sheets; artwork uses the first equipped weapon.
+The selected stack unit retains its original item provenance. Cancel/Escape
+make no changes. Two equipped weapons block a two-handed Versatile grip,
+shields and somatic casting without a free hand. Ordinary replacement and old
+save recipes retain their previous behavior; only dual-weapon profiles use PC37.
+Module0.6.54 accepts all previously supported module identities, including0.6.53.
+
+Focused Party/Training checks pass. The game EN/ES and demo EN hand dialog
+checks pass at1120×800/1920×1080; captured game layouts were inspected. Their
+three output saves match independently constructed native results exactly,
+including original wounds, resources, PC/NPC state and item quantities. The
+existing47-weapon game-control/artwork check passes. Localization952 passes.
+Runtime/test commit `c539347` passed all78 integrated checks after rebuilding
+all native targets and game/demo. This includes27 Godot checks. No original
+issue is closed by the hand-equipment substep.
+
+This implements the hand-equipment prerequisite only. LIGHT-2 combat weapon
+selection/Light attack sequencing and LIGHT-3 feat acquisition/damage are still
+to implement. No additional approval is needed. No new issue, agent or scope.
+
+Phase observations: implementation resumed01:20:09; focused checks passed by
+01:30:41; game/demo UI checks, native save comparisons and47-weapon check passed
+by01:34:17 UTC. Broad native rebuild began around01:33; all78 integrated checks were confirmed
+complete after01:39:37. Original01:45:02 checkpoint is unchanged. Fixes covered
+two C++ version expressions, Godot node lookup, an inventory-view invalidation,
+and two UI harness setup problems (type annotation, fixture content identity).
+The legacy-version test now constructs its altered save outside the rejection
+assertion and uses the actual module version. No runtime test was weakened. Elapsed phase observations overlap; no token/cost
+measurement or claimed speedup.
+
+Hand-equipment verification commands (main project was prepared after the final
+runtime inputs; demo built separately; Godot runs were serial):
+
+```bash
+ctest --test-dir build/mac-check -E '^opengold_godot_prepare$' --fixture-exclude-setup godot_project --output-on-failure
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD build/mac-check/opengold_training_tests --hands-ui
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD OPENGOLD_LANG=en /Applications/Godot_mono.app/Contents/MacOS/Godot --path src/OpenGoldBox/godot --script /Users/edmond/src/OpenGold/tests/equipment_hand_view_tests.gd -- --hands-fixture=/Users/edmond/src/OpenGold/build/mac-check/hands-ui.ogs --hands-captures=/tmp/light-hands-game --hands-output=/tmp/light-hands-game
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD /Applications/Godot_mono.app/Contents/MacOS/Godot --path demos/godot --script /Users/edmond/src/OpenGold/tests/equipment_hand_view_tests.gd -- --hands-demo --hands-fixture=/Users/edmond/src/OpenGold/build/mac-check/hands-ui.ogs --hands-captures=/tmp/light-hands-demo --hands-output=/tmp/light-hands-demo
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD build/mac-check/opengold_training_tests --verify-hands-ui /tmp/light-hands-game-en.ogs
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD build/mac-check/opengold_training_tests --verify-hands-ui /tmp/light-hands-game-es.ogs
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD build/mac-check/opengold_training_tests --verify-hands-ui /tmp/light-hands-demo-en.ogs
+```
+
+Full logs `/tmp/light-hands-integrated.log`, `/tmp/light-hands-game-ui.log`,
+`/tmp/light-hands-demo-ui.log`, `/tmp/light-hands-art-check.log`; captures in
+`/tmp/light-hands-game` and `/tmp/light-hands-demo`. Runtime revision above is
+the tested tree. No pending process or approval remains. Preserve genuine0.6.54
+dual-hand writer evidence before later changing these new recipes/continuations.
+Continue the same batch with focused checks; do the next broad regression on
+the integrated Light/TWF implementation, rather than every small edit.

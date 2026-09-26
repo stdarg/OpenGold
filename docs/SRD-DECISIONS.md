@@ -122,16 +122,13 @@ exact main/demo controls and source routes. STYLE-1 supersedes Q23 and selects
 automatic beneficial die replacement; STYLE-2 approves the Training/Review
 Training additions and the separate advancement dropdown.
 
+LIGHT-1/2/3 APPROVED2026-09-26: the user approved2/3 with “2. Yes. 3. Yes”
+and then1 with “1. Yes.” [Exact scope](LIGHT-ATTACKS.md#approved-controls)
+covers the equipment hand-choice dialog, Weapon/Light combat controls, and
+TWF selectors/automatic benefit. Do not ask these again.
+
 ## Pending — do not implement dependent choices
 
-LIGHT-1: [Light attacks](LIGHT-ATTACKS.md#proposed-controls--approval-required):
-hand-choice equipment dialog remains pending. The user's latest reply approved
-only questions2 and3; do not infer approval of question1.
-
-LIGHT-2/3 APPROVED2026-09-26 by “2. Yes. 3. Yes”: Weapon dropdown and Light
-Bonus Action controls in main/demo, plus Two-Weapon Fighting selectors and
-automatic damage benefit, within the exact recorded packet. No repeated approval
-is needed for these controls.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
