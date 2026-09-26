@@ -1,82 +1,63 @@
 # SRD handoff
 
-Updated2026-09-26. The standing goal remains incomplete: close all
-`SRD_improvements`, all twelve classes through4 and planned higher levels /
-multiclassing. The user said not to pause unless able to restart. Do not pause
-at delivery boundaries or ask for a new resume. ROGUE-DEMO-1 was approved;
-its old blocked metadata does not prevent the explicitly authorized work.
+Updated2026-09-26. Standing goal **ACTIVE and incomplete**: close all
+`SRD_improvements`, preserving all twelve classes through4 and planned higher
+levels/multiclassing. Do not pause at delivery boundaries or ask for a new resume.
+A decision reply alone never resumes a genuinely paused goal. No agents/new tasks
+or model/runtime setting changes are authorized.
 
-## Latest delivery — Fighting Style routes
+## Latest delivery — Light attacks
 
-- Runtime/test commit `bf9ec73`, rules0.6.53, branch
-  `codex/srd-fighting-style-routes`. STYLE-1/2 approved by “1. Yes. 2. yes.”
-- [Coverage](SRD-COVERAGE.md#fighting-style-routes-787980) is the completion record;
-  [packet](FIGHTING-STYLE-ROUTES.md#delivery-and-verification) holds acceptance,
-  tested revision, commands, limits and timings. All79 integrated checks pass
-  across initial run and targeted rerun; main EN/ES and demo EN controls,
-  rendering and native comparison of saved choices pass. No old fixtures removed.
-- Delivered three original feats: Archery#78, Defense#79, GWF#80 through actual
-  Fighter/Paladin/Ranger routes1–4. Their issues are CLOSED after push. #85/#140/#147
-  stay open for other styles/mastery/cantrip alternatives. No broader class claim.
-- Preflight00:08:10; verified runtime commit00:44:42 UTC2026-09-26:36m32s elapsed
-  including approval wait. Three original outcomes. No new issues or agents.
-- Requested Astra/high retained for interactions/history; actual configuration
-  unverified. No switch. Continue from the existing C fighting-style/Light group;
-  freeze next packet before coding. #59 Light attacks / #81 Two-Weapon Fighting
-  remain related work, with actual hand/item/control prerequisites to preflight.
-- Main remains375f58f; this delivery is on the current branch. Earlier Rogue
-  delivery is in [coverage](SRD-COVERAGE.md#rogue-steady-aim-114).
-- No live builds/tests or pending approvals for the completed style batch. Standing goal ACTIVE;
-  do not pause at this delivery boundary. 149 open SRD issues remain, verified after closing these three; snapshot
-  `/tmp/srd-open-after-styles.json`.
+- Branch `codex/srd-light-attacks`; runtime/test **69771eb**, rules0.6.55.
+  **#59 Light, #81 Two-Weapon Fighting, #56 Loading are CLOSED** after push.
+  **146 open SRD issues**, verified in `/tmp/srd-open-after-light.json`.
+- [Coverage](SRD-COVERAGE.md#light-attacks-two-weapon-fighting-and-loading-598156)
+  is canonical. [Packet](LIGHT-ATTACKS.md#delivery-and-verification) records frozen
+  acceptance, compatibility, exact checks, limits and timings. Main remains375f58f;
+  no PR/main integration is claimed.
+- Actual two-hand equipment, ordinary/reaction weapon selection, different-weapon
+  Light Bonus Action attacks, TWF damage/source routes, and Loading action
+  boundaries work through current level1–4 paths. Nick/mastery, Extra Attack,
+  other styles and remaining class/spell work remain in their original issues.
+- All78 integrated checks pass after fresh50-target rebuild; mainEN/ES+demoEN
+  combat and three-class advancement pass at both sizes. Native combat-state and
+  six campaign-save comparisons pass;960 translations validate. Real0.6.53/0.6.54
+  historical captures retained. An integration failure caught non-thrown Light
+  identities initialized too late; fixed at new encounter creation and reverified.
+- Preflight00:45:02, checkpoints recorded without resetting, runtime commit
+  03:38:15 UTC:2h53m13s elapsed including approvals/unobserved interval. Three
+  original requirements delivered, zero new issues. No token/speedup claim.
+- LIGHT-1/2/3 were approved by “2. Yes. 3. Yes” and “1. Yes”. No pending
+  questions, live builds/tests, or code WIP for this batch. Do not ask again.
+- Requested Astra/high for this batch's interactions/history; actual configured
+  model/effort unverified. No model change. Apply routing before the next batch.
 
-## Active batch — Light attacks
+## Next action
 
-[Fixed packet](LIGHT-ATTACKS.md):#59/#81/#56 and bounded style-source integration.
-Preflight00:45:02 UTC2026-09-26; checkpoint01:45:02, maximum02:15:02. Do not reset.
-Requested Astra/high retained; actual unverified. All LIGHT-1/2/3 APPROVED:
-“2. Yes. 3. Yes” followed by “1. Yes.” Implementation resumed01:20:09 UTC.
+Preflight the next bounded delivery from the existing
+[batching review](SRD-BATCHING-REVIEW.md), using the current146-issue snapshot.
+Freeze player outcome, acceptance, included issues and exclusions before coding.
+No automatic child tickets or speculative prerequisite work. Preserve full scope
+of parent#85/#140/#147 and all twelve classes. Use the repo map for targeted reads.
+Prior Fighting Style delivery#78/#79/#80 is recorded in coverage, not repeated here.
 
-Branch `codex/srd-light-attacks`, hand-equipment runtime/test commit `c539347`,
-rules0.6.54, conditional PC37. Actual two-weapon equipment/dialog works in game
-and demo, with unit splitting, provenance, shield/grip/somatic restrictions,
-hand labels and original main-weapon artwork. All78 integrated checks, hand UI
-mainEN/ES + demoEN, native save comparisons and47-weapon game-control check pass.
-Localization952 passes. [Evidence](LIGHT-ATTACKS.md#approved-hand-equipment-implementation).
-No live build/test and no pending approval. No original issue is complete from
-this substep;149 remain open. Goal ACTIVE.
-
-Next: implement approved combat Weapon dropdown and Light extra attacks, then
-TWF source routes/damage and Loading acceptance. Combat still uses the first
-weapon; no Light extra attack or TWF benefit is implemented yet. Preserve actual
-0.6.54 dual-hand writer evidence before changing its recipe/continuation.
-Earlier genuine0.6.53 fixtures are in `tests/light_attack_baseline.h` (d24c146).
-Rules own mechanics; Core applies generic outcomes; UI presents their choices.
-Use focused checks until the final integrated Light/TWF regression; no repeated
-UI approval, new issue, agent, model switch or scope expansion.
-
-## Preserved exclusions
+## Preserved decisions and exclusions
 
 #97 remains physical spellbooks/copying; #165 retains missing spells. #98/#101
-and the full Wizard tracker stay open. Current two Evocation spells cannot
-satisfy all Savant learning. Q19–21 remain pending; Q23 is superseded by approved STYLE-1. Consult decisions.
-Unlimited ranged ammunition is AMMO-UNLIMITED; do not reopen that choice.
-Do not reduce full class, catalog or compatibility requirements.
+and the full Wizard tracker remain open. Two Evocation spells do not satisfy all
+Savant learning. Q19–21 remain pending; Q23 is superseded by approved STYLE-1.
+Unlimited ammunition is AMMO-UNLIMITED; do not reopen it. Camp/inn saves only.
+Consult `SRD-DECISIONS.md` before questions; reuse approvals within recorded scope.
 
 ## Persistent execution agreements
 
-Read [workflow](SRD-WORKFLOW.md), [routing](SRD-MODEL-ROUTING.md),
-[map](SRD-REPO-MAP.md), [decisions](SRD-DECISIONS.md) and relevant requirements.
-Freeze outcome/issues/acceptance/exclusions before coding. One owner/batch;
-no agents/tasks, settings changes, automatic new issues or silent scope growth.
-Rules stay in static SRD library, Core orchestrates, UI presents rules options.
-Do not edit inputs during a build; rebuild before tests. Run Godot serially.
-Use focused checks and final integrated evidence, preserve all released saves.
-Commit/push owned verified changes. Keep coverage canonical and handoff compact.
+Read `SRD-WORKFLOW.md`, `SRD-MODEL-ROUTING.md`, `SRD-REPO-MAP.md` and relevant
+requirements. One owner/batch; no agents/tasks/settings changes/silent scope growth.
+Rules stay in static SRD library; Core orchestrates; UI presents rule-owned choices.
+No build-input edits during builds. Rebuild before testing; Godot runs serially.
+Focused checks, then final integrated evidence; preserve all released-save history.
+Commit/push only owned verified work. Coverage is canonical; handoff stays compact.
 
-Questions restart at1; play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`,
-verify completion and write the complete question visibly. Reuse approvals;
-do not ask again for authorized routine implementation. Camp/inn saves only.
-
-STYLE-1/2 APPROVED2026-09-26: user replied “1. Yes. 2. yes.”
-Implementation continues in the frozen batch; no repeated approval needed.
+Questions restart at1. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`,
+verify exit0, and write each full question visibly; widget alone is insufficient.
+Do not ask repeatedly for routine choices already within accepted scope.

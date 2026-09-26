@@ -209,3 +209,123 @@ the tested tree. No pending process or approval remains. Preserve genuine0.6.54
 dual-hand writer evidence before later changing these new recipes/continuations.
 Continue the same batch with focused checks; do the next broad regression on
 the integrated Light/TWF implementation, rather than every small edit.
+
+## 60-minute checkpoint —01:45:02 UTC
+
+Elapsed60 minutes from frozen preflight; includes approval wait. Original outcomes
+completed0/3 (#59/#81/#56). Verified hand-equipment prerequisite is pushed.
+Current work is combat selection/Light sequencing/TWF in the same scope; actual
+0.6.54 dual-hand saves captured in`eb14dcf` before runtime changes. No new issue,
+agent, scope or approval. The clock is not reset; finish integrated acceptance
+before closing any original issue. Model assignment Astra/high retained; actual
+configuration remains unverified.
+
+At03:11:40 UTC, the90-minute checkpoint had elapsed. The unobserved interval
+is not counted as implementation activity. No live build remained; last evidence
+was passing Thrown checks and a Rogue test expecting the old pending-hit shape.
+Continue this same incomplete batch; do not reset timings or close any issue.
+
+## Integrated implementation — rules0.6.55
+
+The rules module now exposes held weapon choices and named Light attacks through
+`CombatantView`; both adapters present those choices in the approved rows. Each
+Attack action records the actual physical Light weapon used, including misses
+and thrown stack units. Only a different Light weapon can spend the later Bonus
+Action. Magic and Opportunity Attacks do not qualify. Selecting a held weapon
+is free, including selection of an eligible reach during a pending reaction.
+Stowed thrown weapons require a free hand for the Bonus Action; this adds no
+free stowing operation.
+
+Without Two-Weapon Fighting, positive ability damage is removed from the extra
+attack while a negative modifier remains. The feat retains the ordinary modifier
+once. Weapon dice, Sneak Attack dice, critical hits and Savage Attacker decisions
+retain their separate behavior. Actual Fighter starting/replacement choices and
+Paladin/Ranger level-two choices grant the feat, with independent level-four
+acquisition, source checks and nonrepeatability. Other classes can use Light
+without the feat. Loading follows the existing single attack per consumed action:
+normal Action, separate Action Surge action and Light Bonus Action are distinct.
+No level-five Extra Attack or ammunition bookkeeping is introduced.
+
+PC38 is conditional on the new feat. Combat22 records selected weapon, qualifying
+physical identities and pending Light damage context. Actual0.6.53/0.6.54 fixtures
+remain supported; old saved turns receive no invented qualifying attack history.
+Core has no new SRD calculations. The approved earlier equipment transaction and
+safe recovery handle campaign ownership; the rules decide attack outcomes.
+
+Focused evidence is in `tests/light_attack_checks.h`, included by the existing
+training suite: physical identity, positive/negative modifiers, misses/criticals,
+Savage and Rogue Sneak continuations, forged pending-hit rejection, Magic versus
+Attack, alternate-reach reactions, Loading/Action Surge, PC/recruited victory
+recovery and campaign reload/rests, and all three actual feat source routes.
+`tests/light_attack_view_tests.gd` compares control-driven combat saves directly
+with native states, including keyboard/mouse selection and targeting, Escape,
+spent Bonus Action, translated labels and nonoverlapping rows. The existing
+style advancement UI test accepts `--style-light`; saved choices are checked by
+`opengold_training_tests --verify-light-style-ui CLASS FILE`.
+
+At03:23:18 UTC the full training suite passed. Later expanded native checks also
+pass after correcting two test setups (Rogue training eligibility and invoking
+safe equipment recovery only after actual victory). A first graphical pass
+passed mainEN/ES and demoEN; visual review added fixed-width text clipping and a
+specific overlap assertion. Final integrated verification is recorded below
+when complete. No new issue, scope, agent or model change was introduced.
+
+Final focused verification:
+
+- Full `opengold_training_tests` with `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD`
+  passes (`/tmp/light-verified-native.log`).
+- `light_attack_view_tests.gd`: main EN/ES and demo EN at1120×800/1920×1080
+  pass; final logs `/tmp/light-final-light-main.log` and
+  `/tmp/light-final-light-demo.log`. Native checkpoints match after selection,
+  ordinary attack, canceled targeting and mouse/keyboard extra attacks.
+- `style_advancement_view_tests.gd --style-light`: Fighter/Paladin/Ranger main
+  EN/ES and demo EN all pass. All six output campaign files pass
+  `--verify-light-style-ui CLASS FILE`. Logs `/tmp/light-final-style-*.log`.
+  Initial invocation omitted the required `OPENGOLD_GAME_DIR`; corrected command
+  passes without production changes. Minimum-size Spanish combat/advancement
+  and demo combat captures were visually inspected after clipping was corrected.
+- `python3 tools/localization.py --check`:960 messages, complete EN/ES,
+  placeholders/BBCode valid. `git diff --check` passes.
+
+The broader native targets are being rebuilt after the public interface change;
+no source inputs are edited during that build. Full regression result and tested
+revision follow at delivery. Higher-level Extra Attack, Nick/mastery and unrelated
+class/spell work remain excluded and open in their existing requirements.
+
+The first integrated run passed77/78. The unchanged party proficiency regression
+exposed live/restored divergence for Shortsword/Scimitar: their physical inventory
+was activated only at the first qualifying attack, after a checkpoint had omitted
+its source identities. New encounters now initialize physical inventory for all
+Light weapons, as already done for Thrown weapons. Historical readers remain
+unchanged. Rebuilt `opengold_party_tests` and the full training suite both pass;
+final linked-target refresh/regression is required after this production fix.
+
+## Delivery and verification
+
+Runtime/test commit **69771eb**, pushed on `codex/srd-light-attacks`.
+Original issues **#59/#81/#56 CLOSED** after push;149 →146 open SRD issues.
+No new issues. Main branch remains375f58f; no PR or main integration is claimed.
+Canonical completion record: [coverage](SRD-COVERAGE.md#light-attacks-two-weapon-fighting-and-loading-598156).
+
+Final integrated tree: all50 native test targets rebuilt successfully; all78
+native/tool/Godot checks pass. Command:
+
+```bash
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD ctest --test-dir build/mac-check -E '^opengold_godot_prepare$' --fixture-exclude-setup godot_project --output-on-failure
+```
+
+Main `opengoldbox_test_project` and demo `opengold_godot` were freshly built first.
+Final full regression took61.48s (`/tmp/light-final-integrated-tests.log`);
+linked-target build log `/tmp/light-final-integrated-build.log`. New combat UI
+checks were rerun on the final library and pass in both interfaces
+(`/tmp/light-continuation-ui-main.log`, `/tmp/light-continuation-ui-demo.log`).
+Earlier six advancement comparisons remain valid: the final correction changes
+encounter initialization only. No test or compatibility requirement was removed.
+
+Frozen preflight00:45:02 to runtime commit03:38:15 UTC2026-09-26 is2h53m13s,
+including approval wait and the explicitly unobserved interval. This is elapsed
+wall time, not a claim of continuous implementation. Latest observed continuation
+03:11:40 to commit03:38:15 is26m35s. Verification above records measured test time;
+build/implementation subphase timings were not separately captured. Three original
+requirements delivered; no inferred token savings. Requested Astra/high throughout;
+actual configuration and token cost attribution remain unverified.

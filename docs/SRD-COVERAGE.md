@@ -450,16 +450,30 @@ Training exercise GWF; recruited routes, spent resources, wounds, rest and old
 save continuations pass. #85/#140/#147 retain other styles, mastery and cantrip
 alternatives. Whole Paladin/Ranger classes and later levels remain incomplete.
 
-### Light attack prerequisites — incomplete (#59/#81/#56)
+### Light attacks, Two-Weapon Fighting and Loading (#59/#81/#56)
 
-Actual0.6.53 compatibility fixtures (`d24c146`) and rules-owned equipment
-transitions (`bc4edae`) are verified. Core applies module results atomically;
-SRD retains existing equipment behavior. All78 integrated checks plus actual
-game47-weapon equipment controls pass. [Packet and commands](LIGHT-ATTACKS.md#rules-owned-equipment-transition-work).
-This does **not** complete Light attacks, Two-Weapon Fighting or Loading acceptance;
-all three issues remain open. All LIGHT-1/2/3 controls are now approved;
-[hand-equipment implementation](LIGHT-ATTACKS.md#approved-hand-equipment-implementation)
-at runtime/test commit`c539347` is verified: all78 integrated checks, mainEN/ES
-and demoEN hand UI at both sizes, exact native save comparisons and47-weapon
-art/control checks pass. Rules0.6.54 / conditional PC37. Combat still uses the
-first weapon; Light extra attacks and the TWF benefit are not implemented yet.
+Runtime/test commit `69771eb`, rules0.6.55, delivers the three original
+requirements on `codex/srd-light-attacks`. All three issues are closed after push.
+The [fixed packet](LIGHT-ATTACKS.md#integrated-implementation--rules0655) records
+mechanics, scope, commands, compatibility and timings. Actual two-hand equipment
+was delivered in`c539347`; genuine0.6.53/0.6.54 writer fixtures are retained.
+
+An Attack action qualifies a later Bonus Action attack with a different physical
+Light weapon, including misses, thrown units and identical weapon types. Actual
+held weapon selection supports ordinary attacks and eligible reactions. TWF is
+available through Fighter starting/replacement choices, Paladin/Ranger level-two
+choices and independent level-four feats, with provenance and nonrepeatability.
+Its modifier applies once; negative modifiers, Savage, Sneak and critical damage
+remain correct. Loading respects separate Action/Surge/Bonus Action transactions.
+PC38/Combat22 retain selected identities and pending Light damage; supported
+historical saves retain their recorded state and continuation.
+
+All78 integrated checks pass on fresh binaries (61.48s final run). Focused main
+EN/ES + demoEN combat/advancement tests pass at both supported sizes, with exact
+native combat-state and six campaign-save comparisons. Actual PC/recruited safe
+recovery and rest/save paths are covered.960 localized messages validate. An
+unchanged party test caught delayed initialization of non-thrown Light weapon
+identities; initializing them at encounter creation fixed live/restored divergence.
+Core gained no SRD calculations. No new issues, agents, ammunition tracking or
+combat-save controls were added. Nick/mastery, level-five Extra Attack, other
+styles and remaining class/spell requirements stay open under their existing scope.
