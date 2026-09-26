@@ -225,5 +225,6 @@ void checkpoint_capacity(){
 }
 #include "mastery_combat_checks.h"
 #include "nick_attack_checks.h"
+#include "mastery_choice_checks.h"
 }
-int main(){try{if(std::getenv("OPENGOLD_NICK_BASELINE")){nick_attack_checks::capture();return 0;}mastery_combat_checks::run();nick_attack_checks::run();saving_throws();lifecycle();codec();combat();campaign();original_encounter_scope();checkpoint_capacity();std::cout<<"Status effect tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{if(std::getenv("OPENGOLD_MASTERY_CHOICE_BASELINE")){mastery_choice_checks::capture();return 0;}if(std::getenv("OPENGOLD_NICK_BASELINE")){nick_attack_checks::capture();return 0;}mastery_combat_checks::run();nick_attack_checks::run();mastery_choice_checks::historical();saving_throws();lifecycle();codec();combat();campaign();original_encounter_scope();checkpoint_capacity();std::cout<<"Status effect tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

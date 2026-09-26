@@ -24,8 +24,7 @@ Preflight03:56:03 UTC;60-minute checkpoint recorded04:56:24. Do not reset the cl
   is conditional;1–17 remain accepted. Rules identity is now branch0.6.57.
 - Main still375f58f. No PR/main/release integration claimed. Latest completed
   original issue was #82 (ASI); see [coverage](SRD-COVERAGE.md), not old narratives.
-- Sap/Vex committed/pushed86ac760. Nick checkpoint is in the commit containing
-  this record: approved selector/targeting, shared Light budget, combat23 and
+- Sap/Vex committed/pushed86ac760. Nick committed/pushed0bba07e: approved selector/targeting, shared Light budget, combat23 and
   retained actual prior-writer continuation. Three of eight properties delivered;
   this remains partial combat work, not whole-class or issue completion.
 - Pending-choice serialization works. A player-accessible Save game control inside
@@ -41,7 +40,16 @@ See [packet](WEAPON-MASTERY.md#nick-combat-checkpoint) for commands/evidence.
 Observed verification06:06:09 UTC,2h10m06s since original batch start; no live
 build/test. Coverage owns completion, and no issue has been closed.
 
-Next: independent Slow/Topple work in the same frozen batch. Cleave/Graze/Push
+Latest preparation captures actual0.6.57 Longbow/Maul critical phases;
+`opengold_status_effect_tests` rebuilt/passes exact round trips and continuation.
+See [provenance](../tests/fixtures/README.md#optional-mastery-choices-baseline--actual0657-writer).
+No production edits or new completed property. Preparation observed06:10:34 UTC.
+MASTERY-5/6/7 re-presented with verified Glass alert as questions1–3; replies
+remain required. The previous goal turn was progress (Nick0bba07e); this one adds
+verified compatibility evidence. No live process.
+
+Next: Slow/Topple combat integration in the same frozen batch, including
+simultaneous Champion choice ordering once MASTERY-5 is answered. Cleave/Graze/Push
 also remain. Preserve the completed Nick/Sap/Vex paths and historical fixtures.
 MASTERY-5/6/7 remain pending; do not implement their controls or interpretation
 without replies. No new issues, scope, agents/tasks or settings.

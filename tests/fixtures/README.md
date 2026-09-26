@@ -854,3 +854,36 @@ c8d4893b059650dc520d33237e8f40d4dd119496babc5ad7a1d791e43ccfe7b3  combat-v22-nic
 3a6db3e16f7ef02af3db7422deef24ef2ccb863adc54725c63cd18fd6be4ddea  combat-v22-nick-light-spent.save
 0ca778093241e1cc1a681baec16c7dea632f0ef5190dd6e3175453fe102e2cb0  combat-v22-nick-other-bonus-spent.save
 ```
+
+
+## Optional mastery choices baseline — actual0.6.57 writer
+
+Captured2026-09-26 from production `0bba07e` before Slow/Topple or optional
+mastery choice implementation. `tests/mastery_choice_checks.h::capture` asserts
+the actual writer identity and writes its unmodified `CombatSession::save()`.
+Both scenarios use seed30, a Soldier Champion3 with the selected Longbow or Maul,
+physical equipment and the normal content-pack Vanguard target. Each has four
+states: `before` the critical attack, pending Savage `damage`, pending Champion
+`move` after skipping Savage, and `settled` after declining free movement.
+
+The status-effect target verifies exact round trips and command-by-command
+continuation against all eight actual writer files. No bytes were relabeled as
+historical evidence. Capture command after building that target:
+
+```bash
+OPENGOLD_MASTERY_CHOICE_BASELINE=tests/fixtures build/mac-check/opengold_status_effect_tests
+```
+
+Do not rerun this capture with a newer production writer. Build/capture/test logs
+are `/tmp/mastery-choice-baseline-{build,capture,test}.log`.
+
+```text
+a59d63d32a990efe8d32db93852035f7ba17b703c5f176c44b318d7034d131d3  combat-v23-longbow-before.save
+225c1ba93d948ba1ff6fb167bd9c66073124d44065281e0fcc5fa5b247a889ab  combat-v23-longbow-damage.save
+2d0ba8d28b7e319b65ca7592dcad85765f2b6b0a1d83e1468e37fadbf3d4ad60  combat-v23-longbow-move.save
+b1fed47245de38c7249f0d5f875e8a050357388dc7c3d410cac0d6817c78066b  combat-v23-longbow-settled.save
+47b3f0eaa274cb0cf9a371511fbd88994b615c0b3b8661af3ba49a26e280f945  combat-v23-maul-before.save
+bd1953e3ef2117f94ba47582c7d049bb8e0c46932f3941882c0b0e552e1a4c6e  combat-v23-maul-damage.save
+ba61d92a73b7d58e26d7a4d2196652375842f68306d27ad42e02f25636205ebf  combat-v23-maul-move.save
+bb56c8397ddf26eaa87f880a44ef2f0a2c066c7caa6460b252193ca538c8718c  combat-v23-maul-settled.save
+```

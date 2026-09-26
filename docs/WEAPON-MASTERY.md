@@ -365,3 +365,19 @@ unavailable. This commit completes the third of eight combat properties, with
 acquisition/rest transactions already delivered. Five properties and pending
 MASTERY-5/6/7 remain; zero original issues closed. No scope expansion, new issues,
 settings changes or delegation. The goal remains active.
+
+
+### Optional choice compatibility preparation
+
+Observed06:10:34 UTC2026-09-26. Production remains0bba07e/rules0.6.57. Actual
+Longbow/Maul Champion critical checkpoints now cover the attack, Savage decision,
+free movement and settled state; all eight round trips and three-step replays
+match byte-for-byte. Rebuilt `opengold_status_effect_tests` passes; logs
+`/tmp/mastery-choice-baseline-{build,capture,test}.log`. This changes tests and
+provenance only, with no new playable property or issue closure. See
+[fixture provenance](../tests/fixtures/README.md#optional-mastery-choices-baseline--actual0657-writer).
+
+MASTERY-5/6/7 were re-presented as visible questions1–3 with the Glass alert
+(exit0); no answer has arrived. Integration of simultaneous mastery/Champion
+choices needs MASTERY-5. Graze policy and rest Save control need6/7. Keep those
+pending; do not infer their approval from the earlier four-item response.
