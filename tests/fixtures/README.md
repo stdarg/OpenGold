@@ -769,3 +769,19 @@ rebuilding `opengold_training_tests`; runtime inputs are unchanged.
 | `combat-v21-light-before-settled.save` | `b258e60c77783ec7727d843f25d799be7a68b2b19aeeb18b4f9acb1ac44f611a` |
 | `combat-v21-loading-before.save` | `b49d73576583173380549120340cdd318343cf81da260641ea3f414446e2e54d` |
 | `combat-v21-loading-two-actions.save` | `e06afeed956b27bd5fbca84c0f44184cda19e9eb01559a6dfbfcb71ea8758a05` |
+
+## Dual-hand baseline — actual0.6.54 writer
+
+Captured from production runtime`c539347` before combat weapon-selection/Light
+changes, using `opengold_training_tests --freeze-hands`; verified using
+`--hands-baseline`. The only capture edits were the test harness. Includes
+PC/recruited dual equipment, distinct stack units, pending Savage/RNG stages
+and wounds. These are genuine writer outputs, never rewritten version tags.
+
+| Fixture | SHA-256 |
+| --- | --- |
+| campaign-v17-hands-before.ogs | `9f675cd35d362127ac0b9aff92610634439f8a33f675ccfc68f3af32e9e383c1` |
+| combat-v21-hands-before-attack.save | `8e9e282a8cb351f180bb7e9c3af4653390c0f0903996a76c3927bc6ccb2e58cb` |
+| combat-v21-hands-before-first.save | `441629aaa3e56b2c01598bcce121be82a019722f05b707f2e85ea500e43281f7` |
+| combat-v21-hands-before-second.save | `579b15007c02ce438e5194495eb7f27df278413d6193083fb575c94289d55d71` |
+| combat-v21-hands-before-settled.save | `33c45dea2b30e1ec48171ff9ba2275c8de7ff689acdd3f1b3970081e770ceae5` |

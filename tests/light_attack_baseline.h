@@ -132,4 +132,32 @@ void verify_hands_ui(const std::filesystem::path& path) {
     auto expected=p.checkpoint();expected.selected=actual.state().selected;p.restore(std::move(expected));
     check(encode_campaign(actual,nullptr,assets)==encode_campaign(p,nullptr,assets),"UI hand choices exactly match native equipment, inventory, wounds and resources");
 }
+void freeze_hands() {
+    auto rules=rogue_attack_checks::rules_module();check(rules->identity().version=="0.6.54","Hand baseline requires actual0.6.54 writer");
+    auto p=party();for(auto id:{1u,2u}){p.equip(id,2,EquipmentOperation::equip_main);p.equip(id,3,EquipmentOperation::equip_other);}
+    write("campaign-v17-hands-before.ogs",encode_campaign(p,nullptr,"hands-before"));
+    auto actors=p.participants();actors[0].cell={1,1};actors[1].cell={9,6};actors[2].cell={10,6};actors.push_back({99,"target","Target",1,{2,1}});
+    bool captured=false;for(unsigned seed=1;seed<=256&&!captured;++seed){
+        auto c=rules->create({{12,8,std::vector<std::uint8_t>(96)},actors},seed);while(c->snapshot().actor!=1)act(*c,"end");
+        const auto before=c->save();act(*c,"melee");if(!c->snapshot().savage_attack_choice)continue;
+        write("combat-v21-hands-before-attack.save",before);write("combat-v21-hands-before-first.save",c->save());
+        act(*c,"savage_use");write("combat-v21-hands-before-second.save",c->save());act(*c,"savage_second");
+        if(c->snapshot().free_movement)act(*c,"end");write("combat-v21-hands-before-settled.save",c->save());captured=true;
+    }check(captured,"Capture actual two-weapon pending hit");
+}
+void verify_hands_baseline() {
+    auto rules=rogue_attack_checks::rules_module();const auto normalize=[&](std::string s){replace(s,"0.6.54",rules->identity().version);return s;};
+    const auto bytes=read("campaign-v17-hands-before.ogs");CampaignParty p(rogue_attack_checks::rules_module());
+    p.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"hands-before",nullptr).party);
+    const auto body=[](const std::string& s){return s.substr(s.find('\n',s.find('\n')+1)+1);};
+    check(body(encode_campaign(p,nullptr,"hands-before"))==normalize(body(bytes)),"Actual dual-hand campaign preserves both weapons, carried counts, styles and wounds");
+    for(const auto* phase:{"attack","first","second","settled"}){
+        const auto saved=read((std::string("combat-v21-hands-before-")+phase+".save").c_str());
+        check(rules->restore(saved)->save()==normalize(saved),"Actual dual-hand checkpoint retains its exact old state");
+    }
+    auto c=rules->restore(read("combat-v21-hands-before-first.save"));act(*c,"savage_use");
+    check(c->save()==normalize(read("combat-v21-hands-before-second.save")),"Two-weapon pending Savage reroll/RNG exact");
+    act(*c,"savage_second");if(c->snapshot().free_movement)act(*c,"end");
+    check(c->save()==normalize(read("combat-v21-hands-before-settled.save")),"Two-weapon pending resolution exact");
+}
 }
