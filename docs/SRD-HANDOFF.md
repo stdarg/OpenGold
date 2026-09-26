@@ -10,7 +10,7 @@ or model/runtime setting changes are authorized.
 
 - Branch `codex/srd-light-attacks`; runtime/test **69771eb**, rules0.6.55.
   **#59 Light, #81 Two-Weapon Fighting, #56 Loading are CLOSED** after push.
-  **146 open SRD issues**, verified in `/tmp/srd-open-after-light.json`.
+  **145 open SRD issues**, verified in `/tmp/srd-open-after-light.json`.
 - [Coverage](SRD-COVERAGE.md#light-attacks-two-weapon-fighting-and-loading-598156)
   is canonical. [Packet](LIGHT-ATTACKS.md#delivery-and-verification) records frozen
   acceptance, compatibility, exact checks, limits and timings. Main remains375f58f;
@@ -35,7 +35,7 @@ or model/runtime setting changes are authorized.
 ## Next action
 
 Preflight the next bounded delivery from the existing
-[batching review](SRD-BATCHING-REVIEW.md), using the current146-issue snapshot.
+[batching review](SRD-BATCHING-REVIEW.md), using the current145-issue snapshot.
 Freeze player outcome, acceptance, included issues and exclusions before coding.
 No automatic child tickets or speculative prerequisite work. Preserve full scope
 of parent#85/#140/#147 and all twelve classes. Use the repo map for targeted reads.
