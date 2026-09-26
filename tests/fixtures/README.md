@@ -822,3 +822,35 @@ was used to synthesize an older format.
 SHA-256: `182d59edb78ae4e61d32033a8e24b13baf7177991a3324cc1f22e65deaf63431`.
 `mastery_rest_checks.h` verifies exact canonical re-encoding with no invented
 replacement history/window, including acquired masteries and prior advancement.
+
+### Nick shared-budget baseline — actual0.6.56 writer
+
+Captured before Nick production edits, with production revision `86ac760` and
+rules0.6.56. `OPENGOLD_NICK_BASELINE=tests/fixtures` runs the guarded capture path
+in `opengold_status_effect_tests` (`tests/nick_attack_checks.h`). Capture requires
+that old writer identity and used seed1. These are complete, unmodified writer
+outputs, not edited examples or re-created old formats.
+
+- `combat-v22-nick-before.save`: a wounded Fighter2 with two physical daggers and
+  actual chosen Nick mastery, before its Attack action (Nick not yet implemented).
+- `combat-v22-nick-light-pending.save`: Light extra attack has spent the Bonus
+  Action; the old Savage Attacker choice is unresolved.
+- `combat-v22-nick-light-spent.save`: the preceding choice is skipped/resolved.
+- `combat-v22-nick-other-bonus-spent.save`: Second Wind spent the Bonus Action,
+  then the first Attack qualified for Light. No Light extra attack was made.
+
+The last two states demonstrate why the old Bonus Action flag alone cannot
+reconstruct whether the extra attack was used. New code preserves the entire
+old current turn and enables Nick only at the first fresh turn boundary; the
+old pending choice resolves to the old settled oracle byte for byte apart from
+the module identity. New format23 records the shared allowance and the current
+Attack action's physical qualifying weapon explicitly. No old format is dropped.
+
+SHA256:
+
+```
+2e0ba1df72f12b7b5464953867a24a58e028828b35e9d4b2bb44aa7fc70bd3af  combat-v22-nick-before.save
+c8d4893b059650dc520d33237e8f40d4dd119496babc5ad7a1d791e43ccfe7b3  combat-v22-nick-light-pending.save
+3a6db3e16f7ef02af3db7422deef24ef2ccb863adc54725c63cd18fd6be4ddea  combat-v22-nick-light-spent.save
+0ca778093241e1cc1a681baec16c7dea632f0ef5190dd6e3175453fe102e2cb0  combat-v22-nick-other-bonus-spent.save
+```

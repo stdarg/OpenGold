@@ -224,5 +224,6 @@ void checkpoint_capacity(){
     check(rules->restore(saved)->save()==saved,"Maximum actors/effects and escaped source names remain loadable");
 }
 #include "mastery_combat_checks.h"
+#include "nick_attack_checks.h"
 }
-int main(){try{mastery_combat_checks::run();saving_throws();lifecycle();codec();combat();campaign();original_encounter_scope();checkpoint_capacity();std::cout<<"Status effect tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{if(std::getenv("OPENGOLD_NICK_BASELINE")){nick_attack_checks::capture();return 0;}mastery_combat_checks::run();nick_attack_checks::run();saving_throws();lifecycle();codec();combat();campaign();original_encounter_scope();checkpoint_capacity();std::cout<<"Status effect tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

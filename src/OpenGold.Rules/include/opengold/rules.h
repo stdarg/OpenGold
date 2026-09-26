@@ -232,6 +232,8 @@ struct CombatantView {
     std::vector<ThrownWeaponOption> weapons;
     unsigned selected_weapon{};
     std::vector<ItemAttackOption> light_attacks;
+    bool nick_mastery{};
+    std::vector<ItemAttackOption> nick_attacks;
 };
 struct TemporaryHpOffer {
     EntityId recipient{};

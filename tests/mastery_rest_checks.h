@@ -58,7 +58,9 @@ void run(){
     std::string module_id,version,content_id,assets;fields>>std::quoted(module_id)>>std::quoted(version)>>std::quoted(content_id)>>std::quoted(assets);
     check(version=="0.6.56","Frozen acquisition fixture retains its real writer identity");
     CampaignParty old_party(module());old_party.restore(decode_campaign(old,*creation,*rules,assets,nullptr).party);
-    check(encode_campaign(old_party,nullptr,assets)==old,"Actual acquired-masteries save retains exact grants, wounds, resources, inventories and history");
+    auto expected=old.substr(old.find('\n',old.find('\n')+1)+1);expected.replace(expected.find("0.6.56"),6,rules->identity().version);
+    const auto rewritten=encode_campaign(old_party,nullptr,assets);
+    check(rewritten.substr(0,rewritten.find('\n'))==old.substr(0,old.find('\n'))&&rewritten.substr(rewritten.find('\n',rewritten.find('\n')+1)+1)==expected,"Actual acquired-masteries save retains exact grants, wounds, resources, inventories and history apart from module identity and checksum");
     check(!old_party.state().training_rest&&std::all_of(old_party.state().roster.begin(),old_party.state().roster.end(),[](const auto& m){return m.character.training_edits().empty();}),"Loading an acquired-masteries save does not invent rest windows or history");
     // Missing old-save mastery, reserve members and dead actors get no window.
     CampaignParty excluded(module());excluded.add_pc(hero("fighter"));auto reserve=excluded.add_pc(mastery_grant_checks::chosen("rogue"));excluded.remove(reserve);

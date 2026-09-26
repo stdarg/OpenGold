@@ -1,4 +1,5 @@
 #include "combat_weapon_controls.h"
+#include "nick_controls.h"
 #include "godot_images.h"
 #include "hp_presentation.h"
 #include "application_settings.h"
@@ -139,6 +140,7 @@ void CombatView::_ready()
     hover_style->set_bg_color(Color(.06,.09,.12,.97));hover_style->set_border_color(Color(.48,.66,.68));
     hover_style->set_border_width_all(1);hover_style->set_corner_radius_all(4);hover_style->set_content_margin_all(10);
     hover->add_theme_stylebox_override("panel",hover_style);
+    presentation::setup_nick(*this,i18n::text,callable_mp(this,&CombatView::begin_nick),callable_mp(this,&CombatView::nick_selected),callable_mp(this,&CombatView::confirm_nick),callable_mp(this,&CombatView::cancel_nick),callable_mp(this,&CombatView::nick_input));
     presentation::setup_weapon_controls(*this,i18n::text,callable_mp(this,&CombatView::weapon_selected));ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
@@ -315,6 +317,7 @@ void CombatView::layout_reaction_controls(bool show_controls)
     get_node<Button>("React")->set_position(Vector2(24,top));
     get_node<Button>("React")->set_size(Vector2(button_width,36));
     get_node<Button>("Decline")->set_position(Vector2(24+button_width+10,top));
+    get_node<Button>("Nick")->set_position(Vector2(208,top));get_node<Button>("Nick")->set_size(Vector2(174,36));
     get_node<Button>("Decline")->set_size(Vector2(button_width,36));
     get_node<Button>("End")->set_position(Vector2(24,top));
     get_node<Button>("End")->set_size(Vector2(button_width,36));
@@ -328,6 +331,7 @@ void CombatView::layout_status()
     const double top=std::max(148.0,double(turn->get_position().y+turn->get_size().y+8));
     roster->set_position(Vector2(turn->get_position().x,top));roster->set_size(Vector2(358,std::max(0.0,308-top)));
 }
+#include "nick_dialog_impl.h"
 void CombatView::training(){try{error_.clear();demo_->training(settings::flag("--conditions")?3:42,settings::flag("--conditions"));sync_art();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
 void CombatView::slums()
 {
@@ -461,7 +465,7 @@ void CombatView::cantrip_selected(std::int64_t index)
     mode_="move";refresh();
 }
 bool CombatView::matches_item(const Command& command) const
-{return (command.verb!="throw"||command.item==thrown_item_)&&(!command.verb.starts_with("light_")||command.item==light_item_);}
+{return (command.verb!="throw"||command.item==thrown_item_)&&((!command.verb.starts_with("light_")&&!command.verb.starts_with("nick_"))||command.item==light_item_);}
 void CombatView::weapon_selected(std::int64_t index){
     auto* choices=get_node<OptionButton>("Weapons");if(!demo_||!demo_->has_combat()||index<0||index>=choices->get_item_count())return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb=="weapon_select"&&c.item==unsigned(choices->get_item_id(index))){act(c);return;}
@@ -577,6 +581,7 @@ void CombatView::act(const Command& command)
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
+    if(get_node<Window>("NickAttack")->is_visible())return;
     if(get_node<Window>("SneakAttack")->is_visible()||get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
@@ -584,7 +589,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         if(key->get_keycode()==Key::KEY_ESCAPE||(key->get_keycode()==Key::KEY_SPACE&&get_node<Button>("End")->has_focus())){immediate("end");get_viewport()->set_input_as_handled();return;}
     }
     if(key.is_valid()&&(get_node<OptionButton>("ThrownWeapon")->has_focus()||get_node<OptionButton>("ThrownWeapon")->get_popup()->is_visible()))return;
-    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))&&demo_->has_combat()){
+    if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))&&demo_->has_combat()){
         const auto state=demo_->combat().snapshot();
         const auto active=std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;});
         std::vector<Command> targets;for(const auto& command:demo_->combat().legal_commands())if(command.verb==mode_&&matches_item(command))targets.push_back(command);
@@ -597,13 +602,13 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
     }
     if(key.is_valid()&&(get_node<OptionButton>("GroundItem")->has_focus()||get_node<OptionButton>("GroundItem")->get_popup()->is_visible()))return;
-    if(key.is_valid()&&(get_node<Button>("Throw")->has_focus()||get_node<Button>("PickUp")->has_focus()||get_node<Button>("Stabilize")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus()||get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("Throw")->has_focus()||get_node<Button>("PickUp")->has_focus()||get_node<Button>("Stabilize")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus()||get_node<Button>("Nick")->has_focus()||get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("ActionSurge")->has_focus()||get_node<Button>("AdrenalineRush")->has_focus()||get_node<Button>("Dash")->has_focus()||get_node<Button>("CastCantrip")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_KP_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&(get_node<OptionButton>("Weapons")->has_focus()||get_node<OptionButton>("Weapons")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("CunningAction")->has_focus()||get_node<OptionButton>("CunningAction")->get_popup()->is_visible()||get_node<OptionButton>("Cantrip")->has_focus()||get_node<OptionButton>("Cantrip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("Grip")->has_focus()||get_node<OptionButton>("Grip")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&!key->is_ctrl_pressed()&&demo_->has_combat()){
-        if(key->get_keycode()==Key::KEY_ESCAPE&&(mode_=="wake_ally"||mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))){mode_="move";refresh();get_viewport()->set_input_as_handled();return;}
+        if(key->get_keycode()==Key::KEY_ESCAPE&&(mode_=="wake_ally"||mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))){mode_="move";refresh();get_viewport()->set_input_as_handled();return;}
         if(const auto direction=movement_direction(key->get_keycode(),key->is_shift_pressed())){
             move_selected(*direction);get_viewport()->set_input_as_handled();return;
         }
@@ -613,7 +618,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
             if(!actions.empty()){
                 const auto current=std::find(actions.begin(),actions.end(),mode_);
                 mode_=actions[current==actions.end()?0:(std::size_t(current-actions.begin())+1)%actions.size()];
-                if(mode_.starts_with("light_"))for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_){light_item_=c.item;break;}refresh();
+                if((mode_.starts_with("light_")||mode_.starts_with("nick_")))for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_){light_item_=c.item;break;}refresh();
             }
             get_viewport()->set_input_as_handled();return;
         }
@@ -897,6 +902,8 @@ void CombatView::refresh()
     const auto* choice_actor=cunning_actor!=s.combatants.end()&&s.outcome==Outcome::ongoing?&*cunning_actor:nullptr;
     const bool weapon_layout=presentation::refresh_weapons(*this,choice_actor,player,[](const Message& message){return i18n::render(message);});
     const bool bonus_layout=presentation::refresh_bonus_attacks(*this,choice_actor,offered,player,i18n::text,[](const Message& message){return i18n::render(message);});
+    presentation::refresh_nick(*this,choice_actor,player&&!s.reaction_pending,[](const Message& message){return i18n::render(message);});
+    if(s.reaction_pending)get_node<Button>("Nick")->hide();
     if(weapon_layout||bonus_layout)layout();
     get_node<Button>("CastCantrip")->set_disabled(cantrip_.empty()||!enabled(cantrip_));
     get_node<Button>("ActionSurge")->set_disabled(!enabled("action_surge"));
@@ -935,15 +942,15 @@ void CombatView::refresh()
         get_node<Label>("Prompt")->set_text(i18n::text(std::any_of(offered.begin(),offered.end(),[](const auto& c){return c.verb=="melee";})?
             "No movement squares available. Attack an adjacent enemy or end the turn.":
             "No move or melee attack available. End the turn or use another action."));
-    if(player&&(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))){
+    if(player&&(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))){
         std::vector<Command> targets;for(const auto& command:offered)if(command.verb==mode_&&matches_item(command))targets.push_back(command);
         if(!targets.empty()){
             if(std::none_of(targets.begin(),targets.end(),[&](const auto& c){return c.target==aid_target_;}))aid_target_=targets.front().target;
             const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==aid_target_;});
-            if(target!=s.combatants.end())get_node<Label>("Prompt")->set_text(i18n::format(mode_=="throw"?N_("Throw: {name}\nLeft/Right: target | Space: use"):N_("Stabilize: {name}\nLeft/Right: target | Space: use"),{{"name",gs(target->name)}}));
+            if(target!=s.combatants.end())get_node<Label>("Prompt")->set_text(i18n::format(mode_.starts_with("nick_")?N_("Nick attack: {name}\nLeft/Right: target | Space: use"):mode_=="throw"?N_("Throw: {name}\nLeft/Right: target | Space: use"):N_("Stabilize: {name}\nLeft/Right: target | Space: use"),{{"name",gs(target->name)}}));
         }
     }
-    get_node<Label>("Footer")->set_text(player&&(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))?get_node<Label>("Prompt")->get_text().replace("\n"," | ")+" | "+i18n::text("Escape: cancel"):i18n::text("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end"));
+    get_node<Label>("Footer")->set_text(player&&(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))?get_node<Label>("Prompt")->get_text().replace("\n"," | ")+" | "+i18n::text("Escape: cancel"):i18n::text("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end"));
     if(player&&s.free_movement)get_node<Label>("Footer")->set_text(i18n::format("Free move: {feet} ft | Arrows/click: move | Escape or Finish free move: finish",{{"feet",s.free_movement->remaining_feet}}));
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
@@ -1029,7 +1036,7 @@ void CombatView::draw_battlefield()
     }
     if(active!=s.combatants.end()&&active->side==0&&mode_!="move")for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)&&c.target){
         const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});
-        if(target!=s.combatants.end())canvas->draw_rect(Rect2(Vector2(target->cell.x*tile+1,target->cell.y*tile+1),Vector2(tile-2,tile-2)),Color(.4,.8,.75,(mode_=="stabilize"||mode_=="throw"||mode_.starts_with("light_"))&&c.target==aid_target_?.6:.23));
+        if(target!=s.combatants.end())canvas->draw_rect(Rect2(Vector2(target->cell.x*tile+1,target->cell.y*tile+1),Vector2(tile-2,tile-2)),Color(.4,.8,.75,(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))&&c.target==aid_target_?.6:.23));
     }
     for(const auto& item:s.held_items)if(!item.holder){
         const auto cell=Rect2(Vector2(item.cell.x*tile,item.cell.y*tile),Vector2(tile,tile));

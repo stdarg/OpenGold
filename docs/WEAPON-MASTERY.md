@@ -297,3 +297,71 @@ the identical state is valid under the current identity; rejection cannot be
 caused by mismatched HP. Rebuilt status-effect target passes after that test-only
 change (`/tmp/mastery-sap-vex-final-test-build.log`). Production sources remain
 the same tree that passed the full51 native checks and both UI runs.
+
+### Nick combat checkpoint
+
+Nick uses the actual extra attack's selected weapon kind and physical identity.
+Daggers, Light Hammers, Sickles and Scimitars have this property; the source must
+have chosen that kind. The SRD resolver shares Light's damage treatment, thrown
+ledger, hit choices and once-per-turn allowance. Nick does not spend or restore a
+Bonus Action. Taking ordinary Light prevents Nick, taking Nick prevents ordinary
+Light, and Action Surge never supplies a second shared extra attack.
+
+Nick remains part of the current Attack action: movement and unrelated Bonus
+Actions preserve it; a later non-Attack Action closes it. The ordinary Light Bonus
+Action may still be taken later that turn. A subsequent qualifying Attack action
+records its own weapon, so Nick cannot use the same weapon merely because a
+different weapon qualified during an earlier Action Surge action. These outcomes
+stay in `opengold_rules_srd5`; UI consumes supplied options and legal commands.
+Source checked: [Nick](https://www.dndbeyond.com/sources/dnd/br-2024/equipment#Nick)
+and [Attack action](https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary#AttackAction).
+
+Rules identity0.6.57 introduces conditional combat23 for Nick's explicit shared
+allowance and qualifying physical weapon. Formats1–22 remain accepted. Actual
+pre-Nick writer0.6.56 fixtures are documented in
+[fixture provenance](../tests/fixtures/README.md#nick-shared-budget-baseline--actual0656-writer).
+Old in-progress turns remain exact: their Bonus Action flag cannot distinguish
+Light from Second Wind. Nick activates at the first fresh turn boundary, after
+those historical budgets and pending damage choices have resolved normally.
+
+Approved MASTERY-4 controls use the existing unused ordinary-turn Decline slot
+(x208 in main; the corresponding slot in demo), a640×300 labeled selector,
+Target/Cancel, mouse and keyboard targeting and Escape cancellation. The modal
+presents rules-provided eligible physical weapons and attack modes. The Nick
+button stays visible and disabled after expenditure; no combat saving control.
+MainEN/ES and demoEN pass at1120×800/1920×1080, including exact UI/native
+state, disabled/spent controls, keyboard/mouse, cancellation, thrown Nick and
+Nick after an unrelated Bonus Action. The existing Light UI/native checks also
+pass on both surfaces at both sizes. Captures `/tmp/nick-{main,demo}` and
+`/tmp/nick-light-{main,demo}`; logs `/tmp/mastery-nick-{main,demo}-ui.log` and
+`/tmp/mastery-nick-light-{main,demo}.log`.
+
+The final integrated native suite passes **51/51 in8.78s**, with all50 targets
+rebuilt after production edits and affected targets rebuilt after test corrections.
+Commands: `cmake --build build/mac-check --target <native targets> -j6`, then
+`ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`.
+Logs `/tmp/mastery-nick-native-final-build.log`,
+`/tmp/mastery-nick-interactions-build.log`, `/tmp/mastery-nick-native-final.log`.
+Game/demo builds are `/tmp/mastery-nick-{selection,demo-selection}-build.log`.
+UI scripts are [Nick](../tests/nick_view_tests.gd) and
+[existing Light](../tests/light_attack_view_tests.gd); use their fixture/capture
+arguments with the corresponding main/demo project and `OPENGOLD_GAME_DIR`.
+Localization validates988 messages; diff/scope/architecture review passes.
+
+[Native tests](../tests/nick_attack_checks.h) exercise768 weapon/style/ability/seed
+combinations plus all five PC/NPC class routes, actual historical continuation,
+invalid/stale inputs, Surge timing, physical thrown items, Sneak/Savage choices,
+Vex consumption and Champion movement. Regression corrections retained malformed
+save rejection and exact historical-body comparisons while accounting for the new
+identity/checksum and appended fields. The initial integrated run passed48/51;
+further focused checks exposed one additional old tail-field assumption and one
+new test that expected Vex consumption before pending damage resolved. Both were
+test corrections; no production change was needed in this final verification phase.
+
+Observed verified checkpoint06:06:09 UTC2026-09-26, **2h10m06s** after the original
+batch preflight. The60-minute checkpoint above was not reset. Individual earlier
+Nick implementation/build phase times were not recorded separately; tokens/cost
+unavailable. This commit completes the third of eight combat properties, with
+acquisition/rest transactions already delivered. Five properties and pending
+MASTERY-5/6/7 remain; zero original issues closed. No scope expansion, new issues,
+settings changes or delegation. The goal remains active.

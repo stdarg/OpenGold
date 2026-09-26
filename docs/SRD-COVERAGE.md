@@ -542,3 +542,16 @@ demoEN visible attack/log flows at both sizes pass;980 messages validate.
 See [packet](WEAPON-MASTERY.md#sap-and-vex-combat-checkpoint) and
 [tests](../tests/mastery_combat_checks.h). Six combat properties and pending
 MASTERY-5/6/7 remain; #60/#85 are not closed. No added scope or new issues.
+
+
+Weapon Mastery Nick checkpoint (commit containing this entry): chosen Nick kinds
+now offer the approved physical-weapon selector and targeted extra attack, sharing
+Light's once-per-turn allowance while preserving the Bonus Action. Current Attack
+action timing, Surge, Two-Weapon Fighting, thrown items, Sneak/Savage/Vex/Champion
+and conditional combat23 continuation have native evidence. Actual0.6.56 fixtures
+retain old current-turn behavior; Nick activates at the next fresh turn. **51/51
+native PASS**; mainEN/ES and demoEN Nick and neighboring Light UI/native checks
+pass at both sizes;988 messages validate. See
+[packet](WEAPON-MASTERY.md#nick-combat-checkpoint) and
+[tests](../tests/nick_attack_checks.h). Three of eight properties are delivered;
+Cleave/Graze/Push/Slow/Topple and MASTERY-5/6/7 remain. #60/#85 stay open.

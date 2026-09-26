@@ -15,7 +15,7 @@ void move(CombatSession& c,Cell to){for(const auto& v:c.legal_commands())if(v.ve
 void reject_hit_field(const RulesModule& rules,const CombatSession& combat,unsigned field,int value){
     auto bytes=combat.save();const auto start=bytes.find("\n1 99 ");check(start!=std::string::npos,"Locate serialized pending hit");
     const auto end=bytes.find('\n',start+1);std::istringstream in(bytes.substr(start+1,end-start-1));std::vector<int> fields;int n;while(in>>n)fields.push_back(n);
-    check(fields.size()==(bytes.starts_with("OGCOMBAT 22 ")?14u:12u)&&field<fields.size(),"Versioned pending hit field shape");fields[field]=value;std::ostringstream out;for(unsigned i=0;i<fields.size();++i){if(i)out<<' ';out<<fields[i];}
+    check(fields.size()==((bytes.starts_with("OGCOMBAT 22 ")||bytes.starts_with("OGCOMBAT 23 "))?14u:12u)&&field<fields.size(),"Versioned pending hit field shape");fields[field]=value;std::ostringstream out;for(unsigned i=0;i<fields.size();++i){if(i)out<<' ';out<<fields[i];}
     bytes.replace(start+1,end-start-1,out.str());rejects([&]{(void)rules.restore(bytes);});
 }
 void run(){
@@ -64,7 +64,10 @@ void run(){
      for(unsigned seed=1;seed<=64&&!checked;++seed){auto c=battle(*hard,h,"shortbow",false,seed,true,"hard_target");act(*c,"steady_aim");act(*c,"ranged");
         if(unit(*c,99).hit_points!=1000||c->snapshot().sneak_attack_choice||c->snapshot().savage_attack_choice)continue;
         const auto saved=c->save();const auto start=saved.find("\n1 \"campaign-character\"");check(start!=std::string::npos,"Locate saved aimed actor");const auto end=saved.find('\n',start+1);
-        check(saved.substr(end-8,8)==" 0 1 0 0","Miss clears saved Aim readiness while keeping Speed restriction");
+        std::istringstream actor_fields(saved.substr(start+1,end-start-1));std::string field;
+        for(unsigned n=0;n<39;++n)actor_fields>>std::quoted(field);
+        bool sneak_used,aim_used,aim_ready,moved;actor_fields>>sneak_used>>aim_used>>aim_ready>>moved;
+        check(actor_fields&&!sneak_used&&aim_used&&!aim_ready&&!moved,"Miss clears saved Aim readiness while keeping Speed restriction");
         check(!unit(*c).action&&!unit(*c).bonus_action&&unit(*c).movement_feet==0&&!has(*c,"steady_aim"),"Miss preserves spent Action/Bonus Action and zero Speed");roundtrip(*hard,*c);checked=true;}
      check(checked,"Actual aimed miss exercised");}
     auto old_identity=rules->identity();old_identity.version="0.6.51";rejects([&]{auto state=wounds;rules->migrate_character_state(old_identity,h.sheet(),state);});
