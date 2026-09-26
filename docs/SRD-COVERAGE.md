@@ -574,3 +574,13 @@ demoEN controls pass at1120×800/1920×1080; native grants/rest/save checks3/3 a
 neighboring rest controls pass.989 localization messages validate.
 [Evidence and commands](WEAPON-MASTERY.md#pending-mastery-save-control). MASTERY-5/6
 are now approved but their combat implementation remains. No issue closed.
+
+Graze checkpoint (commit containing this entry): both eligible weapons now offer
+Use/Skip after a miss, retaining Action/Reaction costs and applying only the
+attack ability modifier with the approved reduction/cap policy. Main/demo actual
+controls and retained pending/reaction continuation work. All51 native checks,
+mainEN/ES + demoEN at both sizes, neighboring Savage/Champion controls and993
+localized messages pass. [Evidence](WEAPON-MASTERY.md#graze-playable-checkpoint)
+and [native tests](../tests/graze_checks.h). Four of eight mastery properties are
+playable. Slow/Topple choices, Cleave, Push and simultaneous ordering remain;
+#60/#85 are still open. No added issue or scope.

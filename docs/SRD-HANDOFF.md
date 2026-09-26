@@ -2,76 +2,66 @@
 
 Updated2026-09-26. Standing goal remains incomplete: close all `SRD_improvements`,
 preserving all twelve classes through4 and planned higher levels/multiclassing.
-User approved MASTERY-5/6/7; approval blockers are resolved and implementation
-continues. Goal tool last reports blocked; this assistant cannot set it active.
-No agents/new tasks or model/runtime changes are authorized. **144 open SRD
-issues**, cached `/tmp/srd-open-after-asi.json`; no closure in this batch.
+**MASTERY-1–7 approved**; the latest “1. Approved. 2. Approved. 3. Approved.”
+resolves5/6/7. No unanswered question blocks this batch. Goal tool last reports
+blocked from the earlier wait; this assistant cannot set it active. Implementation
+continues within the standing authorization; do not pause at delivery boundaries.
+No agents/new tasks or model/runtime changes authorized. **144 open SRD issues**,
+cached `/tmp/srd-open-after-asi.json`; no closure in this batch.
 
-## Active batch — Weapon Mastery
+## Current delivery batch
 
-Branch `codex/srd-weapon-mastery`. [Fixed packet](WEAPON-MASTERY.md) owns acceptance.
-Target #60/#85, with mastery portions of #140/#147/#111/#103. Five current class
-routes, all eight properties, retained saves and actual controls. Unrelated class
-progression remains in existing issues. Requested Astra/high for rules interactions
-and persistence; actual configured model/effort unverified. One owner; no agents.
-Preflight03:56:03 UTC;60-minute checkpoint recorded04:56:24. Do not reset the clock.
+Branch `codex/srd-weapon-mastery`. [Fixed packet](WEAPON-MASTERY.md) owns acceptance:
+#60/#85 and mastery portions of #140/#147/#111/#103, all eight properties, five
+current class routes, grants/advancement/rest/persistence and main/demo controls.
+No unrelated class progression. Requested Astra/high for rules interactions and
+persistence; actual configuration unverified. One owner, no delegation.
+Preflight03:56:03; original60-minute checkpoint04:56:24. Approval continuation
+13:59:56 after blocked waiting06:29:28–13:59:56. Do not reset batch timing.
 
-- Acquisition committed/pushed **5b978df**; prior-writer preparation **344a6bb**.
-  Creation/preset/review choices, Fighter4 selection and conditional PC39 work.
-- Long Rest replacement **f31fded** committed/pushed: transactions,
-  sourced history replay and approved700×670 controls. SRD owns replacement
-  outcomes; Core owns per-member one-use windows and generic history. Campaign18
-  is conditional;1–17 remain accepted. Rules identity is now branch0.6.58.
-- Main still375f58f. No PR/main/release integration claimed. Latest completed
-  original issue was #82 (ASI); see [coverage](SRD-COVERAGE.md), not old narratives.
-- Sap/Vex committed/pushed86ac760. Nick committed/pushed0bba07e: approved selector/targeting, shared Light budget, combat23 and
-  retained actual prior-writer continuation. Three of eight properties delivered;
-  this remains partial combat work, not whole-class or issue completion.
-- Pending-choice serialization works. A player-accessible Save game control inside
-  the exclusive rest modal is implemented and verified; see coverage.
+Delivered on this branch (coverage is canonical):
 
-## Verification / next action
+- Acquisition, presets/Review Training/Fighter4 and Long Rest replacements.
+- Sap, Vex, Nick and now **Graze:4/8 playable properties**.
+- Rest Save game control committed/pushed **a0514a9**; actual SaveSlots
+  Cancel/save/load retains unapplied edits and pending mastery entitlement.
+- Latest Graze checkpoint (commit containing this file): approved Use/Skip,
+  typed damage cap, physical/advanced/reaction paths and conditional combat24.
+  Rules version0.6.59; all supported prior formats retained. Actual0.6.58 Slow
+  writer captured in addition to0.6.57 critical and0.6.56 Nick fixtures.
+- Main still375f58f; no PR/main/release integration claimed. Last original issue
+  completed was #82. Do not equate property delivery with full issue completion.
 
-Nick and freshly rebuilt **51/51 native checks PASS** (8.78s),
-`/tmp/mastery-nick-native-final.log`. MainEN/ES + demoEN Nick and neighboring Light
-UI/native checks pass at1120×800/1920×1080;988 messages/diff checks pass. Pending
-Sneak/Savage, Vex consumption and Champion movement retain exact continuation.
-See [packet](WEAPON-MASTERY.md#nick-combat-checkpoint) for commands/evidence.
-Observed verification06:06:09 UTC,2h10m06s since original batch start; no live
-build/test. Coverage owns completion, and no issue has been closed.
+## Next implementation
 
-Compatibility preparation aa6e3f8 captures actual0.6.57 Longbow/Maul critical
-phases. Latest checkpoint adds Slow's effect lifecycle/stacking and shared
-movement/persistence consumers; **51/51 freshly rebuilt native checks PASS**,
-12.43s, `/tmp/mastery-slow-native.log`;989 messages/diff checks pass. See
-[packet](WEAPON-MASTERY.md#slow-effect-lifecycle-checkpoint-combat-integration-incomplete)
-for scope and evidence. No live process. Verified06:19:44 UTC,2h23m41s since
-original preflight. Main/demo binaries remain at Nick0.6.57; rebuild before any
-future UI tests. No UI control changed in the Slow lifecycle checkpoint.
+**Slow's hit choice, Topple, Cleave and Push remain**, including simultaneous
+Champion effects and separate Cleave critical movement entitlements (MASTERY-5).
+Slow's lifecycle/stacking already works; connect the real weapon-hit path.
+All layouts and policies are approved in [decisions](SRD-DECISIONS.md); do not
+repeat permission questions. See the fixed packet for exact controls and scope.
+Use the existing optional-effect presentation introduced for Graze, extending it
+for the approved Resolve next dropdown and existing creature/cell targeting.
+Keep source identity, per-turn budgets and interrupted movement in SRD; preserve
+actual prior-writer fixtures. No speculative transit/footprint or class expansion.
 
-Remaining: Slow weapon-hit choice, Topple, Cleave, Graze and Push, simultaneous
-Champion choices. Rest Save control is implemented and verified. **MASTERY-1–7 approved**; consult the
-packet and decision register, do not repeat questions. Historical fixtures remain
-unchanged. Continuation began13:59:56 UTC after blocked waiting06:29:28–13:59:56.
-Requested Astra/high remains appropriate for rules/persistence; actual model and
-effort unverified. No build/test live at continuation; worktree clean at5b0e9ed.
+## Latest verification
 
-## Preserved decisions and execution
+Graze:50 native targets freshly rebuilt; **51/51 PASS**,18.21s,
+`/tmp/graze-native-regression.log`. MainEN/ES + demoEN at both supported sizes
+pass keyboard/mouse/Escape, pending reload and exact native/UI states. Adjacent
+Savage/Champion controls/native prerequisites4/4 pass.993 messages/diff checks
+pass. Main/demo binaries current0.6.59. No live build/test at this checkpoint.
+[Commands/evidence](WEAPON-MASTERY.md#graze-playable-checkpoint).
+Observed14:35:13 UTC:35m17s since approval continuation; no new issue/scope.
 
-#97 remains physical spellbooks/copying; #165 retains missing spells. #98/#101
-and the full Wizard tracker remain open. Q19–21 remain pending; Q23 superseded by
-STYLE-1. Unlimited ammunition is AMMO-UNLIMITED; do not reopen it. Camp/inn saves
-only. Read SRD-WORKFLOW, SRD-MODEL-ROUTING, SRD-REPO-MAP and SRD-DECISIONS.
+## Standing constraints
 
-No silent scope growth, new issues, agents/tasks/settings or compatibility cuts.
-Finish source edits before building; never edit live build inputs. Rebuild before
-testing; Godot runs serially. Preserve prior-writer evidence. Commit/push only
-owned verified work; close only full original acceptance. Coverage is canonical.
-Questions restart at1 per set. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`,
-verify exit0, and write full questions visibly; widget alone is insufficient.
-
-Latest delivery: approved rest Save game control, real SaveSlots Cancel/save/load
-and unapplied-selection preservation; mainEN/ES + demoEN at both sizes pass,
-native grants/rest/save3/3 and adjacent rest controls pass. See coverage/packet.
-MASTERY-5/6 remain approved implementation work, not unanswered questions.
-No active build/test; all owned changes are committed/pushed at this checkpoint.
+Read SRD-WORKFLOW and SRD-MODEL-ROUTING after resets; use SRD-REPO-MAP.
+Camp/inn saves only; unlimited ammunition (AMMO-UNLIMITED). No agents/new tasks,
+settings changes, compatibility cuts or silent scope growth. Finish build inputs
+before building; rebuild affected targets before tests; Godot runs serially.
+Commit/push owned verified work and close only full original acceptance.
+Questions restart at1 per set; play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`
+and write every question visibly. A decision reply does not resume a paused goal.
+#97 spellbooks/copying and #165 missing spells remain; #98/#101/full Wizard open.
+Q19–21 remain separate pending decisions; Q23 superseded by STYLE-1.

@@ -1,3 +1,4 @@
+#include "../../../src/OpenGoldBox/optional_effect_controls.h"
 #include "../../../src/OpenGoldBox/nick_controls.h"
 #include "../../../src/OpenGoldBox/combat_weapon_controls.h"
 #include "combat_view.h"
@@ -40,6 +41,7 @@ std::filesystem::path CombatView::local_path(const char* path) const
 void CombatView::_ready()
 {
     presentation::setup_nick(*this,gs,callable_mp(this,&CombatView::begin_nick),callable_mp(this,&CombatView::nick_selected),callable_mp(this,&CombatView::confirm_nick),callable_mp(this,&CombatView::cancel_nick),callable_mp(this,&CombatView::nick_input));
+    presentation::setup_optional_effect(*this,gs,callable_mp(this,&CombatView::immediate).bind("effect_use"),callable_mp(this,&CombatView::immediate).bind("effect_skip"),callable_mp(this,&CombatView::optional_effect_input));
     presentation::setup_weapon_controls(*this,gs,callable_mp(this,&CombatView::weapon_selected));ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
@@ -218,8 +220,14 @@ void CombatView::act(const Command& command)
     try{if(demo_->submit(command)){mode_="move";ai_delay_=0;error_.clear();refresh();}}
     catch(const std::exception& e){error_=e.what();refresh();}
 }
+void CombatView::optional_effect_input(const Ref<InputEvent>& event){
+    const Ref<InputEventKey> key=event;if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ESCAPE){
+        get_node<Window>("OptionalEffect")->set_input_as_handled();immediate("effect_skip");
+    }
+}
 void CombatView::_input(const Ref<InputEvent>& event)
 {
+    if(get_node<Window>("OptionalEffect")->is_visible())return;
     if(get_node<Window>("NickAttack")->is_visible())return;
     if(get_node<Window>("SneakAttack")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
@@ -318,6 +326,7 @@ void CombatView::refresh()
     const bool weapon_layout=presentation::refresh_weapons(*this,choice_actor,player,[](const Message& message){return render_weapon_message(message);});
     const bool bonus_layout=presentation::refresh_bonus_attacks(*this,choice_actor,offered,player,gs,[](const Message& message){return render_weapon_message(message);});
     presentation::refresh_nick(*this,choice_actor,player&&!s.reaction_pending,[](const Message& message){return render_weapon_message(message);});
+    presentation::refresh_optional_effect(*this,s.optional_effect_choice,player,[](const Message& m){return render_weapon_message(m);});
     if(s.reaction_pending)get_node<Button>("Nick")->hide();
     get_node<Button>("Decline")->set_visible(!get_node<Button>("Nick")->is_visible());
     if(weapon_layout||bonus_layout)layout();

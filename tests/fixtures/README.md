@@ -887,3 +887,19 @@ bd1953e3ef2117f94ba47582c7d049bb8e0c46932f3941882c0b0e552e1a4c6e  combat-v23-mau
 ba61d92a73b7d58e26d7a4d2196652375842f68306d27ad42e02f25636205ebf  combat-v23-maul-move.save
 bb56c8397ddf26eaa87f880a44ef2f0a2c066c7caa6460b252193ca538c8718c  combat-v23-maul-settled.save
 ```
+
+### Actual0.6.58 Slow writer before Graze
+
+`combat-v15-slow-0.6.58.save` was captured2026-09-26 from the actual0.6.58
+`build/sprite-demo/libopengold_rules_srd5.a`, built at `a0514a9` before that build
+was updated for Graze. The capture driver used the matching `rules.h` from that
+commit and asserted the runtime identity was0.6.58. It created a12×8 empty board,
+Vanguard1 at(1,1), Bandit99 at(3,1), scope777 and seed89. Bandit initial vitality
+carried one six-second Slow sourced from1; the old module created, saved and
+round-tripped the session before writing this file. This is real writer output,
+not a current checkpoint with a changed version header.
+
+SHA256: `758e1934fba8b5db82d58e2825f72cfa42d19f64fe3495cc17070b0bdd010a45`.
+`graze_checks.h` requires exact continuation encoding except the expected module
+identity update and verifies that Slow survives. Earlier actual0.6.57 mastery
+critical-phase and0.6.56 Nick fixtures are retained unchanged.

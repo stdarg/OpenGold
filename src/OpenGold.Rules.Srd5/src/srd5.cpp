@@ -81,6 +81,7 @@ bool module_before(const Identity& identity,std::array<unsigned,3> introduced)
 using Dice=detail::DamageDice;
 struct Definition {
     int ac{}, hp{}, initiative{}, speed{}, melee_bonus{};
+    int melee_ability{};
     Dice melee;
     int ranged_bonus{};
     int reach{5};
@@ -183,6 +184,7 @@ struct ChampionMove {
     bool spell{};
     Cell origin;
 };
+struct PendingGraze { EntityId actor{},target{}; int natural{}; };
 struct PendingCheck {
     EntityId actor{},target{};
     int natural{};
@@ -303,7 +305,7 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
             d.versatile_sides=item->versatile_sides;hands+=d.weapon_hands;
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
-            if(item->dice&&!item->ranged){d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.melee_type=item->type;d.reach=item->reach;d.melee_heavy_disadvantage=item->heavy_disadvantage(scores);}
+            if(item->dice&&!item->ranged){d.melee_ability=modifier;d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.melee_type=item->type;d.reach=item->reach;d.melee_heavy_disadvantage=item->heavy_disadvantage(scores);}
             if(item->range){d.ranged_bonus=bonus+((item->ranged&&(features&4))?2:0);d.ranged={item->dice,item->sides,item->fixed_damage?item->fixed_damage:modifier};d.ranged_type=item->type;d.range=item->range;d.long_range=item->long_range;d.ranged_heavy_disadvantage=item->heavy_disadvantage(scores);}
         }else if(const auto* item=detail::armor(key);item&&item->category!=detail::ArmorCategory::shield){
             if(armor)throw std::runtime_error("Only one armor may be equipped");
@@ -511,6 +513,16 @@ private:
     std::optional<PendingWeaponHit> weapon_hit_;
     std::optional<PendingCheck> check_choice_;
     std::optional<ChampionMove> champion_move_;
+    std::optional<PendingGraze> graze_;
+    void validate_graze() const;
+    int graze_damage(const Actor& a,const Actor& target) const {
+        const int cap=std::max(0,def(a).melee_ability);
+        const std::array parts{detail::DamagePart{def(a).melee_type,cap}};
+        auto defenses=def(target).affinities;
+        // The approved Graze policy permits reductions, never vulnerability increases.
+        std::erase_if(defenses,[](const auto& affinity){return affinity.kind==detail::AffinityKind::vulnerability;});
+        return std::min(cap,detail::resolve_damage(parts,defenses).total);
+    }
     void finish_champion_move();
     void validate_champion_move() const;
     void finish_check(const PendingCheck& check,int boost);
@@ -833,6 +845,11 @@ Snapshot Session::snapshot() const
     if(weapon_hit_){const auto& h=*weapon_hit_;const auto a=hit_actor(h);const auto dice=weapon_dice(a,h.ranged);const bool critical=critical_hit(a,actor(h.target),h.natural);
         if(h.sneak_pending)s.sneak_attack_choice=SneakAttackChoice{h.attacker,h.target,int((def(a).sneak_level+1)/2)*(critical?2:1),6,critical};
         else s.savage_attack_choice=SavageAttackChoice{h.attacker,h.target,def(a).weapon_label,dice.count*(critical?2:1),dice.sides,dice.bonus,h.first,h.second,critical,h.sneak_extra};}
+    if(graze_){const auto& g=*graze_;const auto& a=actor(g.actor);const auto& t=actor(g.target);
+        const int amount=graze_damage(a,t);
+        s.optional_effect_choice=OptionalEffectChoice{g.actor,g.target,{"Graze",{}},
+            {"Target: {target}\nGraze damage: {damage}\n\nUse Graze after this miss, or skip it.\nThe attack's Action or Reaction is already spent.",{{"target",t.source.name},{"damage",std::to_string(amount)}}}};
+    }
     if(champion_move_)s.free_movement=FreeMovement{champion_move_->actor,champion_move_->remaining};
     if(check_choice_){const auto& c=*check_choice_;s.ability_check_choice=AbilityCheckChoice{c.actor,c.target,c.natural,def(actor(c.actor)).medicine,c.natural+def(actor(c.actor)).medicine,10,actor(c.actor).winds};}
     if(temporary_offer_)s.temporary_hp_offer=TemporaryHpOffer{actors_[turn_].source.id,actors_[turn_].temporary_hp,*temporary_offer_};
@@ -942,6 +959,7 @@ std::vector<Command> Session::legal_commands() const
         });
         return commands;
     };
+    if(graze_){add(graze_->actor,"effect_use","Use",graze_->target);add(graze_->actor,"effect_skip","Skip",graze_->target);return commands;}
     if(champion_move_){add(champion_move_->actor,"end","Finish free move");for(const auto cell:movement_reach(champion_move_->actor))add(champion_move_->actor,"move","Free move",0,cell);return filtered();}
     if(check_choice_){add(check_choice_->actor,"mind_use","Use Tactical Mind",check_choice_->target);add(check_choice_->actor,"mind_skip","Keep failed check",check_choice_->target);return filtered();}
     if(weapon_hit_){
@@ -1042,7 +1060,7 @@ std::vector<Command> Session::legal_commands() const
 std::vector<Cell> Session::movement_reach(EntityId id) const
 {
     std::vector<Cell> cells;
-    if(outcome_!=Outcome::ongoing||(!champion_move_&&pending())||temporary_offer_||weapon_hit_||check_choice_||(champion_move_&&id!=champion_move_->actor))return cells;
+    if(outcome_!=Outcome::ongoing||(!champion_move_&&pending())||temporary_offer_||weapon_hit_||check_choice_||graze_||(champion_move_&&id!=champion_move_->actor))return cells;
     const auto actor=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;});
     if(actor==actors_.end()||!conscious(*actor))return cells;
     const auto budget=champion_move_?champion_move_->remaining:movement_left(*actor);
@@ -1137,7 +1155,9 @@ void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,in
         " + "+std::to_string(bonus)+" vs AC "+std::to_string(def(target).ac)+modifier_label;
     std::vector<MessageArgument> arguments{{"actor",a.source.name},{"target",target.source.name},{"roll",std::to_string(natural)},
         {"bonus",std::to_string(bonus)},{"ac",std::to_string(def(target).ac)},{"disadvantage",modifier_label,true}};
-    if(!(!spell&&def(a).champion&&natural==19)&&!attack_hits(natural,bonus,def(target).ac)){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});return;}
+    if(!(!spell&&def(a).champion&&natural==19)&&!attack_hits(natural,bonus,def(target).ac)){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});
+        if(!spell&&!ranged&&weapon_mastery(a,false)==detail::Mastery::graze)graze_=PendingGraze{a.source.id,target.source.id,natural};
+        return;}
     const bool critical=critical_hit(a,target,natural,spell);
     if(savage)message+=" (Savage Attacker)";
     amount=resolved_damage(target,type,amount);
@@ -1353,7 +1373,16 @@ bool Session::submit(const Command& command)
     }
     const bool second=command.verb.ends_with("_2");
     const auto spend=[&]{if(second||command.verb=="scorching_ray"||command.verb=="blindness")--a.slots2;else --a.slots;a.spent_slot=true;};
-    if(champion_move_){
+    if(graze_){
+        const auto g=*graze_;graze_.reset();
+        if(command.verb=="effect_use"){
+            auto& target=actor(g.target);const int amount=graze_damage(a,target);
+            log(a.source.name+" grazes "+target.source.name+" for "+std::to_string(amount)+" damage.",
+                {"{actor} grazes {target} for {damage} damage.",{{"actor",a.source.name},{"target",target.source.name},{"damage",std::to_string(amount)}}});
+            damage(target,amount,false);
+        }
+        if(pending())finish_reaction();
+    }else if(champion_move_){
         if(command.verb=="end")finish_champion_move();
         else{const auto grid=movement_grid(a);const auto path=grid.reachable(champion_move_->remaining).path_to(command.destination);
             for(const auto cell:path){champion_move_->remaining-=*grid.step_cost(a.source.cell,cell);a.source.cell=cell;a.moved=true;}clear_departed_overlaps();
@@ -1423,7 +1452,7 @@ bool Session::submit(const Command& command)
         a.weapon_hands=command.verb=="grip_one"?1:2;
     } else if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
-        if(!weapon_hit_&&!champion_move_)finish_reaction();
+        if(!weapon_hit_&&!champion_move_&&!graze_)finish_reaction();
     } else if(command.verb=="move") {
         path_=path_to(a,command.destination);path_index_=0;progress_movement();
     } else if(command.verb=="end")end_turn();
@@ -1509,7 +1538,7 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    const unsigned format=nick_active_?23:light_active_?22:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.sneak_level||a.definition.great_weapon_fighting;})?21:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.arcane<a.definition.arcane;})?20:physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
+    const unsigned format=graze_?24:nick_active_?23:light_active_?22:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.sneak_level||a.definition.great_weapon_fighting;})?21:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.arcane<a.definition.arcane;})?20:physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
     std::ostringstream out;out<<"OGCOMBAT "<<format<<' '<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
@@ -1539,6 +1568,7 @@ std::string Session::save() const
     if(format==17||(format>=19&&check_choice_)){const auto& c=*check_choice_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.surge_spent<<'\n';}
     if(format>=19)out<<bool(champion_move_)<<'\n';
     if(format==18||(format>=19&&champion_move_)){const auto& c=*champion_move_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.remaining<<' '<<c.spell<<' '<<c.origin.x<<' '<<c.origin.y<<'\n';}
+    if(format>=24){const auto& g=*graze_;out<<g.actor<<' '<<g.target<<' '<<g.natural<<' '<<light_active_<<' '<<nick_active_<<'\n';}
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -1732,9 +1762,23 @@ void Session::validate_check() const
        pending()||temporary_offer_||weapon_hit_||outcome_!=Outcome::ongoing||a.actions.surge||
        (c.surge_spent?!a.surge_used:a.actions.normal))throw std::runtime_error("Invalid pending ability check");
 }
+void Session::validate_graze() const
+{
+    if(!graze_)return;const auto& g=*graze_;
+    const auto a=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==g.actor;});
+    const auto t=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==g.target;});
+    if(a==actors_.end()||t==actors_.end()||a==t||!conscious(*a)||t->dead||
+       weapon_mastery(*a,false)!=detail::Mastery::graze||g.natural<1||g.natural>20||
+       attack_hits(g.natural,def(*a).melee_bonus,def(*t).ac)||(def(*a).champion&&g.natural==19)||
+       distance(a->source.cell,t->source.cell)>def(*a).reach||!line_of_sight(a->source.cell,t->source.cell)||
+       weapon_hit_||check_choice_||temporary_offer_||champion_move_||outcome_!=Outcome::ongoing||
+       (pending()?(pending()!=g.actor||a->reaction||g.target!=actors_[turn_].source.id):
+        (g.actor!=actors_[turn_].source.id||(a->actions.normal&&(!a->surge_used||a->actions.surge)))))
+        throw std::runtime_error("Invalid pending Graze");
+}
 void Session::validate_restored_state(bool legacy_facing_reaction) const
 {
-    validate_weapon_hit();validate_check();validate_champion_move();
+    validate_weapon_hit();validate_check();validate_champion_move();validate_graze();
     if (pending() && !legacy_facing_reaction && path_index_ >= path_.size())
         throw std::runtime_error("Reaction without movement");
     const auto& mover = actors_[turn_];
@@ -1814,7 +1858,7 @@ void Session::validate_pending_movement() const
                 throw std::runtime_error("Invalid Champion reaction origin");
             continue;
         }
-        if (detail::opportunity_blocked(actor.effects) || actor.hp == 0 || (!actor.reaction&&!(weapon_hit_&&weapon_hit_->attacker==actor.source.id&&i==reactor_index_)) || actor.source.side == mover.source.side ||
+        if (detail::opportunity_blocked(actor.effects) || actor.hp == 0 || (!actor.reaction&&!((weapon_hit_&&weapon_hit_->attacker==actor.source.id||graze_&&graze_->actor==actor.source.id)&&i==reactor_index_)) || actor.source.side == mover.source.side ||
             !has_weapon_reaction(actor,mover.source.cell,path_[path_index_]) ||
             !can_see(actor,mover))
             throw std::runtime_error("Invalid checkpoint opportunity attack");
@@ -1847,13 +1891,14 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=23)&&identity.version=="0.6.57")||((version>=13&&version<=22)&&identity.version=="0.6.56")||((version>=13&&version<=22)&&identity.version=="0.6.55")||((version>=13&&version<=21)&&identity.version=="0.6.54")||((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=23)&&identity.version=="0.6.58")||((version>=13&&version<=23)&&identity.version=="0.6.57")||((version>=13&&version<=22)&&identity.version=="0.6.56")||((version>=13&&version<=22)&&identity.version=="0.6.55")||((version>=13&&version<=21)&&identity.version=="0.6.54")||((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 23 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 24 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
+    if(version>=24&&module_before(identity,{0,6,59}))throw std::runtime_error("Legacy combat cannot contain Graze choice");
     if(version>=23&&module_before(identity,{0,6,57}))throw std::runtime_error("Legacy combat cannot contain Nick budget");
     Encounter encounter;
     encounter.battlefield = read_checkpoint_board(input);
@@ -1988,6 +2033,8 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     if(version==17||pending_check){PendingCheck c;input>>c.actor>>c.target>>c.natural>>c.surge_spent;if(!input)throw std::runtime_error("Invalid ability-check checkpoint");session->check_choice_=c;}
     if(version>=19)input>>pending_champion;
     if(version==18||pending_champion){if(module_before(identity,{0,6,46}))throw std::runtime_error("Legacy checkpoint cannot contain Champion movement");ChampionMove c;input>>c.actor>>c.target>>c.natural>>c.remaining>>c.spell>>c.origin.x>>c.origin.y;if(!input)throw std::runtime_error("Invalid Champion movement checkpoint");session->champion_move_=c;}
+    bool saved_light=version>=22,saved_nick=version>=23;
+    if(version>=24){PendingGraze g;input>>g.actor>>g.target>>g.natural>>saved_light>>saved_nick;session->graze_=g;}
     if(!input)throw std::runtime_error("Invalid checkpoint continuation");
     unsigned legacy_facing_reaction{};
     if(version==5){
@@ -1998,7 +2045,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         if(a.hp==0&&!a.dead&&session->shares_occupied_space(a))a.involuntary_overlap=true;
     // Validate the old queue before removing it. Migration must not conceal a
     // malformed checkpoint or change damage, spent resources, time or dice.
-    session->light_active_=version>=22;session->nick_active_=version>=23;session->validate_light();
+    session->light_active_=saved_light;session->nick_active_=saved_nick;session->validate_light();
     session->validate_restored_state(legacy_facing_reaction!=0);
     input >> std::ws;
     if (!input.eof()) throw std::runtime_error("Trailing checkpoint data");
@@ -2014,7 +2061,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.6.57"&&saved.version!="0.6.56"&&saved.version!="0.6.55"&&saved.version!="0.6.54"&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.6.58"&&saved.version!="0.6.57"&&saved.version!="0.6.56"&&saved.version!="0.6.55"&&saved.version!="0.6.54"&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -2678,7 +2725,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.58",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.59",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
