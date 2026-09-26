@@ -420,7 +420,8 @@ VitalState vitals(const Actor& a)
     if(a.hp==0)description+=(description.empty()?"":"\n")+std::string(a.dead?"Dead":a.stable?"Stable, unconscious":"Unconscious; death saves ")+(!a.dead&&!a.stable?std::to_string(a.successes)+" successes, "+std::to_string(a.failures)+" failures":"");
     if(detail::healing_blocked(a.effects))description+="\nChill Touch: cannot regain HP.";
     if(detail::opportunity_blocked(a.effects))description+="\nShocking Grasp: cannot make Opportunity Attacks.";
-    if(detail::speed_penalty(a.effects))description+="\nRay of Frost: Speed reduced by 10 feet.";
+    if(detail::frosted(a.effects))description+="\nRay of Frost: Speed reduced by 10 feet.";
+    if(detail::slowed(a.effects))description+="\nSlow: Speed reduced by 10 feet.";
     if(detail::blinded(a.effects))description+="\nBlinded";
     if(a.effects.sleeping)description+="\nNaturally asleep";
     if(a.effects.prone)description+="\nProne";
@@ -899,12 +900,12 @@ Snapshot Session::snapshot() const
             Message message{"Chill Touch ({source}): cannot regain HP.",{{"source",effect.source_name}}};
             messages.push_back(message);view.conditions.push_back(std::move(message));
         }
-        for(const auto& effect:a.effects.active)if(effect.kind==detail::EffectKind::sap||effect.kind==detail::EffectKind::vex){
-            Message message{effect.kind==detail::EffectKind::sap?"Sap ({source}): next attack roll has Disadvantage.":"Vex ({source}): source's next attack against this creature has Advantage.",{{"source",effect.source_name}}};
+        for(const auto& effect:a.effects.active)if(effect.kind==detail::EffectKind::sap||effect.kind==detail::EffectKind::vex||effect.kind==detail::EffectKind::slow){
+            Message message{effect.kind==detail::EffectKind::sap?"Sap ({source}): next attack roll has Disadvantage.":effect.kind==detail::EffectKind::slow?"Slow ({source}): Speed reduced by 10 feet.":"Vex ({source}): source's next attack against this creature has Advantage.",{{"source",effect.source_name}}};
             messages.push_back(message);view.conditions.push_back(std::move(message));
         }
         if(detail::opportunity_blocked(a.effects)){messages.push_back({"Shocking Grasp: cannot make Opportunity Attacks.",{}});view.conditions.push_back({"Shocking Grasp: cannot make Opportunity Attacks.",{}});}
-        if(detail::speed_penalty(a.effects)){messages.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});view.conditions.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});}
+        if(detail::frosted(a.effects)){messages.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});view.conditions.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});}
         if(detail::blinded(a.effects)){
             messages.push_back({"Blinded",{}});s.combatants.back().status+=" | Blinded";
             s.combatants.back().conditions.push_back({"Blinded",{}});
@@ -1287,7 +1288,7 @@ void Session::advance_turn_time()
     detail::elapse_recovery(subjects,delta,rng_,detail::RecoveryMode::combat,[&](const detail::EffectEvent& event){
         const auto& target=actor(event.target);
         if(event.save)log_save(target,*event.save);
-        if(event.removed&&(event.effect.kind==detail::EffectKind::sap||event.effect.kind==detail::EffectKind::vex))log(target.source.name+" loses a mastery effect.",{"{name} loses {mastery} from {source}.",{{"name",target.source.name},{"mastery",event.effect.kind==detail::EffectKind::sap?"Sap":"Vex",true},{"source",event.effect.source_name}}});
+        if(event.removed&&(event.effect.kind==detail::EffectKind::sap||event.effect.kind==detail::EffectKind::vex||event.effect.kind==detail::EffectKind::slow))log(target.source.name+" loses a mastery effect.",{"{name} loses {mastery} from {source}.",{{"name",target.source.name},{"mastery",event.effect.kind==detail::EffectKind::sap?"Sap":event.effect.kind==detail::EffectKind::slow?"Slow":"Vex",true},{"source",event.effect.source_name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::chill_touch)log(target.source.name+" loses a Chill Touch effect.",{ "{name} loses a Chill Touch effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::shocking_grasp)log(target.source.name+" loses a Shocking Grasp effect.",{"{name} loses a Shocking Grasp effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::ray_of_frost)log(target.source.name+" loses a Ray of Frost effect.",{"{name} loses a Ray of Frost effect.",{{"name",target.source.name}}});
@@ -1846,7 +1847,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=22)&&identity.version=="0.6.56")||((version>=13&&version<=22)&&identity.version=="0.6.55")||((version>=13&&version<=21)&&identity.version=="0.6.54")||((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=23)&&identity.version=="0.6.57")||((version>=13&&version<=22)&&identity.version=="0.6.56")||((version>=13&&version<=22)&&identity.version=="0.6.55")||((version>=13&&version<=21)&&identity.version=="0.6.54")||((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
@@ -1923,6 +1924,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         unsigned effects_count{};input>>session->scope_>>session->elapsed_ms_>>effects_count;
         if(!input||!session->scope_||effects_count!=session->actors_.size())throw std::runtime_error("Invalid checkpoint effect header");
         for(auto& a:session->actors_){a.effects=detail::read_effects(input);
+            if(module_before(identity,{0,6,58})&&detail::slowed(a.effects))throw std::runtime_error("Legacy checkpoint cannot contain Slow");
             if(module_before(identity,{0,6,56})&&detail::has_attack_mastery(a.effects))throw std::runtime_error("Legacy checkpoint cannot contain mastery effects");
             if(a.recovery.stable_recovery_due&&(module_before(identity,{0,6,44})||!detail::healing_blocked(a.effects)))throw std::runtime_error("Invalid earned recovery checkpoint");if(module_before(identity,{0,6,43})&&detail::healing_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Chill Touch");if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");if(module_before(identity,{0,6,41})&&a.effects.prone)throw std::runtime_error("Legacy combat cannot contain natural sleep/posture state");if(module_before(identity,{0,6,38})&&detail::opportunity_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Shocking Grasp");if(version<15&&detail::speed_penalty(a.effects))throw std::runtime_error("Legacy combat cannot contain Ray of Frost");}
     }
@@ -2012,7 +2014,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.6.56"&&saved.version!="0.6.55"&&saved.version!="0.6.54"&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.6.57"&&saved.version!="0.6.56"&&saved.version!="0.6.55"&&saved.version!="0.6.54"&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -2256,6 +2258,7 @@ public:
         if(module_before(saved,{0,6,52})&&sheet.character_class=="Rogue"&&sheet.level>2)throw std::runtime_error("Legacy campaign cannot contain level-three Rogues");
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported campaign migration");
         auto definition=character_definition(character_profile(sheet,{}).data);
+        if(module_before(saved,{0,6,58})&&state.resources.find("FX7 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Slow");
         if(module_before(saved,{0,6,56})&&state.resources.find("FX6 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain mastery effects");
         if(module_before(saved,{0,6,43})&&state.resources.find("FX5 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Chill Touch");
         if(module_before(saved,{0,6,38})&&state.resources.find("FX3 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Shocking Grasp");
@@ -2675,7 +2678,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.57",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.58",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})

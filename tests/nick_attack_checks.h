@@ -122,7 +122,7 @@ void historical(){
     auto p=party();auto c=battle(p);bool pending=false;
     for(unsigned seed=1;seed<=96&&!pending;++seed){c=battle(p,seed);act(*c,"melee",99);settle(*c);act(*c,"nick_melee",99);pending=bool(c->snapshot().savage_attack_choice);}
     check(pending,"Forged-budget test has actual pending Nick damage");auto bytes=c->save();
-    auto bad=bytes;bad.replace(bad.find("0.6.57"),6,"0.6.56");rejects([&]{(void)p.rule_module().restore(bad);});
+    auto bad=bytes;bad.replace(bad.find(p.rule_module().identity().version),p.rule_module().identity().version.size(),"0.6.56");rejects([&]{(void)p.rule_module().restore(bad);});
     std::size_t row=0;for(unsigned i=0;i<4;++i)row=bytes.find('\n',row)+1;
     while(!bytes.substr(row).starts_with("1 "))row=bytes.find('\n',row)+1;
     const auto end=bytes.find('\n',row),origin=bytes.rfind(' ',end),budget=bytes.rfind(' ',origin-1);

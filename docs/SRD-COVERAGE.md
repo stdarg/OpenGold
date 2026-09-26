@@ -555,3 +555,12 @@ pass at both sizes;988 messages validate. See
 [packet](WEAPON-MASTERY.md#nick-combat-checkpoint) and
 [tests](../tests/nick_attack_checks.h). Three of eight properties are delivered;
 Cleave/Graze/Push/Slow/Topple and MASTERY-5/6/7 remain. #60/#85 stay open.
+
+
+Slow lifecycle checkpoint (commit containing this entry) supplies bounded sourced
+Slow effects, stacking/expiry and shared movement/persistence consumers in SRD
+rules0.6.58. **51/51 native PASS**,989 messages validate; actual0.6.57 continuation
+is retained. [Evidence](WEAPON-MASTERY.md#slow-effect-lifecycle-checkpoint-combat-integration-incomplete).
+This is partial rules support: the weapon-hit decision is not integrated and
+Slow is not counted as a fourth playable property. No issue closure or new UI
+verification is claimed. MASTERY-5/6/7 remain pending.

@@ -381,3 +381,37 @@ MASTERY-5/6/7 were re-presented as visible questions1–3 with the Glass alert
 (exit0); no answer has arrived. Integration of simultaneous mastery/Champion
 choices needs MASTERY-5. Graze policy and rest Save control need6/7. Keep those
 pending; do not infer their approval from the earlier four-item response.
+
+
+### Slow effect lifecycle checkpoint (combat integration incomplete)
+
+Rules0.6.58 adds sourced Slow state and conditionalFX7 in the existing SRD
+library. Repeated Slow sources cap at10 feet; Ray of Frost contributes its
+separate10 feet. Shared movement, Action/Bonus Dash, standing, Steady Aim,
+chronological expiry and campaign/combat persistence consume this state. Native
+snapshot messages distinguish Slow from Frost and retain sources. No Core
+calculation or new UI control was added. Optional hit choices are **not connected**;
+this does not complete Slow or increase the three-of-eight playable count.
+
+Source: [Slow](https://www.dndbeyond.com/sources/dnd/br-2024/equipment#Slow), checked
+2026-09-26. Existing source-turn timing supplies the future trigger's duration;
+this checkpoint proves the effect clock and consumers, not that trigger.
+Actual0.6.57 fixtures load and replay with only module identity changed. Older
+identities reject forged Slow state; all supported older formats remain accepted.
+
+[Focused tests](../tests/slow_mastery_checks.h) prove nonstacking, independent
+source expiry, refresh/storage bounds, malformed durations/codecs, exact replay,
+combined Speed/Dash/posture behavior and campaign time chunking. All50 native
+targets rebuilt; **51/51 native PASS in12.43s**. Logs
+`/tmp/mastery-slow-lifecycle-{build,test}.log` and
+`/tmp/mastery-slow-native{,-build}.log`. Verification command remains
+`ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`.
+989 messages/diff checks pass. No new Godot control or UI verification is claimed;
+main/demo binaries still correspond to the prior completed Nick checkpoint and
+must be rebuilt for the forthcoming integrated optional-choice work.
+
+Observed verified06:19:44 UTC2026-09-26,2h23m41s since original preflight; original
+60-minute checkpoint retained. This continuation began after compatibility
+preparation06:10:34; exact phase subintervals/token costs unavailable. No failed
+fixes in this checkpoint. MASTERY-5/6/7 remain unanswered. Goal remains active,
+zero new issues or original closures, with the same frozen acceptance.

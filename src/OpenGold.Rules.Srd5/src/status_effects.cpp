@@ -64,8 +64,12 @@ void apply_shocking_grasp(EffectState& effects,std::uint64_t scope,rules::Entity
 }
 int speed_penalty(const EffectState& effects)
 {
-    return std::any_of(effects.active.begin(),effects.active.end(),[](const auto& e){return e.kind==EffectKind::ray_of_frost;})?10:0;
+    // Repeated instances of either source do not stack, but these two distinct
+    // features each reduce Speed by 10 feet.
+    return (frosted(effects)?10:0)+(slowed(effects)?10:0);
 }
+bool slowed(const EffectState& effects){return std::any_of(effects.active.begin(),effects.active.end(),[](const auto& e){return e.kind==EffectKind::slow;});}
+bool frosted(const EffectState& effects){return std::any_of(effects.active.begin(),effects.active.end(),[](const auto& e){return e.kind==EffectKind::ray_of_frost;});}
 void apply_ray_of_frost(EffectState& effects,std::uint64_t scope,rules::EntityId caster,
                         std::string name,unsigned duration_ms)
 {
@@ -77,16 +81,16 @@ bool sapped(const EffectState& effects){return std::any_of(effects.active.begin(
 bool vexed_by(const EffectState& effects,std::uint64_t scope,rules::EntityId source){
     return std::any_of(effects.active.begin(),effects.active.end(),[&](const auto& e){return e.kind==EffectKind::vex&&e.source_scope==scope&&e.source_actor==source;});
 }
-bool has_attack_mastery(const EffectState& effects){return sapped(effects)||std::any_of(effects.active.begin(),effects.active.end(),[](const auto& e){return e.kind==EffectKind::vex;});}
+bool has_attack_mastery(const EffectState& effects){return sapped(effects)||slowed(effects)||std::any_of(effects.active.begin(),effects.active.end(),[](const auto& e){return e.kind==EffectKind::vex;});}
 bool can_apply_attack_mastery(const EffectState& effects,EffectKind kind,std::uint64_t scope,rules::EntityId source){
-    if(kind!=EffectKind::sap&&kind!=EffectKind::vex)return false;
+    if(kind!=EffectKind::sap&&kind!=EffectKind::vex&&kind!=EffectKind::slow)return false;
     // The triggering roll consumes this source's earlier Vex. Repeated Sap from
     // one source replaces its application rather than filling the bounded store.
     return effects.next_id<std::numeric_limits<std::uint64_t>::max()&&(effects.active.size()<effect_limit||
         std::any_of(effects.active.begin(),effects.active.end(),[&](const auto& e){return e.source_scope==scope&&e.source_actor==source&&(e.kind==kind||e.kind==EffectKind::vex);}));
 }
 void apply_attack_mastery(EffectState& effects,EffectKind kind,std::uint64_t scope,rules::EntityId source,std::string name,unsigned duration){
-    if((kind!=EffectKind::sap&&kind!=EffectKind::vex)||!scope||!source||name.empty()||name.size()>160||!duration||duration>(kind==EffectKind::vex?2*round_ms:round_ms))throw std::runtime_error("Invalid attack mastery effect");
+    if((kind!=EffectKind::sap&&kind!=EffectKind::vex&&kind!=EffectKind::slow)||!scope||!source||name.empty()||name.size()>160||!duration||duration>(kind==EffectKind::vex?2*round_ms:round_ms))throw std::runtime_error("Invalid attack mastery effect");
     const auto existing=std::find_if(effects.active.begin(),effects.active.end(),[&](const auto& e){return e.kind==kind&&e.source_scope==scope&&e.source_actor==source;});
     if(existing!=effects.active.end()){existing->remaining_ms=duration;existing->source_name=std::move(name);return;}
     if(!can_apply(effects))throw std::runtime_error("Attack mastery effect storage exhausted");
@@ -160,7 +164,7 @@ void elapse_effects(std::span<EffectSubject> subjects, std::uint64_t millisecond
 }
 void write_effects(std::ostream& out, const EffectState& effects)
 {
-    out << (has_attack_mastery(effects)?"FX6 ":healing_blocked(effects)?"FX5 ":effects.sleeping||effects.prone?"FX4 ":opportunity_blocked(effects)?"FX3 ":speed_penalty(effects)?"FX2 ":"FX1 ") << effects.next_id << ' ' << effects.active.size();
+    out << (slowed(effects)?"FX7 ":has_attack_mastery(effects)?"FX6 ":healing_blocked(effects)?"FX5 ":effects.sleeping||effects.prone?"FX4 ":opportunity_blocked(effects)?"FX3 ":frosted(effects)?"FX2 ":"FX1 ") << effects.next_id << ' ' << effects.active.size();
     for (const auto& e:effects.active)
         out << ' ' << e.id << ' ' << unsigned(e.kind) << ' ' << e.source_scope << ' ' << e.source_actor
             << ' ' << std::quoted(e.source_name) << ' ' << e.dc << ' ' << e.remaining_ms << ' ' << e.save_in_ms;
@@ -170,7 +174,7 @@ EffectState read_effects(std::istream& in)
 {
     std::string magic;std::size_t count{};EffectState result;
     in >> magic;unsigned_field(in,result.next_id);unsigned_field(in,count);
-    if (!in || (magic!="FX1"&&magic!="FX2"&&magic!="FX3"&&magic!="FX4"&&magic!="FX5"&&magic!="FX6") || !result.next_id || count>effect_limit)
+    if (!in || (magic!="FX1"&&magic!="FX2"&&magic!="FX3"&&magic!="FX4"&&magic!="FX5"&&magic!="FX6"&&magic!="FX7") || !result.next_id || count>effect_limit)
         throw std::runtime_error("Invalid effect state");
     std::uint64_t previous{};
     for (std::size_t n=0;n<count;++n) {
@@ -179,9 +183,10 @@ EffectState read_effects(std::istream& in)
         in >> std::quoted(e.source_name) >> e.dc;
         unsigned_field(in,e.remaining_ms);unsigned_field(in,e.save_in_ms);
         const bool timed=(magic!="FX1"&&kind==unsigned(EffectKind::ray_of_frost))||
-            ((magic=="FX3"||magic=="FX4"||magic=="FX5"||magic=="FX6")&&kind==unsigned(EffectKind::shocking_grasp))||
-            ((magic=="FX5"||magic=="FX6")&&kind==unsigned(EffectKind::chill_touch))||
-            (magic=="FX6"&&(kind==unsigned(EffectKind::sap)||kind==unsigned(EffectKind::vex)));
+            ((magic=="FX3"||magic=="FX4"||magic=="FX5"||magic=="FX6"||magic=="FX7")&&kind==unsigned(EffectKind::shocking_grasp))||
+            ((magic=="FX5"||magic=="FX6"||magic=="FX7")&&kind==unsigned(EffectKind::chill_touch))||
+            ((magic=="FX6"||magic=="FX7")&&(kind==unsigned(EffectKind::sap)||kind==unsigned(EffectKind::vex)))||
+            (magic=="FX7"&&kind==unsigned(EffectKind::slow));
         if (!in || (!timed&&kind!=unsigned(EffectKind::blindness)) || e.id<=previous || e.id>=result.next_id ||
             !e.source_scope || !e.source_actor || e.source_name.empty() || e.source_name.size()>160 ||
             (!timed&&(e.dc < -2 || e.dc > 38 || !e.remaining_ms || e.remaining_ms>60000 ||
@@ -194,7 +199,8 @@ EffectState read_effects(std::istream& in)
     if(magic=="FX2"&&!speed_penalty(result))throw std::runtime_error("Noncanonical effect state");
     if(magic=="FX5"&&!healing_blocked(result))throw std::runtime_error("Noncanonical effect state");
     if(magic=="FX6"&&!has_attack_mastery(result))throw std::runtime_error("Noncanonical effect state");
-    if(magic=="FX4"||magic=="FX5"||magic=="FX6"){
+    if(magic=="FX7"&&!slowed(result))throw std::runtime_error("Noncanonical effect state");
+    if(magic=="FX4"||magic=="FX5"||magic=="FX6"||magic=="FX7"){
         unsigned sleeping{},prone{};unsigned_field(in,sleeping);unsigned_field(in,prone);
         if(sleeping>1||prone>1||(sleeping&&!prone)||(magic=="FX4"&&!prone))throw std::runtime_error("Invalid natural sleep/posture state");
         result.sleeping=sleeping;result.prone=prone;

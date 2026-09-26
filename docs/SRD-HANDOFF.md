@@ -21,7 +21,7 @@ Preflight03:56:03 UTC;60-minute checkpoint recorded04:56:24. Do not reset the cl
 - Long Rest replacement **f31fded** committed/pushed: transactions,
   sourced history replay and approved700×670 controls. SRD owns replacement
   outcomes; Core owns per-member one-use windows and generic history. Campaign18
-  is conditional;1–17 remain accepted. Rules identity is now branch0.6.57.
+  is conditional;1–17 remain accepted. Rules identity is now branch0.6.58.
 - Main still375f58f. No PR/main/release integration claimed. Latest completed
   original issue was #82 (ASI); see [coverage](SRD-COVERAGE.md), not old narratives.
 - Sap/Vex committed/pushed86ac760. Nick committed/pushed0bba07e: approved selector/targeting, shared Light budget, combat23 and
@@ -40,19 +40,24 @@ See [packet](WEAPON-MASTERY.md#nick-combat-checkpoint) for commands/evidence.
 Observed verification06:06:09 UTC,2h10m06s since original batch start; no live
 build/test. Coverage owns completion, and no issue has been closed.
 
-Latest preparation captures actual0.6.57 Longbow/Maul critical phases;
-`opengold_status_effect_tests` rebuilt/passes exact round trips and continuation.
-See [provenance](../tests/fixtures/README.md#optional-mastery-choices-baseline--actual0657-writer).
-No production edits or new completed property. Preparation observed06:10:34 UTC.
-MASTERY-5/6/7 re-presented with verified Glass alert as questions1–3; replies
-remain required. The previous goal turn was progress (Nick0bba07e); this one adds
-verified compatibility evidence. No live process.
+Compatibility preparation aa6e3f8 captures actual0.6.57 Longbow/Maul critical
+phases. Latest checkpoint adds Slow's effect lifecycle/stacking and shared
+movement/persistence consumers; **51/51 freshly rebuilt native checks PASS**,
+12.43s, `/tmp/mastery-slow-native.log`;989 messages/diff checks pass. See
+[packet](WEAPON-MASTERY.md#slow-effect-lifecycle-checkpoint-combat-integration-incomplete)
+for scope and evidence. No live process. Verified06:19:44 UTC,2h23m41s since
+original preflight. Main/demo binaries remain at Nick0.6.57; rebuild before any
+future UI tests. No UI control changed in the Slow lifecycle checkpoint.
 
-Next: Slow/Topple combat integration in the same frozen batch, including
-simultaneous Champion choice ordering once MASTERY-5 is answered. Cleave/Graze/Push
-also remain. Preserve the completed Nick/Sap/Vex paths and historical fixtures.
-MASTERY-5/6/7 remain pending; do not implement their controls or interpretation
-without replies. No new issues, scope, agents/tasks or settings.
+Slow's weapon-hit choice and Topple remain unimplemented; playable count stays
+3/8. Next: optional mastery combat integration, with simultaneous Champion
+ordering requiring MASTERY-5's answer. Cleave/Graze/Push also remain. Independent
+Slow lifecycle work is now verified; do not replace remaining full player paths
+with isolated helpers or treat them as delivered. Preserve historical fixtures.
+MASTERY-5/6/7 were re-presented visibly as questions1–3 with verified Glass alert;
+no answers received. Do not repeat widgets or sound without a new question.
+Previous turn was progress (aa6e3f8 compatibility); this one implements and verifies
+Slow lifecycle. No new issues, scope, agents/tasks or settings.
 **MASTERY-1–4 approved. MASTERY-5/6/7 pending:**
 
 1. Resolve next dropdown for simultaneous mastery/Champion movement.

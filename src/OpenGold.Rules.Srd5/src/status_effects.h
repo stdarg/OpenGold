@@ -7,7 +7,7 @@
 
 namespace opengold::srd5::detail {
 enum class Ability : unsigned { strength, dexterity, constitution, intelligence, wisdom, charisma };
-enum class EffectKind : unsigned { blindness = 1, ray_of_frost = 2, shocking_grasp = 3, chill_touch = 4, sap = 5, vex = 6 };
+enum class EffectKind : unsigned { blindness = 1, ray_of_frost = 2, shocking_grasp = 3, chill_touch = 4, sap = 5, vex = 6, slow = 7 };
 inline constexpr unsigned round_ms = 6000;
 inline constexpr std::size_t effect_limit = 128;
 
@@ -64,6 +64,8 @@ void apply_chill_touch(EffectState& effects, std::uint64_t scope, rules::EntityI
 void apply_shocking_grasp(EffectState& effects, std::uint64_t scope, rules::EntityId caster,
                           std::string name, unsigned duration_ms);
 [[nodiscard]] int speed_penalty(const EffectState& effects);
+[[nodiscard]] bool slowed(const EffectState& effects);
+[[nodiscard]] bool frosted(const EffectState& effects);
 void apply_ray_of_frost(EffectState& effects, std::uint64_t scope, rules::EntityId caster,
                         std::string name, unsigned duration_ms);
 [[nodiscard]] bool sapped(const EffectState& effects);

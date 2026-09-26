@@ -29,13 +29,14 @@ std::string fixture(const char* weapon,const char* suffix){
 void historical(){
     auto r=module();
     for(const auto weapon:{"longbow","maul"}){
+        const auto current=[&](const char* suffix){auto bytes=fixture(weapon,suffix);const auto at=bytes.find("0.6.57");check(at!=bytes.npos,"Frozen optional-choice baseline has its actual writer identity");bytes.replace(at,6,r->identity().version);return bytes;};
         for(const auto suffix:{"-before","-damage","-move","-settled"}){
-            const auto bytes=fixture(weapon,suffix);check(r->restore(bytes)->save()==bytes,"Actual writer round trips every critical phase exactly");
+            const auto bytes=fixture(weapon,suffix);check(r->restore(bytes)->save()==current(suffix),"Actual writer round trips every critical phase apart from module identity");
         }
         auto c=r->restore(fixture(weapon,"-before"));act(*c,std::string_view(weapon)=="longbow"?"ranged":"melee",99);
-        check(c->save()==fixture(weapon,"-damage"),"Actual attack reproduces frozen pending damage");
-        c=r->restore(c->save());act(*c,"savage_skip");check(c->save()==fixture(weapon,"-move"),"Actual pending hit reproduces frozen Champion movement");
-        c=r->restore(c->save());act(*c,"end");check(c->save()==fixture(weapon,"-settled"),"Actual critical continuation reproduces frozen settled writer");
+        check(c->save()==current("-damage"),"Actual attack reproduces frozen pending damage");
+        c=r->restore(c->save());act(*c,"savage_skip");check(c->save()==current("-move"),"Actual pending hit reproduces frozen Champion movement");
+        c=r->restore(c->save());act(*c,"end");check(c->save()==current("-settled"),"Actual critical continuation reproduces frozen settled writer");
     }
 }
 }
