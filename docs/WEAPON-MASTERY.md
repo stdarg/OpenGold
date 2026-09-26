@@ -147,7 +147,7 @@ Review found no SRD calculation in Core/UI. Localization972 and diff checks pass
 This acquisition checkpoint is committed on the feature branch; full combat/rest
 acceptance and issue closures remain pending.
 
-### Additional combat decisions (pending)
+### Additional combat decisions (approved)
 
 **MASTERY-5.** When mastery and Champion movement trigger simultaneously on a
 player-controlled turn, add a labeled Resolve next dropdown above the approved
@@ -164,8 +164,7 @@ acceptance row8, so this does not add unrelated trigger systems.
 limit on damage. Resistance/Immunity can reduce it; Vulnerability cannot increase
 it. For modifier+3, ordinary/vulnerable damage3, resistant1, immune0. This resolves
 the wording that Graze damage increases only with its ability modifier against
-the general Vulnerability doubling rule. Await user interpretation; do not treat
-this proposal as approval.
+the general Vulnerability doubling rule. Approved by MASTERY-6 on2026-09-26.
 
 Sources: SRD5.2.1 p90 (Graze) and official
 [Simultaneous Effects](https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary#SimultaneousEffects).
@@ -212,14 +211,14 @@ Existing full rest-control acceptance passes (`/tmp/mastery-rest-neighbor.log`).
 976 localized messages and diff validation pass. These tests verify pending save
 serialization, not yet an accessible Save button inside the modal.
 
-**MASTERY-7 (pending control approval).** The approved exclusive modal covers the
+**MASTERY-7 (approved2026-09-26).** The approved exclusive modal covers the
 existing Save game control. To make unresolved choices saveable through the
 player UI, place a standard Save game button at its bottom left (x24,y614,w234,
 h40), beside Keep current/Apply. Reuse the existing camp/inn save dialog; return
 to the same pending mastery choice after saving or Cancel, with keyboard access.
 Saving must not apply or discard the choice; loading retains its entitlement.
 No combat saving. This is needed to complete acceptance row10 and MASTERY-2's
-pending-save behavior; await approval before adding this control.
+pending-save behavior; approved for implementation.
 
 Rest verification recorded05:04:27 UTC. Final rebuilt native suite **51/51 PASS**,
 4.03s, `/tmp/mastery-rest-native-final.log`. The only initial native regression
@@ -415,3 +414,43 @@ Observed verified06:19:44 UTC2026-09-26,2h23m41s since original preflight; origi
 preparation06:10:34; exact phase subintervals/token costs unavailable. No failed
 fixes in this checkpoint. MASTERY-5/6/7 remain unanswered. Goal remains active,
 zero new issues or original closures, with the same frozen acceptance.
+
+### Approval continuation —2026-09-26 13:59:56 UTC
+
+The user approved MASTERY-5/6/7 together. All seven mastery decisions now have
+approval; historical pending statements above describe earlier checkpoints.
+Continuation retains Astra/high assignment (actual configuration unverified),
+fixed acceptance, one owner and no delegation. The blocked waiting interval
+06:29:28–13:59:56 was7h30m28s, not implementation time. Original batch timing
+and its recorded60-minute checkpoint are retained.
+
+### Pending mastery Save control
+
+MASTERY-7 implemented in the shared rest dialog; main and demo use the same
+existing save callbacks. Draft selections stay in the dialog, committed training
+and the pending entitlement stay in the campaign. Saving/Cancel returns to the
+same draft; loading restores the committed selections and pending entitlement.
+The button is hidden outside a hosted campaign and disabled at unsafe boundaries.
+No combat saving, mechanics, save schema or compatibility changes.
+
+Verification on the commit containing this entry (base5b0e9ed):
+
+- `cmake --build build/mac-check --target opengold_feature_grant_tests opengoldbox_test_project -j6`
+  and `cmake --build build/sprite-demo --target opengold_godot -j6`.
+- `ctest --test-dir build/mac-check --output-on-failure -R '^opengold_(feature_grant|campaign_rest|save)_tests$'`:3/3 PASS,0.47s.
+- Generate a current UI fixture with `OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD OPENGOLD_MASTERY_REST_FIXTURE=/tmp/mastery-rest-pending.ogs build/mac-check/opengold_feature_grant_tests`.
+  It completes the original town introduction, grants a completed rest and validates
+  decoding against the original town resources. It is not a historical fixture.
+- `tests/mastery_rest_save_view_tests.gd` via `tests/run_godot_test.cmake`,
+  `--style-fixture=/tmp/mastery-rest-pending.ogs`; demo adds `--style-demo`.
+  MainEN/ES and demoEN at both supported sizes PASS. Keyboard Save, Cancel,
+  overwrite, reload, unapplied replacement preservation and single Apply covered.
+  Logs `/tmp/mastery-save-{main,demo}-ui-final.log`, rendered captures
+  `/tmp/mastery-save-{main,demo}/`. No engine errors in final runs.
+- Existing `opengold_godot_rest` and `mastery_rest_view_tests.gd` pass; existing
+  tests retain actual camp flow and sequential per-member replacement coverage.
+-989 messages/localization and diff checks pass. Review confirms the change is
+  presentation and test fixture setup only; SRD outcomes remain in the library.
+
+Continuation implementation/build/verification13:59:56–14:10:52 UTC,10m56s. No new scope/issues. Remaining
+combat acceptance is unchanged; playable property count remains3/8.

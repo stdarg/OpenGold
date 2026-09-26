@@ -564,3 +564,13 @@ is retained. [Evidence](WEAPON-MASTERY.md#slow-effect-lifecycle-checkpoint-comba
 This is partial rules support: the weapon-hit decision is not integrated and
 Slow is not counted as a fourth playable property. No issue closure or new UI
 verification is claimed. MASTERY-5/6/7 remain pending.
+
+Weapon Mastery pending-save control (commit containing this entry): approved
+MASTERY-7 Save game opens the existing campaign SaveSlots window and returns to
+the same unapplied mastery selections after Cancel or saving. Reload retains
+the entitlement and original grants; Apply then resolves it. Newly loaded town
+views stay hidden while SaveSlots owns the exclusive window. MainEN/ES and
+demoEN controls pass at1120×800/1920×1080; native grants/rest/save checks3/3 and
+neighboring rest controls pass.989 localization messages validate.
+[Evidence and commands](WEAPON-MASTERY.md#pending-mastery-save-control). MASTERY-5/6
+are now approved but their combat implementation remains. No issue closed.

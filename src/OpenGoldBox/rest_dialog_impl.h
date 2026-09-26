@@ -16,6 +16,9 @@ void RolfTourView::setup_rest()
     spells->connect("window_input",callable_mp(this,&RolfTourView::rest_spell_input));
     auto* training=presentation::setup_training_replacement(*this,callable_mp(this,&RolfTourView::rest_training_keep),callable_mp(this,&RolfTourView::rest_training_apply),rest_text);
     training->connect("window_input",callable_mp(this,&RolfTourView::rest_training_input));
+    auto* training_save=presentation::add_control<Button>(*training,"Save",Rect2(24,614,234,40));
+    training_save->set_text(rest_text(N_("Save game")));
+    training_save->connect("pressed",callable_mp(this,&RolfTourView::rest_save));
     auto owned=presentation::make_node<Window>();owned->set_name("RestDialog");
     owned->set_title(rest_text(N_("Rest")));owned->set_size(Vector2i(720,640));owned->set_min_size(Vector2i(720,640));
     owned->set_flag(Window::FLAG_RESIZE_DISABLED,true);owned->set_transient(true);owned->set_exclusive(true);owned->hide();
@@ -155,7 +158,9 @@ void RolfTourView::rest_resume()
 }
 void RolfTourView::rest_save()
 {
-    rest_save_open_=true;get_node<Window>("RestDialog")->hide();request_save(true);
+    if(!embedded_party_||!session_||!session_->can_leave()||!campaign_||campaign_->in_combat())return;
+    rest_save_open_=true;get_node<Window>("RestDialog")->hide();
+    get_node<Window>("RestTraining")->hide();request_save(true);
 }
 void RolfTourView::rest_input(const Ref<InputEvent>& event)
 {
@@ -365,7 +370,7 @@ void RolfTourView::refresh_rest_spells(){
     }
     try{(void)campaign_->preview_spell_choices(id,rest_spell_choice_,true);w->get_node<Button>("Apply")->set_disabled(false);w->get_node<Label>("Error")->set_text({});}
     catch(const std::exception& e){w->get_node<Button>("Apply")->set_disabled(true);w->get_node<Label>("Error")->set_text(rest_text(e.what()));}
-    if(!w->is_visible()&&is_visible_in_tree()){get_node<Window>("RestDialog")->hide();w->popup_centered();w->get_node<Button>("Cancel")->grab_focus();}
+    if(!w->is_visible()&&!rest_save_open_&&is_visible_in_tree()){get_node<Window>("RestDialog")->hide();w->popup_centered();w->get_node<Button>("Cancel")->grab_focus();}
 }
 void RolfTourView::rest_spell_toggled(bool selected,String group,String option){presentation::toggle_spell(rest_spell_choice_,selected,group.utf8().get_data(),option.utf8().get_data());refresh_rest_spells();}
 void RolfTourView::rest_spell_replaced(std::int64_t){
@@ -387,7 +392,9 @@ void RolfTourView::refresh_rest_training(){
     presentation::refresh_training_replacement(*w,*options,rest_training_choice_,callable_mp(this,&RolfTourView::rest_training_toggled),rest_text);
     try{(void)campaign_->preview_rest_training(rest.ticket,id,rest_training_choice_);w->get_node<Button>("Apply")->set_disabled(false);w->get_node<Label>("Error")->set_text({});}
     catch(const std::exception& e){w->get_node<Button>("Apply")->set_disabled(true);w->get_node<Label>("Error")->set_text(rest_text(e.what()));}
-    if(!w->is_visible()&&is_visible_in_tree()){get_node<Window>("RestDialog")->hide();w->popup_centered();w->get_node<Button>("Cancel")->grab_focus();}
+    w->get_node<Button>("Save")->set_visible(embedded_party_);
+    w->get_node<Button>("Save")->set_disabled(!session_||!session_->can_leave());
+    if(!w->is_visible()&&!rest_save_open_&&is_visible_in_tree()){get_node<Window>("RestDialog")->hide();w->popup_centered();w->get_node<Button>("Cancel")->grab_focus();}
 }
 void RolfTourView::rest_training_toggled(bool selected,String option){
     const std::string id=option.utf8().get_data();

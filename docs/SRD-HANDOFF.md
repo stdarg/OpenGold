@@ -1,31 +1,11 @@
 # SRD handoff
 
-Updated2026-09-26. Standing goal **BLOCKED and incomplete**: close all
-`SRD_improvements`, preserving all twelve classes through4 and planned higher
-levels/multiclassing. Blocked2026-09-26 06:29:28 UTC on unanswered MASTERY-5/6/7.
-Do not treat a delivery boundary as permission to pause.
-A decision reply alone never resumes a genuinely paused goal. No agents/new tasks
-or model/runtime setting changes are authorized. **144 open SRD issues**, snapshot
-`/tmp/srd-open-after-asi.json`; no issue closed in the current batch.
-
-## Blocker audit
-
-The same approval dependency persisted across compatibility preparation aa6e3f8,
-independent Slow lifecycle06ae74b and the current backlog recheck. No replies to
-visible questions1–3 have arrived. Native work is committed/pushed and verified;
-no build/test is live. Goal tool returned **blocked** after this third occurrence.
-The full all-SRD objective and mastery acceptance remain unchanged.
-
-The bounded backlog recheck refreshed44/45/34/39/198/205/223/84/89. It did not
-establish another complete batch executable without further control/design
-choices or incomplete source integrations. A proposed44 packet was discarded
-before production edits; no batch switch, issue closure or scope change occurred.
-Do not interpret this as an exhaustive completion audit of all144 issues.
-
-Required input: MASTERY-5 simultaneous-choice dropdown/order; MASTERY-6 Graze
-cap interpretation; MASTERY-7 rest Save control. Full questions remain visible
-and the existing question widget is pending. After user resumption, revalidate
-answers, then implement the approved remaining mastery paths from this record.
+Updated2026-09-26. Standing goal remains incomplete: close all `SRD_improvements`,
+preserving all twelve classes through4 and planned higher levels/multiclassing.
+User approved MASTERY-5/6/7; approval blockers are resolved and implementation
+continues. Goal tool last reports blocked; this assistant cannot set it active.
+No agents/new tasks or model/runtime changes are authorized. **144 open SRD
+issues**, cached `/tmp/srd-open-after-asi.json`; no closure in this batch.
 
 ## Active batch — Weapon Mastery
 
@@ -48,7 +28,7 @@ Preflight03:56:03 UTC;60-minute checkpoint recorded04:56:24. Do not reset the cl
   retained actual prior-writer continuation. Three of eight properties delivered;
   this remains partial combat work, not whole-class or issue completion.
 - Pending-choice serialization works. A player-accessible Save game control inside
-  the exclusive rest modal still needs MASTERY-7 approval; not implemented yet.
+  the exclusive rest modal is implemented and verified; see coverage.
 
 ## Verification / next action
 
@@ -69,26 +49,12 @@ for scope and evidence. No live process. Verified06:19:44 UTC,2h23m41s since
 original preflight. Main/demo binaries remain at Nick0.6.57; rebuild before any
 future UI tests. No UI control changed in the Slow lifecycle checkpoint.
 
-Slow's weapon-hit choice and Topple remain unimplemented; playable count stays
-3/8. Next: optional mastery combat integration, with simultaneous Champion
-ordering requiring MASTERY-5's answer. Cleave/Graze/Push also remain. Independent
-Slow lifecycle work is now verified; do not replace remaining full player paths
-with isolated helpers or treat them as delivered. Preserve historical fixtures.
-MASTERY-5/6/7 were re-presented visibly as questions1–3 with verified Glass alert;
-no answers received. Do not repeat widgets or sound without a new question.
-Previous turn was progress (aa6e3f8 compatibility); this one implements and verifies
-Slow lifecycle. No new issues, scope, agents/tasks or settings.
-**MASTERY-1–4 approved. MASTERY-5/6/7 pending:**
-
-1. Resolve next dropdown for simultaneous mastery/Champion movement.
-2. Graze damage cap versus Vulnerability interpretation.
-3. Save game button at bottom left of the mastery rest window, opening existing
-   camp/inn saving and returning to the same pending choice without applying it.
-
-Full proposals are in the packet/decision register; do not implement undecided
-behaviors. Continue independent approved combat work while answers are pending.
-The four-item reply is the already-recorded MASTERY-1–4 approval; no later
-three-item decision reply is present.
+Remaining: Slow weapon-hit choice, Topple, Cleave, Graze and Push, simultaneous
+Champion choices. Rest Save control is implemented and verified. **MASTERY-1–7 approved**; consult the
+packet and decision register, do not repeat questions. Historical fixtures remain
+unchanged. Continuation began13:59:56 UTC after blocked waiting06:29:28–13:59:56.
+Requested Astra/high remains appropriate for rules/persistence; actual model and
+effort unverified. No build/test live at continuation; worktree clean at5b0e9ed.
 
 ## Preserved decisions and execution
 
@@ -103,3 +69,9 @@ testing; Godot runs serially. Preserve prior-writer evidence. Commit/push only
 owned verified work; close only full original acceptance. Coverage is canonical.
 Questions restart at1 per set. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`,
 verify exit0, and write full questions visibly; widget alone is insufficient.
+
+Latest delivery: approved rest Save game control, real SaveSlots Cancel/save/load
+and unapplied-selection preservation; mainEN/ES + demoEN at both sizes pass,
+native grants/rest/save3/3 and adjacent rest controls pass. See coverage/packet.
+MASTERY-5/6 remain approved implementation work, not unanswered questions.
+No active build/test; all owned changes are committed/pushed at this checkpoint.

@@ -1,5 +1,25 @@
 namespace mastery_rest_checks {
+void ui_fixture(){
+    const auto output=std::getenv("OPENGOLD_MASTERY_REST_FIXTURE");if(!output)return;
+    const auto assets=std::getenv("OPENGOLD_GAME_DIR");check(assets,"UI fixture needs original assets");
+    auto party=std::make_shared<CampaignParty>(module());party->add_pc(mastery_grant_checks::chosen("fighter"));
+    auto town=por::RolfTourSession::load(assets);town.campaign_party(party);
+    for(unsigned n=0;n<1000&&!town.can_leave();++n){
+        const auto state=town.snapshot();
+        if(state.phase==por::TourPhase::awaiting_continue)town.continue_dialogue(state.continue_ticket);
+        else if(state.phase==por::TourPhase::awaiting_input)town.choose(state.continue_ticket,0);
+        else town.advance(1);
+    }
+    check(town.can_leave(),"Original town reaches a saveable boundary");
+    check(bool(party->rest(RestKind::long_rest))&&party->state().training_rest,"Completed rest has pending mastery");
+    const auto bytes=encode_campaign(*party,&town,campaign_asset_identity(assets));
+    auto prototype=por::RolfTourSession::load(assets);
+    const auto loaded=decode_campaign(bytes,*srd5::character_rules(),party->rule_module(),campaign_asset_identity(assets),&prototype);
+    check(loaded.party.training_rest.has_value()&&loaded.town->can_leave(),"UI fixture decodes through the real campaign loader");
+    write_campaign_file(output,bytes);
+}
 void run(){
+    ui_fixture();
     auto rules=module();auto creation=srd5::character_rules();
     auto roundtrip=[&](const CampaignParty& party){CampaignParty next(module());const auto bytes=saved(party);next.restore(decode_campaign(bytes,*creation,*rules,"grant-fixture",nullptr).party);check(saved(next)==bytes,"Pending/rest-edited training retains canonical campaign continuation");return next;};
     for(const auto klass:{"fighter","barbarian","rogue","paladin","ranger"})for(bool npc:{false,true}){

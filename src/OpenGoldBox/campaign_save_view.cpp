@@ -52,7 +52,7 @@ void CharacterCreationView::load_campaign(const std::filesystem::path& path){
     auto replacement=std::make_shared<CampaignParty>(std::move(module));replacement->restore(std::move(saved.party));
     for(const auto& m:replacement->state().roster){art_->validate(m.character.appearance());(void)replacement->profile(m.id);}
     presentation::NodeOwner<Node> owned;
-    if(saved.town&&!town){owned=presentation::instantiate_scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid town scene");town->set_name("CampaignTown");town->campaign_party(replacement);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));presentation::attach_child(*this,std::move(owned));}
+    if(saved.town&&!town){owned=presentation::instantiate_scene("res://scenes/rolf_tour.tscn");town=Object::cast_to<RolfTourView>(owned.get());if(!town)throw std::runtime_error("Invalid town scene");town->set_name("CampaignTown");town->hide();town->campaign_party(replacement);town->connect("party_member_selected",callable_mp(this,&CharacterCreationView::town_member_selected));town->connect("level_up_requested",callable_mp(this,&CharacterCreationView::open_advancement));town->connect("save_requested",callable_mp(this,&CharacterCreationView::open_saves));presentation::attach_child(*this,std::move(owned));}
     // All decoding, resource loading and character validation completed above.
     campaign_=std::move(replacement);
     campaign_defeated_=false;get_node<Window>("Defeat")->hide();

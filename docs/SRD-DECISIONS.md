@@ -172,11 +172,11 @@ MASTERY-1–4 APPROVED2026-09-26: user replied “1. Yes. 2. Yes. 3. Yes. 4. Yes
 cover Training/fourth Fighter choice, completed Long Rest replacement, optional
 combat mastery decisions and Nick attack. All four proposals are explicitly approved.
 
-MASTERY-5/6 PENDING: simultaneous Champion/mastery Resolve next selector and
-Graze damage-cap interpretation; see [concrete proposals](WEAPON-MASTERY.md#additional-combat-decisions-pending).
-Neither is covered by MASTERY-1–4 approval. Independent approved work continues.
-
-MASTERY-7 PENDING: add Save game at the bottom left of the approved mastery rest
-dialog, reusing camp/inn saving without consuming a pending choice; see the
-[concrete proposal](WEAPON-MASTERY.md#long-rest-implementation-evidence-wip).
-The exclusive dialog currently covers the existing Save game control.
+MASTERY-5–7 APPROVED2026-09-26: user replied “1. Approved. 2. Approved.
+3. Approved.” MASTERY-5 approves the simultaneous Champion/mastery Resolve next
+selector, separate Cleave critical movement entitlements, and enemy-turn ordering.
+MASTERY-6 approves Graze's ability-modifier cap after typed defenses, including
+Vulnerability. MASTERY-7 approves the rest-window Save game button and return to
+the same pending choice. See [combat proposals](WEAPON-MASTERY.md#additional-combat-decisions-approved)
+and [rest proposal](WEAPON-MASTERY.md#long-rest-implementation-evidence-wip).
+These decisions resolve the recorded approval blockers; do not ask again.

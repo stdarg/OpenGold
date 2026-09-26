@@ -1,4 +1,5 @@
 #include "opengold/campaign_save.h"
+#include "opengold/rolf_tour.h"
 #include "opengold/character_creator.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
