@@ -175,3 +175,8 @@ presentation and expanded test fixtures/assertions changed afterward.
 
 Both original features (#112, #114) now meet this batch's full acceptance.
 #116 remains open; Thief, Hide and mastery are still excluded and required.
+
+Final demo runtime: `8ee62fe`; verified at00:06:47 UTC,4m15s after the
+approval continuation was observed. Original elapsed2h38m51s includes the
+approval wait; no claim of measured token savings. Both original requirements
+are delivered, with four existing issue closures total and no new issues.

@@ -421,7 +421,7 @@ spent budgets disable controls. Main EN/ES and demo EN render/input checks pass
 at1120×800 and1920×1080. Demo neighbor controls and layout checks pass. Ordinary
 advancement/rest/reload through4 and recruited routes use the same tested rules.
 See [batch evidence](ROGUE-ATTACKS.md#approved-demo-completion--2026-09-26).
-Rules runtime7f3ab30; final demo completion revision is recorded in that packet.
+Rules runtime7f3ab30; final demo completion runtime8ee62fe.
 #116 remains open for full Rogue completion; Thief, Hide and mastery are not
 claimed complete. Conditional PC35/combat21 preserve released histories.
 
