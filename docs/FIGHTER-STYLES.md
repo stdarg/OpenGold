@@ -40,8 +40,9 @@ Training; replacement requires an existing class-granted style. Completing other
 training later replays advancement choices and preserves the replacement.
 
 The [style-route packet](FIGHTING-STYLE-ROUTES.md) also covers actual Paladin and
-Ranger level-two entitlements and level-four feat selection. #85/#140/#147 remain
-open for their other styles, mastery and cantrip alternatives. Full class support
+Ranger level-two entitlements and level-four feat selection. #85 is now completed by Two-Weapon Fighting and the
+[Weapon Mastery integration](WEAPON-MASTERY.md#optional-hit-mastery-integration).
+#140/#147 retain their remaining class and cantrip alternatives. Full class support
 is not claimed.
 
 Verification: all 41 native/tool checks pass across the regression run and the

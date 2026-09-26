@@ -34,7 +34,9 @@ void historical(){
             const auto bytes=fixture(weapon,suffix);check(r->restore(bytes)->save()==current(suffix),"Actual writer round trips every critical phase apart from module identity");
         }
         auto c=r->restore(fixture(weapon,"-before"));act(*c,std::string_view(weapon)=="longbow"?"ranged":"melee",99);
-        check(c->save()==current("-damage"),"Actual attack reproduces frozen pending damage");
+        const auto fresh=c->snapshot().savage_attack_choice;const auto old=r->restore(fixture(weapon,"-damage"))->snapshot().savage_attack_choice;
+        check(fresh&&old&&fresh->first_damage==old->first_damage&&fresh->dice_count==old->dice_count&&fresh->modifier==old->modifier,"New attack preserves historical damage before offering new mastery choices");
+        c=r->restore(fixture(weapon,"-damage"));
         c=r->restore(c->save());act(*c,"savage_skip");check(c->save()==current("-move"),"Actual pending hit reproduces frozen Champion movement");
         c=r->restore(c->save());act(*c,"end");check(c->save()==current("-settled"),"Actual critical continuation reproduces frozen settled writer");
     }

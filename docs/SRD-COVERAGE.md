@@ -312,7 +312,7 @@ restart tests cover pending spending through the real save/load host.
 | [Sage fixed training #211](https://github.com/stdarg/OpenGold/issues/211) | SRD 5.2.1 p. 83: Arcana, History and Calligrapher's Supplies with background provenance. | All 12 starting classes, Rogue Expertise, tool/skill checks, ASI and actual 0.6.25 migration; existing Training display. | Rules 0.6.26 / PC15. No new choices, items or feat grant. Sage #63 remains open. [Evidence and limits](SAGE-TRAINING.md). |
 | [Acolyte/Soldier fixed training #212](https://github.com/stdarg/OpenGold/issues/212) | SRD 5.2.1 p. 83: Acolyte Insight, Religion, Calligrapher's Supplies; Soldier Athletics, Intimidation. | All 12 starting classes, Rogue Expertise, ASI, actual 0.6.26 migration and existing translated Training display. | Rules 0.6.27 / PC16. #61/#64 remain open for remaining package choices. [Evidence and limits](BACKGROUND-TRAINING.md). |
 | [Archery #78](https://github.com/stdarg/OpenGold/issues/78) | SRD 5.2.1 p. 87: +2 with Ranged weapons; prerequisite and nonrepeatability. | Actual Fighter/Paladin/Ranger grants, ordinary levels1–4, attack/category oracles, campaign/recruited/reload and main/demo controls. | Rules0.6.53 completes supported source routes. [Style-route evidence](FIGHTING-STYLE-ROUTES.md). |
-| [Fighter styles #85](https://github.com/stdarg/OpenGold/issues/85) | Starting choice and replacement whenever gaining a Fighter level. | Training/Review Training and separate advancement control; initial and independently acquired feats retain distinct provenance. | Archery, Defense and GWF through4 delivered. Other styles and mastery remain required. [Scope](FIGHTER-STYLES.md). |
+| [Fighter styles #85](https://github.com/stdarg/OpenGold/issues/85) | Starting choice and replacement whenever gaining a Fighter level. | Training/Review Training and separate advancement control; initial and independently acquired feats retain distinct provenance. | All four SRD styles and mastery through4 delivered; see the Weapon Mastery integration completion record below. [Scope](FIGHTER-STYLES.md). |
 | [Starting class skills #213](https://github.com/stdarg/OpenGold/issues/213) | SRD 5.2.1 Core Traits tables for all twelve classes; exact skill lists and counts. | Shared Training controls, generated presets, sourced bonuses, all-class/background native oracles, actual prior-writer migration and keyboard checks. | Rules 0.6.30 / PC19. Missing old choices remain pending; full class packages remain in their trackers. [Evidence and limits](CLASS-SKILLS.md). |
 | [Bard instruments #214](https://github.com/stdarg/OpenGold/issues/214) | SRD 5.2.1 pp. 31, 94: three of ten instrument proficiencies. | Normal Training, generated presets, sourced sheet/check bonuses, all 120 triples, prior-writer campaign/combat and translated keyboard/render checks. | Rules 0.6.31 / PC20. Old choices stay pending; equipment, Utilize actions and remaining Bard features stay separate. [Evidence](BARD-INSTRUMENTS.md). |
 | [Monk tools #215](https://github.com/stdarg/OpenGold/issues/215) | SRD 5.2.1 pp. 49, 93–94: one artisan tool or instrument from all 27 options. | Training, generated presets, sourced checks, overlap and class-change preservation, prior-writer continuation. | Rules 0.6.32 / PC21; old choices pending. Equipment, Utilize and other Monk features remain separate. [Evidence](MONK-TOOLS.md). |
@@ -584,3 +584,22 @@ localized messages pass. [Evidence](WEAPON-MASTERY.md#graze-playable-checkpoint)
 and [native tests](../tests/graze_checks.h). Four of eight mastery properties are
 playable. Slow/Topple choices, Cleave, Push and simultaneous ordering remain;
 #60/#85 are still open. No added issue or scope.
+
+### Weapon Mastery integration complete (#60/#85)
+
+The commit containing this record completes all eight mastery properties in the
+[approved batch](WEAPON-MASTERY.md#frozen-batch), including creation/review,
+Fighter's fourth kind at4, Long Rest replacement and retained-save continuation.
+Slow/Topple/Cleave/Push now use actual hits and the approved optional controls;
+simultaneous Champion movement preserves separate entitlements and interrupted
+routes. All calculations and decisions stay in the static SRD library.
+[Mechanics, commands and evidence](WEAPON-MASTERY.md#optional-hit-mastery-integration).
+
+Rules0.6.60/combat25 preserves prior supported formats and actual0.6.57–0.6.59
+writer fixtures.51/51 native checks pass; mainEN/ES and demoEN rendered controls
+pass at1120×800/1920×1080;1005 localized messages validate. This completes #60 and
+Fighter #85's level1–4 style/mastery scope, with all four SRD styles supplied by
+this and the preceding style/Light deliveries. #140/#147/#111/#103 retain their
+other original requirements; Barbarian progression and all later-level/multiclass
+requirements remain. No issue or feature scope was added. Source: [SRD Fighting
+Style feats](https://www.dndbeyond.com/sources/dnd/br-2024/feats#FightingStyleFeats).

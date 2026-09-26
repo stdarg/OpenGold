@@ -41,7 +41,7 @@ std::filesystem::path CombatView::local_path(const char* path) const
 void CombatView::_ready()
 {
     presentation::setup_nick(*this,gs,callable_mp(this,&CombatView::begin_nick),callable_mp(this,&CombatView::nick_selected),callable_mp(this,&CombatView::confirm_nick),callable_mp(this,&CombatView::cancel_nick),callable_mp(this,&CombatView::nick_input));
-    presentation::setup_optional_effect(*this,gs,callable_mp(this,&CombatView::immediate).bind("effect_use"),callable_mp(this,&CombatView::immediate).bind("effect_skip"),callable_mp(this,&CombatView::optional_effect_input));
+    presentation::setup_optional_effect(*this,gs,callable_mp(this,&CombatView::immediate).bind("effect_use"),callable_mp(this,&CombatView::immediate).bind("effect_skip"),callable_mp(this,&CombatView::optional_effect_input),callable_mp(this,&CombatView::refresh).unbind(1));
     presentation::setup_weapon_controls(*this,gs,callable_mp(this,&CombatView::weapon_selected));ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
@@ -210,14 +210,15 @@ void CombatView::use_bonus_action(){
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::immediate(String verb)
 {
-    if(!demo_||!demo_->has_combat())return;const auto wanted=std::string(verb.utf8().get_data());
+    if(!demo_||!demo_->has_combat())return;auto wanted=std::string(verb.utf8().get_data());
     const auto state=demo_->combat().snapshot();
+    if(state.effect_targeting&&wanted=="end")wanted="effect_skip";
     if(std::none_of(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;}))return;
-    for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted){act(c);return;}
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted&&((wanted!="effect_use"&&wanted!="effect_skip")||c.item==presentation::optional_effect_item(*this,state))){act(c);return;}
 }
 void CombatView::act(const Command& command)
 {
-    try{if(demo_->submit(command)){mode_="move";ai_delay_=0;error_.clear();refresh();}}
+    try{if(demo_->submit(command)){mode_="move";effect_target_index_=0;ai_delay_=0;error_.clear();refresh();}}
     catch(const std::exception& e){error_=e.what();refresh();}
 }
 void CombatView::optional_effect_input(const Ref<InputEvent>& event){
@@ -232,6 +233,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("SneakAttack")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!demo_||defeated()||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(demo_->has_combat()&&presentation::effect_target_input(event,demo_->combat().snapshot(),demo_->combat().legal_commands(),effect_target_index_,[&](const Command& c){act(c);},[&]{refresh();})){get_viewport()->set_input_as_handled();return;}
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&demo_->has_combat()&&demo_->combat().snapshot().free_movement){
         if(key->get_keycode()==Key::KEY_ESCAPE||(key->get_keycode()==Key::KEY_SPACE&&get_node<Button>("End")->has_focus())){immediate("end");get_viewport()->set_input_as_handled();return;}
         Cell direction{};switch(key->get_keycode()){case Key::KEY_LEFT:direction.x=-1;break;case Key::KEY_RIGHT:direction.x=1;break;case Key::KEY_UP:direction.y=-1;break;case Key::KEY_DOWN:direction.y=1;break;default:break;}
@@ -270,8 +272,8 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(current==s.combatants.end()||current->side!=0)return;
     const auto relative=(local-board_rect_.position)/(board_rect_.size.x/demo_->combat().snapshot().battlefield.width);const Cell cell{static_cast<int>(relative.x),static_cast<int>(relative.y)};
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)) {
-        if(c.verb=="move"&&c.destination==cell){act(c);break;}
-        if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
+        if((c.verb=="move"||c.verb=="effect_push")&&c.destination==cell){act(c);break;}
+        if(c.target&&c.verb!="effect_push") {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);break;}}
     }
     get_viewport()->set_input_as_handled();
 }
@@ -315,12 +317,13 @@ void CombatView::refresh()
         get_node<Label>("SavageAttacker/Text")->set_text(gs(text));if(!modal->is_visible())modal->popup_centered();
         if(changed)get_node<Button>(second?"SavageAttacker/First":"SavageAttacker/Use")->grab_focus();
     }else if(modal->is_visible())modal->hide();
-    get_node<Button>("End")->set_text(gs(s.free_movement?"Finish free move":"End turn"));
+    get_node<Button>("End")->set_text(gs(s.effect_targeting?"Skip effect":s.free_movement?"Finish free move":"End turn"));
     get_node<Button>("End")->set_size(Vector2(s.free_movement?get_node<Button>("Continue")->get_position().x+get_node<Button>("Continue")->get_size().x-get_node<Button>("End")->get_position().x:get_node<Button>("Continue")->get_size().x,36));
     get_node<Button>("Continue")->set_visible(!s.free_movement);
     if(s.free_movement)mode_="move";
+    if(s.effect_targeting)mode_=s.effect_targeting->verb;
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
-    const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
+    const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb||(verb=="end"&&s.effect_targeting&&c.verb=="effect_skip");});};
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor&&a.side==0;});
     const auto* choice_actor=active!=s.combatants.end()&&s.outcome==Outcome::ongoing?&*active:nullptr;
     const bool weapon_layout=presentation::refresh_weapons(*this,choice_actor,player,[](const Message& message){return render_weapon_message(message);});
@@ -388,6 +391,7 @@ void CombatView::refresh()
         }
     }
     if(player&&s.free_movement)get_node<Label>("Prompt")->set_text(gs("Free move: "+std::to_string(s.free_movement->remaining_feet)+" ft\nArrows/click: move | Escape: finish"));
+    if(player&&s.effect_targeting)get_node<Label>("Prompt")->set_text(render_weapon_message(s.effect_targeting->prompt)+"\n"+gs("Arrows: choose | Space: use | Escape: skip"));
     queue_redraw();
 }
 void CombatView::_draw()
@@ -402,9 +406,10 @@ void CombatView::_draw()
         else draw_rect(cell,Color("172228"),false);
     }
     const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
+    unsigned effect_index=0;
     if(active!=s.combatants.end()&&active->side==0)for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)) {
-        auto p=c.destination;if(c.target){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
-        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))&&c.target==aid_target_?.6:.17));
+        auto p=c.destination;if(c.target&&c.verb!="effect_push"){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;p=target->cell;}
+        draw_rect(Rect2(board_rect_.position+Vector2(p.x*tile+2,p.y*tile+2),Vector2(tile-4,tile-4)),Color(.4,.8,.75,s.effect_targeting?(effect_index++==effect_target_index_?.65:.17):(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))&&c.target==aid_target_?.6:.17));
     }
     for(const auto& a:s.combatants) {
         const auto center=board_rect_.position+Vector2((a.cell.x+.5)*tile,(a.cell.y+.5)*tile);

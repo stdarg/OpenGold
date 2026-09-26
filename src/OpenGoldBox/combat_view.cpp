@@ -142,7 +142,7 @@ void CombatView::_ready()
     hover_style->set_border_width_all(1);hover_style->set_corner_radius_all(4);hover_style->set_content_margin_all(10);
     hover->add_theme_stylebox_override("panel",hover_style);
     presentation::setup_nick(*this,i18n::text,callable_mp(this,&CombatView::begin_nick),callable_mp(this,&CombatView::nick_selected),callable_mp(this,&CombatView::confirm_nick),callable_mp(this,&CombatView::cancel_nick),callable_mp(this,&CombatView::nick_input));
-    presentation::setup_optional_effect(*this,i18n::text,callable_mp(this,&CombatView::immediate).bind("effect_use"),callable_mp(this,&CombatView::immediate).bind("effect_skip"),callable_mp(this,&CombatView::optional_effect_input));
+    presentation::setup_optional_effect(*this,i18n::text,callable_mp(this,&CombatView::immediate).bind("effect_use"),callable_mp(this,&CombatView::immediate).bind("effect_skip"),callable_mp(this,&CombatView::optional_effect_input),callable_mp(this,&CombatView::refresh).unbind(1));
     presentation::setup_weapon_controls(*this,i18n::text,callable_mp(this,&CombatView::weapon_selected));ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
     for(const auto& [node,verb]:action_buttons)
@@ -542,10 +542,11 @@ void CombatView::move_selected(Cell direction)
 }
 void CombatView::immediate(String verb)
 {
-    if(!demo_||!demo_->has_combat())return;const auto wanted=std::string(verb.utf8().get_data());
+    if(!demo_||!demo_->has_combat())return;auto wanted=std::string(verb.utf8().get_data());
     const auto state=demo_->combat().snapshot();
+    if(state.effect_targeting&&wanted=="end")wanted="effect_skip";
     if(std::none_of(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;}))return;
-    for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted){act(c);return;}
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted&&((wanted!="effect_use"&&wanted!="effect_skip")||c.item==presentation::optional_effect_item(*this,state))){act(c);return;}
     if(state.reaction_pending&&wanted=="end"){
         error_="Resolve the opportunity attack or decline the reaction before ending the turn.";
         refresh();
@@ -576,7 +577,7 @@ void CombatView::act(const Command& command)
             }
             if(dead&&death_sound_)death_sound_->play(5);
             if(moved&&effect_sound_)effect_sound_->play(10);
-            mode_="move";ai_delay_=0;error_.clear();refresh();
+            mode_="move";effect_target_index_=0;ai_delay_=0;error_.clear();refresh();
         }
     }
     catch(const std::exception& e){error_=e.what();refresh();}
@@ -593,6 +594,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
     if(get_node<Window>("SneakAttack")->is_visible()||get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
     if(!is_visible_in_tree()||!demo_||Engine::get_singleton()->is_editor_hint())return;
     const Ref<InputEventKey> key=event;
+    if(demo_->has_combat()&&presentation::effect_target_input(event,demo_->combat().snapshot(),demo_->combat().legal_commands(),effect_target_index_,[&](const Command& c){act(c);},[&]{refresh();})){get_viewport()->set_input_as_handled();return;}
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&demo_->has_combat()&&demo_->combat().snapshot().free_movement){
         if(key->get_keycode()==Key::KEY_ESCAPE||(key->get_keycode()==Key::KEY_SPACE&&get_node<Button>("End")->has_focus())){immediate("end");get_viewport()->set_input_as_handled();return;}
     }
@@ -680,12 +682,12 @@ void CombatView::_input(const Ref<InputEvent>& event)
     const auto canvas=get_node<Control>("BattlefieldScroll/Canvas")->get_global_transform_with_canvas().affine_inverse().xform(mouse->get_position());
     const auto relative=canvas/(combat_zoom_*base_tile_);
     const Cell cell{static_cast<int>(std::floor(relative.x)),static_cast<int>(std::floor(relative.y))};
-    if(!s.free_movement&&mode_!="stabilize"&&mode_!="chill_touch"&&mode_!="wake_ally"&&mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="shocking_grasp"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
+    if(!s.free_movement&&!s.effect_targeting&&mode_!="stabilize"&&mode_!="chill_touch"&&mode_!="wake_ally"&&mode_!="poison_spray"&&mode_!="sacred_flame"&&mode_!="shocking_grasp"&&mode_!="eldritch_blast"&&mode_!="ray_of_frost")for(const auto& a:s.combatants)if(a.side==0&&!a.dead&&a.cell==cell){select_party(a.id);get_viewport()->set_input_as_handled();return;}
     const auto current=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor;});
     if(current==s.combatants.end()||current->side!=0||selected_!=s.actor)return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)) {
-        if(c.verb=="move"&&c.destination==cell){act(c);get_viewport()->set_input_as_handled();return;}
-        if(c.target) {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);get_viewport()->set_input_as_handled();return;}}
+        if((c.verb=="move"||c.verb=="effect_push")&&c.destination==cell){act(c);get_viewport()->set_input_as_handled();return;}
+        if(c.target&&c.verb!="effect_push") {const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target!=s.combatants.end()&&target->cell==cell){act(c);get_viewport()->set_input_as_handled();return;}}
     }
     if(mode_=="move"&&std::max(std::abs(cell.x-current->cell.x),std::abs(cell.y-current->cell.y))==1)
         move_selected({cell.x-current->cell.x,cell.y-current->cell.y});
@@ -769,7 +771,7 @@ void CombatView::refresh()
     }
     if(loaded&&s.outcome!=Outcome::ongoing)turn=i18n::text(s.outcome==Outcome::victory?N_("Victory"):N_("Party incapacitated / defeat"));
     if(player&&last_actor_&&last_actor_!=s.actor)selected_=s.actor;
-    if((!selected_||s.free_movement)&&player)selected_=s.actor;
+    if((!selected_||s.free_movement||s.effect_targeting)&&player)selected_=s.actor;
     if(loaded)last_actor_=s.actor;
     get_node<Label>("Turn")->set_text(turn);layout_status();
     String roster;for(const auto& a:s.combatants){
@@ -859,10 +861,11 @@ void CombatView::refresh()
     }else if(savage->is_visible()){savage->hide();if(player)get_node<Button>("End")->grab_focus();}
     get_node<Button>("Continue")->set_visible(demo_&&(demo_->waiting()||(loaded&&s.outcome!=Outcome::ongoing)));
     get_node<Button>("End")->set_visible(!get_node<Button>("Continue")->is_visible());
-    get_node<Button>("End")->set_text(i18n::text(s.free_movement?"Finish free move":"End turn"));
+    get_node<Button>("End")->set_text(i18n::text(s.effect_targeting?N_("Skip effect"):s.free_movement?"Finish free move":"End turn"));
     if(s.free_movement)mode_="move";
+    if(s.effect_targeting)mode_=s.effect_targeting->verb;
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
-    const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
+    const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb||(verb=="end"&&s.effect_targeting&&c.verb=="effect_skip");});};
     std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
     if(holders!=item_holders_){item_holders_=std::move(holders);if(campaign_)sync_art(true);}
     auto* thrown=get_node<OptionButton>("ThrownWeapon");thrown->set_block_signals(true);thrown->set_fit_to_longest_item(false);thrown->clear();
@@ -961,6 +964,7 @@ void CombatView::refresh()
     }
     get_node<Label>("Footer")->set_text(player&&(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))?get_node<Label>("Prompt")->get_text().replace("\n"," | ")+" | "+i18n::text("Escape: cancel"):i18n::text("Arrows/Numpad: move | Shift+arrow: diagonal | A: action | Space: use | Z: slot | Enter: end"));
     if(player&&s.free_movement)get_node<Label>("Footer")->set_text(i18n::format("Free move: {feet} ft | Arrows/click: move | Escape or Finish free move: finish",{{"feet",s.free_movement->remaining_feet}}));
+    if(player&&s.effect_targeting)get_node<Label>("Prompt")->set_text(i18n::render(s.effect_targeting->prompt)+"\n"+i18n::text("Arrows: choose | Space: use | Escape: skip"));
     String log=turn+"\n"+get_node<Label>("Prompt")->get_text()+"\n"+i18n::text("A: next action | Space: use | Z: spell slot | Enter: end turn")+"\n\n";
     if(demo_)log+=i18n::campaign("por/combat/dialogue",demo_->dialogue())+"\n\n";
     // Rebuild one startup notice per missing combination; refreshes never append duplicates.
@@ -978,7 +982,7 @@ void CombatView::refresh()
     log_view->set_text(log);
     if(follow_bottom)log_view->scroll_to_line(std::max(0,log_view->get_line_count()-1));
     else log_scroll->set_value(previous_scroll);
-    get_node<Button>("Continue")->hide();if(!campaign_&&!s.free_movement)get_node<Button>("End")->hide();
+    get_node<Button>("Continue")->hide();if(!campaign_&&!s.free_movement&&!s.effect_targeting)get_node<Button>("End")->hide();
     get_node<Control>("BattlefieldScroll/Canvas")->queue_redraw();
     queue_redraw();
     update_hover(get_viewport()->get_mouse_position());
@@ -1043,9 +1047,15 @@ void CombatView::draw_battlefield()
             canvas->draw_rect(Rect2(Vector2(p.x*tile+1,p.y*tile+1),Vector2(tile-2,tile-2)),Color(1,1,1,.18));
         canvas->draw_rect(Rect2(Vector2(selected->cell.x*tile+1,selected->cell.y*tile+1),Vector2(tile-2,tile-2)),Color("e7c484"),false,2.0);
     }
-    if(active!=s.combatants.end()&&active->side==0&&mode_!="move")for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)&&c.target){
+    if(active!=s.combatants.end()&&active->side==0&&mode_!="move")for(const auto& c:demo_->combat().legal_commands())if(c.verb==mode_&&matches_item(c)&&c.target&&!s.effect_targeting){
         const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});
         if(target!=s.combatants.end())canvas->draw_rect(Rect2(Vector2(target->cell.x*tile+1,target->cell.y*tile+1),Vector2(tile-2,tile-2)),Color(.4,.8,.75,(mode_=="stabilize"||mode_=="throw"||(mode_.starts_with("light_")||mode_.starts_with("nick_")))&&c.target==aid_target_?.6:.23));
+    }
+    if(s.effect_targeting&&active!=s.combatants.end()&&active->side==0){
+        unsigned index=0;for(const auto& c:demo_->combat().legal_commands())if(c.verb==s.effect_targeting->verb){
+            auto cell=c.destination;if(!s.effect_targeting->destination){const auto target=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==c.target;});if(target==s.combatants.end())continue;cell=target->cell;}
+            canvas->draw_rect(Rect2(Vector2(cell.x*tile+1,cell.y*tile+1),Vector2(tile-2,tile-2)),Color(.4,.8,.75,index++==effect_target_index_?.65:.23));
+        }
     }
     for(const auto& item:s.held_items)if(!item.holder){
         const auto cell=Rect2(Vector2(item.cell.x*tile,item.cell.y*tile),Vector2(tile,tile));

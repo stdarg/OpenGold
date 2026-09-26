@@ -256,7 +256,9 @@ struct AbilityCheckChoice {
     EntityId actor{}, target{};
     int natural{}, modifier{}, total{}, difficulty{}, resource_uses{};
 };
-struct OptionalEffectChoice { EntityId actor{}, target{}; Message title, description; };
+struct EffectOption { unsigned id{}; Message title,description; bool available{true}; };
+struct OptionalEffectChoice { EntityId actor{}, target{}; Message title, description; std::vector<EffectOption> options; };
+struct EffectTargeting { EntityId actor{}; std::string verb; Message prompt; bool destination{}; };
 struct FreeMovement { EntityId actor{}; int remaining_feet{}; };
 struct Snapshot {
     Identity identity;
@@ -276,6 +278,7 @@ struct Snapshot {
     std::optional<AbilityCheckChoice> ability_check_choice;
     std::optional<FreeMovement> free_movement;
     std::optional<OptionalEffectChoice> optional_effect_choice;
+    std::optional<EffectTargeting> effect_targeting;
     std::vector<HeldItemView> held_items;
     bool physical_inventory{};
 };

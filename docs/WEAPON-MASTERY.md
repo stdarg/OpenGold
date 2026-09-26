@@ -498,3 +498,92 @@ Observed delivery checkpoint14:35:13 UTC:35m17s since approval continuation,
 including the earlier rest Save control delivery. Per-build times not separately
 measured are unavailable. Playable mastery count is4/8. Slow/Topple hit choices,
 Cleave, Push and MASTERY-5 simultaneous ordering remain; no full issue closure.
+
+### Approval continuation checkpoint
+
+Observed2026-09-26 14:58:14 UTC:58m18s since13:59:56 continuation;
+original batch timings above remain unchanged. Rest Save and Graze were committed
+and pushed (a0514a9,a038d91); four of eight properties verified playable, zero
+original issue closures. Slow/Topple/Cleave/Push and simultaneous-effect controls
+are implemented locally; reaction/save/UI acceptance remains in progress. The
+first optional weapon matrix and both Slow/Topple versus Champion orders pass.
+No added scope/issues; no token/cost measurements available. Requested Astra/high,
+actual configuration unverified; one owner, no delegation. This checkpoint does
+not pause work or claim the remaining properties delivered.
+
+## Optional hit mastery integration
+
+Rules0.6.60 connects Slow, Topple, Cleave and Push to actual weapon hits. Slow
+requires damage and expires at the source's next turn; Topple rolls Constitution
+against8 + attack ability modifier + proficiency. Cleave uses the same weapon,
+keeps negative damage modifiers, omits positive ability damage and shares one
+use across the turn, including reactions. Push offers unobstructed, directly-away
+landing cells within10 feet, for Large or smaller targets, without Opportunity
+Attacks or normal movement expenditure. Supplemental creature size metadata only
+supports that eligibility check; general footprints/transit remain #44/#45.
+
+The approved Use/Skip dialog suppresses futile effects. Multiple pending effects
+use Resolve next, preserving each unchosen entitlement; Cleave criticals can
+produce a second separate Champion movement. Position-dependent effects are
+re-evaluated after movement. Enemy-turn ordering is mastery before movement.
+Cleave targets include allies; automatic combat declines if only allies remain.
+Push and Cleave reuse highlighted mouse/keyboard targeting with Escape/Skip effect.
+No combat save controls are introduced.
+
+The SRD session owns the choices, geometry, damage/save resolution and interrupted
+movement. Core consumes generic effect choices/targeting; shared Godot controls
+present them. Conditional combat25 retains pending hit permissions, mastery
+choices, separate Champion entitlements, Cleave expenditure and interrupted-route
+origins/budgets. Prior supported versions remain readable; actual0.6.57 pending
+hits retain their prior continuation, while subsequent fresh attacks can offer
+new properties. Actual0.6.59 positive/zero Graze fixtures remain valid. New
+zero-damage Graze prompts are suppressed without discarding historical choices.
+
+Tests: [optional_mastery_checks.h](../tests/optional_mastery_checks.h) and
+[optional_mastery_view_tests.gd](../tests/optional_mastery_view_tests.gd), alongside
+existing grant/rest/mastery/Graze/Nick/lifecycle tests. The new cases cover every
+eligible weapon/range route, immunity, Push size/collision boundaries, deterministic
+Topple saves, thrown provenance, signed Cleave damage, allies, Savage rerolls,
+critical ordering, movement enabling effects, dead interrupted movers, retained
+formats and malformed/rejected choices. UI fixtures are real native outcomes;
+keyboard/mouse/dialog/targeting outcomes are compared byte-for-byte against them.
+
+Final verification commands (logs below are local build artifacts):
+
+```bash
+cmake --build build/mac-check --target opengold_status_effect_tests -j6
+OPENGOLD_OPTIONAL_MASTERY_FIXTURES=/tmp/optional-mastery-fixtures \
+  ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6
+cmake --build build/mac-check --target opengoldbox_test_project -j6
+cmake --build build/sprite-demo --target opengold_godot -j6
+OPENGOLD_GAME_DIR=/Users/edmond/POOLRAD OPENGOLD_LANG=en cmake \
+  -DGODOT=/Applications/Godot_mono.app/Contents/MacOS/Godot \
+  -DPROJECT=/Users/edmond/src/OpenGold/src/OpenGoldBox/godot \
+  -DSCRIPT=/Users/edmond/src/OpenGold/tests/optional_mastery_view_tests.gd \
+  '-DARGS=--nick-fixtures=/tmp/optional-mastery-fixtures;--nick-captures=/tmp/optional-mastery-main' \
+  '-DEXPECTED=Optional mastery controls passed' -DGRAPHICAL=ON -DTEST_TIMEOUT=120 \
+  -P tests/run_godot_test.cmake
+python3 tools/localization.py --check
+git diff --check
+```
+
+All native executables must be rebuilt before the regression command. The demo
+uses the same wrapper with project `demos/godot` and argument `--nick-demo`.
+English/Spanish main and English demo checks exercise1120×800 and1920×1080.
+
+Final integrated verification (commit containing this record):50 native test
+executables rebuilt, **51/51 native checks PASS**,16.84s;
+`/tmp/mastery-native-regression-final.log`. MainEN/ES and demoEN controls pass
+both sizes against final native fixtures; logs `/tmp/mastery-main-ui-final.log`
+and `/tmp/mastery-demo-ui-final.log`, captures `/tmp/optional-mastery-main-final`
+and `/tmp/optional-mastery-demo-final`. Keyboard Resolve next, Use, target cycling,
+Escape, mouse ally/landing selection and historical pending continuation match
+native outcomes.1005 messages validate; diff checks pass. Main's import step
+emits the same Godot Mono editor diagnostics already present in the Graze build
+(invalid saved editor-window position/debugger timer); runtime UI logs are clean.
+No main-branch merge or release integration is claimed.
+
+Neighboring Savage Attacker/Champion controls and their native prerequisites also
+pass4/4 in3.45s (`/tmp/mastery-neighbor-ui-final.log`). Main Spanish ordering and
+demo Push targeting captures were visually inspected. Final scope/architecture
+review found no mechanics moved into Core/UI and no added issue or feature scope.

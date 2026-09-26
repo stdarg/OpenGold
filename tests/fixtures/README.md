@@ -903,3 +903,24 @@ SHA256: `758e1934fba8b5db82d58e2825f72cfa42d19f64fe3495cc17070b0bdd010a45`.
 `graze_checks.h` requires exact continuation encoding except the expected module
 identity update and verifies that Slow survives. Earlier actual0.6.57 mastery
 critical-phase and0.6.56 Nick fixtures are retained unchanged.
+
+## Pending Graze before optional hit masteries
+
+`combat-v24-graze-pending-0.6.59.save` and
+`combat-v24-zero-graze-0.6.59.save` are genuine **0.6.59** writer output from the
+libraries built at `a038d91`, before the format25 writer was compiled. The first
+retains a positive Graze choice from an actual Greatsword miss; the second retains
+an actual miss by a Strength10 Fighter, for whom the old writer offered zero
+damage. New attacks suppress futile zero-damage prompts, but migration preserves
+and resolves this already-pending historical choice. No original game assets are
+included. Do not regenerate these fixtures with the current writer.
+
+SHA-256:
+
+- positive: `b4c2cdbb824e7ed859edafbe866fee2ee851a6e7d199083fe97d2db20b29453d`
+- zero: `8820cafc280de2d5c229a121d51ebcf8e64df393bd4efd4107e75383c6f552ea`
+
+`optional_mastery_checks.h` verifies unchanged pending bodies apart from module
+identity and exact continuation. Existing0.6.57 pending damage/movement fixtures
+retain their original continuation; fresh attacks after loading an older settled
+checkpoint may offer the newly implemented properties.

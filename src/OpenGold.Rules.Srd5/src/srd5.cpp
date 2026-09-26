@@ -81,7 +81,7 @@ bool module_before(const Identity& identity,std::array<unsigned,3> introduced)
 using Dice=detail::DamageDice;
 struct Definition {
     int ac{}, hp{}, initiative{}, speed{}, melee_bonus{};
-    int melee_ability{};
+    int melee_ability{},ranged_ability{},size{2};
     Dice melee;
     int ranged_bonus{};
     int reach{5};
@@ -152,6 +152,7 @@ struct Actor : detail::LifeState {
     std::vector<unsigned> light_origins;
     unsigned nick_origin{}; // Light weapon used by the current Attack action.
     unsigned light_extra{}; // 0: unused, 1: Bonus Action, 2: Nick; shared once per turn.
+    bool cleave_used{},cleave_damage{};
     bool light_damage{}; // Transient attack copy only; pending hits carry their own flag.
     bool involuntary_overlap{}; // Interrupted in an occupied space; retained through recovery until separated.
     detail::EffectState effects;
@@ -183,7 +184,19 @@ struct ChampionMove {
     int natural{},remaining{};
     bool spell{};
     Cell origin;
+    bool triggered{},cleave{},helpless{};
+    Cell trigger_origin{},target_origin{};
 };
+struct PendingMastery {
+    EntityId actor{},target{};
+    detail::Mastery kind{detail::Mastery::none};
+    int natural{};
+    bool ranged{},targeting{};
+    std::string weapon;
+    Cell origin;
+    unsigned thrown_item{};
+};
+struct EffectReaction { EntityId actor{}; Cell source{},mover{}; int movement{}; bool prone{}; };
 struct PendingGraze { EntityId actor{},target{}; int natural{}; };
 struct PendingCheck {
     EntityId actor{},target{};
@@ -200,6 +213,7 @@ struct PendingWeaponHit {
     int sneak_extra{};
     bool light{};
     unsigned weapon_item{};
+    bool mastery_allowed{},cleave{};
 };
 int maximum_hit_points(int die,bool dwarf,std::span<const int> modifiers)
 {
@@ -306,7 +320,7 @@ Definition character_definition(std::string_view bytes,std::optional<std::span<c
             const int modifier=item->finesse?std::max(str,dex):item->ranged?dex:str;
             const int bonus=(trained(klass,key)?2:0)+modifier;
             if(item->dice&&!item->ranged){d.melee_ability=modifier;d.melee_bonus=bonus;d.melee={item->dice,item->sides,modifier};d.melee_type=item->type;d.reach=item->reach;d.melee_heavy_disadvantage=item->heavy_disadvantage(scores);}
-            if(item->range){d.ranged_bonus=bonus+((item->ranged&&(features&4))?2:0);d.ranged={item->dice,item->sides,item->fixed_damage?item->fixed_damage:modifier};d.ranged_type=item->type;d.range=item->range;d.long_range=item->long_range;d.ranged_heavy_disadvantage=item->heavy_disadvantage(scores);}
+            if(item->range){d.ranged_ability=modifier;d.ranged_bonus=bonus+((item->ranged&&(features&4))?2:0);d.ranged={item->dice,item->sides,item->fixed_damage?item->fixed_damage:modifier};d.ranged_type=item->type;d.range=item->range;d.long_range=item->long_range;d.ranged_heavy_disadvantage=item->heavy_disadvantage(scores);}
         }else if(const auto* item=detail::armor(key);item&&item->category!=detail::ArmorCategory::shield){
             if(armor)throw std::runtime_error("Only one armor may be equipped");
             if(!trained(klass,key)){d.str_dex_disadvantage=true;d.spells=0;}
@@ -514,6 +528,19 @@ private:
     std::optional<PendingCheck> check_choice_;
     std::optional<ChampionMove> champion_move_;
     std::optional<PendingGraze> graze_;
+    std::optional<PendingMastery> mastery_;
+    std::vector<ChampionMove> champion_offers_;
+    std::optional<EffectReaction> effect_reaction_origin_;
+    bool effect_waiting() const {return mastery_.has_value()||!champion_offers_.empty();}
+    Actor mastery_actor(const PendingMastery&) const;
+    std::vector<EntityId> cleave_targets(const PendingMastery&,std::optional<Cell> from={}) const;
+    std::vector<Cell> push_cells(const PendingMastery&,std::optional<Cell> from={}) const;
+    bool mastery_available(const PendingMastery&) const;
+    OptionalEffectChoice effect_choices() const;
+    bool use_effect(const Command&);
+    void finish_effects();
+    void validate_mastery_state() const;
+    void offer_mastery(const Actor&,const Actor&,int natural,bool ranged,int damage,bool critical);
     void validate_graze() const;
     int graze_damage(const Actor& a,const Actor& target) const {
         const int cap=std::max(0,def(a).melee_ability);
@@ -590,7 +617,7 @@ private:
     detail::RollModifiers attack_modifiers(const Actor& a,const Actor& target,bool ranged,bool spell) const;
     Dice weapon_dice(const Actor& a,bool ranged) const;
     detail::DamageDieRule weapon_die_rule(const Actor& a,bool ranged) const;
-    void apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool ranged,bool spell=false);
+    void apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool ranged,bool spell=false,bool optional_mastery=true);
     void resolve_weapon_hit(int amount);
     bool sneak_eligible(const Actor& a,const Actor& target,bool ranged,int mode) const;
     void finish_reaction();
@@ -746,12 +773,12 @@ Actor Session::thrown_actor(const Actor& a,std::string_view weapon) const
 Actor Session::hit_actor(const PendingWeaponHit& hit) const
 {
     const auto& a=actor(hit.attacker);
-    if(!hit.thrown_item){auto result=hit.weapon_item?item_actor(a,hit.weapon_item):a;result.light_damage=hit.light;return result;}
+    if(!hit.thrown_item){auto result=hit.weapon_item?item_actor(a,hit.weapon_item):a;result.light_damage=hit.light;result.cleave_damage=hit.cleave;return result;}
     if(!physical_inventory_||hit.thrown_item>items_.size()||!hit.ranged)throw std::runtime_error("Invalid pending thrown item");
     const auto& item=items_[hit.thrown_item-1];const auto* weapon=detail::weapon(item.definition);
     if(item.holder||item.quantity!=1||!weapon||!weapon->thrown||item.cell!=actor(hit.target).source.cell)
         throw std::runtime_error("Invalid pending thrown weapon position");
-    auto result=thrown_actor(a,item.definition);result.light_damage=hit.light;return result;
+    auto result=thrown_actor(a,item.definition);result.light_damage=hit.light;result.cleave_damage=hit.cleave;return result;
 }
 unsigned Session::ground_one(unsigned token,Cell cell)
 {
@@ -782,6 +809,7 @@ unsigned Session::throw_weapon(Actor& a,Actor& target,unsigned token,bool light)
     a.aim_ready=attacker.aim_ready;
     const auto ground=ground_one(token,target.source.cell);
     if(weapon_hit_){weapon_hit_->thrown_item=ground;weapon_hit_->light=light;}
+    if(mastery_)mastery_->thrown_item=ground;
     if(a.selected_weapon==token)a.selected_weapon=0;
     const auto previous=a.definition.weapon_label;
     a.definition=equipped_definition(a,items_);
@@ -841,7 +869,7 @@ Snapshot Session::snapshot() const
 {
     Snapshot s;s.identity=content_->identity;s.revision=revision_;s.round=round_;s.outcome=outcome_;
     s.elapsed_milliseconds=elapsed_ms_;s.held_items=items_;s.physical_inventory=physical_inventory_;
-    s.actor=champion_move_?champion_move_->actor:pending()?pending():actors_[turn_].source.id;s.reaction_pending=!champion_move_&&pending()!=0;s.battlefield=board_;s.log=log_;s.log_messages=log_messages_;
+    s.actor=weapon_hit_?weapon_hit_->attacker:champion_move_?champion_move_->actor:pending()?pending():actors_[turn_].source.id;s.reaction_pending=!champion_move_&&pending()!=0;s.battlefield=board_;s.log=log_;s.log_messages=log_messages_;
     if(weapon_hit_){const auto& h=*weapon_hit_;const auto a=hit_actor(h);const auto dice=weapon_dice(a,h.ranged);const bool critical=critical_hit(a,actor(h.target),h.natural);
         if(h.sneak_pending)s.sneak_attack_choice=SneakAttackChoice{h.attacker,h.target,int((def(a).sneak_level+1)/2)*(critical?2:1),6,critical};
         else s.savage_attack_choice=SavageAttackChoice{h.attacker,h.target,def(a).weapon_label,dice.count*(critical?2:1),dice.sides,dice.bonus,h.first,h.second,critical,h.sneak_extra};}
@@ -849,6 +877,11 @@ Snapshot Session::snapshot() const
         const int amount=graze_damage(a,t);
         s.optional_effect_choice=OptionalEffectChoice{g.actor,g.target,{"Graze",{}},
             {"Target: {target}\nGraze damage: {damage}\n\nUse Graze after this miss, or skip it.\nThe attack's Action or Reaction is already spent.",{{"target",t.source.name},{"damage",std::to_string(amount)}}}};
+    }
+    if(!weapon_hit_&&!champion_move_&&effect_waiting()){
+        if(mastery_&&mastery_->targeting){const auto& m=*mastery_;s.actor=m.actor;s.effect_targeting=EffectTargeting{m.actor,m.kind==detail::Mastery::cleave?"effect_attack":"effect_push",m.kind==detail::Mastery::cleave?Message{"Choose a Cleave target, or skip.",{}}:Message{"Choose a Push destination, or skip.",{}},m.kind==detail::Mastery::push};}
+        else{s.optional_effect_choice=effect_choices();s.actor=s.optional_effect_choice->actor;
+            if(s.optional_effect_choice->options.size()>1&&actors_[turn_].source.side==0)s.actor=actors_[turn_].source.id;}
     }
     if(champion_move_)s.free_movement=FreeMovement{champion_move_->actor,champion_move_->remaining};
     if(check_choice_){const auto& c=*check_choice_;s.ability_check_choice=AbilityCheckChoice{c.actor,c.target,c.natural,def(actor(c.actor)).medicine,c.natural+def(actor(c.actor)).medicine,10,actor(c.actor).winds};}
@@ -960,6 +993,17 @@ std::vector<Command> Session::legal_commands() const
         return commands;
     };
     if(graze_){add(graze_->actor,"effect_use","Use",graze_->target);add(graze_->actor,"effect_skip","Skip",graze_->target);return commands;}
+    if(!weapon_hit_&&!champion_move_&&effect_waiting()){
+        if(mastery_&&mastery_->targeting){const auto& m=*mastery_;
+            if(m.kind==detail::Mastery::cleave){for(auto target:cleave_targets(m))add(m.actor,"effect_attack","Cleave attack",target);}
+            else for(auto cell:push_cells(m))add(m.actor,"effect_push","Push",m.target,cell);
+            add(m.actor,"effect_skip","Skip",m.target);commands.back().item=1;
+            if(m.kind==detail::Mastery::cleave&&std::none_of(commands.begin(),commands.end(),[&](const auto& c){return c.verb=="effect_attack"&&actor(c.target).source.side!=actor(m.actor).source.side;}))std::rotate(commands.begin(),commands.end()-1,commands.end());
+        }else{const auto choice=effect_choices();for(const auto& option:choice.options){
+            if(option.available){add(choice.actor,"effect_use","Use",choice.target);commands.back().item=option.id;}
+            add(choice.actor,"effect_skip","Skip",choice.target);commands.back().item=option.id;
+        }}return commands;
+    }
     if(champion_move_){add(champion_move_->actor,"end","Finish free move");for(const auto cell:movement_reach(champion_move_->actor))add(champion_move_->actor,"move","Free move",0,cell);return filtered();}
     if(check_choice_){add(check_choice_->actor,"mind_use","Use Tactical Mind",check_choice_->target);add(check_choice_->actor,"mind_skip","Keep failed check",check_choice_->target);return filtered();}
     if(weapon_hit_){
@@ -1060,7 +1104,7 @@ std::vector<Command> Session::legal_commands() const
 std::vector<Cell> Session::movement_reach(EntityId id) const
 {
     std::vector<Cell> cells;
-    if(outcome_!=Outcome::ongoing||(!champion_move_&&pending())||temporary_offer_||weapon_hit_||check_choice_||graze_||(champion_move_&&id!=champion_move_->actor))return cells;
+    if(outcome_!=Outcome::ongoing||(!champion_move_&&pending())||temporary_offer_||weapon_hit_||check_choice_||graze_||(!champion_move_&&effect_waiting())||(champion_move_&&id!=champion_move_->actor))return cells;
     const auto actor=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==id;});
     if(actor==actors_.end()||!conscious(*actor))return cells;
     const auto budget=champion_move_?champion_move_->remaining:movement_left(*actor);
@@ -1142,10 +1186,10 @@ Dice Session::weapon_dice(const Actor& a,bool ranged) const
 {
     const auto& d=def(a);auto result=ranged?d.ranged:d.melee;
     if(!ranged&&d.versatile_sides&&a.weapon_hands==2)result.sides=d.versatile_sides;
-    if(a.light_damage&&!d.two_weapon_fighting)result.bonus=std::min(0,result.bonus);
+    if(a.cleave_damage||(a.light_damage&&!d.two_weapon_fighting))result.bonus=std::min(0,result.bonus);
     return result;
 }
-void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool ranged,bool spell)
+void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool ranged,bool spell,bool optional_mastery)
 {
     // A pending weapon hit retains these applications until damage resolves so
     // its original roll mode remains independently verifiable on save/load.
@@ -1156,9 +1200,10 @@ void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,in
     std::vector<MessageArgument> arguments{{"actor",a.source.name},{"target",target.source.name},{"roll",std::to_string(natural)},
         {"bonus",std::to_string(bonus)},{"ac",std::to_string(def(target).ac)},{"disadvantage",modifier_label,true}};
     if(!(!spell&&def(a).champion&&natural==19)&&!attack_hits(natural,bonus,def(target).ac)){log(message+" misses.",{"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage} misses.",arguments});
-        if(!spell&&!ranged&&weapon_mastery(a,false)==detail::Mastery::graze)graze_=PendingGraze{a.source.id,target.source.id,natural};
+        if(!spell&&!ranged&&weapon_mastery(a,false)==detail::Mastery::graze&&graze_damage(a,target)>0)graze_=PendingGraze{a.source.id,target.source.id,natural};
         return;}
     const bool critical=critical_hit(a,target,natural,spell);
+    const bool helpless=unconscious(target)&&distance(a.source.cell,target.source.cell)<=5;
     if(savage)message+=" (Savage Attacker)";
     amount=resolved_damage(target,type,amount);
     arguments.push_back({"savage",savage?" (Savage Attacker)":"",true});
@@ -1176,10 +1221,13 @@ void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,in
             log(target.source.name+" gains "+label+" from "+a.source.name+".",{"{name} gains {mastery} from {source}.",{{"name",target.source.name},{"mastery",label,true},{"source",a.source.name}}});
         }
     }
+    if(!spell&&optional_mastery)offer_mastery(a,target,natural,ranged,amount,critical);
     if(critical&&def(a).champion&&conscious(a)){
-        champion_move_=ChampionMove{a.source.id,target.source.id,natural,std::max(0,def(a).speed-detail::speed_penalty(a.effects))/2,spell,a.source.cell};
-        if(pending()==a.source.id&&target.source.id==actors_[turn_].source.id&&target.hp==0){path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;}
+        ChampionMove move{a.source.id,target.source.id,natural,std::max(0,def(a).speed-detail::speed_penalty(a.effects))/2,spell,a.source.cell};
+        if(effect_waiting()||a.cleave_damage){move.triggered=true;move.cleave=a.cleave_damage;move.helpless=helpless;move.trigger_origin=a.source.cell;move.target_origin=target.source.cell;}
+        if(effect_waiting())champion_offers_.push_back(move);else champion_move_=move;
     }
+    if(pending()==a.source.id&&actors_[turn_].hp==0&&(effect_waiting()||champion_move_)){path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;}
 }
 bool Session::sneak_eligible(const Actor& a,const Actor& target,bool ranged,int mode) const
 {
@@ -1197,9 +1245,9 @@ bool Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
     const auto damage_dice=spell?spell_dice:weapon_dice(a,ranged);
     const bool hit=(!spell&&d.champion&&natural==19)||attack_hits(natural,bonus,def(target).ac);
     const bool sneak=hit&&!spell&&sneak_eligible(a,target,ranged,modifiers.mode());
-    const int amount=hit?(!spell&&(d.sneak_level||d.great_weapon_fighting||a.light_damage)?detail::roll_damage_component(rng_,damage_dice,critical_hit(a,target,natural),weapon_die_rule(a,ranged)):dice(damage_dice,critical_hit(a,target,natural,spell))):0;
+    const int amount=hit?(!spell&&(d.sneak_level||d.great_weapon_fighting||a.light_damage||a.cleave_damage)?detail::roll_damage_component(rng_,damage_dice,critical_hit(a,target,natural),weapon_die_rule(a,ranged)):dice(damage_dice,critical_hit(a,target,natural,spell))):0;
     if(hit&&!spell&&(sneak||(damage_dice.count&&d.savage&&!a.savage_used))){
-        weapon_hit_=PendingWeaponHit{a.source.id,target.source.id,ranged,natural,modifiers.mode(),amount};weapon_hit_->sneak_pending=sneak;weapon_hit_->aimed=aimed;return hit;
+        weapon_hit_=PendingWeaponHit{a.source.id,target.source.id,ranged,natural,modifiers.mode(),amount};weapon_hit_->sneak_pending=sneak;weapon_hit_->aimed=aimed;weapon_hit_->cleave=a.cleave_damage;const auto property=weapon_mastery(a,ranged);weapon_hit_->mastery_allowed=property==detail::Mastery::slow||property==detail::Mastery::topple||property==detail::Mastery::cleave||property==detail::Mastery::push;return hit;
     }
     apply_hit(a,target,natural,bonus,modifiers.mode(),std::max(0,amount),false,spell?spell_type:ranged?d.ranged_type:d.melee_type,ranged,spell);
     return hit;
@@ -1207,8 +1255,9 @@ bool Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
 void Session::resolve_weapon_hit(int amount)
 {
     const auto h=*weapon_hit_;auto a=hit_actor(h);weapon_hit_.reset();const auto& d=def(a);
-    apply_hit(a,actor(h.target),h.natural,h.ranged?d.ranged_bonus:d.melee_bonus,h.mode,std::max(0,amount+h.sneak_extra),h.second.has_value(),h.ranged?d.ranged_type:d.melee_type,h.ranged);
-    if(pending()&&!champion_move_)finish_reaction();
+    apply_hit(a,actor(h.target),h.natural,h.ranged?d.ranged_bonus:d.melee_bonus,h.mode,std::max(0,amount+h.sneak_extra),h.second.has_value(),h.ranged?d.ranged_type:d.melee_type,h.ranged,false,h.mastery_allowed);
+    if(mastery_&&h.thrown_item)mastery_->thrown_item=h.thrown_item;
+    if(!champion_move_&&!effect_waiting())finish_effects();
 }
 void Session::finish_reaction()
 {
@@ -1222,7 +1271,7 @@ void Session::update_outcome()
 {
     bool party=false,enemies=false;for(const auto& a:actors_)if(a.hp>0&&!a.dead)(a.source.side==0?party:enemies)=true;
     if(!party||!enemies) {
-        outcome_=!party?Outcome::defeat:Outcome::victory;champion_move_.reset();path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;
+        outcome_=!party?Outcome::defeat:Outcome::victory;champion_move_.reset();mastery_.reset();champion_offers_.clear();effect_reaction_origin_.reset();path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;
         log(outcome_==Outcome::victory?"Victory.":"The party is incapacitated. Defeat.");
     }
 }
@@ -1241,7 +1290,7 @@ bool Session::begin_turn()
         }
         if(a.hp==0)return false;
     }
-    for(auto& actor:actors_){actor.savage_used=false;actor.sneak_used=false;actor.aim_used=actor.aim_ready=false;actor.moved=false;actor.light_origins.clear();actor.light_extra=0;actor.nick_origin=0;}
+    for(auto& actor:actors_){actor.cleave_used=false;actor.savage_used=false;actor.sneak_used=false;actor.aim_used=actor.aim_ready=false;actor.moved=false;actor.light_origins.clear();actor.light_extra=0;actor.nick_origin=0;}
     // Historical checkpoints do not distinguish a spent Light attack from any
     // other Bonus Action. Keep their current turn exact; enable Nick at the first
     // fresh turn boundary, where the new shared allowance is unambiguous.
@@ -1373,7 +1422,8 @@ bool Session::submit(const Command& command)
     }
     const bool second=command.verb.ends_with("_2");
     const auto spend=[&]{if(second||command.verb=="scorching_ray"||command.verb=="blindness")--a.slots2;else --a.slots;a.spent_slot=true;};
-    if(graze_){
+    if(!graze_&&!weapon_hit_&&!champion_move_&&effect_waiting()){use_effect(command);
+    }else if(graze_){
         const auto g=*graze_;graze_.reset();
         if(command.verb=="effect_use"){
             auto& target=actor(g.target);const int amount=graze_damage(a,target);
@@ -1406,7 +1456,7 @@ bool Session::submit(const Command& command)
         const auto attacker=hit_actor(h);
         if(!d.savage||a.savage_used||!weapon_dice(attacker,h.ranged).count)resolve_weapon_hit(h.first);
     }else if(command.verb=="savage_use"){
-        a.savage_used=true;const auto attacker=hit_actor(*weapon_hit_);weapon_hit_->second=(def(attacker).sneak_level||def(attacker).great_weapon_fighting||attacker.light_damage)?detail::roll_damage_component(rng_,weapon_dice(attacker,weapon_hit_->ranged),critical_hit(attacker,actor(weapon_hit_->target),weapon_hit_->natural),weapon_die_rule(attacker,weapon_hit_->ranged)):dice(weapon_dice(attacker,weapon_hit_->ranged),critical_hit(attacker,actor(weapon_hit_->target),weapon_hit_->natural));
+        a.savage_used=true;const auto attacker=hit_actor(*weapon_hit_);weapon_hit_->second=(def(attacker).sneak_level||def(attacker).great_weapon_fighting||attacker.light_damage||attacker.cleave_damage)?detail::roll_damage_component(rng_,weapon_dice(attacker,weapon_hit_->ranged),critical_hit(attacker,actor(weapon_hit_->target),weapon_hit_->natural),weapon_die_rule(attacker,weapon_hit_->ranged)):dice(weapon_dice(attacker,weapon_hit_->ranged),critical_hit(attacker,actor(weapon_hit_->target),weapon_hit_->natural));
     }else if(command.verb=="savage_skip"||command.verb=="savage_first"||command.verb=="savage_second"){
         resolve_weapon_hit(command.verb=="savage_second"?*weapon_hit_->second:weapon_hit_->first);
     }else if(command.verb=="temp_hp_keep"||command.verb=="temp_hp_use") {
@@ -1452,7 +1502,7 @@ bool Session::submit(const Command& command)
         a.weapon_hands=command.verb=="grip_one"?1:2;
     } else if(command.verb=="opportunity"||command.verb=="decline") {
         if(command.verb=="opportunity"){a.reaction=false;attack(a,actor(command.target),false);}
-        if(!weapon_hit_&&!champion_move_&&!graze_)finish_reaction();
+        if(!weapon_hit_&&!champion_move_&&!graze_&&!effect_waiting())finish_reaction();
     } else if(command.verb=="move") {
         path_=path_to(a,command.destination);path_index_=0;progress_movement();
     } else if(command.verb=="end")end_turn();
@@ -1530,7 +1580,7 @@ bool Session::submit(const Command& command)
     // Unsigned wrap is defined, but must skip that reserved value.
     if (++revision_ == 0) revision_ = 1;
     update_outcome();
-    if(outcome_==Outcome::ongoing&&!pending()&&!champion_move_&&actors_[turn_].hp==0)end_turn();
+    if(outcome_==Outcome::ongoing&&!pending()&&!weapon_hit_&&!champion_move_&&!effect_waiting()&&actors_[turn_].hp==0)end_turn();
     if(outcome_!=Outcome::ongoing)advance_turn_time();
     return true;
 }
@@ -1538,14 +1588,14 @@ bool Session::submit(const Command& command)
 std::string Session::save() const
 {
     // The module owns the checkpoint format, including RNG and pending reactions.
-    const unsigned format=graze_?24:nick_active_?23:light_active_?22:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.sneak_level||a.definition.great_weapon_fighting;})?21:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.arcane<a.definition.arcane;})?20:physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
+    const unsigned format=(effect_waiting()||effect_reaction_origin_||(champion_move_&&champion_move_->triggered)||(weapon_hit_&&(weapon_hit_->mastery_allowed||weapon_hit_->cleave))||std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.cleave_used;}))?25:graze_?24:nick_active_?23:light_active_?22:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.sneak_level||a.definition.great_weapon_fighting;})?21:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.arcane<a.definition.arcane;})?20:physical_inventory_?19:champion_move_?18:check_choice_?17:items_active_?16:frost_movement_?15:std::any_of(actors_.begin(),actors_.end(),[](const auto& a){return a.definition.surges>0;})?14:13;
     std::ostringstream out;out<<"OGCOMBAT "<<format<<' '<<std::quoted(content_->identity.module)<<' '<<std::quoted(content_->identity.version)<<' '<<std::quoted(content_->identity.content)<<'\n';
     out<<board_.width<<' '<<board_.height<<'\n';for(auto cell:board_.terrain)out<<unsigned(cell)<<' ';out<<'\n';
     out<<rng_<<' '<<revision_<<' '<<turn_<<' '<<round_<<' '<<static_cast<int>(outcome_)<<' '<<actors_.size()<<'\n';
     for(const auto& a:actors_){out<<a.source.id<<' '<<std::quoted(a.source.definition)<<' '<<std::quoted(a.source.name)<<' '<<a.source.side<<' '<<a.source.cell.x<<' '<<a.source.cell.y<<' '
         <<a.hp<<' '<<a.initiative<<' '<<a.movement<<' '<<a.winds<<' '<<a.slots<<' '<<a.successes<<' '<<a.failures<<' '
         <<a.actions.normal<<' '<<a.bonus<<' '<<a.reaction<<' '<<a.dodge<<' '<<a.disengaged<<' '<<a.stable<<' '<<a.dead<<' '<<std::quoted(a.source.character_profile)<<' '<<a.slots2<<' '<<a.spent_slot<<' '<<a.savage_used<<' '<<a.facing_left<<' '<<a.involuntary_overlap<<' '<<a.weapon_hands<<' '<<a.hit_dice<<' '<<a.recovery.death_save_in_ms<<' '<<detail::encode_stable_recovery(a.recovery)<<' '<<a.temporary_hp.amount<<' '<<std::quoted(a.temporary_hp.source_id)<<' '<<a.rushes<<' '<<a.rush_used;
-        if(format>=14)out<<' '<<a.surges<<' '<<a.surge_used<<' '<<a.actions.surge;if(format>=15)out<<' '<<a.dashes;if(format>=20)out<<' '<<a.arcane;if(format>=21)out<<' '<<a.sneak_used<<' '<<a.aim_used<<' '<<a.aim_ready<<' '<<a.moved;if(format>=22){out<<' '<<a.selected_weapon<<' '<<a.light_origins.size();for(auto id:a.light_origins)out<<' '<<id;}if(format>=23)out<<' '<<a.light_extra<<' '<<a.nick_origin;out<<'\n';}
+        if(format>=14)out<<' '<<a.surges<<' '<<a.surge_used<<' '<<a.actions.surge;if(format>=15)out<<' '<<a.dashes;if(format>=20)out<<' '<<a.arcane;if(format>=21)out<<' '<<a.sneak_used<<' '<<a.aim_used<<' '<<a.aim_ready<<' '<<a.moved;if(format>=22){out<<' '<<a.selected_weapon<<' '<<a.light_origins.size();for(auto id:a.light_origins)out<<' '<<id;}if(format>=23)out<<' '<<a.light_extra<<' '<<a.nick_origin;if(format>=25)out<<' '<<a.cleave_used;out<<'\n';}
     out<<path_.size()<<' '<<path_index_<<'\n';for(auto p:path_)out<<p.x<<' '<<p.y<<' ';out<<'\n';
     out<<reactors_.size()<<' '<<reactor_index_<<'\n';for(auto id:reactors_)out<<id<<' ';out<<'\n';
     out<<log_.size()<<'\n';for(const auto& line:log_)out<<std::quoted(line)<<'\n';
@@ -1554,7 +1604,7 @@ std::string Session::save() const
     out<<bool(temporary_offer_)<<'\n';
     if(temporary_offer_)out<<temporary_offer_->amount<<' '<<std::quoted(temporary_offer_->source_id)<<'\n';
     out<<bool(weapon_hit_)<<'\n';
-    if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second.value_or(-1);if(format>=19)out<<' '<<h.thrown_item;if(format>=21)out<<' '<<h.second.has_value()<<' '<<h.sneak_pending<<' '<<h.aimed<<' '<<h.sneak_extra;if(format>=22)out<<' '<<h.light<<' '<<h.weapon_item;out<<'\n';}
+    if(weapon_hit_){const auto& h=*weapon_hit_;out<<h.attacker<<' '<<h.target<<' '<<h.ranged<<' '<<h.natural<<' '<<h.mode<<' '<<h.first<<' '<<h.second.value_or(-1);if(format>=19)out<<' '<<h.thrown_item;if(format>=21)out<<' '<<h.second.has_value()<<' '<<h.sneak_pending<<' '<<h.aimed<<' '<<h.sneak_extra;if(format>=22)out<<' '<<h.light<<' '<<h.weapon_item;if(format>=25)out<<' '<<h.mastery_allowed<<' '<<h.cleave;out<<'\n';}
     if(format>=17)out<<frost_movement_<<' '<<items_active_<<'\n';
     if(format>=20)out<<physical_inventory_<<'\n';
     if(items_active_){
@@ -1568,7 +1618,16 @@ std::string Session::save() const
     if(format==17||(format>=19&&check_choice_)){const auto& c=*check_choice_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.surge_spent<<'\n';}
     if(format>=19)out<<bool(champion_move_)<<'\n';
     if(format==18||(format>=19&&champion_move_)){const auto& c=*champion_move_;out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.remaining<<' '<<c.spell<<' '<<c.origin.x<<' '<<c.origin.y<<'\n';}
-    if(format>=24){const auto& g=*graze_;out<<g.actor<<' '<<g.target<<' '<<g.natural<<' '<<light_active_<<' '<<nick_active_<<'\n';}
+    if(format>=25)out<<bool(graze_)<<'\n';
+    if(format==24||(format>=25&&graze_)){const auto& g=*graze_;out<<g.actor<<' '<<g.target<<' '<<g.natural<<' ';}
+    if(format>=24)out<<light_active_<<' '<<nick_active_<<'\n';
+    if(format>=25){
+        out<<bool(mastery_)<<'\n';if(mastery_){const auto& m=*mastery_;out<<m.actor<<' '<<m.target<<' '<<unsigned(m.kind)<<' '<<m.natural<<' '<<m.ranged<<' '<<m.targeting<<' '<<std::quoted(m.weapon)<<' '<<m.origin.x<<' '<<m.origin.y<<' '<<m.thrown_item<<'\n';}
+        const auto extra=[&](const ChampionMove& c){out<<c.triggered<<' '<<c.cleave<<' '<<c.helpless<<' '<<c.trigger_origin.x<<' '<<c.trigger_origin.y<<' '<<c.target_origin.x<<' '<<c.target_origin.y<<'\n';};
+        out<<champion_offers_.size()<<'\n';for(const auto& c:champion_offers_){out<<c.actor<<' '<<c.target<<' '<<c.natural<<' '<<c.remaining<<' '<<c.spell<<' '<<c.origin.x<<' '<<c.origin.y<<' ';extra(c);}
+        if(champion_move_)extra(*champion_move_);
+        out<<bool(effect_reaction_origin_)<<' ';if(effect_reaction_origin_)out<<effect_reaction_origin_->actor<<' '<<effect_reaction_origin_->source.x<<' '<<effect_reaction_origin_->source.y<<' '<<effect_reaction_origin_->mover.x<<' '<<effect_reaction_origin_->mover.y<<' '<<effect_reaction_origin_->movement<<' '<<effect_reaction_origin_->prone;out<<'\n';
+    }
     return out.str();
 }
 // Parse one actor independently of session mutation. Old checkpoint versions
@@ -1597,11 +1656,13 @@ Actor read_checkpoint_actor(std::istream& input, unsigned version, const Content
     if(version>=21)input>>actor.sneak_used>>actor.aim_used>>actor.aim_ready>>actor.moved;
     if(version>=22){unsigned count{};input>>actor.selected_weapon>>count;if(!input||count>2)throw std::runtime_error("Invalid Light attack count");for(unsigned i=0;i<count;++i){unsigned id{};input>>id;actor.light_origins.push_back(id);}}
     if(version>=23)input>>actor.light_extra>>actor.nick_origin;
+    if(version>=25)input>>actor.cleave_used;
     if (!input || (source.character_profile.empty() && !content.definitions.contains(source.definition)))
         throw std::runtime_error("Invalid checkpoint actor");
     actor.definition = source.character_profile.empty()
         ? content.definitions.at(source.definition) : character_definition(source.character_profile);
     const auto& definition = actor.definition;
+    if(actor.cleave_used&&std::none_of(definition.masteries.begin(),definition.masteries.end(),[](const auto& key){const auto* weapon=detail::weapon(key);return weapon&&weapon->mastery==detail::Mastery::cleave;}))throw std::runtime_error("Invalid Cleave expenditure source");
     if(version<20)actor.arcane=definition.arcane;
     if(version<21&&(definition.sneak_level||definition.great_weapon_fighting))throw std::runtime_error("Weapon damage features require version-21 checkpoint");
     if((actor.sneak_used&&!definition.sneak_level)||(actor.aim_used&&(definition.sneak_level<3||actor.bonus||actor.moved))||(actor.aim_ready&&!actor.aim_used))throw std::runtime_error("Invalid Rogue attack expenditure");
@@ -1686,13 +1747,16 @@ void Session::validate_weapon_hit() const
     if(a==actors_.end()||t==actors_.end())throw std::runtime_error("Unknown pending attacker/target");
     auto attacking=hit_actor(h);attacking.aim_ready=h.aimed;
     const auto d=weapon_dice(attacking,h.ranged);const int count=d.count*(critical_hit(*a,*t,h.natural)?2:1);
-    if(temporary_offer_||outcome_!=Outcome::ongoing||!conscious(*a)||t->hp<=0||t->dead||a->source.side==t->source.side||
+    if(temporary_offer_||outcome_!=Outcome::ongoing||!conscious(*a)||(!h.cleave&&t->hp<=0)||t->dead||(!h.cleave&&a->source.side==t->source.side)||
         h.natural<2||h.natural>20||
         (!(def(*a).champion&&h.natural==19)&&!attack_hits(h.natural,h.ranged?def(attacking).ranged_bonus:def(attacking).melee_bonus,def(*t).ac))||
         h.mode!=attack_modifiers(attacking,*t,h.ranged,false).mode()||!line_of_sight(a->source.cell,t->source.cell)||
         distance(a->source.cell,t->source.cell)>(h.ranged?def(attacking).long_range:def(attacking).reach)||
-        (pending()?(pending()!=h.attacker||h.target!=actors_[turn_].source.id||a->reaction||h.ranged):(h.attacker!=actors_[turn_].source.id||(a->actions.normal&&(!a->surge_used||a->actions.surge)))))
+        (pending()?(pending()!=h.attacker||(!h.cleave&&h.target!=actors_[turn_].source.id)||a->reaction||h.ranged):((h.attacker!=actors_[turn_].source.id&&!(h.cleave&&effect_reaction_origin_&&effect_reaction_origin_->actor==h.attacker&&actors_[turn_].hp==0))||(h.attacker==actors_[turn_].source.id&&a->actions.normal&&(!a->surge_used||a->actions.surge)))))
         throw std::runtime_error("Invalid pending weapon hit");
+    const auto kind=weapon_mastery(attacking,h.ranged);
+    if(h.mastery_allowed&&kind!=detail::Mastery::slow&&kind!=detail::Mastery::topple&&kind!=detail::Mastery::cleave&&kind!=detail::Mastery::push)throw std::runtime_error("Invalid pending mastery permission");
+    if(h.cleave&&(!a->cleave_used||h.ranged||h.light||h.thrown_item||h.weapon_item||weapon_mastery(attacking,false)!=detail::Mastery::cleave))throw std::runtime_error("Missing Cleave expenditure");
     if((!h.light&&h.weapon_item)||(h.thrown_item&&h.weapon_item))throw std::runtime_error("Invalid pending weapon selection");
     if(h.light){
         const auto token=h.thrown_item?h.thrown_item:h.weapon_item;
@@ -1708,7 +1772,7 @@ void Session::validate_weapon_hit() const
         const int extra_count=int((def(*a).sneak_level+1)/2)*(critical_hit(*a,*t,h.natural)?2:1);
         if(!a->sneak_used||!sneak_eligible(attacking,*t,h.ranged,h.mode)||h.sneak_extra<extra_count||h.sneak_extra>extra_count*6)throw std::runtime_error("Invalid Sneak Attack dice");
     }
-    const auto bound=[&](int n){return def(attacking).sneak_level||def(attacking).great_weapon_fighting||h.light?n:std::max(0,n);};
+    const auto bound=[&](int n){return def(attacking).sneak_level||def(attacking).great_weapon_fighting||h.light||h.cleave?n:std::max(0,n);};
     const int minimum_face=weapon_die_rule(attacking,h.ranged)==detail::DamageDieRule::great_weapon_fighting?3:1;
     const auto valid=[&](int n){return n>=bound(count*minimum_face+d.bonus)&&n<=bound(count*d.sides+d.bonus);};
     if(!valid(h.first)||(h.second&&!valid(*h.second)))throw std::runtime_error("Invalid pending weapon damage roll");
@@ -1727,6 +1791,13 @@ void Session::finish_check(const PendingCheck& check,int boost)
 void Session::finish_champion_move()
 {
     champion_move_.reset();
+    if(mastery_&&!mastery_available(*mastery_)&&champion_offers_.empty())mastery_.reset();
+    if(effect_waiting())return;
+    finish_effects();
+}
+void Session::finish_effects()
+{
+    effect_reaction_origin_.reset();
     if(!pending())return;
     const auto& mover=actors_[turn_];
     // The critical mover can now occupy the interrupted route. Stop a route
@@ -1744,11 +1815,14 @@ void Session::validate_champion_move() const
     if(who==actors_.end()||target==actors_.end()||c.actor==c.target||!def(*who).champion||!conscious(*who)||
        c.natural<2||c.natural>20||c.origin.x<0||c.origin.y<0||c.origin.x>=board_.width||c.origin.y>=board_.height||board_.at(c.origin)==1||
        check_choice_||weapon_hit_||temporary_offer_||outcome_!=Outcome::ongoing)throw std::runtime_error("Invalid Champion movement source");
+    if(c.triggered){if(!board_.contains(c.trigger_origin)||board_.at(c.trigger_origin)==1||!board_.contains(c.target_origin)||board_.at(c.target_origin)==1||
+        (c.cleave&&!who->cleave_used)||(c.helpless&&distance(c.trigger_origin,c.target_origin)>5))throw std::runtime_error("Invalid Champion trigger positions");}
+    else if(c.cleave||c.helpless||c.trigger_origin!=Cell{}||c.target_origin!=Cell{})throw std::runtime_error("Unexpected Champion trigger metadata");
     const int budget=std::max(0,def(*who).speed-detail::speed_penalty(who->effects))/2;
     if((c.actor==actors_[turn_].source.id&&(who->actions.surge||(who->actions.normal&&!who->surge_used)))||
        c.remaining<0||c.remaining>budget||distance(c.origin,who->source.cell)>budget-c.remaining||
-       !(c.natural==20||(!c.spell&&c.natural==19)||(target->hp==0&&distance(c.origin,target->source.cell)<=5))||
-       (pending()?(pending()!=c.actor||who->reaction||c.target!=actors_[turn_].source.id):(c.actor!=actors_[turn_].source.id&&!(c.target==actors_[turn_].source.id&&target->hp==0&&!who->reaction))))
+       !(c.natural==20||(!c.spell&&c.natural==19)||((c.helpless||target->hp==0)&&distance(c.triggered?c.trigger_origin:c.origin,c.triggered?c.target_origin:target->source.cell)<=5))||
+       (pending()?(pending()!=c.actor||who->reaction||(!c.cleave&&c.target!=actors_[turn_].source.id)):(c.actor!=actors_[turn_].source.id&&!((c.cleave?actors_[turn_].hp==0:c.target==actors_[turn_].source.id&&target->hp==0)&&!who->reaction))))
         throw std::runtime_error("Invalid Champion movement allowance/trigger");
 }
 void Session::validate_check() const
@@ -1762,6 +1836,8 @@ void Session::validate_check() const
        pending()||temporary_offer_||weapon_hit_||outcome_!=Outcome::ongoing||a.actions.surge||
        (c.surge_spent?!a.surge_used:a.actions.normal))throw std::runtime_error("Invalid pending ability check");
 }
+#include "mastery_resolution_impl.h"
+
 void Session::validate_graze() const
 {
     if(!graze_)return;const auto& g=*graze_;
@@ -1778,7 +1854,7 @@ void Session::validate_graze() const
 }
 void Session::validate_restored_state(bool legacy_facing_reaction) const
 {
-    validate_weapon_hit();validate_check();validate_champion_move();validate_graze();
+    validate_weapon_hit();validate_check();validate_champion_move();validate_graze();validate_mastery_state();
     if (pending() && !legacy_facing_reaction && path_index_ >= path_.size())
         throw std::runtime_error("Reaction without movement");
     const auto& mover = actors_[turn_];
@@ -1787,6 +1863,7 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
         throw std::runtime_error("Invalid pending Temporary HP replacement");
     bool party = false, enemies = false;
     for (const auto& actor : actors_) {
+        if(actor.cleave_used&&(actor.source.id==mover.source.id?(actor.actions.normal&&(!actor.surge_used||actor.actions.surge)):actor.reaction))throw std::runtime_error("Cleave without a spent triggering attack");
         if(actor.aim_used&&actor.source.id!=mover.source.id)throw std::runtime_error("Steady Aim outside current turn");
         if(actor.actions.surge&&actor.source.id!=mover.source.id)throw std::runtime_error("Action Surge allowance outside its turn");
         if(actor.involuntary_overlap&&(actor.dead||!shares_occupied_space(actor)))
@@ -1804,7 +1881,7 @@ void Session::validate_restored_state(bool legacy_facing_reaction) const
         }
     }
     const auto expected = !party ? Outcome::defeat : !enemies ? Outcome::victory : Outcome::ongoing;
-    if (outcome_ != expected || (expected == Outcome::ongoing && mover.hp == 0&&!champion_move_))
+    if (outcome_ != expected || (expected == Outcome::ongoing && mover.hp == 0&&!champion_move_&&!effect_waiting()&&!(weapon_hit_&&weapon_hit_->cleave&&effect_reaction_origin_)))
         throw std::runtime_error("Invalid checkpoint outcome/turn");
     if (!pending() && (!path_.empty() || !reactors_.empty() || legacy_facing_reaction))
         throw std::runtime_error("Unpaused checkpoint movement");
@@ -1829,15 +1906,16 @@ void Session::validate_legacy_facing_reaction() const
 
 void Session::validate_pending_movement() const
 {
-    const auto& mover = actors_[turn_];
+    auto mover = actors_[turn_];
+    if(effect_reaction_origin_){mover.source.cell=effect_reaction_origin_->mover;mover.effects.prone=effect_reaction_origin_->prone;}
     if (outcome_ != Outcome::ongoing || mover.disengaged)
         throw std::runtime_error("Invalid pending movement");
     std::vector<detail::Occupant> occupants;
     for(const auto& other:actors_)if(!other.dead&&other.source.id!=mover.source.id)
-        occupants.push_back({champion_move_&&other.source.id==champion_move_->actor?champion_move_->origin:other.source.cell,other.source.side!=mover.source.side,unconscious(other)});
+        occupants.push_back({effect_reaction_origin_&&other.source.id==pending()?effect_reaction_origin_->source:champion_move_&&other.source.id==champion_move_->actor?champion_move_->origin:other.source.cell,other.source.side!=mover.source.side,unconscious(other)});
     const detail::MovementGrid grid{board_,mover.source.cell,occupants,mover.effects.prone};
     auto cell = mover.source.cell;
-    int remaining = movement_left(mover);
+    int remaining = effect_reaction_origin_?effect_reaction_origin_->movement:movement_left(mover);
     // Only the suffix remains to be travelled. The prefix is history and has
     // already spent its movement budget; charging for it again breaks restores.
     for (auto i = path_index_; i < path_.size(); ++i) {
@@ -1853,6 +1931,8 @@ void Session::validate_pending_movement() const
             [&](const auto& actor) { return actor.source.id == reactors_[i]; });
         // restore_movement already established that every reactor ID exists.
         const auto& actor = *reactor;
+        if(effect_reaction_origin_&&i==reactor_index_){auto original=actor;original.source.cell=effect_reaction_origin_->source;
+            if(actor.source.side==mover.source.side||actor.reaction||!has_weapon_reaction(original,mover.source.cell,path_[path_index_]))throw std::runtime_error("Invalid mastery reaction trigger");continue;}
         if(champion_move_&&i==reactor_index_&&actor.source.id==champion_move_->actor){
             if(actor.source.side==mover.source.side||distance(champion_move_->origin,mover.source.cell)>def(actor).reach||distance(champion_move_->origin,path_[path_index_])<=def(actor).reach)
                 throw std::runtime_error("Invalid Champion reaction origin");
@@ -1891,13 +1971,14 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     input >> magic >> version >> std::quoted(identity.module)
           >> std::quoted(identity.version) >> std::quoted(identity.content);
     auto compatible_identity=identity;compatible_identity.version=content->identity.version;
-    const bool previous_module=(((version>=13&&version<=23)&&identity.version=="0.6.58")||((version>=13&&version<=23)&&identity.version=="0.6.57")||((version>=13&&version<=22)&&identity.version=="0.6.56")||((version>=13&&version<=22)&&identity.version=="0.6.55")||((version>=13&&version<=21)&&identity.version=="0.6.54")||((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
+    const bool previous_module=(((version>=13&&version<=24)&&identity.version=="0.6.59")||((version>=13&&version<=23)&&identity.version=="0.6.58")||((version>=13&&version<=23)&&identity.version=="0.6.57")||((version>=13&&version<=22)&&identity.version=="0.6.56")||((version>=13&&version<=22)&&identity.version=="0.6.55")||((version>=13&&version<=21)&&identity.version=="0.6.54")||((version>=13&&version<=21)&&identity.version=="0.6.53")||((version>=13&&version<=21)&&identity.version=="0.6.52")||((version>=13&&version<=20)&&identity.version=="0.6.51")||((version>=13&&version<=20)&&identity.version=="0.6.50")||((version>=13&&version<=20)&&identity.version=="0.6.49")||((version>=13&&version<=19)&&identity.version=="0.6.48")||((version>=13&&version<=19)&&identity.version=="0.6.47")||((version>=13&&version<=18)&&identity.version=="0.6.46")||((version>=13&&version<=17)&&identity.version=="0.6.45")||(version==5&&identity.version=="0.6.4")||
         ((version>=13&&version<=16)&&(identity.version=="0.6.42"||identity.version=="0.6.43"||identity.version=="0.6.44"))||(version==6&&identity.version=="0.6.5")||(version==7&&identity.version=="0.6.6")||(version==8&&(identity.version=="0.6.7"||identity.version=="0.6.8"||identity.version=="0.6.9"))||(version==9&&identity.version=="0.6.10")||(version==10&&(identity.version=="0.6.11"||identity.version=="0.6.12"||identity.version=="0.6.13"))||(version==11&&identity.version=="0.6.14")||(version==12&&(identity.version=="0.6.15"||identity.version=="0.6.16"||identity.version=="0.6.17"||identity.version=="0.6.18"||identity.version=="0.6.19"))||(version==13&&(identity.version=="0.6.20"||identity.version=="0.6.21"||identity.version=="0.6.22"||identity.version=="0.6.23"))||((version==13||version==14)&&identity.version=="0.6.24")||((version>=13&&version<=15)&&(identity.version=="0.6.25"||identity.version=="0.6.26"||identity.version=="0.6.27"||identity.version=="0.6.28"||identity.version=="0.6.29"||identity.version=="0.6.30"||identity.version=="0.6.31"||identity.version=="0.6.32"||identity.version=="0.6.33"||identity.version=="0.6.34"||identity.version=="0.6.35"||identity.version=="0.6.36"||identity.version=="0.6.37"||identity.version=="0.6.38"||identity.version=="0.6.39"||identity.version=="0.6.40"||identity.version=="0.6.41")))&&(compatible_identity==content->identity||
             (compatible_identity.module==content->identity.module&&compatible_identity.content=="srd-5.2.1-demo.1/15052881321234871607"&&
              content->previous_campaign_identities.end()!=std::find(content->previous_campaign_identities.begin(),content->previous_campaign_identities.end(),compatible_identity)));
-    if (!input || magic != "OGCOMBAT" || version < 1 || version > 24 ||
+    if (!input || magic != "OGCOMBAT" || version < 1 || version > 25 ||
         (identity != content->identity && !previous_module))
         throw std::runtime_error("Combat checkpoint rules/content version mismatch");
+    if(version>=25&&module_before(identity,{0,6,60}))throw std::runtime_error("Legacy combat cannot contain optional mastery sequence");
     if(version>=24&&module_before(identity,{0,6,59}))throw std::runtime_error("Legacy combat cannot contain Graze choice");
     if(version>=23&&module_before(identity,{0,6,57}))throw std::runtime_error("Legacy combat cannot contain Nick budget");
     Encounter encounter;
@@ -1980,7 +2061,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     }
     if(version>=13){
         bool pending_hit{};input>>pending_hit;
-        if(pending_hit){PendingWeaponHit h;int second{};input>>h.attacker>>h.target>>h.ranged>>h.natural>>h.mode>>h.first>>second;if(second>=0)h.second=second;else if(second!=-1&&version<21)throw std::runtime_error("Invalid legacy second damage");if(version>=19)input>>h.thrown_item;if(version>=21){bool rolled{};input>>rolled>>h.sneak_pending>>h.aimed>>h.sneak_extra;if(rolled)h.second=second;else if(second!=-1)throw std::runtime_error("Unexpected second damage");}if(version>=22)input>>h.light>>h.weapon_item;session->weapon_hit_=h;}
+        if(pending_hit){PendingWeaponHit h;int second{};input>>h.attacker>>h.target>>h.ranged>>h.natural>>h.mode>>h.first>>second;if(second>=0)h.second=second;else if(second!=-1&&version<21)throw std::runtime_error("Invalid legacy second damage");if(version>=19)input>>h.thrown_item;if(version>=21){bool rolled{};input>>rolled>>h.sneak_pending>>h.aimed>>h.sneak_extra;if(rolled)h.second=second;else if(second!=-1)throw std::runtime_error("Unexpected second damage");}if(version>=22)input>>h.light>>h.weapon_item;if(version>=25)input>>h.mastery_allowed>>h.cleave;session->weapon_hit_=h;}
         if(!input)throw std::runtime_error("Invalid Savage Attacker choice checkpoint");
     }
     bool has_items=version>=16;
@@ -2034,7 +2115,17 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
     if(version>=19)input>>pending_champion;
     if(version==18||pending_champion){if(module_before(identity,{0,6,46}))throw std::runtime_error("Legacy checkpoint cannot contain Champion movement");ChampionMove c;input>>c.actor>>c.target>>c.natural>>c.remaining>>c.spell>>c.origin.x>>c.origin.y;if(!input)throw std::runtime_error("Invalid Champion movement checkpoint");session->champion_move_=c;}
     bool saved_light=version>=22,saved_nick=version>=23;
-    if(version>=24){PendingGraze g;input>>g.actor>>g.target>>g.natural>>saved_light>>saved_nick;session->graze_=g;}
+    bool saved_graze=version==24;if(version>=25)input>>saved_graze;
+    if(saved_graze){PendingGraze g;input>>g.actor>>g.target>>g.natural;session->graze_=g;}
+    if(version>=24)input>>saved_light>>saved_nick;
+    if(version>=25){
+        bool has_mastery{};input>>has_mastery;if(has_mastery){PendingMastery m;unsigned kind{};input>>m.actor>>m.target>>kind>>m.natural>>m.ranged>>m.targeting>>std::quoted(m.weapon)>>m.origin.x>>m.origin.y>>m.thrown_item;m.kind=static_cast<detail::Mastery>(kind);session->mastery_=std::move(m);}
+        const auto extra=[&](ChampionMove& c){input>>c.triggered>>c.cleave>>c.helpless>>c.trigger_origin.x>>c.trigger_origin.y>>c.target_origin.x>>c.target_origin.y;};
+        unsigned count{};input>>count;if(!input||count>2)throw std::runtime_error("Invalid queued effect count");
+        for(unsigned i=0;i<count;++i){ChampionMove c;input>>c.actor>>c.target>>c.natural>>c.remaining>>c.spell>>c.origin.x>>c.origin.y;extra(c);session->champion_offers_.push_back(c);}
+        if(session->champion_move_)extra(*session->champion_move_);
+        bool origin{};input>>origin;if(origin){EffectReaction r;input>>r.actor>>r.source.x>>r.source.y>>r.mover.x>>r.mover.y>>r.movement>>r.prone;session->effect_reaction_origin_=r;}
+    }
     if(!input)throw std::runtime_error("Invalid checkpoint continuation");
     unsigned legacy_facing_reaction{};
     if(version==5){
@@ -2061,7 +2152,7 @@ public:
     explicit Module(Content content):content_(std::make_shared<const Content>(std::move(content))){}
     Identity identity() const override{return content_->identity;}
     bool accepts_campaign_identity(const Identity& saved) const override {
-        if(saved.version!=content_->identity.version&&saved.version!="0.6.58"&&saved.version!="0.6.57"&&saved.version!="0.6.56"&&saved.version!="0.6.55"&&saved.version!="0.6.54"&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
+        if(saved.version!=content_->identity.version&&saved.version!="0.6.59"&&saved.version!="0.6.58"&&saved.version!="0.6.57"&&saved.version!="0.6.56"&&saved.version!="0.6.55"&&saved.version!="0.6.54"&&saved.version!="0.6.53"&&saved.version!="0.3.0"&&saved.version!="0.4.0"&&saved.version!="0.5.0"&&saved.version!="0.6.0"&&saved.version!="0.6.1"&&saved.version!="0.6.2"&&saved.version!="0.6.3"&&saved.version!="0.6.4"&&saved.version!="0.6.5"&&saved.version!="0.6.6"&&saved.version!="0.6.7"&&saved.version!="0.6.8"&&saved.version!="0.6.9"&&saved.version!="0.6.10"&&saved.version!="0.6.11"&&saved.version!="0.6.12"&&saved.version!="0.6.13"&&saved.version!="0.6.14"&&saved.version!="0.6.15"&&saved.version!="0.6.16"&&saved.version!="0.6.17"&&saved.version!="0.6.18"&&saved.version!="0.6.19"&&saved.version!="0.6.20"&&saved.version!="0.6.21"&&saved.version!="0.6.22"&&saved.version!="0.6.23"&&saved.version!="0.6.24"&&saved.version!="0.6.25"&&saved.version!="0.6.26"&&saved.version!="0.6.27"&&saved.version!="0.6.28"&&saved.version!="0.6.29"&&saved.version!="0.6.30"&&saved.version!="0.6.31"&&saved.version!="0.6.32"&&saved.version!="0.6.33"&&saved.version!="0.6.34"&&saved.version!="0.6.35"&&saved.version!="0.6.36"&&saved.version!="0.6.37"&&saved.version!="0.6.38"&&saved.version!="0.6.39"&&saved.version!="0.6.40"&&saved.version!="0.6.41"&&saved.version!="0.6.42"&&saved.version!="0.6.43"&&saved.version!="0.6.45"&&saved.version!="0.6.44"&&saved.version!="0.6.46"&&saved.version!="0.6.47"&&saved.version!="0.6.48"&&saved.version!="0.6.49"&&saved.version!="0.6.50"&&saved.version!="0.6.51"&&saved.version!="0.6.52")return false;
         auto compatible=saved;compatible.version=content_->identity.version;
         return compatible==content_->identity||std::find(content_->previous_campaign_identities.begin(),content_->previous_campaign_identities.end(),compatible)!=content_->previous_campaign_identities.end();
     }
@@ -2725,7 +2816,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
     if(!header||magic!="OPENGOLD_SRD5"||version!=1)throw std::runtime_error("Unsupported rules content format");
     header>>std::ws;
     if(!header.eof()||revision.empty()||revision.size()>80)throw std::runtime_error("Invalid rules content header");
-    Content content;content.identity={"opengold.srd5","0.6.59",revision+"/"+std::to_string(hash)};
+    Content content;content.identity={"opengold.srd5","0.6.60",revision+"/"+std::to_string(hash)};
     // Preserve campaign saves from the preceding pack and the frozen v1/v2 fixtures.
     if(revision=="srd-5.2.1-demo.1")for(const auto fingerprint:
         {"15286736505479635800","1436083463150607054","4820123901484423331"})
@@ -2751,7 +2842,7 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
         std::uint64_t previous_hash=14695981039346656037ULL;for(unsigned char c:previous){previous_hash^=c;previous_hash*=1099511628211ULL;}
         if(previous_hash!=hash)content.previous_campaign_identities.push_back({"opengold.srd5",content.identity.version,revision+"/"+std::to_string(previous_hash)});
     }
-    std::set<std::string> save_rows,casting_rows,damage_rows;
+    std::set<std::string> save_rows,casting_rows,damage_rows,size_rows;
     while(std::getline(lines,line)) {
         if(line.empty()||line[0]=='#'||line=="\r")continue;
         std::istringstream row(line);std::string tag,key;Definition d;row>>tag>>key;
@@ -2777,6 +2868,11 @@ std::unique_ptr<RulesModule> parse_content(std::string_view content_bytes)
             }
             if(!row)throw std::runtime_error("Truncated damage profile");
             row>>std::ws;if(!row.eof())throw std::runtime_error("Unknown damage profile fields");continue;
+        }
+        if(tag=="size"){
+            std::string size;row>>size;const std::array<std::string_view,6> names{"tiny","small","medium","large","huge","gargantuan"};const auto found=std::find(names.begin(),names.end(),size);
+            if(!row||!content.definitions.contains(key)||found==names.end()||!size_rows.insert(key).second)throw std::runtime_error("Invalid creature size");
+            content.definitions.at(key).size=int(found-names.begin());row>>std::ws;if(!row.eof())throw std::runtime_error("Unknown creature size fields");continue;
         }
         if(tag=="saves"||tag=="spellcasting"){
             const auto found=content.definitions.find(key);

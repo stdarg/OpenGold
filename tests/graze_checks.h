@@ -44,8 +44,11 @@ void reactions_and_limits(){
         draft.training["class:fighter:fighting_style"]={"great_weapon_fighting"};
         Character h(*srd5::character_rules(),draft,{});auto r=rules("");auto e=encounter(*r,h,"greatsword");e.participants.back().definition="graze_target";
         bool tested=false;
-        for(unsigned seed=1;seed<64&&!tested;++seed){auto c=r->create(e,seed);turn(*c,1);act(*c,"melee",99);if(!c->snapshot().optional_effect_choice)continue;
-            const int hp=unit(*c,99).hit_points;act(*c,"effect_use");check(unit(*c,99).hit_points==hp-std::max(0,h.sheet().modifiers[0]),"Graze omits style dice and clamps negative modifiers to zero");tested=true;}
+        for(unsigned seed=1;seed<64&&!tested;++seed){auto c=r->create(e,seed);turn(*c,1);act(*c,"melee",99);
+            if(h.sheet().modifiers[0]<=0){if(!result(*c).source.ends_with("misses."))continue;
+                check(!c->snapshot().optional_effect_choice&&unit(*c,99).hit_points==1000,"Nonpositive modifiers do not produce a pointless Graze prompt");tested=true;continue;}
+            if(!c->snapshot().optional_effect_choice)continue;
+            const int hp=unit(*c,99).hit_points;act(*c,"effect_use");check(unit(*c,99).hit_points==hp-h.sheet().modifiers[0],"Graze omits style dice");tested=true;}
         check(tested,"Each ability modifier actually missed");
     }
     auto draft=hero("greatsword").creation_data();draft.training.erase("class:fighter:weapon_mastery");auto r=rules("");
@@ -67,10 +70,10 @@ void advancement_and_rejection(){
             check(hp-unit(*c,99).hit_points==std::max(0,party.member(id).character.sheet().modifiers[0]),"Advancement changes actual attack ability damage");
             const auto after=c->save();check(!c->submit(stale)&&c->save()==after,"A stale Use cannot deal damage again");
             if(std::string_view(klass)=="fighter"&&level>=2)check(offers(*c,"melee"),"Graze preserves the separate Action Surge allowance");
-            auto bad=pending;bad.replace(bad.find("0.6.59"),6,"0.6.58");rejects([&]{r->restore(bad);});
+            auto bad=pending;bad.replace(bad.find(r->identity().version),6,"0.6.58");rejects([&]{(void)r->restore(bad);});
             const auto tail=pending.rfind('\n',pending.size()-2)+1;
             for(const char* invalid:{"99999 99 1 1 1\n","1 1 1 1 1\n","1 99 20 1 1\n"}){
-                bad=pending;bad.replace(tail,std::string::npos,invalid);rejects([&]{r->restore(bad);});
+                bad=pending;bad.replace(tail,std::string::npos,invalid);rejects([&]{(void)r->restore(bad);});
             }
             tested=true;
         }
@@ -87,7 +90,12 @@ void run(){
         bool tested=false;
         for(unsigned seed=1;seed<64&&!tested;++seed){
             auto c=r->create(e,seed);turn(*c,1);act(*c,"melee",99);
-            if(!c->snapshot().optional_effect_choice)continue;
+            if(!c->snapshot().optional_effect_choice){
+                if(std::string_view(defense)=="immunity"&&result(*c).source.ends_with("misses.")){
+                    check(unit(*c,99).hit_points==1000&&!offers(*c,"melee"),"Immunity suppresses a pointless Graze choice without refunding the attack");tested=true;++cases;
+                }
+                continue;
+            }
             const auto pending=c->save();check(pending.starts_with("OGCOMBAT 24 "),"Graze uses conditional format24");
             check(r->restore(pending)->save()==pending,"Pending Graze round trips exactly");
             check(c->legal_commands().size()==2&&c->movement_reach(1).empty(),"Only Use/Skip legal while Graze waits");
