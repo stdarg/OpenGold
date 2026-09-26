@@ -18,28 +18,32 @@ Preflight03:56:03 UTC;60-minute checkpoint recorded04:56:24. Do not reset the cl
 
 - Acquisition committed/pushed **5b978df**; prior-writer preparation **344a6bb**.
   Creation/preset/review choices, Fighter4 selection and conditional PC39 work.
-- The commit containing this handoff adds Long Rest replacement transactions,
+- Long Rest replacement **f31fded** committed/pushed: transactions,
   sourced history replay and approved700×670 controls. SRD owns replacement
   outcomes; Core owns per-member one-use windows and generic history. Campaign18
   is conditional;1–17 remain accepted. Rules identity remains branch0.6.56.
 - Main still375f58f. No PR/main/release integration claimed. Latest completed
   original issue was #82 (ASI); see [coverage](SRD-COVERAGE.md), not old narratives.
-- **Combat properties remain unimplemented.** Do not mistake acquired masteries
-  or pure replacement policy for runtime combat support. No whole-class closure.
+- Sap/Vex now resolve in combat with chosen-kind gating, exact expiry, attack
+  roll consumption and FX6 persistence. Six other properties remain unfinished;
+  this is a partial combat checkpoint, not whole-class or issue completion.
 - Pending-choice serialization works. A player-accessible Save game control inside
   the exclusive rest modal still needs MASTERY-7 approval; not implemented yet.
 
 ## Verification / next action
 
-Rest focused tests and final freshly rebuilt **51/51 native checks PASS** (4.03s),
-`/tmp/mastery-rest-native-final.log`. All50 native targets rebuilt. Existing full
-rest UI acceptance passes (`/tmp/mastery-rest-neighbor.log`). New shared controls
-pass mainEN/ES + demoEN at1120×800/1920×1080; screenshots `/tmp/mastery-rest-*`.
-Corrected harness applies locale/size after startup; small Spanish and demo layouts
-were visually checked. UI focus-loss bug fixed by retaining visible checkboxes.
-976 localized messages/diff checks pass. No live build/test. Native prior writer
-fixture and provenance live in tests/fixtures. Coverage links the detailed packet.
+Sap/Vex focused tests and freshly rebuilt **51/51 native checks PASS** (13.01s),
+`/tmp/mastery-sap-vex-native-final.log`. All50 native targets rebuilt, game and
+standalone demo linked. MainEN/ES + demoEN attack/log/save-continuation checks pass
+at1120×800/1920×1080, using the real A cycle (main), Space-focused button (demo)
+and battlefield target clicks. Captures `/tmp/mastery-combat-{main,demo}`.980
+messages/diff checks pass. No live build/test. See packet for detailed evidence.
 
+Next: continue remaining approved combat effects, with all eight-property
+acceptance retained. MASTERY-5/6/7 remain pending; do not implement their controls
+or interpretation without replies. Start with independent Slow/Topple or Nick
+work in the same frozen batch. No new issues or scope. Preserve tested Sap/Vex
+interactions and actual prior-writer fixtures.
 **MASTERY-1–4 approved. MASTERY-5/6/7 pending:**
 
 1. Resolve next dropdown for simultaneous mastery/Champion movement.
@@ -49,7 +53,8 @@ fixture and provenance live in tests/fixtures. Coverage links the detailed packe
 
 Full proposals are in the packet/decision register; do not implement undecided
 behaviors. Continue independent approved combat work while answers are pending.
-No question approval has arrived after the acquisition turn's two questions.
+The four-item reply is the already-recorded MASTERY-1–4 approval; no later
+three-item decision reply is present.
 
 ## Preserved decisions and execution
 

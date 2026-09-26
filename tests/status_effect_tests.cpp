@@ -2,6 +2,9 @@
 #include "opengold/combat_demo.h"
 #include "opengold/srd5.h"
 #include "status_effects.h"
+#include "weapons.h"
+#include <fstream>
+#include <cstdlib>
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -220,5 +223,6 @@ void checkpoint_capacity(){
     check(saved.size()>1024*1024&&saved.size()<4*1024*1024,"Worst supported collections fit the checkpoint budget");
     check(rules->restore(saved)->save()==saved,"Maximum actors/effects and escaped source names remain loadable");
 }
+#include "mastery_combat_checks.h"
 }
-int main(){try{saving_throws();lifecycle();codec();combat();campaign();original_encounter_scope();checkpoint_capacity();std::cout<<"Status effect tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{mastery_combat_checks::run();saving_throws();lifecycle();codec();combat();campaign();original_encounter_scope();checkpoint_capacity();std::cout<<"Status effect tests passed\n";}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

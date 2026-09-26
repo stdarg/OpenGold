@@ -230,3 +230,70 @@ UI runs and existing rest controls pass as described above. Scope/architecture
 review confirms rule outcomes stay in the static SRD implementation and Core/UI
 only orchestrate/present them. Checkpoint commits do not close #60/#85; combat and
 pending Save control approval remain outstanding.
+
+### Sap and Vex combat checkpoint
+
+The static SRD library now applies chosen Sap/Vex properties through the shared
+weapon-hit resolver, including selected physical weapons, thrown/Light attacks
+and reactions. Sap needs a hit; Vex needs positive damage after typed defenses.
+Shared attack modifiers apply/consume Sap on any next attack roll and Vex only
+on its scoped source's next roll against that target, including attack spells.
+Timers expire at the source's next start (Sap) or next end (Vex), even when
+applied during another creature's turn. Reapplication refreshes a source's effect;
+other sources retain independent provenance. No mechanic moved into Core/UI.
+
+A pending Savage/Sneak damage choice retains the original effects until its hit
+resolves, preserving independently validated roll mode on reload. Resolution
+consumes those effects before applying the new hit's mastery. Champion movement
+continues afterward. This checkpoint introduces no optional simultaneous-effect
+control and does not resolve pending MASTERY-5/6/7.
+
+Conditional FX6 records these two effects; older codecs remain canonical when
+neither is present. Legacy module identities reject FX6 in combat and campaign
+state. A regression test caught and fixed the combat identity check initially
+running before effects were read. Capacity checks reject before spending actions
+or RNG; same-source refresh and consumed Vex slots remain usable at the limit.
+
+`tests/mastery_combat_checks.h` exercises every Sap/Vex weapon and supported
+attack mode, hits/misses/criticals/immunity, chosen-kind gating, unarmed fallback,
+source/scope separation, exact expiry, cancellation, spell attacks, PC/NPC Light
+and Surge, reactions, Sneak/Savage/Champion continuation, codec rejection and
+bounded storage. The existing status-effect target runs it. Set
+`OPENGOLD_MASTERY_FIXTURES=/tmp/mastery-combat-fixtures` when running that target
+to export actual production-content before/after checkpoints for the shared UI
+harness `tests/mastery_combat_view_tests.gd`. UI uses existing attack controls and
+localized sourced conditions; no new layout. Six mastery properties remain.
+
+Verification at05:31 UTC2026-09-26: freshly rebuilt native **51/51 PASS** (13.01s),
+`/tmp/mastery-sap-vex-native-final.log`; build50 native targets plus game test
+project `/tmp/mastery-sap-vex-native-build.log`, standalone demo
+`/tmp/mastery-sap-vex-demo-build.log`.980 localized messages and diff checks pass.
+MainEN/ES and demoEN UI/native equality passes at1120×800/1920×1080 using
+`mastery_combat_view_tests.gd -- --mastery-fixtures=/tmp/mastery-combat-fixtures
+--mastery-captures=/tmp/mastery-combat-main` (add `--mastery-demo` for demo).
+Logs `/tmp/mastery-sap-vex-{main,demo}-ui.log`; rendered captures
+`/tmp/mastery-combat-{main,demo}`. Small Spanish/main and English/demo captures
+were inspected. Main uses the real A action cycle; demo uses its visible Melee
+button's Space activation. Both use battlefield target clicks and verify the
+visible combat log, exact native state and retained checkpoint continuation.
+
+The harness initially assumed Enter activated an ordinary combat button and
+that the main legacy roster was visible. Source/renderer inspection corrected
+those assumptions: Enter ends the turn; main status is in the scrollable Log.
+No unrelated input/layout behavior was changed. The demo lacks main's A cycle,
+so its existing standard button keyboard path is tested instead. Detailed sourced
+condition data is supplied to snapshots; this checkpoint does not claim a new
+visible condition panel. All mechanics remain inside `opengold_rules_srd5`.
+
+Elapsed batch time at this checkpoint is about95 minutes from03:56:03; the
+required60-minute checkpoint above remains the same. Two of eight combat
+properties are implemented and tested, acquisition/rest paths were delivered
+previously, and zero original issues are closed in this batch. Intermediate
+implementation/build phase durations were not recorded separately; native suite
+runtime is measured above. No scope, new issue, agent or setting change. Goal
+remains active; next independent work is the remaining approved properties.
+Final review strengthened the campaign legacy-effect test by first proving that
+the identical state is valid under the current identity; rejection cannot be
+caused by mismatched HP. Rebuilt status-effect target passes after that test-only
+change (`/tmp/mastery-sap-vex-final-test-build.log`). Production sources remain
+the same tree that passed the full51 native checks and both UI runs.

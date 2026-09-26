@@ -531,3 +531,14 @@ validate. See [packet evidence](WEAPON-MASTERY.md#long-rest-implementation-evide
 Combat masteries remain unfinished. Saving pending choices is verified in the
 codec, but an accessible Save button in the modal awaits MASTERY-7 approval.
 No issue closure or completed full mastery implementation is claimed.
+
+Weapon Mastery Sap/Vex checkpoint (commit containing this entry): chosen weapons
+now apply sourced automatic combat effects, with next-roll consumption, exact
+source-turn expiry, shared Advantage/Disadvantage, typed damage gating and
+conditional FX6 persistence. Native coverage includes all applicable weapons,
+PC/NPC physical/Light/thrown attacks, reactions, Surge, Sneak/Savage/Champion
+continuation, bounds and legacy rejection. **51/51 native PASS**, mainEN/ES and
+demoEN visible attack/log flows at both sizes pass;980 messages validate.
+See [packet](WEAPON-MASTERY.md#sap-and-vex-combat-checkpoint) and
+[tests](../tests/mastery_combat_checks.h). Six combat properties and pending
+MASTERY-5/6/7 remain; #60/#85 are not closed. No added scope or new issues.

@@ -568,10 +568,12 @@ private:
     EntityId pending() const {return reactor_index_<reactors_.size()?reactors_[reactor_index_]:0;}
     bool critical_hit(const Actor& a,const Actor& target,int natural,bool spell=false) const {return natural==20||(!spell&&def(a).champion&&natural==19)||(unconscious(target)&&distance(a.source.cell,target.source.cell)<=5);}
     bool attack(Actor& a,Actor& target,bool ranged,bool spell=false,Dice spell_dice={1,10,0},detail::DamageType spell_type=detail::DamageType::fire);
+    detail::Mastery weapon_mastery(const Actor&,bool ranged) const;
+    bool mastery_capacity(const Actor&,const Actor&,bool ranged) const;
     detail::RollModifiers attack_modifiers(const Actor& a,const Actor& target,bool ranged,bool spell) const;
     Dice weapon_dice(const Actor& a,bool ranged) const;
     detail::DamageDieRule weapon_die_rule(const Actor& a,bool ranged) const;
-    void apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool spell=false);
+    void apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool ranged,bool spell=false);
     void resolve_weapon_hit(int amount);
     bool sneak_eligible(const Actor& a,const Actor& target,bool ranged,int mode) const;
     void finish_reaction();
@@ -872,6 +874,10 @@ Snapshot Session::snapshot() const
             Message message{"Chill Touch ({source}): cannot regain HP.",{{"source",effect.source_name}}};
             messages.push_back(message);view.conditions.push_back(std::move(message));
         }
+        for(const auto& effect:a.effects.active)if(effect.kind==detail::EffectKind::sap||effect.kind==detail::EffectKind::vex){
+            Message message{effect.kind==detail::EffectKind::sap?"Sap ({source}): next attack roll has Disadvantage.":"Vex ({source}): source's next attack against this creature has Advantage.",{{"source",effect.source_name}}};
+            messages.push_back(message);view.conditions.push_back(std::move(message));
+        }
         if(detail::opportunity_blocked(a.effects)){messages.push_back({"Shocking Grasp: cannot make Opportunity Attacks.",{}});view.conditions.push_back({"Shocking Grasp: cannot make Opportunity Attacks.",{}});}
         if(detail::speed_penalty(a.effects)){messages.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});view.conditions.push_back({"Ray of Frost: Speed reduced by 10 feet.",{}});}
         if(detail::blinded(a.effects)){
@@ -897,26 +903,39 @@ std::vector<Command> Session::legal_commands() const
             if(!reacting||weapon_reaction(choice,def(choice))){add(a.source.id,"weapon_select","Select weapon");commands.back().item=item.id;}
         }
     };
-    if(champion_move_){add(champion_move_->actor,"end","Finish free move");for(const auto cell:movement_reach(champion_move_->actor))add(champion_move_->actor,"move","Free move",0,cell);return commands;}
-    if(check_choice_){add(check_choice_->actor,"mind_use","Use Tactical Mind",check_choice_->target);add(check_choice_->actor,"mind_skip","Keep failed check",check_choice_->target);return commands;}
+    const auto filtered=[&]{
+        std::erase_if(commands,[&](const auto& command){
+            const bool ranged=command.verb=="ranged"||command.verb=="throw"||command.verb=="light_ranged"||command.verb=="light_throw";
+            if(!ranged&&command.verb!="melee"&&command.verb!="opportunity"&&command.verb!="light_melee")return false;
+            auto attacking=actor(command.actor);
+            if(command.item){
+                if(command.verb=="throw"||command.verb=="light_throw")attacking=thrown_actor(attacking,items_.at(command.item-1).definition);
+                else if(command.verb.starts_with("light_"))attacking=item_actor(attacking,command.item);
+            }
+            return !mastery_capacity(attacking,actor(command.target),ranged);
+        });
+        return commands;
+    };
+    if(champion_move_){add(champion_move_->actor,"end","Finish free move");for(const auto cell:movement_reach(champion_move_->actor))add(champion_move_->actor,"move","Free move",0,cell);return filtered();}
+    if(check_choice_){add(check_choice_->actor,"mind_use","Use Tactical Mind",check_choice_->target);add(check_choice_->actor,"mind_skip","Keep failed check",check_choice_->target);return filtered();}
     if(weapon_hit_){
         const auto& h=*weapon_hit_;
         if(h.sneak_pending){add(h.attacker,"sneak_use","Use Sneak Attack",h.target);add(h.attacker,"sneak_skip","Keep hit; save Sneak Attack",h.target);}
         else if(!h.second){add(h.attacker,"savage_use","Use Savage Attacker",h.target);add(h.attacker,"savage_skip","Keep damage; save feat",h.target);}
         else {add(h.attacker,"savage_first","Keep first roll",h.target);add(h.attacker,"savage_second","Keep second roll",h.target);}
-        return commands;
+        return filtered();
     }
     if(temporary_offer_){
         add(actors_[turn_].source.id,"temp_hp_keep","Keep current");
-        add(actors_[turn_].source.id,"temp_hp_use","Use new");return commands;
+        add(actors_[turn_].source.id,"temp_hp_use","Use new");return filtered();
     }
     if(pending()) {
         const auto reactor=std::find_if(actors_.begin(),actors_.end(),[&](const auto& a){return a.source.id==pending();});
         add_grips(*reactor);add_weapons(*reactor,true);
         if(weapon_reaction(*reactor,def(*reactor)))add(pending(),"opportunity","Opportunity attack",actors_[turn_].source.id);
-        add(pending(),"decline","Decline reaction");return commands;
+        add(pending(),"decline","Decline reaction");return filtered();
     }
-    const auto& a=actors_[turn_];if(!conscious(a))return commands;const auto& d=def(a);const auto id=a.source.id;
+    const auto& a=actors_[turn_];if(!conscious(a))return filtered();const auto& d=def(a);const auto id=a.source.id;
     add(id,"end","End turn");add_grips(a);add_weapons(a,false);
     for(const auto& item:items_)if(can_pick_up(a,item))
         add(id,"pick_up",item.definition=="shield"?"Pick up (Action)":a.object_interaction?"Pick up (interaction)":"Pick up (Action)",item.id);
@@ -989,7 +1008,7 @@ std::vector<Command> Session::legal_commands() const
         }
     }
     for(const auto cell:movement_reach(id))add(id,"move","Move",0,cell);
-    return commands;
+    return filtered();
 }
 std::vector<Cell> Session::movement_reach(EntityId id) const
 {
@@ -1039,6 +1058,17 @@ void Session::heal(Actor& target,int amount)
     log(target.source.name+" recovers "+std::to_string(restored)+" HP.",
         {"{name} recovers {hp} HP.",{{"name",target.source.name},{"hp",std::to_string(restored)}}});
 }
+detail::Mastery Session::weapon_mastery(const Actor& a,bool ranged) const {
+    const auto& d=def(a);if(d.masteries.empty()||(!ranged&&d.ranged_weapon))return detail::Mastery::none;
+    for(const auto& key:d.equipment_keys)if(const auto* weapon=detail::weapon(key))
+        return std::find(d.masteries.begin(),d.masteries.end(),key)!=d.masteries.end()?weapon->mastery:detail::Mastery::none;
+    return detail::Mastery::none;
+}
+bool Session::mastery_capacity(const Actor& a,const Actor& target,bool ranged) const {
+    const auto kind=weapon_mastery(a,ranged);
+    if(kind!=detail::Mastery::sap&&kind!=detail::Mastery::vex)return true;
+    return detail::can_apply_attack_mastery(target.effects,kind==detail::Mastery::sap?detail::EffectKind::sap:detail::EffectKind::vex,scope_,a.source.id);
+}
 detail::RollModifiers Session::attack_modifiers(const Actor& a,const Actor& target,bool ranged,bool spell) const
 {
     const auto& d=def(a);bool disadvantaged=!spell&&(d.str_dex_disadvantage||
@@ -1050,7 +1080,8 @@ detail::RollModifiers Session::attack_modifiers(const Actor& a,const Actor& targ
     auto result=detail::attack_modifiers(detail::blinded(a.effects),detail::blinded(target.effects),target.dodge,disadvantaged||a.effects.prone);
     // At zero HP the creature is Unconscious and Prone (SRD pp.187,191).
     // At longer range their opposing attack modifiers cancel, not stack.
-    if(unconscious(target)||a.aim_ready)result.advantage=true;
+    if(unconscious(target)||a.aim_ready||detail::vexed_by(target.effects,scope_,a.source.id))result.advantage=true;
+    if(detail::sapped(a.effects))result.disadvantage=true;
     if(target.effects.prone||target.hp==0){if(distance(a.source.cell,target.source.cell)<=5)result.advantage=true;else result.disadvantage=true;}
     return result;
 }
@@ -1067,8 +1098,11 @@ Dice Session::weapon_dice(const Actor& a,bool ranged) const
     if(a.light_damage&&!d.two_weapon_fighting)result.bonus=std::min(0,result.bonus);
     return result;
 }
-void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool spell)
+void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,int amount,bool savage,detail::DamageType type,bool ranged,bool spell)
 {
+    // A pending weapon hit retains these applications until damage resolves so
+    // its original roll mode remains independently verifiable on save/load.
+    detail::consume_attack_masteries(actor(a.source.id).effects,target.effects,scope_,a.source.id);
     const std::string modifier_label=mode<0?" (disadvantage)":mode>0?" (advantage)":"";
     std::string message=a.source.name+" -> "+target.source.name+": d20 "+std::to_string(natural)+
         " + "+std::to_string(bonus)+" vs AC "+std::to_string(def(target).ac)+modifier_label;
@@ -1082,6 +1116,17 @@ void Session::apply_hit(Actor& a,Actor& target,int natural,int bonus,int mode,in
     arguments.push_back({"hit",critical?"CRITICAL":"hits",true});arguments.push_back({"damage",std::to_string(amount)});
     log(message+(critical?" CRITICAL":" hits")+" for "+std::to_string(amount)+" damage.",
         {"{actor} -> {target}: d20 {roll} + {bonus} vs AC {ac}{disadvantage}{savage} {hit} for {damage} damage.",arguments});damage(target,amount,critical);
+    if(!spell){
+        const auto property=weapon_mastery(a,ranged);
+        if(property==detail::Mastery::sap||(property==detail::Mastery::vex&&amount>0)){
+            const auto& source=actor(a.source.id);const auto index=static_cast<std::size_t>(&source-actors_.data());
+            const unsigned slot=turn_end_ms(index)-(index?turn_end_ms(index-1):0);
+            const auto kind=property==detail::Mastery::sap?detail::EffectKind::sap:detail::EffectKind::vex;
+            detail::apply_attack_mastery(target.effects,kind,scope_,a.source.id,a.source.name,next_turn_ms(source)+(kind==detail::EffectKind::vex?slot:0));
+            const auto label=std::string(detail::mastery_name(property));
+            log(target.source.name+" gains "+label+" from "+a.source.name+".",{"{name} gains {mastery} from {source}.",{{"name",target.source.name},{"mastery",label,true},{"source",a.source.name}}});
+        }
+    }
     if(critical&&def(a).champion&&conscious(a)){
         champion_move_=ChampionMove{a.source.id,target.source.id,natural,std::max(0,def(a).speed-detail::speed_penalty(a.effects))/2,spell,a.source.cell};
         if(pending()==a.source.id&&target.source.id==actors_[turn_].source.id&&target.hp==0){path_.clear();path_index_=0;reactors_.clear();reactor_index_=0;}
@@ -1107,13 +1152,13 @@ bool Session::attack(Actor& a,Actor& target,bool ranged,bool spell,Dice spell_di
     if(hit&&!spell&&(sneak||(damage_dice.count&&d.savage&&!a.savage_used))){
         weapon_hit_=PendingWeaponHit{a.source.id,target.source.id,ranged,natural,modifiers.mode(),amount};weapon_hit_->sneak_pending=sneak;weapon_hit_->aimed=aimed;return hit;
     }
-    apply_hit(a,target,natural,bonus,modifiers.mode(),std::max(0,amount),false,spell?spell_type:ranged?d.ranged_type:d.melee_type,spell);
+    apply_hit(a,target,natural,bonus,modifiers.mode(),std::max(0,amount),false,spell?spell_type:ranged?d.ranged_type:d.melee_type,ranged,spell);
     return hit;
 }
 void Session::resolve_weapon_hit(int amount)
 {
     const auto h=*weapon_hit_;auto a=hit_actor(h);weapon_hit_.reset();const auto& d=def(a);
-    apply_hit(a,actor(h.target),h.natural,h.ranged?d.ranged_bonus:d.melee_bonus,h.mode,std::max(0,amount+h.sneak_extra),h.second.has_value(),h.ranged?d.ranged_type:d.melee_type);
+    apply_hit(a,actor(h.target),h.natural,h.ranged?d.ranged_bonus:d.melee_bonus,h.mode,std::max(0,amount+h.sneak_extra),h.second.has_value(),h.ranged?d.ranged_type:d.melee_type,h.ranged);
     if(pending()&&!champion_move_)finish_reaction();
 }
 void Session::finish_reaction()
@@ -1210,6 +1255,7 @@ void Session::advance_turn_time()
     detail::elapse_recovery(subjects,delta,rng_,detail::RecoveryMode::combat,[&](const detail::EffectEvent& event){
         const auto& target=actor(event.target);
         if(event.save)log_save(target,*event.save);
+        if(event.removed&&(event.effect.kind==detail::EffectKind::sap||event.effect.kind==detail::EffectKind::vex))log(target.source.name+" loses a mastery effect.",{"{name} loses {mastery} from {source}.",{{"name",target.source.name},{"mastery",event.effect.kind==detail::EffectKind::sap?"Sap":"Vex",true},{"source",event.effect.source_name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::chill_touch)log(target.source.name+" loses a Chill Touch effect.",{ "{name} loses a Chill Touch effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::shocking_grasp)log(target.source.name+" loses a Shocking Grasp effect.",{"{name} loses a Shocking Grasp effect.",{{"name",target.source.name}}});
         if(event.removed&&event.effect.kind==detail::EffectKind::ray_of_frost)log(target.source.name+" loses a Ray of Frost effect.",{"{name} loses a Ray of Frost effect.",{{"name",target.source.name}}});
@@ -1838,6 +1884,7 @@ std::unique_ptr<Session> Session::restore(std::shared_ptr<const Content> content
         unsigned effects_count{};input>>session->scope_>>session->elapsed_ms_>>effects_count;
         if(!input||!session->scope_||effects_count!=session->actors_.size())throw std::runtime_error("Invalid checkpoint effect header");
         for(auto& a:session->actors_){a.effects=detail::read_effects(input);
+            if(module_before(identity,{0,6,56})&&detail::has_attack_mastery(a.effects))throw std::runtime_error("Legacy checkpoint cannot contain mastery effects");
             if(a.recovery.stable_recovery_due&&(module_before(identity,{0,6,44})||!detail::healing_blocked(a.effects)))throw std::runtime_error("Invalid earned recovery checkpoint");if(module_before(identity,{0,6,43})&&detail::healing_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Chill Touch");if(a.effects.sleeping&&(a.dead||a.hp<=0))throw std::runtime_error("Invalid naturally sleeping vitality");if(module_before(identity,{0,6,41})&&a.effects.prone)throw std::runtime_error("Legacy combat cannot contain natural sleep/posture state");if(module_before(identity,{0,6,38})&&detail::opportunity_blocked(a.effects))throw std::runtime_error("Legacy combat cannot contain Shocking Grasp");if(version<15&&detail::speed_penalty(a.effects))throw std::runtime_error("Legacy combat cannot contain Ray of Frost");}
     }
     if(version>=12){
@@ -2170,6 +2217,7 @@ public:
         if(module_before(saved,{0,6,52})&&sheet.character_class=="Rogue"&&sheet.level>2)throw std::runtime_error("Legacy campaign cannot contain level-three Rogues");
         if(!accepts_campaign_identity(saved))throw std::runtime_error("Unsupported campaign migration");
         auto definition=character_definition(character_profile(sheet,{}).data);
+        if(module_before(saved,{0,6,56})&&state.resources.find("FX6 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain mastery effects");
         if(module_before(saved,{0,6,43})&&state.resources.find("FX5 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Chill Touch");
         if(module_before(saved,{0,6,38})&&state.resources.find("FX3 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Shocking Grasp");
         if(module_before(saved,{0,6,25})&&state.resources.find("FX2 ")!=std::string::npos)throw std::runtime_error("Legacy campaign cannot contain Ray of Frost");
