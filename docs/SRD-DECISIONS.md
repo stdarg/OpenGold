@@ -116,13 +116,13 @@ This supersedes Q25; earlier Wizard approvals remain independently recorded.
 Wake/Stabilize, as specified in [the packet](ROGUE-ATTACKS.md#demo-placement-discovery--rogue-demo-1-approved).
 This separate approval authorizes the new placement and shared keyboard/disabled behavior.
 
+**STYLE-1/2 — APPROVED 2026-09-26:** User replied “1. Yes. 2. yes.”
+[Fighting Style routes](FIGHTING-STYLE-ROUTES.md#approved-decisions) records the
+exact main/demo controls and source routes. STYLE-1 supersedes Q23 and selects
+automatic beneficial die replacement; STYLE-2 approves the Training/Review
+Training additions and the separate advancement dropdown.
+
 ## Pending — do not implement dependent choices
-
-STYLE-1/2: [Fighting Style routes](FIGHTING-STYLE-ROUTES.md#proposed-decisions-not-yet-approved).
-STYLE-1 replaces unresolved Q23 with automatic beneficial die replacement.
-STYLE-2 covers exact main/demo creation/advancement controls and source routes.
-No approval yet.
-
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
@@ -131,7 +131,6 @@ No approval yet.
 | Q21 | #208/#209 Cleric preparation | Proposed current level 3–4 limits/confirmation, explicit Silence selection, existing saved preparations unchanged. Pending. |
 | Q43 | #58 Thrown controls | Proposed Thrown weapon dropdown/Throw row below Ground item/Pick up; held/carried quantities, legal target highlighting, keyboard/mouse, explicit necessary stowing before confirmation, free cancellation; proper SRD hand/action costs. APPROVED 2026-09-25 by “43. Approved.”. |
 | Q44 | #58 landing policy | Proposed target square on hit/miss, no embedding/breakage/scatter; ground item, ordinary pickup and approved Q37 safe recovery. SRD-unspecified policy. APPROVED 2026-09-25 by “44. Approved.”. |
-| Q23 | #80 Great Weapon Fighting | Automatic beneficial replacement of weapon-die 1/2 with 3, versus optional per-hit choice. Helper exists; neither live behavior is approved. |
 
 ## Approved patterns and policies
 
@@ -159,3 +158,6 @@ with concrete options. Play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`.
 Append new decisions here once; other documents should link to this register.
 
 User instruction 2026-09-25: restart visible question numbering at 1 for each new set. Existing Q identifiers remain historical references; new durable entries use topic-specific identifiers to avoid collisions.
+
+STYLE-1/2 APPROVED2026-09-26: user replied “1. Yes. 2. yes.”
+Implementation continues in the frozen batch; no repeated approval needed.

@@ -6,40 +6,29 @@ multiclassing. The user said not to pause unless able to restart. Do not pause
 at delivery boundaries or ask for a new resume. ROGUE-DEMO-1 was approved;
 its old blocked metadata does not prevent the explicitly authorized work.
 
-## Latest delivery — Rogue attacks (#112/#114)
+## Latest delivery — Fighting Style routes
 
-- Rules runtime `7f3ab30`, final demo runtime `8ee62fe`, module0.6.52;
-  branch `codex/srd-rogue-attacks`. ROGUE-1/2/3 and ROGUE-DEMO-1 approved.
-- [Coverage](SRD-COVERAGE.md#rogue-steady-aim-114) is the completion record;
-  [packet](ROGUE-ATTACKS.md) has fixed acceptance, source and evidence.
-- Sneak through Rogue1–4 and Steady Aim at3/4, ordinary advancement,
-  sourced grants, campaign/rest/reload and recruited routes verified.
-  Main EN/ES and demo EN controls/renders at1120×800 and1920×1080 pass.
-  Keyboard dropdown/action results match independent native snapshots.
--78 integrated checks pass on final shared runtime, plus expanded training
-  and main/demo controls after test additions/demo presentation changes.
-  Demo neighboring thrown/pickup checks pass. No old fixture rewritten;
-  conditional PC35/combat21, unchanged campaign format. No new save controls.
-- #112/#220/#221/#114 CLOSED; complete batch and evidence pushed to main.
-  #116 remains open for full Rogue completion; Thief#115, Hide#219 and mastery#60
-  remain excluded and required. No live builds/tests or pending Rogue approvals.
-- Started21:27:56 UTC on2026-09-25. Checkpoint22:26 delivered one of two originals.
-  After approval, observed continuation00:02:32; final demo verified00:06:47
-  (4m15s). Original elapsed2h38m51s includes approval wait. Two original features
-  delivered, four corresponding issue closures, no new issues. Tokens unavailable.
-- Requested Astra/high retained for interactions/migration; actual configuration
-  unverified. No model change, agents or new tasks. Continue by selecting and
-  freezing the next bounded packet from the existing backlog groups.
-
-## Next batch — Fighting Style routes
-
-[Frozen acceptance/proposed controls](FIGHTING-STYLE-ROUTES.md), branch
-`codex/srd-fighting-style-routes`, preflight00:08:10 UTC2026-09-26;
-checkpoint01:08:10, maximum01:38:10. Requested Astra/high; actual unverified.
-#78/#79/#80 plus bounded actual source-route work in#85/#140/#147. STYLE-1/2
-questions pending; no new implementation yet. Main remains verified375f58f.
-Cached open issue snapshot `/tmp/srd-open-20260926.json`:152 open after #114.
-Do not expand into whole Paladin/Ranger classes or remove excluded requirements.
+- Runtime/test commit `bf9ec73`, rules0.6.53, branch
+  `codex/srd-fighting-style-routes`. STYLE-1/2 approved by “1. Yes. 2. yes.”
+- [Coverage](SRD-COVERAGE.md#fighting-style-routes-787980) is the completion record;
+  [packet](FIGHTING-STYLE-ROUTES.md#delivery-and-verification) holds acceptance,
+  tested revision, commands, limits and timings. All79 integrated checks pass
+  across initial run and targeted rerun; main EN/ES and demo EN controls,
+  rendering and native comparison of saved choices pass. No old fixtures removed.
+- Delivered three original feats: Archery#78, Defense#79, GWF#80 through actual
+  Fighter/Paladin/Ranger routes1–4. Closing their issues after push. #85/#140/#147
+  stay open for other styles/mastery/cantrip alternatives. No broader class claim.
+- Preflight00:08:10; verified runtime commit00:44:42 UTC2026-09-26:36m32s elapsed
+  including approval wait. Three original outcomes. No new issues or agents.
+- Requested Astra/high retained for interactions/history; actual configuration
+  unverified. No switch. Continue from the existing C fighting-style/Light group;
+  freeze next packet before coding. #59 Light attacks / #81 Two-Weapon Fighting
+  remain related work, with actual hand/item/control prerequisites to preflight.
+- Main remains375f58f; this delivery is on the current branch. Earlier Rogue
+  delivery is in [coverage](SRD-COVERAGE.md#rogue-steady-aim-114).
+- No live builds/tests or pending approvals for this batch. Standing goal ACTIVE;
+  do not pause at this delivery boundary. Current backlog snapshot was152 open
+  before closing these three; refresh affected issue states after closing.
 
 ## Preserved exclusions
 
@@ -63,3 +52,6 @@ Commit/push owned verified changes. Keep coverage canonical and handoff compact.
 Questions restart at1; play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`,
 verify completion and write the complete question visibly. Reuse approvals;
 do not ask again for authorized routine implementation. Camp/inn saves only.
+
+STYLE-1/2 APPROVED2026-09-26: user replied “1. Yes. 2. yes.”
+Implementation continues in the frozen batch; no repeated approval needed.
