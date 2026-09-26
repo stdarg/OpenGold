@@ -12,11 +12,11 @@ model/runtime changes authorized.
 
 Branch `codex/srd-weapon-mastery`. [Fixed packet](WEAPON-MASTERY.md) is complete:
 all eight properties, existing class routes, grants/creation/review, Fighter4,
-Long Rest replacement, retained saves and main/demo controls. #60/#85 are ready
-for closure after this commit is pushed. Cached count before closure:144 open.
+Long Rest replacement, retained saves and main/demo controls. #60/#85 are closed; GitHub GraphQL confirms142 open SRD issues.
+Implementation commit80ce54b is pushed.
 Other mastery source issues #140/#147/#111/#103 retain their remaining acceptance.
-Rules0.6.60/combat25; prior supported formats retained. Rest Save controla0514a9
-and Grazea038d91 precede this final integration. Main remains375f58f; no merge or
+Rules0.6.60/combat25; prior supported formats retained. Rest Save control `a0514a9`
+and Graze `a038d91` precede this final integration. Main remains375f58f; no merge or
 release integration claimed. [Canonical completion record](SRD-COVERAGE.md#weapon-mastery-integration-complete-6085).
 
 Verification:50 native executables rebuilt;51/51 PASS16.84s. MainEN/ES and demoEN
@@ -27,8 +27,7 @@ No live build/test. All source changes are owned by this batch.
 
 ## Next
 
-Complete GitHub closure/count reconciliation after pushing, then inspect B04
-Fighter integration acceptance (#89) against delivered features and freeze the
+Inspect B04 Fighter starting/progression integration acceptance (#84/#89) against delivered features and freeze the
 next bounded batch under [workflow](SRD-WORKFLOW.md). Do not infer whole-class
 completion or start unrelated progression from the mastery delivery. Reuse the
 [backlog grouping](SRD-BATCHING-REVIEW.md); refresh only affected issues.

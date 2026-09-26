@@ -587,3 +587,9 @@ Neighboring Savage Attacker/Champion controls and their native prerequisites als
 pass4/4 in3.45s (`/tmp/mastery-neighbor-ui-final.log`). Main Spanish ordering and
 demo Push targeting captures were visually inspected. Final scope/architecture
 review found no mechanics moved into Core/UI and no added issue or feature scope.
+
+Delivery: implementation80ce54b pushed; #60/#85 closed. GitHub GraphQL verifies
+142 open SRD issues after closure (the immediate issue-search result lagged by
+one closure). No new issues. Final delivery observed2026-09-26 15:26 UTC,
+about86 minutes after the13:59:56 approval continuation; original batch timings
+and the7h30m28s blocked approval wait remain recorded separately.
