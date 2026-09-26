@@ -112,11 +112,12 @@ Bonus Action row, and ordinary Rogue3/4 advancement using the existing dialog.
 User answered the new Rogue questions “1. Approved. 2. Approved. 3. Approved.”
 This supersedes Q25; earlier Wizard approvals remain independently recorded.
 
+**ROGUE-DEMO-1 — APPROVED 2026-09-26:** User answered “1. yes.” New demo Bonus Action row below battlefield and above
+Wake/Stabilize, as specified in [the packet](ROGUE-ATTACKS.md#demo-placement-discovery--rogue-demo-1-approved).
+This separate approval authorizes the new placement and shared keyboard/disabled behavior.
+
 ## Pending — do not implement dependent choices
 
-**ROGUE-DEMO-1:** New demo Bonus Action row below battlefield and above
-Wake/Stabilize, as specified in [the packet](ROGUE-ATTACKS.md#demo-placement-discovery--rogue-demo-1-pending).
-The main-game row approval does not authorize this new placement.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |

@@ -36,6 +36,10 @@ func press(window: Window, button: Button) -> void:
         event.keycode = KEY_ENTER; event.pressed = down
         window.push_input(event)
     await settle()
+func key(code: Key) -> void:
+    for down in [true, false]:
+        var event := InputEventKey.new(); event.keycode = code; event.pressed = down; root.push_input(event)
+    await settle()
 func capture(name: String, window: Window) -> void:
     if captures.is_empty(): return
     DirAccess.make_dir_recursive_absolute(captures)
@@ -72,20 +76,36 @@ func run_checks() -> void:
                 require(FileAccess.get_file_as_bytes(save_path) == FileAccess.get_file_as_bytes(fixtures.path_join("savage-extra-level" + str(level) + ".save")), "UI use matches native continuation exactly")
                 await capture(locale + "-" + str(size.x) + "-savage-" + str(level), savage)
                 await press(savage, savage.get_node("Skip"))
-            if not demo:
+            await load_fixture("aim-available")
+            var choices: OptionButton = current_scene.get_node("CunningAction")
+            var use_bonus: Button = current_scene.get_node("UseCunningAction")
+            require(choices.visible and choices.item_count == 3 and not choices.is_item_disabled(2), "Steady Aim joins existing Bonus Action choices")
+            require(choices.focus_mode == Control.FOCUS_ALL and use_bonus.focus_mode == Control.FOCUS_ALL, "Bonus controls support keyboard focus")
+            if demo:
+                require(choices.position.x == 214 and choices.size.x == 200 and use_bonus.position.x == 424 and use_bonus.size.x == 240, "Approved demo Bonus Action widths/placement")
+                require(choices.position.y + 44 == current_scene.get_node("WakeAlly").position.y, "Bonus row precedes recovery row by 44 pixels")
+                require(use_bonus.get_rect().end.y <= current_scene.get_node("Log").position.y and current_scene.get_node("Log").get_rect().end.y <= current_scene.get_node("Footer").position.y, "Bonus row, log and footer do not overlap")
+            for index in range(2):
                 await load_fixture("aim-available")
-                var choices: OptionButton = current_scene.get_node("CunningAction")
-                var use_bonus: Button = current_scene.get_node("UseCunningAction")
-                require(choices.visible and choices.item_count == 3 and not choices.is_item_disabled(2), "Steady Aim joins existing Bonus Action choices")
-                choices.select(2); choices.item_selected.emit(2); await settle()
-                require(not use_bonus.disabled, "Selected legal Steady Aim can activate")
-                await capture(locale + "-" + str(size.x) + "-aim", root)
+                choices.select(index); choices.item_selected.emit(index); await settle()
                 await press(root, use_bonus)
-                require(use_bonus.disabled and current_scene.get_node("Move").disabled, "Aim spends Bonus Action and blocks movement")
                 current_scene.get_node("Save").pressed.emit(); await settle()
-                require(FileAccess.get_file_as_bytes(save_path) == FileAccess.get_file_as_bytes(fixtures.path_join("aim-spent.save")), "UI Aim matches native spending exactly")
+                var verb := "cunning_dash" if index == 0 else "cunning_disengage"
+                require(FileAccess.get_file_as_bytes(save_path) == FileAccess.get_file_as_bytes(fixtures.path_join(verb + ".save")), "Bonus dropdown activates selected native command exactly")
+                require(use_bonus.disabled, "Other Bonus Actions consume the shared budget")
+            await load_fixture("aim-available")
+            choices.grab_focus(); await key(KEY_ENTER)
+            require(choices.get_popup().visible, "Keyboard opens Bonus Action choices")
+            choices.get_popup().set_focused_item(1); await key(KEY_DOWN); await key(KEY_ENTER)
+            require(choices.selected == 2, "Keyboard selects Steady Aim")
+            require(not use_bonus.disabled, "Selected legal Steady Aim can activate")
+            await capture(locale + "-" + str(size.x) + "-aim", root)
+            await press(root, use_bonus)
+            require(use_bonus.disabled and current_scene.get_node("Move").disabled, "Aim spends Bonus Action and blocks movement")
+            current_scene.get_node("Save").pressed.emit(); await settle()
+            require(FileAccess.get_file_as_bytes(save_path) == FileAccess.get_file_as_bytes(fixtures.path_join("aim-spent.save")), "UI Aim matches native spending exactly")
     await load_fixture("sneak-level1")
     var popup: Window = current_scene.get_node("SneakAttack")
     popup.close_requested.emit(); await settle()
     require(not popup.visible and current_scene.get_node("SavageAttacker").visible, "Escape/window close declines Sneak without canceling the hit")
-    restore_files(); print("Rogue attack UI checks passed", " (demo Sneak only)" if demo else ""); quit(0)
+    restore_files(); print("Rogue attack UI checks passed"); quit(0)

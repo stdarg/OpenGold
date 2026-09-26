@@ -406,10 +406,24 @@ suite passed again after the final recruited/malformed-save test additions.
 Commands and limits: [batch evidence](ROGUE-ATTACKS.md#verified-implementation-and-remaining-work).
 Mechanics and durable tests: [Sneak Attack](SNEAK-ATTACK.md).
 
-Steady Aim's rules and main-game controls are verified, but #114 remains OPEN
-pending the separately proposed demo Bonus Action placement. #116 remains OPEN
-for full Rogue completion; Thief, Hide and weapon mastery are not delivered.
-Tested runtime commit: `7f3ab30`; evidence-only changes follow separately.
+### Rogue Steady Aim (#114)
+
+Ordinary Rogue levels3/4 grant Steady Aim: a Bonus Action before any movement
+this turn, Advantage on the next attack roll (consumed on hit or miss), and
+Speed0 through turn end. Unused Advantage expires; opposing roll modifiers
+cancel normally. Dash cannot restore movement; returning to the starting square
+does not restore eligibility. No rest pool. Source/level, spent-budget and
+pending-hit saves validate strictly; current and historical continuations pass.
+
+Main and demo have approved Bonus Action dropdowns. All three commands—Dash,
+Disengage and Aim—match independent native saved results under keyboard use;
+spent budgets disable controls. Main EN/ES and demo EN render/input checks pass
+at1120×800 and1920×1080. Demo neighbor controls and layout checks pass. Ordinary
+advancement/rest/reload through4 and recruited routes use the same tested rules.
+See [batch evidence](ROGUE-ATTACKS.md#approved-demo-completion--2026-09-26).
+Rules runtime7f3ab30; final demo completion revision is recorded in that packet.
+#116 remains open for full Rogue completion; Thief, Hide and mastery are not
+claimed complete. Conditional PC35/combat21 preserve released histories.
 
 ### Unconscious enemy transit (#222, bounded child of #44)
 

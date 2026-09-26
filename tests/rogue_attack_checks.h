@@ -112,7 +112,7 @@ void run(){
     auto resisted=rules_module("affinity target ward resistance piercing\n");auto weak=d;for(auto& r:weak.rolls)r={{1,1,1,1},3};auto weak_hero=hero(weak);bool negative_verified=false;
     for(unsigned seed=1;seed<=64&&!negative_verified;++seed){auto c=battle(*resisted,weak_hero,"dagger",true,seed);act(*c,"melee");if(!c->snapshot().sneak_attack_choice)continue;act(*c,"sneak_use");const auto hit=*c->snapshot().savage_attack_choice;if(hit.first_damage>=0)continue;roundtrip(*resisted,*c);act(*c,"savage_skip");check(unit(*c,99).hit_points==1000-std::max(0,hit.first_damage+hit.extra_damage)/2,"Signed weapon plus Sneak damage is resisted once");negative_verified=true;}
     check(negative_verified,"Negative weapon component exercised in live combat");
-    auto live=module();auto aimed=battle(*live,h,"shortbow",false,13,true,"vanguard");write("aim-available",*aimed);act(*aimed,"steady_aim");write("aim-spent",*aimed);
+    auto live=module();auto aimed=battle(*live,h,"shortbow",false,13,true,"vanguard");write("aim-available",*aimed);for(const auto* verb:{"cunning_dash","cunning_disengage"}){auto bonus=live->restore(aimed->save());act(*bonus,verb);write(verb,*bonus);}act(*aimed,"steady_aim");write("aim-spent",*aimed);
     auto ui_hero=hero(d);VitalState ui_vitals;
     for(unsigned level=1;level<=4;++level){
         if(level>1)check(ui_hero.advance(*live,ui_vitals),"UI Rogue advances normally");bool written=false;

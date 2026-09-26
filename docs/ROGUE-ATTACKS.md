@@ -67,7 +67,7 @@ unavailable. This does not grant partial Thief or close #116.
 
 ## Evidence / current phase
 
-### Demo placement discovery — ROGUE-DEMO-1 pending
+### Demo placement discovery — ROGUE-DEMO-1 approved
 
 The legacy demo has no Cunning Action row; it uses a sidebar action grid and
 separate Wake/Stabilize controls below the battlefield. ROGUE-2's assumption of
@@ -82,7 +82,7 @@ available height by 44; retain all existing controls and the footer. Use the
 same Dash/Disengage/Steady Aim options, keyboard behavior and rules-driven
 disabled states approved in ROGUE-2. No new mechanics or scope beyond the
 already required demo player path. Await a visible numbered answer for this
-specific placement before implementing it.
+specific placement before implementing it. Approval received 2026-09-26: “1. yes.”
 
 ### Verified implementation and remaining work
 
@@ -148,3 +148,30 @@ turn's actual hit, and an actual aimed miss clears the saved attack-roll benefit
 while preserving spent Action/Bonus Action and zero Speed. This is verification
 inside the original batch, without new mechanics or UI choices. Native training
 was rebuilt and passed after the final assertion; see `/tmp/rogue-aim-expiry-tests.log`.
+
+Approval received; implementation resumed at observed00:02:32 UTC on2026-09-26.
+Original batch start/checkpoint retained; elapsed includes the approval wait.
+Requested Astra/high unchanged, actual configuration unverified.
+
+### Approved demo completion — 2026-09-26
+
+ROGUE-DEMO-1 is implemented with the exact approved row and44px reservation.
+Godot demo build `cmake --build build/sprite-demo --target opengold_godot -j6`
+passes. The training target was rebuilt; `--rogue-attacks` passes and produces
+independent Dash/Disengage/Aim UI result fixtures. Expanded
+`rogue_attack_view_tests.gd` passes in demo EN and main EN/ES at both sizes,
+including keyboard dropdown selection and Use activation, exact native command
+results for all three choices, shared-budget disabled states and no row/log/footer
+overlap. Demo neighboring thrown/pickup controls also pass keyboard/mouse and
+both-size renders. No native rules or save format changed in this final step.
+
+Logs: `/tmp/rogue-demo-bonus-build.log`, `/tmp/rogue-bonus-fixture-tests.log`,
+`/tmp/rogue-demo-bonus-tests.log`, `/tmp/rogue-demo-neighbor-tests.log`,
+`/tmp/rogue-main-bonus-tests.log`. Inspected captures:
+`/tmp/rogue-demo-bonus-final/en-1120-aim.png` and `en-1920-aim.png`;
+main captures in `/tmp/rogue-main-bonus-final`. The earlier78-check integrated
+runtime pass and both actual advancement comparisons remain current: only demo
+presentation and expanded test fixtures/assertions changed afterward.
+
+Both original features (#112, #114) now meet this batch's full acceptance.
+#116 remains open; Thief, Hide and mastery are still excluded and required.

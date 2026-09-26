@@ -42,6 +42,8 @@ void CombatView::_ready()
         get_node<Button>(node)->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String(verb)));
     get_node<Button>("Move")->connect("pressed",callable_mp(this,&CombatView::select_mode).bind(String("move")));
     get_node<Button>("SpellSlot")->connect("pressed",callable_mp(this,&CombatView::spell_slot));
+    get_node<OptionButton>("CunningAction")->connect("item_selected",callable_mp(this,&CombatView::bonus_selected));
+    get_node<Button>("UseCunningAction")->connect("pressed",callable_mp(this,&CombatView::use_bonus_action));
     get_node<Button>("SecondWind")->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String("second_wind")));
     for(const auto& [node,verb]:std::array<std::pair<const char*,const char*>,4>{{{"Use","savage_use"},{"Skip","savage_skip"},{"First","savage_first"},{"Second","savage_second"}}})
         get_node<Button>(String("SavageAttacker/")+node)->connect("pressed",callable_mp(this,&CombatView::immediate).bind(String(verb)));
@@ -85,7 +87,8 @@ void CombatView::layout()
     const double width=get_size().x,height=get_size().y,sidebar=358,left_width=width-sidebar-72;
     const auto board=demo_&&demo_->has_combat()?demo_->combat().snapshot().battlefield:Battlefield{12,9,{}};
     const bool recovery=get_node<Button>("Stabilize")->is_visible()||get_node<Button>("WakeAlly")->is_visible()||get_node<Button>("StandUp")->is_visible()||get_node<OptionButton>("GroundItem")->is_visible();
-    const double tile=std::min(left_width/board.width,(height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?368:recovery?324:280))/board.height);
+    const double bonus_height=get_node<OptionButton>("CunningAction")->is_visible()?44:0;
+    const double tile=std::min(left_width/board.width,(height-bonus_height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?368:recovery?324:280))/board.height);
     board_rect_=Rect2(24,116,tile*board.width,tile*board.height);const double right=width-sidebar-24;
     const auto place=[&](const char* name,Rect2 rect){auto* node=get_node<Control>(name);node->set_position(rect.position);node->set_size(rect.size);};
     place("Title",Rect2(24,18,left_width,34));place("Subtitle",Rect2(24,62,left_width,45));
@@ -99,13 +102,15 @@ void CombatView::layout()
     place("React",Rect2(right,590,174,36));place("Decline",Rect2(right+184,590,174,36));
     place("Save",Rect2(right,639,112,34));place("Load",Rect2(right+122,639,112,34));place("Revisit",Rect2(right+244,639,114,34));
     place("Help",Rect2(right,686,sidebar,height-732));
-    const double top=board_rect_.get_end().y+16;
+    const double bonus_top=board_rect_.get_end().y+16;
+    place("CunningActionLabel",Rect2(24,bonus_top,180,36));place("CunningAction",Rect2(214,bonus_top,200,36));place("UseCunningAction",Rect2(424,bonus_top,240,36));
+    const double top=bonus_top+bonus_height;
     place("WakeAlly",Rect2(24+left_width-340,top,160,36));
     place("Stabilize",Rect2(24+left_width-170,top,170,36));
     place("StandUp",Rect2(24,top+44,180,36));
     place("GroundItemLabel",Rect2(214,top+44,100,36));place("GroundItem",Rect2(324,top+44,176,36));place("PickUp",Rect2(510,top+44,204,36));
     place("ThrownWeaponLabel",Rect2(24,top+88,190,36));place("ThrownWeapon",Rect2(224,top+88,276,36));place("Throw",Rect2(510,top+88,204,36));
-    place("Log",Rect2(24,top+(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0))));
+    place("Log",Rect2(24,top+(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0),left_width,std::max(0.0,height-board_rect_.get_end().y-64-bonus_height-(get_node<OptionButton>("ThrownWeapon")->is_visible()?132:recovery?88:0))));
     place("Footer",Rect2(24,height-34,width-48,24));
 }
 void CombatView::training(){try{error_.clear();demo_->training();art_.clear();mode_="move";refresh();}catch(const std::exception& e){error_=e.what();refresh();}}
@@ -179,6 +184,8 @@ void CombatView::pick_up(){
     if(!demo_||!demo_->has_combat()||get_node<Button>("PickUp")->is_disabled())return;
     for(const auto& c:demo_->combat().legal_commands())if(c.verb=="pick_up"&&c.target==ground_item_){act(c);return;}
 }
+void CombatView::bonus_selected(std::int64_t){refresh();}
+void CombatView::use_bonus_action(){auto* choices=get_node<OptionButton>("CunningAction");if(choices->get_selected()>=0)immediate(String(choices->get_item_metadata(choices->get_selected())));}
 void CombatView::spell_slot(){spell_slot_=spell_slot_==1?2:1;mode_="move";refresh();}
 void CombatView::immediate(String verb)
 {
@@ -204,6 +211,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
             if(actor!=state.combatants.end())for(const auto& command:demo_->combat().legal_commands())if(command.verb=="move"&&command.destination==Cell{actor->cell.x+direction.x,actor->cell.y+direction.y}){act(command);break;}
             get_viewport()->set_input_as_handled();return;}
     }
+    if(key.is_valid()&&(get_node<OptionButton>("CunningAction")->has_focus()||get_node<OptionButton>("CunningAction")->get_popup()->is_visible()))return;
     if(key.is_valid()&&(get_node<OptionButton>("ThrownWeapon")->has_focus()||get_node<OptionButton>("ThrownWeapon")->get_popup()->is_visible()))return;
     if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&(mode_=="stabilize"||mode_=="throw")&&demo_->has_combat()){
         const auto state=demo_->combat().snapshot();
@@ -218,7 +226,7 @@ void CombatView::_input(const Ref<InputEvent>& event)
         }
     }
     if(key.is_valid()&&(get_node<OptionButton>("GroundItem")->has_focus()||get_node<OptionButton>("GroundItem")->get_popup()->is_visible()))return;
-    if(key.is_valid()&&(get_node<Button>("Throw")->has_focus()||get_node<Button>("PickUp")->has_focus()||get_node<Button>("Stabilize")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
+    if(key.is_valid()&&(get_node<Button>("UseCunningAction")->has_focus()||get_node<Button>("Throw")->has_focus()||get_node<Button>("PickUp")->has_focus()||get_node<Button>("Stabilize")->has_focus()||get_node<Button>("WakeAlly")->has_focus()||get_node<Button>("StandUp")->has_focus())&&
         (key->get_keycode()==Key::KEY_ENTER||key->get_keycode()==Key::KEY_SPACE))return;
     if(key.is_valid()&&key->is_pressed()&&key->get_keycode()==Key::KEY_ESCAPE&&(mode_=="wake_ally"||mode_=="stabilize"||mode_=="throw")){
         mode_="move";refresh();get_viewport()->set_input_as_handled();return;
@@ -284,6 +292,19 @@ void CombatView::refresh()
     if(s.free_movement)mode_="move";
     const auto offered=loaded?demo_->combat().legal_commands():std::vector<Command>{};
     const auto enabled=[&](std::string_view verb){return player&&std::any_of(offered.begin(),offered.end(),[&](const auto& c){return c.verb==verb;});};
+    const auto active=std::find_if(s.combatants.begin(),s.combatants.end(),[&](const auto& a){return a.id==s.actor&&a.side==0;});
+    const bool show_bonus=active!=s.combatants.end()&&!active->bonus_actions.empty()&&s.outcome==Outcome::ongoing;
+    for(const char* name:{"CunningActionLabel","CunningAction","UseCunningAction"})get_node<Control>(name)->set_visible(show_bonus);
+    auto* choices=get_node<OptionButton>("CunningAction");
+    const String previous=choices->get_selected()>=0?String(choices->get_item_metadata(choices->get_selected())):String();
+    const auto options=show_bonus?active->bonus_actions:std::vector<std::string>{};
+    bool changed=choices->get_item_count()!=int(options.size());
+    for(unsigned i=0;!changed&&i<options.size();++i)changed=String(choices->get_item_metadata(i))!=gs(options[i]);
+    if(changed){choices->clear();for(const auto& option:options){const int index=choices->get_item_count();choices->add_item(option=="cunning_dash"?"Dash":option=="cunning_disengage"?"Disengage":"Steady Aim");choices->set_item_metadata(index,gs(option));if(gs(option)==previous)choices->select(index);}}
+    for(unsigned i=0;i<options.size();++i)choices->set_item_disabled(i,!enabled(options[i]));
+    choices->set_disabled(!std::any_of(options.begin(),options.end(),enabled));
+    const int selected=choices->get_selected();
+    get_node<Button>("UseCunningAction")->set_disabled(selected<0||selected>=int(options.size())||!enabled(options[selected]));
     std::vector<std::pair<unsigned,EntityId>> holders;for(const auto& item:s.held_items)holders.emplace_back(item.id,item.holder);
     if(holders!=item_holders_){item_holders_=std::move(holders);if(campaign_)sync_art();}
     auto* thrown=get_node<OptionButton>("ThrownWeapon");thrown->set_block_signals(true);thrown->set_fit_to_longest_item(false);thrown->clear();

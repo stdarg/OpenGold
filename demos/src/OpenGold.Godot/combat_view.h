@@ -40,7 +40,7 @@ private:
     unsigned check_steps_{},completion_frames_{};
     void layout();void refresh();void sync_art();void act(const opengold::rules::Command& command);
     void select_mode(godot::String verb);void immediate(godot::String verb);
-    void spell_slot();
+    void spell_slot();void bonus_selected(std::int64_t index);void use_bonus_action();
     void ground_selected(std::int64_t index);void pick_up();
     unsigned ground_item_{},thrown_item_{};
     void thrown_selected(std::int64_t index);void begin_throw();

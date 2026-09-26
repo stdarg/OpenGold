@@ -1,9 +1,9 @@
 # SRD handoff
 
 Updated 2026-09-25 after verified Wizard spell-choice delivery. The standing goal
-is BLOCKED awaiting ROGUE-DEMO-1 and incomplete: close all `SRD_improvements` issues, support all
+remains incomplete; ROGUE-DEMO-1 is approved: close all `SRD_improvements` issues, support all
 twelve classes through level four, then the planned higher levels/multiclassing.
-The goal was not user-paused. Its blocked audit is recorded below.
+The prior approval blocker is resolved. Work continues under the standing goal.
 
 ## Latest delivery — Wizard spell choices (#37; implementation owner #97)
 
@@ -46,32 +46,13 @@ pass (51 native/tool, 27 Godot; 37.53s). Main EN/ES and demo EN combat and
 advancement UI/renders pass at both sizes, including exact native saved-state
 comparison. Localization validates all 934 messages. Actual old fixtures intact.
 
-The demo lacks the assumed Cunning Action row. ROGUE-DEMO-1 proposes a precise
-row below its battlefield; see packet. This placement needs a new visible
-numbered answer; do not implement it under the main-game placement approval.
-#114 remains open until that playable demo path and its checks are complete.
-
-The complete training suite now passes with additional malformed pending-hit
-and recruited Rogue handoff checks through all four levels. No live build/test
-remains. The78-check run predates only these added tests, not production edits.
-Verified runtime `7f3ab30` and evidence `0d7f803` are pushed on
-`codex/srd-rogue-attacks`; #112/#220/#221 CLOSED at22:26 UTC. #114 and #116
-remain OPEN. Main has not been advanced during this partial batch delivery.
-Delivery checkpoint at22:26 UTC, about58 minutes after the original start:
-one of two original feature requirements delivered; three corresponding issues
-closed; zero issues added. Remaining work is the demo row and its verification.
-ROGUE-DEMO-1 was asked visibly as question1 with successful Glass audio. No
-answer has arrived; do not infer approval from automatic goal continuation.
-At22:28 UTC the complete training suite also passes explicit unused-Aim expiry
-and aimed-miss consumption cases (test-only follow-up; runtime unchanged).
-No independent implementation remains in this frozen batch before that answer;
-no live handles remain. Goal status is now BLOCKED on ROGUE-DEMO-1 after the
-same unanswered approval recurred across three consecutive goal turns. The
-first two turns still delivered implementation/verification; current audit
-confirmed no independent in-scope work remains. No approval was inferred.
-Latest tested follow-up `ff2f989` is pushed; worktree was clean at this audit.
-This is an input dependency, not a user-requested pause or completion. An answer
-to question1 permits the remaining demo implementation under the standing goal.
+ROGUE-DEMO-1 approved by “1. yes.” on2026-09-26; demo row implementation
+resumed at00:02:32 UTC. Prior blocker resolved; do not ask again. Original batch
+start and checkpoint retained; elapsed includes approval wait. Requested
+Astra/high retained, actual configuration unverified. Sneak #112/#220/#221
+closed; #114 awaits approved demo implementation/verification and #116 remains
+open for full Rogue completion. Runtime7f3ab30 and test follow-up ff2f989 pushed.
+The user reiterated not to pause the goal. Continue authorized work.
 
 ## Preserved exclusions from Wizard delivery
 

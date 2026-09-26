@@ -63,5 +63,5 @@ render captures at both sizes were inspected. Archery's existing test was update
 to distinguish newly supported Rogue level two from unsupported later levels.
 
 ROGUE-2 approves the main-game caption Bonus Action and adds Steady Aim from
-level three, using the same dropdown/button. The legacy demo lacks this row;
-its proposed placement remains ROGUE-DEMO-1, pending separate approval.
+level three, using the same dropdown/button. ROGUE-DEMO-1 separately approves the demo row below the battlefield and above
+Wake/Stabilize; it is implemented and verified with the same three commands.
