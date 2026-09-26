@@ -30,16 +30,18 @@ or model/runtime setting changes are authorized.
 - Main remains375f58f; no PR or main integration is claimed. #84/#85/#89 and
   incomplete class/level paths remain open. The full twelve-class goal is active.
 
-## Next action
+## Active batch — Weapon Mastery
 
-Preflight the next bounded delivery from the existing
-[batching review](SRD-BATCHING-REVIEW.md), using the current144-issue snapshot.
-Freeze player outcome, acceptance, included issues and exclusions before coding.
-Fighter completion still needs weapon mastery and starting-choice work; preflight
-that related package rather than claiming its integration trackers are complete.
-No automatic child tickets or speculative prerequisite work. Preserve full scope
-of parent#85/#140/#147 and all twelve classes. Use the repo map for targeted reads.
-Prior Fighting Style delivery#78/#79/#80 is recorded in coverage, not repeated here.
+[Fixed packet](WEAPON-MASTERY.md) owns acceptance, source routes and proposed
+controls MASTERY-1–4. Preflight began03:56:03 UTC2026-09-26; checkpoint04:56:03
+(latest05:26:03). Branch `codex/srd-weapon-mastery`. Requested Astra/high;
+configured model/effort unverified. One owner; no agents/new issues/settings.
+Target #60/#85, with shared mastery portions of #140/#147/#111/#103. All eight
+properties and five current class routes; unrelated class progression stays in
+its existing issues. No gameplay implementation yet. Five genuine0.6.55
+prior-writer fixtures captured; exact replay and full rebuilt training target
+pass04:05:58 UTC. No running test/build. Controls need explicit approval;
+see packet for exact questions. Continue independent in-scope work while pending.
 
 ## Preserved decisions and exclusions
 

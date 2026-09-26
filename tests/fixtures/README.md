@@ -785,3 +785,26 @@ and wounds. These are genuine writer outputs, never rewritten version tags.
 | combat-v21-hands-before-first.save | `441629aaa3e56b2c01598bcce121be82a019722f05b707f2e85ea500e43281f7` |
 | combat-v21-hands-before-second.save | `579b15007c02ce438e5194495eb7f27df278413d6193083fb575c94289d55d71` |
 | combat-v21-hands-before-settled.save | `33c45dea2b30e1ec48171ff9ba2275c8de7ff689acdd3f1b3970081e770ceae5` |
+
+## Weapon Mastery baseline — actual 0.6.55 writer
+
+Captured2026-09-26 before any mastery runtime edits. Production writer is
+`69771eb` (rules0.6.55), inherited at preflight HEAD`7f35c89`.
+`tests/mastery_baseline.h` is included by the existing training target;
+`--freeze-mastery` checks the exact writer version before producing files.
+Do not regenerate these historical fixtures with a later writer.
+
+The five-class campaign covers Fighter/Rogue/Paladin/Ranger at4 and Barbarian1,
+three PCs/two recruited NPCs, prior choices, equipment and wounds. Combat covers
+physical Light qualification and a TWF extra attack through both Savage decisions
+and settlement. `--mastery-baseline` and the ordinary training suite verify exact
+restoration and deterministic continuation (only module version is normalized).
+No new mastery behavior is claimed.
+
+| Fixture | SHA-256 |
+| --- | --- |
+| `campaign-v17-mastery-before.ogs` | `e7815e705693472598a2919cf391c1aebc8a748df0ca6f58e1b21e999948520b` |
+| `combat-v22-mastery-light-first.save` | `e8edb6ac1c2d51b31781100895430018151c6af26907a2afdb07fe204e72c10c` |
+| `combat-v22-mastery-light-qualified.save` | `679f703fb77b89d6605ad1a2f76b2fe4dc04b23d3e014a6158ec02d61841f5d0` |
+| `combat-v22-mastery-light-second.save` | `f1602842a8d4a35a99a713d2dfce4bef3e660838e7fd606e2f6370a2e9a47a24` |
+| `combat-v22-mastery-light-settled.save` | `9e5f26067519e30523607b39db1fdec55bd0224d6fffd20fe203232843a661eb` |

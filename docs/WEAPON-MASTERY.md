@@ -1,0 +1,124 @@
+# Weapon mastery delivery packet
+
+## Frozen batch
+
+- Active user goal; one owner, no agents or new issues.
+- Deliver all eight mastery properties through actual chosen weapon kinds, with
+  creation, advancement, Long Rest replacement, combat and retained saves.
+- Original issues: #60 and mastery acceptance of #85/#140/#147/#111/#103.
+  Target closure #60/#85; other parent issues close only if their remaining
+  original acceptance is independently complete. Do not equate mastery with
+  whole-class completion or add missing unrelated class features.
+- Current source routes: Fighter/Rogue/Paladin/Ranger levels1–4, Barbarian level1.
+  Fighter gains its fourth kind at4. Barbarian's third kind at4 remains part of
+  its existing unavailable progression (#104–109), not a new progression batch.
+  Higher levels and multiclass remain required in the original goal.
+- No starting-equipment packages, ammunition tracking, other conditions/classes,
+  unrelated fixes, new UI framework or reduced historical compatibility.
+- Requested Astra/high for combat trigger interactions and persistence; actual
+  configured model/effort unverified. No model/runtime setting changes. Escalate
+  unresolved architecture/rule interpretation and two failed fixes; attempts0.
+- Preflight began03:56:03 UTC2026-09-26. Checkpoint04:56:03, latest05:26:03.
+  Earlier context-reset boundary is retained; no timing reset.
+
+## Source and acceptance
+
+Official [SRD5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf),
+printed pp28–29,47–48,54,58–59,62 and90, checked2026-09-26.
+
+| Source | Chosen kinds in this batch | Eligible weapons | Long Rest replacement |
+| --- | --- | --- | --- |
+| Barbarian1 |2|Simple/Martial Melee|At most one kind|
+| Fighter1–3 /4 |3 /4|Simple/Martial|At most one kind|
+| Paladin1–4 |2|Proficient kinds|Either/both kinds|
+| Ranger1–4 |2|Proficient kinds|Either/both kinds|
+| Rogue1–4 |2|Proficient kinds|Either/both kinds|
+
+1. Validate counts, duplicate/unknown/unproficient kinds, source and acquisition
+   levels in SRD. All38 ordinary catalog weapons are eligible where class rules
+   allow; the compatibility Wand is not a weapon choice. Presets pre-generate
+   choices; prior saves leave missing selections pending. Existing training,
+   wounds, resources, equipment and advancement survive completion/replacement.
+2. Cleave: after a melee hit, one additional same-weapon melee attack against a
+   different creature within5 feet of the first and the attacker's reach, once
+   per turn. Retain negative ability damage; omit positive modifier.
+3. Graze: optional miss damage equal to the attack ability modifier, weapon damage
+   type; no added weapon/Sneak/style dice or other damage increases. Apply relevant
+   typed defenses and zero-damage behavior.
+4. Nick: the Light extra attack can use its qualifying Attack action instead of
+   the Bonus Action. Share the one extra-attack-per-turn limit with Light; retain
+   different physical weapon identity and Two-Weapon Fighting behavior.
+5. Push: optional straight-away forced movement up to10 feet, Large or smaller;
+   legal reachable destinations, collision and no Opportunity Attack. Declining
+   does not refund the triggering attack. Preserve actual occupied cells.
+6. Sap: next attack roll has Disadvantage before the source's next turn starts.
+   Slow: optional damage-triggered10-foot Speed penalty until that same boundary;
+   multiple Slow sources cannot increase its penalty; compose with other effects.
+7. Topple: optional Constitution save, DC8+attack ability modifier+proficiency;
+   failure Prone. Vex: on damage, source's next attack against this target has
+   Advantage before the end of the source's next turn. Consume/expire effects at
+   exact boundaries; use shared Advantage/Disadvantage cancellation.
+8. Cover misses/hits/zero damage/critical, melee/ranged/thrown/reaction, Action
+   Surge, Savage Attacker, Sneak Attack, Champion movement, sizes/obstacles,
+   incapacitation/death, PC/NPC ownership, rejected-command atomicity and all
+   pending-decision continuation. No mastery from catalog metadata alone.
+9. SRD owns grants, outcomes, expiry, targeting and codecs. Core orchestrates
+   transactions through generic rules interfaces; UI only presents queries.
+   Preserve all released save formats; capture actual0.6.55 writer before edits.
+10. Verify normal creation, Review Training, fourth Fighter choice, camp/inn rest
+    replacement/save/reload and combat. MainEN/ES and demoEN at1120×800/1920×1080,
+    keyboard/mouse, focus, disabled states and Cancel/Escape. Focused native tests,
+    then final integrated regression on freshly built targets. Commit/push and
+    update coverage before closing only fully proven original issues.
+
+## Proposed controls — awaiting explicit approval
+
+**MASTERY-1.** Reuse scrollable Training checkbox groups for Weapon Mastery in
+creation and Review Training, listing weapon plus mastery name and selection
+count. Require class-appropriate counts; preserve Back, lock prior selections in
+Review Training, pre-generate presets, keep missing old-save choices pending.
+For Fighter4 add a labeled fourth-weapon dropdown below Fighting Style in the
+existing Level Up dialog (label y374, selector y406, width652, height38); Confirm
+requires it. Cancel/Escape changes nothing; sheet lists selected weapon kinds.
+
+**MASTERY-2.** After a completed Long Rest, use a centered700×670 Weapon Mastery
+window for each eligible member, following existing spell choices. Reuse a
+scrollable labeled checkbox list, current selections and count/replacement limit.
+Keep current/Apply buttons; Escape keeps current; Apply requires a legal complete
+set. Choices finish before exploration resumes; camp/inn saving preserves a
+pending choice. No combat saving. Interrupted/ineligible rests do not grant a
+replacement window; each completed rest grants only one.
+
+**MASTERY-3.** Reuse a centered combat decision dialog for optional Graze, Slow,
+Topple, Cleave and Push: show the property/effect and Use/Skip buttons. Cleave's
+Use enters existing highlighted creature targeting; Push's Use highlights legal
+landing cells up to10 feet directly away. Click/arrows confirm; Escape or Skip
+(or the temporarily relabeled End Turn button) declines. Other actions wait;
+original Action/Reaction stays spent. Sap/Vex apply automatically as specified.
+The dialog is shown only when an optional effect can change the result. All
+controls retain keyboard access and standard button styling. No combat saves.
+
+**MASTERY-4.** Add Nick attack beside End Turn, in the otherwise unused ordinary
+turn position occupied by Decline during reactions (x208,w174,h36). Show for an
+actor with Nick; disable until legal. It opens a centered640×300 selector naming
+eligible weapon and melee/ranged/thrown attack, followed by Target/Cancel.
+Target uses existing highlighted targeting and keyboard cycle; Escape cancels
+before submission. It spends no Bonus Action and shares Light's one-extra-attack
+limit. Existing Light Bonus Action choices remain available where legal.
+
+## Evidence and phase record
+
+Preflight confirms mastery currently exists only as weapon catalog metadata;
+no runtime mastery grants/effects are implemented. The existing Training,
+advancement, rest-spell and combat weapon controls provide reuse routes above.
+No production source or UI change is authorized by these proposals alone.
+
+Compatibility preparation verified04:05:58 UTC. Production remains69771eb /
+rules0.6.55. Five genuine fixtures and exact replay checks are recorded in
+[fixture provenance](../tests/fixtures/README.md#weapon-mastery-baseline--actual-0655-writer).
+`opengold_training_tests --mastery-baseline` and the full rebuilt training target
+pass; logs `/tmp/mastery-baseline-build.log` and `/tmp/mastery-baseline-tests.log`.
+Only tests/documents changed, so no game rebuild or repeated integrated run.
+One compile correction (unique ownership) and one fixture correction (two-NPC
+party limit); neither failure repeated. No original issue closed by preparation.
+All four control proposals remain pending. No gameplay/UI source edits yet.
