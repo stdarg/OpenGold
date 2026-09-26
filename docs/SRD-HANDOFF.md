@@ -2,9 +2,10 @@
 
 Updated2026-09-26. Standing goal remains incomplete: close all `SRD_improvements`,
 preserving all twelve classes through4 and planned higher levels/multiclassing.
-The goal tracker still says **blocked** from the former approval wait; this
-assistant cannot set it active and has not paused it. Authorized implementation
-continued. No agents/new tasks or model/runtime changes authorized.
+The user requested pausing after the current issue. Alert#74 was already complete,
+tested, pushed and closed; the goal is now **paused**. Skilled#77 implementation
+has not started. No agents/new tasks or model/runtime changes authorized.
+Resume only on the user's explicit instruction.
 
 ## Latest delivery: Alert (#74)
 
@@ -24,19 +25,20 @@ Do not redo it. #84 starting equipment and #89 other Fighter4 acceptance remain.
 ## Next: Skilled (#77), B01
 
 [Fixed packet and concrete control proposal](SKILLED.md). No implementation has
-started. SKILLED-1 is the single pending control question, displayed as question1
-with Glass audio. It adds a Skilled Training page to the existing level-up window.
+started. SKILLED-1 is a written control proposal, not yet asked: the user requested
+the pause before the next question was presented. On an explicit resume, ask it
+as question1 with Glass audio and visible conversation text. It adds a Skilled Training page to the existing level-up window.
 No Human selector, new entitlement, equipment policy or crafting action is added.
 The packet includes four missing SRD tool **proficiency** entries needed by the
 feat's unrestricted choices. No new issues or silent prerequisite expansion.
 
-After approval, branch from this completed delivery, capture actual0.6.61 writer
+After explicit resumption and control approval, branch from this completed delivery, capture actual0.6.61 writer
 fixtures before changing the writer, then implement the recorded packet. Current
 libraries are0.6.61. Read SRD-WORKFLOW, SRD-MODEL-ROUTING and the packet after resets.
 Requested Astra/high for sourced repeatable choices and persistence; actual
 runtime selection unverified. One owner, no delegation. Preflight16:40:50 UTC;
 record approval continuation time and checkpoint before coding. A decision reply
-does not resume a paused goal; this goal was not paused by this continuation.
+does not resume this paused goal.
 
 ## Standing constraints
 

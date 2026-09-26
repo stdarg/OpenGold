@@ -23,6 +23,8 @@
   Escalate after two unsuccessful fixes of the same failure or outside-scope
   dependency. No speculative prerequisite or automatic issue splitting.
 - Preflight observed2026-09-26 16:40:50 UTC. No implementation started.
+  User subsequently requested pausing after Alert#74; goal paused before asking
+  SKILLED-1. Require explicit resumption before further work.
   SKILLED-1 requires control approval before implementation. Record continuation
   timing after the answer, with the60-minute checkpoint and90-minute maximum.
 
