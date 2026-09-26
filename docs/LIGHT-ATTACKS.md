@@ -4,8 +4,9 @@
 
 - Standing goal ACTIVE. One owner, no new tasks/agents/issues. Preflight began
   2026-09-26 00:45:02 UTC; checkpoint01:45:02, maximum02:15:02. Preserve this
-  start across approval waits. Compatibility capture implemented; LIGHT-1/2/3 pending.
-  No dependent gameplay/control implementation.
+  start across approval waits. Compatibility capture implemented; LIGHT-1 pending.
+  LIGHT-2/3 approved by “2. Yes. 3. Yes”2026-09-26; no equipment-dialog
+  implementation until LIGHT-1 is answered.
 - Original requirements: #59 Light extra attacks, #81 Two-Weapon Fighting,
   #56 Loading action boundaries. Bounded source integration under#85/#140/#147.
   Player outcome: equip and choose two one-handed weapons, earn a legal Light
@@ -71,6 +72,10 @@ of different hands is not an additional restriction. The Attack action's weapon
 interaction and Thrown's draw permission must retain their actual boundaries.
 
 ## Proposed controls — approval required
+
+Current approval state: LIGHT-2 and LIGHT-3 APPROVED2026-09-26 by the user's
+“2. Yes. 3. Yes.” LIGHT-1 remains unanswered. This reply does not approve the
+equipment dialog. The exact controls below remain the fixed implementation scope.
 
 **LIGHT-1.** In main/demo, when Equip selected would add or replace a second
 one-handed weapon, open a centered660×340 dialog. Show the selected weapon and
@@ -143,8 +148,8 @@ python3 tools/localization.py --check
 Current native/runtime behavior and save formats remain unchanged. The integrated
 run followed a successful current-tree project preparation; fixture setup was
 excluded only to avoid repeating that preparation. Verification was confirmed at
-01:17:53 UTC. The next player-facing work requires LIGHT-1/2/3; the goal remains
-ACTIVE, with these approvals visibly outstanding.
+01:17:53 UTC. The remaining equipment-dialog approval is LIGHT-1; LIGHT-2/3 were subsequently
+approved. The goal remains ACTIVE.
 
 Phase observations: compatibility capture began00:53:12 and was committed at
 01:00:04 (see d24c146 metadata for exact commit time). Equipment-transition

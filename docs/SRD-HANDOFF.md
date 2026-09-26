@@ -34,8 +34,9 @@ its old blocked metadata does not prevent the explicitly authorized work.
 
 [Fixed packet](LIGHT-ATTACKS.md):#59/#81/#56 and bounded style-source integration.
 Preflight00:45:02 UTC2026-09-26; checkpoint01:45:02, maximum02:15:02.
-Requested Astra/high retained; actual unverified. LIGHT-1/2/3 pending: hand-choice
-Equip dialog, weapon/Light combat controls, and TWF catalog/automatic benefit.
+Requested Astra/high retained; actual unverified. LIGHT-1 pending: hand-choice
+Equip dialog. LIGHT-2/3 approved by “2. Yes. 3. Yes”: weapon/Light combat controls
+and TWF catalog/automatic benefit.
 Branch `codex/srd-light-attacks`: seven actual0.6.53 saves plus
 `tests/light_attack_baseline.h` captured and verified with the full Training test.
 Capture commit d24c146 preserved production source; see fixture provenance.
@@ -43,10 +44,12 @@ Commit `bc4edae` moves existing Equip/Unequip decisions into the SRD module thro
 a generic equipment-change result. All78 integrated checks, the game's47-weapon
 equipment flow and localization941 pass after rebuilding main/demo/native targets.
 No hand controls or automatic TWF benefit is implemented. No live build/test.
-Next: obtain LIGHT-1/2/3, then implement the fixed actual dual-weapon/Light path.
+Next: obtain LIGHT-1 for the equipment dialog; LIGHT-2/3 are approved. Complete
+the fixed actual dual-weapon/Light path without re-asking those two questions.
 No original issue is closed by this prerequisite;149 remain open.
-Rules-side work independent of layout approval may proceed; new controls and
-automatic TWF behavior remain pending. Questions must be visible and preceded by the
+Rules-side work independent of layout approval may proceed; only the new
+equipment dialog remains pending. Weapon/Light controls and automatic TWF
+behavior are approved. Questions must be visible and preceded by the
 verified Glass sound. Goal remains ACTIVE; an approval reply should continue this
 active batch. Do not turn waiting into a paused goal.
 

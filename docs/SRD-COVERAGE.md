@@ -457,4 +457,5 @@ transitions (`bc4edae`) are verified. Core applies module results atomically;
 SRD retains existing equipment behavior. All78 integrated checks plus actual
 game47-weapon equipment controls pass. [Packet and commands](LIGHT-ATTACKS.md#rules-owned-equipment-transition-work).
 This does **not** complete Light attacks, Two-Weapon Fighting or Loading acceptance;
-all three issues remain open and their new controls await LIGHT-1/2/3 approval.
+all three issues remain open. LIGHT-2/3 controls are approved; the equipment
+dialog still awaits LIGHT-1.

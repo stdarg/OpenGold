@@ -124,9 +124,14 @@ Training additions and the separate advancement dropdown.
 
 ## Pending — do not implement dependent choices
 
-LIGHT-1/2/3: [Light attacks](LIGHT-ATTACKS.md#proposed-controls--approval-required):
-hand-choice equipment dialog, weapon/Light combat controls and TWF selector/
-automatic benefit. Pending; no dependent implementation.
+LIGHT-1: [Light attacks](LIGHT-ATTACKS.md#proposed-controls--approval-required):
+hand-choice equipment dialog remains pending. The user's latest reply approved
+only questions2 and3; do not infer approval of question1.
+
+LIGHT-2/3 APPROVED2026-09-26 by “2. Yes. 3. Yes”: Weapon dropdown and Light
+Bonus Action controls in main/demo, plus Two-Weapon Fighting selectors and
+automatic damage benefit, within the exact recorded packet. No repeated approval
+is needed for these controls.
 
 | ID | Issue / decision | Recorded scope |
 | --- | --- | --- |
