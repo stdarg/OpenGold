@@ -25,19 +25,26 @@ comparisons; neighboring Savage/Champion checks4/4 PASS3.45s.1005 messages/diff
 checks pass. [Commands/logs](WEAPON-MASTERY.md#optional-hit-mastery-integration).
 No live build/test. All source changes are owned by this batch.
 
-## Next
+## Next batch: Alert (#74)
 
-Inspect B04 Fighter starting/progression integration acceptance (#84/#89) against delivered features and freeze the
-next bounded batch under [workflow](SRD-WORKFLOW.md). Do not infer whole-class
-completion or start unrelated progression from the mastery delivery. Reuse the
-[backlog grouping](SRD-BATCHING-REVIEW.md); refresh only affected issues.
+Branch `codex/srd-alert`, based on completed mastery delivery13cc711.142 open
+issues verified by GitHub GraphQL; #60/#85 are closed. Fighter #84 still needs
+starting equipment choices; #89 needs reconciliation with the remaining feat
+catalog. Do not close them from mastery evidence alone.
 
-Routing for the completed batch: requested Astra/high for interacting rules and
-persistence; actual configuration unverified. Reclassify/announce before the next
-implementation batch. One owner, no delegation. Original start03:56:03 and
-checkpoint04:56:24 retained; blocked wait06:29:28–13:59:56; approval continuation
-13:59:56, checkpoint14:58:14. Phase/evidence record is in the packet; no measured
-token/cost figures or claimed speedup.
+[Alert packet](ALERT.md) freezes the next original requirement, sources, exclusions
+and verification. ALERT-1 is the single pending control approval, to be displayed
+as question1 with the Glass alert. No Alert implementation has started. After
+approval, capture actual0.6.60 writer fixtures before changing the writer, then
+implement its real grants, Initiative bonus and optional swap. No new issues,
+Human selector, equipment policy or class progression is included.
+
+Requested Astra/high, actual runtime selection unverified; announced for this
+batch's combat-start sequencing and persistence. One owner, no delegation.
+Preflight15:34:23 UTC2026-09-26. Follow SRD-WORKFLOW and the recorded packet.
+Completed mastery timings/evidence remain in WEAPON-MASTERY; do not reset them.
+The existing goal tracker still says blocked from the former approval wait;
+no pause or completion was requested or set by this continuation.
 
 ## Standing constraints
 
