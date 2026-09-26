@@ -2,59 +2,49 @@
 
 Updated2026-09-26. Standing goal remains incomplete: close all `SRD_improvements`,
 preserving all twelve classes through4 and planned higher levels/multiclassing.
-All MASTERY-1–7 decisions are approved and implemented. No unanswered question
-blocks this delivery. The goal tool still reports **blocked** from the former
-approval wait; this assistant cannot set it active and has not paused it.
-Implementation continued under the standing authorization. No agents/new tasks or
-model/runtime changes authorized.
+The goal tracker still says **blocked** from the former approval wait; this
+assistant cannot set it active and has not paused it. Authorized implementation
+continued. No agents/new tasks or model/runtime changes authorized.
 
-## Delivery
+## Latest delivery: Alert (#74)
 
-Branch `codex/srd-weapon-mastery`. [Fixed packet](WEAPON-MASTERY.md) is complete:
-all eight properties, existing class routes, grants/creation/review, Fighter4,
-Long Rest replacement, retained saves and main/demo controls. #60/#85 are closed; GitHub GraphQL confirms142 open SRD issues.
-Implementation commit80ce54b is pushed.
-Other mastery source issues #140/#147/#111/#103 retain their remaining acceptance.
-Rules0.6.60/combat25; prior supported formats retained. Rest Save control `a0514a9`
-and Graze `a038d91` precede this final integration. Main remains375f58f; no merge or
-release integration claimed. [Canonical completion record](SRD-COVERAGE.md#weapon-mastery-integration-complete-6085).
+Branch `codex/srd-alert`, implementation2320701 pushed. #74 CLOSED at
+16:39:33 UTC; GitHub GraphQL confirms141 open SRD issues. Rules0.6.61/PC40/combat26.
+All ALERT-1 behavior is implemented.51/51 native tests PASS9.06s, mainEN/ES and
+demoEN actual keyboard/mouse controls pass both sizes; creation, advancement and
+neighboring controls pass.1014 messages validate. No live build/test; no unchecked
+runtime edits. [Canonical completion](SRD-COVERAGE.md#alert-complete-74),
+[feature/evidence](ALERT.md). Approximately26 minutes from approval to closure;
+preflight/wait excluded. Main remains375f58f; no merge/release claimed.
 
-Verification:50 native executables rebuilt;51/51 PASS16.84s. MainEN/ES and demoEN
-rendered keyboard/mouse controls pass1120×800/1920×1080 with exact native state
-comparisons; neighboring Savage/Champion checks4/4 PASS3.45s.1005 messages/diff
-checks pass. [Commands/logs](WEAPON-MASTERY.md#optional-hit-mastery-integration).
-No live build/test. All source changes are owned by this batch.
+Previous Weapon Mastery delivery80ce54b and #60/#85 closures remain complete:
+[canonical record](SRD-COVERAGE.md#weapon-mastery-integration-complete-6085).
+Do not redo it. #84 starting equipment and #89 other Fighter4 acceptance remain.
 
-## Next batch: Alert (#74)
+## Next: Skilled (#77), B01
 
-Branch `codex/srd-alert`, based on completed mastery delivery13cc711.142 open
-issues verified by GitHub GraphQL; #60/#85 are closed. Fighter #84 still needs
-starting equipment choices; #89 needs reconciliation with the remaining feat
-catalog. Do not close them from mastery evidence alone.
+[Fixed packet and concrete control proposal](SKILLED.md). No implementation has
+started. SKILLED-1 is the single pending control question, displayed as question1
+with Glass audio. It adds a Skilled Training page to the existing level-up window.
+No Human selector, new entitlement, equipment policy or crafting action is added.
+The packet includes four missing SRD tool **proficiency** entries needed by the
+feat's unrestricted choices. No new issues or silent prerequisite expansion.
 
-[Alert packet](ALERT.md) freezes the next original requirement, sources, exclusions
-and verification. ALERT-1 is approved by the user's “1. Approved” reply.
-Continuation started16:13:12 UTC2026-09-26; checkpoint due17:13:12 UTC.
-Alert implementation and verification are complete:51/51 native tests, main/demo
-controls and adjacent creation/advancement checks pass. Commit/push and #74 closure
-are the remaining delivery steps. Actual0.6.60 fixtures are preserved. No new issues,
-Human selector, equipment policy or class progression is included.
-
-Requested Astra/high, actual runtime selection unverified; announced for this
-batch's combat-start sequencing and persistence. One owner, no delegation.
-Preflight15:34:23 UTC2026-09-26. Follow SRD-WORKFLOW and the recorded packet.
-Completed mastery timings/evidence remain in WEAPON-MASTERY; do not reset them.
-The existing goal tracker still says blocked from the former approval wait;
-no pause or completion was requested or set by this continuation.
+After approval, branch from this completed delivery, capture actual0.6.61 writer
+fixtures before changing the writer, then implement the recorded packet. Current
+libraries are0.6.61. Read SRD-WORKFLOW, SRD-MODEL-ROUTING and the packet after resets.
+Requested Astra/high for sourced repeatable choices and persistence; actual
+runtime selection unverified. One owner, no delegation. Preflight16:40:50 UTC;
+record approval continuation time and checkpoint before coding. A decision reply
+does not resume a paused goal; this goal was not paused by this continuation.
 
 ## Standing constraints
 
-Read SRD-WORKFLOW and SRD-MODEL-ROUTING after resets; use SRD-REPO-MAP.
 Camp/inn saves only; unlimited ammunition (AMMO-UNLIMITED). No agents/new tasks,
 settings changes, compatibility cuts or silent scope growth. Finish build inputs
 before building; rebuild affected targets before tests; Godot runs serially.
 Commit/push owned verified work and close only full original acceptance.
 Questions restart at1 per set; play `/usr/bin/afplay /System/Library/Sounds/Glass.aiff`
-and write every question visibly. A decision reply does not resume a paused goal.
-#97 spellbooks/copying and #165 missing spells remain; #98/#101/full Wizard open.
-Q19–21 remain separate pending decisions; Q23 superseded by STYLE-1.
+and write every question visibly. #97 spellbooks/copying and #165 missing spells
+remain; #98/#101/full Wizard remain open. Q19–21 are separate pending decisions;
+Q23 was superseded by STYLE-1. Do not reload the entire historical conversation.

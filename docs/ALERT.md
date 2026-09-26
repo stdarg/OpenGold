@@ -154,3 +154,7 @@ Timing evidence (UTC2026-09-26; observed log timestamps): approval continuation
 16:31:58; final broad build16:32:14–16:35:55. Final native verification completed
 before16:39. One original feat requirement delivered; no new issues or scope.
 Requested Astra/high; actual runtime selection and token/cost metrics unavailable.
+
+Delivery: tested code2320701 pushed on`codex/srd-alert`; #74 closed at
+2026-09-26T16:39:33Z,26m21s after approval continuation. GitHub GraphQL count141.
+Completion is recorded once in [SRD-COVERAGE](SRD-COVERAGE.md#alert-complete-74).

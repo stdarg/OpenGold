@@ -603,3 +603,25 @@ this and the preceding style/Light deliveries. #140/#147/#111/#103 retain their
 other original requirements; Barbarian progression and all later-level/multiclass
 requirements remain. No issue or feature scope was added. Source: [SRD Fighting
 Style feats](https://www.dndbeyond.com/sources/dnd/br-2024/feats#FightingStyleFeats).
+
+### Alert complete (#74)
+
+Tested implementation **2320701**, pushed on`codex/srd-alert`; #74 closed
+2026-09-26T16:39:33Z. GitHub GraphQL confirms141 open SRD issues. Criminal
+characters from all12 creation/preset routes receive the fixed grant; existing
+six level4 feat routes offer Alert without duplicate acquisition. Initiative
+Proficiency and optional pre-turn swaps work through the approved main/demo
+dialog, including multiple holders, incapacitation and exact pending saves.
+Mechanics remain in the static SRD library. Rules0.6.61/PC40/combat26 retains all
+previous supported formats; historical combats keep their rolls and current turn.
+
+51/51 native tests pass in9.06s after affected rebuilds. MainEN/ES and demoEN
+keyboard/mouse checks pass at1120×800/1920×1080; creation, Fighter advancement
+with native save comparison and adjacent Savage/Champion controls pass.1014
+localized messages validate. [Scope, mechanics, commands and timing](ALERT.md),
+[native evidence](../tests/alert_checks.h), [rendered controls](../tests/alert_view_tests.gd).
+One original requirement closed in approximately26 minutes after approval;
+this excludes preflight and approval wait. No new issue or scope was added.
+Human's independent extra Origin-feat source remains#71; background equipment
+and other class progression remain their original issues. Main stays375f58f;
+branch delivery is not a merge or release claim.
