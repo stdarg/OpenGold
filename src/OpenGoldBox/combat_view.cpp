@@ -1,3 +1,4 @@
+#include "initiative_controls.h"
 #include "optional_effect_controls.h"
 #include "combat_weapon_controls.h"
 #include "nick_controls.h"
@@ -142,6 +143,7 @@ void CombatView::_ready()
     hover_style->set_border_width_all(1);hover_style->set_corner_radius_all(4);hover_style->set_content_margin_all(10);
     hover->add_theme_stylebox_override("panel",hover_style);
     presentation::setup_nick(*this,i18n::text,callable_mp(this,&CombatView::begin_nick),callable_mp(this,&CombatView::nick_selected),callable_mp(this,&CombatView::confirm_nick),callable_mp(this,&CombatView::cancel_nick),callable_mp(this,&CombatView::nick_input));
+    presentation::setup_initiative(*this,i18n::text,callable_mp(this,&CombatView::immediate).bind("initiative_swap"),callable_mp(this,&CombatView::immediate).bind("initiative_keep"),callable_mp(this,&CombatView::initiative_input),callable_mp(this,&CombatView::refresh).unbind(1));
     presentation::setup_optional_effect(*this,i18n::text,callable_mp(this,&CombatView::immediate).bind("effect_use"),callable_mp(this,&CombatView::immediate).bind("effect_skip"),callable_mp(this,&CombatView::optional_effect_input),callable_mp(this,&CombatView::refresh).unbind(1));
     presentation::setup_weapon_controls(*this,i18n::text,callable_mp(this,&CombatView::weapon_selected));ready_=true;get_window()->set_min_size(Vector2i(1120,800));set_texture_filter(TEXTURE_FILTER_NEAREST);layout();
     if(Engine::get_singleton()->is_editor_hint())return;
@@ -546,7 +548,7 @@ void CombatView::immediate(String verb)
     const auto state=demo_->combat().snapshot();
     if(state.effect_targeting&&wanted=="end")wanted="effect_skip";
     if(std::none_of(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor&&a.side==0;}))return;
-    for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted&&((wanted!="effect_use"&&wanted!="effect_skip")||c.item==presentation::optional_effect_item(*this,state))){act(c);return;}
+    for(const auto& c:demo_->combat().legal_commands())if(c.verb==wanted&&presentation::initiative_command(*this,c)&&((wanted!="effect_use"&&wanted!="effect_skip")||c.item==presentation::optional_effect_item(*this,state))){act(c);return;}
     if(state.reaction_pending&&wanted=="end"){
         error_="Resolve the opportunity attack or decline the reaction before ending the turn.";
         refresh();
@@ -582,6 +584,11 @@ void CombatView::act(const Command& command)
     }
     catch(const std::exception& e){error_=e.what();refresh();}
 }
+void CombatView::initiative_input(const Ref<InputEvent>& event){
+    const Ref<InputEventKey> key=event;if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ESCAPE){
+        get_node<Window>("InitiativeChoice")->set_input_as_handled();immediate("initiative_keep");
+    }
+}
 void CombatView::optional_effect_input(const Ref<InputEvent>& event){
     const Ref<InputEventKey> key=event;if(key.is_valid()&&key->is_pressed()&&!key->is_echo()&&key->get_keycode()==Key::KEY_ESCAPE){
         get_node<Window>("OptionalEffect")->set_input_as_handled();immediate("effect_skip");
@@ -589,6 +596,7 @@ void CombatView::optional_effect_input(const Ref<InputEvent>& event){
 }
 void CombatView::_input(const Ref<InputEvent>& event)
 {
+    if(get_node<Window>("InitiativeChoice")->is_visible())return;
     if(get_node<Window>("OptionalEffect")->is_visible())return;
     if(get_node<Window>("NickAttack")->is_visible())return;
     if(get_node<Window>("SneakAttack")->is_visible()||get_node<Window>("TemporaryHP")->is_visible()||get_node<Window>("SavageAttacker")->is_visible()||get_node<Window>("TacticalMind")->is_visible())return;
@@ -914,6 +922,7 @@ void CombatView::refresh()
     const bool weapon_layout=presentation::refresh_weapons(*this,choice_actor,player,[](const Message& message){return i18n::render(message);});
     const bool bonus_layout=presentation::refresh_bonus_attacks(*this,choice_actor,offered,player,i18n::text,[](const Message& message){return i18n::render(message);});
     presentation::refresh_nick(*this,choice_actor,player&&!s.reaction_pending,[](const Message& message){return i18n::render(message);});
+    presentation::refresh_initiative(*this,s,offered,i18n::text,[](const Message& m){return i18n::render(m);});
     presentation::refresh_optional_effect(*this,s.optional_effect_choice,player,[](const Message& m){return i18n::render(m);});
     if(s.reaction_pending)get_node<Button>("Nick")->hide();
     if(weapon_layout||bonus_layout)layout();

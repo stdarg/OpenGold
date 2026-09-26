@@ -279,6 +279,8 @@ struct Snapshot {
     std::optional<FreeMovement> free_movement;
     std::optional<OptionalEffectChoice> optional_effect_choice;
     std::optional<EffectTargeting> effect_targeting;
+    // Pre-turn decisions; legal commands carry eligible actors and allies.
+    std::vector<EntityId> initiative_choices;
     std::vector<HeldItemView> held_items;
     bool physical_inventory{};
 };

@@ -924,3 +924,17 @@ SHA-256:
 identity and exact continuation. Existing0.6.57 pending damage/movement fixtures
 retain their original continuation; fresh attacks after loading an older settled
 checkpoint may offer the newly implemented properties.
+
+## Alert baseline — actual0.6.60 writer
+
+Captured2026-09-26 before any Alert runtime changes, from production80ce54b
+(inherited at63936c1), using `opengold_training_tests --freeze-alert`.
+The generator requires exactly0.6.60. The campaign contains normally advanced
+Criminal Fighter/Rogue4, actual equipment, chosen training/masteries and wounds.
+Combat captures retain their original Initiative order and one End Turn
+continuation; loading must never reopen Initiative choices. Campaign migration
+adds only the fixed Criminal Alert grant. No fixture bytes were relabeled.
+
+- `campaign-alert-0.6.60.ogs`: `cdeb881c090315272b68de3d52ccb847f97f01891040ce639f29d8daf3cfe9b9`
+- `combat-alert-0.6.60.save`: `405a4626789d490371e7194d8e245112cac69561d1570ae503494b61d06bc8fb`
+- `combat-alert-0.6.60-continued.save`: `7d2d3c6895947c003f5695426d112e367509d85dda10e48edc858e4911110ca5`

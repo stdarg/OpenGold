@@ -282,7 +282,7 @@ Command choose_demo_command(const CombatSession& session)
     const auto state=session.snapshot();const auto offered=session.legal_commands();if(offered.empty())throw std::runtime_error("No legal combat command");
     const auto& active=*std::find_if(state.combatants.begin(),state.combatants.end(),[&](const auto& a){return a.id==state.actor;});
     // The module orders its pending check choices by its default AI preference.
-    if(state.effect_targeting||state.optional_effect_choice||state.ability_check_choice||state.free_movement||state.sneak_attack_choice)return offered.front();
+    if(!state.initiative_choices.empty()||state.effect_targeting||state.optional_effect_choice||state.ability_check_choice||state.free_movement||state.sneak_attack_choice)return offered.front();
     if(state.temporary_hp_offer){
         const auto verb=state.temporary_hp_offer->current.amount>=state.temporary_hp_offer->offered.amount?"temp_hp_keep":"temp_hp_use";
         for(const auto& command:offered)if(command.verb==verb)return command;

@@ -33,10 +33,11 @@ starting equipment choices; #89 needs reconciliation with the remaining feat
 catalog. Do not close them from mastery evidence alone.
 
 [Alert packet](ALERT.md) freezes the next original requirement, sources, exclusions
-and verification. ALERT-1 is the single pending control approval, to be displayed
-as question1 with the Glass alert. No Alert implementation has started. After
-approval, capture actual0.6.60 writer fixtures before changing the writer, then
-implement its real grants, Initiative bonus and optional swap. No new issues,
+and verification. ALERT-1 is approved by the user's “1. Approved” reply.
+Continuation started16:13:12 UTC2026-09-26; checkpoint due17:13:12 UTC.
+Alert implementation and verification are complete:51/51 native tests, main/demo
+controls and adjacent creation/advancement checks pass. Commit/push and #74 closure
+are the remaining delivery steps. Actual0.6.60 fixtures are preserved. No new issues,
 Human selector, equipment policy or class progression is included.
 
 Requested Astra/high, actual runtime selection unverified; announced for this

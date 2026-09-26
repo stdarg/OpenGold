@@ -4,7 +4,7 @@ Command command(const CombatSession& c,std::string_view verb){for(const auto& v:
 bool has(const CombatSession& c,std::string_view verb){for(const auto& v:c.legal_commands())if(v.verb==verb)return true;return false;}
 void act(CombatSession& c,std::string_view verb){check(c.submit(command(c,verb)),"Cunning command accepted");}
 CombatantView unit(const CombatSession& c){for(const auto& a:c.snapshot().combatants)if(a.id==1)return a;throw std::runtime_error("Missing Rogue");}
-auto battle(const Character& h){auto rules=module();auto c=rules->create({{10,8,std::vector<std::uint8_t>(80)},{{1,"campaign-character","Rogue",0,{1,1},rules->character_profile(h.sheet(),std::array<std::string,1>{"dagger"}).data},{99,"vanguard","Enemy",1,{2,1}}}},2);while(c->snapshot().actor!=1)act(*c,"end");return c;}
+auto battle(const Character& h){auto rules=module();auto c=rules->create({{10,8,std::vector<std::uint8_t>(80)},{{1,"campaign-character","Rogue",0,{1,1},rules->character_profile(h.sheet(),std::array<std::string,1>{"dagger"}).data},{99,"vanguard","Enemy",1,{2,1}}}},2);test::keep_initiative(*c);while(c->snapshot().actor!=1)act(*c,"end");return c;}
 void run(){
     auto rules=module();auto creation=srd5::character_rules();
     const auto output=std::filesystem::path(OPENGOLD_BINARY_DIR)/"cunning-fixtures";std::filesystem::create_directories(output);
@@ -18,7 +18,7 @@ void run(){
         check(std::find(h.sheet().grants.begin(),h.sheet().grants.end(),FeatureGrant{"feature:cunning_action","class:rogue",2,{}})!=h.sheet().grants.end(),"Sourced level-two grant");
         check(rules->advancement_options(h.sheet()).level==3,"Rogue level three is now available through normal advancement");
         auto bad=h.sheet();std::erase_if(bad.grants,[](const auto& g){return g.id=="feature:cunning_action";});rejects([&]{(void)rules->character_profile(bad,{});});
-        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC39","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
+        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,profile.substr(0,profile.find(' ')),"PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
         for(bool bonus_first:{false,true}){
             c=battle(h);const int speed=unit(*c).movement_feet;write("available",*c);
             act(*c,bonus_first?"cunning_dash":"dash");check(unit(*c).action==bonus_first&&unit(*c).bonus_action!=bonus_first&&unit(*c).movement_feet==speed*2,"Dash spends exactly its chosen budget");
@@ -46,7 +46,7 @@ void run(){
     auto d=draft();d.training=choices();auto rogue=hero(d);VitalState vitals;check(rogue.advance(*rules,vitals),"Slow fixture advances normally");
     auto wizard_draft=draft("wizard","sage");wizard_draft.cantrips=std::vector<std::string>{"ray_of_frost"};auto wizard=hero(wizard_draft);
     auto slow=rules->create({{10,8,std::vector<std::uint8_t>(80)},{{1,"campaign-character","Rogue",0,{1,1},rules->character_profile(rogue.sheet(),{}).data},{99,"campaign-character","Wizard",1,{5,1},rules->character_profile(wizard.sheet(),{}).data}}},2);
-    while(slow->snapshot().actor!=99)act(*slow,"end");act(*slow,"ray_of_frost");act(*slow,"end");
+    test::keep_initiative(*slow);while(slow->snapshot().actor!=99)act(*slow,"end");act(*slow,"ray_of_frost");act(*slow,"end");
     check(unit(*slow).movement_feet==20,"Actual Frost hit reduces Rogue Speed to twenty");act(*slow,"cunning_dash");check(unit(*slow).movement_feet==40,"Bonus Dash grants reduced Speed");act(*slow,"dash");check(unit(*slow).movement_feet==60&&rules->restore(slow->save())->save()==slow->save(),"Both slowed Dash allowances persist");
     for(bool dead:{false,true}){
         auto down=rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Down Rogue",0,{1,1},rules->character_profile(rogue.sheet(),{}).data,VitalState{0,dead,{}}},{99,"vanguard","Enemy",1,{5,5}}}},2);

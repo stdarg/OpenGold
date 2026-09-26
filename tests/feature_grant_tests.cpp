@@ -3,6 +3,7 @@
 #include "opengold/character_creator.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
+#include "campaign_fixture.h"
 #include "../src/OpenGold.Rules.Srd5/src/weapon_mastery.h"
 #include <algorithm>
 #include <fstream>

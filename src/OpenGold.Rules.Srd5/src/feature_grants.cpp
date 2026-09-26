@@ -16,6 +16,7 @@ std::string grant_source_id(std::string_view label){
 }
 std::vector<rules::FeatureGrant> starting_grants(std::string_view klass,std::string_view race,std::string_view background){
     std::vector<rules::FeatureGrant> result;
+    if(background=="criminal")result.push_back({"feat:alert","background:criminal",1,{}});
     if(background=="soldier")result.push_back({"feat:savage_attacker","background:soldier",1,{}});
     if(klass=="fighter"){
         // Entitlement already used by the existing Defense selection. Completing
@@ -46,10 +47,11 @@ bool has_grant(std::span<const rules::FeatureGrant> grants,std::string_view id){
     return std::any_of(grants.begin(),grants.end(),[&](const auto& grant){return grant.id==id;});
 }
 GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::string_view klass,
-    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles,bool tactical_mind,bool champion,bool arcane_recovery,bool rogue_attacks,bool style_routes,bool two_weapon_fighting){
+    std::string_view race,std::string_view background,unsigned level,bool damage_traits,bool rush_trait,bool action_surge,bool archery,bool starting_styles,bool tactical_mind,bool champion,bool arcane_recovery,bool rogue_attacks,bool style_routes,bool two_weapon_fighting,bool alert){
     require(level>=1&&level<=4&&grants.size()<=32);
     require(background=="acolyte"||background=="criminal"||background=="sage"||background=="soldier");
     auto required=starting_grants(klass,race,background);
+    if(!alert)std::erase_if(required,[](const auto& g){return g.id=="feat:alert";});
     if(style_routes&&(klass=="paladin"||klass=="ranger")&&level>=2)required.push_back({"feature:fighting_style","class:"+std::string(klass),2,{}});
     if(!rogue_attacks)std::erase_if(required,[](const auto& g){return g.id=="feature:sneak_attack";});
     if(rogue_attacks&&klass=="rogue"&&level>=3)required.push_back({"feature:steady_aim","class:rogue",3,{}});
@@ -89,9 +91,10 @@ GrantEffects validate_grants(std::span<const rules::FeatureGrant> grants,std::st
             }else {
                 require(grant.choices.empty());
                 if(grant.id=="feat:defense"||(archery&&grant.id=="feat:archery")||(style_routes&&grant.id=="feat:great_weapon_fighting")||(two_weapon_fighting&&grant.id=="feat:two_weapon_fighting"))require(has_grant(grants,"feature:fighting_style"));
-                else require(grant.id=="feat:savage_attacker");
+                else require(grant.id=="feat:savage_attacker"||(alert&&grant.id=="feat:alert"));
             }
         }
+        if(grant.id=="feat:alert")effects.feats|=32;
         if(grant.id=="feat:defense")effects.feats|=1;
         if(grant.id=="feat:savage_attacker")effects.feats|=2;
         if(grant.id=="feat:archery")effects.feats|=4;

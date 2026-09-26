@@ -18,8 +18,8 @@
 - Requested Astra/high for combat-start sequencing and save migrations; actual
   runtime selection unverified. No settings change or delegation. Escalate after
   two unsuccessful fixes of the same failure or a new out-of-scope dependency.
-- Preflight observed2026-09-26 15:34:23 UTC. No implementation started. ALERT-1
-  below needs control approval under AGENTS.md before UI implementation.
+- Preflight observed2026-09-26 15:34:23 UTC. Approval continuation began2026-09-26 16:13:12 UTC. ALERT-1
+  approved by the user; implementation authorized. Checkpoint due17:13:12 UTC.
 
 ## Acceptance
 
@@ -58,7 +58,7 @@ starts combat. Feature grants, character profile/migration, that initialization
 boundary, generic pending-choice interfaces and shared combat views are the
 bounded source routes. Capture old-writer evidence before editing them.
 
-## Proposed control: ALERT-1 (pending)
+## Approved control: ALERT-1
 
 In both game and demo, use a centered640×360 Alert dialog before the first combat
 turn. Show the selected holder's Initiative total and a labeled Ally dropdown
@@ -80,3 +80,77 @@ creation's250gp policy. #89 must be reconciled with the remaining feat catalog;
 do not close it merely because Weapon Mastery and Fighting Styles are complete.
 Those issues remain open. Alert is a bounded original feat requirement and a
 Criminal-background dependency; no new issue or silent prerequisite is added.
+
+## Implementation and compatibility
+
+Rules0.6.61 introduces PC40 only for characters who have Alert. Existing profile
+versions remain unchanged. Combat26 is used while the opening choices are
+pending; it records the remaining holders and preserves RNG, totals and order.
+After the final choice, the ordinary current-turn format applies. Each command
+carries the current revision, holder and selected ally; stale or illegal commands
+fail before mutation. The module computes the bonus, eligible allies, swaps and
+final order. Core consumes generic commands; the shared Godot dialog renders
+those commands and totals.
+
+The first turn, blindness recovery scheduling and death saves wait until every
+party choice is resolved. Enemy holders keep their totals automatically. Campaign
+reconstruction adds Criminal's fixed grant; old combat reconstruction retains its
+historical profiles/totals and starts no new choice phase. Actual0.6.60 evidence
+and hashes are in [the fixture record](../tests/fixtures/README.md#alert-baseline--actual0660-writer).
+
+## Verification
+
+Final integrated runtime: main and demo builds passed;50 native executables
+rebuilt, then51/51 non-Godot CTests passed in9.06s. Alert acceptance is part of
+`opengold_training_tests` (`--alert` also runs it alone). It covers all12 Criminal
+creation routes, six current level4 entitlements, duplicate/provenance rejection,
+independent Initiative bonus/cancelled Advantage evidence, multiple holders,
+updated totals, enemy/self/incapacitated targets, sleeping holders, stale commands,
+malformed pending records,32 seeds including an incapacitated first slot, exact
+pending continuation and genuine prior-writer migration. Existing preset tests
+also check Criminal Alert grants.
+
+`alert_view_tests.gd` passes mainEN/ES and demoEN at1120×800/1920×1080. It uses
+actual keyboard/mouse dropdowns/buttons, exchanges unequal totals, selects the
+second resolver, declines with Escape, and compares complete saves with native
+oracles. Screenshots were inspected at the minimum size. Creation controls pass
+all12 class routes; Fighter ASI UI passesEN/ES and both outputs match the native
+oracle. Adjacent Savage/Champion controls and their native prerequisites pass4/4
+in4.16s.1014 localized messages and `git diff --check` pass.
+
+Three older regressions needed explicitly updated expectations: decline the new
+opening decision before weapon-catalog attacks, and add the fixed Criminal grant
+to old rest/mastery campaign expectations. Full comparisons are preserved.
+An early test-only compile error used a nonexistent vitality field; corrected
+before verification. Existing Godot Mono editor-import diagnostics (saved window
+position/debugger timer) remain; actual runtime UI logs are clean. No source
+changes followed successful runtime UI verification; subsequent edits were tests
+and delivery records. No packaging/export or main-branch integration claimed.
+
+Reproduce from the repository root in Bash:
+
+```bash
+cmake --build build/mac-check --target opengold_training_tests -j6
+build/mac-check/opengold_training_tests --alert
+ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6
+python3 tools/localization.py --check
+```
+
+Rebuild all affected native targets before the full CTest run. Main preparation:
+`opengoldbox_test_project`; demo: `build/sprite-demo` target`opengold_godot`.
+Run `tests/run_godot_test.cmake` graphically with `alert_view_tests.gd`,
+`--nick-fixtures=/Users/edmond/src/OpenGold/build/mac-check/alert-fixtures`, and
+optionally `--nick-captures=/tmp/alert-captures`; add`--nick-demo` for the demo.
+Expected marker: `Alert UI tests passed`. These reuse hidden test checkpoint hooks,
+not player combat-save controls.
+
+Logs: `/tmp/alert-final-build.log`, `/tmp/alert-native-verified.log`,
+`/tmp/alert-{main,demo}-final.log`, `/tmp/alert-creation-ui.log`,
+`/tmp/alert-advancement-ui.log`, `/tmp/alert-neighbor-ui.log`.
+Screenshots: `/tmp/alert-main-final/`, `/tmp/alert-demo-final/`.
+
+Timing evidence (UTC2026-09-26; observed log timestamps): approval continuation
+16:13:12; actual prior-writer build16:16:56–16:17:18; integrated training pass by
+16:31:58; final broad build16:32:14–16:35:55. Final native verification completed
+before16:39. One original feat requirement delivered; no new issues or scope.
+Requested Astra/high; actual runtime selection and token/cost metrics unavailable.

@@ -36,7 +36,7 @@ std::uint64_t rng(const CombatSession& c){std::istringstream in(c.save());std::s
 std::string argument(const Message& m,std::string_view key){for(const auto& a:m.arguments)if(a.name==key)return a.value;throw std::runtime_error("Missing argument");}
 Message attack(const CombatSession& c){for(const auto& m:c.snapshot().log_messages)if(m.source.starts_with("{actor} -> {target}: d20"))return m;throw std::runtime_error("Missing attack");}
 auto battle(const RulesModule& rules,const Character& h,const std::string& weapon,unsigned seed=13,Cell target={3,1}){
-    auto profile=rules.character_profile(h.sheet(),std::array{weapon});auto c=rules.create({{64,4,std::vector<std::uint8_t>(256)},{{1,"campaign-character","Hero",0,{1,1},profile.data},{2,"target","Target",1,target}}},seed);check(c->snapshot().actor==1,"Golden seed begins with hero");return c;
+    auto profile=rules.character_profile(h.sheet(),std::array{weapon});auto c=rules.create({{64,4,std::vector<std::uint8_t>(256)},{{1,"campaign-character","Hero",0,{1,1},profile.data},{2,"target","Target",1,target}}},seed);test::keep_initiative(*c);check(c->snapshot().actor==1,"Golden seed begins with hero");return c;
 }
 void definitions(){
     const std::map<std::string,catalog::Ammunition> ammo{{"none",catalog::Ammunition::none},{"arrow",catalog::Ammunition::arrow},{"bolt",catalog::Ammunition::bolt},{"sling_bullet",catalog::Ammunition::sling_bullet},{"firearm_bullet",catalog::Ammunition::firearm_bullet},{"needle",catalog::Ammunition::needle}};
@@ -110,7 +110,7 @@ void legacy(){
     check(party.member(1).character.inventory().find(1)->get().definition_id=="longbow","Legacy original type-45 bow must retain its established conversion");
     check(party.member(2).character.inventory().find(1)->get().definition_id=="longbow"&&party.member(3).character.inventory().find(1)->get().definition_id=="longbow","Real Longbow and item without source provenance are preserved");
     auto expected=old.substr(old.find('\n',old.find('\n')+1)+1);expected.replace(expected.find("0.6.16"),6,rules->identity().version);const auto bytes=encode_campaign(party,nullptr,"catalog-fixture");
-    check(bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1)==test::with_initial_wizard_spell_grants(expected),"Migration adds only explicit spell/Sage grants and module identity, retaining original and authored weapons, grants, pools, wounds and clock");
+    check(bytes.substr(bytes.find('\n',bytes.find('\n')+1)+1)==test::with_alert_grants(test::with_initial_wizard_spell_grants(expected)),"Migration adds only explicit spell/Sage/Alert grants and module identity, retaining original and authored weapons, grants, pools, wounds and clock");
     CampaignParty again(module());again.restore(decode_campaign(bytes,*srd5::character_rules(),*rules,"catalog-fixture",nullptr).party);check(encode_campaign(again,nullptr,"catalog-fixture")==bytes,"Correction occurs only once");
     const auto previous=read(fixtures/"combat-v12-catalog.save");auto c=rules->restore(previous);auto same=previous;same.replace(same.find("0.6.16"),6,rules->identity().version);check(c->save()==test::with_savage_choice(same),"Combat recipes have no original-item provenance and retain their saved weapon/RNG/resources");
     act(*c,"ranged");check(c->save()==rules->restore(read(fixtures/"combat-v12-catalog-continued.save"))->save(),"Frozen prior-writer combat continuation remains exact");

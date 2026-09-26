@@ -47,6 +47,7 @@ private:
     bool matches_item(const opengold::rules::Command& command) const;
     void thrown_selected(std::int64_t index);void begin_throw();
     unsigned effect_target_index_{};
+    void initiative_input(const godot::Ref<godot::InputEvent>& event);
     void optional_effect_input(const godot::Ref<godot::InputEvent>& event);
     void begin_nick();void nick_selected(std::int64_t index);void confirm_nick();void cancel_nick();void nick_input(const godot::Ref<godot::InputEvent>& event);
     std::vector<std::pair<unsigned,opengold::rules::EntityId>> item_holders_;

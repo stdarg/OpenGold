@@ -180,3 +180,10 @@ Vulnerability. MASTERY-7 approves the rest-window Save game button and return to
 the same pending choice. See [combat proposals](WEAPON-MASTERY.md#additional-combat-decisions-approved)
 and [rest proposal](WEAPON-MASTERY.md#long-rest-implementation-evidence-wip).
 These decisions resolve the recorded approval blockers; do not ask again.
+
+## ALERT-1 — approved2026-09-26
+
+User reply: “1. Approved”. Approves the centered640×360 pre-turn Alert dialog
+in main/demo, Ally and conditional Resolve next dropdowns, current totals,
+Swap initiative / Keep initiative, Escape decline, keyboard/mouse and action
+blocking. Enemy AI keeps rolls. See [frozen scope](ALERT.md). No other scope added.
