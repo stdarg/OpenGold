@@ -477,3 +477,21 @@ identities; initializing them at encounter creation fixed live/restored divergen
 Core gained no SRD calculations. No new issues, agents, ammunition tracking or
 combat-save controls were added. Nick/mastery, level-five Extra Attack, other
 styles and remaining class/spell requirements stay open under their existing scope.
+
+### Ability Score Improvement conformance (#82)
+
+Reconciled by test/build commit`c3a88b4` on`codex/srd-asi-conformance`; #82 closed.
+The existing rules0.6.55 implementation was verified rather than duplicated.
+[Acceptance, limits and evidence](ASI-CONFORMANCE.md):252 allocation/class/ownership
+cases, all-ability caps, all12 early-entitlement checks, exact provenance,
+modifiers/saves/skills/combat effects, Constitution HP, wounds/resources, rests
+and saved histories. Duplicate use of one entitlement is rejected; ASI remains
+repeatable when further legal entitlements become available. The current1–4 band
+provides one; unavailable class progression and later levels remain open.
+
+The extended advancement suite passes. Existing controls pass for six classes,
+mainEN/ES + demoEN at both sizes, and all18 saved UI results match native
+advancement exactly. Production code/formats are unchanged from the78-check
+Light batch baseline. The obsolete embedded single-page Wizard check is noted
+as deferred test maintenance; current two-page checks pass. No broader Fighter,
+class integration or higher-level completion is claimed.
