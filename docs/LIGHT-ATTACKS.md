@@ -303,7 +303,9 @@ final linked-target refresh/regression is required after this production fix.
 ## Delivery and verification
 
 Runtime/test commit **69771eb**, pushed on `codex/srd-light-attacks`.
-Original issues **#59/#81/#56 CLOSED** after push;149 →145 open SRD issues.
+Original issues **#59/#81/#56 CLOSED** after push;145 open SRD issues verified.
+The older149-issue snapshot still included#80 from the previous delivery; this
+batch closed three issues, not four.
 No new issues. Main branch remains375f58f; no PR or main integration is claimed.
 Canonical completion record: [coverage](SRD-COVERAGE.md#light-attacks-two-weapon-fighting-and-loading-598156).
 
