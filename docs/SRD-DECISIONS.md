@@ -168,7 +168,10 @@ User instruction 2026-09-25: restart visible question numbering at 1 for each ne
 STYLE-1/2 APPROVED2026-09-26: user replied “1. Yes. 2. yes.”
 Implementation continues in the frozen batch; no repeated approval needed.
 
-MASTERY-1–4 PENDING2026-09-26: [exact proposed controls](WEAPON-MASTERY.md#proposed-controls--awaiting-explicit-approval)
+MASTERY-1–4 APPROVED2026-09-26: user replied “1. Yes. 2. Yes. 3. Yes. 4. Yes.” [exact proposed controls](WEAPON-MASTERY.md#approved-controls)
 cover Training/fourth Fighter choice, completed Long Rest replacement, optional
-combat mastery decisions and Nick attack. These do not inherit approval from
-Light/style controls; dependent UI changes await the user's answer.
+combat mastery decisions and Nick attack. All four proposals are explicitly approved.
+
+MASTERY-5/6 PENDING: simultaneous Champion/mastery Resolve next selector and
+Graze damage-cap interpretation; see [concrete proposals](WEAPON-MASTERY.md#additional-combat-decisions-pending).
+Neither is covered by MASTERY-1–4 approval. Independent approved work continues.

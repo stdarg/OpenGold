@@ -24,6 +24,8 @@ template<class Translate> godot::String training_source(std::string_view id,cons
     if(id=="class:bard")return tr(N_("Bard class"));
     if(id=="class:cleric")return tr(N_("Cleric class"));
     if(id=="class:druid")return tr(N_("Druid class"));
+    if(id.ends_with(":weapon_mastery:4"))return training_source(id.substr(0,id.size()-17),tr)+" / "+tr(N_("Weapon Mastery"));
+    if(id.ends_with(":weapon_mastery"))return training_source(id.substr(0,id.size()-15),tr)+" / "+tr(N_("Weapon Mastery"));
     if(id=="class:fighter")return tr(N_("Fighter class"));
     if(id=="class:monk:tools")return tr(N_("Monk class"));
     if(id=="class:monk")return tr(N_("Monk class"));
@@ -58,6 +60,7 @@ template<class Translate> godot::String training_summary(const opengold::rules::
     }
     for(const auto& t:profile.tools)text+=tr(t.label)+" ("+training_sources(t.sources,tr)+")\n";
     for(const auto& l:profile.languages)text+=tr(l.label)+" ("+training_sources(l.sources,tr)+")\n";
+    for(const auto& m:profile.masteries)text+=tr(N_("Weapon Mastery"))+": "+tr(m.label)+" ("+training_sources(m.sources,tr)+")\n";
     return text;
 }
 inline void style_choice(godot::CheckBox& control){
@@ -131,7 +134,7 @@ template<class Translate> void refresh_training_controls(godot::Node& parent,con
             const auto callback=toggled.bind(training_string(group.id),node_name);check->connect("toggled",callback);check->set_meta("training_callback",callback);
             box->move_child(check,option_index++);
             const bool selected=std::find(picked.begin(),picked.end(),option.id)!=picked.end();
-            check->set_text(tr(option.label));check->set_pressed_no_signal(selected);check->set_disabled((has_locked&&std::find(original->second.begin(),original->second.end(),option.id)!=original->second.end())||(!selected&&picked.size()>=group.count));check->show();
+            check->set_text(tr(option.label)+(option.description.empty()?String():String(" / ")+tr(option.description)));check->set_pressed_no_signal(selected);check->set_disabled((has_locked&&std::find(original->second.begin(),original->second.end(),option.id)!=original->second.end())||(!selected&&picked.size()>=group.count));check->show();
             check->set_tooltip_text(training_source(group.id,tr));
         }
     }

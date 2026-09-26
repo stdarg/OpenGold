@@ -16,7 +16,9 @@ Character hero(std::string klass="fighter",unsigned level=4){
     CharacterDraft d;d.race="human";d.gender="female";d.character_class=klass;d.background="soldier";
     d.alignment="neutral_good";d.name="Rest tester";d.rolled=true;for(auto& r:d.rolls)r={{6,5,4,1},3};
     Character result(*srd5::character_rules(),d,{});VitalState scratch;
-    for(unsigned n=2;n<=level;++n)check(result.advance(*module(),scratch),"Fixture level is supported");return result;
+    // Keep this legacy-rest fixture's later training pending so it continues to
+    // exercise compact campaign formats 11/12, independently of newer choices.
+    for(unsigned n=2;n<=level;++n){auto choice=module()->default_advancement(result.sheet());std::erase_if(choice.training,[](const auto& group){return group.first.find(":weapon_mastery")!=std::string::npos;});check(result.advance(*module(),scratch,choice),"Fixture level is supported");}return result;
 }
 std::string saved(const CampaignParty& p){return encode_campaign(p,nullptr,"campaign-rest");}
 CampaignParty loaded(std::string_view bytes){CampaignParty p(module());p.restore(decode_campaign(bytes,*srd5::character_rules(),*module(),"campaign-rest",nullptr).party);return p;}

@@ -33,7 +33,7 @@ auto battle(const RulesModule& rules,const Character& h,unsigned seed=0,Cell tar
 }
 void grants(){auto rules=module();for(unsigned level=1;level<=4;++level){auto h=hero("fighter",level);const bool mind=level>=2;
     check(srd5::detail::has_grant(h.sheet().grants,"feature:tactical_mind")==mind,"Tactical Mind attained from level two");
-    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with(level>=3?"PC31 ":mind?"PC30 ":"PC28 "),"New feature profile is conditional");
+    auto profile=rules->character_profile(h.sheet(),{}).data;check(profile.starts_with(level==4?"PC39 ":level>=3?"PC31 ":mind?"PC30 ":"PC28 "),"New feature profile is conditional");
     if(mind){profile.replace(0,4,"PC29");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{2,"vanguard","Enemy",1,{5,5}}}},1);});}
 }}
 void outcomes(){auto rules=custom();constexpr std::uint64_t increment=0x9e3779b97f4a7c15ULL;

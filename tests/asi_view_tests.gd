@@ -1,6 +1,10 @@
 extends "style_advancement_view_tests.gd"
 func allocate_points() -> void:
     var level: Window = current_scene.get_node("LevelUp")
+    if klass == "fighter":
+        var mastery: OptionButton = level.get_node("AdvancementTraining")
+        require(mastery.visible and level.get_node("Confirm").disabled, "Fighter fourth mastery must be chosen")
+        mastery.select(1); mastery.item_selected.emit(1); await settle()
     for i in range(6):
         var choice: OptionButton = level.get_node("Ability" + str(i))
         require(choice.visible and choice.focus_mode == Control.FOCUS_ALL, "ASI ability control is visible and keyboard accessible")

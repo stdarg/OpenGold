@@ -114,7 +114,7 @@ void run(){
     for(const auto* klass:{"fighter","paladin","ranger"})for(unsigned level=2;level<=4;++level){
         auto h=style_route_checks::leveled(*rules(),klass,"two_weapon_fighting",level);
         check(std::any_of(h.sheet().grants.begin(),h.sheet().grants.end(),[](const auto& g){return g.id=="feat:two_weapon_fighting";}),"Actual supported class advancement grants TWF");
-        check(rules()->character_profile(h.sheet(),std::vector<std::string>{"dagger"}).data.starts_with("PC38 "),"TWF has versioned sourced profile");
+        check(rules()->character_profile(h.sheet(),std::vector<std::string>{"dagger"}).data.starts_with("PC39 "),"TWF and mastery have versioned sourced profiles");
     }
 }
 }

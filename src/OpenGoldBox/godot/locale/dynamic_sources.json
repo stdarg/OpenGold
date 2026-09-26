@@ -312,5 +312,17 @@
   "Select weapon",
   "Two-Weapon Fighting",
   "Weapon",
-  "Bonus Action"
+  "Bonus Action",
+  "Weapon Mastery",
+  "Cleave",
+  "Graze",
+  "Nick",
+  "Push",
+  "Sap",
+  "Slow",
+  "Topple",
+  "Vex",
+  "Invalid Weapon Mastery choices or provenance",
+  "Legacy campaign cannot contain Weapon Mastery",
+  "Legacy checkpoint cannot contain Weapon Mastery"
 ]

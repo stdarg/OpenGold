@@ -23,7 +23,7 @@ or model/runtime setting changes are authorized.
   recorded separately. New tests use and verify the current two-page flow.
 - Preflight03:41:40 to verified commit03:52:42 UTC2026-09-26:11m02s; one original
   issue reconciled, zero new issues. No claim of class completion or token savings.
-- No pending approvals, live builds/tests or code WIP. Requested Astra/high,
+- At that delivery there were no pending approvals, live builds/tests or code WIP. Requested Astra/high,
   configured model/effort unverified; no model change. Apply routing next batch.
 - Previous Light/TWF/Loading delivery#59/#81/#56: runtime69771eb; see coverage
   and `LIGHT-ATTACKS.md`. Actual old0.6.53/0.6.54 writer fixtures retained.
@@ -38,10 +38,28 @@ controls MASTERY-1–4. Preflight began03:56:03 UTC2026-09-26; checkpoint04:56:0
 configured model/effort unverified. One owner; no agents/new issues/settings.
 Target #60/#85, with shared mastery portions of #140/#147/#111/#103. All eight
 properties and five current class routes; unrelated class progression stays in
-its existing issues. No gameplay implementation yet. Five genuine0.6.55
-prior-writer fixtures captured; exact replay and full rebuilt training target
-pass04:05:58 UTC. No running test/build. Controls need explicit approval;
-see packet for exact questions. Continue independent in-scope work while pending.
+its existing issues. MASTERY-1–4 explicitly approved: “1. Yes. 2. Yes. 3. Yes. 4. Yes.”
+
+Acquisition WIP: SRD mastery grants/validation, creation/preset/review choices,
+Fighter4 selection, conditional PC39 and rules0.6.56. Combat effects and rest
+replacement transactions/UI remain unimplemented; pure replacement policy alone
+is tested. No issue closed. Latest committed/pushed compatibility preparation
+`344a6bb`; subsequent acquisition is recorded in the commit containing this handoff.
+
+Focused grants/training/advancement/weapons pass. MainEN/ES and demoEN Training,
+Fighter4 ASI and Review Training controls pass at both sizes, with five saved
+outputs compared against native expectations; logs `/tmp/mastery-ui-*.log`.
+All50 native targets rebuilt; final regression **51/51 PASS** (4.05s),
+`/tmp/mastery-native-final.log`. Localization972 and diff checks pass. No live
+build/test. First-run10 failures were obsolete profile assertions or incomplete
+training fixtures; corrected without dropping historical coverage. Acquisition
+checkpoint is recorded on the feature branch, not declared full mastery delivery.
+
+Next: Long Rest replacement orchestration/UI and eight combat properties. Two
+additional decisions are being presented as MASTERY-5/6 (numbered1/2 in chat):
+simultaneous mastery/Champion resolution selector and Graze/Vulnerability policy.
+Do not implement those undecided behaviors. Independent approved rest work can
+continue. The goal remains ACTIVE. No original issue closed;144 remain.
 
 ## Preserved decisions and exclusions
 

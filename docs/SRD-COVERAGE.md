@@ -495,3 +495,23 @@ advancement exactly. Production code/formats are unchanged from the78-check
 Light batch baseline. The obsolete embedded single-page Wizard check is noted
 as deferred test maintenance; current two-page checks pass. No broader Fighter,
 class integration or higher-level completion is claimed.
+
+### Weapon Mastery acquisition checkpoint (batch incomplete)
+
+The feature-branch commit containing this entry implements the acquisition part
+of [Weapon Mastery](WEAPON-MASTERY.md): five starting class routes, all38 eligible
+weapon kinds, Fighter4 additional selection, preset choices, pending historical
+training, chosen-grant validation and conditional PC39 recipes. Rules remain in
+`opengold_rules_srd5`; Core passes choice context and UI renders approved controls.
+The branch rules identity is0.6.56; no main/release integration is claimed.
+
+Fresh native regression51/51 passes (`/tmp/mastery-native-final.log`); mainEN/ES
+and demoEN Training/Review Training/Fighter4 ASI controls pass at both sizes,
+with five UI saves matching native expectations. Genuine0.6.55 campaign/combat
+fixtures retain exact continuation.972 localized messages validate. The committed
+acquisition tree is the tested revision; full batch verification is still due.
+
+**No original issue closed:** eight combat properties and completed-Long-Rest
+replacement transactions/UI remain outstanding. The pure replacement policy is
+unit-tested, not yet a playable rest path. This entry is partial evidence, not a
+claim that #60/#85 or the class issues are complete.

@@ -16,7 +16,7 @@ void verify(){
     auto rules=module();auto creation=srd5::character_rules();const auto prior=fixture("campaign-v11-sneak-before.ogs");CampaignParty party(module());party.restore(decode_campaign(prior,*creation,*rules,"sneak-before",nullptr).party);
     auto body=[](const auto& text){return text.substr(text.find('\n',text.find('\n')+1)+1);};auto expected=body(prior);replace(expected,"0.6.35",rules->identity().version);
     check(body(encode_campaign(party,nullptr,"sneak-before"))==test::with_sneak_attack_grants(expected),"Actual pre-Sneak campaign changes only fixed Sneak grant and module identity/checksum");
-    for(const auto& m:party.state().roster)check(m.character.sheet().level==m.id&&m.character.sheet().training.complete&&m.vitals.hit_points==m.character.sheet().hit_points-2&&m.wealth[3]==37,"Both ordinary Rogue levels preserve training, wounds and wealth");
+    for(const auto& m:party.state().roster)check(m.character.sheet().level==m.id&&!m.character.sheet().training.complete&&m.character.sheet().training.masteries.empty()&&m.vitals.hit_points==m.character.sheet().hit_points-2&&m.wealth[3]==37,"Both ordinary Rogue levels preserve training, wounds and wealth with newly owed masteries pending");
     auto upgraded=[&](const char* name){auto text=fixture(name);replace(text,"0.6.35",rules->identity().version);return text;};
     auto combat=rules->restore(fixture("combat-v15-sneak-before.save"));check(combat->save()==upgraded("combat-v15-sneak-before.save"),"Pre-Sneak pending hit retains exact continuation");
     const auto actor=cunning_checks::unit(*combat);check(!actor.action&&!actor.bonus_action&&actor.movement_feet==60,"Existing attack and Bonus Dash expenditures remain spent");

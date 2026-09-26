@@ -71,7 +71,7 @@ printed pp28–29,47–48,54,58–59,62 and90, checked2026-09-26.
     then final integrated regression on freshly built targets. Commit/push and
     update coverage before closing only fully proven original issues.
 
-## Proposed controls — awaiting explicit approval
+## Approved controls
 
 **MASTERY-1.** Reuse scrollable Training checkbox groups for Weapon Mastery in
 creation and Review Training, listing weapon plus mastery name and selection
@@ -121,4 +121,51 @@ pass; logs `/tmp/mastery-baseline-build.log` and `/tmp/mastery-baseline-tests.lo
 Only tests/documents changed, so no game rebuild or repeated integrated run.
 One compile correction (unique ownership) and one fixture correction (two-NPC
 party limit); neither failure repeated. No original issue closed by preparation.
-All four control proposals remain pending. No gameplay/UI source edits yet.
+All four controls subsequently approved by “1. Yes. 2. Yes. 3. Yes. 4. Yes.”
+Implementation now proceeds within those boundaries.
+
+### Acquisition implementation checkpoint (WIP)
+
+By04:39 UTC the acquisition paths and pure replacement policy were implemented.
+Focused grant/training/advancement/weapon checks pass. MainEN/ES and demoEN
+Training, Review Training and Fighter4 ASI checks pass at both supported sizes;
+five UI saves match native expectations. Artifacts/logs use `/tmp/mastery-*`.
+All50 native targets rebuilt; first regression41/51 passed. Ten older tests need
+updated complete-training inputs or conditional profile assertions; compact old
+rest-format fixtures retain explicitly pending training. Corrections in progress.
+Combat effects and actual Long Rest replacement remain outstanding. This is not
+batch delivery, and no original issue has been closed. Timing remains03:56:03
+start,04:56:03 checkpoint; no reset. Token/cost measurement unavailable.
+
+Acquisition verification recorded04:44:04 UTC (observed clock; final log records
+4.05s test duration): all51 native checks pass after rebuilding50 targets.
+`ctest --test-dir build/mac-check --output-on-failure -E '^opengold_godot_' -j6`
+produced `/tmp/mastery-native-final.log`; targeted correction builds are in
+`/tmp/mastery-regression-*-build.log`. Archery legacy rejection tests deliberately
+omit mastery grants so the original Archery boundary remains the cause of failure.
+Review found no SRD calculation in Core/UI. Localization972 and diff checks pass.
+This acquisition checkpoint is committed on the feature branch; full combat/rest
+acceptance and issue closures remain pending.
+
+### Additional combat decisions (pending)
+
+**MASTERY-5.** When mastery and Champion movement trigger simultaneously on a
+player-controlled turn, add a labeled Resolve next dropdown above the approved
+Use/Skip buttons in the same centered decision dialog. Each entry names an
+eligible pending effect. Use/Skip handles only the selected entry, retaining the
+others; existing movement/targeting controls resolve the chosen effect. Retain
+separate critical-hit movement entitlements from a Cleave critical. Keyboard
+access, no action refund, other actions waiting and no combat saves are unchanged.
+On enemy turns the game chooses a fixed mastery-before-movement order. Required
+UI confirmation under AGENTS.md; simultaneous effects are explicitly within
+acceptance row8, so this does not add unrelated trigger systems.
+
+**MASTERY-6.** Proposed Graze interpretation: its ability modifier is the upper
+limit on damage. Resistance/Immunity can reduce it; Vulnerability cannot increase
+it. For modifier+3, ordinary/vulnerable damage3, resistant1, immune0. This resolves
+the wording that Graze damage increases only with its ability modifier against
+the general Vulnerability doubling rule. Await user interpretation; do not treat
+this proposal as approval.
+
+Sources: SRD5.2.1 p90 (Graze) and official
+[Simultaneous Effects](https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary#SimultaneousEffects).

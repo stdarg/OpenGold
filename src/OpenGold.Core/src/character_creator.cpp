@@ -22,7 +22,8 @@ CharacterCreator::CharacterCreator(std::unique_ptr<CharacterRules> rules,Charact
 }
 std::vector<TrainingChoiceGroup> CharacterCreator::training_options() const {
     auto draft=draft_;
-    if(training_character_)for(const auto& group:training_module_->get().training_options(training_character_->sheet()))draft.training.erase(group.id);
+    // Choice queries can use retained later choices to exclude conflicting
+    // starting options. Actual reconstruction still separates acquired levels.
     auto groups=rules_->training_options(draft);
     if(training_character_){
         const auto candidate=training_character_->preview_training(*rules_,training_module_->get(),draft_.training,false);

@@ -18,7 +18,7 @@ void run(){
         check(std::find(h.sheet().grants.begin(),h.sheet().grants.end(),FeatureGrant{"feature:cunning_action","class:rogue",2,{}})!=h.sheet().grants.end(),"Sourced level-two grant");
         check(rules->advancement_options(h.sheet()).level==3,"Rogue level three is now available through normal advancement");
         auto bad=h.sheet();std::erase_if(bad.grants,[](const auto& g){return g.id=="feature:cunning_action";});rejects([&]{(void)rules->character_profile(bad,{});});
-        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC35","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
+        auto profile=rules->character_profile(h.sheet(),{}).data;replace(profile,"PC39","PC23");rejects([&]{(void)rules->create({{8,8,std::vector<std::uint8_t>(64)},{{1,"campaign-character","Forged",0,{1,1},profile},{99,"vanguard","Enemy",1,{5,5}}}},2);});
         for(bool bonus_first:{false,true}){
             c=battle(h);const int speed=unit(*c).movement_feet;write("available",*c);
             act(*c,bonus_first?"cunning_dash":"dash");check(unit(*c).action==bonus_first&&unit(*c).bonus_action!=bonus_first&&unit(*c).movement_feet==speed*2,"Dash spends exactly its chosen budget");

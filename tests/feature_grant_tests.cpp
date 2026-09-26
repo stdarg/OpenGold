@@ -1,6 +1,8 @@
 #include "opengold/campaign_save.h"
+#include "opengold/character_creator.h"
 #include "opengold/srd5.h"
 #include "combat_fixture.h"
+#include "../src/OpenGold.Rules.Srd5/src/weapon_mastery.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -145,5 +147,6 @@ void profiles_and_migration(){
     reference+="6\n1 0 1 1\n2 2 0 0\n3 3 0 0\n4 4 0 0\n5 5 0 0\n6 6 0 0\n1 1 1 1 1 1 1 \n";
     check(legacy->save()==reference,"Continuation matches the previous writer exactly, including damage, spent feats, turn budgets and RNG");
 }
+#include "mastery_grant_checks.h"
 }
-int main(){try{creation();advancement();profiles_and_migration();std::cout<<"Feature grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{mastery_grant_checks::run();creation();advancement();profiles_and_migration();std::cout<<"Feature grant tests passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

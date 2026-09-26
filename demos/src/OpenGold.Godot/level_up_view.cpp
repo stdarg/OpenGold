@@ -128,14 +128,17 @@ void CharacterCreationView::open_advancement(std::int64_t id){
     for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feat->add_item(gs(option.label)+(option.available?"":" (Unavailable)"));feat->set_item_disabled(i,!option.available);feat->set_item_tooltip(i,gs(option.description));if(option.id==advancement_choice_.feat)feat->select(i);}
     feat->set_disabled(advancement_options_.feats.empty());
     const bool has_training=!advancement_options_.training.empty();
+    const bool supplemental_training=has_training&&!advancement_options_.feats.empty();
     auto* training=window->get_node<OptionButton>("AdvancementTraining");training->clear();training->set_visible(has_training);
     window->get_node<Label>("AdvancementTrainingLabel")->set_visible(has_training);
-    for(unsigned i=0;i<6;++i){window->get_node<Control>(String("Ability")+String::num_uint64(i))->set_visible(!has_training);window->get_node<Control>(String("AbilityLabel")+String::num_uint64(i))->set_visible(!has_training);}
+    window->get_node<Label>("AdvancementTrainingLabel")->set_position(Vector2(24,supplemental_training?374:205));
+    training->set_position(Vector2(24,supplemental_training?406:236));
+    for(unsigned i=0;i<6;++i){window->get_node<Control>(String("Ability")+String::num_uint64(i))->set_visible(!has_training||supplemental_training);window->get_node<Control>(String("AbilityLabel")+String::num_uint64(i))->set_visible(!has_training||supplemental_training);}
     if(has_training){
         const auto& group=advancement_options_.training.front();
         window->get_node<Label>("AdvancementTrainingLabel")->set_text(gs(group.label));
-        training->add_item(gs("Choose a proficient skill"));
-        for(const auto& option:group.options)training->add_item(gs(option.label));
+        training->add_item(gs("Choose an option"));
+        for(const auto& option:group.options)training->add_item(gs(option.label)+(option.description.empty()?String():String(" / ")+gs(option.description)));
         training->select(0);advancement_choice_.training.clear();
     }
     for(unsigned i=0;i<6;++i)window->get_node<OptionButton>(String("Ability")+String::num_uint64(i))->select(advancement_choice_.abilities[i]);

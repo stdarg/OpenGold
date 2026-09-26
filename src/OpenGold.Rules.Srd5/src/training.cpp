@@ -1,4 +1,5 @@
 #include "training.h"
+#include "weapon_mastery.h"
 #include "feature_grants.h"
 #include <algorithm>
 #include <set>
@@ -140,6 +141,10 @@ std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view
         for(const auto& tool:tools)if(tool.kind==ToolKind::gaming)group.options.push_back({std::string(tool.id),std::string(tool.label),{}});
         result.push_back(std::move(group));
     }
+    if(policy>=TrainingPolicy::weapon_mastery){auto group=mastery_options(klass,1);
+        const auto& later=selected(choices,mastery_options(klass,4).id);
+        std::erase_if(group.options,[&](const auto& option){return std::find(later.begin(),later.end(),option.id)!=later.end();});
+        if(group.count)result.push_back(std::move(group));}
     return result;
 }
 std::vector<FeatureGrant> matching(std::span<const FeatureGrant> grants,std::string_view id,std::string_view extra={}){
@@ -160,7 +165,7 @@ AbilityCheckModifier check_modifier(std::span<const FeatureGrant> grants,const s
     return result;
 }
 }
-bool is_training_grant(const FeatureGrant& grant){return grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
+bool is_training_grant(const FeatureGrant& grant){return is_mastery_grant(grant)||grant.id.starts_with("skill:")||grant.id.starts_with("tool:")||grant.id.starts_with("expertise:")||grant.id.starts_with("language:");}
 std::vector<FeatureGrant> without_training(std::span<const FeatureGrant> grants){std::vector<FeatureGrant> result;for(const auto& g:grants)if(!is_training_grant(g))result.push_back(g);return result;}
 TrainingChoiceGroup scholar_options(std::span<const FeatureGrant> grants){
     TrainingChoiceGroup group{"class:wizard:scholar","Scholar Expertise",1,{}};
@@ -169,17 +174,19 @@ TrainingChoiceGroup scholar_options(std::span<const FeatureGrant> grants){
         group.options.push_back({std::string(skill.id),std::string(skill.label),{}});
     return group;
 }
-std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::style_routes);}
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::weapon_mastery);}
 std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
     for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());
-    for(const auto& group:groups)add_choices(result,choices,group,(group.id==bard_instruments||group.id==monk_tools||group.id==soldier_gaming)?"tool:":group.id=="class:fighter:fighting_style"?"feat:":group.id=="class:"+std::string(klass)?"skill:":group.id==expertise?"expertise:":"language:");
+    for(const auto& group:groups)add_choices(result,choices,group,(group.id==bard_instruments||group.id==monk_tools||group.id==soldier_gaming)?"tool:":group.id.ends_with(":weapon_mastery")?"mastery:":group.id=="class:fighter:fighting_style"?"feat:":group.id=="class:"+std::string(klass)?"skill:":group.id==expertise?"expertise:":"language:");
     return result;
 }
 TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,TrainingPolicy policy){
     auto required=fixed(klass,background,policy);TrainingChoices choices;std::vector<FeatureGrant> actual;
+    const auto mastery=mastery_choices(grants,klass,4);require(policy>=TrainingPolicy::weapon_mastery||mastery.empty());
     // Style selections emit feats; keep them in feature validation as well.
     for(const auto& grant:grants)if(is_training_grant(grant)||grant.source_id=="class:fighter:fighting_style"){
+        if(is_mastery_grant(grant)&&grant.level==4){choices[grant.source_id].push_back(grant.id.substr(8));continue;}
         if(grant.source_id=="class:wizard:scholar"){
             require(policy>=TrainingPolicy::scholar&&klass=="wizard"&&grant.level==2&&grant.choices.empty());
             const auto group=scholar_options(grants);
@@ -190,16 +197,19 @@ TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::strin
         require((grant.level==1||(replacement&&grant.level<=4))&&grant.choices.empty());actual.push_back(grant);if(replacement)actual.back().level=1;
         const auto found=std::find(required.begin(),required.end(),grant);
         if(found!=required.end()){required.erase(found);continue;}
-        const auto prefix=(grant.source_id==bard_instruments||grant.source_id==monk_tools||grant.source_id==soldier_gaming)?"tool:":grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id=="class:"+std::string(klass)?"skill:":grant.source_id==expertise?"expertise:":"language:";
+        const auto prefix=(grant.source_id==bard_instruments||grant.source_id==monk_tools||grant.source_id==soldier_gaming)?"tool:":grant.source_id.ends_with(":weapon_mastery")?"mastery:":grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id=="class:"+std::string(klass)?"skill:":grant.source_id==expertise?"expertise:":"language:";
         require(grant.id.starts_with(prefix));choices[grant.source_id].push_back(grant.id.substr(std::string_view(prefix).size()));
     }
-    require(required.empty());auto starting=choices;starting.erase("class:wizard:scholar");auto expected=training_grants(klass,background,starting,policy);
+    require(required.empty());auto starting=choices;starting.erase("class:wizard:scholar");starting.erase(mastery_options(klass,4).id);auto expected=training_grants(klass,background,starting,policy);
     const auto order=[](const FeatureGrant& a,const FeatureGrant& b){return std::tie(a.id,a.source_id,a.level)<std::tie(b.id,b.source_id,b.level);};
     std::sort(actual.begin(),actual.end(),order);std::sort(expected.begin(),expected.end(),order);require(actual==expected);return choices;
 }
 TrainingProfile training_profile(std::span<const FeatureGrant> grants,std::string_view klass,std::string_view background,unsigned level,const std::array<int,6>& scores,TrainingPolicy policy){
     const auto choices=training_choices(grants,klass,background,policy);const auto groups=options(klass,background,choices,policy);TrainingProfile result;result.complete=true;
     for(const auto& group:groups)result.complete&=selected(choices,group.id).size()==group.count;
+    const auto mastery=mastery_choices(grants,klass,level);
+    if(policy>=TrainingPolicy::weapon_mastery&&level>=4){const auto extra=mastery_options(klass,4);if(extra.count)result.complete&=selected(choices,extra.id).size()==extra.count;}
+    for(const auto& g:grants)if(is_mastery_grant(g)){const auto* item=weapon(g.id.substr(8));result.masteries.push_back({std::string(item->key),std::string(item->label),{g}});}
     const auto& scholar=selected(choices,"class:wizard:scholar");require(scholar.empty()||level>=2);
     if(policy>=TrainingPolicy::scholar&&klass=="wizard"&&level>=2)result.complete&=scholar.size()==1;
     for(const auto& s:skills){const auto bonus=check_modifier(grants,scores,level,s.ability,s.id,{});
