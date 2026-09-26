@@ -33,6 +33,8 @@ public:
     std::unique_ptr<CombatSession> create(Encounter,std::uint64_t) const override {return {};}
     std::unique_ptr<CombatSession> restore(std::string_view) const override {return {};}
     CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState equipment) const override {return module()->character_profile(sheet,gear,equipment);}
+    EquipmentChange equipment_change(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState state,unsigned selected,EquipmentOperation operation) const override
+    {return module()->equipment_change(sheet,gear,state,selected,operation);}
     RecoveryInfo recovery_info(const CharacterSheet&,const VitalState&) const override {RecoveryInfo r;r.can_rest=true;return r;}
     RestPolicy short_rest_policy() const override {return {2,0};}
     RestPolicy long_rest_policy() const override {return {3,0};}

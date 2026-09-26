@@ -160,6 +160,7 @@ public:
     [[nodiscard]] const rules::RulesModule& rule_module() const {return *rules_;}
     [[nodiscard]] const rules::Identity identity() const {return rules_->identity();}
 private:
+    void change_equipment(MemberId id,std::uint64_t item,rules::EquipmentOperation operation);
     std::unique_ptr<rules::RulesModule> rules_;
     PartyState state_;
     bool combat_{};

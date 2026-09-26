@@ -2181,6 +2181,24 @@ public:
         if(detail::armor(key))return {EquipmentSlot::armor,0};
         return {};
     }
+    EquipmentChange equipment_change(const CharacterSheet& sheet,std::span<const std::string> candidates,
+        EquipmentState equipment,unsigned selected,EquipmentOperation operation) const override
+    {
+        if(selected>=candidates.size())throw std::runtime_error("Unknown equipment candidate");
+        const auto slot=equipment_info(candidates[selected]).slot;
+        if(operation==EquipmentOperation::equip&&slot==EquipmentSlot::carried)
+            throw std::runtime_error("This item is carried, not equipped");
+        EquipmentChange result;result.equipment=slot==EquipmentSlot::weapon?EquipmentState{}:equipment;
+        std::vector<std::string> gear;
+        for(unsigned i=0;i<candidates.size();++i){
+            if(operation==EquipmentOperation::unequip&&i==selected)continue;
+            if(operation==EquipmentOperation::equip&&slot==EquipmentSlot::weapon&&i!=selected&&
+                equipment_info(candidates[i]).slot==EquipmentSlot::weapon)continue;
+            result.indices.push_back(i);gear.push_back(candidates[i]);
+        }
+        (void)character_profile(sheet,gear,result.equipment);
+        return result;
+    }
     AbilityCheckModifier ability_check(const CharacterSheet& sheet,std::span<const std::string> gear,unsigned ability,
         std::string_view skill,std::string_view tool,EquipmentState equipment) const override {
         const auto d=character_definition(character_profile(sheet,gear,equipment).data);

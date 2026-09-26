@@ -97,6 +97,52 @@ Character character(std::string klass="fighter",std::string name="Ada")
 }
 por::Equipment item(unsigned type,unsigned price=10)
 {por::Equipment e;e.stored.type=type;e.stored.value=price;e.stored.stack_size=1;return e;}
+// An intentionally different equipment policy proves Core applies rules-owned
+// choices, rather than retaining the SRD single-weapon replacement decision.
+class AlternateEquipmentRules final : public RulesModule {
+public:
+    Identity identity() const override {return {"equipment-test","1","owned-plans"};}
+    std::vector<std::string> supported_features() const override {return {};}
+    std::unique_ptr<CombatSession> create(Encounter,std::uint64_t) const override {return {};}
+    std::unique_ptr<CombatSession> restore(std::string_view) const override {return {};}
+    EquipmentInfo equipment_info(std::string_view) const override {return {EquipmentSlot::weapon,1};}
+    CharacterProfile character_profile(const CharacterSheet& sheet,std::span<const std::string> gear,EquipmentState state) const override {
+        CharacterProfile result;result.hit_points=sheet.hit_points;result.armor_class=10+int(gear.size());result.equipment=state;return result;
+    }
+    EquipmentChange equipment_change(const CharacterSheet&,std::span<const std::string> gear,EquipmentState,
+        unsigned selected,EquipmentOperation operation) const override {
+        if(gear[selected]=="bad_index")return {{unsigned(gear.size())},{7}};
+        if(gear[selected]=="duplicate_index")return {{selected,selected},{7}};
+        if(gear[selected]=="rejected")throw std::runtime_error("Alternate rules reject this equipment");
+        EquipmentChange result;result.equipment={operation==EquipmentOperation::equip?7u:5u};
+        for(unsigned n=gear.size();n>0;--n)
+            if(operation!=EquipmentOperation::unequip||n-1!=selected)result.indices.push_back(n-1);
+        return result;
+    }
+};
+void equipment_rule_boundary()
+{
+    CampaignParty party(std::make_unique<AlternateEquipmentRules>());auto person=character();
+    const auto sword=person.inventory().add("longsword","Sword");
+    const auto dagger=person.inventory().add("dagger","Dagger");
+    std::vector<std::uint64_t> invalid;
+    for(const char* key:{"bad_index","duplicate_index","rejected"})invalid.push_back(person.inventory().add(key,key));
+    const auto id=party.add_pc(std::move(person));const auto vitals=party.member(id).vitals;
+    party.equip(id,sword);party.equip(id,dagger);
+    check(party.member(id).equipped==std::vector<std::uint64_t>{dagger,sword}&&party.member(id).equipment.weapon_hands==7,
+        "Core applies the module's two-weapon order and non-SRD equipment state");
+    check(party.profile(id).armor_class==12,"Profile query receives the module-selected loadout");
+    const auto before=party.member(id).equipped;
+    for(auto item:invalid){rejects([&]{party.equip(id,item);});check(party.member(id).equipped==before&&
+        party.member(id).equipment.weapon_hands==7&&party.member(id).vitals==vitals&&party.member(id).character.inventory().items().size()==5,
+        "Invalid rules results and rejections preserve owned items, loadout, equipment state and vitals");}
+    party.unequip(id,sword);
+    check(party.member(id).equipped==std::vector<std::uint64_t>{dagger}&&party.member(id).equipment.weapon_hands==5,
+        "Unequip uses the module's equipment continuation");
+    party.equip(id,dagger);party.unequip(id,sword);
+    check(party.member(id).equipment.weapon_hands==5&&party.member(id).vitals==vitals,
+        "Existing equip/unequip no-ops preserve state");
+}
 void party_combat_appearance()
 {
     const auto folder=std::filesystem::path(OPENGOLD_SOURCE_DIR)/"data/art";
@@ -1059,6 +1105,6 @@ void original_loot()
 }
 int main()
 {
-    try{combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();interrupted_rest_victory();std::cout<<"Party integration tests passed\n";return 0;}
+    try{equipment_rule_boundary();combat_body_assignments();party_combat_appearance();all_weapon_equipment();goliath_occupancy();original_loot();roster_and_equipment();class_weapon_proficiency();stabilization_handoff();remaining_turn_handoff();untrained_equipment();combat_handoff();campaign_encounters();allied_campaign_movement();standalone_checkpoints();combat_ownership();progression_and_services();caster_advancement();temple_pooling();dynamic_checkpoint();combat_demo_fixture();script_handoff();rejected_combat_handoff();recovery_hosts();reward_reentry();interrupted_rest_victory();std::cout<<"Party integration tests passed\n";return 0;}
     catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }
