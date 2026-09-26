@@ -38,7 +38,7 @@ struct SaveCodec {
     void field(rules::Identity& v){fields(v.module,v.version,v.content);}
     void field(rules::AbilityRoll& v){fields(v.dice,v.discarded);}
     void field(rules::FeatureGrant& v){fields(v.id,v.source_id,v.level,v.choices);}
-    void field(rules::AdvancementChoice& v){fields(v.feat,v.abilities,v.spells);if(version>=15)field(v.training);if(version>=16)field(v.spell_learning);}
+    void field(rules::AdvancementChoice& v){fields(v.feat,v.abilities,v.spells);if(version>=15)field(v.training);if(version>=16)field(v.spell_learning);if(version>=17)field(v.fighting_style);}
     void field(rules::CharacterDraft& v){fields(v.race,v.gender,v.character_class,v.alignment,v.background,v.name,v.target_classes,v.rolls,v.assignment,v.adjustment,v.rolled);if(version>=9)field(v.training);if(version>=11)field(v.cantrips);if(version>=16)field(v.spells);}
     void field(rules::SpellChoices& v){fields(v.learning,v.prepared,v.replace_cantrip,v.replacement);}
     void field(SpellChoiceEdit& v){fields(v.level,v.rest_session,v.choices);}
@@ -176,7 +176,7 @@ struct SaveCodec {
 };
 
 std::string encode_campaign(const CampaignParty& party,const por::RolfTourSession* town,std::string_view assets){
-    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=party.state().spell_rest||std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return member.character.creation_data().spells.has_value()||!member.character.spell_edits().empty()||std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.spell_learning.has_value();});})?16:std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return !choice.training.empty();});})?15:std::any_of(party.state().detached_items.begin(),party.state().detached_items.end(),[](const auto& item){return item.rest_session!=0;})?14:!party.state().detached_items.empty()?13:party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
+    require(!party.in_combat(),"Cannot save during combat");SaveCodec out;out.version=std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.fighting_style.has_value();});})?17:party.state().spell_rest||std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return member.character.creation_data().spells.has_value()||!member.character.spell_edits().empty()||std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return choice.spell_learning.has_value();});})?16:std::any_of(party.state().roster.begin(),party.state().roster.end(),[](const auto& member){return std::any_of(member.character.advancements().begin(),member.character.advancements().end(),[](const auto& choice){return !choice.training.empty();});})?15:std::any_of(party.state().detached_items.begin(),party.state().detached_items.end(),[](const auto& item){return item.rest_session!=0;})?14:!party.state().detached_items.empty()?13:party.state().rest_activity?12:11;auto identity=party.identity();std::string asset(assets);auto state=party.checkpoint();out.fields(identity,asset,state);bool has_town=town!=nullptr;out.field(has_town);if(town){auto copy=*town;out.town(copy);}out.rest(state);auto body=out.stream.str();require(body.size()<=limit,"Campaign save too large");return "OPENGOLD-CAMPAIGN "+std::to_string(out.version)+"\n"+std::to_string(fingerprint(body))+"\n"+body;
 }
 namespace {
 void validate_saved_member(const PartyMember& member,const rules::RulesModule& module){
@@ -197,7 +197,7 @@ void validate_saved_member(const PartyMember& member,const rules::RulesModule& m
 SavedCampaign decode_campaign(std::string_view bytes,const rules::CharacterRules& creation,const rules::RulesModule& module,std::string_view assets,const por::RolfTourSession* town_template){
     require(bytes.size()<=limit,"Campaign save too large");
     unsigned version{};std::size_t header_size{};
-    for(unsigned v=1;v<=16;++v){
+    for(unsigned v=1;v<=17;++v){
         const auto header="OPENGOLD-CAMPAIGN "+std::to_string(v)+'\n';
         if(bytes.starts_with(header)){version=v;header_size=header.size();break;}
     }

@@ -33,19 +33,19 @@ void selection(){
     auto rules=module();
     for(const auto& klass:srd5::character_rules()->choices(CreationField::character_class)){
         CampaignParty p(module());auto id=p.add_pc(hero(klass.id));p.award_experience(2700,"archery");
-        if(klass.id!="fighter"&&klass.id!="wizard"&&klass.id!="cleric"&&klass.id!="rogue"){
+        if(klass.id!="fighter"&&klass.id!="wizard"&&klass.id!="cleric"&&klass.id!="rogue"&&klass.id!="paladin"&&klass.id!="ranger"){
             check(!p.can_advance(id),"Unsupported later advancement does not invent Fighting Style entitlement");continue;
         }
         grow(p,id,3);auto choice=p.default_advancement(id);choice.feat="archery";choice.abilities={};
         const auto options=p.advancement_options(id);const auto option=std::find_if(options.feats.begin(),options.feats.end(),[](const auto& f){return f.id=="archery";});
-        check(option!=options.feats.end()&&option->available==(klass.id=="fighter"),"Existing feat selector requires Fighting Style");
+        check(option!=options.feats.end()&&option->available==(klass.id=="fighter"||klass.id=="paladin"||klass.id=="ranger"),"Existing feat selector requires Fighting Style");
         const auto before=encode_campaign(p,nullptr,"archery");
-        if(klass.id!="fighter"){rejects([&]{p.advance(id,choice);});check(encode_campaign(p,nullptr,"archery")==before,"Missing entitlement rejects atomically");continue;}
+        if(klass.id!="fighter"&&klass.id!="paladin"&&klass.id!="ranger"){rejects([&]{p.advance(id,choice);});check(encode_campaign(p,nullptr,"archery")==before,"Missing entitlement rejects atomically");continue;}
         auto invalid=choice;invalid.abilities[0]=1;rejects([&]{p.advance(id,invalid);});
         const auto preview=p.preview_advancement(id,choice);check(encode_campaign(p,nullptr,"archery")==before,"Preview and rejected allocation preserve campaign");
         p.advance(id,choice);check(p.member(id).character.sheet().grants==preview.character.sheet().grants,"Confirmation retains previewed grant");
         const auto& sheet=p.member(id).character.sheet();
-        check(std::find(sheet.grants.begin(),sheet.grants.end(),FeatureGrant{"feat:archery","class:fighter:ability_score_improvement",4,{}})!=sheet.grants.end(),"Feat records its real entitlement and acquisition level");
+        check(std::find(sheet.grants.begin(),sheet.grants.end(),FeatureGrant{"feat:archery","class:"+klass.id+":ability_score_improvement",4,{}})!=sheet.grants.end(),"Feat records its real entitlement and acquisition level");
         auto bad=sheet;bad.grants.push_back({"feat:archery","class:fighter:ability_score_improvement",4,{}});rejects([&]{(void)rules->character_profile(bad,{});});
         bad=sheet;std::erase_if(bad.grants,[](const auto& g){return g.id=="feature:fighting_style";});rejects([&]{(void)rules->character_profile(bad,{});});
         auto before_four=hero().sheet();before_four.grants.push_back({"feat:archery","class:fighter:ability_score_improvement",1,{}});rejects([&]{(void)rules->character_profile(before_four,{});});

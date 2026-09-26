@@ -46,13 +46,14 @@ struct AdvancementChoice {
     std::array<unsigned,6> abilities{};
     std::vector<std::string> spells;
     TrainingChoices training;
+    std::optional<std::string> fighting_style; // Class-granted choice/replacement, separate from a level-four feat.
     std::optional<TrainingChoices> spell_learning; // Absent only for historical advancement replay.
     bool operator==(const AdvancementChoice&) const = default;
 };
 struct AdvancementOption {std::string id,label,description;bool available{true};};
 struct AdvancementOptions {
     unsigned level{};
-    std::vector<AdvancementOption> feats,spells;
+    std::vector<AdvancementOption> feats,spells,fighting_styles;
     std::vector<TrainingChoiceGroup> training;
     std::string description;
 };
@@ -302,6 +303,7 @@ public:
     virtual bool advance_character(CharacterSheet& sheet, VitalState& state) const;
     [[nodiscard]] virtual std::vector<TrainingChoiceGroup> training_options(const CharacterSheet&) const {return {};}
     [[nodiscard]] virtual AdvancementOptions advancement_options(const CharacterSheet&) const {return {};}
+    [[nodiscard]] virtual AdvancementOptions advancement_options(const CharacterSheet& sheet,const AdvancementChoice&) const {return advancement_options(sheet);}
     [[nodiscard]] virtual AdvancementChoice default_advancement(const CharacterSheet&) const {return {};}
     virtual bool advance_character(CharacterSheet& sheet,VitalState& state,const AdvancementChoice&) const;
     virtual void recover(VitalState& state, const CharacterSheet& sheet) const;

@@ -57,6 +57,8 @@ void CharacterCreationView::setup_advancement(){
         points->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     }
     control<Label>(window,"SpellLabel",Rect2(24,292,652,28))->set_text("Prepared spells");
+    auto* style=control<OptionButton>(window,"FightingStyle",Rect2(24,325,652,38));style->hide();
+    style->connect("item_selected",callable_mp(this,&CharacterCreationView::advancement_changed));
     for(int i=0;i<4;++i){auto* spell=control<CheckBox>(window,String("Spell")+String::num_int64(i),Rect2(24,325+i*38,652,36));
         spell->connect("toggled",callable_mp(this,&CharacterCreationView::advancement_spell_changed).bind(i));}
     auto* note=control<Label>(window,"Note",Rect2(24,489,652,66));note->set_text("Fixed-average HP growth. Existing resource expenditure is preserved.\nAdditional class and subclass features are unavailable in this version.");note->add_theme_font_size_override("font_size",14);note->set("autowrap_mode",3);
@@ -140,11 +142,25 @@ void CharacterCreationView::open_advancement(std::int64_t id){
     window->get_node<Label>("SpellLabel")->set_text(advancement_options_.spells.empty()?"No spell choices for this class":"Prepared spells: select at least one");
     for(unsigned i=0;i<4;++i){auto* spell=window->get_node<CheckBox>(String("Spell")+String::num_uint64(i));spell->set_visible(i<advancement_options_.spells.size());if(i>=advancement_options_.spells.size())continue;
         const auto& option=advancement_options_.spells[i];spell->set_text(gs(option.label)+(option.available?"":" (Unavailable)"));spell->set_tooltip_text(gs(option.description));spell->set_disabled(!option.available);spell->set_pressed_no_signal(std::find(advancement_choice_.spells.begin(),advancement_choice_.spells.end(),option.id)!=advancement_choice_.spells.end());}
+    auto* style=window->get_node<OptionButton>("FightingStyle");style->clear();style->set_visible(!advancement_options_.fighting_styles.empty());
+    if(!advancement_options_.fighting_styles.empty()){
+        window->get_node<Label>("SpellLabel")->set_text("Fighting Style");
+        for(const auto& option:advancement_options_.fighting_styles){const int i=style->get_item_count();style->add_item(gs(option.label));style->set_item_disabled(i,!option.available);style->set_item_tooltip(i,gs(option.description));
+            if((advancement_choice_.fighting_style&&option.id==*advancement_choice_.fighting_style)||(!advancement_choice_.fighting_style&&option.id=="keep"))style->select(i);
+        }
+    }
     advancement_refreshing_=false;advancement_spell_page();advancement_changed();window->popup_centered();window->get_node<Button>("Cancel")->grab_focus();
 }
 void CharacterCreationView::advancement_spell_changed(bool,int){advancement_changed();}
 void CharacterCreationView::advancement_changed(std::int64_t){
     if(advancement_refreshing_||!advancing_)return;auto* window=get_node<Window>("LevelUp");
+    if(!advancement_options_.fighting_styles.empty()){
+        const auto index=window->get_node<OptionButton>("FightingStyle")->get_selected();
+        if(index>=0){const auto& option=advancement_options_.fighting_styles.at(index);if(option.id=="keep")advancement_choice_.fighting_style.reset();else advancement_choice_.fighting_style=option.id;}
+        advancement_options_=campaign_->advancement_options(advancing_,advancement_choice_);
+        auto* feats=window->get_node<OptionButton>("Feat");
+        for(unsigned i=0;i<advancement_options_.feats.size();++i){const auto& option=advancement_options_.feats[i];feats->set_item_disabled(i,!option.available);feats->set_item_text(i,gs(option.label)+(option.available?String():String(" (Unavailable)")));}
+    }
     if(!advancement_options_.feats.empty())advancement_choice_.feat=advancement_options_.feats.at(window->get_node<OptionButton>("Feat")->get_selected()).id;
     advancement_choice_.training.clear();
     if(!advancement_options_.training.empty()){

@@ -1,4 +1,5 @@
 #include "training.h"
+#include "feature_grants.h"
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -106,6 +107,7 @@ std::vector<TrainingChoiceGroup> options(std::string_view klass,std::string_view
     if(klass=="fighter"&&policy>=TrainingPolicy::fighter_style)
         result.push_back({"class:fighter:fighting_style","Fighting Style",1,
             {{"defense","Defense","+1 AC while wearing armor."},{"archery","Archery","+2 to attack rolls with Ranged weapons."}},TrainingChoiceControl::single_selection});
+    if(klass=="fighter"&&policy>=TrainingPolicy::style_routes)for(auto& group:result)if(group.id=="class:fighter:fighting_style")group.options.push_back({"great_weapon_fighting","Great Weapon Fighting","Treat damage dice showing 1 or 2 as 3 with an eligible Melee weapon held in two hands."});
     if(klass=="rogue"||(policy>=TrainingPolicy::class_skills&&!klass.empty())){
         const auto data=std::find_if(class_skills.begin(),class_skills.end(),[&](const auto& c){return c.id==klass;});
         require(data!=class_skills.end());TrainingChoiceGroup group{"class:"+std::string(klass),std::string(data->label),data->count,{},TrainingChoiceControl::checkboxes,"class_skills"};
@@ -166,7 +168,7 @@ TrainingChoiceGroup scholar_options(std::span<const FeatureGrant> grants){
         group.options.push_back({std::string(skill.id),std::string(skill.label),{}});
     return group;
 }
-std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::soldier_gaming);}
+std::vector<TrainingChoiceGroup> training_options(const CharacterDraft& draft){return options(draft.character_class,draft.background,draft.training,TrainingPolicy::style_routes);}
 std::vector<FeatureGrant> training_grants(std::string_view klass,std::string_view background,const TrainingChoices& choices,TrainingPolicy policy){
     auto result=fixed(klass,background,policy);const auto groups=options(klass,background,choices,policy);
     for(const auto& [id,values]:choices)require(std::any_of(groups.begin(),groups.end(),[&](const auto& g){return g.id==id;})&&!values.empty());
@@ -183,7 +185,8 @@ TrainingChoices training_choices(std::span<const FeatureGrant> grants,std::strin
             require(std::any_of(group.options.begin(),group.options.end(),[&](const auto& option){return grant.id=="expertise:"+option.id;}));
             auto& selected=choices[grant.source_id];require(selected.empty());selected.push_back(grant.id.substr(10));continue;
         }
-        require(grant.level==1&&grant.choices.empty());actual.push_back(grant);
+        const bool replacement=policy>=TrainingPolicy::style_routes&&klass=="fighter"&&grant.source_id=="class:fighter:fighting_style";
+        require((grant.level==1||(replacement&&grant.level<=4))&&grant.choices.empty());actual.push_back(grant);if(replacement)actual.back().level=1;
         const auto found=std::find(required.begin(),required.end(),grant);
         if(found!=required.end()){required.erase(found);continue;}
         const auto prefix=(grant.source_id==bard_instruments||grant.source_id==monk_tools||grant.source_id==soldier_gaming)?"tool:":grant.source_id=="class:fighter:fighting_style"?"feat:":grant.source_id=="class:"+std::string(klass)?"skill:":grant.source_id==expertise?"expertise:":"language:";

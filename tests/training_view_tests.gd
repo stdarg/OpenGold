@@ -1,9 +1,11 @@
 extends SceneTree
 
 var captures := ""
+var locales := ["en", "es"]
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
+		if arg == "--training-demo": locales = ["en"]
 		if arg.begins_with("--training-capture="):
 			captures = arg.trim_prefix("--training-capture=")
 	call_deferred("run_checks")
@@ -79,7 +81,7 @@ func keyboard(key: Key) -> void:
 		await settle()
 
 func background_captures(background: String, translated: String) -> void:
-	for locale in ["en", "es"]:
+	for locale in locales:
 		TranslationServer.set_locale(locale)
 		await press("Back")
 		await press("Next")
@@ -166,7 +168,7 @@ func all_class_skill_controls() -> void:
 		await pick(0, "elvish", false)
 		await pick(0, "dwarvish", false)
 		if klass in ["Bard", "Monk", "Druid", "Wizard"]:
-			for locale in ["en", "es"]:
+			for locale in locales:
 				TranslationServer.set_locale(locale)
 				await press("Back")
 				await press("Next")
@@ -298,9 +300,11 @@ func run_checks() -> void:
 	await press("Next")
 	await press("Back")
 	require(style.selected == 2, "Back must preserve the chosen style")
+	await choose("Training/Rows/Group1/Choice", "Great Weapon Fighting")
+	require(style.selected == 3 and not current_scene.get_node("Next").disabled, "GWF completes starting style choice")
 	await choose("Training/Rows/Group1/Choice", "Defense")
 	require(style.selected == 1 and not current_scene.get_node("Next").disabled, "Changing style must replace its selection")
-	for locale in ["en", "es"]:
+	for locale in locales:
 		TranslationServer.set_locale(locale)
 		await press("Back")
 		await press("Next")

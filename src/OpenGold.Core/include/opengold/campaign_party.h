@@ -104,7 +104,7 @@ public:
     void set_wealth(MemberId id,std::array<std::uint16_t,7> wealth);
     void award_experience(unsigned amount,std::string reward_id);
     [[nodiscard]] bool can_advance(MemberId id) const;
-    [[nodiscard]] rules::AdvancementOptions advancement_options(MemberId id) const;
+    [[nodiscard]] rules::AdvancementOptions advancement_options(MemberId id,const rules::AdvancementChoice& choice={}) const;
     [[nodiscard]] rules::AdvancementChoice default_advancement(MemberId id) const;
     [[nodiscard]] PartyMember preview_advancement(MemberId id,const rules::AdvancementChoice& choice) const;
     void advance(MemberId id,const rules::AdvancementChoice& choice);

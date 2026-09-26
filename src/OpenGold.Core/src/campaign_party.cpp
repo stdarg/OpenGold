@@ -200,8 +200,8 @@ bool CampaignParty::can_advance(MemberId id) const
     if(combat_||state_.short_rest||state_.rest_activity||state_.spell_rest)return false;const auto& m=member(id);const auto options=rules_->advancement_options(m.character.sheet());
     return !m.vitals.dead&&options.level&&m.experience>=rules_->experience_for_level(options.level);
 }
-rules::AdvancementOptions CampaignParty::advancement_options(MemberId id) const
-{return rules_->advancement_options(member(id).character.sheet());}
+rules::AdvancementOptions CampaignParty::advancement_options(MemberId id,const rules::AdvancementChoice& choice) const
+{return rules_->advancement_options(member(id).character.sheet(),choice);}
 rules::AdvancementChoice CampaignParty::default_advancement(MemberId id) const
 {return rules_->default_advancement(member(id).character.sheet());}
 PartyMember CampaignParty::preview_advancement(MemberId id,const rules::AdvancementChoice& choice) const
